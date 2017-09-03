@@ -30,7 +30,7 @@ See [this guide](docs/development.md) How to get InfraBox quickly setup on your 
 ## Setup Components
 Depending on the environment you would like to run InfraBox in you have to setup:
 
-1. [Setup kubernetes](docks/install_kubernetes.md)
+1. [Setup kubernetes](docs/install_kubernetes.md)
 2. [Setup postgresql](docs/install_postgres.md)
 3. [Setup storage](docs/install_storage.md)
 4. [Setup docker registry](docs/install_docker_registry.md)
