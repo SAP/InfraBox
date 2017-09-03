@@ -3,6 +3,8 @@ general:
     kubernetes_master_port: 443
     docker_registry: <YOUR_HOST>:5000
     no_check_certificates: true
+    rbac:
+        enabled: false
 
 storage:
     gcs:

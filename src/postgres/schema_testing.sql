@@ -394,7 +394,8 @@ CREATE TABLE job (
     cpu integer DEFAULT 1 NOT NULL,
     memory integer DEFAULT 1024 NOT NULL,
     build_arg jsonb,
-    deployment jsonb
+    deployment jsonb,
+    download jsonb
 );
 
 

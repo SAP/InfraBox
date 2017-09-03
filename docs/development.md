@@ -1,7 +1,7 @@
 # Local development with minikube
 
 ## Preqreuisites
-- [minikube](https://kubernetes.io/docs/getting-started-guides/minikube/)
+- [minikube](https://kubernetes.io/docs/getting-started-guides/minikube/) v0.21.0
 - [infraboxcli](infraboxcl://github.com/infrabox/cli)
 - [mc](https://docs.minio.io/docs/minio-client-quickstart-guide)
 - [helm](https://github.com/kubernetes/helm)
@@ -29,7 +29,12 @@ Validate if everything works:
 ## Start Minikube
 Start minikube:
 
-    $ minikube start --insecure-registry <YOUR_HOST>:5000 --cpus 4 --memory 8192 --disk-size 100gb
+    $ minikube start \
+        --insecure-registry <YOUR_HOST>:5000 \
+        --cpus 4 \
+        --memory 8192 \
+        --disk-size 100gb \
+        --kubernetes-version v1.6.4
 
 ## Install helm
 
@@ -58,7 +63,8 @@ Do the same for postgres. Copy helm/infrabox/values_minikube.yam.template to lhe
 
 To install InfraBox run:
 
-    $ ./deploy/install
+    $ cd deploy
+    $ ./install.sh
 
 You should now be able to access InfraBox under http://<MINIKUBE_HOST>:30201.
 
@@ -75,9 +81,11 @@ You can access the different components at:
 
 ## Uninstall InfraBox
 
-    $ ./deploy/uninstall
+    $ cd deploy
+    $ ./uninstall.sh
 
 ## Upgrade
 
-    $ helm upgrade infrabox -f deploy/infrabox/values_install.yaml .
+    $ cd deploy/infrabox
+    $ helm upgrade infrabox -f values_install.yaml .
 

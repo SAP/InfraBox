@@ -19,6 +19,8 @@ general:
         # If true the log output will be formatted for google's stackdriver
         stackdriver: false
 
+    rbac:
+        enabled: true
 
 scheduler:
     enabled: true
