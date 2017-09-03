@@ -1,10 +1,10 @@
 # Local development with minikube
 
 ## Preqreuisites
-- minikube (https://kubernetes.io/docs/getting-started-guides/minikube/)
-- infraboxcli (pip install infraboxcli)
-- mc (https://docs.minio.io/docs/minio-client-quickstart-guide)
-- helm
+- [minikube](https://kubernetes.io/docs/getting-started-guides/minikube/)
+- [infraboxcli](infraboxcl://github.com/infrabox/cli)
+- [mc](https://docs.minio.io/docs/minio-client-quickstart-guide)
+- [helm](https://github.com/kubernetes/helm)
 
 ## Docker registry
 You may want to run you own docker registry where you can push to. Run this on your host:
@@ -29,28 +29,28 @@ Validate if everything works:
 ## Start Minikube
 Start minikube:
 
-    minikube start --insecure-registry <YOUR_HOST>:5000 --cpus 4 --memory 8192 --disk-size 100gb
+    $ minikube start --insecure-registry <YOUR_HOST>:5000 --cpus 4 --memory 8192 --disk-size 100gb
 
 ## Install helm
 
 Install helm
 
-    helm init
+    $ helm init
 
 ## Build docker images
 
 Build all images:
 
-    ./deployment/build.sh <YOUR_HOST>:5000/
+    $ ./deploy/build.sh <YOUR_HOST>:5000/
 
 push them to your registry:
 
-    ./deployment/push.sh <YOUR_HOST>:5000/
+    $ ./deploy/push.sh <YOUR_HOST>:5000/
 
 You may want to modifiy build.sh or push.sh to only build the images you modified.
 
 ## Deploy InfraBox
-We have a default configuration for InfraBox in helm/infrabox/values_minikube.yaml.template
+We have a default configuration for InfraBox in deploy/infrabox/values_minikube.yaml.template
 Copy it to helm/infrabox/values_minikube.yaml and edit it.
 Replace <YOUR_HOST> and <MINIKUBE_HOST> with the IP addresses of your host and the minikube vm respectively.
 
@@ -58,22 +58,26 @@ Do the same for postgres. Copy helm/infrabox/values_minikube.yam.template to lhe
 
 To install InfraBox run:
 
-    $ cd helm
-    $ ./install
+    $ ./deploy/install
 
 You should now be able to access InfraBox under http://<MINIKUBE_HOST>:30201.
 
 If you use infraboxcli make sure you always use the --host option:
 
-    infrabox --host http://<MINIKUBE_HOST>:30200 ...
+    $ infrabox --host http://<MINIKUBE_HOST>:30200 ...
+
+You can access the different components at:
+
+- API: <MINIKUBE_HOST>:30200
+- Dashboard: <MINIKUBE_HOST>:30201
+- Docker Registry: <MINIKUBE_HOST>:30202
+- Docs: <MINIKUBE_HOST>:30203
 
 ## Uninstall InfraBox
 
-    cd helm
-    ./uninstall
+    $ ./deploy/uninstall
 
 ## Upgrade
 
-    cd helm/infrabox
-    helm upgrade infrabox -f values_install.yaml .
+    $ helm upgrade infrabox -f deploy/infrabox/values_install.yaml .
 

@@ -1,7 +1,7 @@
 #!/bin/sh -e
 
 install_minio=true
-install_postgres=false
+install_postgres=true
 
 # Values file
 values_yaml="values_minikube.yaml"
@@ -11,8 +11,8 @@ s3_access_key=""
 s3_secret_key=""
 
 # Leave it empty if install_postgres=true
-postgres_username="infrabox"
-postgres_password="0vVtLmA9T6u6Q19g"
+postgres_username=""
+postgres_password=""
 
 registry_admin_username="admin" # Required
 registry_admin_password="admin" # Required
