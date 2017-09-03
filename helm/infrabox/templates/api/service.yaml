@@ -1,0 +1,23 @@
+{{ if .Values.api.enabled }}
+kind: Service
+apiVersion: v1
+metadata:
+    name: infrabox-api
+    namespace: infrabox-system
+    labels:
+        app: infrabox
+        infrabox.net/component: api
+spec:
+    selector:
+        app: infrabox
+        infrabox.net/component: api
+    type: NodePort
+    ports:
+    -
+        protocol: TCP
+        port: 8080
+        targetPort: 8080
+    {{ if .Values.api.node_port }}
+        nodePort: {{ .Values.api.node_port }}
+    {{ end }}
+{{ end }}

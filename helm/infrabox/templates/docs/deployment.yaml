@@ -1,0 +1,39 @@
+{{ if .Values.docs.enabled }}
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+    name: infrabox-docs
+    namespace: infrabox-system
+    labels:
+        app: infrabox
+        infrabox.net/component: docs
+spec:
+    replicas: 1
+    template:
+        metadata:
+            labels:
+                app: infrabox
+                infrabox.net/component: docs
+        spec:
+            {{- if .Values.docs.node_selector }}
+            nodeSelector:
+{{ toYaml .Values.docs.node_selector | indent 16 }}
+            {{- end }}
+            containers:
+            -
+                name: docs
+                image: {{ .Values.general.docker_registry }}/{{ default "infrabox/docs" .Values.docs.image }}:{{ .Values.docs.tag }}
+                imagePullPolicy: Always
+                livenessProbe:
+                    httpGet:
+                        path: /
+                        port: 8080
+                    initialDelaySeconds: 10
+                    periodSeconds: 10
+                readinessProbe:
+                    httpGet:
+                        path: /
+                        port: 8080
+                    initialDelaySeconds: 5
+                    periodSeconds: 5
+{{ end }}

@@ -1,0 +1,156 @@
+<div *ngIf="!tests" class="no-margins no-paddings">
+    <div class="row p-md m-md">
+        <div class="col-lg-4 col-md-4 col-sm-4 col-xs-12 col-xxs-12">
+            <i class="fa fa-spinner fa-5x"></i>
+        </div>
+        <div class="col-lg-8 col-md-8 col-sm-8 col-xs-12 col-xxs-12text-right">
+            <h2 class="font-bold"> Currently no tests to show. </h2>
+            <span> Create some tests or wait until existing tests have finished. </span>
+        </div>
+    </div>
+</div>
+<div [hidden]="!tests" class="no-margins no-paddings">
+    <div class="ibox">
+        <div class="ibox-content no-border">
+            <div class="tabs-container">
+                <div class="tabs-left">
+                    <ul class="nav nav-tabs">
+                        <li class="active"><a data-toggle="tab" href="#tab-chart-duration"><i class="fa fa-clock-o"></i> Duration</a></li>
+                        <li class=""><a data-toggle="tab" href="#tab-chart-results"><i class="fa fa-bar-chart"></i> Results</a></li>
+                        <li class=""><a data-toggle="tab" href="#tab-chart-tests"><i class="fa fa-hashtag"></i> No. of Tests</a></li>
+                    </ul>
+                    <div class="tab-content">
+                        <div id="tab-chart-duration" class="tab-pane active">
+                            <div class="panel-body">
+                                <p><strong>Duration of tests per run (ms)</strong></p>
+                                <div id="chart-duration" class="chart"></div>
+                            </div>
+                        </div>
+                        <div id="tab-chart-results" class="tab-pane">
+                            <div class="panel-body">
+                                <p><strong>Failed tests per run</strong></p>
+                                <div id="chart-results" class="chart"></div>
+                            </div>
+                        </div>
+                        <div id="tab-chart-tests" class="tab-pane">
+                            <div class="panel-body">
+                                <p><strong>Number of tests per run</strong></p>
+                                <div id="chart-tests" class="chart"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row pseudo-headline">
+        <div class="ibox-title">
+            <div class="row">
+                <div class="col-lg-5 col-md-5 col-sm-5 col-xs-5">
+                    <div>
+                        <strong>Executed Tests:</strong>
+                    </div>
+                </div>
+                <div class="col-lg-5 col-md-5 col-sm-5 col-xs-5" style="font-size: inherit">
+                    <div class="input-group">
+                        <input type="text" placeholder="Search" class="input-sm form-control" style="font-size: inherit" [(ngModel)]="input_search" (keyup.enter)="search()" />
+                        <span class="input-group-btn" style="font-size: inherit">
+                            <button type="button" class="btn btn-sm btn-standard pull-right" (click)="search()"> Go!</button>
+                        </span>
+                    </div>
+                </div>
+                <div class="col-lg-2 col-md-2 col-sm-2 col-xs-2">
+                    <div class="input-group-btn inherit-style">
+                        <button data-toggle="dropdown" class="btn btn-white dropdown-toggle dropdown-menu-right" style="font-size: inherit" type="button">Filter States <span class="caret"></span></button>
+                        <ul class="dropdown-menu option-width">
+                            <li *ngFor="let s of all_states" class="p-t-xs m-t-xs">
+                                <button role="group" class="btn btn-white no-border option-width text-left" style="font-size: inherit" (click)="change(s); search();">
+                                    <i *ngIf="s==='ok' && getVisibility(s)" class="fa fa-check icon-success" style="width: 20px"></i>
+                                    <i *ngIf="s==='failure' && getVisibility(s)" class="fa fa-bolt icon-failure" style="width: 20px"></i>
+                                    <i *ngIf="s==='error' && getVisibility(s)" class="fa fa-bomb icon-error" style="width: 20px"></i>
+                                    <i *ngIf="s==='skipped' && getVisibility(s)" class="fa fa-step-forward icon-neutral" style="width: 20px"></i>
+                                    <i *ngIf="!getVisibility(s)" class="fa fa-square-o icon-grey" style="width: 20px"></i>
+                                    <span class="p-l-xs m-l-xs">{{ s }}</span>
+                                </button>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row pseudo-table">
+        <div class="row pseudo-header">
+            <div class="col-md-5 col-xs-5 text-left">Test</div>
+            <div class="col-md-4 col-xs-4 text-left">Test Suite</div>
+            <div class="col-md-1 col-xs-1 text-left">Duration</div>
+            <div class="col-md-1 col-xs-1 text-left">Result</div>
+            <div class="col-md-1 col-xs-1 text-center">Details</div>
+        </div>
+        <div *ngFor="let t of tests; let i = index;" class="row pseudo-body pseudo-row">
+            <div class="accordion-toggle" data-toggle="collapse">
+                <div class="col-md-5 col-xs-5 text-left break-text">
+                    <Strong>{{ t.test.name }}</Strong>
+                </div>
+                <div class="col-md-4 col-xs-4 text-left break-text">{{ t.test.suite }}</div>
+                <div class="col-md-1 col-xs-1 text-left">{{ t.test.duration }} ms</div>
+                <div class="col-md-1 col-xs-1 text-center">
+                    <test-state [state]="t.test.state"></test-state>
+                </div>
+                <div *ngIf="!t.show_details" class="col-md-1 col-xs-1 text-center">
+                    <button class="no-border" style="background-color: inherit" (click)="showMore(t)"><i class="fa fa-plus  icon-running-negative btn-circle-small"></i></button>
+                </div>
+                <div *ngIf="t.show_details" class="col-md-1 col-xs-1 text-center">
+                    <button class="no-border" style="background-color: inherit" (click)="showLess(t)"><i class="fa fa-minus icon-running-negative btn-circle-small"></i></button>
+                </div>
+            </div>
+            <div class="row out collapse in" *ngIf="t.show_details">
+                <div class="row p-l-md m-l-md p-r-md m-r-md">
+                    <div class="ibox no-border">
+                        <div class="tabs-container" style="padding-top: 20px; margin-top: 20px;">
+                            <div class="tabs-left">
+                                <ul class="nav nav-tabs">
+                                    <li *ngIf="t.test.message || t.test.stack"><a data-toggle="tab" href="#tab-list-message-{{ i }}" style="text-align: left"><i class="fa fa-clock-o"></i> Message</a></li>
+                                    <li class="active"><a data-toggle="tab" href="#tab-list-duration-{{ i }}" style="text-align: left"><i class="fa fa-clock-o"></i> Duration</a></li>
+                                    <li><a data-toggle="tab" href="#tab-list-result-{{ i }}" style="text-align: left"><i class="fa fa-bar-chart"></i> Results</a></li>
+                                    <li *ngFor="let m of t.measurements; let j = index;" class="">
+                                        <a data-toggle="tab" href="#tab-list-{{ j }}-{{ i }}" style="text-align: left">
+                                            <i class="fa fa-hashtag"></i> {{ m.name }}
+                                        </a>
+                                    </li>
+                                </ul>
+                                <div class="tab-content">
+                                    <!--<a data-toggle="modal" class="btn btn-outline btn-info pull-right p-r-sm m-r-sm p-t-sm m-t-sm" href="#config_window"><i class="fa fa-balance-scale"></i><small> Compare</small></a>-->
+                                    <div id="tab-list-message-{{ i }}" class="tab-pane">
+                                        <pre *ngIf="t.test.message">{{ t.test.message }}</pre>
+                                        <pre *ngIf="t.test.stack">{{ t.test.stack }}</pre>
+                                    </div>
+                                    <div id="tab-list-duration-{{ i }}" class="tab-pane active">
+                                        <div class="panel-body">
+                                            <p><strong>Duration per run (ms)</strong></p>
+                                            <div class="chart morris-single-test" id="morris-test-duration-{{ i }}"></div>
+                                        </div>
+                                    </div>
+                                    <div id="tab-list-result-{{ i }}" class="tab-pane">
+                                        <div class="panel-body">
+                                            <p><strong>Test results</strong></p>
+                                            <div class="chart morris-single-test" id="morris-test-result-{{ i }}"></div>
+                                        </div>
+                                    </div>
+                                    <div *ngFor="let m of t.measurements; let j = index;" id="tab-list-{{ j }}-{{ i }}" class="tab-pane">
+                                        <div class="panel-body">
+                                            <p><strong>{{ m.name }}</strong></p>
+                                            <div class="chart morris-single-test" id="morris-test-measurement-{{ j }}-{{ i }}"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!--<compare-config id="config_window" class="modal fade" aria-hidden="true" [job]="job"></compare-config>-->
+        </div>
+    </div>
+</div>

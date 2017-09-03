@@ -1,0 +1,120 @@
+{
+    "version": 1,
+    "jobs": [{
+        "type": "docker",
+        "name": "docker-auth",
+        "docker_file": "src/docker-registry/auth/Dockerfile",
+        "build_only": true,
+        "resources": { "limits": { "cpu": 1, "memory": 2048 } },
+        "security": {
+            "scan_container": true
+        }
+    }, {
+        "type": "docker",
+        "name": "gerrit-trigger",
+        "docker_file": "src/gerrit/trigger/Dockerfile",
+        "build_only": true,
+        "resources": { "limits": { "cpu": 1, "memory": 2048 } },
+        "security": {
+            "scan_container": true
+        }
+    }, {
+        "type": "docker",
+        "name": "gerrit-review",
+        "docker_file": "src/gerrit/review/Dockerfile",
+        "build_only": true,
+        "resources": { "limits": { "cpu": 1, "memory": 2048 } },
+        "security": {
+            "scan_container": true
+        }
+    }, {
+        "type": "docker",
+        "name": "docs",
+        "docker_file": "src/docs/Dockerfile",
+        "build_only": true,
+        "resources": { "limits": { "cpu": 1, "memory": 2048 } },
+        "security": {
+            "scan_container": true
+        }
+    }, {
+        "type": "docker",
+        "name": "docker-nginx",
+        "docker_file": "src/docker-registry/nginx/Dockerfile",
+        "build_only": true,
+        "resources": { "limits": { "cpu": 1, "memory": 2048 } },
+        "security": {
+            "scan_container": true
+        }
+     }, {
+        "type": "docker",
+        "name": "dashboard",
+        "docker_file": "src/dashboard/Dockerfile",
+        "build_only": false,
+        "resources": { "limits": { "cpu": 1, "memory": 2048 } },
+        "commit_after_run": true,
+        "security": {
+            "scan_container": true
+        }
+     }, {
+        "type": "docker",
+        "name": "api",
+        "docker_file": "src/api/Dockerfile",
+        "build_only": false,
+        "resources": { "limits": { "cpu": 1, "memory": 2048 } },
+        "commit_after_run": true,
+        "security": {
+            "scan_container": true
+        }
+     }, {
+        "type": "docker",
+        "name": "job",
+        "docker_file": "src/job/Dockerfile",
+        "build_only": true,
+        "resources": { "limits": { "cpu": 1, "memory": 2048 } }
+     }, {
+        "type": "docker",
+        "name": "kube-scheduler",
+        "docker_file": "src/kube-scheduler/Dockerfile",
+        "build_only": true,
+        "resources": { "limits": { "cpu": 1, "memory": 2048 } },
+        "security": {
+            "scan_container": true
+        }
+     }, {
+        "type": "docker",
+        "name": "postgres",
+        "docker_file": "src/postgres/Dockerfile",
+        "build_only": true,
+        "resources": { "limits": { "cpu": 1, "memory": 2048 } },
+        "security": {
+            "scan_container": false
+        }
+     }, {
+        "type": "docker",
+        "name": "api-server",
+        "docker_file": "src/api-server/Dockerfile",
+        "build_only": true,
+        "resources": { "limits": { "cpu": 1, "memory": 2048 } },
+        "security": {
+            "scan_container": true
+        }
+     }, {
+        "type": "docker",
+        "name": "clair-analyzer",
+        "docker_file": "src/clair/analyzer/Dockerfile",
+        "build_only": true,
+        "resources": { "limits": { "cpu": 1, "memory": 2048 } },
+        "security": {
+            "scan_container": false
+        }
+     }, {
+        "type": "docker",
+        "name": "clair-updater",
+        "docker_file": "src/clair/updater/Dockerfile",
+        "build_only": true,
+        "resources": { "limits": { "cpu": 1, "memory": 2048 } },
+        "security": {
+            "scan_container": false
+        }
+    }]
+}

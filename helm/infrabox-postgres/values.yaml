@@ -1,0 +1,3 @@
+docker_registry: <REQUIRED>
+image: infrabox/postgres
+tag: <REQUIRED>

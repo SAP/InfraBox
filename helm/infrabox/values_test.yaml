@@ -1,0 +1,69 @@
+general:
+    docker_registry: us.gcr.io/test-kubernetes-167921
+
+scheduler:
+    enabled: true
+    image: infrabox/scheduler
+    node_selector:
+        cloud.google.com/gke-nodepool: default-pool
+    clair:
+        enabled: false
+
+storage:
+    gcs:
+        enabled: true
+        project_id: test-kubernetes-167921
+        container_output_bucket: test-infrabox-container-output
+        project_upload_bucket: test-infrabox-project-upload
+        container_content_cache_bucket: test-infrabox-container-content-cache
+        docker_registry_bucket: test-infrabox-docker-registry
+    s3:
+        enabled: false
+        endpoint: infrabox-minio-minio-svc.infrabox-system
+        region: us-east-1
+        port: 9000
+        secure: false
+        container_output_bucket: test-infrabox-container-output
+        project_upload_bucket: test-infrabox-project-upload
+        container_content_cache_bucket: test-infrabox-container-content-cache
+        docker_registry_bucket: test-infrabox-docker-registry
+    cloudsql:
+        enabled: false
+    postgres:
+        enabled: true
+        host: infrabox-postgres.infrabox-system
+        port: 5432
+        db: test_db
+
+docker_registry:
+    enabled: true
+    node_selector:
+        cloud.google.com/gke-nodepool: default-pool
+    registry: infrabox-docker-registry-nginx.infrabox-system:8080
+    registry_http_host: http://infrabox-docker-registry-nginx.infrabox-system:8080/
+    registry_http_secret: c5f6a78d-f6c7-4c64-956b-72abc3a86edb
+    auth_image: infrabox/docker-registry/auth
+    nginx_image: infrabox/docker-registry/nginx
+
+dashboard:
+    enabled: false
+
+api:
+    enabled: true
+    node_selector:
+        cloud.google.com/gke-nodepool: default-pool
+    image: infrabox/api
+    url: http://localhost:8080
+    log:
+        level: warn
+    basic_auth:
+        enabled: false
+
+clair:
+    enabled: false
+
+docs:
+    enabled: false
+
+github:
+    enabled: false

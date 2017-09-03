@@ -1,0 +1,32 @@
+<div class="table-responsive">
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th class="table-alignleft">Job Name</th>
+                <th class="table-alignleft">Start Time</th>
+                <th class="table-alignleft">Duration</th>
+                <th class="table-alignleft">Machine</th>
+                <th class="table-aligncenter">State</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr *ngFor="let j of jobs">
+                <td class="table-alignleft hide-link-color">
+                    <a [routerLink]="['/dashboard/project', j.project_id, 'build', j.build.id, 'job', j.id]">{{ j.name }}</a>
+                </td>
+                <td class="table-alignleft">
+                    <start-date [start]="j.start_date"></start-date>
+                </td>
+                <td class="table-alignleft">
+                    <duration [start]="j.start_date" [end]="j.end_date"></duration>
+                </td>
+                <td class="table-alignleft">
+                    <div>{{ j.cpu }} CPU / {{ j.memory }} GiB </div>
+                </td>
+                <td class="table-aligncenter">
+                    <job-state [state]="j.getState()"></job-state>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>

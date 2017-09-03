@@ -1,0 +1,91 @@
+{{ if .Values.docker_registry.enabled }}
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+    name: infrabox-docker-registry
+    namespace: infrabox-system
+    labels:
+        app: infrabox
+        infrabox.net/component: docker-registry
+spec:
+    replicas: 1
+    template:
+        metadata:
+            labels:
+                app: infrabox
+                infrabox.net/component: docker-registry
+        spec:
+            {{- if .Values.docker_registry.node_selector }}
+            nodeSelector:
+{{ toYaml .Values.docker_registry.node_selector | indent 16 }}
+            {{- end }}
+            containers:
+            -
+                name: registry
+                image: registry:2
+                imagePullPolicy: Always
+                env:
+                {{ if .Values.storage.s3.enabled }}
+                -
+                    name: REGISTRY_STORAGE
+                    value: s3
+                -
+                    name: REGISTRY_STORAGE_S3_ENCRYPT
+                    value: "false"
+                -
+                    name: REGISTRY_STORAGE_S3_ROOTDIRECTORY
+                    value: "/"
+                -
+                    name: REGISTRY_STORAGE_S3_CHUNKSIZE
+                    value: "5242880"
+                -
+                    name: REGISTRY_STORAGE_S3_BUCKET
+                    value: {{ default "infrabox-docker-registry" .Values.storage.s3.docker_registry_bucket | quote }}
+                -
+                    name: REGISTRY_STORAGE_S3_REGION
+                    value: {{ .Values.storage.s3.region }}
+                -
+                    name: REGISTRY_STORAGE_S3_REGIONENDPOINT
+                    value: http://{{ .Values.storage.s3.endpoint }}:{{ .Values.storage.s3.port }}
+                -
+                    name: REGISTRY_STORAGE_S3_SECURE
+                    value: {{ .Values.storage.s3.secure | quote }}
+                -
+                    name: REGISTRY_STORAGE_S3_ACCESSKEY
+                    valueFrom:
+                        secretKeyRef:
+                            name: infrabox-s3-credentials
+                            key: accessKey
+                -
+                    name: REGISTRY_STORAGE_S3_SECRETKEY
+                    valueFrom:
+                        secretKeyRef:
+                            name: infrabox-s3-credentials
+                            key: secretKey
+                {{ end }}
+                {{ if .Values.storage.gcs.enabled }}
+                -
+                    name: REGISTRY_STORAGE
+                    value: gcs
+                -
+                    name: REGISTRY_STORAGE_GCS_BUCKET
+                    value: {{ default "infrabox-docker-registry" .Values.storage.gcs.docker_registry_bucket }}
+                -
+                    name: REGISTRY_STORAGE_GCS_KEYFILE
+                    value: /etc/infrabox/gcs/gcs_service_account.json
+                {{ end }}
+                {{ if .Values.storage.gcs.enabled }}
+                volumeMounts:
+                -
+                    name: gcs-service-account
+                    mountPath: /etc/infrabox/gcs
+                    readOnly: true
+                {{ end }}
+            {{ if .Values.storage.gcs.enabled }}
+            volumes:
+            -
+                name: gcs-service-account
+                secret:
+                    secretName: infrabox-gcs
+            {{ end }}
+{{ end }}

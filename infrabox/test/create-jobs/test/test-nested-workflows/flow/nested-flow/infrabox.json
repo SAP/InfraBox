@@ -1,0 +1,21 @@
+{
+    "version": 1,
+    "jobs": [{
+        "name": "nested-1",
+        "type": "docker",
+        "docker_file": "Dockerfile_nested",
+        "resources": { "limits": { "cpu": 1, "memory": 1024 } }
+    }, {
+        "name": "nested-2",
+        "type": "docker",
+        "docker_file": "Dockerfile_nested",
+        "resources": { "limits": { "cpu": 1, "memory": 1024 } },
+        "depends_on": ["nested-1"]
+    }, {
+        "name": "nested-3",
+        "type": "docker",
+        "docker_file": "Dockerfile_nested",
+        "resources": { "limits": { "cpu": 1, "memory": 1024 } },
+        "depends_on": ["nested-1"]
+    }]
+}

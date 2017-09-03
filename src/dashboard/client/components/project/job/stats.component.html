@@ -1,0 +1,12 @@
+<div>
+    <div *ngIf="data && data.length>0" id="chart-cpu" class="chart border-size-sm border-left-right border-top-bottom"></div>
+    <div *ngIf="data.length<=0" class="row p-md m-md">
+        <div class="col-lg-4 col-md-4 col-sm-4 col-xs-12 col-xxs-12">
+            <i class="fa fa-spinner fa-5x"></i>
+        </div>
+        <div class="col-lg-8 col-md-8 col-sm-8 col-xs-12 col-xxs-12text-right">
+            <h2 class="font-bold"> Currently no stats to show. </h2>
+            <span> Please wait until job has been finished.</span>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,158 @@
+<div class="wrapper wrapper-content" *ngIf="project">
+    <div class="clearfix no-borders no-padding">
+        <div class="col-lg-12">
+            <div class="widget white-bg">
+                <div class="row">
+                    <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12 col-xxs-12">
+                        <ol class="breadcrumb breadcrumb-h2">
+                            <li class="active">
+                                <i *ngIf="project.type == 'github'" class="fa fa-github" aria-hidden="true"></i>
+                                <i *ngIf="project.type == 'gerrit'" class="fa fa-git" aria-hidden="true"></i>
+                                <i *ngIf="project.type == 'upload'" class="fa fa-upload" aria-hidden="true"></i>
+                                <strong>{{ project.name }}</strong>
+                            </li>
+                        </ol>
+                    </div>
+                    <div *ngIf="loginService.loggedIn" class="col-lg-6 col-md-6 col-sm-6 col-xs-12 col-xxs-12">
+                        <button class="btn btn-default pull-right m-r-md" data-toggle="tooltip" title="Check or edit project settings" [routerLink]="['/dashboard/project', project.id, 'settings']"><i class="fa fa-cogs"></i> <span class="hidden-xs">Edit Project</span></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-md-push-9">
+            <div class="widget white-bg text-center">
+                <div class="m-b-md">
+                    <div class="state-widget bb-bg-running">
+                        <i class="fa fa-dot-circle-o fa-4x"></i>
+                        <h1 class="m-xs"><span class="font-bold">{{ jobs_running }} </span> Jobs</h1>
+                    </div>
+                </div>
+                <div class="row p-w-sm">
+                    <div class="m-t-sm m-b-sm">
+                        <h3 *ngIf="latestBuild" class="text-uppercase font-bold">
+                            Latest Run ({{latestBuild.number}}.{{latestBuild.restart_counter}})
+                        </h3>
+                    </div>
+                </div>
+                <div class="row p-w-sm">
+                    <div *ngFor="let jb of badges" class="col-xl-12 text-left no-padding">
+                        <dl>
+                            <dt><span><i class="fa fa-shield"></i>
+                                <Strong> {{ jb.job_name }}</Strong></span></dt>
+                            <dd *ngFor="let b of jb.badges" class="m-t-xs m-l-sm">
+                                <badge [status]="b.status" [color]="b.color" [subject]="b.subject" [job_name]="jb.job_name" [project_id]="project_id"></badge>
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-9 col-md-pull-3">
+            <div class="widget white-bg p-xxs text-left">
+                <div class="row m-l-sm m-r-sm p-h-xs">
+                    <div class="col-lg-11 col-md-11 col-sm-11 col-xs-12 col-xxs-12">
+                        <div class="input-group">
+                            <input type="text" placeholder="Search" class="input-sm form-control" [(ngModel)]="input_search" (keyup.enter)="search()">
+                            <span class="input-group-btn">
+                                            <button type="button" class="btn btn-sm btn-standard" (click)="search()"> Go!</button>
+                                        </span>
+                        </div>
+                    </div>
+                    <div class="col-lg-1 col-md-1 col-sm-1 col-xs-12 col-xxs-12">
+                        <div class="input-group-btn inherit-style">
+                            <button data-toggle="dropdown" class="btn btn-white btn-block dropdown-toggle dropdown-menu-right pull-right" style="font-size: inherit" type="button">Filter <span class="caret"></span></button>
+                            <ul class="dropdown-menu option-width">
+                                <li *ngFor="let s of all_states" class="p-t-xs m-t-xs">
+                                    <button role="group" class="btn btn-white no-border option-width text-left" style="font-size: inherit" (click)="change(s); search();">
+                                                    <i *ngIf="s==='finished' && getVisibility(s)" class="fa fa-check icon-success" style="width: 20px"></i>
+                                                    <i *ngIf="s==='failure' && getVisibility(s)" class="fa fa-bolt icon-failure" style="width: 20px"></i>
+                                                    <i *ngIf="s==='error' && getVisibility(s)" class="fa fa-bomb icon-error" style="width: 20px"></i>
+                                                    <i *ngIf="s==='running' && getVisibility(s)" class="fa fa-dot-circle-o icon-running" style="width: 20px"></i>
+                                                    <i *ngIf="s==='scheduled' && getVisibility(s)" class="fa fa-th-list icon-black" style="width: 20px"></i>
+                                                    <i *ngIf="s==='queued' && getVisibility(s)" class="fa fa-pause-circle-o icon-black" style="width: 20px"></i>
+                                                    <i *ngIf="s==='killed' && getVisibility(s)" class="fa fa-ban icon-black" style="width: 20px"></i>
+                                                    <i *ngIf="s==='skipped' && getVisibility(s)" class="fa fa-share icon-grey" style="width: 20px"></i>
+                                                    <i *ngIf="!getVisibility(s)" class="fa fa-square-o icon-grey" style="width: 20px"></i>
+                                                    <span class="p-l-xs m-l-xs">{{ s }}</span>
+                                                </button>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="row p-w-lg">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th class="table-alignleft" width="5%">
+                                        <div class="m-l-sm">
+                                            Build
+                                        </div>
+                                    </th>
+                                    <th *ngIf="project.type == 'github' || project.type == 'gerrit'" class="table-alignleft" width="10%">Author</th>
+                                    <th *ngIf="project.type == 'github' || project.type == 'gerrit'" class="table-alignleft" width="35%">Message</th>
+                                    <th *ngIf="project.type == 'github' || project.type == 'gerrit'" class="table-alignleft" width="10%">Branch</th>
+                                    <th class="table-alignleft" width="13%">Start Time</th>
+                                    <th class="table-alignleft" width="13%">Duration</th>
+                                    <th class="table-aligncenter" width="7%">State</th>
+                                    <th *ngIf="project.type == 'github' || project.type == 'gerrit'" class="table-aligncenter" width="7%">Type</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr *ngFor="let b of builds">
+                                    <td class="table-alignleft hide-link-color">
+                                        <div class="m-l-sm">
+                                            <a [routerLink]="['/dashboard/project', project.id, 'build', b.id]">{{ b.number }}.{{ b.restart_counter }}</a>
+                                        </div>
+                                    </td>
+                                    <td *ngIf="project.type == 'github' || project.type == 'gerrit'" class="table-alignleft hide-link-color">
+                                        <a *ngIf="b.commit" [routerLink]="['/dashboard/project', project.id, 'build', b.id]">{{ b.commit.author_name }}</a>
+                                    </td>
+                                    <td *ngIf="project.type == 'github' || project.type == 'gerrit'" class="table-alignleft hide-link-color">
+                                        <a *ngIf="b.commit" [routerLink]="['/dashboard/project', project.id, 'build', b.id]">{{ b.commit.message.split('\n')[0] }}</a>
+                                    </td>
+                                    <td *ngIf="project.type == 'github' || project.type == 'gerrit'" class="table-alignleft hide-link-color">
+                                        <a *ngIf="b.commit" [routerLink]="['/dashboard/project', project.id, 'build', b.id]">{{ b.commit.branch }}</a>
+                                    </td>
+                                    <td class="table-alignleft">
+                                        <start-date [start]="b.start_date"></start-date>
+                                    </td>
+                                    <td class="table-alignleft">
+                                        <duration [start]="b.start_date" [end]="b.end_date"></duration>
+                                    </td>
+                                    <td class="table-aligncenter">
+                                        <job-state [state]="b.getState()"></job-state>
+                                    </td>
+                                    <td *ngIf="project.type == 'github' || project.type == 'gerrit'" class="table-aligncenter hide-link-color">
+                                        <div *ngIf="b.commit && b.commit.tag">
+                                            <a target="_blank" href="{{ b.commit.url }}">
+                                                <span data-toggle="tooltip" title="{{ b.commit.tag }}" class="hide-link-color">
+                                                    <svg title="asdasd" width="20" height="20" class="octicon" aria-hidden="true"><use xlink:href="/dist/fonts/sprite.octicons.svg#tag" /></svg>
+                                                </span>
+                                            </a>
+                                        </div>
+                                        <div *ngIf="b.commit && !b.commit.tag && !b.pull_request">
+                                            <a target="_blank" href="{{ b.commit.url }}">
+                                                <span data-toggle="tooltip" title="Commit" class="hide-link-color">
+                                                    <svg width="20" height="20" class="octicon" aria-hidden="true"><use xlink:href="/dist/fonts/sprite.octicons.svg#git-commit" /></svg>
+                                                </span>
+                                            </a>
+                                        </div>
+                                        <div *ngIf="b.pull_request">
+                                            <a target="_blank" href="{{ b.pull_request.url }}">
+                                                <span data-toggle="tooltip" title="Pull Request" class="hide-link-color">
+                                                    <svg width="20" height="20" class="octicon" aria-hidden="true"><use xlink:href="/dist/fonts/sprite.octicons.svg#git-pull-request" /></svg>
+                                                </span>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,3 @@
+docker_registry: <YOUR_HOST>:5000
+image: infrabox/postgres
+tag: latest

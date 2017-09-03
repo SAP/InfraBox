@@ -1,0 +1,24 @@
+<div class="m-l-sm p-l-sm m-t-xs m-r-sm p-r-sm">
+    <select class="m-b pull-right">
+        <option>Comparison 1</option>
+        <option>Comparison 2</option>
+        <option>Comparison 3</option>
+        <option>Comparison 4</option>
+    </select>
+
+    <div class="ibox">
+        <div class="ibox-title">
+            <div class="input-group pull-left">
+                <input *ngIf="!isEditMode" disabled placeholder="Comparison #1" type="text" />
+                <input *ngIf="isEditMode" placeholder="Comparison #1" type="text" />
+                <button (click)="changeBtnIcon()" type="button" class="btn btn-outline btn-circle" aria-label="Edit Name" data-toggle="tooltip" data-placement="bottom" title="Edit Name">
+                    <span *ngIf="!isEditMode" class="fa fa-pencil icon-black" aria-hidden="true"></span>
+                    <span *ngIf="isEditMode" class="fa fa-check icon-blue" aria-hidden="true"></span>
+                </button>
+            </div>
+        </div>
+        <div class="ibox-content">
+            <div id="chart-duration" class="chart"></div>
+        </div>
+    </div>
+</div>

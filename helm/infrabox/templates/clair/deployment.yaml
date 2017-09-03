@@ -1,0 +1,63 @@
+{{ if .Values.clair.enabled }}
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+    name: infrabox-clair-updater
+    namespace: infrabox-system
+    labels:
+        app: infrabox
+        infrabox.net/component: clair-updater
+spec:
+    replicas: 1
+    template:
+        metadata:
+            labels:
+                app: infrabox
+                infrabox.net/component: clair-updater
+        spec:
+            {{- if .Values.clair.node_selector }}
+            nodeSelector:
+{{ toYaml .Values.clair.node_selector | indent 16 }}
+            {{- end }}
+            containers:
+            -
+                image: gcr.io/cloudsql-docker/gce-proxy:1.09
+                name: cloudsql-proxy
+                command: ["/cloud_sql_proxy", "--dir=/cloudsql",
+                          "-instances={{ .Values.storage.cloudsql.instance_connection_name }}=tcp:5432",
+                          "-credential_file=/secrets/cloudsql/credentials.json"]
+                volumeMounts:
+                - name: cloudsql-instance-credentials
+                  mountPath: /secrets/cloudsql
+                  readOnly: true
+                - name: ssl-certs
+                  mountPath: /etc/ssl/certs
+                - name: cloudsql
+                  mountPath: /cloudsql
+            -
+                name: clair
+                image: {{ .Values.general.docker_registry }}/{{ default "infrabox/clair/updater" .Values.clair.image }}:{{ .Values.clair.tag }}
+                imagePullPolicy: Always
+                env:
+                -
+                    name: INFRABOX_DATABASE_USER
+                    valueFrom:
+                        secretKeyRef:
+                            name: infrabox-cloudsql-db-credentials
+                            key: username
+                -
+                    name: INFRABOX_DATABASE_PASSWORD
+                    valueFrom:
+                        secretKeyRef:
+                            name: infrabox-cloudsql-db-credentials
+                            key: password
+            volumes:
+              - name: cloudsql-instance-credentials
+                secret:
+                  secretName: infrabox-cloudsql-instance-credentials
+              - name: ssl-certs
+                hostPath:
+                  path: /etc/ssl/certs
+              - name: cloudsql
+                emptyDir:
+{{ end }}

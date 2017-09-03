@@ -1,0 +1,31 @@
+general:
+    docker_registry: "192.168.157.129:5000"
+
+storage:
+    s3:
+        region: "us-east-1"
+        endpoint: "infrabox-minio.infrabox-system"
+        port: 9000
+        secure: false
+    postgres:
+        host: "infrabox-postgres.infrabox-system"
+        db: test_db
+
+docker_registry:
+    url: 192.168.99.100:30202
+    node_port: 30202
+
+docs:
+    url: 192.168.99.100:30203
+    node_port: 30203
+
+dashboard:
+    url: https://testbox-dev.ngrok.io
+    node_port: 30201
+
+api:
+    url: https://598e0ae2.ngrok.io
+    node_port: 30200
+
+github:
+    enable: false

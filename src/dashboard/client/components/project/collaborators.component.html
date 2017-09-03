@@ -1,0 +1,40 @@
+<div class="ibox">
+    <div class="ibox-title bg-muted">
+        <i class="fa fa-users"></i><span><strong> Add collaborators</strong></span>
+    </div>
+    <div class="ibox-content">
+        <div class="row m-md">
+            <div class="col-lg-4 col-md-4 col-sm-6 col-xs-12">
+                <form #f="ngForm" (ngSubmit)="onSubmit(f.value)">
+                    <div class="row">
+                        <div class="col-lg-9 col-md-9 col-sm-9 col-xs-9">
+                            <input type="text" name="username" ngModel placeholder="Username" class="input-text">
+                        </div>
+                        <div class="col-lg-3 col-md-3 col-sm-3 col-xs-3">
+                            <button class="btn btn-info btn-block btn-sm text-center" type="submit">
+                                <i class="fa fa-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="row m-md">
+            <div *ngFor="let c of collaborators" class="col-lg-2 col-md-2 col-sm-3 col-xs-4">
+                <div>
+                    <span>
+                        <img *ngIf="c.avatar_url" alt="image" class="img-circle" style="width: 40px;" src="{{ c.avatar_url }}"/>
+                        <img *ngIf="!c.avatar_url" alt="image" class="img-circle" style="width: 40px;" src="../../img/dashboard/logo_image_only.png"/>
+                    </span>
+                </div>
+                <div>{{ c.username }}</div>
+                <div *ngIf="c.name">({{ c.name }})</div>
+                <button class="btn btn-block btn-outline btn-xs">
+                    <i class="fa fa-trash"></i>
+                    <span (click)="remove(c);"> Remove Collaborator</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

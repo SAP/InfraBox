@@ -1,0 +1,41 @@
+version: "2"
+
+services:
+    postgres:
+        build:
+            context: ../../..
+            dockerfile: src/postgres/Dockerfile
+
+    api-server:
+        build:
+            context: ../../..
+            dockerfile: src/api-server/Dockerfile
+        environment:
+            - INFRABOX_DATABASE_USER=postgres
+            - INFRABOX_DATABASE_PASSWORD=postgres
+            - INFRABOX_DATABASE_HOST=postgres
+            - INFRABOX_DATABASE_PORT=5432
+            - INFRABOX_DATABASE_DB=test_db
+            - INFRABOX_DASHBOARD_URL=something
+            - INFRABOX_JOB_ID=5df0e731-6040-46a9-8540-f1bb7935d2bd
+            - INFRABOX_STORAGE_GCS_ENABLE=true
+            - INFRABOX_STORAGE_GCS_CONTAINER_CONTENT_CACHE_BUCKET=test-cache-bucket
+            - INFRABOX_STORAGE_GCS_CONTAINER_OUTPUT_BUCKET=test-output-bucket
+            - INFRABOX_STORAGE_GCS_PROJECT_UPLOAD_BUCKET=test-project-upload-bucket
+            - INFRABOX_STORAGE_S3_ENABLE=false
+            - INFRABOX_GITHUB_ENABLE=false
+        links:
+            - postgres
+        command: /wait-for-postgres.sh postgres /entrypoint.sh
+
+    test:
+        build:
+            context: ../../..
+            dockerfile: infrabox/test/create-jobs/Dockerfile
+        command: /project/src/utils/wait-for-webserver.sh api-server:5000 /project/infrabox/test/create-jobs/entrypoint.sh
+        environment:
+            - INFRABOX_API_SERVER=api-server:5000
+        links:
+            - postgres
+            - api-server
+

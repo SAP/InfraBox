@@ -1,0 +1,16 @@
+#!/bin/bash
+export INFRABOX_STORAGE_GCS_ENABLED=false
+export INFRABOX_STORAGE_GCS_PROJECT_ID=infrabox-123123
+export INFRABOX_STORAGE_GCS_PROJECT_UPLOAD_BUCKET=infrabox-project-upload
+export INFRABOX_STORAGE_GCS_CONTAINER_OUTPUT_BUCKET=infrabox-container-output
+export INFRABOX_STORAGE_GCS_CONTAINER_CONTENT_CACHE_BUCKET=infrabox-container-content-cache
+export INFRABOX_API_PORT=4000
+export INFRABOX_API_URL=http://localhost:4000
+export INFRABOX_API_LOG_LEVEL=debug
+export INFRABOX_DOCKER_REGISTRY_URL=http://localhost:5000
+export INFRABOX_GITHUB_CLIENT_ID=client-id
+export INFRABOX_GITHUB_CLIENT_SECRET=client-secret
+export INFRABOX_GITHUB_WEBHOOK_SECRET=webhook-secret
+export INFRABOX_VERSION=local
+export INFRABOX_NAME=/infrabox/dashboard
+./node_modules/.bin/gulp

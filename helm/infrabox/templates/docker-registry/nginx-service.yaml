@@ -1,0 +1,23 @@
+{{ if .Values.docker_registry.enabled }}
+kind: Service
+apiVersion: v1
+metadata:
+    name: infrabox-docker-registry-nginx
+    namespace: infrabox-system
+    labels:
+        app: infrabox
+        infrabox.net/component: docker-registry-nginx
+spec:
+    type: NodePort
+    selector:
+        app: infrabox
+        infrabox.net/component: docker-registry-nginx
+    ports:
+    -
+        protocol: TCP
+        port: 8080
+        targetPort: 8080
+    {{ if .Values.docker_registry.node_port }}
+        nodePort: {{ .Values.docker_registry.node_port }}
+    {{ end }}
+{{ end }}

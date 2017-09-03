@@ -1,0 +1,13 @@
+{
+    "version": 1,
+    "jobs": [{
+        "type": "git",
+        "name": "external",
+        "clone_url": "/project/infrabox/test/create-jobs/test/test-one-git-job-env/external_git/",
+        "commit": "master",
+        "environment": {
+            "ENV_VAR": "OUTER_VALUE",
+            "ANOTHER": "VALUE"
+        }
+    }]
+}

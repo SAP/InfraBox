@@ -1,0 +1,18 @@
+{
+    "version": 1,
+    "jobs": [{
+        "type": "docker",
+        "name": "test-1",
+        "docker_file": "Dockerfile",
+        "resources": { "limits": { "cpu": 1, "memory": 1024 } }
+    }, {
+        "type": "docker",
+        "name": "test-2",
+        "docker_file": "Dockerfile2",
+        "resources": { "limits": { "cpu": 1, "memory": 1024 } }
+    }, {
+        "type": "wait",
+        "name": "wait",
+        "depends_on": ["test-1", "test-2"]
+    }]
+}

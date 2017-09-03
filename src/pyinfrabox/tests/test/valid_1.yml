@@ -1,0 +1,17 @@
+version: "2"
+
+services:
+    postgres:
+        image: postgres
+
+    test:
+        build:
+            context: ../../../../
+            dockerfile: src/server/test/test/Dockerfile
+        command: /project/src/utils/wait-for-postgres.sh -- /project/src/server/test/test/start_test.sh
+        environment:
+            - NODE_ENV=test
+            - INFRABOX_JOB_ID=${INFRABOX_JOB_ID}
+        links:
+            - postgres
+

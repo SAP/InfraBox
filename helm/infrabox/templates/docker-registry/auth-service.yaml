@@ -1,0 +1,19 @@
+{{ if .Values.docker_registry.enabled }}
+kind: Service
+apiVersion: v1
+metadata:
+    name: infrabox-docker-registry-auth
+    namespace: infrabox-system
+    labels:
+        app: infrabox
+        infrabox.net/component: docker-registry-auth
+spec:
+    selector:
+        app: infrabox
+        infrabox.net/component: docker-registry-auth
+    ports:
+    -
+        protocol: TCP
+        port: 8080
+        targetPort: 8080
+{{ end }}

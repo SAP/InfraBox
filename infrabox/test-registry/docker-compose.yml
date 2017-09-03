@@ -1,0 +1,47 @@
+version: "2"
+
+services:
+    docker_registry:
+        build:
+            context: ../..
+            dockerfile: infrabox/test-registry/mock-registry/Dockerfile
+    postgres:
+        build:
+            context: ../..
+            dockerfile: src/postgres/Dockerfile
+    docker_auth:
+        build:
+            context: ../..
+            dockerfile: src/docker-registry/auth/Dockerfile
+        environment:
+            - INFRABOX_DATABASE_USER=postgres
+            - INFRABOX_DATABASE_PASSWORD=postgres
+            - INFRABOX_DATABASE_HOST=postgres
+            - INFRABOX_DATABASE_PORT=5432
+            - INFRABOX_DATABASE_DB=test_db
+        command: /wait-for-postgres.sh postgres flask run --host=0.0.0.0 --port 8080
+    docker_nginx:
+        build:
+            context: ../..
+            dockerfile: src/docker-registry/nginx/Dockerfile
+        links:
+            - docker_registry:infrabox-docker-registry
+            - docker_auth:infrabox-docker-registry-auth
+        environment:
+            - INFRABOX_DOCKER_REGISTRY_ADMIN_PASSWORD=admin_pw
+            - INFRABOX_DOCKER_REGISTRY_ADMIN_USERNAME=admin_user
+    test:
+        build:
+            context: ../..
+            dockerfile: infrabox/test-registry/Dockerfile
+        command: /wait-for-webserver.sh docker-auth:8080 /entrypoint.sh
+        links:
+            - docker_nginx:docker-registry
+            - docker_auth:docker-auth
+        environment:
+            - INFRABOX_DATABASE_USER=postgres
+            - INFRABOX_DATABASE_PASSWORD=postgres
+            - INFRABOX_DATABASE_HOST=postgres
+            - INFRABOX_DATABASE_PORT=5432
+            - INFRABOX_DATABASE_DB=test_db
+

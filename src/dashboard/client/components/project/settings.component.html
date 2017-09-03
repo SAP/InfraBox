@@ -1,0 +1,118 @@
+<div class="wrapper wrapper-content" *ngIf="project">
+    <div class="clearfix no-borders no-padding">
+        <div class="col-lg-12">
+            <div class="widget white-bg">
+                <div class="row">
+                    <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12 col-xxs-12">
+                        <ol class="breadcrumb breadcrumb-h2">
+                            <li class="active">
+                                <i *ngIf="project.type == 'github'" class="fa fa-github" aria-hidden="true"></i>
+                                <i *ngIf="project.type == 'upload'" class="fa fa-upload" aria-hidden="true"></i>
+                                <strong>{{ project.name }}</strong>
+                            </li>
+                        </ol>
+                    </div>
+                    <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12 col-xxs-12">
+                        <button class="btn btn-default pull-right" data-toggle="tooltip" title="Return to project page" [routerLink]="['/dashboard/project', project.id]"><i class="fa fa-reply"></i> Return To Project</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-12">
+            <div class="widget white-bg p-xxs text-left">
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="panel blank-panel">
+                            <div class="panel-heading">
+                                <div class="panel-options">
+                                    <ul class="nav nav-tabs">
+                                        <li class="active"><a href="#tab-collaborators" data-toggle="tab">Collaborators</a></li>
+                                        <li class=""><a href="#tab-env" data-toggle="tab">Secrets</a></li>
+                                        <li class=""><a href="#tab-more" data-toggle="tab">More</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <div class="panel-body">
+                                <div class="tab-content">
+                                    <div class="tab-pane active" id="tab-collaborators">
+                                        <div>
+                                            <project-collaborators [project]="project"></project-collaborators>
+                                        </div>
+                                    </div>
+                                    <div class="tab-pane" id="tab-env">
+                                        <div>
+                                            <secret-table [project_id]="project.id"></secret-table>
+                                        </div>
+                                    </div>
+                                    <div class="tab-pane" id="tab-more">
+                                        <div>
+                                            <div class="ibox">
+                                                <div class="ibox-title bg-muted">
+                                                    <i class="fa fa-id-card-o"></i><span><strong> Project ID</strong></span>
+                                                </div>
+                                                <div class="ibox-content">
+                                                    <div class="row m-md">
+                                                        <input type="text" class="input-text" value="{{ project.id }}" disabled/>
+                                                    </div>
+                                                </div>
+                                                <div class="ibox-title bg-muted">
+                                                    <i class="fa fa-heartbeat"></i><span><strong> Get your status badges for integrations</strong></span>
+                                                </div>
+                                                <div class="ibox-content">
+                                                    <div class="row m-md">
+                                                        <div>
+                                                            <img src="{{ host }}/v1/project/{{ project.id }}/build/state.svg" />
+                                                            <pre>![Build Status]({{ host }}/v1/project/{{ project.id }}/build/state.svg)</pre>
+                                                        </div>
+                                                        <div class="m-t-md">
+                                                            <img src="{{ host }}/v1/project/{{ project.id }}/build/tests.svg" />
+                                                            <pre>![Test Status]({{ host }}/v1/project/{{ project.id }}/build/tests.svg)</pre>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="ibox-title bg-muted">
+                                                    <i class="fa fa-trash"></i><span><strong> Remove project from InfraBox</strong></span>
+                                                </div>
+                                                <div class="ibox-content">
+                                                    <div class="row m-md">
+                                                        <span>Remove this project, all jobs and test data permanently from InfraBox:  </span>
+                                                        <a data-toggle="modal" href="#delete-insurance" type="button" class="btn btn-sm btn-info"><i class="fa fa-trash"></i><span> Remove Project from InfraBox</span></a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="delete-insurance" class="modal fade" aria-hidden="true">
+    <div class="modal-dialog" style="width:50%">
+        <div class="modal-content">
+            <div class="modal-body">
+                <div class="text-center font-bold m-xs p-xs">
+                    <h3>Are you sure?</h3>
+                    <p>All information about your project, its builds, dependencies and results will be permanently removed.</p>
+                </div>
+                <div class="row">
+                    <div class="col-lg-6">
+                        <button class="btn btn-sm btn-block btn-info" (click)="deleteProject()">
+                            Yes, delete.
+                        </button>
+                    </div>
+                    <div class="col-lg-6">
+                        <button class="btn btn-sm btn-block btn-info" data-dismiss="modal">
+                            No, please cancel.
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

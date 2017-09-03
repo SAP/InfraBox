@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: infrabox-dockerd-config 
+  namespace: infrabox-worker
+data:
+{{ (.Files.Glob "config/docker/*").AsConfig | indent 2 }}

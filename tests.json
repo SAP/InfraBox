@@ -1,0 +1,41 @@
+{
+    "version": 1,
+    "jobs": [{
+        "type": "docker-compose",
+        "name": "test-server",
+        "docker_compose_file": "src/dashboard/server/test/test/docker-compose.yml",
+        "resources": { "limits": { "cpu": 1, "memory": 10000 } }
+    }, {
+        "type": "docker-compose",
+        "name": "api",
+        "docker_compose_file": "infrabox/test/api/docker-compose.yml",
+        "resources": { "limits": { "cpu": 1, "memory": 2048 } }
+    }, {
+        "type": "docker-compose",
+        "name": "api-server",
+        "docker_compose_file": "src/api-server/test/docker-compose.yml",
+        "resources": { "limits": { "cpu": 1, "memory": 2048 } }
+    }, {
+        "type": "docker-compose",
+        "name": "registry",
+        "docker_compose_file": "infrabox/test-registry/docker-compose.yml",
+        "resources": { "limits": { "cpu": 1, "memory": 2048 } }
+    }, {
+        "type": "docker",
+        "name": "pyinfrabox",
+        "docker_file": "infrabox/test-pyinfrabox/Dockerfile",
+        "build_only": false,
+        "resources": { "limits": { "cpu": 1, "memory": 2048 } }
+    }, {
+        "type": "docker-compose",
+        "name": "create-jobs",
+        "docker_compose_file": "infrabox/test/create-jobs/docker-compose.yml",
+        "resources": { "limits": { "cpu": 1, "memory": 2048 } }
+    }, {
+        "type": "docker",
+        "name": "malicious-container",
+        "docker_file": "infrabox/test-malicious/Dockerfile",
+        "build_only": false,
+        "resources": { "limits": { "cpu": 1, "memory": 2048 } }
+    }]
+}

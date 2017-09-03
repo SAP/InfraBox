@@ -1,0 +1,112 @@
+{{ if .Values.dashboard.enabled }}
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+    name: infrabox-dashboard
+    namespace: infrabox-system
+    annotations:
+        infrabox.net/checksum: {{ .Files.Get "values.yaml" | sha256sum }}
+    labels:
+        app: infrabox
+        infrabox.net/component: dashboard
+spec:
+    replicas: {{ default 1 .Values.dashboard.replicas }}
+    template:
+        metadata:
+            labels:
+                app: infrabox
+                infrabox.net/component: dashboard
+        spec:
+            {{- if .Values.dashboard.node_selector }}
+            nodeSelector:
+{{ toYaml .Values.dashboard.node_selector | indent 16 }}
+            {{- end }}
+            containers:
+            {{ if .Values.storage.cloudsql.enabled }}
+            -
+                image: gcr.io/cloudsql-docker/gce-proxy:1.09
+                name: cloudsql-proxy
+                command: ["/cloud_sql_proxy", "--dir=/cloudsql",
+                          "-instances={{ .Values.storage.cloudsql.instance_connection_name }}=tcp:5432",
+                          "-credential_file=/secrets/cloudsql/credentials.json"]
+                volumeMounts:
+                - name: cloudsql-instance-credentials
+                  mountPath: /secrets/cloudsql
+                  readOnly: true
+                - name: ssl-certs
+                  mountPath: /etc/ssl/certs
+                - name: cloudsql
+                  mountPath: /cloudsql
+            {{ end }}
+            -
+                name: dashboard
+                image: {{ .Values.general.docker_registry }}/{{ default "infrabox/dashboard" .Values.dashboard.image }}:{{ .Values.dashboard.tag }}
+                imagePullPolicy: Always
+                command:
+                - "node"
+                - "/dashboard/dist/server/app.js"
+                volumeMounts:
+                {{ if .Values.storage.gcs.enabled }}
+                -
+                    name: gcs-service-account
+                    mountPath: /etc/infrabox/gcs
+                    readOnly: true
+                {{ end }}
+                env:
+                {{ include "env_database" . | indent 16 }}
+                {{ include "env_gcs" . | indent 16 }}
+                {{ include "env_s3" . | indent 16 }}
+                {{ include "env_github" . | indent 16 }}
+                {{ include "env_github_secrets" . | indent 16 }}
+                {{ include "env_general" . | indent 16 }}
+                {{ include "env_ldap" . | indent 16 }}
+                -
+                    name: INFRABOX_DASHBOARD_SECRET
+                    valueFrom:
+                        secretKeyRef:
+                            name: infrabox-dashboard
+                            key: secret
+                -
+                    name: INFRABOX_SERVICE
+                    value: {{ default "infrabox/dashboard" .Values.dashboard.image }}
+                -
+                    name: INFRABOX_VERSION
+                    value: {{ .Values.dashboard.tag }}
+                -
+                    name: INFRABOX_DASHBOARD_LOG_CONSOLE
+                    value: "true"
+                -
+                    name: INFRABOX_DASHBOARD_LOG_LEVEL
+                    value: {{ default "info" .Values.dashboard.log.level }}
+                -
+                    name: INFRABOX_DASHBOARD_URL
+                    value: {{ .Values.dashboard.url }}
+                -
+                    name: INFRABOX_DASHBOARD_PORT
+                    value: "8080"
+                -
+                    name: INFRABOX_DOCKER_REGISTRY_URL
+                    value: {{ .Values.docker_registry.url }}
+                -
+                    name: INFRABOX_API_URL
+                    value: {{ .Values.api.url }}
+                -
+                    name: INFRABOX_DOCS_URL
+                    value: {{ .Values.docs.url }}
+                -
+                    name: INFRABOX_ACCOUNT_SIGNUP_ENABLED
+                    value: {{ .Values.account.signup.enabled | quote }}
+                {{ if .Values.general.no_check_certificates }}
+                -
+                    name: NODE_TLS_REJECT_UNAUTHORIZED
+                    value: "0"
+                {{ end }}
+            volumes:
+                {{ include "volumes_database" . | indent 16 }}
+                {{ if .Values.storage.gcs.enabled }}
+                -
+                    name: gcs-service-account
+                    secret:
+                        secretName: infrabox-gcs
+                {{ end }}
+{{ end }}

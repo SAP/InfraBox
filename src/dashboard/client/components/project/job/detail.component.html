@@ -1,0 +1,168 @@
+<div class="wrapper wrapper-content">
+    <div class="clearfix no-borders no-padding">
+        <div class="col-lg-12" *ngIf="ready">
+            <div class="widget white-bg">
+                <ol class="breadcrumb breadcrumb-h2">
+                    <li class="breadcrumb-smaller">
+                        <a [routerLink]="['/dashboard/project', project.id]">
+                            <i *ngIf="project.type == 'github'" class="fa fa-github" aria-hidden="true"></i>
+                            <i *ngIf="project.type == 'gerrit'" class="fa fa-git" aria-hidden="true"></i>
+                            <i *ngIf="project.type == 'upload'" class="fa fa-upload" aria-hidden="true"></i>
+                            <span>{{ project.name }}</span>
+                        </a>
+                    </li>
+                    <li class="breadcrumb-smaller">
+                        <a [routerLink]="['/dashboard/project', project.id, 'build', job.build.id]">
+                                Build {{ job.build.build_number }}.{{ job.build.restart_counter }}
+                            </a>
+                    </li>
+                    <li class="active">
+                        <strong>{{ job.name }}</strong>
+                    </li>
+                </ol>
+            </div>
+        </div>
+        <div class="col-md-3 col-md-push-9" *ngIf="job">
+            <div class="widget white-bg text-center">
+                <div class="m-b-md">
+                    <job-state-big [state]="job.getState()"></job-state-big>
+                </div>
+                <div class="row p-sm">
+                    <div class="col-xl-6 col-lg-6 col-sm-6 col-md-6 col-xs-6 col-xxs-12 text-left no-padding">
+                        <dl>
+                            <dt><span> <i class="fa fa-play fa-1x"></i><Strong> Started:</Strong></span></dt>
+                            <dd>
+                                <start-date [start]="job.start_date"></start-date>
+                            </dd>
+                        </dl>
+                    </div>
+                    <div *ngIf="job.end_date" class="col-xl-6 col-lg-6 col-sm-6 col-md-6 col-xs-6 col-xxs-12 text-left no-padding">
+                        <dl>
+                            <dt><span> <i class="fa fa-clock-o fa-1x"></i><Strong> Duration:</Strong></span></dt>
+                            <dd>
+                                <duration [start]="job.start_date" [end]="job.end_date"></duration>
+                            </dd>
+                        </dl>
+                    </div>
+                    <div *ngIf="job.commit" class="col-xl-6 col-lg-6 col-sm-6 col-md-6 col-xs-6 col-xxs-12 text-left no-padding">
+                        <dl>
+                            <dt>
+                            <span>
+                                <i class="fa fa-list-ol fa-1x"></i><Strong> Commit ID:</Strong>
+                            </span>
+                        </dt>
+                            <dd>
+                                <a target="_blank" href="{{ job.commit.url }}">
+                                    <i class="fa fa-github"></i> {{ job.commit.id.substr(0, 8) }}
+                                </a>
+                            </dd>
+                        </dl>
+                    </div>
+                    <div *ngIf="job.memory" class="col-xl-6 col-lg-6 col-sm-6 col-md-6 col-xs-6 col-xxs-12 text-left no-padding">
+                        <dl>
+                            <dt><span> <i class="fa fa-server fa-1x"></i><Strong> Memory:</Strong></span></dt>
+                            <dd>{{ job.memory }}</dd>
+                        </dl>
+                    </div>
+                    <div *ngIf="job.cpu" class="col-xl-6 col-lg-6 col-sm-6 col-md-6 col-xs-6 col-xxs-12 text-left no-padding">
+                        <dl>
+                            <dt><span> <i class="fa fa-server fa-1x"></i><Strong> CPU:</Strong></span></dt>
+                            <dd>{{ job.cpu }}</dd>
+                        </dl>
+                    </div>
+                    <div *ngIf="job.commit" class="col-xl-6 col-lg-6 col-md-6 col-sm-6 col-xs-6 col-xxs-12 text-left no-padding">
+                        <dl>
+                            <dt><span> <i class="fa fa-user fa-1x"></i><Strong> Author:</Strong></span></dt>
+                            <dd *ngIf="job.commit.author_name!=''" class="break-text"> {{ job.commit.author_name }}</dd>
+                            <dd *ngIf="job.commit.author_name==''" class="break-text"> {{ job.commit.author_username }}</dd>
+                        </dl>
+                    </div>
+
+                    <div *ngIf="job.commit" class="col-xl-6 col-lg-6 col-md-6 col-sm-6 col-xs-6 col-xxs-12 text-left no-padding">
+                        <dl>
+                            <dt><span> <i class="fa fa-code-fork fa-1x"></i><Strong> Branch:</Strong></span></dt>
+                            <dd> {{ job.commit.branch }}
+                            </dd>
+                        </dl>
+                    </div>
+
+                    <div *ngIf="loginService.loggedIn" class="col-xl-6 col-lg-6 col-md-6 col-sm-6 col-xs-6 col-xxs-12 text-left no-padding">
+                        <dl>
+                            <dt><span> <i class="fa fa-download fa-1x"></i><Strong> Run local:</Strong></span></dt>
+                            <dd>
+                                <button data-toggle="modal" data-target="#run_local" type="button" class="btn btn-default btn-outline p-xxs" style="font-size: inherit">
+                                     Get CLI command
+                                </button>
+                            </dd>
+                        </dl>
+
+                        <div id="run_local" class="modal fade" aria-hidden="true">
+                            <div class="modal-dialog" style="width:50%">
+                                <div class="modal-content">
+                                    <div class="modal-body">
+                                        <div class="m-t-md m-b-lg">
+                                            <h2>Run it with infraboxcli:</h2>
+                                        </div>
+                                        <div>
+                                            <pre class="inherit-style">{{ cli_command }}</pre>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div *ngIf="badges && badges.length > 0" class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-xs-12 col-xxs-12 text-left no-padding">
+                        <dl>
+                            <dt><span><i class="fa fa-shield"></i> <Strong> Badges:</Strong></span></dt>
+                            <dd>
+                                <div *ngFor="let b of badges; let i = index">
+                                    <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-xs-12 col-xxs-12 m-b-xs no-padding">
+
+                                        <badge [status]="b.status" [color]="b.color" [subject]="b.subject" [job_name]="job.name" [project_id]="project.id"></badge>
+                                    </div>
+                                </div>
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+                <div *ngIf="job.commit" class="row">
+                    <div class="description-box">
+                        <pre class="inherit-style no-border m-xxs p-xxs">{{ job.commit.message }}</pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-9 col-md-pull-3">
+            <div class="widget white-bg p-xxs text-left">
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="panel blank-panel">
+                            <div class="panel-heading">
+                                <div class="panel-options">
+                                    <ul class="nav nav-tabs">
+                                        <li [routerLink]="['console']" [routerLinkActive]="['active']"><a>Console Output</a></li>
+                                        <li [routerLink]="['history']" [routerLinkActive]="['active']"><a>Job History</a></li>
+                                        <li [routerLink]="['tests']" [routerLinkActive]="['active']"><a>Tests</a></li>
+                                        <li [routerLink]="['stats']" [routerLinkActive]="['active']"><a>Stats</a></li>
+                                        <li [routerLink]="['downloads']" [routerLinkActive]="['active']"><a>Downloads</a></li>
+                                        <li *ngFor="let t of tabs" [routerLink]="['document', t.name.replace('.', '_').replace(' ', '_')]" [routerLinkActive]="['active']">
+                                            <a>{{ t.name.split(".")[0] }}</a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <div class="panel-body">
+                                <div class="tab-content">
+                                    <router-outlet></router-outlet>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

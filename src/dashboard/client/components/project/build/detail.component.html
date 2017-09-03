@@ -1,0 +1,302 @@
+<div class="wrapper wrapper-content" *ngIf="project">
+    <div class="clearfix no-borders no-padding">
+        <div class="col-lg-12">
+            <div class="widget white-bg">
+                <div class="row">
+                    <div class="col-lg-8">
+                        <ol class="breadcrumb breadcrumb-h2">
+                            <li class="breadcrumb-smaller">
+                                <a [routerLink]="['/dashboard/project', project.id]">
+                                    <i *ngIf="project.type == 'github'" class="fa fa-github" aria-hidden="true"></i>
+                                    <i *ngIf="project.type == 'gerrit'" class="fa fa-git" aria-hidden="true"></i>
+                                    <i *ngIf="project.type == 'upload'" class="fa fa-upload" aria-hidden="true"></i>
+
+                                    <span>{{ project.name }}</span>
+                                </a>
+                            </li>
+                            <li *ngIf="build" class="active">
+                                <strong>Build {{ build.number }}.{{ build.restart_counter }}</strong>
+                            </li>
+                        </ol>
+                    </div>
+                    <div *ngIf="loginService.loggedIn" class="col-lg-4">
+                        <div class="btn-group pull-right m-r-md" role="group" aria-label="...">
+                            <button class="btn btn-default" (click)="clearCache(build)">
+                        <i class="fa fa-trash"></i>
+                        <span class="hidden-xs"> Clear Cache</span>
+                    </button>
+                            <button class="btn btn-default" (click)="kill(build)">
+                        <i class="fa fa-ban"></i>
+                        <span class="hidden-xs"> Kill Run</span>
+                    </button>
+                            <button class="btn btn-default" (click)="restart(build)">
+                        <i class="fa fa-repeat"></i>
+                        <span class="hidden-xs"> Restart Run</span>
+                    </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-md-push-9">
+            <div class="widget white-bg text-center">
+                <div *ngIf="commit" class="m-b-md">
+                    <a target="_blank" href="{{ commit.url }}">
+                        <job-state-big *ngIf="build" [state]="build.state"></job-state-big>
+                    </a>
+                </div>
+                <div *ngIf="!commit" class="m-b-md">
+                    <job-state-big *ngIf="build" [state]="build.state"></job-state-big>
+                </div>
+                <div class="row p-sm">
+                    <div class="col-xl-6 col-lg-6 col-sm-6 col-md-6 col-xs-6 col-xxs-12 text-left no-padding">
+                        <dl>
+                            <dt><span> <i class="fa fa-play fa-1x"></i><Strong> Started:</Strong></span></dt>
+                            <dd>
+                                <start-date *ngIf="build" [start]="build.start_date"></start-date>
+                            </dd>
+                        </dl>
+                    </div>
+                    <div class="col-xl-6 col-lg-6 col-sm-6 col-md-6 col-xs-6 col-xxs-12 text-left no-padding">
+                        <dl>
+                            <dt><span> <i class="fa fa-clock-o fa-1x"></i><Strong> Duration:</Strong></span></dt>
+                            <dd>
+                                <duration *ngIf="build" [start]="build.start_date" [end]="build.end_date"></duration>
+                            </dd>
+                        </dl>
+                    </div>
+
+                    <div *ngIf="commit" class="col-xl-6 col-lg-6 col-sm-6 col-md-6 col-xs-6 col-xxs-12 text-left no-padding">
+                        <dl>
+                            <dt><span> <i class="fa fa-list-ol fa-1x"></i><Strong> Commit ID:</Strong></span></dt>
+                            <dd>
+                                <a target="_blank" href="{{ commit.url }}">
+                                    <i class="fa fa-github"></i> {{ commit.id.substr(0, 8) }}
+                                </a>
+                            </dd>
+                        </dl>
+                    </div>
+                    <div *ngIf="commit" class="col-xl-6 col-lg-6 col-sm-6 col-md-6 col-xs-6 col-xxs-12 text-left no-padding">
+                        <dl>
+                            <dt><span> <i class="fa fa-calendar fa-1x"></i><Strong> Committed:</Strong></span></dt>
+                            <dd>
+                                <start-date [start]="commit.timestamp"></start-date>
+                            </dd>
+                        </dl>
+                    </div>
+                    <div *ngIf="commit" class="col-xl-6 col-lg-6 col-sm-6 col-md-6 col-xs-6 col-xxs-12 text-left no-padding">
+                        <dl>
+                            <dt><span> <i class="fa fa-user fa-1x"></i><Strong> Author:</Strong></span></dt>
+                            <dd *ngIf="commit.author_name!=''" class="break-text"> {{ commit.author_name }}</dd>
+                            <dd *ngIf="commit.author_name==''" class="break-text"> {{ commit.author_username }}</dd>
+                        </dl>
+                    </div>
+                    <div *ngIf="commit" class="col-xl-6 col-lg-6 col-sm-6 col-md-6 col-xs-6 col-xxs-12 text-left no-padding">
+                        <dl>
+                            <dt><span> <i class="fa fa-code-fork fa-1x"></i><Strong> Branch:</Strong></span></dt>
+                            <dd> {{ commit.branch }}<dd>
+                        </dl>
+                    </div>
+                    <div *ngIf="commit && commit.tag" class="col-xl-6 col-lg-6 col-sm-6 col-md-6 col-xs-6 col-xxs-12 text-left no-padding">
+                        <dl>
+                            <dt><span>
+                                <svg width="13" height="13" class="octicon" aria-hidden="true"><use xlink:href="/dist/fonts/sprite.octicons.svg#tag" /></svg>
+                                <Strong> Tag:</Strong></span></dt>
+                            <dd> {{ commit.tag }}
+                            <dd>
+                        </dl>
+                    </div>
+                    <div *ngIf="badges && badges.length > 0" class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-xs-12 col-xxs-12 text-left no-padding m-b-sm">
+                        <dl>
+                            <dt><span><i class="fa fa-shield"></i> <Strong> Badges:</Strong></span></dt>
+                            <dd>
+                                <div *ngFor="let jbl of badges; let jobIndex = index">
+                                    <div>{{ jbl.job_name }}</div>
+                                    <div *ngFor="let b of jbl.badges">
+                                        <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-xs-12 col-xxs-12 m-b-xs m-l-xs no-padding">
+                                            <badge [status]="b.status" [color]="b.color" [subject]="b.subject" [job_name]="jbl.job_name" [project_id]="project_id"></badge>
+                                        </div>
+                                    </div>
+                                </div>
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+                <div *ngIf="commit" class="row">
+                    <div class="description-box">
+                        <pre class="inherit-style no-border m-xxs p-xxs">{{ commit.message }}</pre>
+                    </div>
+                </div>
+                <div *ngIf="commit && commit.added.length!=0 && commit.modified.length!=0 && commit.removed.length!=0" class="row p-sm" style="padding-bottom: 0">
+                    <div class="col-xl-12 col-lg-12 col-sm-12 col-md-12 col-xs-12 col-xxs-12 text-left">
+                        <Strong>Changes:</Strong>
+                    </div>
+                </div>
+                <div *ngIf="commit" class="row p-xxs" style="padding-top: 0">
+                    <div class="col-lg-12">
+                        <div id="vertical-timeline" class="vertical-container dark-timeline" style="padding-top: 0; margin-top:0">
+                            <div *ngIf="commit.added.length!=0" class="vertical-timeline-block">
+                                <div class="vertical-timeline-icon bg-info">
+                                    <i class="fa fa-plus"></i>
+                                </div>
+                                <div class="vertical-timeline-content">
+                                    <Strong> {{ commit.added.length }}</Strong> document(s) added.
+                                    <ul style="text-align: left; list-style-type: none; padding-left: 0; margin-left: 0">
+                                        <li *ngFor="let a of commit.added">
+                                            <div class="small text-muted break-text">
+                                                <span *ngIf="a.lastIndexOf('/') <= 0"><i class="fa fa-plus icon-blue"></i> {{ a }}</span>
+                                                <span *ngIf="a.lastIndexOf('/') > 0"><i class="fa fa-plus icon-blue"></i> ...{{ a.substr(a.lastIndexOf('/')) }}</span>
+                                            </div>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div *ngIf="commit.removed.length!=0" class="vertical-timeline-block">
+                                <div class="vertical-timeline-icon bg-info">
+                                    <i class="fa fa-minus"></i>
+                                </div>
+                                <div class="vertical-timeline-content">
+                                    <Strong> {{ commit.removed.length }}</Strong> document(s) removed.
+                                    <ul style="text-align: left; list-style-type: none; padding-left: 0; margin-left: 0">
+                                        <li *ngFor="let r of commit.removed">
+                                            <div class="small text-muted break-text">
+                                                <span *ngIf="r.lastIndexOf('/') <= 0"><i class="fa fa-minus icon-blue"></i> {{ r }}</span>
+                                                <span *ngIf="r.lastIndexOf('/') > 0"><i class="fa fa-minus icon-blue"></i> ...{{ r.substr(r.lastIndexOf('/')) }}</span>
+                                            </div>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div *ngIf="commit.modified.length!=0" class="vertical-timeline-block">
+                                <div class="vertical-timeline-icon bg-info">
+                                    <i class="fa fa-pencil"></i>
+                                </div>
+                                <div class="vertical-timeline-content break-text">
+                                    <Strong> {{ commit.modified.length }}</Strong> document(s) modified.
+                                    <ul style="text-align: left; list-style-type: none; padding-left: 0; margin-left: 0">
+                                        <li *ngFor="let m of commit.modified">
+                                            <div class="small text-muted">
+                                                <span *ngIf="m.lastIndexOf('/') <= 0"><i class="fa fa-pencil icon-blue"></i> {{ m }}</span>
+                                                <span *ngIf="m.lastIndexOf('/') > 0"><i class="fa fa-pencil icon-blue"></i> ...{{ m.substr(m.lastIndexOf('/')) }}</span>
+                                            </div>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-9 col-md-pull-3">
+            <div class="widget white-bg p-xxs text-left">
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="panel blank-panel">
+                            <div class="panel-heading">
+                                <div class="panel-options">
+                                    <ul class="nav nav-tabs">
+                                        <li class="active">
+                                            <a href="#tab-build" data-toggle="tab">
+                                            Build
+                                        </a>
+                                        </li>
+                                        <li class="">
+                                            <a href="#tab-jobs" data-toggle="tab">Jobs</a></li>
+                                        <li *ngIf="commit" class="">
+                                            <a href="#tab-branch-history" data-toggle="tab">
+                                            Branch History
+                                        </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="panel-body">
+                                <div class="tab-content" id="tab-content">
+                                    <div class="tab-pane active" id="tab-build">
+                                        <div id="holder"></div>
+                                    </div>
+                                    <div class="tab-pane" id="tab-jobs">
+                                        <job-list *ngIf="build" [jobs]="jobs"></job-list>
+                                    </div>
+                                    <div *ngIf="commit" class="tab-pane" id="tab-branch-history">
+                                        <div class="table-responsive">
+                                            <table class="table table-striped">
+                                                <thead>
+                                                    <tr>
+                                                        <th class="table-alignleft" width="10%">
+                                                            Build No.
+                                                        </th>
+                                                        <th class="table-alignleft" width="15%">
+                                                            Author
+                                                        </th>
+                                                        <th class="table-alignleft" width="5%">
+                                                            Branch
+                                                        </th>
+                                                        <th class="table-alignleft" width="17%">
+                                                            Message
+                                                        </th>
+                                                        <th class="table-alignleft" width="17%">
+                                                            Start Time
+                                                        </th>
+                                                        <th class="table-alignleft" width="10%">
+                                                            Duration
+                                                        </th>
+                                                        <th class="table-aligncenter" width="5%">
+                                                            State
+                                                        </th>
+                                                        <th class="table-aligncenter">
+                                                            Action
+                                                        </th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr *ngFor="let b of branchBuilds; let i = index">
+                                                        <td class="table-alignleft hide-link-color">
+                                                            <Strong class="hide-link-color"> <a [routerLink]="['/dashboard/project', project.id, 'build', b.id]">{{ b.number }}.{{ b.restart_counter }}</a></Strong>
+                                                        </td>
+                                                        <td class="table-alignleft hide-link-color">
+                                                            <a [routerLink]="['/dashboard/project', project.id, 'build', b.id]">{{ b.commit.author_name }}</a>
+                                                        </td>
+                                                        <td class="table-alignleft hide-link-color">
+                                                            <a [routerLink]="['/dashboard/project', project.id, 'build', b.id]">{{ b.commit.branch }}</a>
+                                                        </td>
+                                                        <td class="table-alignleft hide-link-color">
+                                                            <a [routerLink]="['/dashboard/project', project.id, 'build', b.id]">{{ b.commit.message.split("\n")[0] }}</a>
+                                                        </td>
+                                                        <td class="table-alignleft hide-link-color">
+                                                            <start-date [start]="b.start_date"></start-date>
+                                                        </td>
+                                                        <td class="table-alignleft hide-link-color">
+                                                            <duration [start]="b.start_date" [end]="b.end_date"></duration>
+                                                        </td>
+                                                        <td class="table-aligncenter hide-link-color">
+                                                            <job-state [state]="b.getState()"></job-state>
+                                                        </td>
+                                                        <td class="table-aligncenter">
+                                                            <div *ngIf="loginService.loggedIn" class="btn-group" role="group" aria-label="...">
+                                                                <button class="btn btn-default" data-toggle="tooltip" title="Clear cache" (click)="clearCache(b)">
+                                                                <i class="fa fa-trash"></i>
+                                                            </button>
+                                                                <button class="btn btn-default" data-toggle="tooltip" title="Kill build" (click)="kill(b)">
+                                                                <i class="fa fa-ban"></i>
+                                                            </button>
+                                                                <button class="btn btn-default" data-toggle="tooltip" title="Restart build" (click)="restart(b)">
+                                                                <i class="fa fa-repeat"></i>
+                                                            </button>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

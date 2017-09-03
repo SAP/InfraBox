@@ -1,0 +1,17 @@
+<div *ngFor="let s of sections">
+    <div class="row codebox-body">
+        <div class="accordion-toggle" data-toggle="collapse" [attr.data-target]="'#data' + s.line">
+            <div class="col-md-1 col-xs-2 col-xxs-2 codebox-collapsesymbol"><i class="fa fa-level-down" aria-hidden="true"></i></div>
+            <div class="col-md-9 col-xs-6 col-xxs-6">
+                <pre class="codebox">{{ s.text }}</pre>
+            </div>
+            <div class="col-md-1 col-xs-1 col-xxs-1">{{ s.lines_in_section }} lines </div>
+            <div class="col-md-1 col-xs-3 col-xxs-3">{{ s.duration }} sec</div>
+        </div>
+    </div>
+    <div id="data{{ s.line }}" class="collapse int">
+        <div class="row detail-box">
+            <div class="col-md-12 col-xs-12 col-xxs-12" style="padding-left: 6px"><pre class="codebox" [innerHTML]="s.lines_html"></pre></div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,119 @@
+<div class="modal-dialog" style="width:75%">
+    <div class="modal-content">
+        <div class="modal-body">
+            <div class="row">
+                <h3 class="m-t-none m-b">Configure your comparison view</h3>
+
+                <p>Choose the metrics to compare your current one with.</p>
+
+                <div class="row m-t-sm p-t-sm">
+                    <div class="col-sm-1"></div>
+                    <div class="col-sm-2">
+                        <label class="control-label">Select Job</label>
+                    </div>
+                    <div class="col-sm-2">
+                        <label class="control-label">Select Test Suite</label>
+                    </div>
+                    <div class="col-sm-3">
+                        <label class="control-label">Select Test</label>
+                    </div>
+                    <div class="col-sm-2">
+                        <label class="control-label">Select Metric</label>
+                    </div>
+                    <div class="col-sm-2 text-left">
+                        <label class="control-label">Select Color</label>
+                    </div>
+                </div>
+                <form role="form">
+                    <div *ngFor="let m of metricsList; let i = index;" class="row" style="line-height: 25px">
+                        <div class="form-group col-sm-1 comp-select " style="padding: 3px 6px;">
+                            {{ i+1 }}.
+                        </div>
+                        <div class="form-group col-sm-2">
+                            <div>
+                                <select class="compare-selection m-b comp-select" (change)="setSelectedJob($event.target.value, i)">
+                                    <option *ngFor="let j of jobsWithTestSuites.keys()">{{ j }}</option>
+                                </select>
+
+                            </div>
+                        </div>
+                        <div class="form-group col-sm-2">
+                            <div>
+                                <select class="compare-selection m-b comp-select" (change)="setSelectedSuite($event.target.value, i)" id="SelSuite_{{ i }}">
+                                    <option *ngFor="let t of metricsList[i].mTestSuites">{{ t }}</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group col-sm-3">
+                            <div>
+                                <select class="compare-selection m-b comp-select" name="Test" id="SelTest_{{ i }}">
+                                    <option *ngFor="let t of metricsList[i].mTests">{{ t.name }}</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group col-sm-2">
+                            <div>
+                                <select class="compare-selection m-b comp-select" name="Metric">
+                                    <option>Duration</option>
+                                    <option>Results</option>
+                                    <option>option 3</option>
+                                    <option>option 4</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group col-sm-1" (change)="setColor($event.target.value, i)">
+                            <input class="comp-select" type="color" />
+                        </div>
+                        <div class="form-group col-sm-1">
+                            <button type="button" class="btn btn-outline btn-info form-group comp-select text-center" (click)="deleteMetric(i)">
+                               <i class="fa fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="form-group col-sm-1">
+                            <button type="button" class="btn btn-outline btn-info form-group comp-select" (click)="addMetric()">
+                                <span><i class="fa fa-plus"></i></span>
+                            </button>
+                        </div>
+                        <div class="form-group col-sm-2">
+                            <div>
+                                <select disabled class="compare-selection-disabled m-b comp-select">
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group col-sm-2">
+                            <div>
+                                <select disabled class="compare-selection-disabled m-b comp-select">
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group col-sm-3">
+                            <div>
+                                <select disabled class="compare-selection-disabled m-b comp-select">
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group col-sm-2">
+                            <div>
+                                <select disabled class="compare-selection-disabled m-b comp-select">
+                                </select>
+                            </div>
+                        </div>
+                        <div hidden="true" class="form-group col-sm-1">
+                            <input disabled type="color" class="comp-select"/>
+                        </div>
+                        <div hidden="true" class="form-group col-sm-1">
+                            <button disabled type="button" class="btn btn-mute comp-select">
+                                <span><i class="fa fa-trash"></i></span>
+                            </button>
+                        </div>
+                    </div>
+                    <div>
+                        <button class="btn btn-sm btn-info btn-outline pull-right m-t-n-xs" type="submit"><i class="fa fa-balance-scale"></i><strong> Show Comparison</strong></button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

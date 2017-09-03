@@ -1,0 +1,213 @@
+general:
+    # hostname / IP of your kubernetes master
+    # kubernetes_master_host: kubernetes.default.svc.cluster.local
+
+    # port of your kubernetes master
+    # kubernetes_master_port: 443
+
+    # Address of the docker registry which contains
+    # all the InfraBox images. It must be accessible
+    # by all hosts which run your kubernetes cluster.
+    docker_registry: <REQUIRED>
+
+    # Set it to false if certificates of your
+    # Github enterprise should not be checked (cause they are self signed)
+    # no_check_certificates: false
+
+
+    log:
+        # If true the log output will be formatted for google's stackdriver
+        stackdriver: false
+
+
+scheduler:
+    enabled: true
+
+    # name of the scheduler image in your general.docker_registry
+    # image: infrabox/scheduler
+
+    # Tag
+    tag: latest
+
+    clair:
+        enabled: false
+
+clair:
+    enabled: false
+
+    # name of the clair updater image in your general.docker_registry
+    # image: infrabox/clair/updater
+
+    # Tag
+    tag: latest
+
+storage:
+    gcs:
+        enabled: false
+    s3:
+        enabled: true
+
+        # Region
+        region: <REQUIRED>
+
+        # Regeion endpoint
+        endpoint: <REQUIRED>
+
+        # Region endpoint port
+        # port: 443
+
+        # If https should be used or not
+        # secure: true
+
+        # Bucket name to store output of the jobs
+        # container_output_bucket: infrabox-container-output
+
+        # Bucket name of infraboxcli push uploads
+        # project_upload_bucket: infrabox-project-upload
+
+        # Bucket name for job cache
+        # container_content_cache_bucket: infrabox-container-content-cache
+
+        # Bucket name for docker registry
+        # docker_registry_bucket: infrabox-docker-registry
+    cloudsql:
+        enabled: false
+    postgres:
+        enabled: true
+
+        # Host of your postgres database
+        # Set this to localhost if you use GCS!
+        host: <REQUIRED>
+
+        # Port of your postgres database
+        # Don't set this if you use GCS!
+        # port: 5432
+
+        # Database name
+        # db: infrabox
+
+docker_registry:
+    enabled: true
+
+    url: <REQUIRED>
+
+    # name of the docker-registry auth image in your general.docker_registry
+    # auth_image: infrabox/docker-registry/auth
+
+    # Tag
+    auth_tag: latest
+
+    # name of the docker-registry nginx image in your general.docker_registry
+    # nginx_image: infrabox/docker-registry/nginx
+
+    # Tag
+    nginx_tag: latest
+
+    # Kubernetes NodePort
+    # node_port: 30202
+
+docs:
+    enabled: true
+
+    url: <REQUIRED>
+
+    # Tag
+    tag: latest
+
+    # Kubernetes NodePort
+    # node_port: 30203
+
+dashboard:
+    enabled: true
+
+    # name of the dashboard image in your general.docker_registry
+    # image: infrabox/dashboard
+
+    # Tag
+    tag: latest
+
+    # URL on which the dashboard will be reachable by your users
+    url: <REQUIRED>
+
+    # Kubernetes NodePort
+    # node_port: 30201
+
+    log:
+        level: info
+
+        # If true prints output for stackdriver
+        stackdriver: false
+
+api:
+    enabled: true
+
+    # name of the dashboard image in your general.docker_registry
+    # image: infrabox/api
+
+    # Tag
+    tag: latest
+
+    # URL on which the api will be reachable by your users
+    url: <REQUIRED>
+
+    # Kubernetes NodePort
+    # node_port: 30200
+
+    log:
+        level: info
+
+        # If true prints output for stackdriver
+        stackdriver: false
+
+account:
+    signup:
+        enabled: true
+
+    ldap:
+        enabled: false
+
+        # url: <REQUIRED>
+        # base: <REQUIRED>
+
+gerrit:
+    enabled: false
+
+    review:
+        enabled: false
+
+        # name of the gerrit review image in your general.docker_registry
+        # image: infrabox/gerrit/review
+
+        # Tag
+        tag: latest
+
+    trigger:
+        # name of the gerrit trigger image in your general.docker_registry
+        # image: infrabox/gerrit/trigger
+
+        # Tag
+        tag: latest
+
+    # hostname: <REQUIRED>
+    # username: <REQUIRED>
+    # port: 29418
+
+job:
+    max_output_size: 104857600
+
+local_cache:
+    enabled: false
+
+    # host_path: /tmp/infrabox/local_cache
+
+github:
+    enabled: false
+
+    login:
+        enabled: false
+
+        # Github Login URL
+        # url: https://github.com/login
+
+    # Github API URL
+    # api_url: https://api.github.com

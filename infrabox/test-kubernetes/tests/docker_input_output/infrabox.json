@@ -1,0 +1,17 @@
+{
+    "version": 1,
+    "jobs": [{
+        "type": "docker",
+        "name": "producer",
+        "docker_file": "Dockerfile_producer",
+        "build_only": false,
+        "resources": { "limits": { "cpu": 1, "memory": 1024 } }
+     }, {
+        "type": "docker",
+        "name": "consumer",
+        "docker_file": "Dockerfile_consumer",
+        "build_only": false,
+        "resources": { "limits": { "cpu": 1, "memory": 1024 } },
+        "depends_on": ["producer"]
+     }]
+}

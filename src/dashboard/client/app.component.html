@@ -1,0 +1,105 @@
+<div class="top-navigation">
+
+    <div id="wrapper">
+        <div id="page-wrapper" class="gray-bg">
+
+            <div class="row border-bottom white-bg">
+                <nav class="navbar navbar-static-top" role="navigation" style="margin-bottom: 0; border-bottom: 1px outset #293846">
+                    <div class="navbar-header">
+                        <button aria-controls="navbar" aria-expanded="false" data-target="#navbar" data-toggle="collapse" class="navbar-toggle collapsed" type="button">
+                            <i class="fa fa-reorder"></i>
+                        </button>
+                        <a href="http://infrabox.net" class="navbar-logo" style="background-color: #293846"><img src="img/dashboard/logo_white_on_transparent.png" style="height:35px;" /></a>
+                    </div>
+                    <div class="navbar-collapse collapse" id="navbar">
+                        <ul class="nav navbar-nav">
+                            <li class="active" [routerLinkActive]="['active']">
+                                <a aria-expanded="false" role="button" routerLink="/dashboard/start">
+                                    <i class="fa fa-th-large"></i>
+                                    <span class="nav-label">Getting Started</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a aria-expanded="false" role="button" (click)="infraboxService.openDocs()">
+                                    <i class="fa fa-th-large"></i>
+                                    <span class="nav-label">Docs</span>
+                                </a>
+                            </li>
+                            <li *ngIf="loginService.loggedIn" class="dropdown">
+                                <a aria-expanded="false" role="button" href="#" class="dropdown-toggle" data-toggle="dropdown">
+                                    <i class="fa fa-tasks"></i>
+                                    <span class="nav-label"> Projects</span><span class="caret"></span></a>
+                                <ul role="menu" class="dropdown-menu">
+                                    <li class="m-sm m-b-md">
+                                        <a data-toggle="modal" type="button" class="btn  btn-xs btn-block btn-default" href="#add_project"><i class="fa fa-plus"></i><span> Add New Project</span></a>
+                                    </li>
+                                    <project-list></project-list>
+                                </ul>
+                            </li>
+                            <li *ngIf="loginService.loggedIn" class="dropdown">
+                                <a aria-expanded="false" role="button" href="#" class="dropdown-toggle" data-toggle="dropdown">
+                                    <i class="fa fa-cogs"></i>
+                                    <span class="nav-label"> Settings</span><span class="caret"></span></a>
+                                <ul role="menu" class="dropdown-menu">
+                                    <li>
+                                        <a [routerLink]="['/dashboard/account/tokens']">
+                                            <i class="fa fa-key fa-fw"></i>
+                                            <span class="nav-label"> Authetication Tokens
+                                            </span>
+                                        </a>
+                                    </li>
+                                    <li *ngIf="infraboxService.isGithubEnabled()">
+                                        <a [routerLink]="['/dashboard/account/repositories']">
+                                            <i class="fa fa-github fa-fw"></i>
+                                            <span class="nav-label"> My GitHub Repositories</span>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
+                        </ul>
+                        <ul *ngIf="!loginService.loggedIn" class="nav navbar-top-links navbar-right">
+                            <li>
+                                <a href="/"><i class="fa fa-sign-in"></i> Log In</a>
+                            </li>
+                        </ul>
+                        <ul *ngIf="loginService.loggedIn" class="nav navbar-top-links navbar-right">
+                            <job-state-list [stateToShow]="'active'"></job-state-list>
+                            <li>
+                                <a (click)="logout()"><i class="fa fa-sign-out"></i> Log Out</a>
+                            </li>
+                        </ul>
+                    </div>
+                </nav>
+            </div>
+            <div class="row">
+                <div class="col-lg-12">
+                    <router-outlet>
+                    </router-outlet>
+                </div>
+            </div>
+            <div id="add_project" class="modal fade" aria-hidden="true">
+                <div class="modal-dialog" style="width:30%">
+                    <div class="modal-content">
+                        <div class="modal-body">
+                            <div class="row m-l-lg m-r-lg p-l-lg p-r-lg m-b-none p-b-none">
+                                <h3 class="m-t-md m-b">Add New Project</h3>
+                                <div class="m-t-md p-t-sm">
+                                    <div class="row">
+                                        <div class="col-lg-8 col-md-8 col-sm-8 col-xs-8">
+                                            <input type="text" [(ngModel)]="add_project_name" placeholder="Project Name" class="input-text">
+                                        </div>
+                                        <div class="col-lg-3 col-md-3 col-sm-3 col-xs-3">
+                                            <button class="btn btn-info btn-block btn-sm text-center" (click)="addUploadProject()">
+                                                <i class="fa fa-plus"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

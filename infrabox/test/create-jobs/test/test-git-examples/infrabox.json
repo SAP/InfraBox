@@ -1,0 +1,8 @@
+{
+    "version": 1,
+    "jobs": [{
+        "type": "git",
+        "name": "examples",
+        "clone_url": "https://github.com/InfraBox/examples.git"
+    }]
+}

@@ -1,0 +1,91 @@
+{{ if .Values.api.enabled }}
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+    name: infrabox-api
+    namespace: infrabox-system
+    annotations:
+        infrabox.net/checksum: {{ .Files.Get "values.yaml" | sha256sum }}
+    labels:
+        app: infrabox
+        infrabox.net/component: api
+spec:
+    replicas: {{ default 1 .Values.api.replicas }}
+    template:
+        metadata:
+            labels:
+                app: infrabox
+                infrabox.net/component: api
+        spec:
+            {{- if .Values.api.node_selector }}
+            nodeSelector:
+{{ toYaml .Values.api.node_selector | indent 16 }}
+            {{- end }}
+            containers:
+            {{ if .Values.storage.cloudsql.enabled }}
+            -
+                image: gcr.io/cloudsql-docker/gce-proxy:1.09
+                name: cloudsql-proxy
+                command: ["/cloud_sql_proxy", "--dir=/cloudsql",
+                          "-instances={{ .Values.storage.cloudsql.instance_connection_name }}=tcp:5432",
+                          "-credential_file=/secrets/cloudsql/credentials.json"]
+                volumeMounts:
+                - name: cloudsql-instance-credentials
+                  mountPath: /secrets/cloudsql
+                  readOnly: true
+                - name: ssl-certs
+                  mountPath: /etc/ssl/certs
+                - name: cloudsql
+                  mountPath: /cloudsql
+            {{ end }}
+            -
+                name: api
+                image: {{ .Values.general.docker_registry }}/{{ default "infrabox/api" .Values.api.image }}:{{ .Values.api.tag }}
+                imagePullPolicy: Always
+                command:
+                - "node"
+                - "/api/dist/server/app.js"
+                {{ if .Values.storage.gcs.enabled }}
+                volumeMounts:
+                -
+                    name: gcs-service-account
+                    mountPath: /etc/infrabox/gcs
+                    readOnly: true
+                {{ end }}
+                env:
+                {{ include "env_database" . | indent 16 }}
+                {{ include "env_gcs" . | indent 16 }}
+                {{ include "env_s3" . | indent 16 }}
+                {{ include "env_github" . | indent 16 }}
+                {{ include "env_github_secrets" . | indent 16 }}
+                {{ include "env_general" . | indent 16 }}
+                -
+                    name: INFRABOX_SERVICE
+                    value: {{ default "infrabox/api" .Values.api.image }}
+                -
+                    name: INFRABOX_VERSION
+                    value: {{ .Values.api.tag }}
+                -
+                    name: INFRABOX_API_LOG_CONSOLE
+                    value: "true"
+                -
+                    name: INFRABOX_API_LOG_LEVEL
+                    value: {{ default "info" .Values.api.log.level | quote }}
+                -
+                    name: INFRABOX_API_URL
+                    value: {{ .Values.api.url }}
+                -
+                    name: INFRABOX_API_PORT
+                    value: "8080"
+                -
+                    name: INFRABOX_DOCKER_REGISTRY_URL
+                    value: {{ .Values.docker_registry.url }}
+            volumes:
+                {{ include "volumes_database" . | indent 16 }}
+                {{ if .Values.storage.gcs.enabled }}
+                -
+                    name: gcs-service-account
+                    secret:
+                        secretName: infrabox-gcs
+                {{ end }}
+{{ end }}
