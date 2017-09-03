@@ -77,6 +77,9 @@ export let config = {
             base: ""
         }
     },
+    gerrit: {
+        enabled: getFromEnvBool("INFRABOX_GERRIT_ENABLED", false),
+    },
     github: {
         enabled: getFromEnvBool("INFRABOX_GITHUB_ENABLED", false),
         client_id: "someid",

@@ -4,7 +4,7 @@ import { Subscription } from "rxjs/Subscription";
 
 import { NotificationService, Notification } from "./services/notification.service";
 import { Logger, LogService } from "./services/log.service";
-import { ProjectService } from "./services/project.service";
+import { ProjectService, ProjectType } from "./services/project.service";
 import { LoginService } from "./services/login.service";
 import { InfraBoxService } from "./services/infrabox.service";
 
@@ -19,6 +19,8 @@ export class AppComponent implements OnInit, OnDestroy {
     private subs = new Array<Subscription>();
     private logger: Logger;
     private add_project_name: string;
+    private add_project_private: boolean = true;
+    private add_project_type: ProjectType = "upload";
 
     constructor(
         private notificationService: NotificationService,
@@ -58,8 +60,19 @@ export class AppComponent implements OnInit, OnDestroy {
         }));
     }
 
-    public addUploadProject() {
-        this.subs.push(this.projectService.addUploadProject(this.add_project_name).subscribe((n: Notification) => {
+    public setProjectType(t: ProjectType) {
+        this.add_project_type = t;
+    }
+
+    public setPrivate(b: boolean) {
+        this.add_project_private = b;
+    }
+
+    public addProject() {
+        this.subs.push(this.projectService.addProject(this.add_project_name,
+                                                      this.add_project_private,
+                                                      this.add_project_type)
+                       .subscribe((n: Notification) => {
             this.notificationService.notify(n);
             if (n.type === "success") {
                 setTimeout(() => {

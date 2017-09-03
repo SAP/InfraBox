@@ -17,6 +17,7 @@
         var INFRABOX_DOCS_URL = "{{ INFRABOX_DOCS_URL }}";
         var INFRABOX_API_URL = "{{ INFRABOX_API_URL }}";
         var INFRABOX_GITHUB_ENABLED = {{ INFRABOX_GITHUB_ENABLED }};
+        var INFRABOX_GERRIT_ENABLED = {{ INFRABOX_GERRIT_ENABLED }};
     </script>
 
     <script src="vendor.js"></script>

@@ -61,6 +61,9 @@ spec:
                 {{ include "env_general" . | indent 16 }}
                 {{ include "env_ldap" . | indent 16 }}
                 -
+                    name: INFRABOX_GERRIT_ENABLED
+                    value: {{ .Values.gerrit.enabled | quote }}
+                -
                     name: INFRABOX_DASHBOARD_SECRET
                     valueFrom:
                         secretKeyRef:

@@ -25,9 +25,11 @@ const AddProjectSchema = {
     id: "/EnvVarSchema",
     type: "object",
     properties: {
-        name: { type: "string" }
+        name: { type: "string" },
+        private: { type: "boolean" },
+        type: ["upload", "gerrit"]
     },
-    required: ["name"]
+    required: ["name", "private", "type"]
 };
 
 router.post("/", pv, (req: Request, res: Response, next) => {
@@ -39,6 +41,9 @@ router.post("/", pv, (req: Request, res: Response, next) => {
     }
 
     const name = req['body']['name'];
+    const typ = req['body']['type'];
+    const priv = req['body']['private'] === 'true';
+
     const user_id = req['user'].id;
     let project_id = null;
 
@@ -53,8 +58,8 @@ router.post("/", pv, (req: Request, res: Response, next) => {
                     throw new BadRequest("too many projects");
                 }
 
-                return tx.one("INSERT INTO project (name, type) VALUES ($1, 'upload') RETURNING id",
-                    [name]);
+                return tx.one("INSERT INTO project (name, type, public) VALUES ($1, $2, $3) RETURNING id",
+                    [name, typ, !priv]);
             })
             .then((result: any) => {
                 project_id = result.id;

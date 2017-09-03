@@ -93,17 +93,17 @@
                                     <div class="row">
                                         <div class="panel blank-panel">
                                             <div class="panel-heading">
-                                                <h5>1. Select project origin:</h5>
+                                                <h5>1. Select project type:</h5>
                                                 <div class="panel-options no-border">
                                                     <ul class="nav nav-tabs no-border">
-                                                        <li role="presentation" class="active"><a href="#tab-gerrit" data-toggle="tab"><i class="fa fa-binoculars"></i> Gerrit</a></li>
-                                                        <li role="presentation"><a href="#tab-upload" data-toggle="tab"><i class="fa fa-upload"></i> Upload</a></li>
-                                                        <li role="presentation"><a href="#tab-github" data-toggle="tab"><i class="fa fa-github"></i> Github</a></li>
+                                                        <li role="presentation" class="active"><a href="#tab-upload" data-toggle="tab" (click)="setProjectType('upload');"><i class="fa fa-upload"></i> Upload</a></li>
+                                                        <li *ngIf="infraboxService.isGerritEnabled()" role="presentation"><a href="#tab-gerrit" data-toggle="tab" (click)="setProjectType('gerrit');"><i class="fa fa-binoculars"></i> Gerrit</a></li>
+                                                        <li *ngIf="infraboxService.isGithubEnabled()" role="presentation"><a href="#tab-github" data-toggle="tab" (click)="setProjectType('github');"><i class="fa fa-github"></i> Github</a></li>
                                                     </ul>
                                                 </div>
                                             </div>
                                             <div class="panel-body">
-                                                <div class="tab-content" id="tab-content">
+                                                <div class="tab-content" id="project-type-tab">
                                                     <div class="tab-pane active" id="tab-gerrit">
                                                         <h5>2. Enter the name of your Gerrit project:</h5>
                                                         <input type="text" [(ngModel)]="add_project_name" placeholder="Project Name" class="input-text">
@@ -143,7 +143,7 @@
                                                                             <div *ngIf="!r.private">
                                                                                 <i class="fa icon-mute fa-2x fa fa-globe"></i>
                                                                             </div>
-                                                                        </button>
+                                                                    </button>
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -153,11 +153,11 @@
                                             <div style="padding-left: 15px; padding-right: 15px;">
                                                 <h5>3. Select the visibility of your project:</h5>
                                                 <div class="btn-group btn-group-sm" role="group" aria-label="...">
-                                                    <button type="button" class="btn btn-info btn-outline"><i class="fa fa-user"></i> Private</button>
-                                                    <button type="button" class="btn btn-info btn-outline"><i class="fa fa-users"></i> Public</button>
+                                                    <button type="button" [ngClass]="{active: add_project_private}" class="btn btn-info btn-outline" (click)="setPrivate(true)"><i class="fa fa-user"></i> Private</button>
+                                                    <button type="button" [ngClass]="{active: !add_project_private}" class="btn btn-info btn-outline" (click)="setPrivate(false)"><i class="fa fa-users"></i> Public</button>
                                                 </div>
                                                 <h5 style="padding-top: 15px;">4. Add the project to InfraBox:</h5>
-                                                <button class="btn btn-info btn-outline btn-sm text-center" (click)="addUploadProject()">
+                                                <button class="btn btn-info btn-outline btn-sm text-center" (click)="addProject()">
                                                     <i class="fa fa-plus"></i><span> Finish</span>
                                                 </button>
                                             </div>

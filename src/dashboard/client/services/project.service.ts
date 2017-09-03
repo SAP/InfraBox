@@ -12,6 +12,7 @@ import 'rxjs/add/operator/mergeMap';
 import 'rxjs/add/observable/from';
 
 type RepoType = "github" | "upload" | "gerrit";
+export type ProjectType = "gerrit" | "github" | "upload";
 
 export class GithubUser {
     public login: string;
@@ -105,9 +106,9 @@ export class ProjectService {
         });
     }
 
-    public addUploadProject(name: string): Observable<Notification> {
+    public addProject(name: string, priv: boolean, t: ProjectType): Observable<Notification> {
         const url = this.projectURL;
-        const body = JSON.stringify({ name: name });
+        const body = JSON.stringify({ name: name, type: t, private: priv });
         return this.api.post(url, body);
     }
 

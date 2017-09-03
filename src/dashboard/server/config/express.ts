@@ -63,7 +63,8 @@ module.exports = (app) => {
         res.render("dashboard", {
             INFRABOX_DOCS_URL: config.docs.url,
             INFRABOX_API_URL: config.api.url,
-            INFRABOX_GITHUB_ENABLED: config.github.enabled
+            INFRABOX_GITHUB_ENABLED: config.github.enabled,
+            INFRABOX_GERRIT_ENABLED: config.gerrit.enabled
         });
     });
 
