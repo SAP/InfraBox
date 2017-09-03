@@ -4,7 +4,7 @@ install_minio=true
 install_postgres=false
 
 # Values file
-values_yaml="values_ccloud.yaml"
+values_yaml="values_minikube.yaml"
 
 # Leave it empty if install_minio=true
 s3_access_key=""
