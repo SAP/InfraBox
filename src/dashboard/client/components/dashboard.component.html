@@ -6,33 +6,19 @@
                     <div class="col-lg-12">
                         <ol class="breadcrumb breadcrumb-h2">
                             <li class="active">
-                                <i class="fa fa-th-large"></i><span><strong> Getting Started</strong></span>
+                                <i class="fa fa-th-large"></i><span><strong> Overview</strong></span>
                             </li>
                         </ol>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-md-6">
+        <div class="col-md-12">
             <div class="widget white-bg">
                 <div *ngIf="builds.length <= 0" class="dashboard-box">
-                    <h2>Welcome to Infrabox</h2>
-                    <div class="ibox m-t-md no-borders p-w-sm">
-                        <ul>
-                            <li class="m-b-md">
-                                For a fast start the box at the right gives you an overview about the basics steps.
-                            </li>
-                            <li class="m-b-md">
-                                The InfraBox Help Center contains everything you need to know about configuration and functionality.<br>
-                                <img class="m-t-sm m-b-sm img-thumbnail" src="../img/dashboard/helpLink.png" width="75%" /><br>
-                                Also have look at the beginners tutorials at <a target="_blank" href="">this page</a> of the Help Center.
-                            </li>
-                            <li>
-                                If you need further help, found any problems or have something else in your mind you want to tell us you can use our support widget at the right to contact us.<br>
-                                <img class="m-t-sm img-thumbnail" src="../img/dashboard/support.png" width="75%" />
-                            </li>
-                        </ul>
-                    </div>
+                    <h2>Welcome to InfraBox!</h2>
+                    <div class="m-t-md">Add your first project to start off:</div>
+                    <a data-toggle="modal" type="button" class="btn btn-sm btn-info m-t-md" href="#add_project"><i class="fa fa-plus"></i><span> Add New Project</span></a>
                 </div>
                 <div *ngIf="builds.length > 0" class="dashboard-box">
                     <h2>Your latest build</h2>
@@ -109,258 +95,90 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-6">
-            <div class="widget white-bg">
-                <div class="dashboard-box">
-                    <h2 *ngIf="builds.length >= 0">Need help re-entering InfraBox?</h2>
-                    <h2 *ngIf="builds.length <= 0">What kind of project do you want to start with?</h2>
-
-                    <div class="ibox m-t-md no-borders">
-                        <div class="border-top-bottom border-left-right b-r-sm m-b-xs p-sm">
-                            <a class="collapse-link" style="color: inherit">
-                                <h3><i class="fa fa-github pull-left"></i>&#32; Start with a GitHub Project</h3>
-                            </a>
-                        </div>
-                        <div class="ibox-content no-borders m-t-xxs no-padding">
-                            <div class="panel-body no-padding">
-                                <div class="panel-group" id="accordionGit">
-                                    <div class="panel panel-default">
-                                        <div class="panel-heading">
-                                            <h5 class="panel-title">
-                                                <a data-toggle="collapse" data-parent="#accordionGit" href="#collapseGitOne">Step 1: Connect your repository
-                                                    </a>
-                                            </h5>
-                                        </div>
-                                        <div id="collapseGitOne" class="panel-collapse collapse">
-                                            <div class="panel-body">
-                                                <div class="m-r-md m-l-md m-b-md">
-                                                    Go to your GitHub repository overview page:
-                                                    <img class="m-t-xs img-thumbnail" src="../img/dashboard/connect_github.png" width="100%" />
-                                                </div>
-                                                <div class="m-r-md m-l-md">
-                                                    Select the repositories you want to connect with InfraBox:
-                                                    <img class="m-t-xs img-thumbnail" src="../img/dashboard/connect_github_select_repo.png" width="100%" />
-                                                </div>
-                                            </div>
+    </div>
+    <div id="add_project" class="modal fade" aria-hidden="true">
+        <div class="modal-dialog" style="width:40%">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <div class="row m-l-lg m-r-lg p-l-lg p-r-lg m-b-none p-b-none">
+                        <h3 class="border-bottom m-b-sm m-t-md"><i class="fa fa-tasks"></i> Add New Project</h3>
+                        <div class="m-t-md p-t-sm">
+                            <div class="row">
+                                <div class="panel blank-panel">
+                                    <div class="panel-heading">
+                                        <h5>1. Select project origin:</h5>
+                                        <div class="panel-options no-border">
+                                            <ul class="nav nav-tabs no-border">
+                                                <li role="presentation" class="active"><a href="#tab-gerrit" data-toggle="tab"><i class="fa fa-binoculars"></i> Gerrit</a></li>
+                                                <li role="presentation"><a href="#tab-upload" data-toggle="tab"><i class="fa fa-upload"></i> Upload</a></li>
+                                                <li role="presentation"><a href="#tab-github" data-toggle="tab"><i class="fa fa-github"></i> Github</a></li>
+                                            </ul>
                                         </div>
                                     </div>
-                                    <div class="panel panel-default">
-                                        <div class="panel-heading">
-                                            <h4 class="panel-title">
-                                                <a data-toggle="collapse" data-parent="#accordionGit" href="#collapseGitTwo">Step 2: Book a machine configuration</a>
-                                            </h4>
-                                        </div>
-                                        <div id="collapseGitTwo" class="panel-collapse collapse">
-                                            <div class="panel-body">
-                                                You can choose from the following configurations:
-                                                <div class="m-r-md m-l-md">
-                                                    <div class="table-responsive">
-                                                        <table class="table table-striped">
-                                                            <thead>
-                                                                <tr>
-                                                                    <th>Name</th>
-                                                                    <th>CPU</th>
-                                                                    <th>RAM</th>
-                                                                    <th>Storage</th>
-                                                                </tr>
-                                                            </thead>
-                                                            <tbody>
-                                                                <tr>
-                                                                    <td>vm-mini-1024</td>
-                                                                    <td>0.5 Core</td>
-                                                                    <td>1024 MB</td>
-                                                                    <td>10 GB</td>
-                                                                </tr>
-                                                                <tr>
-                                                                    <td>vm-1-2048</td>
-                                                                    <td>1 Core</td>
-                                                                    <td>2048 MB</td>
-                                                                    <td>20 GB</td>
-                                                                </tr>
-                                                                <tr>
-                                                                    <td>vm-2-4096</td>
-                                                                    <td>2 Cores</td>
-                                                                    <td>4096 MB</td>
-                                                                    <td>30 GB</td>
-                                                                </tr>
-                                                                <tr>
-                                                                    <td>vm-4-8192</td>
-                                                                    <td>4 Cores</td>
-                                                                    <td>8192 MB</td>
-                                                                    <td>40 GB</td>
-                                                                </tr>
-                                                            </tbody>
-                                                        </table>
+                                    <div class="panel-body">
+                                        <div class="tab-content" id="tab-content">
+                                            <div class="tab-pane active" id="tab-gerrit">
+                                                <h5>2. Enter the name of your Gerrit project:</h5>
+                                                <input type="text" [(ngModel)]="add_project_name" placeholder="Project Name" class="input-text">
+                                            </div>
+                                            <div class="tab-pane" id="tab-upload">
+                                                <h5>2. Enter the name of your local project:</h5>
+                                                <input type="text" [(ngModel)]="add_project_name" placeholder="Project Name" class="input-text">
+                                            </div>
+                                            <div class="tab-pane" id="tab-github">
+                                                <div *ngIf="!hasGithubAccount">
+                                                    <h5>2. You don't have a Github account conntected.</h5>
+                                                    <button class="btn btn-info btn-outline btn-sm" (click)="connectGithubAccount()"><i class="fa fa-plug"></i> <span class="hidden-xs"> Connect it to continue</span></button>
+                                                </div>
+                                                <div *ngIf="hasGithubAccount">
+                                                    <div class="row">
+                                                        <div class="col-lg-12 col-xs-12">
+                                                            <h3>2. Select the Github repository you want to connect:</h3>
+                                                            <p>Currently there are <span><strong>{{repos.length}}</strong></span> active repositories.</p>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row">
+                                                        <div *ngFor="let r of repos" class="col-lg-3">
+                                                            <button (click)="connect(r);" class="btn btn-default btn-outline btn-xs btn-dashboard col-lg-12">
+                                                                            <div *ngIf="r.connected">
+                                                                                <i class="fa icon-blue icon-huge fa fa-chain m-t-sm"></i>
+                                                                                <!-- Blue image is shown, if connected.-->
+                                                                            </div>
+                                                                            <div *ngIf="!r.connected">
+                                                                                <i class="fa icon-mute icon-huge fa fa-unlink m-t-sm"></i>
+                                                                                <!-- Grey image is shown, if not connected.-->
+                                                                            </div>
+                                                                            <div class="border-top m-t-sm"><strong>{{ r.full_name }}</strong></div>
+                                                                            <div>Owner: {{ r.owner.login }}</div>
+                                                                            <div *ngIf="r.private">
+                                                                                <i class="fa icon-mute fa-2x fa fa-home"></i>
+                                                                            </div>
+                                                                            <div *ngIf="!r.private">
+                                                                                <i class="fa icon-mute fa-2x fa fa-globe"></i>
+                                                                            </div>
+                                                                        </button>
+                                                        </div>
                                                     </div>
                                                 </div>
-                                                For pricing and subsriptions have a look at <a target="_blank" href="/dashboard/account/machines">this page</a>.
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="panel panel-default">
-                                        <div class="panel-heading">
-                                            <h4 class="panel-title">
-                                                <a data-toggle="collapse" data-parent="#accordionGit" href="#collapseGitThree">Step 3: Set up your configuration</a>
-                                            </h4>
+                                    <div style="padding-left: 15px; padding-right: 15px;">
+                                        <h5>3. Select the visibility of your project:</h5>
+                                        <div class="btn-group btn-group-sm" role="group" aria-label="...">
+                                            <button type="button" class="btn btn-info btn-outline"><i class="fa fa-user"></i> Private</button>
+                                            <button type="button" class="btn btn-info btn-outline"><i class="fa fa-users"></i> Public</button>
                                         </div>
-                                        <div id="collapseGitThree" class="panel-collapse collapse">
-                                            <div class="panel-body">
-                                                The heart of your InfraBox project is the infrabox.json file. In this document you define your jobs, their dependencies and resources.<br/>
-                                                <a target="_blank" href="#"> This article </a>explains how to set up the infrabox.json file.
-                                                <div class="font-bold">Assign one of the subscribed machine configurations to each of your jobs.</div>
-                                                <img class="m-t-xs img-thumbnail" src="../img/dashboard/machine_config_infrabox_json.png" width="100%" />
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="panel panel-default">
-                                        <div class="panel-heading">
-                                            <h4 class="panel-title">
-                                                <a data-toggle="collapse" data-parent="#accordionGit" href="#collapseGitFour">Step 4: Run your project on InfraBox</a>
-                                            </h4>
-                                        </div>
-                                        <div id="collapseGitFour" class="panel-collapse collapse">
-                                            <div class="panel-body">
-                                                Put your infrabox.json file into the root directory of your GitHub project.<br/> Now every time you push to you repository InfraBox will run your jobs and visualizes their results.
-                                                <img class="m-t-xs img-thumbnail" src="../img/landing/test-chart.png" width="100%" />
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="ibox no-borders">
-                        <div class="border-top-bottom border-left-right b-r-sm m-b-xs p-sm">
-                            <a class="collapse-link" style="color: inherit">
-                                <h3><i class="fa fa-upload pull-left"></i>&#32; Start with a Local Project</h3>
-                            </a>
-                        </div>
-                        <div class="ibox-content no-borders m-t-xxs no-padding">
-                            <div class="panel-body no-padding">
-                                <div class="panel-group" id="accordionLocal">
-                                    <div class="panel panel-default">
-                                        <div class="panel-heading">
-                                            <h5 class="panel-title">
-                                                <a data-toggle="collapse" data-parent="#accordionLocal" href="#collapseLocalOne">Step 1: Prepare your local project directory
-                                                    </a>
-                                            </h5>
-                                        </div>
-                                        <div id="collapseLocalOne" class="panel-collapse collapse">
-                                            <div class="panel-body">
-                                                Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="panel panel-default">
-                                        <div class="panel-heading">
-                                            <h4 class="panel-title">
-                                                <a data-toggle="collapse" data-parent="#accordionLocal" href="#collapseLocalTwo">Step 2: Book a machine configuration</a>
-                                            </h4>
-                                        </div>
-                                        <div id="collapseLocalTwo" class="panel-collapse collapse">
-                                            <div class="panel-body">
-                                                You can choose from the following configurations:
-                                                <div class="m-r-md m-l-md">
-                                                    <div class="table-responsive">
-                                                        <table class="table table-striped">
-                                                            <thead>
-                                                                <tr>
-                                                                    <th>Name</th>
-                                                                    <th>CPU</th>
-                                                                    <th>RAM</th>
-                                                                    <th>Storage</th>
-                                                                </tr>
-                                                            </thead>
-                                                            <tbody>
-                                                                <tr>
-                                                                    <td>vm-mini-1024</td>
-                                                                    <td>0.5 Core</td>
-                                                                    <td>1024 MB</td>
-                                                                    <td>10 GB</td>
-                                                                </tr>
-                                                                <tr>
-                                                                    <td>vm-1-2048</td>
-                                                                    <td>1 Core</td>
-                                                                    <td>2048 MB</td>
-                                                                    <td>20 GB</td>
-                                                                </tr>
-                                                                <tr>
-                                                                    <td>vm-2-4096</td>
-                                                                    <td>2 Cores</td>
-                                                                    <td>4096 MB</td>
-                                                                    <td>30 GB</td>
-                                                                </tr>
-                                                                <tr>
-                                                                    <td>vm-4-8192</td>
-                                                                    <td>4 Cores</td>
-                                                                    <td>8192 MB</td>
-                                                                    <td>40 GB</td>
-                                                                </tr>
-                                                            </tbody>
-                                                        </table>
-                                                    </div>
-                                                </div>
-                                                For pricing and subsriptions have a look at <a target="_blank" href="/dashboard/account/machines">this page</a>.
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="panel panel-default">
-                                        <div class="panel-heading">
-                                            <h4 class="panel-title">
-                                                <a data-toggle="collapse" data-parent="#accordionLocal" href="#collapseLocalThree">Step 3: Set up your configuration</a>
-                                            </h4>
-                                        </div>
-                                        <div id="collapseLocalThree" class="panel-collapse collapse">
-                                            <div class="panel-body">
-                                                The heart of your InfraBox project is the infrabox.json file. In this document you define your jobs, their dependencies and resources.<br/>
-                                                <a target="_blank" href="#"> This article </a>explains how to set up the infrabox.json file.
-                                                <div class="font-bold">Assign one of the subscribed machine configurations to each of your jobs.</div>
-                                                <img class="m-t-xs img-thumbnail" src="../img/dashboard/machine_config_infrabox_json.png" width="100%" />
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="panel panel-default">
-                                        <div class="panel-heading">
-                                            <h4 class="panel-title">
-                                                <a data-toggle="collapse" data-parent="#accordionLocal" href="#collapseLocalFour">Step 4: Add your project to InfraBox</a>
-                                            </h4>
-                                        </div>
-                                        <div id="collapseLocalFour" class="panel-collapse collapse">
-                                            <div class="panel-body">
-                                                After you set up your directory and infrabox.json file your can add it to InfraBox. Now you can use the complete InfraBox functionality within this project and visualize its results.<br/>
-                                                <img class="m-t-xs img-thumbnail" src="../img/dashboard/addNewProject.png" width="100%" />
-                                            </div>
-                                        </div>
+                                        <h5 style="padding-top: 15px;">4. Add the project to InfraBox:</h5>
+                                        <button class="btn btn-info btn-outline btn-sm text-center" (click)="addUploadProject()">
+                                                    <i class="fa fa-plus"></i><span> Finish</span>
+                                                </button>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-
-                <!-- <h2>You are new to InfraBox?</h2>
-                    <div class="row m-l-lg m-r-lg">
-                        <div class="col-lg-6 col-md-6 col-sm-12 col-xs-12 p-w-lg">
-                            <div class="panel panel-default">
-                                <div class="panel-heading font-bold">
-                                    The InfraBox Help Center explains all you need to get started.
-                                </div>
-                                <div class="panel-body">
-                                    <img src="../img/dashboard/helpcenter.png" height="300px" alt="Help Center" height="300px" />
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-lg-6 col-md-6 col-sm-12 col-xs-12 p-w-lg">
-                            <div class="panel panel-default">
-                                <div class="panel-heading font-bold">
-                                    For information, suggestions or error messages feel free to contact us.
-                                </div>
-                                <div class="panel-body">
-                                    <img src="../img/dashboard/support.png" height="300px" alt="Help Widget" height="300px" />
-                                </div>
-                            </div>
-                        </div>
-                    </div>-->
             </div>
         </div>
     </div>

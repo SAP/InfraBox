@@ -16,12 +16,12 @@
                             <li class="active" [routerLinkActive]="['active']">
                                 <a aria-expanded="false" role="button" routerLink="/dashboard/start">
                                     <i class="fa fa-th-large"></i>
-                                    <span class="nav-label">Getting Started</span>
+                                    <span class="nav-label">Overview</span>
                                 </a>
                             </li>
                             <li>
                                 <a aria-expanded="false" role="button" (click)="infraboxService.openDocs()">
-                                    <i class="fa fa-th-large"></i>
+                                    <i class="fa fa-book"></i>
                                     <span class="nav-label">Docs</span>
                                 </a>
                             </li>
@@ -44,7 +44,7 @@
                                     <li>
                                         <a [routerLink]="['/dashboard/account/tokens']">
                                             <i class="fa fa-key fa-fw"></i>
-                                            <span class="nav-label"> Authetication Tokens
+                                            <span class="nav-label"> Authentication Tokens
                                             </span>
                                         </a>
                                     </li>
