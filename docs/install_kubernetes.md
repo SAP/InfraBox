@@ -8,7 +8,7 @@ InfraBox requires two namespaces:
     kubectl create namespace infrabox-worker
 
 ## Prepare helm
-InfraBox will be lated installed using helm. So make sure you have helm downloaded and configured:
+InfraBox will be later installed using helm. So make sure you have helm downloaded and configured:
 
     helm init
 
