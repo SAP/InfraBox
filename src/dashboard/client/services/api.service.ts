@@ -3,7 +3,6 @@ import { NotificationService, Notification } from "./notification.service";
 import { LoginService } from "./login.service";
 
 import { Http, Response, Headers, RequestOptions, ResponseContentType } from "@angular/http";
-import { AuthHttp } from "angular2-jwt";
 import { Injectable } from "@angular/core";
 import { Observable } from "rxjs/Observable";
 import { saveAs as importedSaveAs } from "file-saver";
@@ -13,20 +12,12 @@ import 'rxjs/add/observable/throw';
 @Injectable()
 export class APIService {
     private logger: Logger;
-    private http: any;
 
     constructor(private logService: LogService,
-        private authHttp: AuthHttp,
-        private regularHttp: Http,
+        private http: Http,
         private notification: NotificationService,
         private loginService: LoginService) {
         this.logger = logService.createNamedLogger("APIService");
-
-        if (this.loginService.isLoggedIn()) {
-            this.http = this.authHttp;
-        } else {
-            this.http = this.regularHttp;
-        }
     }
 
     public get(url: string, data = {}): Observable<any> {
@@ -36,7 +27,7 @@ export class APIService {
         return this.http
             .get(url, options)
             .map((res: Response) => res.json())
-            .catch((error: Response | any) => {
+            .catch((error: any) => {
                 this.logger.error("error for: ", url);
                 this.logger.error(error);
 
@@ -45,10 +36,12 @@ export class APIService {
                     const body = error.json();
                     console.warn(body);
                     this.notification.notify(body as Notification);
+                    return Observable.throw(body);
                 } else {
                     this.logger.error("no Response");
                     const errMsg = error.message ? error.message : error.toString();
                     console.error(errMsg);
+                    return Observable.throw(errMsg);
                 }
             });
     }
@@ -68,7 +61,7 @@ export class APIService {
         return this.http
             .delete(url)
             .map((res: Response) => res.json())
-            .catch((error: Response | any) => {
+            .catch((error: any) => {
                 this.logger.error("error for: ", url);
                 this.logger.error(error);
 

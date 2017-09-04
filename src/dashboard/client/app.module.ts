@@ -4,7 +4,6 @@ import { FormsModule, ReactiveFormsModule } from "@angular/forms";
 import { HttpModule } from "@angular/http";
 import { MomentModule } from 'angular2-moment';
 
-import { provideAuth } from 'angular2-jwt';
 import { MarkdownModule } from 'angular2-markdown';
 import { CookieService } from 'angular2-cookie/services/cookies.service';
 
@@ -49,7 +48,7 @@ import { NotificationService } from "./services/notification.service";
 import { APIService } from "./services/api.service";
 import { TestService } from "./services/test.service";
 import { UserService } from "./services/user.service";
-import { LoginService, getToken, IsLoggedIn } from "./services/login.service";
+import { LoginService, IsLoggedIn } from "./services/login.service";
 import * as moment from "moment";
 
 moment.locale('de-de', {
@@ -85,15 +84,6 @@ import { AppComponent } from "./app.component";
         ProjectService, LogService, BuildService, InfraBoxService,
         CommitService, TestService, UserService,
         NotificationService, IsLoggedIn, APIService, CookieService,
-        provideAuth({
-            headerName: "auth-token",
-            headerPrefix: "",
-            tokenName: "token",
-            tokenGetter: () => getToken(),
-            globalHeaders: [{ 'Content-Type': 'application/json' }],
-            noJwtError: false,
-            noTokenScheme: true
-        })
     ],
 })
 export class AppModule { }
