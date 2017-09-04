@@ -102,7 +102,7 @@ def get_job_data():
 	    u.username,
 	    j.build_only,
 	    j.type,
-	    j.commit_after_run,
+	    null,
 	    j.keep,
 	    j.repo,
 	    j.base_path,
@@ -137,7 +137,6 @@ def get_job_data():
         "dockerfile": r[2],
         "build_only": r[12],
         "type": r[13],
-        "commit_after_run": r[14],
         "keep": r[15],
         "repo": r[16],
         "base_path": r[17],
@@ -675,8 +674,6 @@ def create_jobs():
         if 'security' in job:
             scan_container = job['security']['scan_container']
 
-        commit_after_run = job.get("commit_after_run", False)
-
         # Set commit status
         if job_type != "wait":
             create_github_commit_status('pending', name)
@@ -748,12 +745,12 @@ def create_jobs():
         cursor.execute("""
             INSERT INTO job (id, state, build_id, type, dockerfile, name,
                 project_id, dependencies, build_only,
-                commit_after_run, keep, created_at, repo, base_path, scan_container,
+                keep, created_at, repo, base_path, scan_container,
                 env_var_ref, env_var, build_arg, deployment, cpu, memory)
-            VALUES (%s, 'queued', %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);""",
+            VALUES (%s, 'queued', %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);""",
                        (job_id, job_data['build']['id'], t, f, name,
                         job_data['project']['id'],
-                        dependencies, build_only, commit_after_run, keep, datetime.now(),
+                        dependencies, build_only, keep, datetime.now(),
                         repo, base_path, scan_container, env_var_refs, env_vars,
                         build_arguments, deployments, limits_cpu, limits_memory))
         cursor.close()

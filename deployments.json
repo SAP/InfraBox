@@ -51,7 +51,6 @@
         "docker_file": "src/dashboard/Dockerfile",
         "build_only": false,
         "resources": { "limits": { "cpu": 1, "memory": 2048 } },
-        "commit_after_run": true,
         "security": {
             "scan_container": true
         }
@@ -61,7 +60,6 @@
         "docker_file": "src/api/Dockerfile",
         "build_only": false,
         "resources": { "limits": { "cpu": 1, "memory": 2048 } },
-        "commit_after_run": true,
         "security": {
             "scan_container": true
         }

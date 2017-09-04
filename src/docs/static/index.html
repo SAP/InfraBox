@@ -639,7 +639,6 @@ services:
     "docker_file": "infrabox/build-and-test/Dockerfile"
     "resources": { "limits": { "cpu": 1, "memory": 1024 } },
     "build_only": false,
-    "commit_after_run": false,
     "depends_on": ["other_job_name"],
     "environment": { ... },
     "security": {
@@ -693,12 +692,6 @@ services:
                                     <td>true</td>
                                     <td>boolean</td>
                                     <td>If set to <kbd>true</kbd> the container will only be build but not run. Use it if you only want to build a container and push it to a registry. See <a href="#using-image-registries">here</a> for how to push to a docker registry.</td>
-                                </tr>
-                                <tr>
-                                    <td>commit_after_run</td>
-                                    <td>false</td>
-                                    <td>boolean</td>
-                                    <td>Default value is <kbd>false</kbd>. Only valid if <kbd>build_only</kbd> is <kbd>false.</kbd><br/>It's good practice to build images only from a Dockerfile. But sometime it's required to run a script while build an image. For this you can set commit_after_run to true. InfraBox will then run <i>docker commit</i> after the container got executed. If keep is true or you have set up an deployment to an external docker registry InfraBox will deploy the image including all the changes you did while running the container. </td>
                                 </tr>
                                 <tr>
                                     <td>depends_on</td>

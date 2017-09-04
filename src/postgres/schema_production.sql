@@ -383,7 +383,6 @@ CREATE TABLE job (
     dependencies uuid[],
     build_only boolean NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    commit_after_run boolean DEFAULT false NOT NULL,
     keep boolean DEFAULT false NOT NULL,
     repo jsonb,
     base_path character varying(1024),

@@ -516,9 +516,7 @@ class RunJob(Job):
 
                 cmd += [image_name]
                 c.execute(cmd, show=True)
-
-                if self.job['commit_after_run']:
-                    c.execute(("docker", "commit", container_name, image_name))
+                c.execute(("docker", "commit", container_name, image_name))
         except:
             raise Failure("Container run exited with error")
         finally:

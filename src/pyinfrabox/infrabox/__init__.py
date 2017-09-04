@@ -111,7 +111,7 @@ def parse_resources(d, path):
     parse_limits(d['limits'], path + ".limits")
 
 def parse_docker(d, path):
-    check_allowed_properties(d, path, ("type", "name", "docker_file", "depends_on", "resources", "build_only", "security", "commit_after_run", "keep", "environment", "build_arguments", "deployments"))
+    check_allowed_properties(d, path, ("type", "name", "docker_file", "depends_on", "resources", "build_only", "security", "keep", "environment", "build_arguments", "deployments"))
     check_required_properties(d, path, ("type", "name", "docker_file", "resources"))
     check_name(d['name'], path + ".name")
     check_text(d['docker_file'], path + ".docker_file")
@@ -128,10 +128,6 @@ def parse_docker(d, path):
 
     if 'security' in d:
         parse_security(d['security'], path + ".security")
-
-    if 'commit_after_run' in d:
-        if not isinstance(d['commit_after_run'], bool):
-            raise ValidationError(path + ".commit_after_run", "Must be boolean")
 
     if 'environment' in d:
         parse_environment(d['environment'], path + ".environment")
