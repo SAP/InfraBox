@@ -1,10 +1,12 @@
 import { Component, OnInit, OnDestroy } from "@angular/core";
 
+import { Observable } from "rxjs/Observable";
 import { Subscription } from "rxjs/Subscription";
 
 import { NotificationService, Notification } from "./services/notification.service";
+import { UserService } from "./services/user.service";
 import { Logger, LogService } from "./services/log.service";
-import { ProjectService, ProjectType } from "./services/project.service";
+import { GithubRepo, ProjectService, ProjectType } from "./services/project.service";
 import { LoginService } from "./services/login.service";
 import { InfraBoxService } from "./services/infrabox.service";
 
@@ -17,16 +19,20 @@ require('./img/dashboard/logo_white_on_transparent.png');
 })
 export class AppComponent implements OnInit, OnDestroy {
     private subs = new Array<Subscription>();
+    private repos = new Array<GithubRepo>();
     private logger: Logger;
     private add_project_name: string;
     private add_project_private: boolean = true;
     private add_project_type: ProjectType = "upload";
+    private add_project_repo: GithubRepo;
+    private hasGithubAccount = false;
 
     constructor(
         private notificationService: NotificationService,
         private loginService: LoginService,
         private logService: LogService,
         private projectService: ProjectService,
+        private userService: UserService,
         private infraboxService: InfraBoxService) {
         this.logger = this.logService.createNamedLogger("AppComponent");
 
@@ -58,6 +64,18 @@ export class AppComponent implements OnInit, OnDestroy {
                 this.logger.error("Unknown notification type", n);
             }
         }));
+
+        this.subs.push(this.userService.hasGithubAccount().flatMap((hasAccount: boolean) => {
+            this.hasGithubAccount = hasAccount;
+
+            if (hasAccount) {
+                return this.projectService.getGithubRepositories();
+            } else {
+                return Observable.from([]);
+            }
+        }).subscribe((r: GithubRepo) => {
+            this.repos.push(r);
+        }));
     }
 
     public setProjectType(t: ProjectType) {
@@ -68,7 +86,19 @@ export class AppComponent implements OnInit, OnDestroy {
         this.add_project_private = b;
     }
 
+    public connectGithubAccount() {
+        window.location.href = "/github/auth/connect";
+    }
+
+    public select(r: GithubRepo) {
+        this.add_project_name = r.owner.login + "/" + r.name;
+    }
+
     public addProject() {
+        if (!this.add_project_name) {
+            return;
+        }
+
         this.subs.push(this.projectService.addProject(this.add_project_name,
                                                       this.add_project_private,
                                                       this.add_project_type)

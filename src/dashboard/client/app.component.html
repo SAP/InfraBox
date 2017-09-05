@@ -126,7 +126,7 @@
                                                             </div>
                                                             <div class="row">
                                                                 <div *ngFor="let r of repos" class="col-lg-3">
-                                                                    <button (click)="connect(r);" class="btn btn-default btn-outline btn-xs btn-dashboard col-lg-12">
+                                                                    <button (click)="select(r);" class="btn btn-default btn-outline btn-xs btn-dashboard col-lg-12">
                                                                             <div *ngIf="r.connected">
                                                                                 <i class="fa icon-blue icon-huge fa fa-chain m-t-sm"></i>
                                                                                 <!-- Blue image is shown, if connected.-->
