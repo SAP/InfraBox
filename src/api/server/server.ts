@@ -1,5 +1,7 @@
 import express = require("express");
 import http = require("http");
+import https = require("https");
+import fs = require("fs");
 
 import * as _ from "lodash";
 
@@ -12,7 +14,21 @@ import { socket_token_auth } from "./utils/auth";
 
 export function createServer(print: boolean) {
     const app = express();
-    const server = http.createServer(app);
+    let server = null;
+
+    if (config.api.tls.enabled) {
+        logger.info("HTTPS is enabled");
+        const options = {
+            key: fs.readFileSync(config.api.tls.key),
+            cert: fs.readFileSync(config.api.tls.cert)
+        }
+
+        server = https.createServer(options, app);
+    } else {
+        logger.warn("HTTPS is not enabled");
+        server = http.createServer(app);
+    }
+
 
     server['listeners']['console'] = new ConsoleListener();
     server['listeners']['job'] = new JobListener();

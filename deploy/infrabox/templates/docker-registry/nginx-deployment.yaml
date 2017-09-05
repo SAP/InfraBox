@@ -37,16 +37,21 @@ spec:
                         secretKeyRef:
                             name: infrabox-docker-registry
                             key: username
-                livenessProbe:
-                    httpGet:
-                        path: /ping
-                        port: 8080
-                    initialDelaySeconds: 5
-                    periodSeconds: 30
-                readinessProbe:
-                    httpGet:
-                        path: /ping
-                        port: 8080
-                    initialDelaySeconds: 3
-                    periodSeconds: 3
+                -
+                    name: INFRABOX_DOCKER_REGISTRY_TLS_ENABLED
+                    value: {{ default "false" .Values.docker_registry.tls.enabled | quote }}
+                volumeMounts:
+                {{ if .Values.docker_registry.tls.enabled }}
+                -
+                    name: registry-tls
+                    mountPath: /var/run/infrabox
+                    readOnly: true
+                {{ end }}
+            volumes:
+            {{ if .Values.docker_registry.tls.enabled }}
+            -
+                name: registry-tls
+                secret:
+                    secretName: infrabox-docker-registry-tls
+            {{ end }}
 {{ end }}

@@ -45,11 +45,17 @@ spec:
                 command:
                 - "node"
                 - "/api/dist/server/app.js"
-                {{ if .Values.storage.gcs.enabled }}
                 volumeMounts:
+                {{ if .Values.storage.gcs.enabled }}
                 -
                     name: gcs-service-account
                     mountPath: /etc/infrabox/gcs
+                    readOnly: true
+                {{ end }}
+                {{ if .Values.api.tls.enabled }}
+                -
+                    name: api-tls
+                    mountPath: /var/run/infrabox
                     readOnly: true
                 {{ end }}
                 env:
@@ -78,6 +84,9 @@ spec:
                     name: INFRABOX_API_PORT
                     value: "8080"
                 -
+                    name: INFRABOX_API_TLS_ENABLED
+                    value: {{ default "false" .Values.api.tls.enabled | quote }}
+                -
                     name: INFRABOX_DOCKER_REGISTRY_URL
                     value: {{ .Values.docker_registry.url }}
             volumes:
@@ -87,5 +96,11 @@ spec:
                     name: gcs-service-account
                     secret:
                         secretName: infrabox-gcs
+                {{ end }}
+                {{ if .Values.api.tls.enabled }}
+                -
+                    name: api-tls
+                    secret:
+                        secretName: infrabox-api-tls
                 {{ end }}
 {{ end }}

@@ -63,6 +63,11 @@ export let config = {
         log: {
             level: getFromEnv("INFRABOX_DASHBOARD_LOG_LEVEL", "info"),
             stackdriver: getFromEnvBool("INFRABOX_GENERAL_LOG_STACKDRIVER", false),
+        },
+        tls: {
+            enabled: getFromEnvBool("INFRABOX_DASHBOARD_TLS_ENABLED", false),
+            key: "",
+            cert: ""
         }
     },
     account: {
@@ -164,4 +169,9 @@ if (config.account.ldap.enabled && config.github.login.enabled) {
 if (config.account.ldap.enabled && config.account.signup.enabled) {
     console.error("Choose either account.ldap or account.signup, but both together is not supported!");
     process.exit(1);
+}
+
+if (config.dashboard.tls.enabled) {
+    config.dashboard.tls.key = getFromEnv("INFRABOX_DASHBOARD_TLS_KEY", "/var/run/infrabox/server.key");
+    config.dashboard.tls.cert = getFromEnv("INFRABOX_DASHBOARD_TLS_CERT", "/var/run/infrabox/server.crt");
 }

@@ -24,16 +24,22 @@ spec:
                 name: docs
                 image: {{ .Values.general.docker_registry }}/{{ default "infrabox/docs" .Values.docs.image }}:{{ .Values.docs.tag }}
                 imagePullPolicy: Always
-                livenessProbe:
-                    httpGet:
-                        path: /
-                        port: 8080
-                    initialDelaySeconds: 10
-                    periodSeconds: 10
-                readinessProbe:
-                    httpGet:
-                        path: /
-                        port: 8080
-                    initialDelaySeconds: 5
-                    periodSeconds: 5
+                env:
+                -
+                    name: INFRABOX_DOCS_TLS_ENABLED
+                    value: {{ default "false" .Values.docs.tls.enabled | quote }}
+                volumeMounts:
+                {{ if .Values.docs.tls.enabled }}
+                -
+                    name: docs-tls
+                    mountPath: /var/run/infrabox
+                    readOnly: true
+                {{ end }}
+            volumes:
+            {{ if .Values.docs.tls.enabled }}
+            -
+                name: docs-tls
+                secret:
+                    secretName: infrabox-docs-tls
+            {{ end }}
 {{ end }}

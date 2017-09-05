@@ -108,6 +108,9 @@ docker_registry:
     # Kubernetes NodePort
     # node_port: 30202
 
+    tls:
+        enabled: false
+
 docs:
     enabled: true
 
@@ -118,6 +121,9 @@ docs:
 
     # Kubernetes NodePort
     # node_port: 30203
+
+    tls:
+        enabled: false
 
 dashboard:
     enabled: true
@@ -140,6 +146,9 @@ dashboard:
         # If true prints output for stackdriver
         stackdriver: false
 
+    tls:
+        enabled: false
+
 api:
     enabled: true
 
@@ -160,6 +169,9 @@ api:
 
         # If true prints output for stackdriver
         stackdriver: false
+
+    tls:
+        enabled: false
 
 account:
     signup:

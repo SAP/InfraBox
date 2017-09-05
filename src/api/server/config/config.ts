@@ -56,6 +56,11 @@ export let config = {
         log: {
             level: getFromEnv("INFRABOX_API_LOG_LEVEL", "info"),
             stackdriver: getFromEnvBool("INFRABOX_GENERAL_LOG_STACKDRIVER", false),
+        },
+        tls: {
+            enabled: getFromEnvBool("INFRABOX_API_TLS_ENABLED", false),
+            key: "",
+            cert: ""
         }
     },
     github: {
@@ -121,4 +126,9 @@ if (config.github.enabled) {
     config.github.client_id = getFromEnv("INFRABOX_GITHUB_CLIENT_ID");
     config.github.client_secret = getFromEnv("INFRABOX_GITHUB_CLIENT_SECRET");
     config.github.webhook_secret = getFromEnv("INFRABOX_GITHUB_WEBHOOK_SECRET");
+}
+
+if (config.api.tls.enabled) {
+    config.api.tls.key = getFromEnv("INFRABOX_API_TLS_KEY", "/var/run/infrabox/server.key");
+    config.api.tls.cert = getFromEnv("INFRABOX_API_TLS_CERT", "/var/run/infrabox/server.crt");
 }

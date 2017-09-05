@@ -1,8 +1,6 @@
-#!/bin/sh -e
+#!/bin/bash -e
 
-HTPASSWD_PATH=/home/nginx/nginx.htpasswd python get_admin_pw.py
-
-if [ "$INFRABOX_DOCKER_REGISTRY_TLS_ENABLED" == "true" ];
+if [ "$INFRABOX_DOCS_TLS_ENABLED" == "true" ];
 then
     if [ ! -f "/var/run/infrabox/server.crt" ]; then
         echo "/var/run/infrabox/server.crt not found"
