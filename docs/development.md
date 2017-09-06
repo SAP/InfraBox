@@ -1,8 +1,8 @@
 # Local development with minikube
 
-## Preqreuisites
+## Prerequisites
 - [minikube](https://kubernetes.io/docs/getting-started-guides/minikube/) v0.21.0
-- [infraboxcli](infraboxcl://github.com/infrabox/cli)
+- [infraboxcli](https://github.com/infrabox/cli)
 - [mc](https://docs.minio.io/docs/minio-client-quickstart-guide)
 - [helm](https://github.com/kubernetes/helm)
 
