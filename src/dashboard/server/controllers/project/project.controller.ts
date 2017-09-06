@@ -102,10 +102,10 @@ router.post("/", pv, (req: Request, res: Response, next) => {
                 let repo_name = split[1]
 
                 return tx.none(`
-                    INSERT INTO repository (name, html_url, clone_url, github_id, private, project_id)
-                    VALUES ($1, $2, $3, $4, $5, $6);
+                    INSERT INTO repository (name, html_url, clone_url, github_id, private, project_id, github_owner)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7);
                 `, [repo.name, repo.html_url,
-                    repo.clone_url, repo.id, repo.private, project_id]
+                    repo.clone_url, repo.id, repo.private, project_id, repo.owner.login]
                 ).then(() => {
                     return createHook(api_token, repo_name, owner);
                 }).then((hook: any) => {
@@ -122,36 +122,3 @@ router.post("/", pv, (req: Request, res: Response, next) => {
     .catch(handleDBError(next));
 });
 
-router.delete("/", pv, (req: Request, res: Response, next) => {
-    const user_id = req['user'].id;
-    const project_id = req.params['project_id'];
-
-    db.tx((tx) => {
-        return tx.one(`SELECT COUNT(*) as cnt
-                       FROM collaborator co
-               INNER JOIN project p
-                   ON p.id = co.project_id
-                   AND p.type = 'upload'
-                       WHERE co.user_id = $1
-                   AND co.project_id = $2
-                   AND co.owner = true`, [user_id, project_id]
-            ).then((data: any) => {
-                if (data.cnt === 0) {
-                    throw new NotFound();
-                }
-
-                return tx.any(`DELETE FROM project WHERE id = $1
-                    AND type = 'upload' RETURNING ID`, [project_id]);
-            }).then((data: any) => {
-                if (data.length === 0) {
-                            throw new NotFound();
-                }
-
-                return tx.any(`DELETE FROM collaborator WHERE project_id = $1`, [project_id]);
-        });
-    })
-    .then(() => {
-        return OK(res, 'successfully deleted project');
-    })
-    .catch(handleDBError(next));
-});

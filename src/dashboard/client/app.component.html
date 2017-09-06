@@ -31,7 +31,7 @@
                                     <span class="nav-label"> Projects</span><span class="caret"></span></a>
                                 <ul role="menu" class="dropdown-menu">
                                     <li class="m-sm m-b-md">
-                                        <a data-toggle="modal" type="button" class="btn  btn-xs btn-block btn-default" href="#add_project"><i class="fa fa-plus"></i><span> Add New Project</span></a>
+                                        <a [routerLink]="['/dashboard/account/project/add']" data-toggle="modal" type="button" class="btn  btn-xs btn-block btn-default"><i class="fa fa-plus"></i><span> Add New Project</span></a>
                                     </li>
                                     <project-list></project-list>
                                 </ul>
@@ -46,12 +46,6 @@
                                             <i class="fa fa-key fa-fw"></i>
                                             <span class="nav-label"> Authentication Tokens
                                             </span>
-                                        </a>
-                                    </li>
-                                    <li *ngIf="infraboxService.isGithubEnabled()">
-                                        <a [routerLink]="['/dashboard/account/repositories']">
-                                            <i class="fa fa-github fa-fw"></i>
-                                            <span class="nav-label"> My GitHub Repositories</span>
                                         </a>
                                     </li>
                                 </ul>
@@ -81,92 +75,6 @@
                 <div class="col-lg-12">
                     <router-outlet>
                     </router-outlet>
-                </div>
-            </div>
-            <div id="add_project" class="modal fade" aria-hidden="true">
-                <div class="modal-dialog" style="width:40%">
-                    <div class="modal-content">
-                        <div class="modal-body">
-                            <div class="row m-l-lg m-r-lg p-l-lg p-r-lg m-b-none p-b-none">
-                                <h3 class="border-bottom m-b-sm m-t-md"><i class="fa fa-tasks"></i> Add New Project</h3>
-                                <div class="m-t-md p-t-sm">
-                                    <div class="row">
-                                        <div class="panel blank-panel">
-                                            <div class="panel-heading">
-                                                <h5>1. Select project type:</h5>
-                                                <div class="panel-options no-border">
-                                                    <ul class="nav nav-tabs no-border">
-                                                        <li role="presentation" class="active"><a href="#tab-upload" data-toggle="tab" (click)="setProjectType('upload');"><i class="fa fa-upload"></i> Upload</a></li>
-                                                        <li *ngIf="infraboxService.isGerritEnabled()" role="presentation"><a href="#tab-gerrit" data-toggle="tab" (click)="setProjectType('gerrit');"><i class="fa fa-binoculars"></i> Gerrit</a></li>
-                                                        <li *ngIf="infraboxService.isGithubEnabled()" role="presentation"><a href="#tab-github" data-toggle="tab" (click)="setProjectType('github');"><i class="fa fa-github"></i> Github</a></li>
-                                                    </ul>
-                                                </div>
-                                            </div>
-                                            <div class="panel-body">
-                                                <div class="tab-content" id="project-type-tab">
-                                                    <div class="tab-pane active" id="tab-gerrit">
-                                                        <h5>2. Enter the name of your Gerrit project:</h5>
-                                                        <input type="text" [(ngModel)]="add_project_name" placeholder="Project Name" class="input-text">
-                                                    </div>
-                                                    <div class="tab-pane" id="tab-upload">
-                                                        <h5>2. Enter the name of your local project:</h5>
-                                                        <input type="text" [(ngModel)]="add_project_name" placeholder="Project Name" class="input-text">
-                                                    </div>
-                                                    <div class="tab-pane" id="tab-github">
-                                                        <div *ngIf="!hasGithubAccount">
-                                                            <h5>2. You don't have a Github account conntected.</h5>
-                                                            <button class="btn btn-info btn-outline btn-sm" (click)="connectGithubAccount()"><i class="fa fa-plug"></i> <span class="hidden-xs"> Connect it to continue</span></button>
-                                                        </div>
-                                                        <div *ngIf="hasGithubAccount">
-                                                            <div class="row">
-                                                                <div class="col-lg-12 col-xs-12">
-                                                                    <h3>2. Select the Github repository you want to connect:</h3>
-                                                                    <p>Currently there are <span><strong>{{repos.length}}</strong></span> active repositories.</p>
-                                                                </div>
-                                                            </div>
-                                                            <div class="row">
-                                                                <div *ngFor="let r of repos" class="col-lg-3">
-                                                                    <button (click)="select(r);" class="btn btn-default btn-outline btn-xs btn-dashboard col-lg-12">
-                                                                            <div *ngIf="r.connected">
-                                                                                <i class="fa icon-blue icon-huge fa fa-chain m-t-sm"></i>
-                                                                                <!-- Blue image is shown, if connected.-->
-                                                                            </div>
-                                                                            <div *ngIf="!r.connected">
-                                                                                <i class="fa icon-mute icon-huge fa fa-unlink m-t-sm"></i>
-                                                                                <!-- Grey image is shown, if not connected.-->
-                                                                            </div>
-                                                                            <div class="border-top m-t-sm"><strong>{{ r.full_name }}</strong></div>
-                                                                            <div>Owner: {{ r.owner.login }}</div>
-                                                                            <div *ngIf="r.private">
-                                                                                <i class="fa icon-mute fa-2x fa fa-home"></i>
-                                                                            </div>
-                                                                            <div *ngIf="!r.private">
-                                                                                <i class="fa icon-mute fa-2x fa fa-globe"></i>
-                                                                            </div>
-                                                                    </button>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div style="padding-left: 15px; padding-right: 15px;">
-                                                <h5>3. Select the visibility of your project:</h5>
-                                                <div class="btn-group btn-group-sm" role="group" aria-label="...">
-                                                    <button type="button" [ngClass]="{active: add_project_private}" class="btn btn-info btn-outline" (click)="setPrivate(true)"><i class="fa fa-user"></i> Private</button>
-                                                    <button type="button" [ngClass]="{active: !add_project_private}" class="btn btn-info btn-outline" (click)="setPrivate(false)"><i class="fa fa-users"></i> Public</button>
-                                                </div>
-                                                <h5 style="padding-top: 15px;">4. Add the project to InfraBox:</h5>
-                                                <button class="btn btn-info btn-outline btn-sm text-center" (click)="addProject()">
-                                                    <i class="fa fa-plus"></i><span> Finish</span>
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>

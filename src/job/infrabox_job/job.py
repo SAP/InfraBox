@@ -79,7 +79,7 @@ class Job(object):
             return
 
         if r.status_code != 200:
-            raise Failure('Failed to download file')
+            raise Failure('Failed to download file: %s' % r.text)
 
         with open(path, 'wb') as  f:
             for chunk in r.iter_content(chunk_size=1024):

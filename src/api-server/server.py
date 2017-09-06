@@ -488,8 +488,26 @@ def get_output_of_job(job_id):
     if not is_valid_dependency:
         return "Job not found", 404
 
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT download FROM job WHERE id = %s
+    ''', (job_id, ))
+    r = cursor.fetchall()
+    cursor.close()
+
+    if len(r) != 1:
+        return "Job not found 2: %s" % r, 500
+
+    if 'Output' not in r[0][0]:
+        return "Job not found 3: %s" % r[0], 500
+
+    output = r[0][0]["Output"]
+
+    if len(output) != 1:
+        return "Job not found 4: %s" % p, 500
+
+    object_name = output[0]['id']
     output_zip = os.path.join('/tmp', job_id + '.tar.gz')
-    object_name = "%s.tar.gz" % job_id
 
     if use_gcs():
         bucket = os.environ['INFRABOX_STORAGE_GCS_CONTAINER_OUTPUT_BUCKET']

@@ -93,6 +93,37 @@ export function getRepo(token: string, repo: string, owner: string) {
     });
 }
 
+export function deleteHook(token: string, repo: string, owner: string, id: string) {
+    const options = {
+        uri: api_url + '/repos/' + owner + '/' + repo + '/hooks/' + id,
+        method: 'DELETE',
+        headers: {
+            "Authorization": "token " + token,
+            "User-Agent": "InfraBox"
+        }
+    };
+
+    console.log(JSON.stringify(options));
+
+    return new Promise((resolve, reject) => {
+        request(options, (err, response, body) => {
+            if (err) {
+                return reject(new InternalError(err));
+            }
+
+            if (response.statusCode !== 201) {
+                try {
+                    return reject(new BadRequest(body['errors'][0]['message']));
+                } catch (e) {
+                    return reject(new InternalError(body));
+                }
+            }
+
+            return resolve(body);
+        });
+    });
+}
+
 export function createHook(token: string, repo: string, owner: string) {
     const options = {
         uri: api_url + '/repos/' + owner + '/' + repo + '/hooks',

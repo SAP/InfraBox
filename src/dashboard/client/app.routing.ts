@@ -13,7 +13,7 @@ import { DocumentComponent } from "./components/utils/document.component";
 
 import { DashboardComponent } from "./components/dashboard.component";
 import { ProjectSettingsComponent } from "./components/project/settings.component";
-import { GithubReposComponent } from "./components/github_repos.component";
+import { AddProjectComponent } from "./components/add_project.component";
 import { AuthTokenComponent } from "./components/auth_token.component";
 import { IsLoggedIn } from "./services/login.service";
 
@@ -25,9 +25,9 @@ const appRoutes: Routes = [{
     path: "dashboard/start",
     component: DashboardComponent
 }, {
-    path: "dashboard/account/repositories",
+    path: "dashboard/account/project/add",
     canActivate: [IsLoggedIn],
-    component: GithubReposComponent
+    component: AddProjectComponent
 }, {
     path: "dashboard/account/tokens",
     canActivate: [IsLoggedIn],

@@ -257,14 +257,14 @@ class RunJob(Job):
             self.get_file_from_api_server('/output/%s' % dep['id'], storage_input_file_tar)
 
             if os.path.isfile(storage_input_file_tar):
-                c.collect("input found: %s\n" % dep['name'])
+                c.collect("output found for %s\n" % dep['name'], show=True)
                 c.execute(['ls', '-alh', storage_input_file_tar], show=True)
                 infrabox_input_dir = os.path.join(self.infrabox_inputs_dir, dep['name'].split('/')[-1])
                 os.makedirs(infrabox_input_dir)
                 self.uncompress(storage_input_file_tar, infrabox_input_dir, c)
                 os.remove(storage_input_file_tar)
             else:
-                c.collect("no input found\n")
+                c.collect("no output found for %s\n" % dep['name'], show=True)
 
         # <storage_dir>/cache is synced with the corresponding
         # Storage path which stores the compressed cache

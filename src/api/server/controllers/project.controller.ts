@@ -134,15 +134,18 @@ router.get("/:project_id/job/:job_id/output", pv, token_auth, checkProjectAccess
     const job_id = req.params['job_id'];
 
     return db.any(`
-        SELECT id FROM job WHERE id = $1 and project_id = $2
+        SELECT id, download FROM job WHERE id = $1 and project_id = $2
     `, [job_id, project_id])
     .then((result: any[]) => {
         if (result.length !== 1) {
             throw new NotFound();
         }
 
-        const file = job_id + '.tar.gz';
+        if (!result[0].download) {
+            throw new NotFound();
+        }
 
+        const file = result[0].download.Output[0].id;
         return downloadOutput(file);
     }).then((stream: any) => {
         if (!stream) {

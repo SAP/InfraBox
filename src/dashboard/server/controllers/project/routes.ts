@@ -19,6 +19,8 @@ project.use(checkProjectAccess);
 project.use('/collaborators/', require('./collaborators.controller'));
 project.use('/secrets/', require('./secret.controller'));
 project.use('/build/', require('./build.controller'));
+project.use('/', require('./delete.controller'));
+
 p.use('/:project_id/', project);
 p.use('/', auth, require('./project.controller'));
 

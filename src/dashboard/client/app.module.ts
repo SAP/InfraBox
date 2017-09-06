@@ -29,7 +29,7 @@ import { BadgeComponent } from "./components/utils/badge.component";
 import { TestStateComponent } from "./components/utils/test_state.component";
 import { DurationComponent } from "./components/utils/duration.component";
 import { StartDateComponent } from "./components/utils/start_date.component";
-import { GithubReposComponent } from "./components/github_repos.component";
+import { AddProjectComponent } from "./components/add_project.component";
 import { EndDateComponent } from "./components/utils/end_date.component";
 import { ConsoleComponent } from "./components/project/job/console.component";
 import { AuthTokenComponent } from "./components/auth_token.component";
@@ -74,7 +74,7 @@ import { AppComponent } from "./app.component";
         ConsoleComponent, ProjectSettingsComponent, ProjectCollaboratorsComponent,
         JobListComponent, BuildDetailComponent,
         JobStateTimelineComponent, EndDateComponent, DurationComponent,
-        StartDateComponent, GithubReposComponent,
+        StartDateComponent, AddProjectComponent,
         CompareConfigComponent, CompareMetricsComponent,
         TestStateComponent, SecretComponent, AuthTokenComponent,
         DocumentComponent, BadgeComponent, JobStatsComponent, JobDownloadsComponent

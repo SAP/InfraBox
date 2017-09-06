@@ -127,7 +127,7 @@
     value: {{ default "https://api.github.com" .Values.github.api_url }}
 -
     name: INFRABOX_GITHUB_LOGIN_URL
-    value: {{ default "https://github.com/login" .Values.github.login_url }}
+    value: {{ default "https://github.com/login" .Values.github.login.url }}
 {{ end }}
 {{ end }}
 
