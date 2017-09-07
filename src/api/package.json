@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "engines": {
-    "node": "6.7.0"
+    "node": "8.4.0"
   },
   "scripts": {
     "start": "NODE_ENV=production node dist/server/app.js",
@@ -15,10 +15,10 @@
     "@types/lodash": "4.14.41",
     "@types/mocha": "^2.2.41",
     "@types/node": "^7.0.31",
-    "@types/toastr": "^2.1.33",
     "@types/uuid": "^3.0.0",
+    "@types/bluebird": "~3.0.36",
     "async": "^2.4.1",
-    "bluebird": "^3.5.0",
+    "bluebird": "~3.4.6",
     "buffer-equal-constant-time": "^1.0.1",
     "compression": "^1.6.2",
     "cookie-parser": "^1.4.3",

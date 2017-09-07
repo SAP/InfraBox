@@ -4,6 +4,6 @@ RUN apk add --no-cache python py-psycopg2 py-requests py-pip && \
     pip install prometheus_client && \
     apk del py-pip
 
-COPY src/kube-scheduler kube-scheduler
+COPY src/scheduler scheduler
 
-ENTRYPOINT ["python", "kube-scheduler/scheduler.py"]
+ENTRYPOINT ["python", "scheduler/scheduler.py"]

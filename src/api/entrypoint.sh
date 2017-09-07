@@ -8,7 +8,7 @@ cd project
 
 echo "## npm install"
 export NPM_CONFIG_LOGLEVEL=warn
-npm install
+npm install --production
 
 echo "## Copy to cache"
 rm -rf /infrabox/cache/node_modules

@@ -213,20 +213,27 @@ function getOwnerToken(repo_id: number) {
     );
 }
 
+function getBranch(ref) {
+    const a = ref.split("/");
+    a.shift();
+    a.shift();
+    return a.join("/");
+}
+
 function handlePush(event: PushEvent, res: Response, next) {
     let branch = null;
     let tag = null;
     let commits: Commit[];
 
     if (event.base_ref) {
-        branch = event.base_ref.split("/").pop();
+        branch = getBranch(event.base_ref);
     }
 
     if (event.ref.startsWith("refs/tags")) {
         tag = event.ref.split("/").pop();
         commits = [event.head_commit];
     } else {
-        branch = event.ref.split("/").pop();
+        branch = getBranch(event.ref);
         commits = event.commits;
     }
 

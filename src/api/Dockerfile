@@ -1,4 +1,4 @@
-FROM node:6.9.2-alpine
+FROM node:8.4-alpine
 
 ENV NPM_CONFIG_LOGLEVEL=warn
 ENV NODE_ENV=production

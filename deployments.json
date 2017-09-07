@@ -71,8 +71,8 @@
         "resources": { "limits": { "cpu": 1, "memory": 2048 } }
      }, {
         "type": "docker",
-        "name": "kube-scheduler",
-        "docker_file": "src/kube-scheduler/Dockerfile",
+        "name": "scheduler",
+        "docker_file": "src/scheduler/Dockerfile",
         "build_only": true,
         "resources": { "limits": { "cpu": 1, "memory": 2048 } },
         "security": {

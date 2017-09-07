@@ -1,2 +1,1 @@
-let s = require("./server");
-s.createServer(true);
+require("./server").createServer(true);

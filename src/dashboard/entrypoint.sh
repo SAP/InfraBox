@@ -8,6 +8,7 @@ cp -r /infrabox/cache/node_modules /project
 cd project
 
 echo "## npm install"
+
 export NPM_CONFIG_LOGLEVEL=warn
 npm install
 
