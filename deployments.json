@@ -89,8 +89,8 @@
         }
      }, {
         "type": "docker",
-        "name": "api-server",
-        "docker_file": "src/api-server/Dockerfile",
+        "name": "job-api",
+        "docker_file": "src/job-api/Dockerfile",
         "build_only": true,
         "resources": { "limits": { "cpu": 1, "memory": 2048 } },
         "security": {

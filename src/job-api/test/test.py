@@ -84,7 +84,7 @@ class Test(TestCase):
 
     def test_get_job(self):
         """GET: /job should return all the job data"""
-        r = requests.get('http://api-server:5000/job')
+        r = requests.get('http://job-api:5000/job')
         assert r.status_code == 200
         data = {
             "build": {
@@ -164,7 +164,7 @@ class Test(TestCase):
 
         with open('/tmp/testresult.json', 'r') as f:
             files = {"data": f}
-            r = requests.post('http://api-server:5000/testresult', files=files)
+            r = requests.post('http://job-api:5000/testresult', files=files)
 
             assert r.status_code == 400
             print r.text
@@ -177,7 +177,7 @@ class Test(TestCase):
 
         with open('/tmp/testresult.json', 'r') as f:
             files = {"data": f}
-            r = requests.post('http://api-server:5000/testresult', files=files)
+            r = requests.post('http://job-api:5000/testresult', files=files)
 
             assert r.status_code == 404
             print r.text
@@ -198,7 +198,7 @@ class Test(TestCase):
 
         with open('/tmp/testresult.json', 'r') as f:
             files = {"data": f}
-            r = requests.post('http://api-server:5000/testresult', files=files)
+            r = requests.post('http://job-api:5000/testresult', files=files)
 
             assert r.status_code == 400
             print r.text
@@ -220,7 +220,7 @@ class Test(TestCase):
 
         with open('/tmp/testresult.json', 'r') as f:
             files = {"data": f}
-            r = requests.post('http://api-server:5000/testresult', files=files)
+            r = requests.post('http://job-api:5000/testresult', files=files)
 
             assert r.status_code == 200
             assert r.text == ""
@@ -232,7 +232,7 @@ class Test(TestCase):
 
         with open('/tmp/test.md', 'r') as f:
             files = {"data": f}
-            r = requests.post('http://api-server:5000/markdown', files=files)
+            r = requests.post('http://job-api:5000/markdown', files=files)
 
             assert r.status_code == 200
             assert r.text == ""

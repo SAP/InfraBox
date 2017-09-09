@@ -5,8 +5,8 @@ RUN apk update && apk add --no-cache py-pip && \
     apk del py-pip
 
 COPY src/pyinfrabox/ /pyinfrabox
-COPY src/api-server/server.py /server.py
-COPY src/api-server/entrypoint.sh /entrypoint.sh
+COPY src/job-api/server.py /server.py
+COPY src/job-api/entrypoint.sh /entrypoint.sh
 COPY src/utils/wait-for-postgres.sh /wait-for-postgres.sh
 
 ENV PYTHONPATH=/pyinfrabox

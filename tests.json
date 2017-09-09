@@ -12,8 +12,8 @@
         "resources": { "limits": { "cpu": 1, "memory": 2048 } }
     }, {
         "type": "docker-compose",
-        "name": "api-server",
-        "docker_compose_file": "src/api-server/test/docker-compose.yml",
+        "name": "job-api",
+        "docker_compose_file": "src/job-api/test/docker-compose.yml",
         "resources": { "limits": { "cpu": 1, "memory": 2048 } }
     }, {
         "type": "docker-compose",

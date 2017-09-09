@@ -6,10 +6,10 @@ services:
             context: ../../..
             dockerfile: src/postgres/Dockerfile
 
-    api-server:
+    job-api:
         build:
             context: ../../..
-            dockerfile: src/api-server/Dockerfile
+            dockerfile: src/job-api/Dockerfile
         environment:
             - INFRABOX_DATABASE_USER=postgres
             - INFRABOX_DATABASE_PASSWORD=postgres
@@ -32,10 +32,10 @@ services:
         build:
             context: ../../..
             dockerfile: infrabox/test/create-jobs/Dockerfile
-        command: /project/src/utils/wait-for-webserver.sh api-server:5000 /project/infrabox/test/create-jobs/entrypoint.sh
+        command: /project/src/utils/wait-for-webserver.sh job-api:5000 /project/infrabox/test/create-jobs/entrypoint.sh
         environment:
-            - INFRABOX_API_SERVER=api-server:5000
+            - INFRABOX_API_SERVER=job-api:5000
         links:
             - postgres
-            - api-server
+            - job-api
 

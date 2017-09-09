@@ -82,7 +82,7 @@ class Scheduler(object):
             "value": job_id
         }, {
             "name": "INFRABOX_SERVICE",
-            "value": "api-server"
+            "value": "job-api"
         }, {
             "name": "INFRABOX_VERSION",
             "value": self.args.tag
@@ -161,8 +161,8 @@ class Scheduler(object):
         env.extend(db_env)
 
         r = {
-            "name": "api-server",
-            "image": self.args.docker_registry + "/infrabox/api-server:%s" % self.args.tag,
+            "name": "job-api",
+            "image": self.args.docker_registry + "/infrabox/job-api:%s" % self.args.tag,
             "env": env,
             "resources": {
                 "requests": {

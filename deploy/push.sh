@@ -7,7 +7,7 @@ echo "Pusing images for "
 echo "  registry: $docker_registry"
 echo "  tag: $image_tag"
 
-docker push ${docker_registry}infrabox/api-server:$image_tag
+docker push ${docker_registry}infrabox/job-api:$image_tag
 docker push ${docker_registry}infrabox/gerrit/trigger:$image_tag
 docker push ${docker_registry}infrabox/gerrit/review:$image_tag
 docker push ${docker_registry}infrabox/api:$image_tag
