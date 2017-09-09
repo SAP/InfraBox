@@ -32,6 +32,7 @@ services:
             - INFRABOX_DOCKER_REGISTRY_URL=127.0.0.1
             - INFRABOX_GITHUB_ENABLED=false
             - INFRABOX_DOCS_URL=docs
+            - INFRABOX_DASHBOARD_SECRET=asd
         links:
             - postgres
 

@@ -73,7 +73,7 @@ describe('/api/dashboard/project', function() {
         const token = getToken("ee267114-ec67-4800-853c-ec1325d977fb");
         request(server)
             .get('/api/dashboard/project')
-            .set('auth-token', token)
+            .set('Cookie', ['token=' + token])
             .expect(200)
             .expect([{
                 id: "41443519-836c-4d8b-890c-8ec76ecbcd5c",
@@ -83,10 +83,10 @@ describe('/api/dashboard/project', function() {
     });
 
     it('should return 200 and repo 1 and repo 2 data for user 2', (done) => {
-        let token = getToken("b0907c0d-2642-47f4-8a55-eaf70bce8289");
+        const token = getToken("b0907c0d-2642-47f4-8a55-eaf70bce8289");
         request(server)
             .get('/api/dashboard/project')
-            .set('auth-token', token)
+            .set('Cookie', ['token=' + token])
             .expect(200)
             .expect([{
                 id: "41443519-836c-4d8b-890c-8ec76ecbcd5c",
@@ -101,7 +101,7 @@ describe('/api/dashboard/project', function() {
 });
 
 describe('/api/dashboard/project/:project_id/collaborators', () => {
-    let data = {
+    const data = {
         user: [{
             id: "ee267114-ec67-4800-853c-ec1325d977fb",
             github_id: 1,
@@ -149,20 +149,20 @@ describe('/api/dashboard/project/:project_id/collaborators', () => {
     });
 
     it('should return 400 if email is not set', (done) => {
-        let token = getToken("ee267114-ec67-4800-853c-ec1325d977fb");
+        const token = getToken("ee267114-ec67-4800-853c-ec1325d977fb");
         request(server)
             .post('/api/dashboard/project/' + data.project[0].id + '/collaborators')
             .send({})
-            .set('auth-token', token)
+            .set('Cookie', ['token=' + token])
             .expect(400, done);
     });
 
     it('should return 400 if user not found', (done) => {
-        let token = getToken("ee267114-ec67-4800-853c-ec1325d977fb");
+        const token = getToken("ee267114-ec67-4800-853c-ec1325d977fb");
         request(server)
             .post('/api/dashboard/project/' + data.project[0].id + '/collaborators')
             .send({ username: "some" })
-            .set('auth-token', token)
+            .set('Cookie', ['token=' + token])
             .expect(400)
             .expect({ message: "user not found", type: "error" }, done);
     });
@@ -172,11 +172,11 @@ describe('/api/dashboard/project/:project_id/collaborators', () => {
     // should return 404 if user has no permissions
 
     it('should return 200 and successfully add the user', (done) => {
-        let token = getToken("ee267114-ec67-4800-853c-ec1325d977fb");
+        const token = getToken("ee267114-ec67-4800-853c-ec1325d977fb");
         request(server)
             .post('/api/dashboard/project/' + data.project[0].id + '/collaborators')
             .send({ username: data.user[1].username })
-            .set('auth-token', token)
+            .set('Cookie', ['token=' + token])
             .expect({ message: "successfully added user", type: "success" })
             .expect(200)
             .end((err) => {
@@ -187,7 +187,7 @@ describe('/api/dashboard/project/:project_id/collaborators', () => {
                 // check if we also receive it
                 request(server)
                     .get('/api/dashboard/project/' + data.project[0].id + '/collaborators')
-                    .set('auth-token', token)
+                    .set('Cookie', ['token=' + token])
                     .expect(200)
                     .expect((res) => {
                         res.body.should.be.instanceof(Array).and.have.lengthOf(2);
@@ -197,7 +197,7 @@ describe('/api/dashboard/project/:project_id/collaborators', () => {
 });
 
 describe('/api/dashboard/project/:project_id/commit/:commit_id', () => {
-    let data = {
+    const data = {
         user: [{
             id: "ee267114-ec67-4800-853c-ec1325d977fb",
             github_id: 1,
@@ -234,6 +234,8 @@ describe('/api/dashboard/project/:project_id/commit/:commit_id', () => {
             committer_name: "committer_name",
             committer_email: "committer_email",
             committer_username: "committer_username",
+            tag: null,
+            pull_request_id: null,
             url: "url",
             branch: "master",
             project_id: "51443519-836c-4d8b-890c-8ec76ecbcd5c"
@@ -258,38 +260,38 @@ describe('/api/dashboard/project/:project_id/commit/:commit_id', () => {
     });
 
     it('should return 200 and the commit', (done) => {
-        let token = getToken("ee267114-ec67-4800-853c-ec1325d977fb");
-        let expect = _.cloneDeep(data.commit[0]);
+        const token = getToken("ee267114-ec67-4800-853c-ec1325d977fb");
+        const expect = _.cloneDeep(data.commit[0]);
         expect['added'] = [];
         expect['removed'] = [];
         expect['modified'] = [];
 
         request(server)
             .get('/api/dashboard/project/51443519-836c-4d8b-890c-8ec76ecbcd5c/commit/ca82a6dff817ec66f44342007202690a93763949')
-            .set('auth-token', token)
+            .set('Cookie', ['token=' + token])
             .expect(200)
             .expect(expect, done);
     });
 
     it('should return 404 if ids are wrong', (done) => {
-        let token = getToken("ee267114-ec67-4800-853c-ec1325d977fb");
+        const token = getToken("ee267114-ec67-4800-853c-ec1325d977fb");
         request(server)
             .get('/api/dashboard/project/41443519-836c-4d8b-890c-8ec76ecbcd5c/commit/ca82a6dff817ec66f44342007202690a93763949')
-            .set('auth-token', token)
+            .set('Cookie', ['token=' + token])
             .expect(404, done);
     });
 
     it('should return 404 if ids are invalid', (done) => {
-        let token = getToken("ee267114-ec67-4800-853c-ec1325d977fb");
+        const token = getToken("ee267114-ec67-4800-853c-ec1325d977fb");
         request(server)
             .get('/api/dashboard/project/41443519-836c-4d8b-890c-8ec76ecbcd5c/commit/;')
-            .set('auth-token', token)
+            .set('Cookie', ['token=' + token])
             .expect(404, done);
     });
 });
 
 describe('/api/dashboard/project/:project_id/job/:job_id/testruns', () => {
-    let data = {
+    const data = {
         user: [{
             id: "ee267114-ec67-4800-853c-ec1325d977fb",
             github_id: 1,
@@ -381,25 +383,25 @@ describe('/api/dashboard/project/:project_id/job/:job_id/testruns', () => {
     });
 
     it('should return 200 and the tests', (done) => {
-        let token = getToken("ee267114-ec67-4800-853c-ec1325d977fb");
+        const token = getToken("ee267114-ec67-4800-853c-ec1325d977fb");
         request(server)
             .get('/api/dashboard/project/51443519-836c-4d8b-890c-8ec76ecbcd5c/job/2c215611-0a7d-4b3a-8967-ce34ba59df52/testruns')
-            .set('auth-token', token)
+            .set('Cookie', ['token=' + token])
             .expect(200)
             .expect([{ build_number: 0, state: "ok", name: "T1", suite: "S1", duration: 12, message: null, stack: null }], done);
     });
 
     it('should return 404 if ids are wrong', (done) => {
-        let token = getToken("ee267114-ec67-4800-853c-ec1325d977fb");
+        const token = getToken("ee267114-ec67-4800-853c-ec1325d977fb");
         request(server)
             .get('/api/dashboard/project/61443519-836c-4d8b-890c-8ec76ecbcd5c/job/2c215611-0a7d-4b3a-8967-ce34ba59df52/testruns')
-            .set('auth-token', token)
+            .set('Cookie', ['token=' + token])
             .expect(404, done);
     });
 });
 
 describe('/api/dashboard/project/:project_id/job/:job_id/stats/history', () => {
-    let data = {
+    const data = {
         user: [{
             id: "ee267114-ec67-4800-853c-ec1325d977fb",
             github_id: 1,
@@ -599,10 +601,10 @@ describe('/api/dashboard/project/:project_id/job/:job_id/stats/history', () => {
     });
 
     it('should return 200 and one value', (done) => {
-        let token = getToken("ee267114-ec67-4800-853c-ec1325d977fb");
+        const token = getToken("ee267114-ec67-4800-853c-ec1325d977fb");
         request(server)
             .get('/api/dashboard/project/81443519-836c-4d8b-890c-8ec76ecbcd5c/job/2c215611-0a7d-4b3a-8967-ce34ba59df52/stats/history')
-            .set('auth-token', token)
+            .set('Cookie', ['token=' + token])
             .expect(200)
             .expect([{
                 build_number: 1,
@@ -617,10 +619,10 @@ describe('/api/dashboard/project/:project_id/job/:job_id/stats/history', () => {
     });
 
     it('should return 200 and two values', (done) => {
-        let token = getToken("ee267114-ec67-4800-853c-ec1325d977fb");
+        const token = getToken("ee267114-ec67-4800-853c-ec1325d977fb");
         request(server)
             .get('/api/dashboard/project/81443519-836c-4d8b-890c-8ec76ecbcd5c/job/3c215611-0a7d-4b3a-8967-ce34ba59df52/stats/history')
-            .set('auth-token', token)
+            .set('Cookie', ['token=' + token])
             .expect(200)
             .expect([{
                 build_number: 1,
@@ -644,10 +646,10 @@ describe('/api/dashboard/project/:project_id/job/:job_id/stats/history', () => {
     });
 
     it('should return 404 for foreign project', (done) => {
-        let token = getToken("ee267114-ec67-4800-853c-ec1325d977fb");
+        const token = getToken("ee267114-ec67-4800-853c-ec1325d977fb");
         request(server)
             .get('/api/dashboard/project/91443519-836c-4d8b-890c-8ec76ecbcd5c/job/6c215611-0a7d-4b3a-8967-ce34ba59df52/stats/history')
-            .set('auth-token', token)
+            .set('Cookie', ['token=' + token])
             .expect(404, done);
     });
 });

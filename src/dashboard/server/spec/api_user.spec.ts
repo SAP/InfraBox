@@ -3,8 +3,8 @@ import { insertData } from "../db";
 import { getToken } from "./utils";
 import { config } from "../../server/config/config";
 
-let request = require("supertest");
-let jwt = require("jsonwebtoken");
+const request = require("supertest");
+const jwt = require("jsonwebtoken");
 
 describe('/api/dashboard/user', function() {
     this.timeout(10000);
@@ -36,12 +36,12 @@ describe('/api/dashboard/user', function() {
     it('should return 401 if auth token is invalid', (done) => {
         request(server)
             .get('/api/dashboard/user')
-            .set('auth-token', 'some weird value')
+            .set('Cookie', ['token=some weird value'])
             .expect(401, done);
     });
 
     it('should return 401 if auth token has been expired', (done) => {
-        let older_token = jwt.sign({
+        const older_token = jwt.sign({
             user: 'some id', iat: Math.floor(Date.now() / 1000) - 60 * 60 * 24 * 7
         },
             config.dashboard.secret, { expiresIn: "1d" }
@@ -49,31 +49,31 @@ describe('/api/dashboard/user', function() {
 
         request(server)
             .get('/api/dashboard/user')
-            .set('auth-token', older_token)
+            .set('Cookie', ['token=' + older_token])
             .expect(401, done);
     });
 
     it('should return 401 for an invalid uuid', (done) => {
-        let token = getToken("some id");
+        const token = getToken("some id");
         request(server)
             .get('/api/dashboard/user')
-            .set('auth-token', token)
+            .set('Cookie', ['token=' + token])
             .expect(401, done);
     });
 
     it('should return 401 if user is not found', (done) => {
-        let token = getToken('1e267114-ec67-4800-853c-ec1325d977fb');
+        const token = getToken('1e267114-ec67-4800-853c-ec1325d977fb');
         request(server)
             .get('/api/dashboard/user')
-            .set('auth-token', token)
+            .set('Cookie', ['token=' + token])
             .expect(401, done);
     });
 
     it('should return 200 and user data if token is valid', (done) => {
-        let token = getToken('ee267114-ec67-4800-853c-ec1325d977fb');
+        const token = getToken('ee267114-ec67-4800-853c-ec1325d977fb');
         request(server)
             .get('/api/dashboard/user')
-            .set('auth-token', token)
+            .set('Cookie', ['token=' + token])
             .expect(200, done);
     });
 });
