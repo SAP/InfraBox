@@ -89,6 +89,11 @@ spec:
                 -
                     name: INFRABOX_DOCKER_REGISTRY_URL
                     value: {{ .Values.docker_registry.url }}
+                {{ if .Values.general.no_check_certificates }}
+                -
+                    name: NODE_TLS_REJECT_UNAUTHORIZED
+                    value: "0"
+                {{ end }}
             volumes:
                 {{ include "volumes_database" . | indent 16 }}
                 {{ if .Values.storage.gcs.enabled }}

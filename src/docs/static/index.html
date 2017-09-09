@@ -116,6 +116,7 @@
                             <li><a href="#using-image-registries">Using Image Registries</a></li>
                             <li><a href="#caching">Caching on InfraBox</a></li>
                             <li><a href="#create-badges">Create Badges</a></li>
+                            <li><a href="#generators">Dynamic Workflows</a></li>
                             <li><a href="#create-upload-project">Create an Upload Project</a></li>
                             <li><a href="#connect-github-repo">Connect a Github Repository</a></li>
                             <li><a href="#create-auth-token">Create Auth Token</a></li>
@@ -1030,10 +1031,24 @@ CMD /usr/bin/test.py
                     <p>In your job the secret value will then be available as the environment variable <kbd>ENV_VAR_1</kbd>.</p>
 
                     <h3 id="using-image-registries">Using Image Registries</h3>
-                    <p>TODO</p>
+                    <p>The docker images which have been build can also be pushed to a docker registry by InfraBox. You would add a deployment to your job: </p>
+
+<pre class="line-numbers"><code class="language-javascript">{
+    "type": "docker",
+    ...
+    "deployments": [{
+            "type": "docker-registry",
+            "host": "&lt;my_registry&gt;:5000",
+            "repository": "repo-name",
+            "username": "your_username",
+            "password": { "$ref": "SECRET_NAME_FOR_YOUR_PASSWORD" }
+    }]
+}</code></pre>
+
+                    <p>Deployments are currently only supported for <i>docker</i> job types. <i>username</i> and <i>password</i> are optional if you don't have any authentication setup for your registry.</p>
 
                     <h3 id="caching">Caching on InfraBox</h3>
-                    <p>TODO</p>
+                    <p>Sometimes it's useful to keep some data from one run of a container to the next one. Maybe you have a <i>nodejs</i> project and don't want to install your dependencies every time. For such uses cases InfraBox mounts the directory <kbd>/infrabox/cache</kbd> into every container. Everything which you store in this directory will be available at the same place in the next run. So for your <i>nodejs</i> project you could simply copy your <i>node_modules</i> directory in there.</p>
 
                     <h3 id="create-badges">Create Badges</h3>
                     <p>
@@ -1051,6 +1066,20 @@ CMD /usr/bin/test.py
                         and save it to <kbd>/infrabox/upload/badges/badge.json</kbd>. You can also save multiple files with different names in this directory. For every file a separate badge will be created.
 
                     </p>
+
+                    <h3 id="generators">Dynamic Workflows</h3>
+                    <p>So far you always had a static graph of jobs which you defined in <kbd>infrabox.json</kbd>. In some situations this is not flexible enough. So maybe on some branches you want to run a different set of tests than on you other branches or when you tag a change you would like to run more tests than on your regular pushes. This can be achieved by a <i>generator</i>. A <i>generator</i> is a docker container which is executed as a very first step in your graph. The task of this container is to produce an <kbd>/infrabox/output/infrabox.json</kbd>. The jobs specified in this file will then be used for your graph. In the <i>generator</i> container you have access to the environment variables and your git repository. So based on this information you may now create your <kbd>infrabox.json</kbd> file.</p>
+
+                    <p>To use a <i>generator</i> you would write your <kbd>infrabox.json</kbd> in your root direcotyr of the project like this:</p>
+<pre class="line-numbers"><code class="language-javascript">{
+    "version": 1,
+    "generator": {
+        "docker_file": "path_to_docker_file"
+    }
+}</code></pre>
+                    <p>As you see you don't define any jobs anymore, but only the generator and he will then produce the actual graph.</p>
+
+                    <p>It's only possible to have one generator. It's not allowed to define jobs and a generator. A generator will always run with 1 CPU and 1024MB of RAM. So don't do any time or memory consuming task in the generator, but move them instead into other jobs.</p>
 
                     <h3 id="create-upload-project">Create an Upload Project</h3>
                     <p>Upload project can be used for executing workflows without storing them in a git repository.</p>

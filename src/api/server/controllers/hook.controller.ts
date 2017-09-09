@@ -322,6 +322,13 @@ function handlePullRequest_open(pr: PullRequestEvent) {
                 return commits[0];
             }
 
+            let committer_login = null;
+            if (hc.committer) {
+                committer_login = hc.committer.login;
+            }
+
+            const branch = pr.pull_request.head.ref;
+
             return tx.one(`
                 INSERT INTO "commit" (
                     id, message, repository_id, timestamp,
@@ -330,11 +337,11 @@ function handlePullRequest_open(pr: PullRequestEvent) {
                 VALUES ($1, $2, $3,
                     $4, $5, $6,
                     $7, $8, $9,
-                    $10, $11, $12, 'pull_request', $13)
+                    $10, $11, $12, $13, $14)
                 RETURNING *
             `, [hc.sha, hc.commit.message, repo.id, new Date(hc.commit.author.date), hc.commit.author.name,
                 hc.commit.author.email, hc.author.login, hc.commit.committer.name, hc.commit.committer.email,
-                hc.committer.login, hc.commit.url, repo.project_id, pr_id]);
+                committer_login, hc.commit.url, repo.project_id, branch, pr_id]);
         }).then((co: any) => {
             commit = co;
             return tx.one('SELECT count(distinct build_number) + 1 AS build_no FROM build AS b WHERE b.project_id = $1', [repo.project_id]);
@@ -362,7 +369,7 @@ function handlePullRequest_open(pr: PullRequestEvent) {
 }
 
 function handlePullRequest(pr: PullRequestEvent, res: Response, next) {
-    if (pr.action === "opened" || pr.action === "synchronize") {
+    if (pr.action === "opened" || pr.action === "synchronize" || pr.action === "reopened") {
         handlePullRequest_open(pr)
         .then(() => {
             return getOwnerToken(pr.repository.id);
