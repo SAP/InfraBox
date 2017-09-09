@@ -99,6 +99,43 @@ def test_duplicate_job_name():
 
     raises_expect(d, "#jobs[1].name: Job name 'compile' already exists")
 
+def test_dependency_conditions():
+    d = {
+        "version": 1,
+        "jobs": [{
+            "type": "docker",
+            "name": "compile",
+            "docker_file": "test/Dockerfile_benchmarks",
+            "build_only": False,
+            "resources": {"limits": {"cpu": 1, "memory": 1024}},
+        }, {
+            "type": "docker",
+            "name": "compile2",
+            "docker_file": "test/Dockerfile_benchmarks",
+            "resources": {"limits": {"cpu": 1, "memory": 1024}},
+            "build_only": False,
+            "depends_on": [{"job": "compile", "on": True}]
+        }]
+    }
+
+    raises_expect(d, "#jobs[1].depends_on[0].on: must be a list")
+
+    d['jobs'][1]['depends_on'] = [{"job": "compile", "on": []}]
+    raises_expect(d, "#jobs[1].depends_on[0].on: must not be empty")
+
+    d['jobs'][1]['depends_on'] = [{"job": "compile", "on": [True]}]
+    raises_expect(d, "#jobs[1].depends_on[0].on: True is not a valid value")
+
+    d['jobs'][1]['depends_on'] = [{"job": "compile", "on": ["not valid"]}]
+    raises_expect(d, "#jobs[1].depends_on[0].on: not valid is not a valid value")
+
+    d['jobs'][1]['depends_on'] = [{"job": "not-valid", "on": ["*"]}]
+    raises_expect(d, "#jobs[1].depends_on: Job 'not-valid' not found")
+
+    d['jobs'][1]['depends_on'] = [{"job": "compile", "on": ["error", "error"]}]
+    raises_expect(d, "#jobs[1].depends_on[0].on: error used twice")
+
+
 def test_empty_dep_array():
     d = {
         "version": 1,

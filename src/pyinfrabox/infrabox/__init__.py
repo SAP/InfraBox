@@ -12,13 +12,48 @@ def check_name(n, path):
     if not special_match(n):
         raise ValidationError(path, "'%s' not a valid value" % n)
 
-def check_name_array(a, path):
-    check_string_array(a, path)
+
+def parse_depends_on_condition(d, path):
+    check_allowed_properties(d, path, ("job", "on"))
+    check_required_properties(d, path, ("job", "on"))
+    check_name(d['job'], path + '.job')
+
+    on = d['on']
+    if not isinstance(on, list):
+        raise ValidationError(path + ".on", "must be a list")
+
+    if not on:
+        raise ValidationError(path + ".on", "must not be empty")
+
+
+    on_used = {}
+    for i in on:
+        if i not in ('finished', 'error', 'failure', '*'):
+            raise ValidationError(path + ".on", "%s is not a valid value" % i)
+
+        if i in on_used:
+            raise ValidationError(path + ".on", "%s used twice" % i)
+
+        on_used[i] = True
+
+
+def parse_depends_on(a, path):
+    if not isinstance(a, list):
+        raise ValidationError(path, "must be an list")
+
+    if not a:
+        raise ValidationError(path, "must not be empty")
 
     for i in range(0, len(a)):
         n = a[i]
-        check_name(n, path + ('[%s]' % i))
+        p = '[%s]' % i
 
+        if isinstance(n, dict):
+            # contains conditions
+            parse_depends_on_condition(n, path + p)
+        else:
+            # no conditions, default to 'finished'
+            check_name(n, path + p)
 
 def check_version(v, path):
     if not isinstance(v, int):
@@ -70,7 +105,7 @@ def parse_git(d, path):
     check_text(d['clone_url'], path + ".clone_url")
 
     if 'depends_on' in d:
-        check_name_array(d['depends_on'], path + ".depends_on")
+        parse_depends_on(d['depends_on'], path + ".depends_on")
 
     if 'environment' in d:
         parse_environment(d['environment'], path + ".environment")
@@ -82,7 +117,7 @@ def parse_workflow(d, path):
     check_text(d['infrabox_file'], path + ".infrabox_file")
 
     if 'depends_on' in d:
-        check_name_array(d['depends_on'], path + ".depends_on")
+        parse_depends_on(d['depends_on'], path + ".depends_on")
 
 def parse_security(d, path):
     check_allowed_properties(d, path, ("scan_container",))
@@ -124,7 +159,7 @@ def parse_docker(d, path):
         check_boolean(d['keep'], path + ".keep")
 
     if 'depends_on' in d:
-        check_name_array(d['depends_on'], path + ".depends_on")
+        parse_depends_on(d['depends_on'], path + ".depends_on")
 
     if 'security' in d:
         parse_security(d['security'], path + ".security")
@@ -146,7 +181,7 @@ def parse_docker_compose(d, path):
     parse_resources(d['resources'], path + ".resources")
 
     if 'depends_on' in d:
-        check_name_array(d['depends_on'], path + ".depends_on")
+        parse_depends_on(d['depends_on'], path + ".depends_on")
 
     if 'environment' in d:
         parse_environment(d['environment'], path + ".environment")
@@ -157,7 +192,7 @@ def parse_wait(d, path):
     check_name(d['name'], path + ".name")
 
     if 'depends_on' in d:
-        check_name_array(d['depends_on'], path + ".depends_on")
+        parse_depends_on(d['depends_on'], path + ".depends_on")
 
 def parse_deployment_docker_registry(d, path):
     check_allowed_properties(d, path, ("type", "host", "repository", "username", "password"))
@@ -271,15 +306,22 @@ def validate_json(d):
 
         deps = {}
         for depends_on in job['depends_on']:
-            if job_name == depends_on:
-                raise ValidationError(path, "Job '%s' may not depend on itself" % depends_on)
+            parent_name = None
 
-            if depends_on not in jobs:
-                raise ValidationError(path + ".depends_on", "Job '%s' not found" % depends_on)
+            if isinstance(depends_on, dict):
+                parent_name = depends_on['job']
+            else:
+                parent_name = depends_on
 
-            if depends_on in deps:
-                raise ValidationError(path + ".depends_on", "'%s' duplicate dependencies" % depends_on)
+            if job_name == parent_name:
+                raise ValidationError(path, "Job '%s' may not depend on itself" % parent_name)
 
-            deps[depends_on] = True
+            if parent_name not in jobs:
+                raise ValidationError(path + ".depends_on", "Job '%s' not found" % parent_name)
+
+            if parent_name in deps:
+                raise ValidationError(path + ".depends_on", "'%s' duplicate dependencies" % parent_name)
+
+            deps[parent_name] = True
 
     return True
