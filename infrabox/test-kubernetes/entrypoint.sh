@@ -65,7 +65,7 @@ _installPostgres() {
     export INFRABOX_CLI_PROJECT_ID='2daef5b5-0474-4e63-a47e-df8438a82eba'
     export USER_ID='70c68f11-4d04-46d3-a68e-c0d2a91c00a6'
     # Insert dummy data
-    _sql "INSERT INTO \"user\" (id, github_id, username, github_avatar_url)
+    _sql "INSERT INTO \"user\" (id, github_id, username, avatar_url)
           VALUES ('$USER_ID', '1', 'user', 'url')"
     _sql "INSERT INTO project (id, name, type)
           VALUES('$INFRABOX_CLI_PROJECT_ID', 'test', 'upload')"

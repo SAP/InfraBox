@@ -169,8 +169,8 @@ class TestCreateJobs(object):
             ('external/flow/test-server', 'Dockerfile_flow',
              ['Create Jobs'],
              {
-                "commit": "master",
-                "clone_url": "/project/infrabox/test/create-jobs/test/test-git-with-workflow/external_git/",
+                 "commit": "master",
+                 "clone_url": "/project/infrabox/test/create-jobs/test/test-git-with-workflow/external_git/",
              }),
         )
         self.run(path, expect, with_external_git_id=True)
@@ -333,7 +333,7 @@ class TestCreateJobs(object):
 
         self.execute("""
             INSERT INTO "user" (id, github_id, username,
-                github_avatar_url)
+                avatar_url)
             VALUES (%s, 1, 'testuser', 'url');
         """, (user_id,))
 

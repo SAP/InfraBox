@@ -55,14 +55,6 @@ class TestGithubHook(object):
         assert r.status_code == 400
         assert res['message'] == "Unknown repository"
 
-    def test_pr(self):
-        pr = self.get_file("pr_open.json")
-        r = requests.post(self.api_url, json=pr, headers=self.get_headers("pull_request"))
-        res = r.json()
-        print  res
-        assert r.status_code == 200
-        assert res['message'] == "successfully handled pull_request event"
-
     def execute(self, stmt, args=None):
         cur = self.conn.cursor()
         cur.execute(stmt, args)
@@ -86,7 +78,7 @@ class TestGithubHook(object):
 
         self.execute("""
             INSERT INTO "user" (id, github_id, username,
-                github_avatar_url)
+                avatar_url)
             VALUES (%s, 1, 'testuser', 'url');
         """, (user_id,))
 
