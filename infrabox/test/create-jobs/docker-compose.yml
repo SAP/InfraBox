@@ -18,12 +18,13 @@ services:
             - INFRABOX_DATABASE_DB=test_db
             - INFRABOX_DASHBOARD_URL=something
             - INFRABOX_JOB_ID=5df0e731-6040-46a9-8540-f1bb7935d2bd
-            - INFRABOX_STORAGE_GCS_ENABLE=true
+            - INFRABOX_STORAGE_GCS_ENABLED=true
             - INFRABOX_STORAGE_GCS_CONTAINER_CONTENT_CACHE_BUCKET=test-cache-bucket
             - INFRABOX_STORAGE_GCS_CONTAINER_OUTPUT_BUCKET=test-output-bucket
             - INFRABOX_STORAGE_GCS_PROJECT_UPLOAD_BUCKET=test-project-upload-bucket
-            - INFRABOX_STORAGE_S3_ENABLE=false
-            - INFRABOX_GITHUB_ENABLE=false
+            - INFRABOX_STORAGE_S3_ENABLED=false
+            - INFRABOX_GITHUB_ENABLED=false
+            - INFRABOX_JOB_MAX_OUTPUT_SIZE=1024
         links:
             - postgres
         command: /wait-for-postgres.sh postgres /entrypoint.sh
