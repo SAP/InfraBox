@@ -486,7 +486,7 @@ class Scheduler(object):
         # find jobs
         cursor = self.conn.cursor()
         cursor.execute('''
-            SELECT j.id, j.cpu, j.type, j.memory
+            SELECT j.id, j.cpu, j.type, j.memory, j.dependencies
             FROM job j
             WHERE j.state = 'queued'
             ORDER BY j.created_at
@@ -504,34 +504,57 @@ class Scheduler(object):
             cpu = j[1]
             job_type = j[2]
             memory = j[3]
+            dependencies = j[4]
 
             cursor = self.conn.cursor()
             cursor.execute('''
-                SELECT
-                    COUNT(CASE WHEN j.state = 'queued' OR j.state = 'scheduled'
-                        OR j.state = 'running' OR j.state is null THEN 1 END) as count_running,
-                    COUNT(CASE WHEN j.state = 'failure' OR j.state = 'error'
-                        OR j.state = 'skipped' OR j.state = 'killed' THEN 1 END) as count_error
-                FROM job j
-                RIGHT OUTER JOIN (SELECT unnest(dependencies) id FROM job WHERE ID = %s) parent
-                    ON parent.id = j .id
+		SELECT id, state
+		FROM job
+		WHERE id IN (
+                    SELECT (deps->>'job-id')::uuid
+                    FROM job, jsonb_array_elements(job.dependencies) as deps
+                    WHERE id = %s
+                )
             ''', (job_id,))
-            result = cursor.fetchone()
+            result = cursor.fetchall()
             cursor.close()
 
-            count_running = result[0]
-            count_error = result[1]
+            # check if there's still some parent running
+            parents_running = False
+            for r in result:
+                parent_state = r[1]
+                if parent_state in ('running', 'scheduled', 'queued'):
+                    # dependencies not ready
+                    parents_running = True
+                    break
 
-            if count_error > 0:
-                # dependency error, don't run this job_id
-                cursor = self.conn.cursor()
-                cursor.execute(
-                    "UPDATE job SET state = 'skipped' WHERE id = (%s)", (job_id,))
-                cursor.close()
+            if parents_running:
                 continue
 
-            if count_running > 0:
-                # dependencies not ready
+            # check if conditions are met
+            skipped = False
+            for r in result:
+                on = None
+                parent_id = r[0]
+                parent_state = r[1]
+
+                for dep in dependencies:
+                    if dep['job-id'] == parent_id:
+                        on = dep['on']
+
+                assert on
+
+                if parent_state not in on:
+                    print (parent_state, "not in", on)
+                    skipped = True
+                    # dependency error, don't run this job_id
+                    cursor = self.conn.cursor()
+                    cursor.execute(
+                        "UPDATE job SET state = 'skipped' WHERE id = (%s)", (job_id,))
+                    cursor.close()
+                    continue
+
+            if skipped:
                 continue
 
             # If it's a wait job we are done here

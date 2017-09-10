@@ -380,7 +380,7 @@ CREATE TABLE job (
     end_date timestamp with time zone,
     name character varying(50) NOT NULL,
     project_id uuid NOT NULL,
-    dependencies uuid[],
+    dependencies jsonb,
     build_only boolean NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     keep boolean DEFAULT false NOT NULL,

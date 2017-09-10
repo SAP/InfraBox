@@ -45,6 +45,12 @@ export class PullRequest {
     constructor(public title: string) {}
 }
 
+export class Dependency {
+    public job: string;
+    public "job-id": string;
+    public on: string;
+}
+
 export class Job {
     private state: BehaviorSubject<JobState>;
     public end_date: BehaviorSubject<Date>;
@@ -58,7 +64,7 @@ export class Job {
     public name: string;
     public cpu: number;
     public memory: number;
-    public dependencies = new Array<string>();
+    public dependencies = new Array<Dependency>();
     public source_upload: SourceUpload;
     public pull_request: PullRequest;
 
@@ -219,7 +225,7 @@ export class JobService {
 
     public addJobs(project_id: string, jobs: any[]) {
         this.startListening(project_id);
-        for (let j of jobs) {
+        for (const j of jobs) {
             this.handleJobInsert(j);
         }
     }

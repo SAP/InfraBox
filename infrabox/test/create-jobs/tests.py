@@ -121,6 +121,17 @@ class TestCreateJobs(object):
         )
         self.run(path, expect, with_external_git_id=True)
 
+    def test_dependency_conditions(self):
+        path = '/project/infrabox/test/create-jobs/test/test-dependency-conditions'
+        expect = (
+            ('consumer1', 'Dockerfile_consumer1', ['producer']),
+            ('consumer2', 'Dockerfile_consumer2', ['producer']),
+            ('consumer3', 'Dockerfile_consumer3', ['producer']),
+            ('producer', 'Dockerfile_producer', ['Create Jobs']),
+        )
+        self.run(path, expect)
+
+
     def test_one_git_job(self):
         path = '/project/infrabox/test/create-jobs/test/test-one-git-job'
         gp = os.path.join(path, 'external_git')
@@ -253,8 +264,9 @@ class TestCreateJobs(object):
 	LEFT JOIN LATERAL (
 		SELECT ARRAY(SELECT name FROM job j
 		INNER JOIN (
-			SELECT unnest(dependencies) as id
-			FROM job  where id = outer_job.id
+                        SELECT (p->>'job-id')::uuid as id
+                        FROM job, jsonb_array_elements(job.dependencies) p
+			WHERE job.id = outer_job.id
 		) deps
 		ON j.id = deps.id
 		ORDER BY name) deps FROM  job  where id = outer_job.id

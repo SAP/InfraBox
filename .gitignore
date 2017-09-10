@@ -22,3 +22,5 @@ src/infraboxcli/infraboxcli.egg-info/
 *.yaml.infrabox
 run_server.sh
 certs/
+deploy/infrabox-postgres/values_gke.yaml
+deploy/infrabox/values_gke.yaml

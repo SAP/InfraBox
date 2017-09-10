@@ -1,5 +1,5 @@
 import { Router } from "@angular/router";
-import { Job } from "../services/job.service";
+import { Job, Dependency } from "../services/job.service";
 
 import * as Raphael from 'raphael';
 
@@ -177,7 +177,7 @@ class GanttJob {
     constructor(
         public id: string,
         public name: string,
-        public dependencies: string[],
+        public dependencies: Dependency[],
         public level: number,
         public state: string,
         public project_id: string,
@@ -257,7 +257,7 @@ export class GanttChart {
 
     private allParentsAvailable(job: GanttJob) {
         for (const dep of job.dependencies) {
-            const r = this.findJobPosById(dep);
+            const r = this.findJobPosById(dep['job-id']);
             if (r === null) {
                 return false;
             }
@@ -272,7 +272,7 @@ export class GanttChart {
     }
 
     private sortJobs() {
-        let all_jobs = this.jobs;
+        const all_jobs = this.jobs;
         this.jobs = [];
 
         // Find Start
@@ -299,12 +299,12 @@ export class GanttChart {
                     let found_parent = false;
 
                     for (const dep of job.dependencies) {
-                        const r = this.findJobPosById(dep);
+                        const r = this.findJobPosById(dep['job-id']);
                         if (r === null) {
                             found_all_deps = false;
                         }
 
-                        if (dep === parent.id) {
+                        if (dep['job-id'] === parent.id) {
                             found_parent = true;
                         }
                     }
@@ -342,9 +342,9 @@ export class GanttChart {
         return (job.pos * this.box_height) + (job.pos * this.box_padding) + (this.box_padding / 2);
     }
 
-    private getParent(id) {
+    private getParent(dep: Dependency) {
         for (const job of this.jobs) {
-            if (job.id === id) {
+            if (job.id === dep['job-id']) {
                 return job;
             }
         }
@@ -359,7 +359,7 @@ export class GanttChart {
             let c = 0;
             for (const dep of job.dependencies) {
                 for (const j of this.jobs) {
-                    if (j.id !== dep) {
+                    if (j.id !== dep['job-id']) {
                         continue;
                     }
 
@@ -405,7 +405,7 @@ export class GanttChart {
         this.setNodeAttributes(job);
 
         s.click(() => {
-            this.router.navigate(["/dashboard", "project", job.project_id, "job", job.id]);
+            this.router.navigate(["/dashboard", "project", job.project_id, "build", job.build_id, "job", job.id]);
         });
 
         const hoverEnter = () => {

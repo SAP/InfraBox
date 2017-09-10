@@ -229,17 +229,19 @@ def get_job_data():
     # get dependencies
     cursor = conn.cursor()
     cursor.execute('''
-        WITH RECURSIVE next_job(id, parent) AS (
-                SELECT id, unnest(dependencies) as parent FROM job WHERE id = %s
-                UNION
-                SELECT j.id, unnest(j.dependencies) as parent
-                FROM job j, next_job nj
-                WHERE j.id = nj.parent
-        )
-
-        SELECT id, name, state, start_date, end_date, null, dependencies
-        FROM job WHERE id IN (SELECT distinct id FROM next_job)
-    ''', (data['job']['id'], ))
+          WITH RECURSIVE next_job(id, parent) AS (
+                  SELECT j.id, (p->>'job-id')::uuid parent
+                  FROM job j, jsonb_array_elements(j.dependencies) AS p
+                  WHERE j.id = %s
+              UNION
+                  SELECT j.id, (p->>'job-id')::uuid parent
+                  FROM job j
+                  LEFT JOIN LATERAL jsonb_array_elements(j.dependencies) AS p ON true,
+                  next_job nj WHERE j.id = nj.parent
+          )
+          SELECT id, name, state, start_date, end_date, dependencies
+          FROM job WHERE id IN (SELECT distinct id FROM next_job WHERE id != %s)
+    ''', (data['job']['id'], data['job']['id']))
     r = cursor.fetchall()
     cursor.close()
 
@@ -252,14 +254,14 @@ def get_job_data():
             "state": d[2],
             "start_date": str(d[3]),
             "end_date": str(d[4]),
-            "depends_on": d[6]
+            "depends_on": d[5]
         })
 
     # get parents
     cursor = conn.cursor()
     cursor.execute('''
-        SELECT id, name FROM job where id
-        IN (SELECT unnest(dependencies) FROM job WHERE id = %s)
+      SELECT id, name FROM job where id
+          IN (SELECT (deps->>'job-id')::uuid FROM job, jsonb_array_elements(job.dependencies) as deps WHERE id = %s)
     ''', (data['job']['id'], ))
     r = cursor.fetchall()
     cursor.close()
@@ -498,13 +500,16 @@ def get_output_of_job(job_id):
     if len(r) != 1:
         return "Job not found 2: %s" % r, 500
 
+    if not r[0][0]:
+        return "Job not found 3: %s" % r, 404
+
     if 'Output' not in r[0][0]:
-        return "Job not found 3: %s" % r[0], 500
+        return "Job not found 4: %s" % r[0], 500
 
     output = r[0][0]["Output"]
 
     if len(output) != 1:
-        return "Job not found 4: %s" % p, 500
+        return "Job not found 5: %s" % r, 500
 
     object_name = output[0]['id']
     output_zip = os.path.join('/tmp', job_id + '.tar.gz')
@@ -698,16 +703,11 @@ def create_jobs():
 
         depends_on = job.get("depends_on", [])
 
-        dependencies = '{'
-        for dep in depends_on:
-            if len(dependencies) != 1:
-                dependencies += ','
-
-            dependencies += '"%s"' % jobname_id[dep]
-
-        if not depends_on:
-            dependencies += '"%s"' % JOB_ID
-        dependencies += '}'
+        if depends_on:
+            for dep in depends_on:
+                dep['job-id'] = jobname_id[dep['job']]
+        else:
+            depends_on = [{"job": "Create Jobs", "job-id": JOB_ID, "on": ["finished"]}]
 
         if job_type == "docker":
             f = job['docker_file']
@@ -768,7 +768,7 @@ def create_jobs():
             VALUES (%s, 'queued', %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);""",
                        (job_id, job_data['build']['id'], t, f, name,
                         job_data['project']['id'],
-                        dependencies, build_only, keep, datetime.now(),
+                        json.dumps(depends_on), build_only, keep, datetime.now(),
                         repo, base_path, scan_container, env_var_refs, env_vars,
                         build_arguments, deployments, limits_cpu, limits_memory))
         cursor.close()

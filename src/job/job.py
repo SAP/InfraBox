@@ -578,8 +578,6 @@ class RunJob(Job):
             if not os.path.exists(p):
                 raise Failure("%s does not exist" % p)
 
-
-
         jobs = data.get('jobs', [])
         for job in jobs:
             job_type = job['type']
@@ -608,9 +606,26 @@ class RunJob(Job):
                 if not os.path.exists(p):
                     raise Failure("%s does not exist" % p)
 
+    def rewrite_depends_on(self, data):
+        for job in data['jobs']:
+            for i in range(0, len(job.get('depends_on', []))):
+                d = job['depends_on'][i]
+
+                if not isinstance(d, dict):
+                    job['depends_on'][i] = {"job": d, "on": ["finished"]}
+                    continue
+
+                on = d['on']
+                for n in range(0, len(on)):
+                    if on[n] == ["*"]:
+                        d['on'] = ["finished", "error", "failure"]
+                        break
+
     def get_job_list(self, data, c, repo, parent_name="",
                      base_path=None,
                      repo_path='/repo', infrabox_paths={}):
+
+        self.rewrite_depends_on(data)
 
         jobs = []
         for job in data['jobs']:
@@ -624,7 +639,7 @@ class RunJob(Job):
 
                 deps = job.get('depends_on', [])
                 for x in xrange(0, len(deps)):
-                    deps[x] = parent_name + "/" + deps[x]
+                    deps[x]['job'] = parent_name + "/" + deps[x]['job']
 
             job_name = job['name']
             if job['type'] != "workflow" and job['type'] != "git":
@@ -694,7 +709,7 @@ class RunJob(Job):
                     s['depends_on'] = job.get('depends_on', [])
 
                 for d in deps:
-                    job_with_children[d] = True
+                    job_with_children[d['job']] = True
 
                 # overwrite env vars if set
                 if 'environment' in job:
@@ -719,7 +734,7 @@ class RunJob(Job):
             for s in sub:
                 sub_name = s['name']
                 if sub_name not in job_with_children:
-                    final_job['depends_on'].append(sub_name)
+                    final_job['depends_on'].append({"job": sub_name, "on": ["finished"]})
 
             jobs.append(final_job)
 

@@ -112,7 +112,7 @@ router.get("/:project_id/job/:job_id/manifest", pv, token_auth, checkProjectAcce
 
         return db.any(`
              SELECT name, state, id FROM job
-             WHERE id IN (SELECT unnest(dependencies) FROM job WHERE ID = $1)
+             WHERE id IN (SELECT (p->>'job-id')::uuid FROM job, jsonb_elements_array(job.dependencies) WHERE job.id = $1)
         `, [job_id]);
     })
     .then((deps: any[]) => {

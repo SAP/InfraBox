@@ -4,7 +4,7 @@ install_minio=true
 install_postgres=true
 
 # Values file
-values_yaml="values_minikube.yaml"
+values_yaml="values_gke.yaml"
 
 # Leave it empty if install_minio=true
 s3_access_key=""
