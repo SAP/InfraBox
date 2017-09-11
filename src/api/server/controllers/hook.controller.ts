@@ -364,18 +364,26 @@ function handlePullRequest_open(pr: PullRequestEvent) {
             INSERT INTO job (id, state, build_id, type, name, project_id, build_only, dockerfile, cpu, memory, repo)
             VALUES (gen_random_uuid(), 'queued', $1, 'create_job_matrix', 'Create Jobs', $2, false, '', 1, 1024, $3)
             `, [build.id, repo.project_id, pr_repo]);
+        }).then(() => {
+            return {
+                build_id: build.id,
+                project_id: repo.project_id,
+            };
         });
     });
 }
 
 function handlePullRequest(pr: PullRequestEvent, res: Response, next) {
     if (pr.action === "opened" || pr.action === "synchronize" || pr.action === "reopened") {
+        let build = null;
+
         handlePullRequest_open(pr)
-        .then(() => {
+        .then((b) => {
+            build = b;
             return getOwnerToken(pr.repository.id);
         }).then((result: any) => {
             const token = result.github_api_token;
-            return setStatus(token, pr.pull_request.statuses_url, 'pending');
+            return setStatus(token, pr.pull_request.statuses_url, 'pending', build.project_id, build.build_id);
         }).then(() => {
             return OK(res, "successfully handled pull_request event");
         }).catch(handleDBError(next));

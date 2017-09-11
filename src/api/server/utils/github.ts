@@ -24,7 +24,12 @@ export function getCommits(token: string, url: string) {
     });
 }
 
-export function setStatus(token: string, url: string, state: string) {
+export function setStatus(token: string, url: string, state: string, project_id: string, build_id: string) {
+    let target_url = config.api.url;
+    if (project_id && build_id) {
+        target_url += `/dashboard/project/${project_id}/build/${build_id}`;
+    }
+
     const options = {
         uri: url,
         method: 'POST',
@@ -34,7 +39,7 @@ export function setStatus(token: string, url: string, state: string) {
         },
         json: {
             state: state,
-            target_url: config.api.url,
+            target_url: target_url,
             description: "InfraBox",
             context: "Job: Create Jobs"
         }
