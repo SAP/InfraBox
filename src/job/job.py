@@ -617,7 +617,7 @@ class RunJob(Job):
 
                 on = d['on']
                 for n in range(0, len(on)):
-                    if on[n] == ["*"]:
+                    if on[n] == "*":
                         d['on'] = ["finished", "error", "failure"]
                         break
 

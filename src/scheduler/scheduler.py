@@ -462,8 +462,7 @@ class Scheduler(object):
         else:
             cpu = cpu * 0.9
 
-        logger.info("Scheduling job")
-        logger.info("job_id: %s", job_id)
+        logger.info("Scheduling job to kubernetes")
 
         if job_type == 'create_job_matrix':
             job_type = 'create'
@@ -479,6 +478,9 @@ class Scheduler(object):
         cursor = self.conn.cursor()
         cursor.execute("UPDATE job SET state = 'scheduled' WHERE id = %s", [job_id])
         cursor.close()
+
+        logger.info("Finished scheduling job")
+        logger.info("")
 
         SCHEDULED_JOBS.inc()
 
@@ -506,6 +508,9 @@ class Scheduler(object):
             memory = j[3]
             dependencies = j[4]
 
+            logger.info("Starting to schedule job: %s", job_id)
+            logger.info("Dependencies: %s", dependencies)
+
             cursor = self.conn.cursor()
             cursor.execute('''
 		SELECT id, state
@@ -519,6 +524,8 @@ class Scheduler(object):
             result = cursor.fetchall()
             cursor.close()
 
+            logger.info("Parent states: %s", result)
+
             # check if there's still some parent running
             parents_running = False
             for r in result:
@@ -529,6 +536,7 @@ class Scheduler(object):
                     break
 
             if parents_running:
+                logger.info("A parent is still running, not scheduling job")
                 continue
 
             # check if conditions are met
@@ -537,22 +545,24 @@ class Scheduler(object):
                 on = None
                 parent_id = r[0]
                 parent_state = r[1]
-
                 for dep in dependencies:
                     if dep['job-id'] == parent_id:
                         on = dep['on']
 
                 assert on
 
+                logger.info("Checking parent %s with state %s", parent_id, parent_state)
+                logger.info("Condition is %s", on)
+
                 if parent_state not in on:
-                    print (parent_state, "not in", on)
+                    logger.info("Condition is not met, skipping job")
                     skipped = True
                     # dependency error, don't run this job_id
                     cursor = self.conn.cursor()
                     cursor.execute(
                         "UPDATE job SET state = 'skipped' WHERE id = (%s)", (job_id,))
                     cursor.close()
-                    continue
+                    break
 
             if skipped:
                 continue
