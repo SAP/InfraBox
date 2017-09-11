@@ -166,10 +166,12 @@ class Scheduler(object):
             "env": env,
             "resources": {
                 "requests": {
-                    "memory": "128Mi"
+                    "memory": "256Mi",
+                    "cpu": 0.2
                 },
                 "limits": {
-                    "memory": "256Mi"
+                    "memory": "256Mi",
+                    "cpu": 0.2
                 }
             },
             "volumeMounts": []
@@ -384,10 +386,12 @@ class Scheduler(object):
                 "env": db_env,
                 "resources": {
                     "requests": {
-                        "memory": "128Mi"
+                        "memory": "256Mi",
+                        "cpu": 0.2
                     },
                     "limits": {
-                        "memory": "256Mi"
+                        "memory": "256Mi",
+                        "cpu": 0.2
                     }
                 },
                 "volumeMounts": [{
@@ -410,6 +414,16 @@ class Scheduler(object):
                             + os.environ['INFRABOX_STORAGE_CLOUDSQL_INSTANCE_CONNECTION_NAME']
                             + "=tcp:5432",
                             "-credential_file=/secrets/cloudsql/credentials.json"],
+                "resources": {
+                    "requests": {
+                        "memory": "256Mi",
+                        "cpu": 0.2
+                    },
+                    "limits": {
+                        "memory": "256Mi",
+                        "cpu": 0.2
+                    }
+                },
                 "volumeMounts": [{
                     "name": "cloudsql-instance-credentials",
                     "mountPath": "/secrets/cloudsql",
