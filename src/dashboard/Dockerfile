@@ -1,9 +1,9 @@
-FROM node:8.4-alpine
+FROM node:8.4
 
 ENV NPM_CONFIG_LOGLEVEL=warn
 ENV NODE_ENV=production
 
-RUN apk add --no-cache git python make g++
+RUN apt-get -y update && apt-get install -y git
 
 COPY src/dashboard /project
 RUN mkdir /dashboard
