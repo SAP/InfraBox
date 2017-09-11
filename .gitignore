@@ -16,6 +16,7 @@ results/
 *.pyc
 *.json_change
 *.swp
+.*.swp
 src/infraboxcli/infraboxcli.egg-info/
 .infrabox
 *.yml.infrabox
