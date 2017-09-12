@@ -267,6 +267,12 @@ export class GanttChart {
     }
 
     private addJob(j: Job) {
+        for (const job of this.jobs) {
+            if (job.id == j.id) {
+                return;
+            }
+        }
+
         const job = new GanttJob(j.id, j.name, j.dependencies, 0, j.getStateValue(), j.project_id, j.build.id);
         this.jobs.push(job);
     }

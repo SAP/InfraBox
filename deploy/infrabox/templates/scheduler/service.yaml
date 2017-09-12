@@ -1,0 +1,18 @@
+kind: Service
+apiVersion: v1
+metadata:
+    name: infrabox-scheduler
+    namespace: infrabox-system
+    labels:
+        app: infrabox
+        infrabox.net/component: scheduler
+spec:
+    selector:
+        app: infrabox
+        infrabox.net/component: scheduler
+    ports:
+    -
+        name: monitoring
+        protocol: TCP
+        port: 8000
+        targetPort: 8000

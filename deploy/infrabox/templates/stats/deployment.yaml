@@ -1,0 +1,113 @@
+{{ if .Values.stats.enabled }}
+{{ if .Values.general.rbac.enabled }}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: infrabox-stats-sa
+  namespace: infrabox-system
+---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1beta1
+metadata:
+  namespace: infrabox-system
+  name: infrabox-stats-role
+rules:
+- apiGroups: [""]
+  resources: ["endpoints"]
+  verbs: ["get"]
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1beta1
+metadata:
+  name: infrabox-stats-rb
+  namespace: infrabox-system
+subjects:
+- kind: ServiceAccount
+  name: infrabox-stats-sa
+  namespace: infrabox-system
+roleRef:
+  kind: ClusterRole
+  name: cluster-admin
+  apiGroup: rbac.authorization.k8s.io
+---
+{{ end }}
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+    name: infrabox-stats
+    namespace: infrabox-system
+    labels:
+        app: infrabox
+        infrabox.net/component: stats
+spec:
+    replicas: 1
+    template:
+        metadata:
+            labels:
+                app: infrabox
+                infrabox.net/component: stats
+        spec:
+            {{- if .Values.general.rbac.enabled }}
+            serviceAccountName: infrabox-stats-sa
+            {{- end }}
+            {{- if .Values.stats.node_selector }}
+            nodeSelector:
+{{ toYaml .Values.stats.node_selector | indent 16 }}
+            {{- end }}
+            containers:
+            {{ if .Values.storage.cloudsql.enabled }}
+            -
+                image: gcr.io/cloudsql-docker/gce-proxy:1.09
+                name: cloudsql-proxy
+                command: ["/cloud_sql_proxy", "--dir=/cloudsql",
+                          "-instances={{ .Values.storage.cloudsql.instance_connection_name }}=tcp:5432",
+                          "-credential_file=/secrets/cloudsql/credentials.json"]
+                volumeMounts:
+                - name: cloudsql-instance-credentials
+                  mountPath: /secrets/cloudsql
+                  readOnly: true
+                - name: ssl-certs
+                  mountPath: /etc/ssl/certs
+                - name: cloudsql
+                  mountPath: /cloudsql
+            {{ end }}
+            -
+                name: leader-elector
+                image: "gcr.io/google_containers/leader-elector:0.5"
+                args:
+                    - "--election"
+                    - infrabox-stats
+                    - "--http=0.0.0.0:4040"
+                ports:
+                - containerPort: 4040
+            -
+                name: stats
+                image: {{ .Values.general.docker_registry }}/{{ default "infrabox/stats" .Values.stats.image }}:{{ .Values.stats.tag }}
+                imagePullPolicy: Always
+                command:
+                - "python"
+                - "/stats/stats.py"
+                volumeMounts:
+                {{ if .Values.storage.gcs.enabled }}
+                -
+                    name: gcs-service-account
+                    mountPath: /etc/infrabox/gcs
+                    readOnly: true
+                {{ end }}
+                env:
+                {{ include "env_database" . | indent 16 }}
+                -
+                    name: INFRABOX_SERVICE
+                    value: {{ default "infrabox/stats" .Values.stats.image }}
+                -
+                    name: INFRABOX_VERSION
+                    value: {{ .Values.stats.tag }}
+            volumes:
+                {{ include "volumes_database" . | indent 16 }}
+                {{ if .Values.storage.gcs.enabled }}
+                -
+                    name: gcs-service-account
+                    secret:
+                        secretName: infrabox-gcs
+                {{ end }}
+{{ end }}

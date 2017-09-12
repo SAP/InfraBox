@@ -34,6 +34,9 @@ scheduler:
     clair:
         enabled: false
 
+    log:
+        level: info
+
 clair:
     enabled: false
 
@@ -149,10 +152,19 @@ dashboard:
     tls:
         enabled: false
 
+stats:
+    enabled: true
+
+    # name of the stats image in your general.docker_registry
+    # image: infrabox/stats
+
+    # Tag
+    tag: latest
+
 api:
     enabled: true
 
-    # name of the dashboard image in your general.docker_registry
+    # name of the api image in your general.docker_registry
     # image: infrabox/api
 
     # Tag

@@ -113,6 +113,9 @@ spec:
                 -
                     name: INFRABOX_CLAIR_ENABLED
                     value: {{ required "scheduler.clair.enabled is required" .Values.scheduler.clair.enabled | quote }}
+                -
+                    name: INFRABOX_SCHEDULER_LOG_LEVEL
+                    value: {{ default "info" .Values.scheduler.log.level }}
                 ports:
                 - containerPort: 8000
                   name: prometheus

@@ -1,0 +1,20 @@
+{{ if .Values.stats.enabled }}
+kind: Service
+apiVersion: v1
+metadata:
+    name: infrabox-stats
+    namespace: infrabox-system
+    labels:
+        app: infrabox
+        infrabox.net/component: stats
+spec:
+    selector:
+        app: infrabox
+        infrabox.net/component: stats
+    ports:
+    -
+        name: monitoring
+        protocol: TCP
+        port: 8000
+        targetPort: 8000
+{{ end }}

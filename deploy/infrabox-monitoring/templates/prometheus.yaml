@@ -1,0 +1,46 @@
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: Prometheus
+metadata:
+  name: infrabox-prometheus
+  namespace: infrabox-system
+  labels:
+    infrabox.net/component: prometheus
+spec:
+  version: v1.7.0
+{{ if .Values.rbac.enabled }}
+  serviceAccountName: prometheus
+{{ end }}
+  serviceMonitorSelector:
+    matchLabels:
+      app: infrabox
+  resources:
+    requests:
+      # 2Gi is default, but won't schedule if you don't have a node with >2Gi
+      # memory. Modify based on your target and time-series count for
+      # production use. This value is mainly meant for demonstration/testing
+      # purposes.
+      memory: 400Mi
+  alerting:
+    alertmanagers:
+    - namespace: monitoring
+      name: alertmanager-main
+      port: monitoring
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus-frontend
+  namespace: infrabox-system
+  labels:
+    app: infrabox
+    infrabox.net/component: prometheus
+spec:
+  type: NodePort
+  ports:
+  - name: web
+    nodePort: 30210
+    port: 9090
+    protocol: TCP
+    targetPort: web
+  selector:
+    prometheus: infrabox-prometheus

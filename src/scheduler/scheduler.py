@@ -18,7 +18,7 @@ namespace = 'infrabox-worker'
 # pylint: disable=no-value-for-parameter
 LOOP_SECONDS = Histogram('infrabox_scheduler_loop_seconds', 'Time spent for one scheduler loop iteration')
 ORPHANED_JOBS = Counter('infrabox_scheduler_orphaned_jobs_total', 'Number of removed orphaned jobs')
-ABORTED_JOBS = Counter('infrabox_scheduler_aborted_jobs_total', 'Number of aborted jobs')
+ABORTED_JOBS = Counter('infrabox_scheduler_killed_jobs_total', 'Number of killed jobs')
 SCHEDULED_JOBS = Counter('infrabox_scheduler_scheduled_jobs_total', 'Number of scheduled jobs')
 TIMEOUT_JOBS = Counter('infrabox_scheduler_timeout_jobs_total', 'Number of timed out scheduled jobs')
 
@@ -583,6 +583,7 @@ class Scheduler(object):
 
             # If it's a wait job we are done here
             if job_type == "wait":
+                logger.info("Wait job, we are done")
                 cursor = self.conn.cursor()
                 cursor.execute('''
                     UPDATE job SET state = 'finished', start_date = now(), end_date = now() WHERE id = %s;
@@ -605,8 +606,20 @@ class Scheduler(object):
             result = cursor.fetchone()
             cursor.close()
 
+            if not result:
+                # project was probably deleted
+                cursor = self.conn.cursor()
+                cursor.execute('''
+                    UPDATE job SET state = 'killed', start_date = now(), end_date = now() WHERE id = %s;
+                ''', (job_id,))
+                cursor.close()
+                continue
+
             max_concurrent_jobs = result[0]
             owner_id = result[1]
+
+            logger.info("User quota:")
+            logger.info("max_concurrent_jobs: %s", max_concurrent_jobs)
 
             cursor = self.conn.cursor()
             cursor.execute('''
@@ -778,7 +791,7 @@ def main():
     elif args.loglevel == 'info':
         logger.setLevel(logging.INFO)
     else:
-        logger.setLevel(logging.ERROR)
+        logger.setLevel(logging.INFO)
 
     get_env('INFRABOX_SERVICE')
     get_env('INFRABOX_VERSION')

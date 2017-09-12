@@ -1,0 +1,15 @@
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: ServiceMonitor
+metadata:
+  name: infrabox-scheduler
+  namespace: infrabox-system
+  labels:
+    app: infrabox
+    infrabox.net/component: scheduler
+spec:
+  selector:
+    matchLabels:
+      infrabox.net/component: scheduler
+  endpoints:
+  - port: monitoring
+    interval: 5s

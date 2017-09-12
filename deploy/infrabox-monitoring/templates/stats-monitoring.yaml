@@ -1,0 +1,15 @@
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: ServiceMonitor
+metadata:
+  name: infrabox-stats
+  namespace: infrabox-system
+  labels:
+    app: infrabox
+    infrabox.net/component: stats
+spec:
+  selector:
+    matchLabels:
+      infrabox.net/component: stats
+  endpoints:
+  - port: monitoring
+    interval: 5s
