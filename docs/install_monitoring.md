@@ -25,7 +25,3 @@ Install InfraBox monitoring
 
     cd deploy/infrabox-monitoring
     helm install -n infrabox-monitoring .
-
-# Grafana
-
-    helm install stable/grafana --namespace
