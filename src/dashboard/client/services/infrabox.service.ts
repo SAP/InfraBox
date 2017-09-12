@@ -15,6 +15,6 @@ export class InfraBoxService {
     }
 
     public openDocs() {
-        window.open(INFRABOX_DOCS_URL, "_self");
+        window.open(INFRABOX_DOCS_URL, "_blank");
     }
 }
