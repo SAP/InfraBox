@@ -603,13 +603,20 @@ def create_jobs():
     d = request.json
     jobs = d['jobs']
 
-    cursor = conn.cursor()
+    # Create new connection without auto commit
+    c = psycopg2.connect(dbname=os.environ['INFRABOX_DATABASE_DB'],
+                         user=os.environ['INFRABOX_DATABASE_USER'],
+                         password=os.environ['INFRABOX_DATABASE_PASSWORD'],
+                         host=os.environ['INFRABOX_DATABASE_HOST'],
+                         port=os.environ['INFRABOX_DATABASE_PORT'])
+
+    cursor = c.cursor()
     cursor.execute("SELECT env_var FROM job WHERE id = %s", (JOB_ID,))
     result = cursor.fetchone()
     base_env_var = result[0]
 
     # Get some project info
-    cursor = conn.cursor()
+    cursor = c.cursor()
     cursor.execute("""
         SELECT co.user_id, b.build_number, j.project_id FROM collaborator co
         INNER JOIN job j
@@ -639,7 +646,7 @@ def create_jobs():
         if job['type'] == "wait":
             continue
 
-        cursor = conn.cursor()
+        cursor = c.cursor()
         cursor.execute("""
             SELECT EXTRACT(EPOCH FROM avg(j.end_date - j.start_date))
             FROM job j
@@ -663,7 +670,7 @@ def create_jobs():
 
                 if isinstance(value, dict):
                     env_var_ref_name = value['$ref']
-                    cursor = conn.cursor()
+                    cursor = c.cursor()
                     cursor.execute("""SELECT value FROM secret WHERE name = %s and project_id = %s""",
                                    (env_var_ref_name, job_data['project']['id']))
                     result = cursor.fetchall()
@@ -759,7 +766,7 @@ def create_jobs():
             env_var_refs = json.dumps(job['env_var_refs'])
 
         # Create job
-        cursor = conn.cursor()
+        cursor = c.cursor()
         cursor.execute("""
             INSERT INTO job (id, state, build_id, type, dockerfile, name,
                 project_id, dependencies, build_only,
@@ -776,6 +783,7 @@ def create_jobs():
         # to make sure the get picked up in the right order by the scheduler
         time.sleep(0.1)
 
+    c.commit()
     return "Successfully create jobs"
 
 @app.route("/consoleupdate", methods=['POST'])
