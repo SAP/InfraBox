@@ -2,7 +2,6 @@ import os
 import sys
 import requests
 
-# pylint: disable=import-error,dangerous-default-value
 from infrabox_job.process import Failure
 
 class Job(object):

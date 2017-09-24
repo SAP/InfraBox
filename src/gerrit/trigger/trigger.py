@@ -1,5 +1,3 @@
-#pylint: disable=missing-docstring,too-many-return-statements,invalid-name
-
 import json
 import os
 import logging

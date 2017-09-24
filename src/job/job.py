@@ -1,6 +1,4 @@
 #!/usr/bin/python
-# pylint: disable=dangerous-default-value
-
 import os
 import shutil
 import traceback

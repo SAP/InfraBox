@@ -1,4 +1,3 @@
-#pylint: disable=missing-docstring,invalid-name,too-many-locals
 from __future__ import print_function
 import os
 import json
@@ -545,7 +544,6 @@ def get_output_of_job(job_id):
 
 @app.route("/job")
 def get_job():
-    # pylint: disable=global-statement
     global job_data
     job_data = get_job_data()
 

@@ -1,4 +1,3 @@
-#pylint: disable=missing-docstring,invalid-name,too-many-locals
 import json
 import os
 import logging
@@ -163,6 +162,5 @@ def print_stackdriver():
 if __name__ == "__main__":
     try:
         main()
-    #pylint: disable=bare-except
     except:
         print_stackdriver()
