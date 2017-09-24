@@ -93,6 +93,7 @@ class RunJob(Job):
                 "build": {
                     "id": self.build['id'],
                     "number": self.build['build_number'],
+                    "url": os.environ['INFRABOX_DASHBOARD_URL'] + '/dashboard/project/' + self.project['id'] + '/build/' + self.build['id']
                 }
             }
 
@@ -100,13 +101,8 @@ class RunJob(Job):
                 o['commit'] = {}
                 o['commit']["branch"] = self.commit['branch']
                 o['commit']["id"] = self.commit['id']
-                o['build']["url"] = os.environ['INFRABOX_DASHBOARD_URL'] + '/dashboard/project/' + self.project['id'] + '/commit/' + self.commit['id']
-
-            if self.project['type'] == 'upload':
-                o['build']["url"] = os.environ['INFRABOX_DASHBOARD_URL'] + '/dashboard/project/' + self.project['id'] + '/build/' + str(self.build['build_number'])
 
             json.dump(o, out)
-
 
     def flush(self):
         self.console.flush()
@@ -166,8 +162,15 @@ class RunJob(Job):
                 c.execute(cmd, show=True, cwd="/repo")
 
             c.header("Checkout commit", show=True)
-            c.execute(['git', 'checkout', '-qf', '-b', 'job', self.commit['id']],
-                      cwd="/repo", show=True)
+            cmd = ['git', 'checkout', '-qf', '-b', 'job']
+
+            if 'repo' in self.job and self.job['repo'] and 'commit' in self.job['repo'] and self.job['repo']['commit']:
+                cmd += [self.job['repo']['commit']]
+            else:
+                cmd += [self.commit['id']]
+
+            c.collect(' '.join(cmd), show=True)
+            c.execute(cmd, cwd="/repo", show=True)
 
             c.header("Init submodules", show=True)
             c.execute(['git', 'submodule', 'init'], cwd="/repo", show=True)

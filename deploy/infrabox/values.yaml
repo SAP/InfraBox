@@ -214,6 +214,13 @@ gerrit:
         # Tag
         tag: latest
 
+    api:
+        # name of the gerrit api image in your general.docker_registry
+        # image: infrabox/gerrit/api
+
+        # Tag
+        tag: latest
+
     # hostname: <REQUIRED>
     # username: <REQUIRED>
     # port: 29418
@@ -228,6 +235,21 @@ local_cache:
 
 github:
     enabled: false
+
+    trigger:
+        # image: infrabox/github/trigger
+
+        tag: latest
+
+    api:
+        # image: infrabox/github/api
+
+        tag: latest
+
+    review:
+        # image: infrabox/review/api
+
+        tag: latest
 
     login:
         enabled: false

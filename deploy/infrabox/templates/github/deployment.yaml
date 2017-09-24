@@ -1,16 +1,16 @@
-{{ if .Values.scheduler.enabled }}
+{{ if .Values.github.enabled }}
 {{ if .Values.general.rbac.enabled }}
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: infrabox-scheduler-sa
+  name: infrabox-github-sa
   namespace: infrabox-system
 ---
 kind: Role
 apiVersion: rbac.authorization.k8s.io/v1beta1
 metadata:
   namespace: infrabox-system
-  name: infrabox-scheduler-role
+  name: infrabox-github-role
 rules:
 - apiGroups: [""]
   resources: ["endpoints"]
@@ -19,11 +19,11 @@ rules:
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1beta1
 metadata:
-  name: infrabox-scheduler-rb
+  name: infrabox-github-rb
   namespace: infrabox-system
 subjects:
 - kind: ServiceAccount
-  name: infrabox-scheduler-sa
+  name: infrabox-github-sa
   namespace: infrabox-system
 roleRef:
   kind: ClusterRole
@@ -34,25 +34,25 @@ roleRef:
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-    name: infrabox-scheduler
+    name: infrabox-github
     namespace: infrabox-system
     labels:
         app: infrabox
-        infrabox.net/component: scheduler
+        infrabox.net/component: github
 spec:
     replicas: 1
     template:
         metadata:
             labels:
                 app: infrabox
-                infrabox.net/component: scheduler
+                infrabox.net/component: github
         spec:
             {{- if .Values.general.rbac.enabled }}
-            serviceAccountName: infrabox-scheduler-sa
-            {{- end }}
-            {{- if .Values.scheduler.node_selector }}
+            serviceAccountName: infrabox-github-sa
+            {{ end }}
+            {{- if .Values.github.node_selector }}
             nodeSelector:
-{{ toYaml .Values.scheduler.node_selector | indent 16 }}
+{{ toYaml .Values.github.node_selector | indent 16 }}
             {{- end }}
             containers:
             {{ if .Values.storage.cloudsql.enabled }}
@@ -72,58 +72,33 @@ spec:
                   mountPath: /cloudsql
             {{ end }}
             -
-                name: scheduler
-                image: {{ required "general.docker_registry is required" .Values.general.docker_registry }}/{{ default "infrabox/scheduler" .Values.scheduler.image }}:{{ required "scheduler.tag is required" .Values.scheduler.tag }}
-                args:
-                    - "--docker-registry"
-                    - "{{ .Values.general.docker_registry }}"
-                    - "--tag"
-                    - "{{ .Values.scheduler.tag }}"
+                name: github-review
+                image: {{ required "general.docker_registry is required" .Values.general.docker_registry }}/{{ default "infrabox/github/review" .Values.github.review.image }}:{{ required "github.review.tag is required" .Values.github.review.tag }}
                 imagePullPolicy: Always
                 env:
                 {{ include "env_database" . | indent 16 }}
-                {{ include "env_gcs" . | indent 16 }}
-                {{ include "env_s3" . | indent 16 }}
-                {{ include "env_gerrit" . | indent 16 }}
-                {{ include "env_local_cache" . | indent 16 }}
-                {{ include "env_job" . | indent 16 }}
+                {{ include "env_github" . | indent 16 }}
                 {{ include "env_general" . | indent 16 }}
-                {{ include "env_kubernetes" . | indent 16 }}
-                -
-                    name: INFRABOX_GENERAL_NO_CHECK_CERTIFICATES
-                    value: {{ default "false" .Values.general.no_check_certificates | quote }}
-                -
-                    name: INFRABOX_DASHBOARD_URL
-                    value: {{ required "dashboard.url is required" .Values.dashboard.url }}
-                -
-                    name: INFRABOX_DOCKER_REGISTRY_URL
-                    value: {{ required "docker_registry.url is required" .Values.docker_registry.url }}
                 -
                     name: INFRABOX_SERVICE
-                    value: {{ default "infrabox/scheduler" .Values.scheduler.image }}
+                    value: {{ default "infrabox/github/review" .Values.github.review.image }}
                 -
                     name: INFRABOX_VERSION
-                    value: {{ required "scheduler.tag is required" .Values.scheduler.tag }}
+                    value: {{ required "github.review.tag is required" .Values.github.review.tag }}
                 -
-                    name: INFRABOX_CLAIR_ENABLED
-                    value: {{ required "scheduler.clair.enabled is required" .Values.scheduler.clair.enabled | quote }}
-                -
-                    name: INFRABOX_SCHEDULER_LOG_LEVEL
-                    value: {{ default "info" .Values.scheduler.log.level }}
-                ports:
-                - containerPort: 8000
-                  name: prometheus
+                    name: INFRABOX_DASHBOARD_URL
+                    value: {{ .Values.dashboard.url }}
             -
                 name: leader-elector
                 image: "gcr.io/google_containers/leader-elector:0.5"
                 args:
                     - "--election"
-                    - infrabox-scheduler
+                    - infrabox-github
                     - "--http=0.0.0.0:4040"
                 ports:
                 - containerPort: 4040
-            {{- if .Values.storage.cloudsql.enabled }}
             volumes:
+            {{- if .Values.storage.cloudsql.enabled }}
               - name: cloudsql-instance-credentials
                 secret:
                   secretName: infrabox-cloudsql-instance-credentials

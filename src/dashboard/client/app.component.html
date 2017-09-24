@@ -36,20 +36,6 @@
                                     <project-list></project-list>
                                 </ul>
                             </li>
-                            <li *ngIf="loginService.loggedIn" class="dropdown">
-                                <a aria-expanded="false" role="button" href="#" class="dropdown-toggle" data-toggle="dropdown">
-                                    <i class="fa fa-cogs"></i>
-                                    <span class="nav-label"> Settings</span><span class="caret"></span></a>
-                                <ul role="menu" class="dropdown-menu">
-                                    <li>
-                                        <a [routerLink]="['/dashboard/account/tokens']">
-                                            <i class="fa fa-key fa-fw"></i>
-                                            <span class="nav-label"> Authentication Tokens
-                                            </span>
-                                        </a>
-                                    </li>
-                                </ul>
-                            </li>
                             <li>
                                 <a aria-expanded="false" role="button" href="https://github.com/InfraBox/infrabox/issues" target="_blank">
                                     <i class="fa fa-exclamation-circle"></i>

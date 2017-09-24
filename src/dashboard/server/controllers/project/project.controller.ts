@@ -113,6 +113,11 @@ router.post("/", pv, (req: Request, res: Response, next) => {
                                     WHERE github_id = $2`, [hook.id, repo.id]);
 
                });
+            } else if (typ === "gerrit") {
+                return tx.none(`
+                    INSERT INTO repository (name, private, project_id)
+                    VALUES ($1, false, $2);
+                `, [name, project_id]);
             }
         });
     })

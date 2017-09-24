@@ -1,3 +1,4 @@
+#pylint: disable=missing-docstring,invalid-name,too-many-locals
 from __future__ import print_function
 import os
 import json
@@ -562,42 +563,6 @@ def set_running():
     conn.commit()
     return jsonify({})
 
-def create_github_commit_status(state, name):
-    if get_env('INFRABOX_GITHUB_ENABLED') != 'true':
-        return
-
-    if job_data['project']['type'] != 'github':
-        return
-
-    if not job_data['repository'].get('github_api_token', None):
-        return
-
-    github_api_url = get_env('INFRABOX_GITHUB_API_URL')
-    url = github_api_url + '/repos/' + job_data['repository']['owner'] + '/' + job_data['repository']['name'] + '/statuses/' + job_data['commit']['id']
-
-    payload = {
-        "state": state,
-        "target_url": get_env('INFRABOX_DASHBOARD_URL') + '/dashboard/project/' + job_data['project']['id'] + '/job/' + job_data['job']['id'],
-        "description": "InfraBox",
-        "context": "Job: %s" % name
-    }
-
-    headers = {
-        "Authorization": "token " + job_data['repository']['github_api_token'],
-        "User-Agent": "InfraBox"
-    }
-
-    verify = os.environ['INFRABOX_GENERAL_NO_CHECK_CERTIFICATES'] != 'true'
-    requests.post(url, data=json.dumps(payload), headers=headers, timeout=5, verify=verify)
-
-    return jsonify({})
-
-@app.route("/commitstatus", methods=['POST'])
-def create_commit_status():
-    d = request.json
-    create_github_commit_status(d['state'], d['name'])
-    return jsonify({})
-
 @app.route("/create_jobs", methods=['POST'])
 def create_jobs():
     d = request.json
@@ -703,10 +668,6 @@ def create_jobs():
 
         if 'security' in job:
             scan_container = job['security']['scan_container']
-
-        # Set commit status
-        if job_type != "wait":
-            create_github_commit_status('pending', name)
 
         depends_on = job.get("depends_on", [])
 
@@ -1137,8 +1098,6 @@ def set_finished():
     else:
         commit_state = 'failure'
 
-    create_github_commit_status(commit_state, job_data['job']['name'])
-
     conn.commit()
     return jsonify({})
 
@@ -1155,11 +1114,7 @@ if __name__ == "__main__":
     get_env('INFRABOX_DATABASE_PORT')
     get_env('INFRABOX_JOB_ID')
     get_env('INFRABOX_DASHBOARD_URL')
-    get_env('INFRABOX_GITHUB_ENABLED')
     get_env('INFRABOX_JOB_MAX_OUTPUT_SIZE')
-
-    if get_env('INFRABOX_GITHUB_ENABLED') == 'true':
-        get_env('INFRABOX_GITHUB_API_URL')
 
     if get_env('INFRABOX_STORAGE_GCS_ENABLED') == 'true':
         get_env('INFRABOX_STORAGE_GCS_CONTAINER_CONTENT_CACHE_BUCKET')

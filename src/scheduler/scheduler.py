@@ -28,9 +28,6 @@ def use_gcs():
 def use_s3():
     return os.environ['INFRABOX_STORAGE_S3_ENABLED'] == 'true'
 
-def github_enabled():
-    return os.environ['INFRABOX_GITHUB_ENABLED'] == 'true'
-
 def gerrit_enabled():
     return os.environ['INFRABOX_GERRIT_ENABLED'] == 'true'
 
@@ -102,18 +99,9 @@ class Scheduler(object):
             "name": "INFRABOX_JOB_MAX_OUTPUT_SIZE",
             "value": os.environ['INFRABOX_JOB_MAX_OUTPUT_SIZE']
         }, {
-            "name": "INFRABOX_GITHUB_ENABLED",
-            "value": os.environ['INFRABOX_GITHUB_ENABLED']
-        }, {
             "name": "INFRABOX_GERRIT_ENABLED",
             "value": os.environ['INFRABOX_GERRIT_ENABLED']
         }]
-
-        if github_enabled():
-            env.extend(({
-                "name": "INFRABOX_GITHUB_API_URL",
-                "value": os.environ['INFRABOX_GITHUB_API_URL']
-            },))
 
         if use_gcs():
             env.extend(({

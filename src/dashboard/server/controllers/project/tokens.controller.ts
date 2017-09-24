@@ -7,10 +7,12 @@ import { Validator } from 'jsonschema';
 
 const router = Router({ mergeParams: true });
 module.exports = router;
+
 router.get("/", pv,(req: Request, res: Response, next) => {
     let project_id = req.params['project_id'];
 
-    db.any('SELECT token, description, scope_push, scope_pull, id FROM "auth_token" where project_id = $1',
+    db.any(`SELECT token, description, scope_push, scope_pull, id
+            FROM "auth_token" where project_id = $1`,
         [project_id])
         .then((tokens: any[]) => {
             res.json(tokens);

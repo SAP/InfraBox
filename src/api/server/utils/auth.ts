@@ -23,7 +23,7 @@ export function token_auth(req: Request, res: Response, next: any) {
         }
 
         db.any(`
-            SELECT project_id, push, pull FROM auth_token at WHERE token = $1
+            SELECT project_id, scope_push, scope_pull FROM auth_token at WHERE token = $1
         `, [t])
         .then((t: any[]) => {
             if (t.length !== 1) {
@@ -33,7 +33,7 @@ export function token_auth(req: Request, res: Response, next: any) {
 
 
             const pt = t[0];
-            req["token"] = new ProjectToken(pt.project_id, new Scopes(pt.push, pt.pull));
+            req["token"] = new ProjectToken(pt.project_id, new Scopes(pt.scope_push, pt.scope_pull));
             return next();
         })
         .catch(handleDBError(next));

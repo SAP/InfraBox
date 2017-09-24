@@ -39,7 +39,7 @@ gulp.task("compile", ["empty-dist"], function() {
 });
 
 gulp.task("develop", ["build-server"], function() {
-    livereload.listen();
+    livereload.listen({ port: 33002 });
     nodemon({
         script: "dist/server/app.js",
         ext: "js html css",

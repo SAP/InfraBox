@@ -26,6 +26,7 @@ spec:
             -
                 image: gcr.io/cloudsql-docker/gce-proxy:1.09
                 name: cloudsql-proxy
+                imagePullPolicy: Always
                 command: ["/cloud_sql_proxy", "--dir=/cloudsql",
                           "-instances={{ .Values.storage.cloudsql.instance_connection_name }}=tcp:5432",
                           "-credential_file=/secrets/cloudsql/credentials.json"]
@@ -37,6 +38,53 @@ spec:
                   mountPath: /etc/ssl/certs
                 - name: cloudsql
                   mountPath: /cloudsql
+            {{ end }}
+            {{ if .Values.gerrit.enabled }}
+            -
+                image: {{ .Values.general.docker_registry }}/{{ default "infrabox/gerrit/api" .Values.gerrit.api.image }}:{{ .Values.gerrit.api.tag }}
+                imagePullPolicy: Always
+                name: gerrit-api
+                env:
+                {{ include "env_general" . | indent 16 }}
+                {{ include "env_gerrit" . | indent 16 }}
+                -
+                    name: INFRABOX_SERVICE
+                    value: {{ default "infrabox/gerrit/api" .Values.gerrit.api.image }}
+                -
+                    name: INFRABOX_VERSION
+                    value: {{ .Values.gerrit.api.tag }}
+                volumeMounts:
+                - name: gerrit-ssh
+                  mountPath: /tmp/gerrit
+                  readOnly: true
+            {{ end }}
+            {{ if .Values.github.enabled }}
+            -
+                image: {{ .Values.general.docker_registry }}/{{ default "infrabox/github/trigger" .Values.github.trigger.image }}:{{ .Values.github.trigger.tag }}
+                imagePullPolicy: Always
+                name: github-trigger
+                env:
+                {{ include "env_database" . | indent 16 }}
+                {{ include "env_general" . | indent 16 }}
+                -
+                    name: INFRABOX_SERVICE
+                    value: {{ default "infrabox/github/trigger" .Values.github.trigger.image }}
+                -
+                    name: INFRABOX_VERSION
+                    value: {{ .Values.github.trigger.tag }}
+            -
+                image: {{ .Values.general.docker_registry }}/{{ default "infrabox/github/api" .Values.github.api.image }}:{{ .Values.github.api.tag }}
+                imagePullPolicy: Always
+                name: github-api
+                env:
+                {{ include "env_general" . | indent 16 }}
+                {{ include "env_github" . | indent 16 }}
+                -
+                    name: INFRABOX_SERVICE
+                    value: {{ default "infrabox/github/api" .Values.github.api.image }}
+                -
+                    name: INFRABOX_VERSION
+                    value: {{ .Values.github.api.tag }}
             {{ end }}
             -
                 name: api
@@ -107,5 +155,11 @@ spec:
                     name: api-tls
                     secret:
                         secretName: infrabox-api-tls
+                {{ end }}
+                {{ if .Values.gerrit.enabled }}
+                -
+                    name: gerrit-ssh
+                    secret:
+                        secretName: infrabox-gerrit-ssh
                 {{ end }}
 {{ end }}

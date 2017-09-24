@@ -324,7 +324,7 @@ CREATE TABLE collaborator (
 
 CREATE TABLE commit (
     id character varying(255) NOT NULL,
-    message character varying(255),
+    message character varying(4096),
     repository_id uuid NOT NULL,
     "timestamp" timestamp with time zone NOT NULL,
     author_name character varying NOT NULL,

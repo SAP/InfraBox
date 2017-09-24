@@ -35,14 +35,6 @@ class Job(object):
 
         self.deployments = data['deployments']
 
-    def create_github_commit_status(self, state, name):
-        payload = {
-            "state": state,
-            "name": name
-        }
-        requests.post("http://%s/commitstatus" % self.api_server, json=payload, timeout=60).json()
-        return 0
-
     def create_jobs(self, jobs):
         payload = {
             "jobs": jobs,
