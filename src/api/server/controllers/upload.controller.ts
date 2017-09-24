@@ -40,21 +40,17 @@ router.post("/:project_id/upload", upload.single('project.zip'), (req: Request, 
 
     db.tx((tx) => {
         return tx.any(`
-            SELECT u.id as user_id
+            SELECT token
             FROM auth_token at
-            INNER JOIN "user" u
-                ON u.id = at.user_id
-                AND at.token = $1
-            INNER JOIN collaborator co
-                ON co.user_id = u.id
             INNER JOIN project p
-                ON p.id = co.project_id
+                ON  at.project_id = p.id
+                AND at.token = $1
                 AND p.id = $2
                 AND p.type = 'upload'
         `, [req.headers['authorization'], project_id])
         .then((result: any[]) => {
             if (result.length !== 1) {
-        	logger.debug('project not found for id and token');
+                logger.debug('project not found for id and token');
                 throw new Unauthorized();
             }
 

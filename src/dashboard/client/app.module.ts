@@ -32,7 +32,7 @@ import { StartDateComponent } from "./components/utils/start_date.component";
 import { AddProjectComponent } from "./components/add_project.component";
 import { EndDateComponent } from "./components/utils/end_date.component";
 import { ConsoleComponent } from "./components/project/job/console.component";
-import { AuthTokenComponent } from "./components/auth_token.component";
+import { AuthTokenComponent } from "./components/project/token.component";
 import { CompareConfigComponent } from "./components/compare_config.component";
 import { CompareMetricsComponent } from "./components/compare_metrics.component";
 import { SecretComponent } from "./components/project/secret.component";

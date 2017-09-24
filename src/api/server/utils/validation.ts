@@ -5,7 +5,6 @@ const validators = {
     project_id: isUUID,
     build_id: isUUID,
     job_id: isUUID,
-    user_id: isUUID,
     commit_id: () => true,
     dep_id: isUUID,
     secret_id: isUUID,

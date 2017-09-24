@@ -5,6 +5,14 @@ import { Unauthorized, NotFound } from "./status";
 import { db, handleDBError } from "../db";
 import { logger } from "./logger";
 
+export class Scopes {
+    constructor(public push: boolean, public pull: boolean) {}
+}
+
+export class ProjectToken {
+    constructor(public project_id: string, public scopes: Scopes) {}
+}
+
 export function token_auth(req: Request, res: Response, next: any) {
     try {
         const t = req.headers["auth-token"];
@@ -15,15 +23,17 @@ export function token_auth(req: Request, res: Response, next: any) {
         }
 
         db.any(`
-            SELECT at.user_id as id FROM auth_token at WHERE token = $1
+            SELECT project_id, push, pull FROM auth_token at WHERE token = $1
         `, [t])
-        .then((users: any[]) => {
-            if (users.length !== 1) {
-                logger.debug("token_auth: Did not find a user with the provided token");
+        .then((t: any[]) => {
+            if (t.length !== 1) {
+                logger.debug("token_auth: Did not find the token");
                 return next(new Unauthorized());
             }
 
-            req["user"] = users[0];
+
+            const pt = t[0];
+            req["token"] = new ProjectToken(pt.project_id, new Scopes(pt.push, pt.pull));
             return next();
         })
         .catch(handleDBError(next));
@@ -35,31 +45,24 @@ export function token_auth(req: Request, res: Response, next: any) {
 
 export function socket_token_auth(token: string) {
     return db.any(`
-        SELECT at.user_id as id FROM auth_token at WHERE token = $1
+        SELECT project_id, push, pull FROM auth_token at WHERE token = $1
     `, [token])
-    .then((users: any[]) => {
-        if (users.length !== 1) {
-            logger.debug("socket_token_auth: Did not find a user with the provided token");
+    .then((t: any[]) => {
+        if (t.length !== 1) {
+            logger.debug("socket_token_auth: Did not find the token");
             throw new Unauthorized();
         }
 
-        return users[0];
+        const pt = t[0]
+        const project_token = new ProjectToken(pt.project_id, new Scopes(pt.push, pt.pull));
+        return project_token;
     });
 }
 
 export function checkProjectAccess(req: Request, res: Response, next: any) {
-    const user_id = req["user"].id;
-    const project_id = req.params["project_id"];
-
-    db.any(`
-        SELECT * FROM collaborator WHERE user_id = $1 and project_id = $2
-    `, [user_id, project_id]
-    ).then((r: any[]) => {
-        if (r.length !== 1) {
-            logger.debug("checkProjectAccess: user not a collaborator");
-            return next(new NotFound());
-        } else {
-            return next();
-        }
-    }).catch(handleDBError(next));
+    if (req.params['project_id'] === req['token']['project_id']) {
+        return next();
+    } else {
+        return next(new NotFound());
+    }
 }

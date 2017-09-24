@@ -34,6 +34,14 @@ export class Secret {
     constructor(public name: string, public value: string, public id: string) {}
 }
 
+export class AuthToken {
+    public id: string;
+    public description: string;
+    public token: string;
+    public scope_push = false;
+    public scope_pull = false;
+}
+
 @Injectable()
 export class ProjectService {
     private projectURL = "api/dashboard/project";
@@ -49,6 +57,30 @@ export class ProjectService {
 
         return this.api.get("api/dashboard/github/repos").mergeMap((repos: GithubRepo[]) => {
             return Observable.from(repos);
+        });
+    }
+
+    public addAuthToken(project_id: string, token: AuthToken): Observable<Notification> {
+        const url = this.projectURL + '/' + project_id + '/tokens';
+        const body = JSON.stringify({
+            description: token.description,
+            token: token.token,
+            scope_pull: token.scope_pull,
+            scope_push: token.scope_push
+        });
+        return this.api.post(url, body);
+    }
+
+    public deleteAuthToken(project_id: string, token: AuthToken): Observable<Notification> {
+        const url = this.projectURL + '/' + project_id + '/tokens/' + token.id;
+        return this.api.delete(url);
+    }
+
+    public getAuthTokens(project_id: string): Observable<AuthToken> {
+        const url = this.projectURL + '/' + project_id + '/tokens';
+
+        return this.api.get(url).mergeMap((env: AuthToken[]) => {
+            return Observable.from(env);
         });
     }
 

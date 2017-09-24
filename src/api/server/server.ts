@@ -10,7 +10,7 @@ import { logger } from "./utils/logger";
 import { Subscription } from "rxjs/Subscription";
 import { ConsoleListener } from "./listeners/ConsoleListener";
 import { JobListener } from "./listeners/JobListener";
-import { socket_token_auth } from "./utils/auth";
+import { ProjectToken, socket_token_auth } from "./utils/auth";
 
 export function createServer(print: boolean) {
     const app = express();
@@ -42,7 +42,7 @@ export function createServer(print: boolean) {
         logger.info("New socket connection");
         const subs = new Array<Subscription>();
         let isAuthenticated = false;
-        let user = null;
+        let project_token: ProjectToken ;
         openConnections += 1;
 
         socket.on("disconnect", () => {
@@ -77,8 +77,8 @@ export function createServer(print: boolean) {
             }
 
             socket_token_auth(token)
-            .then((u) => {
-                user = u;
+            .then((u: ProjectToken) => {
+                project_token = u;
                 isAuthenticated = true;
             })
             .catch((err) => {
@@ -112,7 +112,7 @@ export function createServer(print: boolean) {
                 return;
             }
 
-            subs.push(server['listeners']['job'].getJobs(user.id).subscribe((j) => {
+            subs.push(server['listeners']['job'].getJobs(project_token.project_id).subscribe((j) => {
                 if (j.data.build.id === build_id) {
                     logger.debug("notify:job:", j);
                     socket.emit("notify:job", j);
@@ -146,7 +146,7 @@ export function createServer(print: boolean) {
                 return;
             }
 
-            subs.push(server['listeners']['console'].getOutput(job_id, user.id).subscribe((output) => {
+            subs.push(server['listeners']['console'].getOutput(job_id, project_token.project_id).subscribe((output) => {
                 logger.debug("notify:console:",  job_id);
                 socket.emit("notify:console", {
                     data: output,

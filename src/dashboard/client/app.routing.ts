@@ -14,7 +14,7 @@ import { DocumentComponent } from "./components/utils/document.component";
 import { DashboardComponent } from "./components/dashboard.component";
 import { ProjectSettingsComponent } from "./components/project/settings.component";
 import { AddProjectComponent } from "./components/add_project.component";
-import { AuthTokenComponent } from "./components/auth_token.component";
+import { AuthTokenComponent } from "./components/project/token.component";
 import { IsLoggedIn } from "./services/login.service";
 
 const appRoutes: Routes = [{

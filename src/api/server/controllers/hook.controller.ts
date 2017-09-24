@@ -194,6 +194,8 @@ function createJob(c: Commit, repository: Repository, branch: string, tag: strin
             const stmt = pgp.helpers.insert(files, ['project_id', 'commit_id', 'modification', 'filename'], 'commit_file');
 
             return tx.any(stmt);
+        }).then(() => {
+            return build;
         });
     });
 }
@@ -237,13 +239,27 @@ function handlePush(event: PushEvent, res: Response, next) {
         commits = event.commits;
     }
 
+    let token = null;
+
     getOwnerToken(event.repository.id)
     .then((result) => {
-        const token = result.github_api_token;
+        token = result.github_api_token;
+    }).then(() => {
+        return Promise.mapSeries(commits, (c: Commit) => {
+            if (!c.distinct) {
+                return;
+            }
 
-        if (token) {
-            return Promise.map(commits, (c: Commit) => {
-                if (c.distinct) {
+            return createJob(c, event.repository, branch, tag)
+                .then((build) => {
+                    if (!token) {
+                        return;
+                    }
+
+                    if (c.distinct) {
+                        return;
+                    }
+
                     const owner = event.repository.owner.name;
                     const repo = event.repository.name;
                     const sha = c.id;
@@ -253,17 +269,10 @@ function handlePush(event: PushEvent, res: Response, next) {
                                 + repo
                                 + '/statuses/'
                                 + sha;
-                    return setStatus(token, url, 'pending');
-                }
-            }).catch(() => {
-                // failed to set status, but we ignore it
-            });
-        }
-    }).then(() => {
-        return Promise.mapSeries(commits, (c: Commit) => {
-            if (c.distinct) {
-                return createJob(c, event.repository, branch, tag);
-            }
+                    setStatus(token, url, 'pending', build.project_id, build.id).catch(() => {
+                        // failed to set status, but we ignore it
+                    });
+                });
         });
     }).then(() => {
         return OK(res, "successfully handled push event");

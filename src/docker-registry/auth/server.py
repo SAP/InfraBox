@@ -55,11 +55,7 @@ def auth_project(project_id):
         return "BAD REQUEST", 401
 
     cur = conn.cursor()
-    cur.execute('''SELECT * FROM auth_token at
-                    INNER JOIN collaborator co
-                        ON co.user_id = at.user_id
-                        AND co.project_id = %s
-                        AND at.token = %s''', (project_id, token))
+    cur.execute('''SELECT * FROM auth_token WHERE project_id = %s AND token = %s''', (project_id, token))
     r = cur.fetchall()
 
     if len(r) == 1:

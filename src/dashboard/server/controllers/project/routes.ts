@@ -16,6 +16,7 @@ p.use('/:project_id/', public_project);
 const project = Router({ mergeParams: true });
 project.use(auth);
 project.use(checkProjectAccess);
+project.use('/tokens/', require('./tokens.controller'));
 project.use('/collaborators/', require('./collaborators.controller'));
 project.use('/secrets/', require('./secret.controller'));
 project.use('/build/', require('./build.controller'));

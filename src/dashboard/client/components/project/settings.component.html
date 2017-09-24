@@ -28,6 +28,7 @@
                                     <ul class="nav nav-tabs">
                                         <li class="active"><a href="#tab-collaborators" data-toggle="tab">Collaborators</a></li>
                                         <li class=""><a href="#tab-env" data-toggle="tab">Secrets</a></li>
+                                        <li class=""><a href="#tab-token" data-toggle="tab">Tokens</a></li>
                                         <li class=""><a href="#tab-more" data-toggle="tab">More</a></li>
                                     </ul>
                                 </div>
@@ -43,6 +44,11 @@
                                     <div class="tab-pane" id="tab-env">
                                         <div>
                                             <secret-table [project_id]="project.id"></secret-table>
+                                        </div>
+                                    </div>
+                                    <div class="tab-pane" id="tab-token">
+                                        <div>
+                                            <project-token [project_id]="project.id"></project-token>
                                         </div>
                                     </div>
                                     <div class="tab-pane" id="tab-more">
