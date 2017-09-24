@@ -538,6 +538,12 @@ class RunJob(Job):
             c.execute(cmd, show=True)
             c.execute(("docker", "commit", container_name, image_name))
         except:
+            try:
+                c.execute(("docker", "commit", container_name, image_name))
+                self.push_container(image_name)
+            except:
+                pass
+
             raise Failure("Container run exited with error")
         finally:
             collector.stop()
