@@ -2,6 +2,7 @@ import express = require("express");
 import http = require("http");
 import https = require("https");
 import fs = require("fs");
+import prom = require('prom-client');
 
 import * as _ from "lodash";
 
@@ -12,10 +13,22 @@ import { ConsoleListener } from "./listeners/ConsoleListener";
 import { JobListener } from "./listeners/JobListener";
 import { socket_auth } from "./utils/auth";
 
-export function createServer(print: boolean) {
-    const app = express();
-    let server = null;
+const WEBSOCKET_CONNECTIONS = new prom.Gauge({
+    name: "infrabox_dashboard_websocket_connections",
+    help: "Number of open websocket connections"
+});
 
+const WEBSOCKET_EMIT_CONSOLE_UPDATE = new prom.Counter({
+    name: "infrabox_dashboard_websocket_emit_console_update",
+    help: "Number of emitted console updates"
+});
+
+const WEBSOCKET_EMIT_JOB_UPDATE = new prom.Counter({
+    name: "infrabox_dashboard_websocket_emit_job_update",
+    help: "Number of emitted job updates"
+});
+
+function createServerImpl(app): any {
     if (config.dashboard.tls.enabled) {
         logger.info("HTTPS is enabled");
         const options = {
@@ -23,11 +36,27 @@ export function createServer(print: boolean) {
             cert: fs.readFileSync(config.dashboard.tls.cert)
         }
 
-        server = https.createServer(options, app);
+        return https.createServer(options, app);
     } else {
         logger.warn("HTTPS is not enabled");
-        server = http.createServer(app);
+        return http.createServer(app);
     }
+}
+
+function createMonitoringServerImpl() {
+    const server = express();
+    prom.collectDefaultMetrics();
+    server.get('/metrics', (req, res) => {
+        //res.set('Content-Type', prom.register.contentType);
+        res.end(prom.register.metrics());
+    });
+    server.listen(8000);
+}
+
+export function createServer(print: boolean) {
+    const app = express();
+    let server = createServerImpl(app);
+    createMonitoringServerImpl();
 
     server['listeners']['console'] = new ConsoleListener();
     server['listeners']['job'] = new JobListener();
@@ -35,13 +64,12 @@ export function createServer(print: boolean) {
     require("./config/express")(app, config);
     const io = require("socket.io").listen(server, { transports: ['polling'] });
 
-    let openConnections = 0;
-
     io.on("connection", (socket) => {
         logger.info("New socket connection");
         const subs = new Array<Subscription>();
         let user = null;
-        openConnections += 1;
+
+        WEBSOCKET_CONNECTIONS.inc();
 
         socket.on("disconnect", () => {
             logger.warn("disconnect, closing socket");
@@ -49,7 +77,7 @@ export function createServer(print: boolean) {
                 sub.unsubscribe();
             }
 
-            openConnections -= 1;
+            WEBSOCKET_CONNECTIONS.dec();
         });
 
         socket.on("error", (err) => {
@@ -109,6 +137,7 @@ export function createServer(print: boolean) {
 
             subs.push(server['listeners']['console'].getOutput(job_id, user_id).subscribe((output) => {
                 logger.debug("notify:console:",  job_id);
+                WEBSOCKET_EMIT_CONSOLE_UPDATE.inc();
                 socket.emit("notify:console", {
                     data: output,
                     job_id: job_id
@@ -145,6 +174,7 @@ export function createServer(print: boolean) {
 
             subs.push(server['listeners']['job'].getJobs(user_id, project_id).subscribe((j) => {
                 logger.debug("notify:jobs:", j);
+                WEBSOCKET_EMIT_JOB_UPDATE.inc();
                 socket.emit("notify:jobs", j);
             }));
         });

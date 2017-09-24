@@ -5,6 +5,13 @@ import { logger } from "../utils/logger";
 import { db, pgp } from "../db";
 import { NotFound } from "../utils/status";
 
+import prom = require('prom-client');
+
+const JOB_UPDATES = new prom.Counter({
+    name: "infrabox_dashboard_job_update_notifications",
+    help: "Number of job update notifictions"
+});
+
 export class JobListener {
     private subject = new Subject<any>();
     private connection = null;
@@ -38,6 +45,8 @@ export class JobListener {
                 this.connection = sco;
 
                 sco.client.on("notification", (msg) => {
+                    JOB_UPDATES.inc();
+
                     const update = JSON.parse(msg.payload);
 
                     if (update.data.commit) {

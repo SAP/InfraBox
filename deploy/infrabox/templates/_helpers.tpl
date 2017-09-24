@@ -258,3 +258,12 @@
     name: INFRABOX_JOB_MAX_OUTPUT_SIZE
     value: {{ default "104857600" .Values.job.max_output_size | quote }}
 {{ end }}
+
+{{ define "env_kubernetes" }}
+-
+    name: INFRABOX_KUBERNETES_MASTER_HOST
+    value: {{ default "kubernetes.default.svc.cluster.local" .Values.general.kubernetes_master_host }}
+-
+    name: INFRABOX_KUBERNETES_MASTER_PORT
+    value: {{ default 443 .Values.general.kubernetes_master_port | quote }}
+{{ end }}

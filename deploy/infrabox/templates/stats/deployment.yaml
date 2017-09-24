@@ -96,6 +96,7 @@ spec:
                 {{ end }}
                 env:
                 {{ include "env_database" . | indent 16 }}
+                {{ include "env_kubernetes" . | indent 16 }}
                 -
                     name: INFRABOX_SERVICE
                     value: {{ default "infrabox/stats" .Values.stats.image }}

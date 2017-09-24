@@ -522,6 +522,7 @@ class Scheduler(object):
             memory = j[3]
             dependencies = j[4]
 
+            logger.info("")
             logger.info("Starting to schedule job: %s", job_id)
             logger.info("Dependencies: %s", dependencies)
 
@@ -767,7 +768,7 @@ class Scheduler(object):
     def run(self):
         while True:
             self.handle()
-            time.sleep(1)
+            time.sleep(5)
 
 def get_env(name):
     if name not in os.environ:

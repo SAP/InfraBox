@@ -12,7 +12,7 @@ FORMAT = '%(asctime)-15s %(levelno)s %(message)s'
 logging.basicConfig(format=FORMAT, level=logging.ERROR)
 logger = logging.getLogger("scheduler")
 
-# pylint: disable=no-value-for-parameter
+# pylint: disable=no-value-for-parameter, no-member
 JOBS_RUNNING = Gauge('infrabox_jobs_running', 'Jobs with state running')
 JOBS_SCHEDULED = Gauge('infrabox_jobs_scheduled', 'Jobs with state scheduled')
 JOBS_QUEUED = Gauge('infrabox_jobs_queued', 'Jobs with state queued')
@@ -59,11 +59,8 @@ def get_jobs(conn):
         if state == 'error':
             JOBS_ERROR.set(count)
 
-JOBS_SCHEDULED_CPU = Gauge('infrabox_jobs_scheduled_cpu_total', 'Total CPU of all jobs in state scheduled')
-JOBS_SCHEDULED_MEMORY = Gauge('infrabox_jobs_scheduled_memory_total', 'Total Memory of all jobs in state scheduled')
-
-JOBS_RUNNING_CPU = Gauge('infrabox_jobs_running_cpu_total', 'Total CPU of all jobs in state running')
-JOBS_RUNNING_MEMORY = Gauge('infrabox_jobs_running_memory_total', 'Total Memory of all jobs in state running')
+JOBS_CPU_REQUESTED = Gauge('infrabox_jobs_cpu_requested_total', 'Total requested CPU of all jobs', ['state'])
+JOBS_MEMORY_REQUESTED = Gauge('infrabox_jobs_memory_requsted_bytes_total', 'Total requested memory of all jobs', ['state'])
 
 def get_active_resources(conn):
     cursor = conn.cursor()
@@ -71,23 +68,47 @@ def get_active_resources(conn):
     result = cursor.fetchall()
     cursor.close()
 
-    JOBS_SCHEDULED_CPU.set(0)
-    JOBS_SCHEDULED_MEMORY.set(0)
-    JOBS_RUNNING_CPU.set(0)
-    JOBS_RUNNING_MEMORY.set(0)
+    for state in ('running', 'scheduled'):
+        JOBS_CPU_REQUESTED.labels(state=state).set(0)
+        JOBS_MEMORY_REQUESTED.labels(state=state).set(0)
 
     for r in result:
         state = r[0]
         cpu = r[1]
-        memory = r[2]
+        memory = r[2] * 1024 * 1024
 
-        if state == 'running':
-            JOBS_RUNNING_CPU.set(cpu)
-            JOBS_RUNNING_MEMORY.set(memory)
+        JOBS_CPU_REQUESTED.labels(state=state).set(cpu)
+        JOBS_MEMORY_REQUESTED.labels(state=state).set(memory)
 
-        if state == 'scheduled':
-            JOBS_SCHEDULED_CPU.set(cpu)
-            JOBS_SCHEDULED_MEMORY.set(memory)
+
+K8S_NODE_CPU = Gauge('infrabox_k8s_node_cpu_cores', 'CPU cores per node', ['hostname'])
+K8S_NODE_MEMORY = Gauge('infrabox_k8s_node_memory_bytes', 'Memory per node', ['hostname'])
+
+def get_k8s_stats():
+    with open('/var/run/secrets/kubernetes.io/serviceaccount/token', 'r') as f:
+        token = f.read()
+
+        h = {'Authorization': 'Bearer %s' % token}
+        api_server = "https://" + get_env('INFRABOX_KUBERNETES_MASTER_HOST') + ":" + get_env('INFRABOX_KUBERNETES_MASTER_PORT')
+
+        r = requests.get(api_server + '/api/v1/nodes', headers=h, timeout=5).json()
+
+        for node in r['items']:
+            hostname = None
+
+            for a in node['status']['addresses']:
+                if a['type'] == "Hostname":
+                    hostname = a['address']
+                    break
+
+            capa = node['status']['capacity']
+            cpu = capa['cpu']
+            memory = capa['memory']
+            memory = int(memory[:-2]) * 1024
+
+            K8S_NODE_CPU.labels(hostname=hostname).set(cpu)
+            K8S_NODE_MEMORY.labels(hostname=hostname).set(memory)
+
 
 def get_env(name):
     if name not in os.environ:
@@ -103,6 +124,8 @@ def main():
     get_env('INFRABOX_DATABASE_PASSWORD')
     get_env('INFRABOX_DATABASE_HOST')
     get_env('INFRABOX_DATABASE_PORT')
+    get_env('INFRABOX_KUBERNETES_MASTER_HOST')
+    get_env('INFRABOX_KUBERNETES_MASTER_PORT')
 
     while True:
         r = requests.get("http://localhost:4040", timeout=5)
@@ -123,11 +146,14 @@ def main():
 
     conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
 
+    os.environ['REQUESTS_CA_BUNDLE'] = '/var/run/secrets/kubernetes.io/serviceaccount/ca.crt'
+
     start_http_server(8000)
 
     while True:
         get_jobs(conn)
         get_active_resources(conn)
+        get_k8s_stats()
         time.sleep(1)
 
 def print_stackdriver():

@@ -89,15 +89,10 @@ spec:
                 {{ include "env_local_cache" . | indent 16 }}
                 {{ include "env_job" . | indent 16 }}
                 {{ include "env_general" . | indent 16 }}
+                {{ include "env_kubernetes" . | indent 16 }}
                 -
                     name: INFRABOX_GENERAL_NO_CHECK_CERTIFICATES
                     value: {{ default "false" .Values.general.no_check_certificates | quote }}
-                -
-                    name: INFRABOX_KUBERNETES_MASTER_HOST
-                    value: {{ default "kubernetes.default.svc.cluster.local" .Values.general.kubernetes_master_host }}
-                -
-                    name: INFRABOX_KUBERNETES_MASTER_PORT
-                    value: {{ default 443 .Values.general.kubernetes_master_port | quote }}
                 -
                     name: INFRABOX_DASHBOARD_URL
                     value: {{ required "dashboard.url is required" .Values.dashboard.url }}

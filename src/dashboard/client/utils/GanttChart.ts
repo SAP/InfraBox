@@ -268,7 +268,7 @@ export class GanttChart {
 
     private addJob(j: Job) {
         for (const job of this.jobs) {
-            if (job.id == j.id) {
+            if (job.id === j.id) {
                 return;
             }
         }

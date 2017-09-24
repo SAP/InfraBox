@@ -5,12 +5,38 @@ import { logger } from "../utils/logger";
 import { db } from "../db";
 import { NotFound } from "../utils/status";
 
-export class ConsoleOutput {
-    public subject: ReplaySubject<string> = new ReplaySubject<string>();
+import prom = require('prom-client');
+
+const CONSOLE_NOTIFICATIONS = new prom.Counter({
+    name: "infrabox_dashboard_console_update_notifications",
+    help: "Number of console update notifictions"
+});
+
+const CACHED_CONSOLE = new prom.Gauge({
+    name: "infrabox_dashboard_cached_console_outputs",
+    help: "Number of cached console outputs"
+});
+
+class ConsoleOutputCache {
+    private output = new Map<string, ReplaySubject<string>>();
+
+    public has(job_id: string) : boolean {
+        return this.output.has(job_id);
+    }
+
+    public get(job_id: string) {
+        return this.output.get(job_id);
+    }
+
+    public set(job_id: string, subject: ReplaySubject<string>) {
+        CACHED_CONSOLE.inc();
+        return this.output.set(job_id, subject);
+    }
 }
 
 export class ConsoleListener {
-    private output = new Map<string, ConsoleOutput>();
+    private cache = new ConsoleOutputCache();
+
     private connection = null;
     private connecting = false;
 
@@ -44,6 +70,7 @@ export class ConsoleListener {
                 sco.client.on("notification", (msg) => {
                     const update = JSON.parse(msg.payload);
                     logger.debug("Received console update", update);
+                    CONSOLE_NOTIFICATIONS.inc();
                     this.handleNotification(update);
                 });
 
@@ -65,28 +92,27 @@ export class ConsoleListener {
     public handleNotification(event) {
         const job_id: string = event.job_id;
 
-        if (!this.output.has(job_id)) {
+        if (!this.cache.has(job_id)) {
             // we are not interested in this output
             return;
         }
 
-        const output = this.output.get(job_id);
-
+        const subject = this.cache.get(job_id);
         db.any("SELECT output FROM console WHERE id = $1;", [event.id])
         .then((result: any[]) => {
             if (result.length > 0) {
-                output.subject.next(result[0].output);
+                subject.next(result[0].output);
             }
         });
     }
 
     public getOutput(job_id: string, user_id: string): Observable<string> {
         logger.debug("getOutput:", job_id, user_id);
-        if (this.output.has(job_id)) {
-            return this.output.get(job_id).subject;
+        if (this.cache.has(job_id)) {
+            return this.cache.get(job_id);
         }
 
-        const out = new ConsoleOutput();
+        const out = new ReplaySubject<string>();
 
         db.any(`SELECT j.*, p.public
                 FROM project p
@@ -116,35 +142,35 @@ export class ConsoleListener {
         })
        .then((jobs: any[]) => {
             if (jobs.length === 0) {
-                out.subject.complete();
+                out.complete();
                 return;
             }
 
             const job = jobs[0];
 
             if (job.state === "finished" || job.state === "failure" || job.state === "error" || job.state === "killed" || job.state === "skipped") {
-                out.subject.next(job.console);
-                out.subject.complete();
+                out.next(job.console);
+                out.complete();
             } else {
                 return db.any("SELECT output FROM console WHERE job_id = $1 ORDER BY date;", [job_id]).then((result) => {
                     // a parallel request might have added the job_id
-                    // already so we have to check it in forward the values
-                    if (this.output.has(job_id)) {
-                        this.output.get(job_id).subject.subscribe(out.subject);
+                    // already so we have to check it and forward the values
+                    if (this.cache.has(job_id)) {
+                        this.cache.get(job_id).subscribe(out);
                     } else {
-                        this.output.set(job_id, out);
+                        this.cache.set(job_id, out);
                         for (const r of result) {
-                            out.subject.next(r.output);
+                            out.next(r.output);
                         }
                     }
                 });
             }
         }).catch((err) => {
             logger.error(err);
-            out.subject.complete();
+            out.complete();
         });
 
-        return out.subject;
+        return out;
     }
 
     public stop() {
