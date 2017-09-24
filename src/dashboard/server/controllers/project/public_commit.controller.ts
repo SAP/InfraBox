@@ -11,31 +11,13 @@ router.get("/:commit_id", pv, (req: Request, res: Response, next) => {
     const project_id = req.params['project_id'];
 
     db.tx((t) => {
-        return t.batch([
-            // Select the commit
-            t.one(`SELECT c.* FROM commit c
-                   WHERE c.id = $2
-                   AND c.project_id = $1`,
-                [project_id, commit_id]),
-
-            // Select all the modified files
-            t.any(`SELECT modification, filename FROM commit_file
-                   WHERE project_id = $1
-                   AND commit_id = $2`, [project_id, commit_id])
-        ]);
+        // Select the commit
+        return t.one(`SELECT c.* FROM commit c
+               WHERE c.id = $2
+               AND c.project_id = $1`,
+            [project_id, commit_id]);
     })
-    .then((data: any[]) => {
-        const commit = data[0];
-        commit['modified'] = [];
-        commit['removed'] = [];
-        commit['added'] = [];
-
-        const files = data[1];
-
-        for (const f of files) {
-            commit[f.modification].push(f.filename);
-        }
-
+    .then((commit: any) => {
         res.send(commit);
     }).catch(handleDBError(next));
 });

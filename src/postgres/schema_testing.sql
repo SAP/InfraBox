@@ -61,17 +61,6 @@ COMMENT ON EXTENSION pgcrypto IS 'cryptographic functions';
 SET search_path = public, pg_catalog;
 
 --
--- Name: file_modification; Type: TYPE; Schema: public; Owner: -
---
-
-CREATE TYPE file_modification AS ENUM (
-    'added',
-    'removed',
-    'modified'
-);
-
-
---
 -- Name: job_state; Type: TYPE; Schema: public; Owner: -
 --
 
@@ -339,19 +328,6 @@ CREATE TABLE commit (
     tag character varying(255),
     pull_request_id uuid
 );
-
-
---
--- Name: commit_file; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE commit_file (
-    project_id uuid NOT NULL,
-    commit_id character varying(255) NOT NULL,
-    modification file_modification NOT NULL,
-    filename character varying NOT NULL
-);
-
 
 --
 -- Name: console; Type: TABLE; Schema: public; Owner: -
@@ -749,13 +725,6 @@ CREATE INDEX collaborator_project_id_idx ON collaborator USING btree (project_id
 --
 
 CREATE INDEX collaborator_user_id_idx ON collaborator USING btree (user_id);
-
-
---
--- Name: commit_file_project_id_idx; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX commit_file_project_id_idx ON commit_file USING btree (project_id);
 
 
 --

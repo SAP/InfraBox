@@ -127,65 +127,6 @@
                         <pre class="inherit-style no-border m-xxs p-xxs">{{ commit.message }}</pre>
                     </div>
                 </div>
-                <div *ngIf="commit && commit.added.length!=0 && commit.modified.length!=0 && commit.removed.length!=0" class="row p-sm" style="padding-bottom: 0">
-                    <div class="col-xl-12 col-lg-12 col-sm-12 col-md-12 col-xs-12 col-xxs-12 text-left">
-                        <Strong>Changes:</Strong>
-                    </div>
-                </div>
-                <div *ngIf="commit" class="row p-xxs" style="padding-top: 0">
-                    <div class="col-lg-12">
-                        <div id="vertical-timeline" class="vertical-container dark-timeline" style="padding-top: 0; margin-top:0">
-                            <div *ngIf="commit.added.length!=0" class="vertical-timeline-block">
-                                <div class="vertical-timeline-icon bg-info">
-                                    <i class="fa fa-plus"></i>
-                                </div>
-                                <div class="vertical-timeline-content">
-                                    <Strong> {{ commit.added.length }}</Strong> document(s) added.
-                                    <ul style="text-align: left; list-style-type: none; padding-left: 0; margin-left: 0">
-                                        <li *ngFor="let a of commit.added">
-                                            <div class="small text-muted break-text">
-                                                <span *ngIf="a.lastIndexOf('/') <= 0"><i class="fa fa-plus icon-blue"></i> {{ a }}</span>
-                                                <span *ngIf="a.lastIndexOf('/') > 0"><i class="fa fa-plus icon-blue"></i> ...{{ a.substr(a.lastIndexOf('/')) }}</span>
-                                            </div>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </div>
-                            <div *ngIf="commit.removed.length!=0" class="vertical-timeline-block">
-                                <div class="vertical-timeline-icon bg-info">
-                                    <i class="fa fa-minus"></i>
-                                </div>
-                                <div class="vertical-timeline-content">
-                                    <Strong> {{ commit.removed.length }}</Strong> document(s) removed.
-                                    <ul style="text-align: left; list-style-type: none; padding-left: 0; margin-left: 0">
-                                        <li *ngFor="let r of commit.removed">
-                                            <div class="small text-muted break-text">
-                                                <span *ngIf="r.lastIndexOf('/') <= 0"><i class="fa fa-minus icon-blue"></i> {{ r }}</span>
-                                                <span *ngIf="r.lastIndexOf('/') > 0"><i class="fa fa-minus icon-blue"></i> ...{{ r.substr(r.lastIndexOf('/')) }}</span>
-                                            </div>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </div>
-                            <div *ngIf="commit.modified.length!=0" class="vertical-timeline-block">
-                                <div class="vertical-timeline-icon bg-info">
-                                    <i class="fa fa-pencil"></i>
-                                </div>
-                                <div class="vertical-timeline-content break-text">
-                                    <Strong> {{ commit.modified.length }}</Strong> document(s) modified.
-                                    <ul style="text-align: left; list-style-type: none; padding-left: 0; margin-left: 0">
-                                        <li *ngFor="let m of commit.modified">
-                                            <div class="small text-muted">
-                                                <span *ngIf="m.lastIndexOf('/') <= 0"><i class="fa fa-pencil icon-blue"></i> {{ m }}</span>
-                                                <span *ngIf="m.lastIndexOf('/') > 0"><i class="fa fa-pencil icon-blue"></i> ...{{ m.substr(m.lastIndexOf('/')) }}</span>
-                                            </div>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
         <div class="col-md-9 col-md-pull-3">
