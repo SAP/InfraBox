@@ -186,9 +186,6 @@
                                                         <th class="table-aligncenter" width="5%">
                                                             State
                                                         </th>
-                                                        <th class="table-aligncenter">
-                                                            Action
-                                                        </th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -213,19 +210,6 @@
                                                         </td>
                                                         <td class="table-aligncenter hide-link-color">
                                                             <job-state [state]="b.getState()"></job-state>
-                                                        </td>
-                                                        <td class="table-aligncenter">
-                                                            <div *ngIf="loginService.loggedIn" class="btn-group" role="group" aria-label="...">
-                                                                <button class="btn btn-default" data-toggle="tooltip" title="Clear cache" (click)="clearCache(b)">
-                                                                <i class="fa fa-trash"></i>
-                                                            </button>
-                                                                <button class="btn btn-default" data-toggle="tooltip" title="Kill build" (click)="kill(b)">
-                                                                <i class="fa fa-ban"></i>
-                                                            </button>
-                                                                <button class="btn btn-default" data-toggle="tooltip" title="Restart build" (click)="restart(b)">
-                                                                <i class="fa fa-repeat"></i>
-                                                            </button>
-                                                            </div>
                                                         </td>
                                                     </tr>
                                                 </tbody>
