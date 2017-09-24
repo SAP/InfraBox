@@ -1,4 +1,4 @@
-#pylint: disable=missing-docstring,too-many-return-statements
+#pylint: disable=missing-docstring,too-many-return-statements,invalid-name
 import os
 import logging
 
@@ -11,7 +11,7 @@ logging.basicConfig(
     level=logging.DEBUG
 )
 
-LOGGER = logging.getLogger("github")
+logger = logging.getLogger("github")
 
 def get_env(name):
     if name not in os.environ:
@@ -52,7 +52,7 @@ def get_commit():
         result = execute_api(url, query['token'])
 
         if result.status_code != 200:
-            LOGGER.warning(result.json())
+            logger.warning(result.json())
             return error(500, "internal server error")
 
         result = result.json()
@@ -62,7 +62,7 @@ def get_commit():
     result = execute_api(url, query['token'])
 
     if result.status_code != 200:
-        LOGGER.warning(result.json())
+        logger.warning(result.json())
         return error(500, "internal server error")
 
     result = result.json()

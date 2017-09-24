@@ -9,8 +9,12 @@ import psycopg2.extensions
 import requests
 from prometheus_client import start_http_server, Histogram, Counter
 
-FORMAT = '%(asctime)-15s %(levelno)s %(message)s'
-logging.basicConfig(format=FORMAT, level=logging.ERROR)
+logging.basicConfig(
+    format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s',
+    datefmt='%d-%m-%Y:%H:%M:%S',
+    level=logging.WARN
+)
+
 logger = logging.getLogger("scheduler")
 
 namespace = 'infrabox-worker'

@@ -8,9 +8,13 @@ import psycopg2.extensions
 import requests
 from prometheus_client import start_http_server, Gauge
 
-FORMAT = '%(asctime)-15s %(levelno)s %(message)s'
-logging.basicConfig(format=FORMAT, level=logging.ERROR)
-logger = logging.getLogger("scheduler")
+logging.basicConfig(
+    format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s',
+    datefmt='%d-%m-%Y:%H:%M:%S',
+    level=logging.WARN
+)
+
+logger = logging.getLogger("stats")
 
 # pylint: disable=no-value-for-parameter, no-member
 JOBS_RUNNING = Gauge('infrabox_jobs_running', 'Jobs with state running')

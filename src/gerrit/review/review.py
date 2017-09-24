@@ -9,8 +9,12 @@ import requests
 import psycopg2
 import paramiko
 
-FORMAT = '%(asctime)-15s %(levelno)s %(message)s'
-logging.basicConfig(format=FORMAT, level=logging.INFO)
+logging.basicConfig(
+    format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s',
+    datefmt='%d-%m-%Y:%H:%M:%S',
+    level=logging.DEBUG
+)
+
 logger = logging.getLogger("gerrit")
 
 def get_env(name):

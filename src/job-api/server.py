@@ -22,8 +22,14 @@ from pyinfrabox.testresult import validate_result
 from pyinfrabox import ValidationError
 
 app = Flask(__name__)
+
+logging.basicConfig(
+    format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s',
+    datefmt='%d-%m-%Y:%H:%M:%S',
+    level=logging.WARN
+)
+
 log = logging.getLogger('werkzeug')
-log.setLevel(logging.WARN)
 
 def allowed_file(filename, extensions):
     return '.' in filename and \

@@ -1,17 +1,15 @@
+#pylint: disable=invalid-name,missing-docstring
 import os
 import traceback
 import base64
 import json
 from uuid import UUID
-import logging
 
 from flask import Flask, request
 import psycopg2
 import psycopg2.extensions
 
 app = Flask(__name__)
-
-log = logging.getLogger('werkzeug')
 
 conn = psycopg2.connect(dbname=os.environ['INFRABOX_DATABASE_DB'],
                         user=os.environ['INFRABOX_DATABASE_USER'],
