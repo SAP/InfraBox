@@ -97,7 +97,9 @@ class RunJob(Job):
                 "build": {
                     "id": self.build['id'],
                     "number": self.build['build_number'],
-                    "url": os.environ['INFRABOX_DASHBOARD_URL'] + '/dashboard/project/' + self.project['id'] + '/build/' + self.build['id']
+                    "url": os.environ['INFRABOX_DASHBOARD_URL'] \
+                           + '/dashboard/project/' + self.project['id'] \
+                           + '/build/' + self.build['id']
                 }
             }
 
@@ -247,6 +249,58 @@ class RunJob(Job):
         else:
             self.main_run_job()
 
+    def upload_test_results(self):
+        c = self.console
+        c.header("Uploading test results", show=True)
+        if os.path.exists(self.infrabox_testresult_dir):
+            files = self.get_files_in_dir(self.infrabox_testresult_dir, ".json")
+
+            for f in files:
+                tr_path = os.path.join(self.infrabox_testresult_dir, f)
+                c.collect("%s\n" % tr_path, show=True)
+                r = requests.post("http://localhost:5000/testresult",
+                                  files={"data": open(tr_path)}, timeout=10)
+                c.collect("%s\n" % r.text, show=True)
+
+
+    def upload_markdown_files(self):
+        c = self.console
+        c.header("Uploading markdown files", show=False)
+        if os.path.exists(self.infrabox_markdown_dir):
+            files = self.get_files_in_dir(self.infrabox_markdown_dir, ".md")
+
+            for f in files:
+                file_name = os.path.basename(f)
+                r = requests.post("http://localhost:5000/markdown",
+                                  files={file_name: open(os.path.join(self.infrabox_markdown_dir, f))}, timeout=10)
+                c.collect("%s\n" % r.text, show=False)
+
+    def upload_markup_files(self):
+        c = self.console
+        c.header("Uploading markup files", show=True)
+        if os.path.exists(self.infrabox_markup_dir):
+            files = self.get_files_in_dir(self.infrabox_markup_dir, ".json")
+
+            for f in files:
+                file_name = os.path.basename(f)
+                f = open(os.path.join(self.infrabox_markup_dir, f))
+                r = requests.post("http://localhost:5000/markup",
+                                  files={file_name: f}, timeout=10)
+                c.collect(f.read(), show=True)
+                c.collect("%s\n" % r.text, show=True)
+
+    def upload_badge_files(self):
+        c = self.console
+        c.header("Uploading badge files", show=True)
+        if os.path.exists(self.infrabox_badge_dir):
+            files = self.get_files_in_dir(self.infrabox_badge_dir, ".json")
+
+            for f in files:
+                file_name = os.path.basename(f)
+                r = requests.post("http://localhost:5000/badge",
+                                  files={file_name: open(os.path.join(self.infrabox_badge_dir, f))}, timeout=10)
+                c.collect("%s\n" % r.text, show=True)
+
     def main_run_job(self):
         c = self.console
         self.create_jobs_json()
@@ -302,52 +356,10 @@ class RunJob(Job):
         else:
             raise Exception('Unknown job type')
 
-        # Upload test results
-        c.header("Uploading test results", show=True)
-        if os.path.exists(self.infrabox_testresult_dir):
-            files = self.get_files_in_dir(self.infrabox_testresult_dir, ".json")
-
-            for f in files:
-                tr_path = os.path.join(self.infrabox_testresult_dir, f)
-                c.collect("%s\n" % tr_path, show=True)
-                r = requests.post("http://localhost:5000/testresult",
-                                  files={"data": open(tr_path)}, timeout=10)
-                c.collect("%s\n" % r.text, show=True)
-
-        # Upload markdown files
-        c.header("Uploading markdown files", show=False)
-        if os.path.exists(self.infrabox_markdown_dir):
-            files = self.get_files_in_dir(self.infrabox_markdown_dir, ".md")
-
-            for f in files:
-                file_name = os.path.basename(f)
-                r = requests.post("http://localhost:5000/markdown",
-                                  files={file_name: open(os.path.join(self.infrabox_markdown_dir, f))}, timeout=10)
-                c.collect("%s\n" % r.text, show=False)
-
-        # Upload markup files
-        c.header("Uploading markup files", show=True)
-        if os.path.exists(self.infrabox_markup_dir):
-            files = self.get_files_in_dir(self.infrabox_markup_dir, ".json")
-
-            for f in files:
-                file_name = os.path.basename(f)
-                f = open(os.path.join(self.infrabox_markup_dir, f))
-                r = requests.post("http://localhost:5000/markup",
-                                  files={file_name: f}, timeout=10)
-                c.collect(f.read(), show=True)
-                c.collect("%s\n" % r.text, show=True)
-
-        # Upload badge files
-        c.header("Uploading badge files", show=True)
-        if os.path.exists(self.infrabox_badge_dir):
-            files = self.get_files_in_dir(self.infrabox_badge_dir, ".json")
-
-            for f in files:
-                file_name = os.path.basename(f)
-                r = requests.post("http://localhost:5000/badge",
-                                  files={file_name: open(os.path.join(self.infrabox_badge_dir, f))}, timeout=10)
-                c.collect("%s\n" % r.text, show=True)
+        self.upload_test_results()
+        self.upload_markdown_files()
+        self.upload_markup_files()
+        self.upload_badge_files()
 
         # Compressing output
         c.header("Compressing output", show=True)
@@ -462,6 +474,97 @@ class RunJob(Job):
 
         return True
 
+    def scan_container(self, image_name):
+        c = self.console
+        if self.job['scan_container'] and os.environ['INFRABOX_CLAIR_ENABLED'] == "true":
+            c.header("Scanning container for vulnerabilities", show=True)
+            c.execute(['python', '/usr/local/bin/analyze.py',
+                       '--image', image_name,
+                       '--output', os.path.join(self.infrabox_markup_dir, "Container Scan.json")],
+                      show=True)
+
+    def deploy_container(self, image_name):
+        c = self.console
+        c.header("Deploying", show=True)
+        if not self.deployments:
+            c.collect("No deployments configured\n", show=True)
+
+        for dep in self.deployments:
+            dep_image_name = dep['host'] + '/' + dep['repository'] + ':build_%s' % self.build['build_number']
+            c.execute(['docker', 'tag', image_name, dep_image_name], show=True)
+            c.execute(['docker', 'push', dep_image_name], show=True)
+
+    def push_container(self, image_name):
+        c = self.console
+        c.header("Uploading to docker registry", show=True)
+
+        try:
+            if self.job['build_only']:
+                c.collect("Not pushing container, because build_only is set.\n", show=True)
+            elif not self.job['keep']:
+                c.collect("Not pushing container, because keep is not set.\n", show=True)
+            else:
+                c.execute(['docker', 'login',
+                           '-u', os.environ['INFRABOX_DOCKER_REGISTRY_ADMIN_USERNAME'],
+                           '-p', os.environ['INFRABOX_DOCKER_REGISTRY_ADMIN_PASSWORD'],
+                           os.environ['INFRABOX_DOCKER_REGISTRY_URL']], show=False)
+
+                c.execute(['docker', 'push', image_name], show=True)
+        except Exception as e:
+            raise Failure(e.__str__())
+
+    def run_docker_container(self, image_name):
+        if self.job['build_only']:
+            return
+
+        c = self.console
+        collector = StatsCollector()
+
+        container_name = self.job['id']
+        cmd = ['docker', 'run', '--name', container_name, '-v', self.data_dir + ':/infrabox']
+
+        # Add local cache
+        if os.environ['INFRABOX_LOCAL_CACHE_ENABLED'] == 'true':
+            cmd += ['-v', "/local-cache:/infrabox/local-cache"]
+
+        # add env vars
+        for name, value in self.environment.iteritems():
+            cmd += ['-e', '%s=%s' % (name, value)]
+
+        cmd += [image_name]
+
+        try:
+            c.header("Run container", show=True)
+            c.execute(cmd, show=True)
+            c.execute(("docker", "commit", container_name, image_name))
+        except:
+            raise Failure("Container run exited with error")
+        finally:
+            collector.stop()
+            self.post_stats(collector.get_result())
+
+    def build_docker_container(self, image_name):
+        c = self.console
+
+        cwd = self.job.get('base_path', None)
+        if cwd:
+            cwd = os.path.join('/repo', cwd)
+        else:
+            cwd = "/repo"
+
+        try:
+            c.header("Build container", show=True)
+
+            cmd = ['docker', 'build', '-t', image_name, '.', '-f', self.job['dockerfile']]
+
+            if 'build_arguments' in self.job and self.job['build_arguments']:
+                for name, value in self.job['build_arguments'].iteritems():
+                    cmd += ['--build-arg', '%s=%s' % (name, value)]
+
+            c.execute(cmd, cwd=cwd, show=True)
+        except:
+            raise Failure("Failed to build the container")
+
     def run_container(self, c):
         for dep in self.deployments:
             try:
@@ -484,87 +587,16 @@ class RunJob(Job):
                 raise Failure("Failed to login to registry: " + e.message)
 
 
-        image_name = os.environ['INFRABOX_DOCKER_REGISTRY_URL'] + '/' + self.project['id'] + '/' + self.job['name'] + ':build_%s' % self.build['build_number']
+        image_name = os.environ['INFRABOX_DOCKER_REGISTRY_URL'] + '/' \
+                     + self.project['id'] + '/' \
+                     + self.job['name'] \
+                     + ':build_%s' % self.build['build_number']
 
-        cwd = self.job.get('base_path', None)
-        if cwd:
-            cwd = os.path.join('/repo', cwd)
-        else:
-            cwd = "/repo"
-
-        try:
-            c.header("Build container", show=True)
-
-            cmd = ['docker', 'build', '-t', image_name, '.', '-f', self.job['dockerfile']]
-
-            if 'build_arguments' in self.job and self.job['build_arguments']:
-                for name, value in self.job['build_arguments'].iteritems():
-                    cmd += ['--build-arg', '%s=%s' % (name, value)]
-
-            c.execute(cmd, cwd=cwd, show=True)
-        except:
-            raise Failure("Failed to build the container")
-
-        collector = StatsCollector()
-
-        try:
-            if not self.job['build_only']:
-                c.header("Run container", show=True)
-                container_name = self.job['id']
-                cmd = ['docker', 'run', '--name', container_name, '-v', self.data_dir + ':/infrabox']
-
-                # Add local cache
-                if os.environ['INFRABOX_LOCAL_CACHE_ENABLED'] == 'true':
-                    cmd += ['-v', "/local-cache:/infrabox/local-cache"]
-
-                # add env vars
-                for name, value in self.environment.iteritems():
-                    cmd += ['-e', '%s=%s' % (name, value)]
-
-                cmd += [image_name]
-                c.execute(cmd, show=True)
-                c.execute(("docker", "commit", container_name, image_name))
-        except:
-            raise Failure("Container run exited with error")
-        finally:
-            collector.stop()
-            self.post_stats(collector.get_result())
-
-        # Scan container
-        if self.job['scan_container'] and os.environ['INFRABOX_CLAIR_ENABLED'] == "true":
-            c.header("Scanning container for vulnerabilities", show=True)
-            c.execute(['python', '/usr/local/bin/analyze.py',
-                       '--image', image_name,
-                       '--output', os.path.join(self.infrabox_markup_dir, "Container Scan.json")],
-                      show=True)
-
-        # Deploying
-        c.header("Deploying", show=True)
-        if not self.deployments:
-            c.collect("No deployments configured\n", show=True)
-
-        for dep in self.deployments:
-            dep_image_name = dep['host'] + '/' + dep['repository'] + ':build_%s' % self.build['build_number']
-            c.execute(['docker', 'tag', image_name, dep_image_name], show=True)
-            c.execute(['docker', 'push', dep_image_name], show=True)
-
-        # Pushing
-        c.header("Uploading to docker registry", show=True)
-
-        try:
-            if self.job['build_only']:
-                c.collect("Not pushing container, because build_only is set.\n", show=True)
-            elif not self.job['keep']:
-                c.collect("Not pushing container, because keep is not set.\n", show=True)
-            else:
-                c.execute(['docker', 'login',
-                           '-u', os.environ['INFRABOX_DOCKER_REGISTRY_ADMIN_USERNAME'],
-                           '-p', os.environ['INFRABOX_DOCKER_REGISTRY_ADMIN_PASSWORD'],
-                           os.environ['INFRABOX_DOCKER_REGISTRY_URL']], show=False)
-
-                c.execute(['docker', 'push', image_name], show=True)
-        except Exception as e:
-            raise Failure(e.__str__())
+        self.build_docker_container(image_name)
+        self.run_docker_container(image_name)
+        self.scan_container(image_name)
+        self.deploy_container(image_name)
+        self.push_container(image_name)
 
         c.header("Finished succesfully", show=True)
 
@@ -630,7 +662,11 @@ class RunJob(Job):
 
     def get_job_list(self, data, c, repo, parent_name="",
                      base_path=None,
-                     repo_path='/repo', infrabox_paths={}):
+                     repo_path='/repo', infrabox_paths=None):
+        #pylint: disable=too-many-locals
+
+        if not infrabox_paths:
+            infrabox_paths = {}
 
         self.rewrite_depends_on(data)
 
