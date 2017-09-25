@@ -91,138 +91,6 @@ CREATE TYPE test_result AS ENUM (
 );
 
 
---
--- Name: console_notify(); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION console_notify() RETURNS trigger
-    LANGUAGE plpgsql
-    AS $$
-DECLARE
-BEGIN
-  IF TG_OP = 'DELETE' THEN
-    RETURN OLD;
-  END IF;
-
-  IF TG_OP = 'UPDATE' THEN
-    RETURN NEW;
-  END IF;
-
-  PERFORM pg_notify('console_update', json_build_object('id', NEW.id, 'job_id', NEW.job_id)::text);
-
-  RETURN NEW;
-END;
-$$;
-
-
---
--- Name: job_queue_notify(); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION job_queue_notify() RETURNS trigger
-    LANGUAGE plpgsql
-    AS $$
-DECLARE
-	build_json json;
-	project_json json;
-	job_json json;
-	commit_json json;
-	data_json json;
-	pull_request_json json;
-	project project%ROWTYPE;
-BEGIN
-	IF TG_OP = 'DELETE' THEN
-		RETURN OLD;
-	END IF;
-
-	-- create build json
-	SELECT json_build_object(
-		'id', b.id,
-		'build_number', b.build_number,
-		'restart_counter', b.restart_counter
-	) INTO build_json FROM build b WHERE id = NEW.build_id;
-
-	-- create project json
-	SELECT json_build_object(
-		'id', p.id,
-		'name', p.name,
-		'type', p.type
-	) INTO project_json FROM project p WHERE id = NEW.project_id;
-
-	-- create job json
-	job_json := json_build_object(
-		'id', NEW.id,
-		'state', NEW.state,
-		'start_date', NEW.start_date,
-		'type', NEW.type,
-		'dockerfile', NEW.dockerfile,
-		'end_date', NEW.end_date,
-		'name', NEW.name,
-		'cpu', NEW.cpu,
-		'memory', NEW.memory,
-		'dependencies', NEW.dependencies,
-		'created_at', NEW.created_at
-	);
-
-
-	SELECT * INTO project FROM project WHERE id = NEW.project_id;
-	IF project.type in ('github', 'gerrit') THEN
-		-- create commit json
-		SELECT json_build_object(
-			'id', c.id,
-			'message', split_part(c.message, '\n', 1),
-			'author_name', c.author_name,
-			'author_email', c.author_email,
-			'author_username', c.author_username,
-			'committer_name', c.committer_name,
-			'committer_email', c.committer_email,
-			'committer_username', c.committer_username,
-			'committer_avatar_url', u.avatar_url,
-			'url', c.url,
-			'branch', c.branch
-		), json_build_object(
-			'title', pr.title,
-			'url', pr.url
-		) INTO commit_json, pull_request_json
-		FROM job j
-		INNER JOIN build b
-			ON j.build_id = b.id
-		INNER JOIN commit c
-			ON b.commit_id = c.id
-		LEFT OUTER JOIN "user" u
-			ON c.committer_username = u.username
-		LEFT OUTER JOIN pull_request pr
-			ON c.pull_request_id = pr.id
-		WHERE b.id = NEW.build_id AND j.id = NEW.id;
-	END IF;
-
-	data_json := json_build_object('job', job_json, 'build', build_json, 'project', project_json, 'commit', commit_json, 'pull_request', pull_request_json);
-	PERFORM pg_notify('job_update', json_build_object('type', TG_OP, 'data', data_json)::text);
-
-  RETURN NEW;
-END;
-$$;
-
-
---
--- Name: truncate_tables(character varying); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION truncate_tables(username character varying) RETURNS void
-    LANGUAGE plpgsql
-    AS $$
-DECLARE
-    statements CURSOR FOR
-        SELECT tablename FROM pg_tables
-        WHERE tableowner = username AND schemaname = 'public';
-BEGIN
-    FOR stmt IN statements LOOP
-        EXECUTE 'TRUNCATE TABLE ' || quote_ident(stmt.tablename) || ' CASCADE;';
-    END LOOP;
-END;
-$$;
-
-
 SET default_tablespace = '';
 
 SET default_with_oids = false;
@@ -249,7 +117,7 @@ CREATE TABLE abort (
 CREATE TABLE auth_token (
     token uuid DEFAULT gen_random_uuid() NOT NULL,
     description character varying(255) NOT NULL,
-    user_id uuid NOT NULL,
+    project_id uuid NOT NULL,
     scope_push boolean DEFAULT false NOT NULL,
     scope_pull boolean DEFAULT false NOT NULL,
     id uuid DEFAULT gen_random_uuid() NOT NULL
@@ -677,7 +545,7 @@ ALTER TABLE ONLY user_quota
 -- Name: auth_token_user_id_idx; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX auth_token_user_id_idx ON auth_token USING btree (user_id);
+CREATE INDEX auth_token_project_id_idx ON auth_token USING btree (project_id);
 
 
 --
@@ -771,6 +639,147 @@ CREATE INDEX test_run_job_id_idx ON test_run USING btree (job_id);
 CREATE INDEX test_run_project_id_idx ON test_run USING btree (project_id);
 
 
+
+--
+-- Name: public; Type: ACL; Schema: -; Owner: -
+--
+
+REVOKE ALL ON SCHEMA public FROM PUBLIC;
+REVOKE ALL ON SCHEMA public FROM postgres;
+GRANT ALL ON SCHEMA public TO postgres;
+GRANT ALL ON SCHEMA public TO PUBLIC;
+
+--
+-- Name: console_notify(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION console_notify() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+BEGIN
+  IF TG_OP = 'DELETE' THEN
+    RETURN OLD;
+  END IF;
+
+  IF TG_OP = 'UPDATE' THEN
+    RETURN NEW;
+  END IF;
+
+  PERFORM pg_notify('console_update', json_build_object('id', NEW.id, 'job_id', NEW.job_id)::text);
+
+  RETURN NEW;
+END;
+$$;
+
+
+--
+-- Name: job_queue_notify(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION job_queue_notify() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+	build_json json;
+	project_json json;
+	job_json json;
+	commit_json json;
+	data_json json;
+	pull_request_json json;
+	project project%ROWTYPE;
+BEGIN
+	IF TG_OP = 'DELETE' THEN
+		RETURN OLD;
+	END IF;
+
+	-- create build json
+	SELECT json_build_object(
+		'id', b.id,
+		'build_number', b.build_number,
+		'restart_counter', b.restart_counter
+	) INTO build_json FROM build b WHERE id = NEW.build_id;
+
+	-- create project json
+	SELECT json_build_object(
+		'id', p.id,
+		'name', p.name,
+		'type', p.type
+	) INTO project_json FROM project p WHERE id = NEW.project_id;
+
+	-- create job json
+	job_json := json_build_object(
+		'id', NEW.id,
+		'state', NEW.state,
+		'start_date', NEW.start_date,
+		'type', NEW.type,
+		'dockerfile', NEW.dockerfile,
+		'end_date', NEW.end_date,
+		'name', NEW.name,
+		'cpu', NEW.cpu,
+		'memory', NEW.memory,
+		'dependencies', NEW.dependencies,
+		'created_at', NEW.created_at
+	);
+
+
+	SELECT * INTO project FROM project WHERE id = NEW.project_id;
+	IF project.type in ('github', 'gerrit') THEN
+		-- create commit json
+		SELECT json_build_object(
+			'id', c.id,
+			'message', split_part(c.message, '\n', 1),
+			'author_name', c.author_name,
+			'author_email', c.author_email,
+			'author_username', c.author_username,
+			'committer_name', c.committer_name,
+			'committer_email', c.committer_email,
+			'committer_username', c.committer_username,
+			'committer_avatar_url', u.avatar_url,
+			'url', c.url,
+			'branch', c.branch
+		), json_build_object(
+			'title', pr.title,
+			'url', pr.url
+		) INTO commit_json, pull_request_json
+		FROM job j
+		INNER JOIN build b
+			ON j.build_id = b.id
+		INNER JOIN commit c
+			ON b.commit_id = c.id
+		LEFT OUTER JOIN "user" u
+			ON c.committer_username = u.username
+		LEFT OUTER JOIN pull_request pr
+			ON c.pull_request_id = pr.id
+		WHERE b.id = NEW.build_id AND j.id = NEW.id;
+	END IF;
+
+	data_json := json_build_object('job', job_json, 'build', build_json, 'project', project_json, 'commit', commit_json, 'pull_request', pull_request_json);
+	PERFORM pg_notify('job_update', json_build_object('type', TG_OP, 'data', data_json)::text);
+
+  RETURN NEW;
+END;
+$$;
+
+
+--
+-- Name: truncate_tables(character varying); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION truncate_tables(username character varying) RETURNS void
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+    statements CURSOR FOR
+        SELECT tablename FROM pg_tables
+        WHERE tableowner = username AND schemaname = 'public';
+BEGIN
+    FOR stmt IN statements LOOP
+        EXECUTE 'TRUNCATE TABLE ' || quote_ident(stmt.tablename) || ' CASCADE;';
+    END LOOP;
+END;
+$$;
+
 --
 -- Name: console_notify_insert; Type: TRIGGER; Schema: public; Owner: -
 --
@@ -791,18 +800,4 @@ CREATE TRIGGER job_queue_notify_insert AFTER INSERT ON job FOR EACH ROW EXECUTE 
 
 CREATE TRIGGER job_queue_notify_update AFTER UPDATE ON job FOR EACH ROW EXECUTE PROCEDURE job_queue_notify();
 
-
---
--- Name: public; Type: ACL; Schema: -; Owner: -
---
-
-REVOKE ALL ON SCHEMA public FROM PUBLIC;
-REVOKE ALL ON SCHEMA public FROM postgres;
-GRANT ALL ON SCHEMA public TO postgres;
-GRANT ALL ON SCHEMA public TO PUBLIC;
-
-
---
--- PostgreSQL database dump complete
---
 

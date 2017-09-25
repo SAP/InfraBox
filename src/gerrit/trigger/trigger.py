@@ -105,7 +105,9 @@ def handle_patchset_created_project(conn, event, project_id, project_name):
                 %s, %s, %s,
                 %s, %s, %s, %s, %s)
             RETURNING *
-                ''', (sha, event['change']['commitMessage'], repository_id, datetime.datetime.now(), event['change']['owner']['name'],
+                ''', (sha, event['change']['commitMessage'],
+                      repository_id, datetime.datetime.now(),
+                      event['change']['owner']['name'],
                       '', event['change']['owner']['username'], '', '', '',
                       event['change']['url'],
                       event['change']['branch'], project_id, None))
@@ -160,7 +162,8 @@ def handle_patchset_created_project(conn, event, project_id, project_name):
                                             get_env('INFRABOX_GERRIT_HOSTNAME'),
                                             get_env('INFRABOX_GERRIT_PORT'),
                                             project_name),
-        "ref": event['patchSet']['ref']
+        "ref": event['patchSet']['ref'],
+        "event": event['change']['branch']
     }
 
     c = conn.cursor()
@@ -168,7 +171,10 @@ def handle_patchset_created_project(conn, event, project_id, project_name):
                                  project_id, build_only, dockerfile,
                                  cpu, memory, repo, env_var)
                 VALUES (gen_random_uuid(), 'queued', %s, 'create_job_matrix', 'Create Jobs',
-                        %s, false, '', 1, 1024, %s, %s)''', (build_id, project_id, json.dumps(git_repo), json.dumps(env_vars)))
+                        %s, false, '', 1, 1024, %s, %s)''', (build_id,
+                                                             project_id,
+                                                             json.dumps(git_repo),
+                                                             json.dumps(env_vars)))
 
 def handle_patchset_created(conn, event):
     conn.rollback()

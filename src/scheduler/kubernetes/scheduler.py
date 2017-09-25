@@ -838,7 +838,8 @@ def main():
             logger.info("I'm not the leader, %s is the leader", leader)
             time.sleep(1)
 
-    args.api_server = "https://" + get_env('INFRABOX_KUBERNETES_MASTER_HOST') + ":" + get_env('INFRABOX_KUBERNETES_MASTER_PORT')
+    args.api_server = "https://" + get_env('INFRABOX_KUBERNETES_MASTER_HOST') \
+                                 + ":" + get_env('INFRABOX_KUBERNETES_MASTER_PORT')
 
     os.environ['REQUESTS_CA_BUNDLE'] = '/var/run/secrets/kubernetes.io/serviceaccount/ca.crt'
 

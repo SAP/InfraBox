@@ -146,7 +146,9 @@ def parse_resources(d, path):
     parse_limits(d['limits'], path + ".limits")
 
 def parse_docker(d, path):
-    check_allowed_properties(d, path, ("type", "name", "docker_file", "depends_on", "resources", "build_only", "security", "keep", "environment", "build_arguments", "deployments"))
+    check_allowed_properties(d, path, ("type", "name", "docker_file", "depends_on", "resources",
+                                       "build_only", "security", "keep", "environment",
+                                       "build_arguments", "deployments"))
     check_required_properties(d, path, ("type", "name", "docker_file", "resources"))
     check_name(d['name'], path + ".name")
     check_text(d['docker_file'], path + ".docker_file")
@@ -195,13 +197,16 @@ def parse_wait(d, path):
         parse_depends_on(d['depends_on'], path + ".depends_on")
 
 def parse_deployment_docker_registry(d, path):
-    check_allowed_properties(d, path, ("type", "host", "repository", "username", "password"))
+    check_allowed_properties(d, path, ("type", "host", "repository", "username", "password", "tag"))
     check_required_properties(d, path, ("type", "host", "repository"))
     check_text(d['host'], path + ".host")
     check_text(d['repository'], path + ".repository")
 
     if 'username' in d:
         check_text(d['username'], path + ".username")
+
+    if 'tag' in d:
+        check_text(d['tag'], path + ".tag")
 
     if 'password' in d:
         parse_secret_ref(d['password'], path + ".password")

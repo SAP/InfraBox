@@ -85,6 +85,10 @@ export class JobDetailComponent implements OnInit, OnDestroy {
         this.unsubscribe();
     }
 
+    public downloadConsoleOutput(): void {
+        this.jobService.downloadConsoleOutput(this.project.id, this.job.id);
+    }
+
     private unsubscribe() {
         if (this.sub) {
             this.sub.unsubscribe();

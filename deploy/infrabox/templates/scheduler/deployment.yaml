@@ -73,7 +73,7 @@ spec:
             {{ end }}
             -
                 name: scheduler
-                image: {{ required "general.docker_registry is required" .Values.general.docker_registry }}/{{ default "infrabox/scheduler" .Values.scheduler.image }}:{{ required "scheduler.tag is required" .Values.scheduler.tag }}
+                image: {{ required "general.docker_registry is required" .Values.general.docker_registry }}/{{ default "infrabox/scheduler/kubernetes" .Values.scheduler.image }}:{{ required "scheduler.tag is required" .Values.scheduler.tag }}
                 args:
                     - "--docker-registry"
                     - "{{ .Values.general.docker_registry }}"

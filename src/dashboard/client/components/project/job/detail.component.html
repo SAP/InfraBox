@@ -110,6 +110,15 @@
                                 </div>
                             </div>
                         </div>
+
+                        <dl>
+                            <dt><span> <i class="fa fa-download fa-1x"></i><Strong> Console Output:</Strong></span></dt>
+                            <dd>
+                                <button type="button" class="btn btn-default btn-outline p-xxs" style="font-size: inherit" (click)="downloadConsoleOutput()">
+                                    Download
+                                </button>
+                            </dd>
+                        </dl>
                     </div>
 
                     <div *ngIf="badges && badges.length > 0" class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-xs-12 col-xxs-12 text-left no-padding">

@@ -34,6 +34,9 @@ def connect_db():
             time.sleep(3)
 
 def elect_leader():
+    if os.environ.get('INFRABOX_DISABLE_LEADER_ELECTION', 'false') == 'true':
+        return
+
     while True:
         r = requests.get("http://localhost:4040", timeout=5)
         leader = r.json()['name']
@@ -62,7 +65,7 @@ def apply_migration(conn, migration):
         sql = sql_file.read()
         cur = conn.cursor()
         cur.execute(sql)
-        cur.execute('UPDATE infrabox SET schema_version = %s', migration[1])
+        cur.execute('UPDATE infrabox SET schema_version = %s', (migration[1],))
         cur.close()
         conn.commit()
 
@@ -102,6 +105,8 @@ def migrate_db(conn):
     logger.info("Current schema version is: %s", current_schema_version)
 
     apply_migrations(conn, current_schema_version)
+
+    logger.info("Finished database migration")
 
 def main():
     get_env('INFRABOX_SERVICE')

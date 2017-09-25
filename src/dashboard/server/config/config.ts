@@ -56,6 +56,9 @@ export let config = {
         url: getFromEnv("INFRABOX_DASHBOARD_URL"),
         port: getFromEnv("INFRABOX_DASHBOARD_PORT"),
         secret: getFromEnv("INFRABOX_DASHBOARD_SECRET"),
+        monitoring: {
+            port: getFromEnv("INFRABOX_DASHBOARD_MONITORING_PORT", 8010)
+        },
         express: {
             use_request_logger: false,
             print_errors: true

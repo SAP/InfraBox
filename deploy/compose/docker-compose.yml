@@ -1,0 +1,94 @@
+version: "2"
+
+services:
+    postgres:
+        image: postgres:9.6
+        restart: on-failure
+        network_mode: host
+
+    minio:
+        image: minio/minio
+        command: server /data
+        restart: always
+        network_mode: host
+        environment:
+            - MINIO_ACCESS_KEY=AKIAIOSFODNN7EXAMPLE
+            - MINIO_SECRET_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+
+    db:
+        image: $INFRABOX_DOCKER_REGISTRY/infrabox/db
+        network_mode: host
+        environment:
+            - INFRABOX_SERVICE=db
+            - INFRABOX_VERSION=latest
+            - INFRABOX_DISABLE_LEADER_ELECTION=true
+
+    scheduler:
+        image: $INFRABOX_DOCKER_REGISTRY/infrabox/scheduler/docker-compose
+        restart: on-failure
+        privileged: true
+        tty: true
+        network_mode: host
+        volumes:
+            - "/var/run/docker.sock:/var/run/docker.sock"
+        environment:
+            - INFRABOX_SERVICE=scheduler
+            - INFRABOX_VERSION=latest
+            - INFRABOX_JOB_MAX_OUTPUT_SIZE=104857600
+
+    dashboard:
+        image: $INFRABOX_DOCKER_REGISTRY/infrabox/dashboard
+        command: node /dashboard/dist/server/app.js
+        restart: on-failure
+        network_mode: host
+        environment:
+            - INFRABOX_SERVICE=dashboard
+            - INFRABOX_VERSION=latest
+            - INFRABOX_STORAGE_GCS_ENABLED=false
+            - INFRABOX_STORAGE_S3_ENABLED=true
+            - INFRABOX_STORAGE_S3_ACCESS_KEY=AKIAIOSFODNN7EXAMPLE
+            - INFRABOX_STORAGE_S3_SECRET_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+            - INFRABOX_STORAGE_S3_PORT=9000
+            - INFRABOX_STORAGE_S3_ENDPOINT=localhost
+            - INFRABOX_STORAGE_S3_SECURE=false
+            - INFRABOX_STORAGE_S3_REGION=us-east-1
+            - INFRABOX_STORAGE_S3_CONTAINER_CONTENT_CACHE_BUCKET=infrabox-container-content-cache
+            - INFRABOX_STORAGE_S3_PROJECT_UPLOAD_BUCKET=infrabox-project-upload
+            - INFRABOX_STORAGE_S3_CONTAINER_OUTPUT_BUCKET=infrabox-container-output
+            - INFRABOX_GITHUB_ENABLED=false
+            - INFRABOX_GERRIT_ENABLED=false
+            - INFRABOX_DASHBOARD_URL="localhost:30201"
+            - INFRABOX_DASHBOARD_PORT=30201
+            - INFRABOX_DASHBOARD_SECRET=secret
+            - INFRABOX_DASHBOARD_MONITORING_PORT=30303
+            - INFRABOX_API_URL="localhost:30200"
+            - INFRABOX_DOCS_URL="localhost:30203"
+            - INFRABOX_DOCKER_REGISTRY_URL="localhost:30202"
+
+    api:
+        image: $INFRABOX_DOCKER_REGISTRY/infrabox/api
+        command: node /api/dist/server/app.js
+        restart: on-failure
+        network_mode: host
+        environment:
+            - INFRABOX_SERVICE=api
+            - INFRABOX_VERSION=latest
+            - INFRABOX_STORAGE_GCS_ENABLED=false
+            - INFRABOX_STORAGE_S3_ENABLED=true
+            - INFRABOX_STORAGE_S3_ACCESS_KEY=AKIAIOSFODNN7EXAMPLE
+            - INFRABOX_STORAGE_S3_SECRET_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+            - INFRABOX_STORAGE_S3_PORT=9000
+            - INFRABOX_STORAGE_S3_ENDPOINT=localhost
+            - INFRABOX_STORAGE_S3_SECURE=false
+            - INFRABOX_STORAGE_S3_REGION=us-east-1
+            - INFRABOX_STORAGE_S3_CONTAINER_CONTENT_CACHE_BUCKET=infrabox-container-content-cache
+            - INFRABOX_STORAGE_S3_PROJECT_UPLOAD_BUCKET=infrabox-project-upload
+            - INFRABOX_STORAGE_S3_CONTAINER_OUTPUT_BUCKET=infrabox-container-output
+            - INFRABOX_GITHUB_ENABLED=false
+            - INFRABOX_GERRIT_ENABLED=false
+            - INFRABOX_DASHBOARD_URL="localhost:30201"
+            - INFRABOX_API_PORT=30200
+            - INFRABOX_API_MONITORING_PORT=30304
+            - INFRABOX_API_URL="localhost:30200"
+            - INFRABOX_DOCS_URL="localhost:30203"
+            - INFRABOX_DOCKER_REGISTRY_URL="localhost:30202"

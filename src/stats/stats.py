@@ -32,8 +32,6 @@ def get_jobs(conn):
     result = cursor.fetchall()
     cursor.close()
 
-    print result
-
     JOBS_RUNNING.set(0)
     JOBS_SCHEDULED.set(0)
     JOBS_QUEUED.set(0)
@@ -63,12 +61,20 @@ def get_jobs(conn):
         if state == 'error':
             JOBS_ERROR.set(count)
 
-JOBS_CPU_REQUESTED = Gauge('infrabox_jobs_cpu_requested_total', 'Total requested CPU of all jobs', ['state'])
-JOBS_MEMORY_REQUESTED = Gauge('infrabox_jobs_memory_requsted_bytes_total', 'Total requested memory of all jobs', ['state'])
+JOBS_CPU_REQUESTED = Gauge('infrabox_jobs_cpu_requested_total',
+                           'Total requested CPU of all jobs',
+                           ['state'])
+JOBS_MEMORY_REQUESTED = Gauge('infrabox_jobs_memory_requsted_bytes_total',
+                              'Total requested memory of all jobs',
+                              ['state'])
 
 def get_active_resources(conn):
     cursor = conn.cursor()
-    cursor.execute('''SELECT state, sum(cpu), sum(memory) from job group by state having state in ('running', 'scheduled')''')
+    cursor.execute('''
+        SELECT state, sum(cpu), sum(memory)
+        FROM job
+        GROUP BY state
+        HAVING state in ('running', 'scheduled')''')
     result = cursor.fetchall()
     cursor.close()
 
@@ -93,7 +99,8 @@ def get_k8s_stats():
         token = f.read()
 
         h = {'Authorization': 'Bearer %s' % token}
-        api_server = "https://" + get_env('INFRABOX_KUBERNETES_MASTER_HOST') + ":" + get_env('INFRABOX_KUBERNETES_MASTER_PORT')
+        api_server = "https://" + get_env('INFRABOX_KUBERNETES_MASTER_HOST') \
+                                + ":" + get_env('INFRABOX_KUBERNETES_MASTER_PORT')
 
         r = requests.get(api_server + '/api/v1/nodes', headers=h, timeout=5).json()
 
@@ -119,17 +126,9 @@ def get_env(name):
         raise Exception("%s not set" % name)
     return os.environ[name]
 
-
-def main():
-    get_env('INFRABOX_SERVICE')
-    get_env('INFRABOX_VERSION')
-    get_env('INFRABOX_DATABASE_DB')
-    get_env('INFRABOX_DATABASE_USER')
-    get_env('INFRABOX_DATABASE_PASSWORD')
-    get_env('INFRABOX_DATABASE_HOST')
-    get_env('INFRABOX_DATABASE_PORT')
-    get_env('INFRABOX_KUBERNETES_MASTER_HOST')
-    get_env('INFRABOX_KUBERNETES_MASTER_PORT')
+def elect_leader():
+    if os.environ.get('INFRABOX_DISABLE_LEADER_ELECTION', 'false') == 'true':
+        return
 
     while True:
         r = requests.get("http://localhost:4040", timeout=5)
@@ -142,13 +141,39 @@ def main():
             logger.info("I'm not the leader, %s is the leader", leader)
             time.sleep(1)
 
-    conn = psycopg2.connect(dbname=os.environ['INFRABOX_DATABASE_DB'],
-                            user=os.environ['INFRABOX_DATABASE_USER'],
-                            password=os.environ['INFRABOX_DATABASE_PASSWORD'],
-                            host=os.environ['INFRABOX_DATABASE_HOST'],
-                            port=os.environ['INFRABOX_DATABASE_PORT'])
+def main():
+    get_env('INFRABOX_SERVICE')
+    get_env('INFRABOX_VERSION')
+    get_env('INFRABOX_DATABASE_DB')
+    get_env('INFRABOX_DATABASE_USER')
+    get_env('INFRABOX_DATABASE_PASSWORD')
+    get_env('INFRABOX_DATABASE_HOST')
+    get_env('INFRABOX_DATABASE_PORT')
 
-    conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
+    k8s_stats = get_env('INFRABOX_STATS_KUBERNETES_ENABLED') == 'true'
+
+    if k8s_stats:
+        get_env('INFRABOX_KUBERNETES_MASTER_HOST')
+        get_env('INFRABOX_KUBERNETES_MASTER_PORT')
+
+    elect_leader()
+
+
+    conn = None
+    while True:
+        try:
+            conn = psycopg2.connect(dbname=os.environ['INFRABOX_DATABASE_DB'],
+                                    user=os.environ['INFRABOX_DATABASE_USER'],
+                                    password=os.environ['INFRABOX_DATABASE_PASSWORD'],
+                                    host=os.environ['INFRABOX_DATABASE_HOST'],
+                                    port=os.environ['INFRABOX_DATABASE_PORT'])
+
+            conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
+            break
+        except Exception as e:
+            logger.warn("Can't connect to database: %s", e)
+            time.sleep(1)
+
 
     os.environ['REQUESTS_CA_BUNDLE'] = '/var/run/secrets/kubernetes.io/serviceaccount/ca.crt'
 
@@ -157,7 +182,10 @@ def main():
     while True:
         get_jobs(conn)
         get_active_resources(conn)
-        get_k8s_stats()
+
+        if k8s_stats:
+            get_k8s_stats()
+
         time.sleep(1)
 
 def print_stackdriver():

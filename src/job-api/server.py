@@ -302,6 +302,7 @@ def get_job_data():
         for dep in deployments:
             if dep['type'] == 'docker-registry':
                 if 'password' not in dep:
+                    data['deployments'].append(dep)
                     continue
 
                 secret_name = dep['password']['$ref']

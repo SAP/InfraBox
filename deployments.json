@@ -11,6 +11,15 @@
         }
     }, {
         "type": "docker",
+        "name": "db",
+        "docker_file": "src/db/Dockerfile",
+        "build_only": true,
+        "resources": { "limits": { "cpu": 1, "memory": 2048 } },
+        "security": {
+            "scan_container": true
+        }
+    }, {
+        "type": "docker",
         "name": "gerrit-trigger",
         "docker_file": "src/gerrit/trigger/Dockerfile",
         "build_only": true,
@@ -107,8 +116,8 @@
         "resources": { "limits": { "cpu": 1, "memory": 2048 } }
      }, {
         "type": "docker",
-        "name": "scheduler",
-        "docker_file": "src/scheduler/Dockerfile",
+        "name": "scheduler-kubernetes",
+        "docker_file": "src/scheduler/kubernetes/Dockerfile",
         "build_only": true,
         "resources": { "limits": { "cpu": 1, "memory": 2048 } },
         "security": {
@@ -116,12 +125,12 @@
         }
      }, {
         "type": "docker",
-        "name": "postgres",
-        "docker_file": "src/postgres/Dockerfile",
+        "name": "scheduler-docker-compose",
+        "docker_file": "src/scheduler/docker-compose/Dockerfile",
         "build_only": true,
         "resources": { "limits": { "cpu": 1, "memory": 2048 } },
         "security": {
-            "scan_container": false
+            "scan_container": true
         }
      }, {
         "type": "docker",

@@ -6,4 +6,4 @@ RUN apk add --no-cache python py-psycopg2 py-requests py-pip && \
 
 COPY src/stats stats
 
-ENTRYPOINT ["python", "stats/scheduler.py"]
+ENTRYPOINT ["python", "stats/stats.py"]

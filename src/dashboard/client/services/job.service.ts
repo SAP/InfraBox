@@ -250,6 +250,12 @@ export class JobService {
         return this.api.download(url, file_name);
     }
 
+    public downloadConsoleOutput(project_id: string, job_id: string) {
+        const url = '/api/dashboard/project/' + project_id + '/job/' + job_id + '/console';
+        const file_name = job_id + "-console-output.txt";
+        return this.api.download(url, file_name);
+    }
+
     public getStats(project_id: string, job_id: string): Observable<any> {
         const url = '/api/dashboard/project/' + project_id + '/job/' + job_id + '/stats';
         return this.api.get(url);

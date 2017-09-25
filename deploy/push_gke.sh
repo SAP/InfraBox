@@ -11,6 +11,10 @@ echo "  tag: $image_tag"
 $cmd_prefix -- push ${docker_registry}infrabox/job-api:$image_tag
 $cmd_prefix -- push ${docker_registry}infrabox/gerrit/trigger:$image_tag
 $cmd_prefix -- push ${docker_registry}infrabox/gerrit/review:$image_tag
+$cmd_prefix -- push ${docker_registry}infrabox/gerrit/api:$image_tag
+$cmd_prefix -- push ${docker_registry}infrabox/github/trigger:$image_tag
+$cmd_prefix -- push ${docker_registry}infrabox/github/review:$image_tag
+$cmd_prefix -- push ${docker_registry}infrabox/github/api:$image_tag
 $cmd_prefix -- push ${docker_registry}infrabox/api:$image_tag
 $cmd_prefix -- push ${docker_registry}infrabox/docs:$image_tag
 $cmd_prefix -- push ${docker_registry}infrabox/job:$image_tag
@@ -20,4 +24,5 @@ $cmd_prefix -- push ${docker_registry}infrabox/clair/analyzer:$image_tag
 $cmd_prefix -- push ${docker_registry}infrabox/clair/updater:$image_tag
 $cmd_prefix -- push ${docker_registry}infrabox/docker-registry/auth:$image_tag
 $cmd_prefix -- push ${docker_registry}infrabox/docker-registry/nginx:$image_tag
-$cmd_prefix -- push ${docker_registry}infrabox/postgres:$image_tag
+$cmd_prefix -- push ${docker_registry}infrabox/stats:$image_tag
+$cmd_prefix -- push ${docker_registry}infrabox/db:$image_tag

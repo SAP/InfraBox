@@ -85,10 +85,12 @@ class Trigger(object):
         build_id = result[0][0]
         return build_id
 
-    def create_job(self, commit_id, clone_url, build_id, project_id):
+    def create_job(self, commit_id, clone_url, build_id, project_id, github_private_repo, branch):
         git_repo = {
             "commit": commit_id,
-            "clone_url": clone_url
+            "clone_url": clone_url,
+            "github_private_repo": github_private_repo,
+            "branch": branch
         }
 
         self.execute('''
@@ -102,12 +104,13 @@ class Trigger(object):
 
     def create_push(self, c, repository, branch, tag):
         result = self.execute('''
-            SELECT id, project_id
+            SELECT id, project_id, private
             FROM repository
             WHERE github_id = %s''', [repository['id']])[0]
 
         repo_id = result[0]
         project_id = result[1]
+        github_repo_private = result[2]
         commit_id = None
 
         result = self.execute('''
@@ -146,7 +149,8 @@ class Trigger(object):
 
 
         build_id = self.create_build(commit_id, project_id)
-        self.create_job(c['id'], repository['clone_url'], build_id, project_id)
+        self.create_job(c['id'], repository['clone_url'], build_id,
+                        project_id, github_repo_private, branch)
 
     def handle_push(self, event):
         result = self.execute('''
@@ -190,12 +194,16 @@ class Trigger(object):
 
 
     def handle_pull_request(self, event):
+        if event['action'] == 'closed':
+            return
+
         result = self.execute('''
-            SELECT id, project_id FROM repository WHERE github_id = %s;
+            SELECT id, project_id, private FROM repository WHERE github_id = %s;
         ''', [event['repository']['id']])[0]
 
         repo_id = result[0]
         project_id = result[1]
+        github_repo_private = result[2]
 
         result = self.execute('''
             SELECT build_on_push FROM project WHERE id = %s;
@@ -277,7 +285,7 @@ class Trigger(object):
         build_id = self.create_build(commit_id, project_id)
         self.create_job(event['pull_request']['head']['sha'],
                         event['pull_request']['head']['repo']['clone_url'],
-                        build_id, project_id)
+                        build_id, project_id, github_repo_private, branch)
 
         self.conn.commit()
         return res(200, 'ok')

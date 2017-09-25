@@ -51,6 +51,27 @@ router.get("/:job_id/downloads", pv, (req: Request, res: Response, next) => {
         }).catch(handleDBError(next));
 });
 
+router.get("/:job_id/console", pv, (req: Request, res: Response, next) => {
+    const project_id = req.params['project_id'];
+    const job_id = req.params['job_id'];
+
+    db.any(`SELECT console FROM job WHERE id = $1 and project_id = $2`,
+           [job_id, project_id])
+        .then((result: any[]) => {
+            if (result.length != 1) {
+                throw new NotFound();
+            }
+
+			const d = result[0].console;
+
+			if (!d) {
+                throw new NotFound();
+			}
+
+            res.send(d);
+        }).catch(handleDBError(next));
+});
+
 router.get("/:job_id/downloads/:file_id", pv, (req: Request, res: Response, next) => {
     const project_id = req.params['project_id'];
     const job_id = req.params['job_id'];
@@ -59,7 +80,6 @@ router.get("/:job_id/downloads/:file_id", pv, (req: Request, res: Response, next
     db.any(`SELECT download FROM job WHERE id = $1 and project_id = $2`,
            [job_id, project_id])
         .then((result: any[]) => {
-			console.log(result);
             if (result.length != 1) {
                 throw new NotFound();
             }

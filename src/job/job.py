@@ -138,23 +138,23 @@ class RunJob(Job):
     def get_source(self):
         c = self.console
 
-        if self.job['repo'] or self.project['type'] == 'github':
-            if self.job['repo']:
-                clone_url = self.job['repo']['clone_url']
-                private = False
-            else:
-                clone_url = self.repository['clone_url']
-                private = self.repository['private']
+        if self.job['repo']:
+            repo = self.job['repo']
+            clone_url = repo['clone_url']
+            branch = repo.get('branch', None)
+            private = repo.get('github_private_repo', False)
+            ref = repo.get('ref', None)
+            commit = repo['commit']
 
-                if private:
-                    clone_url = clone_url.replace('github.com',
-                                                  '%s@github.com' % self.repository['github_api_token'])
+            if private:
+                clone_url = clone_url.replace('github.com',
+                                              '%s@github.com' % self.repository['github_api_token'])
 
             c.execute(['rm', '-rf', 'repo'], show=True)
 
             cmd = ['git', 'clone', '--depth=10']
-            if self.commit['branch']:
-                cmd += ['--single-branch', '-b', self.commit['branch']]
+            if branch:
+                cmd += ['--single-branch', '-b', branch]
 
             c.header("Clone repository", show=True)
             cmd += [clone_url, '/repo']
@@ -162,18 +162,13 @@ class RunJob(Job):
             c.collect(' '.join(cmd), show=True)
             c.execute(cmd, show=True)
 
-            if 'repo' in self.job and self.job['repo'] and 'ref' in self.job['repo'] and self.job['repo']['ref']:
-                cmd = ['git', 'fetch', '--depth=10', clone_url, self.job['repo']['ref']]
+            if ref:
+                cmd = ['git', 'fetch', '--depth=10', clone_url, ref]
                 c.collect(' '.join(cmd), show=True)
                 c.execute(cmd, show=True, cwd="/repo")
 
             c.header("Checkout commit", show=True)
-            cmd = ['git', 'checkout', '-qf', '-b', 'job']
-
-            if 'repo' in self.job and self.job['repo'] and 'commit' in self.job['repo'] and self.job['repo']['commit']:
-                cmd += [self.job['repo']['commit']]
-            else:
-                cmd += [self.commit['id']]
+            cmd = ['git', 'checkout', '-qf', '-b', 'job', commit]
 
             c.collect(' '.join(cmd), show=True)
             c.execute(cmd, cwd="/repo", show=True)
@@ -490,7 +485,8 @@ class RunJob(Job):
             c.collect("No deployments configured\n", show=True)
 
         for dep in self.deployments:
-            dep_image_name = dep['host'] + '/' + dep['repository'] + ':build_%s' % self.build['build_number']
+            tag = dep.get('tag', 'build_%s' % self.build['build_number'])
+            dep_image_name = dep['host'] + '/' + dep['repository'] + ":" + tag
             c.execute(['docker', 'tag', image_name, dep_image_name], show=True)
             c.execute(['docker', 'push', dep_image_name], show=True)
 
@@ -587,8 +583,6 @@ class RunJob(Job):
                     host = dep['host']
                     c.execute(['docker', 'login', '-u', dep['username'],
                                '-p', dep['password'], host], show=False)
-                else:
-                    raise Exception("Not implemented")
             except Exception as e:
                 raise Failure("Failed to login to registry: " + e.message)
 
@@ -717,10 +711,12 @@ class RunJob(Job):
                 infrabox_paths[p] = True
                 c.collect("file: %s" % p)
                 yml = self.parse_infrabox_json(p)
+
                 git_repo = {
                     "clone_url": job['clone_url'],
                     "commit": job['commit']
                 }
+
                 self.check_file_exist(yml, new_repo_path)
                 sub = self.get_job_list(yml, c, git_repo, parent_name=job_name,
                                         repo_path=new_repo_path,

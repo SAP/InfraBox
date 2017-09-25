@@ -50,7 +50,7 @@ function createMonitoringServerImpl() {
         //res.set('Content-Type', prom.register.contentType);
         res.end(prom.register.metrics());
     });
-    server.listen(8010);
+    server.listen(config.dashboard.monitoring.port);
 }
 
 export function createServer(print: boolean) {

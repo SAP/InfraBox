@@ -103,6 +103,9 @@ spec:
                 -
                     name: INFRABOX_VERSION
                     value: {{ .Values.stats.tag }}
+                -
+                    name: INFRABOX_STATS_KUBERNETES_ENABLED
+                    value: "true"
             volumes:
                 {{ include "volumes_database" . | indent 16 }}
                 {{ if .Values.storage.gcs.enabled }}
