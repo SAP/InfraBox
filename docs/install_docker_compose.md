@@ -7,7 +7,7 @@ This setup is not meant for production. You may use it to try InfraBox or use it
 - [docker-compose](https://docs.docker.com/compose/)
 
 ## Build docker contaienrs
-See [these instructions](build_containers.md) on how to build the InfraBox docker containers.
+See [these instructions](build_images.md) on how to build the InfraBox docker containers.
 
 ## Generate docker-compose.yaml
 InfraBox comes with deploy/install.py which can generate for you a docker-compose.yaml with all the neccessary configuration values to get started quickly.
