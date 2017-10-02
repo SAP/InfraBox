@@ -7,5 +7,3 @@ InfraBox starts its own docker registry to store the images of the jobs. You hav
 
     --docker-registry-admin-username <CHOSE_A_USERNAME>
     --docker-registry-admin-password <CHOSE_A_PASSWORD>
-
-TODO: insecure registry

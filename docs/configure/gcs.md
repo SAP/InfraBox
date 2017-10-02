@@ -10,5 +10,3 @@ InfraBox will create a few buckets with default names. You may change the names 
     --gcs-project-upload-bucket <NAME>
     --gcs-container-content-cache-bucket <NAME>
     --gcs-docker-registry-bucket <NAME>
-
-
