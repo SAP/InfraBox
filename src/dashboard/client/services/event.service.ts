@@ -19,9 +19,19 @@ export class EventService {
             protocol = 'wss:';
         }
 
-        this.host = protocol + "//" + window.location.hostname + ":" + window.location.port;
+        this.host = protocol + "//" + window.location.host;
         this.logger = logService.createNamedLogger("EventService");
-        this.socket = io.connect(this.host, { transports: ['polling'] });
+
+        let path = window.location.pathname.substr(0, window.location.pathname.search("/dashboard"));
+        path += '/socket.io/';
+
+        console.log(this.host);
+        console.log(path);
+
+        this.socket = io.connect(this.host, {
+            transports: ['polling'],
+            path: path
+        });
 
         this.socket.on("connect", () => {
             this.logger.info("connected");

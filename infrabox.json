@@ -9,15 +9,5 @@
         "name": "deploy",
         "infrabox_file": "deployments.json",
         "depends_on": ["test"]
-	}, {
-        "type": "docker",
-        "name": "e2e",
-        "docker_file": "infrabox/test-kubernetes/Dockerfile",
-        "build_only": false,
-        "resources": { "limits": { "cpu": 1, "memory": 2048 } },
-        "depends_on": ["deploy"],
-        "environment": {
-            "TEST_KUBERNETES_SERVICE_ACCOUNT": { "$ref": "TEST_KUBERNETES_SERVICE_ACCOUNT" }
-        }
     }]
 }

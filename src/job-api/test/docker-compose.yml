@@ -14,7 +14,7 @@ services:
             - INFRABOX_DATABASE_HOST=postgres
             - INFRABOX_DATABASE_USER=postgres
             - INFRABOX_DATABASE_PASSWORD=postgres
-            - INFRABOX_DATABASE_DB=test_db
+            - INFRABOX_DATABASE_DB=postgres
             - INFRABOX_DATABASE_PORT=5432
             - INFRABOX_DASHBOARD_URL=infrabox-dashboard
             - INFRABOX_JOB_ID=1514af82-3c4f-4bb5-b1da-a89a0ced5e6f
@@ -37,7 +37,7 @@ services:
             - INFRABOX_DATABASE_HOST=postgres
             - INFRABOX_DATABASE_USER=postgres
             - INFRABOX_DATABASE_PASSWORD=postgres
-            - INFRABOX_DATABASE_DB=test_db
+            - INFRABOX_DATABASE_DB=postgres
             - INFRABOX_DATABASE_PORT=5432
         links:
             - job-api

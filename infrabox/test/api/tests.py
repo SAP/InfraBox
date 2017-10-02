@@ -8,7 +8,7 @@ import requests
 
 from nose.tools import raises
 
-POSTGRES_URL = "postgres://postgres:postgres@postgres/test_db"
+POSTGRES_URL = "postgres://postgres:postgres@postgres/postgres"
 
 class TestGithubHook(object):
     def __init__(self):

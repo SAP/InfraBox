@@ -11,7 +11,7 @@ from nose.tools import raises
 from job import RunJob
 from infrabox_job.process import ApiConsole
 
-POSTGRES_URL = "postgres://postgres:postgres@postgres/test_db"
+POSTGRES_URL = "postgres://postgres:postgres@postgres/postgres"
 
 class TestCreateJobs(object):
     def __init__(self):

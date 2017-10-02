@@ -1,42 +1,22 @@
 # InfraBox
+InfraBox is a serverless computing platform focusing on efficiently executing build and test workflows for your project. You may execute everything on InfraBox which runs in a docker container. Some of InfraBox features include:
+
+- Static and dynamic workflows
+- Set resource limits (CPU and memory) for each task
+- GitHub integration
+- Gerrit integration
+- LDAP support
+- and many more
 
 ## Requirements
 
-- Kubernetes 1.6
+- Kubernetes 1.7
 - Postgres 9.6
 - S3 compatible storage (i.e. minio)
 
-## Build Containers
-To build the container you need to have installed:
+## Install InfraBox
+You have multiple options to install InfraBox.
 
-- [infraboxcli](https://github.com/infrabox/cli)
-- [docker](https://www.docker.com/)
-
-To run Infrabox you first have to build all its docker containers. To do so run
-
-    ./deploy/build.sh <YOUR_DOCKER_REGISTRY>
-    ./deploy/push.sh <YOUR_DOCKER_REGISTYR>
-
-i.e.:
-
-    ./deploy/build.sh 192.168.157.129:5000/
-    ./deploy/push.sh 192.168.157.129:5000/
-
-Now you have all the containers build and your registry. Next step is to setup all the necessary credentials for running InfraBox in your kubernetes cluster.
-
-## Try it on minikube
-See [this guide](docs/development.md) How to get InfraBox quickly setup on your local machine with the help of minikube.
-
-## Setup Components
-Depending on the environment you would like to run InfraBox in you have to setup:
-
-1. [Setup kubernetes](docs/install_kubernetes.md)
-2. [Setup postgresql](docs/install_postgres.md)
-3. [Setup storage](docs/install_storage.md)
-4. [Setup docker registry](docs/install_docker_registry.md)
-5. [Setup InfraBox](docs/install_infrabox.md)
-
-Optionally you way want to configure:
-- [Setup gerrit](docs/install_gerrit.md)
-- [Setup github](docs/install_github.md)
-- [Setup ldap](docs/install_ldap.md)
+- [Docker Compose](docs/install_docker_compose.md)
+- [Minikube](docs/install_minikube.md)
+- [On your own Kubernetes cluster](docs/install_kubernetes.md)

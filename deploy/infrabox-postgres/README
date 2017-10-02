@@ -1,8 +1,0 @@
-# InfraBox Postgres
-A simple helm chart to deploy a Postgres database with the InfraBox schema.
-This is not meant for production!
-
-# Install
-To install it first edit value.yaml and then run
-
-    helm install .

@@ -22,6 +22,13 @@ general:
     rbac:
         enabled: true
 
+db:
+    # name of the db image in your general.docker_registry
+    # image: infrabox/db
+
+    # Tag
+    tag: latest
+
 scheduler:
     enabled: true
 
@@ -49,6 +56,22 @@ clair:
 storage:
     gcs:
         enabled: false
+
+        # Your project ID
+        project_id: <REQUIRED>
+
+        # Bucket name to store output of the jobs
+        # container_output_bucket: infrabox-container-output
+
+        # Bucket name of infraboxcli push uploads
+        # project_upload_bucket: infrabox-project-upload
+
+        # Bucket name for job cache
+        # container_content_cache_bucket: infrabox-container-content-cache
+
+        # Bucket name for docker registry
+        # docker_registry_bucket: infrabox-docker-registry
+
     s3:
         enabled: true
 

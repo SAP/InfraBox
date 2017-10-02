@@ -15,7 +15,7 @@ services:
             - INFRABOX_DATABASE_PASSWORD=postgres
             - INFRABOX_DATABASE_HOST=postgres
             - INFRABOX_DATABASE_PORT=5432
-            - INFRABOX_DATABASE_DB=test_db
+            - INFRABOX_DATABASE_DB=postgres
             - INFRABOX_DASHBOARD_URL=something
             - INFRABOX_DOCKER_REGISTRY_URL=http://registry
             - INFRABOX_API_URL=http://api

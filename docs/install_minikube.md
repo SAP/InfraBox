@@ -1,4 +1,5 @@
 # Local development with minikube
+This setup is not meant for production. You may use it to try InfraBox or use it for local development.
 
 ## Prerequisites
 - [minikube](https://kubernetes.io/docs/getting-started-guides/minikube/) v0.21.0
@@ -34,7 +35,7 @@ Start minikube:
         --cpus 4 \
         --memory 8192 \
         --disk-size 100gb \
-        --kubernetes-version v1.6.4
+        --kubernetes-version v1.7.5
 
 ## Install helm
 
@@ -55,37 +56,5 @@ push them to your registry:
 You may want to modifiy build.sh or push.sh to only build the images you modified.
 
 ## Deploy InfraBox
-We have a default configuration for InfraBox in deploy/infrabox/values_minikube.yaml.template
-Copy it to helm/infrabox/values_minikube.yaml and edit it.
-Replace <YOUR_HOST> and <MINIKUBE_HOST> with the IP addresses of your host and the minikube vm respectively.
 
-Do the same for postgres. Copy helm/infrabox/values_minikube.yam.template to lhelm/infrabox/values_minikube.yaml and edit it.
-
-To install InfraBox run:
-
-    $ cd deploy
-    $ ./install.sh
-
-You should now be able to access InfraBox under http://<MINIKUBE_HOST>:30201.
-
-If you use infraboxcli make sure you always use the --host option:
-
-    $ infrabox --host http://<MINIKUBE_HOST>:30200 ...
-
-You can access the different components at:
-
-- API: <MINIKUBE_HOST>:30200
-- Dashboard: <MINIKUBE_HOST>:30201
-- Docker Registry: <MINIKUBE_HOST>:30202
-- Docs: <MINIKUBE_HOST>:30203
-
-## Uninstall InfraBox
-
-    $ cd deploy
-    $ ./uninstall.sh
-
-## Upgrade
-
-    $ cd deploy/infrabox
-    $ helm upgrade infrabox -f values_install.yaml .
-
+TODO

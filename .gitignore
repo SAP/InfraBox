@@ -1,10 +1,5 @@
 node_modules/
 public/components
-deploy/infrabox/values_install.yaml
-deploy/infrabox/values_minikube.yaml
-deploy/infrabox-postgres/values_minikube.yaml
-deploy/infrabox/config/docker/daemon.json
-deploy/infrabox-postgres/values_install.yaml
 src/dashboard/run_server.sh
 src/api/run_server.sh
 .sass-cache
@@ -23,8 +18,4 @@ src/infraboxcli/infraboxcli.egg-info/
 *.yaml.infrabox
 run_server.sh
 certs/
-deploy/infrabox-postgres/values_gke.yaml
-deploy/infrabox/values_gke.yaml
-deploy/infrabox-postgres/values_test.yaml
-deploy/infrabox/values_test.yaml
 src/stats/run.sh
