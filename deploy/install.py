@@ -605,7 +605,7 @@ def main():
     parser.add_argument('--docker-registry-admin-password')
     parser.add_argument('--docker-registry-k8s-nodeport', type=int, default=30202)
     parser.add_argument('--docker-registry-url')
-    parser.add_argument('--docker-regisytr-tls-enabled', action='store_true', default=False)
+    parser.add_argument('--docker-registry-tls-enabled', action='store_true', default=False)
     parser.add_argument('--docker-registry-tls-key-file')
     parser.add_argument('--docker-registry-tls-crt-file')
 
