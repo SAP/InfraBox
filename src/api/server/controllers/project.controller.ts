@@ -203,7 +203,10 @@ router.get("/:project_id/build/state.svg", pv, (req: Request, res: Response, nex
                 if (err) {
                     throw new InternalError(err);
                 } else {
-                    res.set('Cache-Control', 'no-cache');
+                    res.setHeader('Surrogate-Control', 'no-store')
+                    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate')
+                    res.setHeader('Pragma', 'no-cache')
+                    res.setHeader('Expires', '0')
                     res.send(svg);
                 }
             });
@@ -251,7 +254,10 @@ router.get("/:project_id/build/tests.svg", pv, (req: Request, res: Response, nex
                 if (err) {
                     throw new InternalError(err);
                 } else {
-                    res.set('Cache-Control', 'no-cache');
+                    res.setHeader('Surrogate-Control', 'no-store')
+                    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate')
+                    res.setHeader('Pragma', 'no-cache')
+                    res.setHeader('Expires', '0')
                     res.send(svg);
                 }
             });
@@ -291,7 +297,10 @@ router.get("/:project_id/badge.svg", pv, (req: Request, res: Response, next) => 
             if (err) {
                 throw new InternalError(err);
             } else {
-                res.set('Cache-Control', 'no-cache');
+                res.setHeader('Surrogate-Control', 'no-store')
+                res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate')
+                res.setHeader('Pragma', 'no-cache')
+                res.setHeader('Expires', '0')
                 res.send(svg);
             }
         });
