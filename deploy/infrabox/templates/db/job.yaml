@@ -8,6 +8,9 @@ spec:
         metadata:
             name: infrabox-db-migration
         spec:
+            {{- if .Values.general.rbac.enabled }}
+            serviceAccountName: infrabox-leader-elector
+            {{- end }}
             containers:
             -
                 name: leader-elector

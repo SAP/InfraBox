@@ -16,8 +16,15 @@ echo "## Copy to cache"
 rm -rf /infrabox/cache/node_modules
 cp -r /project/src/dashboard/node_modules /infrabox/cache
 
+set +e
+
 echo "## Starting tests"
 npm test -- -R xunit-file
+rc=$?
+
+set -e
 
 echo "## Converting testresult"
 python /tmp/infrabox-testresult/testresult.py -f xunit -i xunit.xml
+
+exit $rc

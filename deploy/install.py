@@ -281,6 +281,9 @@ class Kubernetes(Install):
 
             self.create_secret("infrabox-docker_registry-tls", "infrabox-system", secret)
 
+    def setup_account(self):
+        self.set('account.signup.enabled', self.args.account_signup_enabled)
+
     def setup_ldap(self):
         if not self.args.ldap_enabled:
             return
@@ -303,7 +306,7 @@ class Kubernetes(Install):
         self.set('account.signup.enabled', False)
 
     def setup_gerrit(self):
-        if not self.args.github_enabled:
+        if not self.args.gerrit_enabled:
             return
 
         self.required_option('gerrit-hostname')
@@ -312,8 +315,8 @@ class Kubernetes(Install):
         self.required_option('gerrit-private-key')
 
         self.set('gerrit.enabled', True)
-        self.set('gerrit.hostname', self.args.github_hostname)
-        self.set('gerrit.username', self.args.github_username)
+        self.set('gerrit.hostname', self.args.gerrit_hostname)
+        self.set('gerrit.username', self.args.gerrit_username)
 
         self.check_file_exists(self.args.gerrit_private_key)
 
@@ -345,7 +348,7 @@ class Kubernetes(Install):
             "webhook_secret": ''.join([random.choice(string.lowercase) for _ in xrange(32)])
         }
 
-        self.create_secret("infrabox-gerrit-ssh", "infrabox-system", secret)
+        self.create_secret("infrabox-github", "infrabox-system", secret)
 
     def setup_dashboard(self):
         self.required_option('dashboard-url')
@@ -429,6 +432,7 @@ class Kubernetes(Install):
         self.setup_postgres()
         self.setup_storage()
         self.setup_docker_registry()
+        self.setup_account()
         self.setup_gerrit()
         self.setup_github()
         self.setup_dashboard()
@@ -685,6 +689,17 @@ def main():
     parser.add_argument('--gerrit-port')
     parser.add_argument('--gerrit-username')
     parser.add_argument('--gerrit-private-key')
+
+    # Github
+    parser.add_argument('--github-enabled', action='store_true', default=False)
+    parser.add_argument('--github-client-secret')
+    parser.add_argument('--github-client-id')
+    parser.add_argument('--github-api-url', default='https://api.github.com')
+    parser.add_argument('--github-login-enabled', action='store_true', default=False)
+    parser.add_argument('--github-login-url', default='https://github.com/login')
+
+    # Account
+    parser.add_argument('--account-signup-enabled', action='store_true', default=False)
 
     # Parse options
     args = parser.parse_args()

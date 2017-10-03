@@ -123,6 +123,9 @@
     value: {{ .Values.github.enabled | quote }}
 {{ if .Values.github.enabled }}
 -
+    name: INFRABOX_GITHUB_LOGIN_ENABLED
+    value: {{ .Values.github.login.enabled | quote }}
+-
     name: INFRABOX_GITHUB_API_URL
     value: {{ default "https://api.github.com" .Values.github.api_url }}
 -

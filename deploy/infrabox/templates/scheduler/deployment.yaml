@@ -1,36 +1,4 @@
 {{ if .Values.scheduler.enabled }}
-{{ if .Values.general.rbac.enabled }}
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: infrabox-scheduler-sa
-  namespace: infrabox-system
----
-kind: Role
-apiVersion: rbac.authorization.k8s.io/v1beta1
-metadata:
-  namespace: infrabox-system
-  name: infrabox-scheduler-role
-rules:
-- apiGroups: [""]
-  resources: ["endpoints"]
-  verbs: ["get"]
----
-kind: ClusterRoleBinding
-apiVersion: rbac.authorization.k8s.io/v1beta1
-metadata:
-  name: infrabox-scheduler-rb
-  namespace: infrabox-system
-subjects:
-- kind: ServiceAccount
-  name: infrabox-scheduler-sa
-  namespace: infrabox-system
-roleRef:
-  kind: ClusterRole
-  name: cluster-admin
-  apiGroup: rbac.authorization.k8s.io
----
-{{ end }}
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
@@ -48,7 +16,7 @@ spec:
                 infrabox.net/component: scheduler
         spec:
             {{- if .Values.general.rbac.enabled }}
-            serviceAccountName: infrabox-scheduler-sa
+            serviceAccountName: infrabox-leader-elector
             {{- end }}
             {{- if .Values.scheduler.node_selector }}
             nodeSelector:

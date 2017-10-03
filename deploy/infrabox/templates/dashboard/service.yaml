@@ -14,11 +14,6 @@ spec:
     type: NodePort
     ports:
     -
-        name: monitoring
-        protocol: TCP
-        port: 8000
-        targetPort: 8000
-    -
         name: web
         protocol: TCP
         port: 8080
@@ -26,4 +21,24 @@ spec:
     {{ if .Values.dashboard.node_port }}
         nodePort: {{ .Values.dashboard.node_port }}
     {{ end }}
+---
+kind: Service
+apiVersion: v1
+metadata:
+    name: infrabox-dashboard-monitoring
+    namespace: infrabox-system
+    labels:
+        app: infrabox
+        infrabox.net/component: dashboard
+spec:
+    selector:
+        app: infrabox
+        infrabox.net/component: dashboard
+    type: NodePort
+    ports:
+    -
+        name: monitoring
+        protocol: TCP
+        port: 8000
+        targetPort: 8000
 {{ end }}

@@ -760,7 +760,7 @@ class Scheduler(object):
     def run(self):
         while True:
             self.handle()
-            time.sleep(5)
+            time.sleep(2)
 
 def get_env(name):
     if name not in os.environ:

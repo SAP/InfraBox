@@ -1,36 +1,4 @@
 {{ if .Values.github.enabled }}
-{{ if .Values.general.rbac.enabled }}
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: infrabox-github-sa
-  namespace: infrabox-system
----
-kind: Role
-apiVersion: rbac.authorization.k8s.io/v1beta1
-metadata:
-  namespace: infrabox-system
-  name: infrabox-github-role
-rules:
-- apiGroups: [""]
-  resources: ["endpoints"]
-  verbs: ["get"]
----
-kind: ClusterRoleBinding
-apiVersion: rbac.authorization.k8s.io/v1beta1
-metadata:
-  name: infrabox-github-rb
-  namespace: infrabox-system
-subjects:
-- kind: ServiceAccount
-  name: infrabox-github-sa
-  namespace: infrabox-system
-roleRef:
-  kind: ClusterRole
-  name: cluster-admin
-  apiGroup: rbac.authorization.k8s.io
----
-{{ end }}
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
@@ -48,7 +16,7 @@ spec:
                 infrabox.net/component: github
         spec:
             {{- if .Values.general.rbac.enabled }}
-            serviceAccountName: infrabox-github-sa
+            serviceAccountName: infrabox-leader-elector
             {{ end }}
             {{- if .Values.github.node_selector }}
             nodeSelector:

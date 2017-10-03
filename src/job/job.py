@@ -344,17 +344,20 @@ class RunJob(Job):
         else:
             c.collect("no cache found\n", show=True)
 
-        if self.job['type'] == 'run_project_container':
-            self.run_container(c)
-        elif self.job['type'] == 'run_docker_compose':
-            self.run_docker_compose(c)
-        else:
-            raise Exception('Unknown job type')
-
-        self.upload_test_results()
-        self.upload_markdown_files()
-        self.upload_markup_files()
-        self.upload_badge_files()
+        try:
+            if self.job['type'] == 'run_project_container':
+                self.run_container(c)
+            elif self.job['type'] == 'run_docker_compose':
+                self.run_docker_compose(c)
+            else:
+                raise Exception('Unknown job type')
+        except:
+            raise
+        finally:
+            self.upload_test_results()
+            self.upload_markdown_files()
+            self.upload_markup_files()
+            self.upload_badge_files()
 
         # Compressing output
         c.header("Compressing output", show=True)
@@ -445,6 +448,8 @@ class RunJob(Job):
         with open(compose_file_new, "w+") as out:
             yaml.dump(compose_file_content, out, default_flow_style=False)
 
+        collector = StatsCollector()
+
         try:
             self.environment['PATH'] = os.environ['PATH']
             c.execute(['docker-compose', '-f', compose_file_new, 'build'],
@@ -455,17 +460,16 @@ class RunJob(Job):
             if cwd:
                 cwd = os.path.join('/repo', cwd)
 
-            collector = StatsCollector()
 
             c.execute(['docker-compose', '-f', compose_file_new, 'up',
                        '--abort-on-container-exit'], env=self.environment, show=True, cwd=cwd)
             c.execute(['docker-compose', '-f', compose_file_new, 'ps'], env=self.environment, cwd=cwd)
             c.execute(['get_compose_exit_code.sh', compose_file_new], env=self.environment, cwd=cwd)
-
-            collector.stop()
-            self.post_stats(collector.get_result())
         except:
             raise Failure("Failed to build and run container")
+        finally:
+            collector.stop()
+            self.post_stats(collector.get_result())
 
         return True
 
