@@ -68,12 +68,12 @@
                                                 <div class="ibox-content">
                                                     <div class="row m-md">
                                                         <div>
-                                                            <img src="{{ host }}/v1/project/{{ project.id }}/build/state.svg" />
-                                                            <pre>![Build Status]({{ host }}/v1/project/{{ project.id }}/build/state.svg)</pre>
+                                                            <img src="{{ api_host }}/v1/project/{{ project.id }}/build/state.svg" />
+                                                            <pre>[![Build Status]({{ api_host }}/v1/project/{{ project.id }}/build/state.svg)]({{ dashboard_host }}/dashboard/project/{{ project.id }})</pre>
                                                         </div>
                                                         <div class="m-t-md">
-                                                            <img src="{{ host }}/v1/project/{{ project.id }}/build/tests.svg" />
-                                                            <pre>![Test Status]({{ host }}/v1/project/{{ project.id }}/build/tests.svg)</pre>
+                                                            <img src="{{ api_host }}/v1/project/{{ project.id }}/build/tests.svg" />
+                                                            <pre>[![Test Status]({{ api_host }}/v1/project/{{ project.id }}/build/tests.svg)]({{ dashboard_host }}/dashboard/project/{{ project.id }})</pre>
                                                         </div>
                                                     </div>
                                                 </div>

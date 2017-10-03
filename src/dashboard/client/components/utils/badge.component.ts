@@ -73,15 +73,16 @@ export class BadgeComponent implements OnInit, OnChanges {
     @Input() private color: string;
     @Input() private project_id: string;
     @Input() private job_name: string;
-    private host: string;
+    private api_host: string;
+    private dashboard_host: string;
     private id: string;
     private url: string;
     private link: string;
     private statusEncoded: string;
 
     constructor() {
-        const a = window.location.href.split('/');
-        this.host = a[0] + '//' + a[2];
+        this.api_host = window['INFRABOX_API_URL'];
+        this.dashboard_host = window['INFRABOX_DASHBOARD_URL'];
     }
 
     public ngOnInit() {
@@ -96,8 +97,8 @@ export class BadgeComponent implements OnInit, OnChanges {
         this.statusEncoded = encodeURI(this.status);
         this.id = `badge-${this.subject}-${this.status}`;
         this.id = this.id.replace(/\W+/g, "");
-        this.url = `${this.host}/api/v1/project/${this.project_id}/badge.svg?subject=${this.subject}&job_name=${this.job_name}`;
+        this.url = `${this.api_host}/v1/project/${this.project_id}/badge.svg?subject=${this.subject}&job_name=${this.job_name}`;
         this.url = encodeURI(this.url);
-        this.link = `${this.host}/dashboard/project/${this.project_id}`;
+        this.link = `${this.dashboard_host}/dashboard/project/${this.project_id}`;
     }
 }

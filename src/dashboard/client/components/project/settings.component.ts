@@ -14,13 +14,15 @@ import { NotificationService, Notification } from "../../services/notification.s
 export class ProjectSettingsComponent implements OnInit, OnDestroy {
     private project: Project;
     private subs: Subscription[];
-    private host: string;
+    private api_host: string;
+    private dashboard_host: string;
 
     constructor(private projectService: ProjectService,
         private route: ActivatedRoute,
         private router: Router,
         private notificationService: NotificationService) {
-        this.host = window['INFRABOX_API_URL'];
+        this.api_host = window['INFRABOX_API_URL'];
+        this.dashboard_host = window['INFRABOX_DASHBOARD_URL'];
     }
 
     private init(): void {

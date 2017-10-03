@@ -63,14 +63,17 @@ module.exports = (app) => {
         res.render("dashboard", {
             INFRABOX_DOCS_URL: config.docs.url,
             INFRABOX_API_URL: config.api.url,
+            INFRABOX_DASHBOARD_URL: config.dashboard.url,
             INFRABOX_GITHUB_ENABLED: config.github.enabled,
             INFRABOX_GERRIT_ENABLED: config.gerrit.enabled
         });
     });
 
     app.get('/', (req, res) => {
+        const show_login_form = config.account.signup.enabled || config.account.ldap.enabled;
         res.render('index', {
-            github_login_enabled: config.github.login.enabled
+            github_login_enabled: config.github.login.enabled,
+            show_login_form: show_login_form
         });
     });
 

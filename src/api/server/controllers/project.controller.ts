@@ -203,10 +203,11 @@ router.get("/:project_id/build/state.svg", pv, (req: Request, res: Response, nex
                 if (err) {
                     throw new InternalError(err);
                 } else {
-                    res.setHeader('Surrogate-Control', 'no-store')
-                    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate')
-                    res.setHeader('Pragma', 'no-cache')
-                    res.setHeader('Expires', '0')
+                    res.setHeader('Surrogate-Control', 'no-store');
+                    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+                    res.setHeader('Pragma', 'no-cache');
+                    res.setHeader('Expires', '0');
+                    res.setHeader('Content-Type', 'image/svg+xml');
                     res.send(svg);
                 }
             });
@@ -254,10 +255,11 @@ router.get("/:project_id/build/tests.svg", pv, (req: Request, res: Response, nex
                 if (err) {
                     throw new InternalError(err);
                 } else {
-                    res.setHeader('Surrogate-Control', 'no-store')
-                    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate')
-                    res.setHeader('Pragma', 'no-cache')
-                    res.setHeader('Expires', '0')
+                    res.setHeader('Surrogate-Control', 'no-store');
+                    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+                    res.setHeader('Pragma', 'no-cache');
+                    res.setHeader('Expires', '0');
+                    res.setHeader('Content-Type', 'image/svg+xml');
                     res.send(svg);
                 }
             });
@@ -291,16 +293,17 @@ router.get("/:project_id/badge.svg", pv, (req: Request, res: Response, next) => 
 
         const r = rows[0];
         const color = r.color;
-        const status = encodeURI(r.status);
+        const status = r.status;
 
         badge({ text: [subject, status], colorscheme: color, template: "flat" }, (svg, err) => {
             if (err) {
                 throw new InternalError(err);
             } else {
-                res.setHeader('Surrogate-Control', 'no-store')
-                res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate')
-                res.setHeader('Pragma', 'no-cache')
-                res.setHeader('Expires', '0')
+                res.setHeader('Surrogate-Control', 'no-store');
+                res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+                res.setHeader('Pragma', 'no-cache');
+                res.setHeader('Expires', '0');
+                res.setHeader('Content-Type', 'image/svg+xml');
                 res.send(svg);
             }
         });

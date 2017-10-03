@@ -34,7 +34,7 @@ function createServerImpl(app): any {
         const options = {
             key: fs.readFileSync(config.dashboard.tls.key),
             cert: fs.readFileSync(config.dashboard.tls.cert)
-        }
+        };
 
         return https.createServer(options, app);
     } else {
@@ -47,7 +47,6 @@ function createMonitoringServerImpl() {
     const server = express();
     prom.collectDefaultMetrics();
     server.get('/metrics', (req, res) => {
-        //res.set('Content-Type', prom.register.contentType);
         res.end(prom.register.metrics());
     });
     server.listen(config.dashboard.monitoring.port);
@@ -55,14 +54,14 @@ function createMonitoringServerImpl() {
 
 export function createServer(print: boolean) {
     const app = express();
-    let server = createServerImpl(app);
-    createMonitoringServerImpl();
+    const server = createServerImpl(app);
+    // createMonitoringServerImpl();
 
     server['listeners']['console'] = new ConsoleListener();
     server['listeners']['job'] = new JobListener();
 
     require("./config/express")(app, config);
-    const io = require("socket.io").listen(server, { transports: ['polling'] });
+    const io = require("socket.io").listen(server);
 
     io.on("connection", (socket) => {
         logger.info("New socket connection");

@@ -94,7 +94,7 @@ export let config = {
         client_secret: "somesecret",
         webhook_secret: "somewebhook",
         login: {
-            enabled: false,
+            enabled: getFromEnvBool("INFRABOX_GITHUB_LOGIN_ENABLED", false),
             url: "https://github.com/login",
         },
         api_url: "https://api.github.com"

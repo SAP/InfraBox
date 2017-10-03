@@ -154,7 +154,8 @@ CREATE TABLE commit (
     branch character varying NOT NULL,
     project_id uuid,
     tag character varying(255),
-    pull_request_id uuid
+    pull_request_id uuid,
+    github_status_url character varying(1024)
 );
 
 --
@@ -267,7 +268,8 @@ CREATE TABLE project (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name character varying(255) NOT NULL,
     type project_type NOT NULL,
-    public boolean DEFAULT false NOT NULL
+    public boolean DEFAULT false NOT NULL,
+    build_on_push boolean NOT NULL DEFAULT true
 );
 
 
@@ -295,6 +297,7 @@ CREATE TABLE repository (
     clone_url character varying(255) NOT NULL,
     github_id integer NOT NULL,
     github_hook_id integer,
+    github_owner character varying(255),
     project_id uuid NOT NULL,
     private boolean NOT NULL
 );
