@@ -103,6 +103,9 @@ class Trigger(object):
 
 
     def create_push(self, c, repository, branch, tag):
+        if not c['distinct']:
+            return
+
         result = self.execute('''
             SELECT id, project_id, private
             FROM repository
