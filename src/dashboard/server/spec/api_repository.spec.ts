@@ -238,7 +238,8 @@ describe('/api/dashboard/project/:project_id/commit/:commit_id', () => {
             pull_request_id: null,
             url: "url",
             branch: "master",
-            project_id: "51443519-836c-4d8b-890c-8ec76ecbcd5c"
+            project_id: "51443519-836c-4d8b-890c-8ec76ecbcd5c",
+            github_status_url: null
         }]
     };
 
@@ -262,9 +263,6 @@ describe('/api/dashboard/project/:project_id/commit/:commit_id', () => {
     it('should return 200 and the commit', (done) => {
         const token = getToken("ee267114-ec67-4800-853c-ec1325d977fb");
         const expect = _.cloneDeep(data.commit[0]);
-        expect['added'] = [];
-        expect['removed'] = [];
-        expect['modified'] = [];
 
         request(server)
             .get('/api/dashboard/project/51443519-836c-4d8b-890c-8ec76ecbcd5c/commit/ca82a6dff817ec66f44342007202690a93763949')
