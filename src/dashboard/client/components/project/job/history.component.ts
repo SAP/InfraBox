@@ -9,7 +9,7 @@ import { ActivatedRoute } from "@angular/router";
     templateUrl: "./history.component.html"
 })
 export class JobHistoryComponent implements OnInit, OnDestroy {
-    private subs = new Array<Subscription>();
+    private sub: Subscription;
     private job: Job;
     private jobs: Job[] = [];
 
@@ -17,25 +17,13 @@ export class JobHistoryComponent implements OnInit, OnDestroy {
                 private route: ActivatedRoute) {}
 
     public ngOnInit(): void {
-       this.subs.push(this.route.parent.params.subscribe((params) => {
+       this.route.parent.params.flatMap((params) => {
             const job_id = params["job_id"];
-            this.getJob(job_id);
-        }));
-    }
-
-    public getJob(job_id: string): void {
-        this.subs.push(this.jobService.getJob(job_id).subscribe((j: Job) => {
+            return this.jobService.getJob(job_id);
+        }).flatMap((j: Job) => {
             this.job = j;
-            this.getHistory();
-        }));
-    }
-
-    public getHistory(): void {
-        this.subs.push(this.jobService.getJobs().filter((j: Job) => {
-            if (j.commit !== this.job.commit) {
-                return false;
-            }
-
+            return this.jobService.getJobs();
+        }).filter((j: Job) => {
             if (j.project_id !== this.job.project_id) {
                 return false;
             }
@@ -57,7 +45,7 @@ export class JobHistoryComponent implements OnInit, OnDestroy {
             return false;
         }).subscribe((j: Job) => {
             this.jobs.unshift(j);
-        }));
+        });
     }
 
     public ngOnDestroy(): void {
@@ -65,10 +53,8 @@ export class JobHistoryComponent implements OnInit, OnDestroy {
     }
 
     private unsubscribe() {
-        for (const s of this.subs) {
-            s.unsubscribe();
+        if (this.sub) {
+            this.sub.unsubscribe();
         }
-
-        this.subs = new Array<Subscription>();
     }
 }
