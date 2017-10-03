@@ -51,7 +51,6 @@ class Test(TestCase):
         cur.execute('''DELETE FROM measurement''')
         cur.execute('''DELETE FROM test''')
         cur.execute('''DELETE FROM job_markup''')
-        cur.execute('''DELETE FROM user_quota''')
 
         cur.execute('''INSERT INTO job(id, state, start_date, build_id, type, dockerfile, name,
                             cpu, memory, project_id, dependencies, build_only,
@@ -73,10 +72,6 @@ class Test(TestCase):
         cur.execute('''INSERT INTO source_upload(project_id, id, filename, filesize)
                         VALUES(%s, %s, 'filename', 123)''',
                     (self.project_id, self.source_upload_id))
-        cur.execute('''INSERT INTO user_quota(user_id, max_concurrent_jobs, max_cpu_per_job,
-                        max_memory_per_job, max_jobs_per_build)
-                        VALUES(%s, 1, 1, 1024, 50)''',
-                    (self.user_id,))
 
         cur.execute('''INSERT INTO secret (project_id, name, value)
                         VALUES(%s, 'SECRET', 'my secret')''',
@@ -130,12 +125,6 @@ class Test(TestCase):
                 "id": "4514af82-3c4f-4bb5-b1da-a89a0ced5e6f",
                 "name": "test",
                 "type": "upload"
-            },
-            "quota": {
-                "max_concurrent_jobs": 1,
-                "max_cpu_per_job": 1,
-                "max_memory_per_job": 1024,
-                "max_jobs_per_build": 50
             },
             "repository": {
                 "private": False,

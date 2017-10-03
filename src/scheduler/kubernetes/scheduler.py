@@ -584,52 +584,6 @@ class Scheduler(object):
                 cursor.close()
                 continue
 
-            # Quota
-            cursor = self.conn.cursor()
-            cursor.execute('''
-                SELECT uq.max_concurrent_jobs, co.user_id
-                FROM user_quota uq
-                INNER JOIN collaborator co
-                    ON co.user_id = uq.user_id
-                    AND co.owner = true
-                INNER JOIN job j
-                    ON j.project_id = co.project_id
-                    AND j.id = %s
-            ''', (job_id,))
-            result = cursor.fetchone()
-            cursor.close()
-
-            if not result:
-                # project was probably deleted
-                cursor = self.conn.cursor()
-                cursor.execute('''
-                    UPDATE job SET state = 'killed', start_date = now(), end_date = now() WHERE id = %s;
-                ''', (job_id,))
-                cursor.close()
-                continue
-
-            max_concurrent_jobs = result[0]
-            owner_id = result[1]
-
-            logger.info("User quota:")
-            logger.info("max_concurrent_jobs: %s", max_concurrent_jobs)
-
-            cursor = self.conn.cursor()
-            cursor.execute('''
-                SELECT count(*)
-                FROM job j
-                INNER JOIN collaborator co
-                    ON co.project_id = j.project_id
-                    AND co.user_id = %s
-                    AND j.state in ('running', 'scheduled')
-            ''', (owner_id,))
-            result = cursor.fetchone()
-            cursor.close()
-            num_active_jobs = result[0]
-
-            if num_active_jobs >= max_concurrent_jobs:
-                continue
-
             self.schedule_job(job_id, cpu, memory)
 
     def handle_aborts(self):

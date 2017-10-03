@@ -96,12 +96,6 @@ router.post("/register", (req: Request, res: Response, next) => {
                            [email, hash]);
         }).then((u) => {
             user = u;
-            return tx.any(`
-                INSERT INTO user_quota (user_id, max_concurrent_jobs, max_cpu_per_job,
-                          max_memory_per_job, max_jobs_per_build)
-                VALUES ($1, 1, 1, 1024, 50)
-            `, [u.id]);
-        }).then(() => {
             const token = jwt.sign({ user: { id: user.id } }, config.dashboard.secret);
             res.cookie("token", token);
             res.redirect('/dashboard/start');

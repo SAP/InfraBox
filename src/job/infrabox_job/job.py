@@ -27,7 +27,6 @@ class Job(object):
         self.dependencies = data['dependencies']
         self.parents = data['parents']
         self.environment = data['environment']
-        self.quota = data['quota']
 
         if 'source_upload' in data:
             self.source_upload = data['source_upload']

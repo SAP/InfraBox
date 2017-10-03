@@ -345,24 +345,6 @@ def get_job_data():
 
             data['environment'][name] = secret
 
-    # Quota
-    cursor = conn.cursor()
-    cursor.execute('''
-         SELECT max_concurrent_jobs, max_cpu_per_job, max_memory_per_job,
-                max_jobs_per_build
-         FROM user_quota
-         WHERE user_id = %s
-    ''', (user_id, ))
-    r = cursor.fetchone()
-    cursor.close()
-    quota = {
-        "max_concurrent_jobs": r[0],
-        "max_cpu_per_job": r[1],
-        "max_memory_per_job": r[2],
-        "max_jobs_per_build": r[3]
-    }
-
-    data['quota'] = quota
     return data
 
 @app.route("/source")

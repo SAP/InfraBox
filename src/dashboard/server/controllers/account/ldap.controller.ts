@@ -46,7 +46,6 @@ router.post("/login", (req: Request, res: Response, next) => {
     const password = req.body['password'];
     let ldapUser = null;
     let user = null;
-    let created = false;
 
     db.tx((tx) => {
         return authenticate(email, password)
@@ -60,7 +59,6 @@ router.post("/login", (req: Request, res: Response, next) => {
                 return users[0];
             }
 
-            created = true;
             // create user
             return tx.one(`
                 INSERT INTO "user" (email, username, name)
@@ -69,17 +67,6 @@ router.post("/login", (req: Request, res: Response, next) => {
         })
         .then((u) => {
             user = u;
-
-            // create user
-            if (created) {
-                return tx.any(`
-                    INSERT INTO user_quota (user_id, max_concurrent_jobs, max_cpu_per_job,
-                              max_memory_per_job, max_jobs_per_build)
-                    VALUES ($1, 1, 1, 1024, 50)
-                `, [u.id]);
-            }
-        })
-        .then(() => {
             const token = jwt.sign({ user: { id: user.id } }, config.dashboard.secret);
             res.cookie("token", token);
             res.redirect('/dashboard/start');

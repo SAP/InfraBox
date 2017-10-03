@@ -374,19 +374,6 @@ CREATE TABLE "user" (
 
 
 --
--- Name: user_quota; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE user_quota (
-    user_id uuid NOT NULL,
-    max_concurrent_jobs integer NOT NULL,
-    max_cpu_per_job integer NOT NULL,
-    max_memory_per_job integer NOT NULL,
-    max_jobs_per_build integer NOT NULL
-);
-
-
---
 -- Name: auth_token_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -520,14 +507,6 @@ ALTER TABLE ONLY test_run
 
 ALTER TABLE ONLY "user"
     ADD CONSTRAINT user_pkey PRIMARY KEY (id);
-
-
---
--- Name: user_quota_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY user_quota
-    ADD CONSTRAINT user_quota_pkey PRIMARY KEY (user_id);
 
 
 --

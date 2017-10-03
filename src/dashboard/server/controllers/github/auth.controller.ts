@@ -34,7 +34,6 @@ passport.use(new GitHubStrategy({
     let user = null;
 
     if (config.github.login.enabled) {
-        let created = false;
         db.tx((tx) => {
             return tx.any('SELECT id FROM "user" WHERE github_id = $1', [p.id])
             .then((users: any[]) => {
@@ -43,7 +42,6 @@ passport.use(new GitHubStrategy({
                     return users[0];
                 }
 
-                created = true;
                 // create user
                 return tx.one(`
                     INSERT INTO "user" (github_id, username, avatar_url, name)
@@ -52,17 +50,6 @@ passport.use(new GitHubStrategy({
             })
             .then((u) => {
                 user = u;
-
-                // create user
-                if (created) {
-                    return tx.any(`
-                        INSERT INTO user_quota (user_id, max_concurrent_jobs, max_cpu_per_job,
-                                  max_memory_per_job, max_jobs_per_build)
-                        VALUES ($1, 1, 1, 1024, 50)
-                    `, [u.id]);
-                }
-            })
-            .then(() => {
                 return getEmail(accessToken);
             })
             .then((email) => {

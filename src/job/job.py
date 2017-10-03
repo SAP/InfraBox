@@ -219,7 +219,6 @@ class RunJob(Job):
 
         c.header("Creating jobs", show=True)
         jobs = self.get_job_list(data, c, self.job['repo'], infrabox_paths={"/repo/infrabox.json": True})
-        self.check_quota(jobs)
         self.create_jobs(jobs)
         c.collect("Done creating jobs\n")
 
@@ -788,24 +787,6 @@ class RunJob(Job):
             jobs.append(final_job)
 
         return jobs
-
-    def check_quota(self, jobs):
-        max_jobs_per_build = self.quota['max_jobs_per_build']
-        if len(jobs) > max_jobs_per_build:
-            raise Failure("Quota: max jobs per build is %s, but you requested %s" % (max_jobs_per_build, len(jobs)))
-
-        for j in jobs:
-            if j['type'] in ('wait', 'workflow', 'git'):
-                continue
-
-            l = j['resources']['limits']
-            max_cpu = self.quota['max_cpu_per_job']
-            if l['cpu'] > max_cpu:
-                raise Failure("Quota: max cpu per job is %s, but you requested %s" % (max_cpu, l['cpu']))
-
-            max_memory = self.quota['max_memory_per_job']
-            if l['cpu'] > max_cpu:
-                raise Failure("Quota: max memory per job is %s, but you requested %s" % (max_memory, l['memory']))
 
 def print_stackdriver():
     if 'INFRABOX_GENERAL_LOG_STACKDRIVER' in os.environ and os.environ['INFRABOX_GENERAL_LOG_STACKDRIVER'] == 'true':

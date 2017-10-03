@@ -91,9 +91,3 @@ class TestGithubHook(object):
             INSERT INTO secret (project_id, name, value)
             VALUES (%s, 'OTHER', 'value');
         """, (project_id,))
-
-        self.execute("""
-            INSERT INTO user_quota(user_id, max_concurrent_jobs, max_cpu_per_job,
-                max_memory_per_job, max_jobs_per_build)
-            VALUES (%s, 1, 2, 4096, 50);
-        """, (user_id,))

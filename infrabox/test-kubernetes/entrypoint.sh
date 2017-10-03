@@ -76,8 +76,6 @@ _installPostgres() {
           VALUES ('$INFRABOX_CLI_TOKEN', 'desc', '$INFRABOX_CLI_PROJECT_ID', true, true)"
     _sql "INSERT INTO secret(project_id, name, value)
           VALUES ('$INFRABOX_CLI_PROJECT_ID', 'SECRET_ENV', 'hello world')"
-    _sql "INSERT INTO user_quota(user_id, max_concurrent_jobs, max_cpu_per_job, max_memory_per_job, max_jobs_per_build)
-          VALUES ('$USER_ID', 2, 2, 4096, 20)"
 }
 
 _createKubernetesObjects() {
