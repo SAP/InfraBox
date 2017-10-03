@@ -16,6 +16,7 @@ InfraBox comes with deploy/install.py which can generate for you a docker-compos
         -o /tmp/compose \
         --platform docker-compose
         --docker-registry <YOUR_REGISTRY>
+        --account-signup-enabled
 
 Set <YOUR\_REGISTRY> to the same value you used for building the images in the previous step. This command creates a default configuration for InfraBox. You may want to configure additional things like
 

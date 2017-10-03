@@ -47,9 +47,9 @@ Every service is assigned a port which is routed on each Kubernetes node to the 
     --api-url http://<K8S_MASTER_IP>:30200
     --dashboard-url http://<K8S_MASTER_IP>:30201
     --docs-url http://<K8S_MASTER_IP>:30202
-    --docker-registry-url http://<K8S_MASTER_IP>:30203
+    --docker-registry-url K8S_MASTER_IP>:30203
 
-The ports are configurable with (these are the default values):
+Do not add http/https for --docker-registry-url! The ports are configurable with (these are the default values):
 
     --api-k8s-nodeport 30200
     --dashboard-k8s-nodeport 30201
