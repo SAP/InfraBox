@@ -52,8 +52,8 @@ class TestGithubHook(object):
         r = requests.post(self.api_url, json=pr, headers=self.get_headers("pull_request"))
         res = r.json()
         print  res
-        assert r.status_code == 400
-        assert res['message'] == "Unknown repository"
+        assert r.status_code == 404
+        assert res['message'] == "Not Found"
 
     def execute(self, stmt, args=None):
         cur = self.conn.cursor()

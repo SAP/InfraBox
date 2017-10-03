@@ -122,7 +122,7 @@ class Trigger(object):
 
         commit_id = c['id']
 
-        if len(result) == 0:
+        if not result:
             status_url = repository['statuses_url'].format(sha=c['id'])
             result = self.execute('''
                 INSERT INTO "commit" (
@@ -199,7 +199,10 @@ class Trigger(object):
 
         result = self.execute('''
             SELECT id, project_id, private FROM repository WHERE github_id = %s;
-        ''', [event['repository']['id']])[0]
+        ''', [event['repository']['id']])
+
+        if not result:
+            return res(404, "Unknown repository")
 
         repo_id = result[0]
         project_id = result[1]
@@ -233,7 +236,7 @@ class Trigger(object):
             SELECT id FROM pull_request WHERE project_id = %s and github_pull_request_id = %s
         ''', [repo_id, event['pull_request']['id']])
 
-        if len(result) == 0:
+        if not result:
             result = self.execute('''
                 INSERT INTO pull_request (project_id, github_pull_request_id,
                                          title, url)
@@ -258,7 +261,7 @@ class Trigger(object):
 
         branch = event['pull_request']['head']['ref']
 
-        if len(result) == 0:
+        if not result:
             result = self.execute('''
                 INSERT INTO "commit" (
                     id, message, repository_id, timestamp,
@@ -304,12 +307,17 @@ def trigger_build():
         return trigger.handle_push(request.json)
     elif event == 'pull_request':
         return trigger.handle_pull_request(request.json)
-    else:
-        return res(200, "OK")
+
+    return res(200, "OK")
 
 def main():
     get_env('INFRABOX_SERVICE')
     get_env('INFRABOX_VERSION')
+    get_env('INFRABOX_DATABASE_DB')
+    get_env('INFRABOX_DATABASE_USER')
+    get_env('INFRABOX_DATABASE_PASSWORD')
+    get_env('INFRABOX_DATABASE_HOST')
+    get_env('INFRABOX_DATABASE_PORT')
 
     run(host='0.0.0.0', port=8083)
 

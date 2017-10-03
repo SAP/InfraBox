@@ -7,7 +7,7 @@ import Promise = require("bluebird");
 import { config } from "../config/config";
 import { Request, Response, Router } from "express";
 import { db, pgp, handleDBError } from "../db";
-import { OK, BadRequest } from "../utils/status";
+import { OK, BadRequest, NotFound } from "../utils/status";
 import { logger } from "../utils/logger";
 import { setStatus, getCommits } from "../utils/github";
 import * as request from 'request-promise';
@@ -48,18 +48,20 @@ router.post("/", (req: Request, res: Response, next) => {
 
     const options = {
         method: 'POST',
-        uri: 'http://localhost:8083/api/v1/trigger',
+        uri: `http://${config.github.trigger_host}:8083/api/v1/trigger`,
         body: req.body,
         headers: {
             'x-github-event': event,
             'x-hub-signature': sig
         },
         json: true
-    }
+    };
 
     request(options)
         .then(() => {
         OK(res, "ok");
     })
-    .catch(handleDBError(next));
+    .catch((err) => {
+        next(new NotFound());
+    });
 });

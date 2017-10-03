@@ -67,7 +67,8 @@ export let config = {
         enabled: getFromEnvBool("INFRABOX_GITHUB_ENABLED", false),
         client_id: "someid",
         client_secret: "somesecret",
-        webhook_secret: "somewebhook"
+        webhook_secret: "somewebhook",
+        trigger_host: getFromEnv("INFRABOX_GITHUB_TRIGGER_HOST", "localhost")
     },
     docker_registry: {
         url: getFromEnv("INFRABOX_DOCKER_REGISTRY_URL")

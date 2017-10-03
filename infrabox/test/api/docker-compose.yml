@@ -6,6 +6,19 @@ services:
             context: ../../..
             dockerfile: src/postgres/Dockerfile
 
+    github-trigger:
+        build:
+            context: ../../..
+            dockerfile: src/github/trigger/Dockerfile
+        environment:
+            - INFRABOX_VERSION=test
+            - INFRABOX_SERVICE=github-trigger
+            - INFRABOX_DATABASE_USER=postgres
+            - INFRABOX_DATABASE_PASSWORD=postgres
+            - INFRABOX_DATABASE_HOST=postgres
+            - INFRABOX_DATABASE_PORT=5432
+            - INFRABOX_DATABASE_DB=postgres
+
     api:
         build:
             context: ../../..
@@ -30,6 +43,7 @@ services:
             - INFRABOX_GITHUB_CLIENT_ID=myid
             - INFRABOX_GITHUB_CLIENT_SECRET=myscret
             - INFRABOX_GITHUB_WEBHOOK_SECRET=webhooksecret
+            - INFRABOX_GITHUB_TRIGGER_HOST=github-trigger
             - INFRABOX_TEST=true
         links:
             - postgres
