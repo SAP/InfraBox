@@ -16,20 +16,27 @@ logging.basicConfig(
 
 logger = logging.getLogger("github")
 
-def get_env(name):
+def get_env(name): # pragma: no cover
     if name not in os.environ:
         raise Exception("%s not set" % name)
     return os.environ[name]
 
-def main():
-    get_env('INFRABOX_SERVICE')
-    get_env('INFRABOX_VERSION')
-    pg_db = get_env('INFRABOX_DATABASE_DB')
-    pg_user = get_env('INFRABOX_DATABASE_USER')
-    pg_password = get_env('INFRABOX_DATABASE_PASSWORD')
-    pg_host = get_env('INFRABOX_DATABASE_HOST')
-    pg_port = int(get_env('INFRABOX_DATABASE_PORT'))
-    get_env('INFRABOX_DASHBOARD_URL')
+def connect_db(): # pragma: no cover
+    while True:
+        try:
+            conn = psycopg2.connect(dbname=os.environ['INFRABOX_DATABASE_DB'],
+                                    user=os.environ['INFRABOX_DATABASE_USER'],
+                                    password=os.environ['INFRABOX_DATABASE_PASSWORD'],
+                                    host=os.environ['INFRABOX_DATABASE_HOST'],
+                                    port=os.environ['INFRABOX_DATABASE_PORT'])
+            return conn
+        except Exception as e:
+            logger.warn("Could not connect to db: %s", e)
+            time.sleep(3)
+
+def elect_leader(): # pragma: no cover
+    if os.environ.get('INFRABOX_DISABLE_LEADER_ELECTION', 'false') == 'true':
+        return
 
     while True:
         r = requests.get("http://localhost:4040", timeout=5)
@@ -42,11 +49,26 @@ def main():
             logger.info("I'm not the leader, %s is the leader", leader)
             time.sleep(1)
 
-    conn = psycopg2.connect(dbname=pg_db,
-                            user=pg_user,
-                            password=pg_password,
-                            host=pg_host,
-                            port=pg_port)
+def execute_sql(conn, stmt, params): # pragma: no cover
+    c = conn.cursor()
+    c.execute(stmt, params)
+    result = c.fetchall()
+    c.close()
+    return result
+
+def main(): # pragma: no cover
+    get_env('INFRABOX_SERVICE')
+    get_env('INFRABOX_VERSION')
+    get_env('INFRABOX_DATABASE_DB')
+    get_env('INFRABOX_DATABASE_USER')
+    get_env('INFRABOX_DATABASE_PASSWORD')
+    get_env('INFRABOX_DATABASE_HOST')
+    get_env('INFRABOX_DATABASE_PORT')
+    get_env('INFRABOX_DASHBOARD_URL')
+
+    elect_leader()
+
+    conn = connect_db()
     conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
     logger.info("Connected to database")
 
@@ -90,16 +112,13 @@ def handle_job_update(conn, update):
     logger.info("Handle job %s", job_id)
     logger.info("Setting state to %s", state)
 
-    c = conn.cursor()
-    c.execute('''
+    token = execute_sql(conn, '''
         SELECT github_api_token FROM "user" u
         INNER JOIN collaborator co
             ON co.owner = true
             AND co.project_id = %s
             AND co.user_id = u.id
     ''', [project_id])
-    token = c.fetchall()
-    c.close()
 
     if not token:
         logger.info("No API token, not updating status")
@@ -107,15 +126,12 @@ def handle_job_update(conn, update):
 
     github_api_token = token[0][0]
 
-    c = conn.cursor()
-    c.execute('''
+    github_status_url = execute_sql(conn, '''
         SELECT github_status_url
         FROM "commit"
         WHERE id = %s
         AND project_id = %s
-    ''', [commit_sha, project_id])
-    github_status_url = c.fetchall()[0][0]
-    c.close()
+    ''', [commit_sha, project_id])[0][0]
 
     payload = {
         "state": state,
@@ -145,7 +161,7 @@ def handle_job_update(conn, update):
         logger.info("Successfully updated github status")
 
 
-def print_stackdriver():
+def print_stackdriver(): # pragma: no cover
     if 'INFRABOX_GENERAL_LOG_STACKDRIVER' in os.environ and \
             os.environ['INFRABOX_GENERAL_LOG_STACKDRIVER'] == 'true':
         print json.dumps({
@@ -159,7 +175,7 @@ def print_stackdriver():
     else:
         print traceback.format_exc()
 
-if __name__ == "__main__":
+if __name__ == "__main__": # pragma: no cover
     try:
         main()
     except:

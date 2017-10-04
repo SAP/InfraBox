@@ -12,7 +12,7 @@ logging.basicConfig(
 
 logger = logging.getLogger("github")
 
-def get_env(name):
+def get_env(name): # pragma: no cover
     if name not in os.environ:
         raise Exception("%s not set" % name)
     return os.environ[name]
@@ -21,10 +21,11 @@ def execute_api(url, token):
     headers = {
         "Authorization": "token " + token,
         "User-Agent": "InfraBox"
-    },
+    }
 
     # TODO(ib-steffen): allow custom ca bundles
-    return requests.get(get_env('INFRABOX_GITHUB_API_URL') + url, headers, verify=False)
+    url = get_env('INFRABOX_GITHUB_API_URL') + url
+    return requests.get(url, headers, verify=False)
 
 def error(status, message):
     response.status = status
@@ -77,12 +78,12 @@ def get_commit():
         "message": result['message']
     }
 
-def main():
+def main(): # pragma: no cover
     get_env('INFRABOX_SERVICE')
     get_env('INFRABOX_VERSION')
     get_env('INFRABOX_GITHUB_API_URL')
 
     run(host='0.0.0.0', port=8081)
 
-if __name__ == '__main__':
+if __name__ == '__main__': # pragma: no cover
     main()

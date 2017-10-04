@@ -33,6 +33,18 @@
         "resources": { "limits": { "cpu": 1, "memory": 2048 } }
     }, {
         "type": "docker",
+        "name": "github-api",
+        "docker_file": "infrabox/test/github-api/Dockerfile",
+        "resources": { "limits": { "cpu": 1, "memory": 2048 } },
+        "build_only": false
+    }, {
+        "type": "docker",
+        "name": "github-review",
+        "docker_file": "infrabox/test/github-review/Dockerfile",
+        "resources": { "limits": { "cpu": 1, "memory": 2048 } },
+        "build_only": false
+    }, {
+        "type": "docker",
         "name": "malicious-container",
         "docker_file": "infrabox/test-malicious/Dockerfile",
         "build_only": false,
