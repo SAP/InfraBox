@@ -1,5 +1,4 @@
-# InfraBox
-[![Build Status](https://api.infrabox.net/v1/project/e8a9bf87-10c8-41fa-b632-f6bb40d0d14e/build/state.svg)](https://demo.infrabox.net/dashboard/project/e8a9bf87-10c8-41fa-b632-f6bb40d0d14e)
+# InfraBox [![Build Status](https://api.infrabox.net/v1/project/e8a9bf87-10c8-41fa-b632-f6bb40d0d14e/build/state.svg)](https://demo.infrabox.net/dashboard/project/e8a9bf87-10c8-41fa-b632-f6bb40d0d14e)
 
 |Component|Coverage|
 |---------|--------|
