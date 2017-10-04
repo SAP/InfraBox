@@ -101,7 +101,7 @@ def handle_job_update(conn, update):
     token = c.fetchall()
     c.close()
 
-    if not len(token):
+    if not token:
         logger.info("No API token, not updating status")
         return
 

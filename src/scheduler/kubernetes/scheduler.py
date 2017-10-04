@@ -159,11 +159,11 @@ class Scheduler(object):
             "resources": {
                 "requests": {
                     "memory": "256Mi",
-                    "cpu": 0.2
+                    "cpu": 0.1
                 },
                 "limits": {
                     "memory": "256Mi",
-                    "cpu": 0.2
+                    "cpu": 0.1
                 }
             },
             "volumeMounts": []
@@ -409,11 +409,11 @@ class Scheduler(object):
                 "resources": {
                     "requests": {
                         "memory": "256Mi",
-                        "cpu": 0.2
+                        "cpu": 0.1
                     },
                     "limits": {
                         "memory": "256Mi",
-                        "cpu": 0.2
+                        "cpu": 0.1
                     }
                 },
                 "volumeMounts": [{
@@ -464,7 +464,7 @@ class Scheduler(object):
         build_id = j[1]
 
         if cpu == 1:
-            cpu = cpu * 0.8
+            cpu = cpu * 0.7
         else:
             cpu = cpu * 0.9
 
