@@ -150,32 +150,25 @@ class RunJob(Job):
                 clone_url = clone_url.replace('github.com',
                                               '%s@github.com' % self.repository['github_api_token'])
 
-            c.execute(['rm', '-rf', 'repo'], show=True)
-
-            cmd = ['git', 'clone', '--depth=10']
-            if branch:
-                cmd += ['--single-branch', '-b', branch]
-
-            c.header("Clone repository", show=True)
-            cmd += [clone_url, '/repo']
-
-            c.collect(' '.join(cmd), show=True)
-            c.execute(cmd, show=True)
+            env = [
+                "-e", "INFRABOX_CLONE_URL=%s" % clone_url,
+                "-e", "INFRABOX_COMMIT=%s" % commit,
+            ]
 
             if ref:
-                cmd = ['git', 'fetch', '--depth=10', clone_url, ref]
-                c.collect(' '.join(cmd), show=True)
-                c.execute(cmd, show=True, cwd="/repo")
+                env += ["-e", "INFRABOX_REF=%s" % ref]
 
-            c.header("Checkout commit", show=True)
-            cmd = ['git', 'checkout', '-qf', '-b', 'job', commit]
+            if branch:
+                env += ["-e", "INFRABOX_BRANCH=%s" % branch]
 
-            c.collect(' '.join(cmd), show=True)
-            c.execute(cmd, cwd="/repo", show=True)
+            cmd = ['docker', 'build', '-f', 'git/Dockerfile', '-t', 'clone', '.']
+            c.execute(cmd, show=True, cwd='/job')
 
-            c.header("Init submodules", show=True)
-            c.execute(['git', 'submodule', 'init'], cwd="/repo", show=True)
-            c.execute(['git', 'submodule', 'update'], cwd="/repo", show=True)
+            cmd = ['docker', 'run', '-v', '/repo:/repo']
+            cmd += env
+            cmd += ['clone']
+
+            c.execute(cmd, show=True)
         elif self.project['type'] == 'upload':
             c.header("Downloading Source")
             storage_source_zip = os.path.join(self.storage_dir, 'source.zip')
