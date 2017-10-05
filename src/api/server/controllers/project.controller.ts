@@ -15,45 +15,32 @@ router.get("/:project_id", pv, token_auth, checkProjectAccess, (req: Request, re
     const project_id = req.params['project_id'];
 
     return db.any(`
-        SELECT p.id, p.name, p.type
-        FROM project p
-        WHERE p.id = $1
-    `, [project_id])
-    .then((result: any[]) => {
-        if (result.length !== 1) {
-            throw new NotFound();
-        }
-
-        res.json(result[0]);
-    }).catch(handleDBError(next));
-});
-
-router.get("/:project_id/build", pv, token_auth, checkProjectAccess, (req: Request, res: Response, next) => {
-    const project_id = req.params['project_id'];
-
-    return db.any(`
-        SELECT i.id, i.number, i.restart_counter,
-            count(*)::int num_jobs,
-            count(CASE WHEN j.state = 'queued' OR j.state = 'scheduled' OR j.state = 'running' THEN 1 END)::int num_active,
-            count(CASE WHEN j.state = 'failure' THEN 1 END)::int num_failure,
-            count(CASE WHEN j.state = 'error' THEN 1 END)::int num_error,
-            count(CASE WHEN j.state = 'skipped' THEN 1 END)::int num_skipped,
-            count(CASE WHEN j.state = 'finished' THEN 1 END)::int num_finished
+        SELECT row_to_json(r) as project
         FROM (
-            SELECT b.id, b.build_number as number, b.restart_counter
-            FROM build b
-            WHERE b.project_id = $1
-            ORDER BY b.build_number DESC
-            LIMIT 10
-        ) i
-        INNER JOIN job j
-            ON j.build_id = i.id
-            AND j.project_id = $1
-        GROUP BY i.id, i.number, i.restart_counter
-        ORDER BY i.number, i.restart_counter
-    `, [project_id])
-    .then((result: any[]) => {
-        res.json(result);
+            SELECT name, id, type, public, build_on_push, builds.builds
+            FROM (
+                select name, id, type, public, build_on_push
+                from project
+                where id = $1
+            ) p LEFT JOIN LATERAL (
+                SELECT array_to_json(array_agg(row_to_json(b))) as builds
+                FROM (
+                    SELECT id, restart_counter, build_number, jobs.jobs FROM build
+                    LEFT JOIN LATERAL (
+                        SELECT array_to_json(array_agg(row_to_json(jobs))) jobs
+                        FROM (
+                            SELECT id, state, start_date, end_date, name, build_only, keep, cpu, memory
+                            FROM job
+                            WHERE project_id = $1
+                            AND build_id = build.id
+                        ) jobs
+                    ) jobs on true
+                    WHERE build.project_id = $1
+                ) as b
+            ) builds on true
+        ) r `, [project_id])
+    .then((project: any) => {
+        res.json(project[0]);
     }).catch(handleDBError(next));
 });
 
