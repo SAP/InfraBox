@@ -65,9 +65,6 @@ export let config = {
     },
     github: {
         enabled: getFromEnvBool("INFRABOX_GITHUB_ENABLED", false),
-        client_id: "someid",
-        client_secret: "somesecret",
-        webhook_secret: "somewebhook",
         trigger_host: getFromEnv("INFRABOX_GITHUB_TRIGGER_HOST", "localhost")
     },
     docker_registry: {
@@ -121,12 +118,6 @@ if (config.storage.s3.enabled) {
 if (!config.storage.s3.enabled && !config.storage.gcs.enabled) {
     console.error("No storage enabled");
     process.exit(1);
-}
-
-if (config.github.enabled) {
-    config.github.client_id = getFromEnv("INFRABOX_GITHUB_CLIENT_ID");
-    config.github.client_secret = getFromEnv("INFRABOX_GITHUB_CLIENT_SECRET");
-    config.github.webhook_secret = getFromEnv("INFRABOX_GITHUB_WEBHOOK_SECRET");
 }
 
 if (config.api.tls.enabled) {

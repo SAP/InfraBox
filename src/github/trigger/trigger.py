@@ -1,6 +1,8 @@
 import os
 import logging
 import json
+import hashlib
+import hmac
 
 import requests
 import psycopg2
@@ -13,7 +15,7 @@ logging.basicConfig(
     level=logging.DEBUG
 )
 
-LOGGER = logging.getLogger("github")
+logger = logging.getLogger("github")
 
 def get_env(name):
     if name not in os.environ:
@@ -296,14 +298,39 @@ class Trigger(object):
         self.conn.commit()
         return res(200, 'ok')
 
+
+def sign_blob(key, blob):
+    return 'sha1=' + hmac.new(key, blob, hashlib.sha1).hexdigest()
+
 @post('/api/v1/trigger')
 def trigger_build():
     headers = dict(request.headers)
 
+    print headers
+
     if 'X-Github-Event' not in headers:
+        print 'no event'
         return res(400, "X-Github-Event not set")
 
+    if 'X-Hub-Signature' not in headers:
+        print 'no sig'
+        return res(400, "X-Hub-Signature not set")
+
+
     event = headers['X-Github-Event']
+    sig = headers['X-Hub-Signature']
+    #pylint: disable=no-member
+    body = request.body.read()
+    secret = get_env('INFRABOX_GITHUB_WEBHOOK_SECRET')
+    signed = sign_blob(secret, body)
+
+    logger.warn("sig: %s", sig)
+    logger.warn("body: %s", body)
+    logger.warn("signed: %s", signed)
+
+    if signed != sig:
+        print 'dont match'
+        return res(400, "X-Hub-Signature does not match blob signature")
 
     trigger = Trigger()
     if event == 'push':
@@ -321,6 +348,7 @@ def main():
     get_env('INFRABOX_DATABASE_PASSWORD')
     get_env('INFRABOX_DATABASE_HOST')
     get_env('INFRABOX_DATABASE_PORT')
+    get_env('INFRABOX_GITHUB_WEBHOOK_SECRET')
 
     run(host='0.0.0.0', port=8083)
 

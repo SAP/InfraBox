@@ -333,6 +333,7 @@ class Kubernetes(Install):
 
         self.required_option('github-client-id')
         self.required_option('github-client-secret')
+        self.required_option('github-webhook-secret')
         self.required_option('github-api-url')
         self.required_option('github-login-url')
         self.required_option('github-login-enabled')
@@ -345,7 +346,7 @@ class Kubernetes(Install):
         secret = {
             "client_id": self.args.github_client_id,
             "client_secret": self.args.github_client_secret,
-            "webhook_secret": ''.join([random.choice(string.lowercase) for _ in xrange(32)])
+            "webhook_secret": self.args.github_webhook_secret
         }
 
         self.create_secret("infrabox-github", "infrabox-system", secret)
@@ -694,6 +695,7 @@ def main():
     parser.add_argument('--github-enabled', action='store_true', default=False)
     parser.add_argument('--github-client-secret')
     parser.add_argument('--github-client-id')
+    parser.add_argument('--github-webhook-secret')
     parser.add_argument('--github-api-url', default='https://api.github.com')
     parser.add_argument('--github-login-enabled', action='store_true', default=False)
     parser.add_argument('--github-login-url', default='https://github.com/login')

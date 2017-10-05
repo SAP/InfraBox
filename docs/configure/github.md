@@ -11,6 +11,7 @@ If you use github.com and not a local GitHub Enterprise installation you may hav
     --github-enabled
     --github-client-id <GITHUB_CLIENT_ID>
     --github-client-secret <GITHUB_CLIENT_SECRET>
+    --github-webhook-secret <CHOSE_A_RANDOM_SECRET>
 
 In case you use a GitHub Enterprise installation please also set
 

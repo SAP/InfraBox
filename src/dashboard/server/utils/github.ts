@@ -103,8 +103,6 @@ export function deleteHook(token: string, repo: string, owner: string, id: strin
         }
     };
 
-    console.log(JSON.stringify(options));
-
     return new Promise((resolve, reject) => {
         request(options, (err, response, body) => {
             if (err) {

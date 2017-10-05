@@ -8,9 +8,6 @@ export INFRABOX_API_PORT=4000
 export INFRABOX_API_URL=http://localhost:4000
 export INFRABOX_API_LOG_LEVEL=debug
 export INFRABOX_DOCKER_REGISTRY_URL=http://localhost:5000
-export INFRABOX_GITHUB_CLIENT_ID=client-id
-export INFRABOX_GITHUB_CLIENT_SECRET=client-secret
-export INFRABOX_GITHUB_WEBHOOK_SECRET=webhook-secret
 export INFRABOX_VERSION=local
 export INFRABOX_NAME=/infrabox/dashboard
 ./node_modules/.bin/gulp
