@@ -632,7 +632,7 @@ class Scheduler(object):
         cursor = self.conn.cursor()
         cursor.execute('''
             SELECT j.id FROM job j
-            WHERE j.start_date < (NOW() - INTERVAL '60 minutes')
+            WHERE j.start_date < (NOW() - (j.timeout * INTERVAL '1' SECOND))
             AND j.state = 'running'
         ''')
         aborts = cursor.fetchall()

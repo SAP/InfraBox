@@ -689,6 +689,12 @@ services:
                                     <td>Specify the number of MiB of RAM to be used for the job. Value must be an integer and at least 128.</td>
                                 </tr>
                                 <tr>
+                                    <td>timeout</td>
+                                    <td>false</td>
+                                    <td>integer</td>
+                                    <td>Timeout in seconds after which the job should be killed. Timeout starts when the job is set to running. Default is 3600 (1 hour)</td>
+                                </tr>
+                                <tr>
                                     <td>build_only</td>
                                     <td>true</td>
                                     <td>boolean</td>
@@ -803,6 +809,12 @@ CMD /usr/bin/test.py
                                     <td>true</td>
                                     <td>integer</td>
                                     <td>Specify the number of MiB of RAM to be used for the job. Value must be an integer and at least 128</td>
+                                </tr>
+                                <tr>
+                                    <td>timeout</td>
+                                    <td>false</td>
+                                    <td>integer</td>
+                                    <td>Timeout in seconds after which the job should be killed. Timeout starts when the job is set to running. Default is 3600 (1 hour)</td>
                                 </tr>
                                 <tr>
                                     <td>depends_on</td>

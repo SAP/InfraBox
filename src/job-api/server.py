@@ -10,7 +10,6 @@ import copy
 from datetime import datetime
 
 import psycopg2
-import requests
 from minio import Minio
 
 from flask import Flask, jsonify, request, send_file
@@ -678,6 +677,7 @@ def create_jobs():
 
         limits_cpu = 1
         limits_memory = 1024
+        timeout = job.get('timeout', 3600)
 
         if 'resources' in job and 'limits' in job['resources']:
             limits_cpu = job['resources']['limits']['cpu']
@@ -719,13 +719,13 @@ def create_jobs():
             INSERT INTO job (id, state, build_id, type, dockerfile, name,
                 project_id, dependencies, build_only,
                 keep, created_at, repo, base_path, scan_container,
-                env_var_ref, env_var, build_arg, deployment, cpu, memory)
-            VALUES (%s, 'queued', %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);""",
+                env_var_ref, env_var, build_arg, deployment, cpu, memory, timeout)
+            VALUES (%s, 'queued', %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);""",
                        (job_id, job_data['build']['id'], t, f, name,
                         job_data['project']['id'],
                         json.dumps(depends_on), build_only, keep, datetime.now(),
                         repo, base_path, scan_container, env_var_refs, env_vars,
-                        build_arguments, deployments, limits_cpu, limits_memory))
+                        build_arguments, deployments, limits_cpu, limits_memory, timeout))
         cursor.close()
 
         # to make sure the get picked up in the right order by the scheduler

@@ -148,7 +148,7 @@ def parse_resources(d, path):
 def parse_docker(d, path):
     check_allowed_properties(d, path, ("type", "name", "docker_file", "depends_on", "resources",
                                        "build_only", "security", "keep", "environment",
-                                       "build_arguments", "deployments"))
+                                       "build_arguments", "deployments", "timeout"))
     check_required_properties(d, path, ("type", "name", "docker_file", "resources"))
     check_name(d['name'], path + ".name")
     check_text(d['docker_file'], path + ".docker_file")
@@ -174,6 +174,10 @@ def parse_docker(d, path):
 
     if 'deployments' in d:
         parse_deployments(d['deployments'], path + ".deployments")
+
+    if 'timeout' in d:
+        check_number(d['timeout'], path + ".timeout")
+
 
 def parse_docker_compose(d, path):
     check_allowed_properties(d, path, ("type", "name", "docker_compose_file", "depends_on", "environment", "resources"))
