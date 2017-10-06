@@ -18,6 +18,9 @@ services:
             - INFRABOX_DATABASE_HOST=postgres
             - INFRABOX_DATABASE_PORT=5432
             - INFRABOX_DATABASE_DB=postgres
+            - INFRABOX_GITHUB_CLIENT_ID=myid
+            - INFRABOX_GITHUB_CLIENT_SECRET=myscret
+            - INFRABOX_GITHUB_WEBHOOK_SECRET=webhooksecret
 
     api:
         build:
@@ -40,9 +43,6 @@ services:
             - INFRABOX_STORAGE_GCS_PROJECT_UPLOAD_BUCKET=test-project-upload-bucket
             - INFRABOX_STORAGE_S3_ENABLED=false
             - INFRABOX_GITHUB_ENABLED=true
-            - INFRABOX_GITHUB_CLIENT_ID=myid
-            - INFRABOX_GITHUB_CLIENT_SECRET=myscret
-            - INFRABOX_GITHUB_WEBHOOK_SECRET=webhooksecret
             - INFRABOX_GITHUB_TRIGGER_HOST=github-trigger
             - INFRABOX_TEST=true
         links:

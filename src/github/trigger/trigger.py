@@ -306,14 +306,10 @@ def sign_blob(key, blob):
 def trigger_build():
     headers = dict(request.headers)
 
-    print headers
-
     if 'X-Github-Event' not in headers:
-        print 'no event'
         return res(400, "X-Github-Event not set")
 
     if 'X-Hub-Signature' not in headers:
-        print 'no sig'
         return res(400, "X-Hub-Signature not set")
 
 
@@ -324,12 +320,7 @@ def trigger_build():
     secret = get_env('INFRABOX_GITHUB_WEBHOOK_SECRET')
     signed = sign_blob(secret, body)
 
-    logger.warn("sig: %s", sig)
-    logger.warn("body: %s", body)
-    logger.warn("signed: %s", signed)
-
     if signed != sig:
-        print 'dont match'
         return res(400, "X-Hub-Signature does not match blob signature")
 
     trigger = Trigger()
