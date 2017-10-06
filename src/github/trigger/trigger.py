@@ -6,6 +6,8 @@ import requests
 
 from pyinfraboxutils import get_env, get_logger
 from pyinfraboxutils.ibbottle import InfraBoxPostgresPlugin
+from pyinfraboxutils.db import connect_db
+
 from bottle import post, run, request, response, install
 
 logger = get_logger("github")
@@ -323,6 +325,8 @@ def main():
     get_env('INFRABOX_DATABASE_HOST')
     get_env('INFRABOX_DATABASE_PORT')
     get_env('INFRABOX_GITHUB_WEBHOOK_SECRET')
+
+    connect_db() # Wait until DB is ready
 
     install(InfraBoxPostgresPlugin())
     run(host='0.0.0.0', port=8083)
