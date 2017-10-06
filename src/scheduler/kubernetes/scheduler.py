@@ -2,20 +2,16 @@ import logging
 import argparse
 import time
 import os
-import json
-import traceback
 import psycopg2
 import psycopg2.extensions
 import requests
 from prometheus_client import start_http_server, Histogram, Counter
 
-logging.basicConfig(
-    format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s',
-    datefmt='%d-%m-%Y:%H:%M:%S',
-    level=logging.WARN
-)
+from pyinfraboxutils import get_logger, get_env, print_stackdriver
+from pyinfraboxutils.leader import elect_leader
+from pyinfraboxutils.db import connect_db
 
-logger = logging.getLogger("scheduler")
+logger = get_logger("scheduler")
 
 namespace = 'infrabox-worker'
 
@@ -716,11 +712,6 @@ class Scheduler(object):
             self.handle()
             time.sleep(2)
 
-def get_env(name):
-    if name not in os.environ:
-        raise Exception("%s not set" % name)
-    return os.environ[name]
-
 def main():
     # Arguments
     parser = argparse.ArgumentParser(prog="scheduler.py")
@@ -781,47 +772,20 @@ def main():
     with open('/var/run/secrets/kubernetes.io/serviceaccount/token', 'r') as f:
         args.token = f.read()
 
-    while True:
-        r = requests.get("http://localhost:4040", timeout=5)
-        leader = r.json()['name']
-
-        if leader == os.environ['HOSTNAME']:
-            logger.info("I'm the leader")
-            break
-        else:
-            logger.info("I'm not the leader, %s is the leader", leader)
-            time.sleep(1)
+    elect_leader()
 
     args.api_server = "https://" + get_env('INFRABOX_KUBERNETES_MASTER_HOST') \
                                  + ":" + get_env('INFRABOX_KUBERNETES_MASTER_PORT')
 
     os.environ['REQUESTS_CA_BUNDLE'] = '/var/run/secrets/kubernetes.io/serviceaccount/ca.crt'
 
-    conn = psycopg2.connect(dbname=os.environ['INFRABOX_DATABASE_DB'],
-                            user=os.environ['INFRABOX_DATABASE_USER'],
-                            password=os.environ['INFRABOX_DATABASE_PASSWORD'],
-                            host=os.environ['INFRABOX_DATABASE_HOST'],
-                            port=os.environ['INFRABOX_DATABASE_PORT'])
-
+    conn = connect_db()
     conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
 
     start_http_server(8000)
 
     scheduler = Scheduler(conn, args)
     scheduler.run()
-
-def print_stackdriver():
-    if 'INFRABOX_GENERAL_LOG_STACKDRIVER' in os.environ and os.environ['INFRABOX_GENERAL_LOG_STACKDRIVER'] == 'true':
-        print json.dumps({
-            "serviceContext": {
-                "service": os.environ.get('INFRABOX_SERVICE', 'unknown'),
-                "version": os.environ.get('INFRABOX_VERSION', 'unknown')
-            },
-            "message": traceback.format_exc(),
-            "severity": 'ERROR'
-        })
-    else:
-        print traceback.format_exc()
 
 if __name__ == "__main__":
     try:

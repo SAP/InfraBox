@@ -1,57 +1,31 @@
 import json
-import os
-import logging
-import traceback
 import select
-import time
 
-import requests
 import psycopg2
 import paramiko
 
-logging.basicConfig(
-    format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s',
-    datefmt='%d-%m-%Y:%H:%M:%S',
-    level=logging.DEBUG
-)
+from pyinfraboxutils import get_logger, get_env, print_stackdriver
+from pyinfraboxutils.db import connect_db
+from pyinfraboxutils.leader import elect_leader
 
-logger = logging.getLogger("gerrit")
-
-def get_env(name):
-    if name not in os.environ:
-        raise Exception("%s not set" % name)
-    return os.environ[name]
+logger = get_logger("gerrit")
 
 def main():
     get_env('INFRABOX_SERVICE')
     get_env('INFRABOX_VERSION')
-    pg_db = get_env('INFRABOX_DATABASE_DB')
-    pg_user = get_env('INFRABOX_DATABASE_USER')
-    pg_password = get_env('INFRABOX_DATABASE_PASSWORD')
-    pg_host = get_env('INFRABOX_DATABASE_HOST')
-    pg_port = int(get_env('INFRABOX_DATABASE_PORT'))
+    get_env('INFRABOX_DATABASE_DB')
+    get_env('INFRABOX_DATABASE_USER')
+    get_env('INFRABOX_DATABASE_PASSWORD')
+    get_env('INFRABOX_DATABASE_HOST')
+    get_env('INFRABOX_DATABASE_PORT')
     get_env('INFRABOX_GERRIT_PORT')
     get_env('INFRABOX_GERRIT_HOSTNAME')
     get_env('INFRABOX_GERRIT_USERNAME')
     get_env('INFRABOX_GERRIT_KEY_FILENAME')
     get_env('INFRABOX_DASHBOARD_URL')
 
-    while True:
-        r = requests.get("http://localhost:4040", timeout=5)
-        leader = r.json()['name']
-
-        if leader == os.environ['HOSTNAME']:
-            logger.info("I'm the leader")
-            break
-        else:
-            logger.info("I'm not the leader, %s is the leader", leader)
-            time.sleep(1)
-
-    conn = psycopg2.connect(dbname=pg_db,
-                            user=pg_user,
-                            password=pg_password,
-                            host=pg_host,
-                            port=pg_port)
+    elect_leader()
+    conn = connect_db()
     conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
     logger.info("Connected to database")
 
@@ -136,22 +110,12 @@ def handle_job_update(conn, update):
                 vote = "-1"
 
     logger.info('Setting InfraBox=%s', vote)
-    execute_ssh_cmd(client, 'gerrit review --project %s -m "%s" --label InfraBox=%s %s' % (project_name, message, vote, commit_sha))
+    execute_ssh_cmd(client, 'gerrit review --project %s -m "%s" --label InfraBox=%s %s' % (project_name,
+                                                                                           message,
+                                                                                           vote,
+                                                                                           commit_sha))
 
     client.close()
-
-def print_stackdriver():
-    if 'INFRABOX_GENERAL_LOG_STACKDRIVER' in os.environ and os.environ['INFRABOX_GENERAL_LOG_STACKDRIVER'] == 'true':
-        print json.dumps({
-            "serviceContext": {
-                "service": os.environ.get('INFRABOX_SERVICE', 'unknown'),
-                "version": os.environ.get('INFRABOX_VERSION', 'unknown')
-            },
-            "message": traceback.format_exc(),
-            "severity": 'ERROR'
-        })
-    else:
-        print traceback.format_exc()
 
 if __name__ == "__main__":
     try:

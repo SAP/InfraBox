@@ -14,12 +14,14 @@ services:
             context: ../..
             dockerfile: src/docker-registry/auth/Dockerfile
         environment:
+            - INFRABOX_SERVICE=registry-auth
+            - INFRABOX_VERSION=testing
             - INFRABOX_DATABASE_USER=postgres
             - INFRABOX_DATABASE_PASSWORD=postgres
             - INFRABOX_DATABASE_HOST=postgres
             - INFRABOX_DATABASE_PORT=5432
             - INFRABOX_DATABASE_DB=postgres
-        command: /wait-for-postgres.sh postgres flask run --host=0.0.0.0 --port 8080
+        #command: /wait-for-postgres.sh postgres flask run --host=0.0.0.0 --port 8080
     docker_nginx:
         build:
             context: ../..

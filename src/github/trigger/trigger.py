@@ -1,26 +1,14 @@
-import os
-import logging
 import json
 import hashlib
 import hmac
 
 import requests
-import psycopg2
 
-from bottle import post, run, request, response
+from pyinfraboxutils import get_env, get_logger
+from pyinfraboxutils.ibbottle import InfraBoxPostgresPlugin
+from bottle import post, run, request, response, install
 
-logging.basicConfig(
-    format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s',
-    datefmt='%d-%m-%Y:%H:%M:%S',
-    level=logging.DEBUG
-)
-
-logger = logging.getLogger("github")
-
-def get_env(name):
-    if name not in os.environ:
-        raise Exception("%s not set" % name)
-    return os.environ[name]
+logger = get_logger("github")
 
 def res(status, message):
     response.status = status
@@ -40,12 +28,8 @@ def get_commits(url, token):
 
 
 class Trigger(object):
-    def __init__(self):
-        self.conn = psycopg2.connect(dbname=os.environ['INFRABOX_DATABASE_DB'],
-                                     user=os.environ['INFRABOX_DATABASE_USER'],
-                                     password=os.environ['INFRABOX_DATABASE_PASSWORD'],
-                                     host=os.environ['INFRABOX_DATABASE_HOST'],
-                                     port=os.environ['INFRABOX_DATABASE_PORT'])
+    def __init__(self, conn):
+        self.conn = conn
 
     def execute(self, stmt, args=None, fetch=True):
         cur = self.conn.cursor()
@@ -303,7 +287,7 @@ def sign_blob(key, blob):
     return 'sha1=' + hmac.new(key, blob, hashlib.sha1).hexdigest()
 
 @post('/api/v1/trigger')
-def trigger_build():
+def trigger_build(conn):
     headers = dict(request.headers)
 
     if 'X-Github-Event' not in headers:
@@ -311,7 +295,6 @@ def trigger_build():
 
     if 'X-Hub-Signature' not in headers:
         return res(400, "X-Hub-Signature not set")
-
 
     event = headers['X-Github-Event']
     sig = headers['X-Hub-Signature']
@@ -323,7 +306,7 @@ def trigger_build():
     if signed != sig:
         return res(400, "X-Hub-Signature does not match blob signature")
 
-    trigger = Trigger()
+    trigger = Trigger(conn)
     if event == 'push':
         return trigger.handle_push(request.json)
     elif event == 'pull_request':
@@ -341,6 +324,7 @@ def main():
     get_env('INFRABOX_DATABASE_PORT')
     get_env('INFRABOX_GITHUB_WEBHOOK_SECRET')
 
+    install(InfraBoxPostgresPlugin())
     run(host='0.0.0.0', port=8083)
 
 if __name__ == '__main__':

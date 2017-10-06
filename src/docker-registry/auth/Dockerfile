@@ -1,15 +1,13 @@
-FROM alpine:3.4
+FROM alpine:3.6
 
-RUN apk update && apk add --no-cache python py-pip py-psycopg2 postgresql-client && \
-    pip install flask && \
-    apk del py-pip
+RUN apk update && apk add --no-cache python py-bottle py-psycopg2
 
 COPY src/docker-registry/auth/server.py /server.py
-COPY src/utils/wait-for-postgres.sh /wait-for-postgres.sh
+COPY src/pyinfraboxutils /pyinfraboxutils
 
-ENV FLASK_APP /server.py
+ENV PYTHONPATH=/
 
 RUN adduser -S auth
 USER auth
 
-CMD ["flask", "run", "--host=0.0.0.0", "--port", "8080"]
+CMD python /server.py

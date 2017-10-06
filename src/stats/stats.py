@@ -1,20 +1,13 @@
 import time
 import os
-import json
-import traceback
-import logging
-import psycopg2
-import psycopg2.extensions
 import requests
 from prometheus_client import start_http_server, Gauge
 
-logging.basicConfig(
-    format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s',
-    datefmt='%d-%m-%Y:%H:%M:%S',
-    level=logging.WARN
-)
+from pyinfraboxutils import get_env, get_logger, print_stackdriver
+from pyinfraboxutils.leader import elect_leader
+from pyinfraboxutils.db import connect_db
 
-logger = logging.getLogger("stats")
+logger = get_logger("stats")
 
 # pylint: disable=no-value-for-parameter, no-member
 JOBS_RUNNING = Gauge('infrabox_jobs_running', 'Jobs with state running')
@@ -120,27 +113,6 @@ def get_k8s_stats():
             K8S_NODE_CPU.labels(hostname=hostname).set(cpu)
             K8S_NODE_MEMORY.labels(hostname=hostname).set(memory)
 
-
-def get_env(name):
-    if name not in os.environ:
-        raise Exception("%s not set" % name)
-    return os.environ[name]
-
-def elect_leader():
-    if os.environ.get('INFRABOX_DISABLE_LEADER_ELECTION', 'false') == 'true':
-        return
-
-    while True:
-        r = requests.get("http://localhost:4040", timeout=5)
-        leader = r.json()['name']
-
-        if leader == os.environ['HOSTNAME']:
-            logger.info("I'm the leader")
-            break
-        else:
-            logger.info("I'm not the leader, %s is the leader", leader)
-            time.sleep(1)
-
 def main():
     get_env('INFRABOX_SERVICE')
     get_env('INFRABOX_VERSION')
@@ -158,23 +130,7 @@ def main():
 
     elect_leader()
 
-
-    conn = None
-    while True:
-        try:
-            conn = psycopg2.connect(dbname=os.environ['INFRABOX_DATABASE_DB'],
-                                    user=os.environ['INFRABOX_DATABASE_USER'],
-                                    password=os.environ['INFRABOX_DATABASE_PASSWORD'],
-                                    host=os.environ['INFRABOX_DATABASE_HOST'],
-                                    port=os.environ['INFRABOX_DATABASE_PORT'])
-
-            conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
-            break
-        except Exception as e:
-            logger.warn("Can't connect to database: %s", e)
-            time.sleep(1)
-
-
+    conn = connect_db()
     os.environ['REQUESTS_CA_BUNDLE'] = '/var/run/secrets/kubernetes.io/serviceaccount/ca.crt'
 
     start_http_server(8000)
@@ -187,19 +143,6 @@ def main():
             get_k8s_stats()
 
         time.sleep(1)
-
-def print_stackdriver():
-    if 'INFRABOX_GENERAL_LOG_STACKDRIVER' in os.environ and os.environ['INFRABOX_GENERAL_LOG_STACKDRIVER'] == 'true':
-        print json.dumps({
-            "serviceContext": {
-                "service": os.environ.get('INFRABOX_SERVICE', 'unknown'),
-                "version": os.environ.get('INFRABOX_VERSION', 'unknown')
-            },
-            "message": traceback.format_exc(),
-            "severity": 'ERROR'
-        })
-    else:
-        print traceback.format_exc()
 
 if __name__ == "__main__":
     try:

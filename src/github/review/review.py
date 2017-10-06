@@ -1,53 +1,14 @@
 import json
-import os
-import logging
-import traceback
 import select
-import time
 
 import requests
 import psycopg2
 
-logging.basicConfig(
-    format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s',
-    datefmt='%d-%m-%Y:%H:%M:%S',
-    level=logging.INFO
-)
+from pyinfraboxutils import get_logger, print_stackdriver, get_env
+from pyinfraboxutils.db import connect_db
+from pyinfraboxutils.leader import elect_leader
 
-logger = logging.getLogger("github")
-
-def get_env(name): # pragma: no cover
-    if name not in os.environ:
-        raise Exception("%s not set" % name)
-    return os.environ[name]
-
-def connect_db(): # pragma: no cover
-    while True:
-        try:
-            conn = psycopg2.connect(dbname=os.environ['INFRABOX_DATABASE_DB'],
-                                    user=os.environ['INFRABOX_DATABASE_USER'],
-                                    password=os.environ['INFRABOX_DATABASE_PASSWORD'],
-                                    host=os.environ['INFRABOX_DATABASE_HOST'],
-                                    port=os.environ['INFRABOX_DATABASE_PORT'])
-            return conn
-        except Exception as e:
-            logger.warn("Could not connect to db: %s", e)
-            time.sleep(3)
-
-def elect_leader(): # pragma: no cover
-    if os.environ.get('INFRABOX_DISABLE_LEADER_ELECTION', 'false') == 'true':
-        return
-
-    while True:
-        r = requests.get("http://localhost:4040", timeout=5)
-        leader = r.json()['name']
-
-        if leader == os.environ['HOSTNAME']:
-            logger.info("I'm the leader")
-            break
-        else:
-            logger.info("I'm not the leader, %s is the leader", leader)
-            time.sleep(1)
+logger = get_logger("github")
 
 def execute_sql(conn, stmt, params): # pragma: no cover
     c = conn.cursor()
@@ -159,21 +120,6 @@ def handle_job_update(conn, update):
         logger.warn("Failed to update github status: %s", r.text)
     else:
         logger.info("Successfully updated github status")
-
-
-def print_stackdriver(): # pragma: no cover
-    if 'INFRABOX_GENERAL_LOG_STACKDRIVER' in os.environ and \
-            os.environ['INFRABOX_GENERAL_LOG_STACKDRIVER'] == 'true':
-        print json.dumps({
-            "serviceContext": {
-                "service": os.environ.get('INFRABOX_SERVICE', 'unknown'),
-                "version": os.environ.get('INFRABOX_VERSION', 'unknown')
-            },
-            "message": traceback.format_exc(),
-            "severity": 'ERROR'
-        })
-    else:
-        print traceback.format_exc()
 
 if __name__ == "__main__": # pragma: no cover
     try:

@@ -4,7 +4,10 @@ RUN apt-get update -y && \
     apt-get install -y python-psycopg2 python-paramiko openssh-client python-requests && \
     rm -rf /var/lib/apt/lists/*
 
-ADD src/gerrit/review/review.py /review.py
-ADD src/gerrit/review/entrypoint.sh /entrypoint.sh
+COPY src/gerrit/review/review.py /review.py
+COPY src/gerrit/review/entrypoint.sh /entrypoint.sh
+COPY src/pyinfraboxutils /pyinfraboxutils
+
+ENV PYTHONPATH=/
 
 CMD /entrypoint.sh

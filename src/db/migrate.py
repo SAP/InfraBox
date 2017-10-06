@@ -1,52 +1,10 @@
-import logging
-import time
 import os
-import json
-import traceback
-import psycopg2
-import psycopg2.extensions
-import requests
 
-logging.basicConfig(
-    format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s',
-    datefmt='%d-%m-%Y:%H:%M:%S',
-    level=logging.INFO
-)
+from pyinfraboxutils import get_logger, get_env, print_stackdriver
+from pyinfraboxutils.db import connect_db
+from pyinfraboxutils.leader import elect_leader
 
-logger = logging.getLogger("migrate")
-
-def get_env(name):
-    if name not in os.environ:
-        raise Exception("%s not set" % name)
-    return os.environ[name]
-
-def connect_db():
-    while True:
-        try:
-            conn = psycopg2.connect(dbname=os.environ['INFRABOX_DATABASE_DB'],
-                                    user=os.environ['INFRABOX_DATABASE_USER'],
-                                    password=os.environ['INFRABOX_DATABASE_PASSWORD'],
-                                    host=os.environ['INFRABOX_DATABASE_HOST'],
-                                    port=os.environ['INFRABOX_DATABASE_PORT'])
-            return conn
-        except Exception as e:
-            logger.warn("Could not connect to db: %s", e)
-            time.sleep(3)
-
-def elect_leader():
-    if os.environ.get('INFRABOX_DISABLE_LEADER_ELECTION', 'false') == 'true':
-        return
-
-    while True:
-        r = requests.get("http://localhost:4040", timeout=5)
-        leader = r.json()['name']
-
-        if leader == os.environ['HOSTNAME']:
-            logger.info("I'm the leader")
-            break
-        else:
-            logger.info("I'm not the leader, %s is the leader", leader)
-            time.sleep(1)
+logger = get_logger("migrate")
 
 def get_sql_files(current_schema_version):
     dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -120,20 +78,6 @@ def main():
     elect_leader()
     conn = connect_db()
     migrate_db(conn)
-
-
-def print_stackdriver():
-    if 'INFRABOX_GENERAL_LOG_STACKDRIVER' in os.environ and os.environ['INFRABOX_GENERAL_LOG_STACKDRIVER'] == 'true':
-        print json.dumps({
-            "serviceContext": {
-                "service": os.environ.get('INFRABOX_SERVICE', 'unknown'),
-                "version": os.environ.get('INFRABOX_VERSION', 'unknown')
-            },
-            "message": traceback.format_exc(),
-            "severity": 'ERROR'
-        })
-    else:
-        print traceback.format_exc()
 
 if __name__ == "__main__":
     try:

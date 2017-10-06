@@ -19,6 +19,7 @@ COPY src/job/analyze.py /usr/local/bin/
 
 COPY src/utils/wait-for-webserver.sh /usr/local/bin/
 COPY src/pyinfrabox /pyinfrabox
+COPY src/pyinfraboxutils /pyinfraboxutils
 
 ENV PYTHONPATH=/utils:/
 ENV PATH=/utils:$PATH

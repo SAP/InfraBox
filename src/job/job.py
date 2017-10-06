@@ -1,7 +1,6 @@
 #!/usr/bin/python
 import os
 import shutil
-import traceback
 import json
 import subprocess
 import logging
@@ -17,11 +16,7 @@ from infrabox_job.stats import StatsCollector
 from infrabox_job.process import ApiConsole, Failure
 from infrabox_job.job import Job
 
-logging.basicConfig(
-    format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s',
-    datefmt='%d-%m-%Y:%H:%M:%S',
-    level=logging.DEBUG
-)
+from pyinfraboxutils import get_env, print_stackdriver
 
 def makedirs(path):
     os.makedirs(path)
@@ -781,46 +776,16 @@ class RunJob(Job):
 
         return jobs
 
-def print_stackdriver():
-    if 'INFRABOX_GENERAL_LOG_STACKDRIVER' in os.environ and os.environ['INFRABOX_GENERAL_LOG_STACKDRIVER'] == 'true':
-        print json.dumps({
-            "serviceContext": {
-                "service": os.environ.get('INFRABOX_SERVICE', 'unknown'),
-                "version": os.environ.get('INFRABOX_VERSION', 'unknown')
-            },
-            "message": traceback.format_exc(),
-            "severity": 'ERROR'
-        })
-    else:
-        print traceback.format_exc()
-
 def main():
-    if 'INFRABOX_SERVICE' not in os.environ:
-        raise Exception("INFRABOX_SERVICE not set")
-
-    if 'INFRABOX_VERSION' not in os.environ:
-        raise Exception("INFRABOX_VERSION not set")
-
-    if 'INFRABOX_DOCKER_REGISTRY_ADMIN_USERNAME' not in os.environ:
-        raise Exception('INFRABOX_DOCKER_REGISTRY_ADMIN_USERNAME not set')
-
-    if 'INFRABOX_DOCKER_REGISTRY_ADMIN_PASSWORD' not in os.environ:
-        raise Exception('INFRABOX_DOCKER_REGISTRY_ADMIN_PASSWORD not set')
-
-    if 'INFRABOX_DOCKER_REGISTRY_URL' not in os.environ:
-        raise Exception('INFRABOX_DOCKER_REGISTRY_URL not set')
-
-    if 'INFRABOX_DASHBOARD_URL' not in os.environ:
-        raise Exception('INFRABOX_DASHBOARD_URL not set')
-
-    if 'INFRABOX_GENERAL_NO_CHECK_CERTIFICATES' not in os.environ:
-        raise Exception('INFRABOX_GENERAL_NO_CHECK_CERTIFICATES not set')
-
-    if 'INFRABOX_LOCAL_CACHE_ENABLED' not in os.environ:
-        raise Exception('INFRABOX_LOCAL_CACHE_ENABLED not set')
-
-    if 'INFRABOX_JOB_MAX_OUTPUT_SIZE' not in os.environ:
-        raise Exception('INFRABOX_JOB_MAX_OUTPUT_SIZE not set')
+    get_env('INFRABOX_SERVICE')
+    get_env('INFRABOX_VERSION')
+    get_env('INFRABOX_DOCKER_REGISTRY_ADMIN_USERNAME')
+    get_env('INFRABOX_DOCKER_REGISTRY_ADMIN_PASSWORD')
+    get_env('INFRABOX_DOCKER_REGISTRY_URL')
+    get_env('INFRABOX_DASHBOARD_URL')
+    get_env('INFRABOX_GENERAL_NO_CHECK_CERTIFICATES')
+    get_env('INFRABOX_LOCAL_CACHE_ENABLED')
+    get_env('INFRABOX_JOB_MAX_OUTPUT_SIZE')
 
     parser = argparse.ArgumentParser(description='Process some integers.')
     parser.add_argument('--type', choices=['create', 'run'], help="job type")

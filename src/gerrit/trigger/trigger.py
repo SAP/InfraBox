@@ -1,58 +1,32 @@
 import json
-import os
-import logging
-import traceback
 import datetime
-import time
 
-import requests
-import psycopg2
 import paramiko
 
-logging.basicConfig(
-    format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s',
-    datefmt='%d-%m-%Y:%H:%M:%S',
-    level=logging.DEBUG
-)
+from pyinfraboxutils import get_logger, get_env, print_stackdriver
+from pyinfraboxutils.leader import elect_leader
+from pyinfraboxutils.db import connect_db
 
-LOGGER = logging.getLogger("github")
-
-def get_env(name):
-    if name not in os.environ:
-        raise Exception("%s not set" % name)
-    return os.environ[name]
+logger = get_logger("gerrit")
 
 def main():
     get_env('INFRABOX_SERVICE')
     get_env('INFRABOX_VERSION')
-    pg_db = get_env('INFRABOX_DATABASE_DB')
-    pg_user = get_env('INFRABOX_DATABASE_USER')
-    pg_password = get_env('INFRABOX_DATABASE_PASSWORD')
-    pg_host = get_env('INFRABOX_DATABASE_HOST')
-    pg_port = int(get_env('INFRABOX_DATABASE_PORT'))
+    get_env('INFRABOX_DATABASE_DB')
+    get_env('INFRABOX_DATABASE_USER')
+    get_env('INFRABOX_DATABASE_PASSWORD')
+    get_env('INFRABOX_DATABASE_HOST')
+    get_env('INFRABOX_DATABASE_PORT')
     gerrit_port = int(get_env('INFRABOX_GERRIT_PORT'))
     gerrit_hostname = get_env('INFRABOX_GERRIT_HOSTNAME')
     gerrit_username = get_env('INFRABOX_GERRIT_USERNAME')
     gerrit_key_filename = get_env('INFRABOX_GERRIT_KEY_FILENAME')
 
-    while True:
-        r = requests.get("http://localhost:4040", timeout=5)
-        leader = r.json()['name']
 
-        if leader == os.environ['HOSTNAME']:
-            LOGGER.info("I'm the leader")
-            break
-        else:
-            LOGGER.info("I'm not the leader, %s is the leader", leader)
-            time.sleep(1)
+    elect_leader()
+    conn = connect_db()
 
-    conn = psycopg2.connect(dbname=pg_db,
-                            user=pg_user,
-                            password=pg_password,
-                            host=pg_host,
-                            port=pg_port)
-
-    LOGGER.info("Connected to db")
+    logger.info("Connected to db")
     client = paramiko.SSHClient()
     client.load_system_host_keys()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -62,15 +36,15 @@ def main():
                    key_filename=gerrit_key_filename)
     client.get_transport().set_keepalive(60)
 
-    LOGGER.info("Connected to gerrit")
+    logger.info("Connected to gerrit")
     _, stdout, _ = client.exec_command('gerrit stream-events')
 
-    LOGGER.info("Waiting for stream-events")
+    logger.info("Waiting for stream-events")
     for line in stdout:
         event = json.loads(line)
 
         if event['type'] == "patchset-created":
-            LOGGER.info(json.dumps(event, indent=4))
+            logger.info(json.dumps(event, indent=4))
             handle_patchset_created(conn, event)
 
 def handle_patchset_created_project(conn, event, project_id, project_name):
@@ -85,7 +59,7 @@ def handle_patchset_created_project(conn, event, project_id, project_name):
     repository_id = result[0]
     sha = event['patchSet']['revision']
 
-    LOGGER.info("Repository ID: %s", repository_id)
+    logger.info("Repository ID: %s", repository_id)
 
     c = conn.cursor()
     c.execute('SELECT * FROM "commit" WHERE project_id = %s and id = %s', [project_id, sha])
@@ -185,11 +159,11 @@ def handle_patchset_created(conn, event):
         project_name = event['change'].get('project', None)
 
     if not project_name:
-        LOGGER.error('Failed to get project from event')
+        logger.error('Failed to get project from event')
         return
 
 
-    LOGGER.info("Project name: %s", project_name)
+    logger.info("Project name: %s", project_name)
 
     # Get project
     c = conn.cursor()
@@ -197,30 +171,17 @@ def handle_patchset_created(conn, event):
     projects = c.fetchall()
     c.close()
 
-    LOGGER.info("Found projects in db: %s", json.dumps(projects))
+    logger.info("Found projects in db: %s", json.dumps(projects))
 
     if not projects:
         return
 
     for project in projects:
         project_id = project[0]
-        LOGGER.info("Handling project with id: %s", project_id)
+        logger.info("Handling project with id: %s", project_id)
         handle_patchset_created_project(conn, event, project_id, project_name)
 
     conn.commit()
-
-def print_stackdriver():
-    if 'INFRABOX_GENERAL_LOG_STACKDRIVER' in os.environ and os.environ['INFRABOX_GENERAL_LOG_STACKDRIVER'] == 'true':
-        print json.dumps({
-            "serviceContext": {
-                "service": os.environ.get('INFRABOX_SERVICE', 'unknown'),
-                "version": os.environ.get('INFRABOX_VERSION', 'unknown')
-            },
-            "message": traceback.format_exc(),
-            "severity": 'ERROR'
-        })
-    else:
-        print traceback.format_exc()
 
 if __name__ == "__main__":
     try:
