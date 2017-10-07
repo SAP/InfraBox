@@ -1,7 +1,6 @@
 "use strict";
 
 const crypto = require('crypto');
-const bufferEq = require('buffer-equal-constant-time');
 
 import Promise = require("bluebird");
 import { config } from "../config/config";

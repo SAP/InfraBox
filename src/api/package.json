@@ -20,7 +20,6 @@
     "@types/uuid": "^3.0.0",
     "async": "^2.4.1",
     "bluebird": "~3.4.6",
-    "buffer-equal-constant-time": "^1.0.1",
     "compression": "^1.6.2",
     "cookie-parser": "^1.4.3",
     "express": "^4.15.3",

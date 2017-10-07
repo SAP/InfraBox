@@ -12,7 +12,7 @@ router.get("/", pv, (req: Request, res: Response, next) => {
     const project_id = req.params['project_id'];
 
     db.any(`
-        SELECT name, value, id FROM secret
+        SELECT name, id FROM secret
         WHERE project_id = $1`
         , [project_id]
     ).then((vars: any[]) => {

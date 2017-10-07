@@ -61,10 +61,10 @@ router.post("/", pv, (req: Request, res: Response, next) => {
                 throw new BadRequest("too many projects");
             }
 
-            if (typ == "github") {
-                const split = name.split('/')
-                let owner = split[0]
-                let repo_name = split[1]
+            if (typ === "github") {
+                const split = name.split('/');
+                const owner = split[0];
+                const repo_name = split[1];
 
                 return tx.one(`
                     SELECT github_api_token FROM "user" WHERE id = $1
@@ -97,9 +97,9 @@ router.post("/", pv, (req: Request, res: Response, next) => {
             );
         }).then(() => {
             if (typ === "github") {
-                const split = name.split('/')
-                let owner = split[0]
-                let repo_name = split[1]
+                const split = name.split('/');
+                const owner = split[0];
+                const repo_name = split[1];
 
                 return tx.none(`
                     INSERT INTO repository (name, html_url, clone_url, github_id, private, project_id, github_owner)
@@ -126,4 +126,3 @@ router.post("/", pv, (req: Request, res: Response, next) => {
     })
     .catch(handleDBError(next));
 });
-

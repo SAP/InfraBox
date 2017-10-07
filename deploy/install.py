@@ -2,8 +2,6 @@ import argparse
 import os
 import sys
 import stat
-import random
-import string
 import shutil
 import base64
 import logging
@@ -355,7 +353,7 @@ class Kubernetes(Install):
         self.required_option('dashboard-url')
 
         secret = {
-            "secret": ''.join([random.choice(string.lowercase) for _ in xrange(32)])
+            "secret": self.args.dashboard_secret
         }
 
         self.create_secret("infrabox-dashboard", "infrabox-system", secret)
@@ -662,6 +660,7 @@ def main():
     parser.add_argument('--dashboard-tls-enabled', action='store_true', default=False)
     parser.add_argument('--dashboard-tls-key-file')
     parser.add_argument('--dashboard-tls-crt-file')
+    parser.add_argument('--dashboard-secret')
 
     # API
     parser.add_argument('--api-url')

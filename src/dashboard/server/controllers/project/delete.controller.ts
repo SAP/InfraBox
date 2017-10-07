@@ -33,25 +33,25 @@ router.delete("/", pv, (req: Request, res: Response, next) => {
             return tx.one(`DELETE FROM project WHERE id = $1 RETURNING ID, type`, [project_id]);
         }).then((data: any) => {
             project_type = data.type;
-            if (project_type == "github") {
+            if (project_type === "github") {
                 let repo_info = null;
 
                 return tx.one(
                     `SELECT name, github_owner, github_hook_id
                      FROM repository
                      WHERE project_id = $1`, [project_id]
-                ).then((data: any) => {
-                    repo_info = data;
+                ).then((ri: any) => {
+                    repo_info = ri;
                     return tx.one(`SELECT github_api_token FROM "user"
                         WHERE id = $1`, [user_id]);
-                }).then((data: any) => {
+                }).then((t: any) => {
                     const d = repo_info;
                     // don't wait for the delete, it may fail
-                    deleteHook(data.github_api_token, d.name, d.github_owner, d.github_hook_id);
+                    deleteHook(t.github_api_token, d.name, d.github_owner, d.github_hook_id);
                 });
             }
         }).then(() => {
-            if (project_type == "github" || project_type == "gerrit") {
+            if (project_type === "github" || project_type === "gerrit") {
                 return tx.any(`DELETE FROM repository WHERE project_id = $1`, [project_id]);
             }
         }).then(() => {

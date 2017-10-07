@@ -1,3 +1,4 @@
+# pylint: disable=too-many-lines,global-statement,too-many-locals,too-many-branches
 from __future__ import print_function
 import os
 import json
@@ -154,7 +155,6 @@ def get_job_data():
 
     env_vars = r[20]
     env_var_refs = r[21]
-    user_id = r[24]
     deployments = r[26]
 
     data['project'] = {
@@ -1079,11 +1079,6 @@ def set_finished():
     # remove form console table
     cursor.execute("DELETE FROM console WHERE job_id = %s", (JOB_ID,))
     cursor.close()
-
-    if state == 'finished':
-        commit_state = 'success'
-    else:
-        commit_state = 'failure'
 
     conn.commit()
     return jsonify({})
