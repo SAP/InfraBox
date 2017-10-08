@@ -463,6 +463,8 @@ helm install -n infrabox -f values-generated.yaml .
 command -v helm >/dev/null 2>&1 || { echo >&2 "I require helm but it's not installed. Aborting."; exit 1; }
 command -v kubectl >/dev/null 2>&1 || { echo >&2 "I require kubectl but it's not installed. Aborting."; exit 1; }
 
+kubectl delete job -n infrabox-system --all
+
 helm upgrade infrabox -f values-generated.yaml .
 '''
 
