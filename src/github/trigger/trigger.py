@@ -195,6 +195,8 @@ class Trigger(object):
         if not result:
             return res(404, "Unknown repository")
 
+        result = result[0]
+
         repo_id = result[0]
         project_id = result[1]
         github_repo_private = result[2]
