@@ -147,8 +147,8 @@ class Kubernetes(Install):
                 "password": args.postgres_password
             }
 
-            self.create_secret("infrabox-postgres-db-credentials", "infrabox-worker", secret)
-            self.create_secret("infrabox-postgres-db-credentials", "infrabox-system", secret)
+            self.create_secret("infrabox-postgres", "infrabox-worker", secret)
+            self.create_secret("infrabox-postgres", "infrabox-system", secret)
         elif args.database == 'cloudsql':
             self.required_option('cloudsql-instance-connection-name')
             self.required_option('cloudsql-proxy-service-account-key-file')
@@ -168,8 +168,8 @@ class Kubernetes(Install):
                 "password": args.cloudsql_proxy_password
             }
 
-            self.create_secret("infrabox-cloudsql-db-credentials", "infrabox-worker", secret)
-            self.create_secret("infrabox-cloudsql-db-credentials", "infrabox-system", secret)
+            self.create_secret("infrabox-postgres", "infrabox-worker", secret)
+            self.create_secret("infrabox-postgres", "infrabox-system", secret)
 
             with open(args.cloudsql_proxy_service_account_key_file) as keyfile:
                 secret = {

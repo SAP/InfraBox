@@ -3,23 +3,13 @@
     name: INFRABOX_DATABASE_USER
     valueFrom:
         secretKeyRef:
-            {{ if .Values.storage.cloudsql.enabled }}
-            name: infrabox-cloudsql-db-credentials
-            {{ end }}
-            {{ if .Values.storage.postgres.enabled }}
-            name: infrabox-postgres-db-credentials
-            {{ end }}
+            name: infrabox-postgres
             key: username
 -
     name: INFRABOX_DATABASE_PASSWORD
     valueFrom:
         secretKeyRef:
-            {{ if .Values.storage.cloudsql.enabled }}
-            name: infrabox-cloudsql-db-credentials
-            {{ end }}
-            {{ if .Values.storage.postgres.enabled }}
-            name: infrabox-postgres-db-credentials
-            {{ end }}
+            name: infrabox-postgres
             key: password
 -
     name: INFRABOX_DATABASE_HOST

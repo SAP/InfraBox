@@ -41,7 +41,7 @@ class Scheduler(object):
             "name": "INFRABOX_DATABASE_USER",
             "valueFrom": {
                 "secretKeyRef": {
-                    "name": "",
+                    "name": "infrabox-postgres",
                     "key": "username"
                 }
             }
@@ -49,7 +49,7 @@ class Scheduler(object):
             "name": "INFRABOX_DATABASE_PASSWORD",
             "valueFrom": {
                 "secretKeyRef": {
-                    "name": "",
+                    "name": "infrabox-postgres",
                     "key": "password"
                 }
             }
@@ -63,13 +63,6 @@ class Scheduler(object):
             "name": "INFRABOX_DATABASE_PORT",
             "value": os.environ['INFRABOX_DATABASE_PORT']
         })
-
-        if os.environ['INFRABOX_STORAGE_CLOUDSQL_ENABLED'] == "true":
-            env[0]['valueFrom']['secretKeyRef']['name'] = 'infrabox-cloudsql-db-credentials'
-            env[1]['valueFrom']['secretKeyRef']['name'] = 'infrabox-cloudsql-db-credentials'
-        else:
-            env[0]['valueFrom']['secretKeyRef']['name'] = 'infrabox-postgres-db-credentials'
-            env[1]['valueFrom']['secretKeyRef']['name'] = 'infrabox-postgres-db-credentials'
 
         return env
 
