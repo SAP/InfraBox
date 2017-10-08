@@ -351,6 +351,7 @@ class Kubernetes(Install):
 
     def setup_dashboard(self):
         self.required_option('dashboard-url')
+        self.required_option('dashboard-secret')
 
         secret = {
             "secret": self.args.dashboard_secret
