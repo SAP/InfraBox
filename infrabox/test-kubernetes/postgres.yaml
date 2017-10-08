@@ -42,7 +42,7 @@ spec:
 apiVersion: v1
 kind: Secret
 metadata:
-    name: infrabox-postgres-db-credentials
+    name: infrabox-postgres
     namespace: infrabox-system
 type: Opaque
 data:
@@ -52,7 +52,7 @@ data:
 apiVersion: v1
 kind: Secret
 metadata:
-    name: infrabox-postgres-db-credentials
+    name: infrabox-postgres
     namespace: infrabox-worker
 type: Opaque
 data:
