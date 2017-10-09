@@ -19,3 +19,4 @@ src/infraboxcli/infraboxcli.egg-info/
 run_server.sh
 certs/
 src/stats/run.sh
+src/new-dashboard/node_modules
