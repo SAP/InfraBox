@@ -131,7 +131,7 @@ def main():
     connect_db() # Wait until db is ready
 
     install(InfraBoxPostgresPlugin())
-    run(host='0.0.0.0', port=8080)
+    run(host='0.0.0.0', port=8081)
 
 if __name__ == "__main__":
     try:

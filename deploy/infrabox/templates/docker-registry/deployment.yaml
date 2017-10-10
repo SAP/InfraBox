@@ -20,9 +20,62 @@ spec:
 {{ toYaml .Values.docker_registry.node_selector | indent 16 }}
             {{- end }}
             containers:
+            {{ include "containers_database" . | indent 12 }}
+            -
+                name: auth
+                image: {{ .Values.general.docker_registry }}/{{ default "infrabox/docker-registry/auth" .Values.docker_registry.auth_image }}:{{ .Values.docker_registry.auth_tag }}
+                imagePullPolicy: Always
+                env:
+                {{ include "env_database" . | indent 16 }}
+                {{ include "env_docker_registry" . | indent 16 }}
+                -
+                    name: INFRABOX_SERVICE
+                    value: {{ default "infrabox/docker-registry/auth" .Values.docker_registry.auth_image }}
+                -
+                    name: INFRABOX_VERSION
+                    value: {{ .Values.docker_registry.auth_tag }}
+                livenessProbe:
+                    httpGet:
+                        path: /ping
+                        port: 8081
+                    initialDelaySeconds: 5
+                    periodSeconds: 30
+                readinessProbe:
+                    httpGet:
+                        path: /ping
+                        port: 8081
+                    initialDelaySeconds: 3
+                    periodSeconds: 3
+            -
+                name: nginx
+                image: {{ .Values.general.docker_registry }}/{{ default "infrabox/docker-registry/nginx" .Values.docker_registry.nginx_image }}:{{ .Values.docker_registry.nginx_tag }}
+                imagePullPolicy: Always
+                env:
+                -
+                    name: INFRABOX_DOCKER_REGISTRY_ADMIN_PASSWORD
+                    valueFrom:
+                        secretKeyRef:
+                            name: infrabox-docker-registry
+                            key: password
+                -
+                    name: INFRABOX_DOCKER_REGISTRY_ADMIN_USERNAME
+                    valueFrom:
+                        secretKeyRef:
+                            name: infrabox-docker-registry
+                            key: username
+                -
+                    name: INFRABOX_DOCKER_REGISTRY_TLS_ENABLED
+                    value: {{ default "false" .Values.docker_registry.tls.enabled | quote }}
+                volumeMounts:
+                {{ if .Values.docker_registry.tls.enabled }}
+                -
+                    name: registry-tls
+                    mountPath: /var/run/infrabox
+                    readOnly: true
+                {{ end }}
             -
                 name: registry
-                image: registry:2
+                image: registry:2.6
                 imagePullPolicy: Always
                 env:
                 {{ if .Values.storage.s3.enabled }}
@@ -81,11 +134,19 @@ spec:
                     mountPath: /etc/infrabox/gcs
                     readOnly: true
                 {{ end }}
-            {{ if .Values.storage.gcs.enabled }}
+
             volumes:
-            -
-                name: gcs-service-account
-                secret:
-                    secretName: infrabox-gcs
-            {{ end }}
+                {{ include "volumes_database" . | indent 16 }}
+                {{ if .Values.docker_registry.tls.enabled }}
+                -
+                    name: registry-tls
+                    secret:
+                        secretName: infrabox-docker-registry-tls
+                {{ end }}
+                {{ if .Values.storage.gcs.enabled }}
+                -
+                    name: gcs-service-account
+                    secret:
+                        secretName: infrabox-gcs
+                {{ end }}
 {{ end }}
