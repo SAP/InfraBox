@@ -57,9 +57,6 @@ import store from './store'
 
 export default {
   name: 'app',
-  store,
-  beforeCreate () {
-    this.$store.dispatch('loadProjects')
-  }
+  store
 }
 </script>

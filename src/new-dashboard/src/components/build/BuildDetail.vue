@@ -1,26 +1,34 @@
 <template>
-  <div>
-    Build Detail {{ project.name }}
+  <div v-if="data">
+      Build Detail {{ data.project.name }} {{ data.build.number }}.{{ data.build.restartCounter }}
   </div>
 </template>
 
 <script>
 import store from '../../store'
+import ProjectService from '../../services/ProjectService'
 
 export default {
   name: 'BuildDetail',
-  store,
-  data: function () {
-    return {
-      project: {
-        name: ''
-      }
-    }
-  },
   props: ['projectName', 'buildNumber', 'buildRestartCounter'],
-  created: function () {
-    this.project = this.$store.getters.findProjectByNameParam
-    console.log(this.project)
+  store,
+  asyncComputed: {
+    data () {
+      let project = null
+      return ProjectService
+        .findProjectByName(this.projectName)
+        .then((p) => {
+          project = p
+          return p.getBuild(this.buildNumber, this.restartCounter)
+        })
+        .then(function (build) {
+          console.log(build)
+          return {
+            project,
+            build
+          }
+        })
+    }
   }
 }
 </script>

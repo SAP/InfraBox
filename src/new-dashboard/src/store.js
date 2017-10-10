@@ -34,6 +34,16 @@ class Project {
 
     return builds
   }
+
+  getBuild (number, restartCounter) {
+    for (let b of this.builds) {
+      if (b.number === number && b.restartCounter === restartCounter) {
+        return b
+      }
+    }
+
+    return null
+  }
 }
 
 const state = {
@@ -194,18 +204,7 @@ const mutations = {
   handleJobUpdate
 }
 
-const actions = {
-  loadProjects (context) {
-    Vue.http.get('http://localhost:3000/api/dashboard/project').then(response => {
-      for (let p of response.body) {
-        context.commit('addProject', p)
-        events.listenJobs(p)
-      }
-    }, response => {
-      console.log(response)
-    })
-  }
-}
+const actions = {}
 
 const store = new Vuex.Store({
   state,
