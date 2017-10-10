@@ -270,17 +270,25 @@ class Kubernetes(Install):
             self.required_option('docker-registry-tls-crt-file')
 
             self.check_file_exists(self.args.docker_registry_tls_key_file)
-            self.check_file_exists(self.args.docker_registry_crt_key_file)
+            self.check_file_exists(self.args.docker_registry_tls_crt_file)
 
             secret = {
                 "server.key": open(self.args.docker_registry_tls_key_file).read(),
                 "server.crt": open(self.args.docker_registry_tls_crt_file).read()
             }
 
-            self.create_secret("infrabox-docker_registry-tls", "infrabox-system", secret)
+            self.create_secret("infrabox-docker-registry-tls", "infrabox-system", secret)
+            self.set('docker_registry.tls.enabled', True)
 
     def setup_account(self):
         self.set('account.signup.enabled', self.args.account_signup_enabled)
+
+    def setup_local_cache(self):
+        self.set('local_cache.enabled', self.args.local_cache_enabled)
+
+        if self.args.local_cache_enabled:
+            self.required_option('local-cache-host-path')
+            self.set('local_cache.host_path', self.args.local_cache_host_path)
 
     def setup_ldap(self):
         if not self.args.ldap_enabled:
@@ -334,7 +342,6 @@ class Kubernetes(Install):
         self.required_option('github-webhook-secret')
         self.required_option('github-api-url')
         self.required_option('github-login-url')
-        self.required_option('github-login-enabled')
 
         self.set('github.enabled', True)
         self.set('github.login.enabled', self.args.github_login_enabled)
@@ -369,7 +376,7 @@ class Kubernetes(Install):
             self.required_option('dashboard-tls-crt-file')
 
             self.check_file_exists(self.args.dashboard_tls_key_file)
-            self.check_file_exists(self.args.dashboard_crt_key_file)
+            self.check_file_exists(self.args.dashboard_tls_crt_file)
 
             secret = {
                 "server.key": open(self.args.dashboard_tls_key_file).read(),
@@ -377,6 +384,7 @@ class Kubernetes(Install):
             }
 
             self.create_secret("infrabox-dashboard-tls", "infrabox-system", secret)
+            self.set('dashboard.tls.enabled', True)
 
 
     def setup_api(self):
@@ -392,7 +400,7 @@ class Kubernetes(Install):
             self.required_option('api-tls-crt-file')
 
             self.check_file_exists(self.args.api_tls_key_file)
-            self.check_file_exists(self.args.api_crt_key_file)
+            self.check_file_exists(self.args.api_tls_crt_file)
 
             secret = {
                 "server.key": open(self.args.api_tls_key_file).read(),
@@ -400,6 +408,7 @@ class Kubernetes(Install):
             }
 
             self.create_secret("infrabox-api-tls", "infrabox-system", secret)
+            self.set('api.tls.enabled', True)
 
 
     def setup_docs(self):
@@ -415,7 +424,7 @@ class Kubernetes(Install):
             self.required_option('docs-tls-crt-file')
 
             self.check_file_exists(self.args.docs_tls_key_file)
-            self.check_file_exists(self.args.docs_crt_key_file)
+            self.check_file_exists(self.args.docs_tls_crt_file)
 
             secret = {
                 "server.key": open(self.args.docs_tls_key_file).read(),
@@ -423,12 +432,16 @@ class Kubernetes(Install):
             }
 
             self.create_secret("infrabox-docs-tls", "infrabox-system", secret)
+            self.set('docs.tls.enabled', True)
 
+    def setup_general(self):
+        self.set('general.no_check_certificates', self.args.general_no_check_certificates)
 
     def main(self):
         # Copy helm chart
         copy_files(self.args, 'infrabox')
 
+        self.setup_general()
         self.setup_postgres()
         self.setup_storage()
         self.setup_docker_registry()
@@ -439,6 +452,7 @@ class Kubernetes(Install):
         self.setup_api()
         self.setup_docs()
         self.setup_ldap()
+        self.setup_local_cache()
 
         self.config.dump(os.path.join(self.args.o, 'values-generated.yaml'))
 
@@ -604,6 +618,9 @@ def main():
                         choices=['docker-compose', 'kubernetes'],
                         required=True)
 
+    # General
+    parser.add_argument('--general-no-check-certificates', action='store_true', default=False)
+
     # Docker configuration
     parser.add_argument('--docker-registry',
                         required=True)
@@ -704,6 +721,10 @@ def main():
 
     # Account
     parser.add_argument('--account-signup-enabled', action='store_true', default=False)
+
+    # Local Cache
+    parser.add_argument('--local-cache-enabled', action='store_true', default=False)
+    parser.add_argument('--local-cache-host-path')
 
     # Parse options
     args = parser.parse_args()

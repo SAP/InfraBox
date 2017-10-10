@@ -6,6 +6,7 @@ RUN apk add --no-cache \
     py-requests \
     bash \
     iptables \
+    openssh-client \
     pigz && \
     pip install docker-compose docker future && \
     apk del py-pip

@@ -3,7 +3,7 @@
 import Vue from 'vue'
 import VueResource from 'vue-resource'
 import VueMaterial from 'vue-material'
-import VueSocketio from 'vue-socket.io'
+import { sync } from 'vuex-router-sync'
 
 import App from './App'
 import router from './router'
@@ -11,8 +11,9 @@ import store from './store'
 
 import 'vue-material/dist/vue-material.css'
 
+sync(store, router)
+
 Vue.config.productionTip = false
-Vue.use(VueSocketio, 'ws://localhost:3000', store)
 Vue.use(VueResource)
 Vue.use(VueMaterial)
 

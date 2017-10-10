@@ -20,9 +20,12 @@ def get_sql_files(current_schema_version):
 def apply_migration(conn, migration):
     logger.info("Starting to apply migration %s", migration[1])
     with open(migration[0]) as sql_file:
-        sql = sql_file.read()
+        sql = sql_file.read().strip()
+
         cur = conn.cursor()
-        cur.execute(sql)
+        if sql:
+            cur.execute(sql)
+
         cur.execute('UPDATE infrabox SET schema_version = %s', (migration[1],))
         cur.close()
         conn.commit()
@@ -78,6 +81,7 @@ def main():
     elect_leader()
     conn = connect_db()
     migrate_db(conn)
+    conn.close()
 
 if __name__ == "__main__":
     try:

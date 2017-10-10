@@ -1,7 +1,7 @@
 FROM alpine:3.6
 
-RUN apk add --no-cache git python
+RUN apk add --no-cache git python openssh-client
 
-COPY git/clone.py /clone.py
+COPY git git
 
-CMD python /clone.py
+CMD /git/entrypoint.sh

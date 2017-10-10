@@ -148,7 +148,16 @@ class RunJob(Job):
             env = [
                 "-e", "INFRABOX_CLONE_URL=%s" % clone_url,
                 "-e", "INFRABOX_COMMIT=%s" % commit,
+                "-e", "INFRABOX_GENERAL_NO_CHECK_CERTIFICATES=%s" % os.environ['INFRABOX_GENERAL_NO_CHECK_CERTIFICATES']
             ]
+
+            gerrit_port = os.environ.get('INFRABOX_GERRIT_PORT', None)
+            gerrit_hostname = os.environ.get('INFRABOX_GERRIT_HOSTNAME', None)
+            if gerrit_port:
+                env += [
+                    "-e", "INFRABOX_GERRIT_PORT=%s" % gerrit_port,
+                    "-e", "INFRABOX_GERRIT_HOSTNAME=%s" % gerrit_hostname
+                ]
 
             if ref:
                 env += ["-e", "INFRABOX_REF=%s" % ref]
@@ -161,6 +170,10 @@ class RunJob(Job):
 
             cmd = ['docker', 'run', '-v', '/repo:/repo']
             cmd += env
+
+            if os.path.exists('/tmp/gerrit/id_rsa'):
+                cmd += ['-v', '/tmp/gerrit/id_rsa:/tmp/gerrit/id_rsa']
+
             cmd += ['clone']
 
             c.execute(cmd, show=True)
@@ -792,9 +805,6 @@ def main():
 
     args = parser.parse_args()
     console = ApiConsole()
-
-    if os.environ['INFRABOX_GENERAL_NO_CHECK_CERTIFICATES'] == 'true':
-        console.execute(('git', 'config', '--global', 'http.sslVerify', 'false'), show=False)
 
     try:
         j = RunJob(console, args.type)

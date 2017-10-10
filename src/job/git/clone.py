@@ -10,6 +10,9 @@ def main():
     branch = os.environ.get('INFRABOX_BRANCH', None)
     ref = os.environ.get('INFRABOX_REF', None)
 
+    if os.environ['INFRABOX_GENERAL_NO_CHECK_CERTIFICATES'] == 'true':
+        execute(('git', 'config', '--global', 'http.sslVerify', 'false'))
+
     cmd = ['git', 'clone', '--depth=10']
     if branch:
         cmd += ['--single-branch', '-b', branch]
