@@ -1,60 +1,47 @@
 <template>
-<md-card>
-<md-card-header>
-    <md-card-header-text>
-      <div class="md-title">Title goes here</div>
-      <div class="md-subhead">Subtitle here</div>
-    </md-card-header-text>
+    <div class="example-box">
+		<md-card v-if="project" class="example-box-card">
+			<md-toolbar md-theme="white" class="md-dense">
+				<h3 class="md-title">{{ project.name }}</h3>
+			</md-toolbar>
 
-    <md-menu md-size="4" md-direction="bottom left">
-      <md-button class="md-icon-button" md-menu-trigger>
-        <md-icon>more_vert</md-icon>
-      </md-button>
+			  <md-card-area>
+				<md-tabs md-right :md-dynamic-height="false" class="md-transparent example-tabs">
 
-      <md-menu-content>
-        <md-menu-item>
-          <span>Call</span>
-          <md-icon>phone</md-icon>
-        </md-menu-item>
 
-        <md-menu-item>
-          <span>Send a message</span>
-          <md-icon>message</md-icon>
-        </md-menu-item>
-      </md-menu-content>
-    </md-menu>
+  <template slot="header-item" scope="props">
+    <md-icon v-if="props.header.icon">{{ props.header.icon }}</md-icon>
+    <template v-if="props.header.options && props.header.options.new_badge">
+      <span v-if="props.header.label" class="label-with-new-badge">
+        {{ props.header.label }}
+        <span class="new-badge">{{ props.header.options.new_badge }}</span>
+      </span>
+    </template>
+    <template v-else>
+      <span v-if="props.header.label">{{ props.header.label }}</span>
+    </template>
+  </template>
 
-</md-card-header>
-<md-card-content>
-  <md-table v-if="project">
-	  <md-table-header>
-		<md-table-row>
-		  <md-table-head>Build</md-table-head>
-		  <md-table-head v-if="project.isGit()">Author</md-table-head>
-		  <md-table-head v-if="project.isGit()">Branch</md-table-head>
-		  <md-table-head>Start Time</md-table-head>
-		  <md-table-head>Duration</md-table-head>
-		  <md-table-head v-if="project.isGit()">Type</md-table-head>
-		</md-table-row>
-	  </md-table-header>
 
-	  <md-table-body>
-		<md-table-row v-for="b in project.builds" :key="b.id">
-		  <md-table-cell><ib-state :state="b.state"></ib-state>
-			{{ b.number }}.{{ b.restartCounter }}</md-table-cell>
-          <md-table-cell v-if="project.isGit()">{{ b.commit.author_name }}</md-table-cell>
-          <md-table-cell v-if="project.isGit()">{{ b.commit.branch }}</md-table-cell>
-          <md-table-cell><ib-date :date="b.start_date"></ib-date></md-table-cell>
-          <md-table-cell><ib-duration :start="b.start_date" :end="b.end_date"></ib-duration></md-table-cell>
-          <md-table-cell v-if="project.isGit()"><ib-gitjobtype :build="b"></ib-gitjobtype></md-table-cell>
-		</md-table-row>
-	  </md-table-body>
-	</md-table>
-</md-card-content>
-</md-card>
+				  <md-tab class="example-content" md-label="Builds" md-icon="search" :md-options="{new_badge: 1}" md-active>
+					<slot name="demo">
+                       <ib-build-table :project="project"></ib-build-table>
+                    </slot>
+				  </md-tab>
+
+				  <md-tab class="code-content" md-label="Settings" md-icon="phone">
+					<slot name="code">
+                        Settings
+                    </slot>
+				  </md-tab>
+				</md-tabs>
+			  </md-card-area>
+		</md-card>
+    </div>
 </template>
 
 <script>
+/*
 import store from '../../store'
 import ProjectService from '../../services/ProjectService'
 
@@ -75,4 +62,33 @@ export default {
         }
     }
 }
+*/
+
+import BuildTable from './BuildTable'
+
+export default {
+    props: ['project'],
+    components: {
+        'ib-build-table': BuildTable
+    }
+}
 </script>
+
+<style scoped>
+  .example-box {
+    margin: 16px;
+  }
+  .md-title {
+    position: relative;
+    z-index: 3;
+  }
+  .example-tabs {
+    margin-top: -48px;
+    @media (max-width: 480px) {
+      margin-top: -1px;
+      background-color: #fff;
+    }
+  }
+.label-with-new-badge{font-weight:bolder}.new-badge{background-color:red;color:#fff;padding:3px;border-radius:3px}
+</style>
+

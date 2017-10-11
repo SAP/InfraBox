@@ -17,6 +17,7 @@ import 'font-awesome/css/font-awesome.css'
 import NotificationComponent from '@/components/Notification'
 import StateComponent from '@/components/utils/State'
 import DateComponent from '@/components/utils/Date'
+import ProjectDetailComponent from '@/components/project/ProjectDetail'
 import DurationComponent from '@/components/utils/Duration'
 import GitJobTypeComponent from '@/components/utils/GitJobType'
 import NotificationService from './services/NotificationService'
@@ -47,6 +48,7 @@ Vue.component('ib-state', StateComponent)
 Vue.component('ib-date', DateComponent)
 Vue.component('ib-duration', DurationComponent)
 Vue.component('ib-gitjobtype', GitJobTypeComponent)
+Vue.component('ib-project', ProjectDetailComponent)
 
 /* eslint-disable no-new */
 new Vue({
