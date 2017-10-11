@@ -31,6 +31,16 @@ module.exports = merge(baseWebpackConfig, {
       template: 'index.html',
       inject: true
     }),
-    new FriendlyErrorsPlugin()
+    new FriendlyErrorsPlugin(),
+	new webpack.ContextReplacementPlugin(/^\.\/locale$/, context => {
+	  if (!/\/moment\//.test(context.context)) { return }
+	  // context needs to be modified in place
+	  Object.assign(context, {
+		// include only CJK
+		regExp: /^\.\/(ja|ko|zh)/,
+		// point to the locale data folder relative to moment's src/lib/locale
+		request: '../../locale'
+	  })
+	})
   ]
 })

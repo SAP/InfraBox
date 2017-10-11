@@ -7,22 +7,19 @@ import BuildDetail from '@/components/build/BuildDetail'
 Vue.use(Router)
 
 export default new Router({
-  routes: [
-    {
-      path: '/',
-      name: 'Overview',
-      component: Overview
-    },
-    {
-      path: '/project/:projectName',
-      name: 'ProjectDetail',
-      component: ProjectDetail
-    },
-    {
-      path: '/project/:projectName/build/:buildNumber/:buildRestartCounter',
-      name: 'BuildDetail',
-      component: BuildDetail,
-      props: true
-    }
-  ]
+    routes: [{
+        path: '/',
+        name: 'Overview',
+        component: Overview
+    }, {
+        path: '/project/:projectName',
+        name: 'ProjectDetail',
+        component: ProjectDetail,
+        props: true
+    }, {
+        path: '/project/:projectName/build/:buildNumber/:buildRestartCounter',
+        name: 'BuildDetail',
+        component: BuildDetail,
+        props: true
+    }]
 })
