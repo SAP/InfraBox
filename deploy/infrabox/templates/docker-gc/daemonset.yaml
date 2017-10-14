@@ -1,0 +1,45 @@
+{{ if .Values.job.use_host_docker_daemon }}
+apiVersion: apps/v1beta2
+kind: DaemonSet
+metadata:
+    name: infrabox-docker-gc
+    namespace: infrabox-system
+    labels:
+        app: infrabox
+        infrabox.net/component: docker-gc
+spec:
+    selector:
+        matchLabels:
+            name: infrabox-docker-gc
+    template:
+        metadata:
+            labels:
+                name: infrabox-docker-gc
+        spec:
+            containers:
+            -
+                name: docker-gc
+                image: spotify/docker-gc
+                volumeMounts:
+                -
+                    name: docker-socket
+                    mountPath: /var/run/docker.sock
+                environment:
+                -
+                    name: DRY_RUN
+                    value: "1"
+                -
+                    name: FORCE_IMAGE_REMOVAL
+                    value: "1"
+                -
+                    name: FORCE_CONTAINER_REMOVAL
+                    value: "1"
+                -
+                    name: GRACE_PERIOD_SECONDS
+                    value: "60"
+        volumes:
+        -
+            name: docker-socket
+            hostPath:
+                path: /var/run/docker.sock
+{{ end }}

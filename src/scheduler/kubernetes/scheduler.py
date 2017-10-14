@@ -31,6 +31,9 @@ def use_s3():
 def gerrit_enabled():
     return os.environ['INFRABOX_GERRIT_ENABLED'] == 'true'
 
+def use_host_docker_daemon():
+    return os.environ['INFRABOX_JOB_USE_HOST_DOCKER_DAEMON'] == 'true'
+
 class Scheduler(object):
     def __init__(self, conn, args):
         self.conn = conn
@@ -277,6 +280,20 @@ class Scheduler(object):
                 "secret": {
                     "secretName": "infrabox-gcs"
                 }
+            })
+
+        if use_host_docker_daemon():
+            volumes.append({
+                "name": "docker-socket",
+                "hostPath": {
+                    "path": "/var/run/docker.sock",
+                    "type": "Socket"
+                }
+            })
+
+            volume_mounts.append({
+                "mountPath": "/var/run/docker.sock",
+                "name": "docker-socket"
             })
 
         if os.environ['INFRABOX_LOCAL_CACHE_ENABLED'] == 'true':

@@ -252,6 +252,7 @@ job:
     max_output_size: 104857600
 
     # mount_docker_socket: false
+    # use_host_docker_daemon: false
 
 local_cache:
     enabled: false

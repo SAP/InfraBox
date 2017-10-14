@@ -4,8 +4,6 @@ kind: Deployment
 metadata:
     name: infrabox-dashboard
     namespace: infrabox-system
-    annotations:
-        infrabox.net/checksum: {{ .Files.Get "values.yaml" | sha256sum }}
     labels:
         app: infrabox
         infrabox.net/component: dashboard

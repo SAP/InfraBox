@@ -253,6 +253,9 @@
 -
     name: INFRABOX_JOB_MOUNT_DOCKER_SOCKET
     value: {{ default "false" .Values.job.mount_docker_socket | quote }}
+-
+    name: INFRABOX_JOB_USE_HOST_DOCKER_DAEMON
+    value: {{ default "false" .Values.job.use_host_docker_daemon | quote }}
 {{ end }}
 
 {{ define "env_kubernetes" }}
