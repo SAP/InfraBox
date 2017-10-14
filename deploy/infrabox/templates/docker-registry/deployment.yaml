@@ -66,6 +66,12 @@ spec:
                 -
                     name: INFRABOX_DOCKER_REGISTRY_TLS_ENABLED
                     value: {{ default "false" .Values.docker_registry.tls.enabled | quote }}
+                -
+                    name: INFRABOX_AUTH_HOST
+                    value: localhost
+                -
+                    name: INFRABOX_REGISTRY_HOST
+                    value: localhost
                 volumeMounts:
                 {{ if .Values.docker_registry.tls.enabled }}
                 -

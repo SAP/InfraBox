@@ -19,4 +19,7 @@ else
     cp /etc/nginx/nginx_no_ssl.conf /etc/nginx/nginx.conf
 fi
 
+sed -i -e "s/auth-host-placeholder/$INFRABOX_AUTH_HOST/g" /etc/nginx/nginx.conf
+sed -i -e "s/registry-host-placeholder/$INFRABOX_REGISTRY_HOST/g" /etc/nginx/nginx.conf
+
 nginx -g "daemon off;"

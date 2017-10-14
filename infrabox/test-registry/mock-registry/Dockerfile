@@ -9,4 +9,4 @@ ENV FLASK_APP /server.py
 RUN adduser -S registry
 USER registry
 
-CMD ["flask", "run", "--host=0.0.0.0", "--port", "8080"]
+CMD ["flask", "run", "--host=0.0.0.0", "--port", "5000"]
