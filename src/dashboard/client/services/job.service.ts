@@ -217,6 +217,16 @@ export class JobService {
         return this.api.get(url);
     }
 
+    public kill(job: Job): Observable<Notification> {
+        const url = '/api/dashboard/project/' + job.project_id + '/job/' + job.id + '/kill';
+        return this.api.get(url);
+    }
+
+    public restart(job: Job): Observable<Notification> {
+        const url = '/api/dashboard/project/' + job.project_id + '/job/' + job.id + '/restart';
+        return this.api.get(url);
+    }
+
     public getJob(id: string): Observable<Job> {
         return this.getJobs().filter((j: Job) => {
             return j.id === id;

@@ -2,24 +2,44 @@
     <div class="clearfix no-borders no-padding">
         <div class="col-lg-12" *ngIf="ready">
             <div class="widget white-bg">
-                <ol class="breadcrumb breadcrumb-h2">
-                    <li class="breadcrumb-smaller">
-                        <a [routerLink]="['/dashboard/project', project.id]">
-                            <i *ngIf="project.type == 'github'" class="fa fa-github" aria-hidden="true"></i>
-                            <i *ngIf="project.type == 'gerrit'" class="fa fa-git" aria-hidden="true"></i>
-                            <i *ngIf="project.type == 'upload'" class="fa fa-upload" aria-hidden="true"></i>
-                            <span>{{ project.name }}</span>
-                        </a>
-                    </li>
-                    <li class="breadcrumb-smaller">
-                        <a [routerLink]="['/dashboard/project', project.id, 'build', job.build.id]">
-                                Build {{ job.build.build_number }}.{{ job.build.restart_counter }}
-                            </a>
-                    </li>
-                    <li class="active">
-                        <strong>{{ job.name }}</strong>
-                    </li>
-                </ol>
+                <div class="row">
+                    <div class="col-lg-8">
+                        <ol class="breadcrumb breadcrumb-h2">
+                            <li class="breadcrumb-smaller">
+                                <a [routerLink]="['/dashboard/project', project.id]">
+                                    <i *ngIf="project.type == 'github'" class="fa fa-github" aria-hidden="true"></i>
+                                    <i *ngIf="project.type == 'gerrit'" class="fa fa-git" aria-hidden="true"></i>
+                                    <i *ngIf="project.type == 'upload'" class="fa fa-upload" aria-hidden="true"></i>
+                                    <span>{{ project.name }}</span>
+                                </a>
+                            </li>
+                            <li class="breadcrumb-smaller">
+                                <a [routerLink]="['/dashboard/project', project.id, 'build', job.build.id]">
+                                        Build {{ job.build.build_number }}.{{ job.build.restart_counter }}
+                                    </a>
+                            </li>
+                            <li class="active">
+                                <strong>{{ job.name }}</strong>
+                            </li>
+                        </ol>
+                    </div>
+                    <div *ngIf="loginService.loggedIn" class="col-lg-4">
+                        <div class="btn-group pull-right m-r-md" role="group" aria-label="...">
+                           <button class="btn btn-default" (click)="clearCache(job)">
+                                <i class="fa fa-trash"></i>
+                                <span class="hidden-xs"> Clear Cache</span>
+                            </button>
+                            <button class="btn btn-default" (click)="kill(job)">
+                                <i class="fa fa-ban"></i>
+                                <span class="hidden-xs"> Kill Run</span>
+                            </button>
+                            <button class="btn btn-default" (click)="restart(job)">
+                                <i class="fa fa-repeat"></i>
+                                <span class="hidden-xs"> Restart Job</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
         <div class="col-md-3 col-md-push-9" *ngIf="job">

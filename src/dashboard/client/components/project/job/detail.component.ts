@@ -7,6 +7,7 @@ import { Build, BuildService } from "../../../services/build.service";
 import { LoginService } from "../../../services/login.service";
 import { Job, Tab, Badge, JobService, JobState, EnvironmentVariable } from "../../../services/job.service";
 import { Logger, LogService } from "../../../services/log.service";
+import { Notification, NotificationService } from "../../../services/notification.service";
 
 import 'rxjs/add/observable/forkJoin';
 
@@ -30,7 +31,8 @@ export class JobDetailComponent implements OnInit, OnDestroy {
         private route: ActivatedRoute,
         private projectService: ProjectService,
         private buildService: BuildService,
-        private loginService: LoginService) {}
+        private loginService: LoginService,
+        private notificationService: NotificationService) {}
 
     private init(): void {
         this.unsubscribe();
@@ -78,6 +80,27 @@ export class JobDetailComponent implements OnInit, OnDestroy {
 
             this.cli_command += ` \\\n    --job-id ${job_id}`;
             this.ready = true;
+        });
+    }
+
+    public restart(job: Job) {
+        this.sub = this.jobService.restart(job)
+            .subscribe((n: Notification) => {
+            this.notificationService.notify(n);
+        });
+    }
+
+    public kill(job: Job) {
+        this.sub = this.jobService.kill(job)
+            .subscribe((n: Notification) => {
+            this.notificationService.notify(n);
+        });
+    }
+
+    public clearCache(job: Job) {
+        this.sub = this.jobService.clearCache(job)
+            .subscribe((n: Notification) => {
+            this.notificationService.notify(n);
         });
     }
 

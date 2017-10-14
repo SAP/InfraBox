@@ -25,13 +25,13 @@ export function restart_build(req: Request, res: Response, next)  {
             }
 
             build = builds[0];
-            return db.one(`
+            return tx.one(`
                 SELECT max(restart_counter) as restart_counter
                 FROM build WHERE build_number = $1 and project_id = $2
             `, [build.build_number, build.project_id]);
         })
         .then((r: any) => {
-            return db.one(`
+            return tx.one(`
                 INSERT INTO build (commit_id, build_number,
                           project_id, restart_counter, source_upload_id)
                 VALUES ($1, $2, $3, $4, $5) RETURNING ID
@@ -40,7 +40,7 @@ export function restart_build(req: Request, res: Response, next)  {
         })
         .then((b: any) => {
             new_build_id = b.id;
-            return db.one(`
+            return tx.one(`
                SELECT repo, env_var FROM job
                WHERE project_id = $1
                AND name = 'Create Jobs'
@@ -48,7 +48,7 @@ export function restart_build(req: Request, res: Response, next)  {
             `, [project_id, build_id]);
         })
         .then((job: any) => {
-            return db.none(`
+            return tx.none(`
                 INSERT INTO job (id, state, build_id, type,
                            name, cpu, memory, project_id, build_only, dockerfile, repo, env_var)
                 VALUES (gen_random_uuid(), 'queued', $1, 'create_job_matrix',

@@ -21,18 +21,18 @@
                     </div>
                     <div *ngIf="loginService.loggedIn" class="col-lg-4">
                         <div class="btn-group pull-right m-r-md" role="group" aria-label="...">
-                            <button class="btn btn-default" (click)="clearCache(build)">
-                        <i class="fa fa-trash"></i>
-                        <span class="hidden-xs"> Clear Cache</span>
-                    </button>
+                           <button class="btn btn-default" (click)="clearCache(build)">
+                                <i class="fa fa-trash"></i>
+                                <span class="hidden-xs"> Clear Cache</span>
+                            </button>
                             <button class="btn btn-default" (click)="kill(build)">
-                        <i class="fa fa-ban"></i>
-                        <span class="hidden-xs"> Kill Run</span>
-                    </button>
+                                <i class="fa fa-ban"></i>
+                                <span class="hidden-xs"> Kill Run</span>
+                            </button>
                             <button class="btn btn-default" (click)="restart(build)">
-                        <i class="fa fa-repeat"></i>
-                        <span class="hidden-xs"> Restart Run</span>
-                    </button>
+                                <i class="fa fa-repeat"></i>
+                                <span class="hidden-xs"> Restart Build</span>
+                            </button>
                         </div>
                     </div>
                 </div>

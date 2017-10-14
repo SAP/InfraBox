@@ -20,6 +20,7 @@ project.use('/tokens/', require('./tokens.controller'));
 project.use('/collaborators/', require('./collaborators.controller'));
 project.use('/secrets/', require('./secret.controller'));
 project.use('/build/', require('./build.controller'));
+project.use('/job/', require('./job.controller'));
 project.use('/', require('./delete.controller'));
 
 p.use('/:project_id/', project);
