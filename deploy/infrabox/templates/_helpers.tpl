@@ -250,6 +250,9 @@
 -
     name: INFRABOX_JOB_MAX_OUTPUT_SIZE
     value: {{ default "104857600" .Values.job.max_output_size | quote }}
+-
+    name: INFRABOX_JOB_MOUNT_DOCKER_SOCKET
+    value: {{ default "false" .Values.job.mount_docker_socket | quote }}
 {{ end }}
 
 {{ define "env_kubernetes" }}

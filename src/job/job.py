@@ -523,6 +523,10 @@ class RunJob(Job):
         container_name = self.job['id']
         cmd = ['docker', 'run', '--name', container_name, '-v', self.data_dir + ':/infrabox']
 
+        # Mount docker socket
+        if os.environ['INFRABOX_JOB_MOUNT_DOCKER_SOCKET'] == 'true':
+            cmd += ['-v', '/var/run/docker.sock:/var/run/docker.sock']
+
         # Add local cache
         if os.environ['INFRABOX_LOCAL_CACHE_ENABLED'] == 'true':
             cmd += ['-v', "/local-cache:/infrabox/local-cache"]

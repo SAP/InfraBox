@@ -251,6 +251,8 @@ gerrit:
 job:
     max_output_size: 104857600
 
+    # mount_docker_socket: false
+
 local_cache:
     enabled: false
 

@@ -15,7 +15,6 @@ logging.basicConfig(
 
 logger = logging.getLogger("install")
 
-
 class Configuration(object):
     def __init__(self):
         self.config = {}
@@ -437,6 +436,9 @@ class Kubernetes(Install):
     def setup_general(self):
         self.set('general.no_check_certificates', self.args.general_no_check_certificates)
 
+    def setup_job(self):
+        self.set('job.mount_docker_socket', self.args.job_mount_docker_socket)
+
     def main(self):
         # Copy helm chart
         copy_files(self.args, 'infrabox')
@@ -446,6 +448,7 @@ class Kubernetes(Install):
         self.setup_storage()
         self.setup_docker_registry()
         self.setup_account()
+        self.setup_job()
         self.setup_gerrit()
         self.setup_github()
         self.setup_dashboard()
@@ -725,6 +728,9 @@ def main():
     # Local Cache
     parser.add_argument('--local-cache-enabled', action='store_true', default=False)
     parser.add_argument('--local-cache-host-path')
+
+    # Job
+    parser.add_argument('--job-mount-docker-socket', action='store_true', default=False)
 
     # Parse options
     args = parser.parse_args()

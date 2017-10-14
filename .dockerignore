@@ -2,6 +2,7 @@ src/dashboard/dist/*
 src/dashboard/node_modules/*
 src/api/node_modules/*
 src/api/dist/*
+src/new-dashboard
 .vscode/*
 .infrabox/*
 .git/*

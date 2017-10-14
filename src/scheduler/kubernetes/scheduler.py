@@ -248,6 +248,9 @@ class Scheduler(object):
             "name": "INFRABOX_JOB_MAX_OUTPUT_SIZE",
             "value": os.environ['INFRABOX_JOB_MAX_OUTPUT_SIZE']
         }, {
+            "name": "INFRABOX_JOB_MOUNT_DOCKER_SOCKET",
+            "value": os.environ['INFRABOX_JOB_MOUNT_DOCKER_SOCKET']
+        }, {
             "name": "INFRABOX_DOCKER_REGISTRY_ADMIN_USERNAME",
             "valueFrom": {
                 "secretKeyRef": {
@@ -739,6 +742,7 @@ def main():
     get_env('INFRABOX_STORAGE_S3_ENABLED')
     get_env('INFRABOX_GENERAL_NO_CHECK_CERTIFICATES')
     get_env('INFRABOX_JOB_MAX_OUTPUT_SIZE')
+    get_env('INFRABOX_JOB_MOUNT_DOCKER_SOCKET')
 
     if use_gcs():
         get_env('INFRABOX_STORAGE_GCS_CONTAINER_OUTPUT_BUCKET')
