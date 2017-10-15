@@ -199,25 +199,6 @@ class RunJob(Job):
         data = self.parse_infrabox_json('/repo/infrabox.json')
         self.check_file_exist(data)
 
-        if 'generator' in data:
-            c.header("Running generator", show=True)
-            self.job['dockerfile'] = data['generator']['docker_file']
-            c.collect("Using docker file: %s \n" % self.job['dockerfile'], show=True)
-
-            job_name = self.job['name']
-            self.job['name'] = "generator"
-            self.run_container(c)
-            self.job['name'] = job_name
-
-            infrabox_json_path = os.path.join(self.infrabox_output_dir, "infrabox.json")
-            if not os.path.exists(infrabox_json_path):
-                raise Failure("Generator job did not create /infrabox/output/infrabox.json")
-
-            shutil.copyfile(infrabox_json_path, "/repo/infrabox.json")
-
-            data = self.parse_infrabox_json('/repo/infrabox.json')
-            self.check_file_exist(data)
-
         c.header("Creating jobs", show=True)
         jobs = self.get_job_list(data, c, self.job['repo'], infrabox_paths={"/repo/infrabox.json": True})
         self.create_jobs(jobs)
@@ -624,11 +605,6 @@ class RunJob(Job):
             return data
 
     def check_file_exist(self, data, base_path="/repo"):
-        if 'generator' in data:
-            p = os.path.join(base_path, data['generator']['docker_file'])
-            if not os.path.exists(p):
-                raise Failure("%s does not exist" % p)
-
         jobs = data.get('jobs', [])
         for job in jobs:
             job_type = job['type']

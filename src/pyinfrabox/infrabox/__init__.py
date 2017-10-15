@@ -266,28 +266,14 @@ def parse_jobs(e, path):
         else:
             raise ValidationError(p, "type '%s' not supported" % t)
 
-def parse_generator(d, path):
-    check_allowed_properties(d, "#", ("docker_file",))
-    check_required_properties(d, "#", ("docker_file",))
-    check_text(d['docker_file'], path + ".docker_file")
-
 def parse_document(d):
-    check_allowed_properties(d, "#", ("version", "jobs", "generator"))
-    check_required_properties(d, "#", ("version", ))
+    check_allowed_properties(d, "#", ("version", "jobs"))
+    check_required_properties(d, "#", ("version", "jobs"))
 
     check_version(d['version'], "#version")
 
-    if 'generator' not in d and 'jobs' not in d:
-        raise ValidationError("#", "Either 'jobs' or 'generator' must be set")
-
-    if 'generator' in d and 'jobs' in d:
-        raise ValidationError("#", "Either 'jobs' or 'generator' must be set, not both")
-
     if 'jobs' in d:
         parse_jobs(d['jobs'], "#jobs")
-
-    if 'generator' in d:
-        parse_generator(d['generator'], "#generator")
 
 def validate_json(d):
     parse_document(d)
