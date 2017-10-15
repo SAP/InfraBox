@@ -41,7 +41,7 @@ class RunJob(Job):
         #
         # /tmp/infrabox is mounted to the same path on the host
         # So we can use it to transfer data between the job and
-        # the run_job.py container.
+        # the job.py container.
         #
 
         # <data_dir>/cache is mounted in the job to /infrabox/cache
@@ -432,6 +432,7 @@ class RunJob(Job):
             makedirs(service_badge_dir)
 
             service_volumes = [
+                "/repo:/infrabox/context",
                 "%s:/infrabox/cache" % service_cache_dir,
                 "%s:/infrabox/inputs" % self.infrabox_inputs_dir,
                 "%s:/infrabox/output" % service_output_dir,
@@ -522,6 +523,9 @@ class RunJob(Job):
 
         container_name = self.job['id']
         cmd = ['docker', 'run', '--name', container_name, '-v', self.data_dir + ':/infrabox']
+
+        # Mount context
+        cmd += ['-v', '/repo:/infrabox/context']
 
         # Mount docker socket
         if os.environ['INFRABOX_JOB_MOUNT_DOCKER_SOCKET'] == 'true':
