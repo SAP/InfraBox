@@ -22,6 +22,11 @@ def makedirs(path):
     os.makedirs(path)
     os.chmod(path, 0o777)
 
+def get_registry_name():
+    n = os.environ['INFRABOX_DOCKER_REGISTRY_URL'].replace('https://', '')
+    n = n.replace('http://', '')
+    return n
+
 class RunJob(Job):
     def __init__(self, console, job_type):
         Job.__init__(self)
@@ -489,7 +494,7 @@ class RunJob(Job):
                 c.execute(['docker', 'login',
                            '-u', os.environ['INFRABOX_DOCKER_REGISTRY_ADMIN_USERNAME'],
                            '-p', os.environ['INFRABOX_DOCKER_REGISTRY_ADMIN_PASSWORD'],
-                           os.environ['INFRABOX_DOCKER_REGISTRY_URL']], show=False)
+                           get_registry_name()], show=False)
 
                 c.execute(['docker', 'push', image_name], show=True)
         except Exception as e:
@@ -580,7 +585,7 @@ class RunJob(Job):
                 raise Failure("Failed to login to registry: " + e.message)
 
 
-        image_name = os.environ['INFRABOX_DOCKER_REGISTRY_URL'] + '/' \
+        image_name = get_registry_name() + '/' \
                      + self.project['id'] + '/' \
                      + self.job['name'] \
                      + ':build_%s' % self.build['build_number']
