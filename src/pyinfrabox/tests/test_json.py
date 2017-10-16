@@ -16,7 +16,6 @@ def test_version():
     raises_expect({'version': 2, 'jobs': []}, "#version: unsupported version")
 
 def test_jobs():
-    raises_expect({'version': 1}, "#: Either 'jobs' or 'generator' must be set")
     raises_expect({'version': 1, 'jobs': 'asd'}, "#jobs: must be an array")
     raises_expect({'version': 1, 'jobs': []}, "#jobs: must not be empty")
     raises_expect({'version': 1, 'jobs': [{}]}, "#jobs[0]: does not contain a 'type'")

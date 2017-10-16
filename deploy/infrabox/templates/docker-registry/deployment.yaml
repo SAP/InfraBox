@@ -84,6 +84,9 @@ spec:
                 image: registry:2.6
                 imagePullPolicy: Always
                 env:
+                -
+                    name: REGISTRY_HTTP_HOST
+                    value: {{ .Values.docker_registry.url }}
                 {{ if .Values.storage.s3.enabled }}
                 -
                     name: REGISTRY_STORAGE

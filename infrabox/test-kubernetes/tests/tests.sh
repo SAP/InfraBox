@@ -20,7 +20,6 @@ _runDockerJobTests() {
     _runSingleTest "docker_secure_env"
     _runSingleTest "docker_insecure_env"
     _runSingleTest "docker_input_output"
-    _runSingleTest "generator"
 
     echo "## TODO: docker: testresult"
     echo "## TODO: docker: badge"

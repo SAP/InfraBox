@@ -29,6 +29,13 @@ db:
     # Tag
     tag: latest
 
+docker_gc:
+    # name of the docker-gc image in your general.docker_registry
+    # image: infrabox/docker-gc
+
+    # Tag
+    tag: latest
+
 scheduler:
     enabled: true
 

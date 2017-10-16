@@ -26,3 +26,4 @@ infrabox run deploy/docker-auth      -t ${docker_registry}infrabox/docker-regist
 infrabox run deploy/docker-nginx     -t ${docker_registry}infrabox/docker-registry/nginx:$image_tag
 infrabox run deploy/stats            -t ${docker_registry}infrabox/stats:$image_tag
 infrabox run deploy/db               -t ${docker_registry}infrabox/db:$image_tag
+infrabox run deploy/docker-gc        -t ${docker_registry}infrabox/docker-gc:$image_tag

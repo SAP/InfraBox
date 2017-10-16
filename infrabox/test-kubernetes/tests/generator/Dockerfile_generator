@@ -1,2 +1,0 @@
-FROM alpine
-CMD echo '{ "version": 1, "jobs":[{"type":"docker", "name": "jobname", "resources":{"limits":{"cpu":1, "memory": 1024}}, "docker_file":"Dockerfile", "build_only": false }]}' > /infrabox/output/infrabox.json

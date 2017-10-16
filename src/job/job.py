@@ -22,6 +22,11 @@ def makedirs(path):
     os.makedirs(path)
     os.chmod(path, 0o777)
 
+def get_registry_name():
+    n = os.environ['INFRABOX_DOCKER_REGISTRY_URL'].replace('https://', '')
+    n = n.replace('http://', '')
+    return n
+
 class RunJob(Job):
     def __init__(self, console, job_type):
         Job.__init__(self)
@@ -41,7 +46,7 @@ class RunJob(Job):
         #
         # /tmp/infrabox is mounted to the same path on the host
         # So we can use it to transfer data between the job and
-        # the run_job.py container.
+        # the job.py container.
         #
 
         # <data_dir>/cache is mounted in the job to /infrabox/cache
@@ -198,25 +203,6 @@ class RunJob(Job):
         c.header("Parsing infrabox.json", show=True)
         data = self.parse_infrabox_json('/repo/infrabox.json')
         self.check_file_exist(data)
-
-        if 'generator' in data:
-            c.header("Running generator", show=True)
-            self.job['dockerfile'] = data['generator']['docker_file']
-            c.collect("Using docker file: %s \n" % self.job['dockerfile'], show=True)
-
-            job_name = self.job['name']
-            self.job['name'] = "generator"
-            self.run_container(c)
-            self.job['name'] = job_name
-
-            infrabox_json_path = os.path.join(self.infrabox_output_dir, "infrabox.json")
-            if not os.path.exists(infrabox_json_path):
-                raise Failure("Generator job did not create /infrabox/output/infrabox.json")
-
-            shutil.copyfile(infrabox_json_path, "/repo/infrabox.json")
-
-            data = self.parse_infrabox_json('/repo/infrabox.json')
-            self.check_file_exist(data)
 
         c.header("Creating jobs", show=True)
         jobs = self.get_job_list(data, c, self.job['repo'], infrabox_paths={"/repo/infrabox.json": True})
@@ -432,6 +418,7 @@ class RunJob(Job):
             makedirs(service_badge_dir)
 
             service_volumes = [
+                "/repo:/infrabox/context",
                 "%s:/infrabox/cache" % service_cache_dir,
                 "%s:/infrabox/inputs" % self.infrabox_inputs_dir,
                 "%s:/infrabox/output" % service_output_dir,
@@ -507,7 +494,7 @@ class RunJob(Job):
                 c.execute(['docker', 'login',
                            '-u', os.environ['INFRABOX_DOCKER_REGISTRY_ADMIN_USERNAME'],
                            '-p', os.environ['INFRABOX_DOCKER_REGISTRY_ADMIN_PASSWORD'],
-                           os.environ['INFRABOX_DOCKER_REGISTRY_URL']], show=False)
+                           get_registry_name()], show=False)
 
                 c.execute(['docker', 'push', image_name], show=True)
         except Exception as e:
@@ -522,6 +509,9 @@ class RunJob(Job):
 
         container_name = self.job['id']
         cmd = ['docker', 'run', '--name', container_name, '-v', self.data_dir + ':/infrabox']
+
+        # Mount context
+        cmd += ['-v', '/repo:/infrabox/context']
 
         # Mount docker socket
         if os.environ['INFRABOX_JOB_MOUNT_DOCKER_SOCKET'] == 'true':
@@ -595,7 +585,7 @@ class RunJob(Job):
                 raise Failure("Failed to login to registry: " + e.message)
 
 
-        image_name = os.environ['INFRABOX_DOCKER_REGISTRY_URL'] + '/' \
+        image_name = get_registry_name() + '/' \
                      + self.project['id'] + '/' \
                      + self.job['name'] \
                      + ':build_%s' % self.build['build_number']
@@ -620,11 +610,6 @@ class RunJob(Job):
             return data
 
     def check_file_exist(self, data, base_path="/repo"):
-        if 'generator' in data:
-            p = os.path.join(base_path, data['generator']['docker_file'])
-            if not os.path.exists(p):
-                raise Failure("%s does not exist" % p)
-
         jobs = data.get('jobs', [])
         for job in jobs:
             job_type = job['type']

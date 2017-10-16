@@ -26,3 +26,4 @@ $cmd_prefix -- push ${docker_registry}infrabox/docker-registry/auth:$image_tag
 $cmd_prefix -- push ${docker_registry}infrabox/docker-registry/nginx:$image_tag
 $cmd_prefix -- push ${docker_registry}infrabox/stats:$image_tag
 $cmd_prefix -- push ${docker_registry}infrabox/db:$image_tag
+$cmd_prefix -- push ${docker_registry}infrabox/docker-gc:$image_tag

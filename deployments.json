@@ -152,6 +152,15 @@
         }
      }, {
         "type": "docker",
+        "name": "docker-gc",
+        "docker_file": "src/docker-gc/Dockerfile",
+        "build_only": true,
+        "resources": { "limits": { "cpu": 1, "memory": 2048 } },
+        "security": {
+            "scan_container": true
+        }
+     }, {
+        "type": "docker",
         "name": "clair-analyzer",
         "docker_file": "src/clair/analyzer/Dockerfile",
         "build_only": true,

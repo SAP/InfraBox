@@ -24,4 +24,5 @@ docker push ${docker_registry}infrabox/clair/updater:$image_tag
 docker push ${docker_registry}infrabox/docker-registry/auth:$image_tag
 docker push ${docker_registry}infrabox/docker-registry/nginx:$image_tag
 docker push ${docker_registry}infrabox/stats:$image_tag
+docker push ${docker_registry}infrabox/docker-gc:$image_tag
 docker push ${docker_registry}infrabox/db:$image_tag
