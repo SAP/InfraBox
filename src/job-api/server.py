@@ -120,7 +120,8 @@ def get_job_data():
             j.memory,
             u.id,
             j.build_arg,
-            j.deployment
+            j.deployment,
+            j.security_context
 	FROM job j
 	INNER JOIN build b
 	    ON j.build_id = b.id
@@ -150,7 +151,8 @@ def get_job_data():
         "scan_container": r[19],
         "cpu": r[22],
         "memory": r[23],
-        "build_arguments": r[25]
+        "build_arguments": r[25],
+        "security_context": r[27]
     }
 
     env_vars = r[20]
@@ -553,6 +555,17 @@ def set_running():
 def create_jobs():
     d = request.json
     jobs = d['jobs']
+
+    # Check if capabilities are set and allowed
+    if get_env('INFRABOX_JOB_SECURITY_CONTEXT_CAPABILITIES_ENABLED') != 'true':
+        for job in jobs:
+            sc = job.get('security_context', None)
+            if not sc:
+                continue
+
+            if sc.get('capabilities', None):
+                return 'Capabilities are disabled', 404
+
 
     # Create new connection without auto commit
     c = psycopg2.connect(dbname=os.environ['INFRABOX_DATABASE_DB'],
@@ -1097,6 +1110,7 @@ if __name__ == "__main__":
     get_env('INFRABOX_JOB_ID')
     get_env('INFRABOX_DASHBOARD_URL')
     get_env('INFRABOX_JOB_MAX_OUTPUT_SIZE')
+    get_env('INFRABOX_JOB_SECURITY_CONTEXT_CAPABILITIES_ENABLED')
 
     if get_env('INFRABOX_STORAGE_GCS_ENABLED') == 'true':
         get_env('INFRABOX_STORAGE_GCS_CONTAINER_CONTENT_CACHE_BUCKET')

@@ -97,6 +97,9 @@ class Scheduler(object):
         }, {
             "name": "INFRABOX_GERRIT_ENABLED",
             "value": os.environ['INFRABOX_GERRIT_ENABLED']
+        }, {
+            "name": "INFRABOX_JOB_SECURITY_CONTEXT_CAPABILITIES_ENABLED",
+            "value": os.environ['INFRABOX_JOB_SECURITY_CONTEXT_CAPABILITIES_ENABLED']
         }]
 
         if use_gcs():
@@ -760,6 +763,7 @@ def main():
     get_env('INFRABOX_GENERAL_NO_CHECK_CERTIFICATES')
     get_env('INFRABOX_JOB_MAX_OUTPUT_SIZE')
     get_env('INFRABOX_JOB_MOUNT_DOCKER_SOCKET')
+    get_env('INFRABOX_JOB_SECURITY_CONTEXT_CAPABILITIES_ENABLED')
 
     if use_gcs():
         get_env('INFRABOX_STORAGE_GCS_CONTAINER_OUTPUT_BUCKET')
