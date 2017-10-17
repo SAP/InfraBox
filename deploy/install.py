@@ -438,7 +438,7 @@ class Kubernetes(Install):
 
     def setup_job(self):
         self.set('job.mount_docker_socket', self.args.job_mount_docker_socket)
-        self.set('job.use_host_docker_daemon', self.args.use_host_docker_daemon)
+        self.set('job.use_host_docker_daemon', self.args.job_use_host_docker_daemon)
 
     def main(self):
         # Copy helm chart
