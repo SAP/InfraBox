@@ -18,6 +18,7 @@ import NotificationComponent from '@/components/Notification'
 import StateComponent from '@/components/utils/State'
 import DateComponent from '@/components/utils/Date'
 import ProjectDetailComponent from '@/components/project/ProjectDetail'
+import ProjectOverviewComponent from '@/components/project/ProjectOverview'
 import DurationComponent from '@/components/utils/Duration'
 import GitJobTypeComponent from '@/components/utils/GitJobType'
 import NotificationService from './services/NotificationService'
@@ -49,6 +50,126 @@ Vue.component('ib-date', DateComponent)
 Vue.component('ib-duration', DurationComponent)
 Vue.component('ib-gitjobtype', GitJobTypeComponent)
 Vue.component('ib-project', ProjectDetailComponent)
+Vue.component('ib-overview', ProjectOverviewComponent)
+
+Vue.material.registerTheme({
+    default: {
+        primary: {
+            color: 'blue-grey',
+            hue: 900,
+            textColor: 'white'
+        },
+        accent: {
+            color: 'cyan',
+            hue: 600,
+            textColor: 'white'
+        },
+        warn: {
+            color: 'red',
+            hue: 900,
+            textColor: 'white'
+        },
+        background: {
+            color: 'grey',
+            hue: 100,
+            textColor: 'black'
+        }
+    },
+    error: {
+        primary: {
+            color: 'black',
+            textColor: 'white'
+        },
+        accent: {
+            color: 'grey',
+            textColor: 'white'
+        }
+    },
+    failure: {
+        primary: {
+            color: 'red',
+            hue: '900',
+            textColor: 'white'
+        },
+        accent: {
+            color: 'red',
+            hue: 100,
+            textColor: 'grey'
+        }
+    },
+    finished: {
+        primary: {
+            color: 'green',
+            hue: 'A400',
+            textColor: 'white'
+        },
+        accent: {
+            color: 'green',
+            hue: 100,
+            textColor: 'grey'
+        }
+    },
+    killed: {
+        primary: {
+            color: 'grey',
+            hue: '700',
+            textColor: 'white'
+        },
+        accent: {
+            color: 'grey',
+            hue: 100,
+            textColor: 'grey'
+        }
+    },
+    queued: {
+        primary: {
+            color: 'grey',
+            hue: 500,
+            textColor: 'white'
+        },
+        accent: {
+            color: 'cyan',
+            hue: 100,
+            textColor: 'grey'
+        }
+    },
+    running: {
+        primary: {
+            color: 'cyan',
+            hue: 600,
+            textColor: 'white'
+        },
+        accent: {
+            color: 'cyan',
+            hue: 100,
+            textColor: 'grey'
+        }
+    },
+    scheduled: {
+        primary: {
+            color: 'grey',
+            hue: 300,
+            textColor: 'white'
+        },
+        accent: {
+            color: 'cyan',
+            hue: 100,
+            textColor: 'grey'
+        }
+    },
+    skipped: {
+        primary: {
+            color: 'grey',
+            hue: 400,
+            textColor: 'white'
+        },
+        accent: {
+            color: 'cyan',
+            hue: 100,
+            textColor: 'grey'
+        }
+    }
+})
 
 /* eslint-disable no-new */
 new Vue({

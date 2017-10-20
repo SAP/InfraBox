@@ -1,6 +1,7 @@
 <template>
   <div v-if="loaded">
-      <ib-project v-for="project of $store.state.projects" :key="project.id" :project="project"></ib-project>
+      <div class="md-headline" style="margin:25px"><md-icon md-iconset="fa fa-th-large"></md-icon> Overview</div>
+      <ib-overview v-for="project of $store.state.projects" :key="project.id" :project="project"></ib-overview>
   </div>
 </template>
 
