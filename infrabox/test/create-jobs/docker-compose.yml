@@ -25,6 +25,7 @@ services:
             - INFRABOX_STORAGE_S3_ENABLED=false
             - INFRABOX_GITHUB_ENABLED=false
             - INFRABOX_JOB_MAX_OUTPUT_SIZE=1024
+            - INFRABOX_JOB_SECURITY_CONTEXT_CAPABILITIES_ENABLED=false
         links:
             - postgres
         command: /wait-for-postgres.sh postgres /entrypoint.sh

@@ -525,6 +525,11 @@ class RunJob(Job):
         for name, value in self.environment.iteritems():
             cmd += ['-e', '%s=%s' % (name, value)]
 
+        # Add capabilities
+        add_capabilities = self.job.get('security_context', {}).get('capabilities', {}).get('add', [])
+        if add_capabilities:
+            cmd += ['--cap-add=%s' % ','.join(add_capabilities)]
+
         cmd += [image_name]
 
         try:

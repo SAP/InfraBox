@@ -260,6 +260,10 @@ job:
 
     # mount_docker_socket: false
     # use_host_docker_daemon: false
+    #
+    security_context:
+        capabilities:
+            enabled: false
 
 local_cache:
     enabled: false
