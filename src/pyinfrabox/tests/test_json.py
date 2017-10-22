@@ -290,6 +290,32 @@ def test_build_arguments():
     d['jobs'][0]['build_arguments'] = {}
     validate_json(d)
 
+def test_security_context():
+    d = {
+        "version": 1,
+        "jobs": [{
+            "type": "docker",
+            "name": "test",
+            "docker_file": "Dockerfile",
+            "resources": {"limits": {"cpu": 1, "memory": 1024}},
+            "security_context": []
+        }]
+    }
+
+    raises_expect(d, "#jobs[0].security_context: must be an object")
+
+    d['jobs'][0]['security_context'] = {'capabilities': []}
+    raises_expect(d, "#jobs[0].security_context.capabilities: must be an object")
+
+    d['jobs'][0]['security_context'] = {'capabilities': {'add': {}}}
+    raises_expect(d, "#jobs[0].security_context.capabilities.add: must be an array")
+
+    d['jobs'][0]['security_context'] = {'capabilities': {'add': [123]}}
+    raises_expect(d, "#jobs[0].security_context.capabilities.add[0]: is not a string")
+
+    d['jobs'][0]['security_context'] = {'capabilities': {'add': ['CAP']}}
+    validate_json(d)
+
 def test_valid():
     d = {
         "version": 1,

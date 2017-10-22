@@ -119,7 +119,8 @@ class Test(TestCase):
                 "name": "test",
                 "type": "run_project_container",
                 "state": "scheduled",
-                "scan_container": False
+                "scan_container": False,
+                "security_context": None
             },
             "project": {
                 "id": "4514af82-3c4f-4bb5-b1da-a89a0ced5e6f",

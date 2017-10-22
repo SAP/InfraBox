@@ -256,6 +256,9 @@
 -
     name: INFRABOX_JOB_USE_HOST_DOCKER_DAEMON
     value: {{ default "false" .Values.job.use_host_docker_daemon | quote }}
+-
+    name: INFRABOX_JOB_SECURITY_CONTEXT_CAPABILITIES_ENABLED
+    value: {{ default "false" .Values.job.security_context.capabilities.enabled | quote }}
 {{ end }}
 
 {{ define "env_kubernetes" }}
