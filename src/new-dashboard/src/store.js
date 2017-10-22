@@ -5,6 +5,7 @@ import _ from 'underscore'
 
 import Project from './models/Project'
 import Build from './models/Build'
+import Job from './models/Job'
 
 Vue.use(Vuex)
 
@@ -68,7 +69,7 @@ function handleJobUpdate (state, event) {
 
         const j = event.data.job
         job.state = j.state
-        job.end_date = new Date(j.end_date)
+        job.endDate = new Date(j.end_date)
 
         build._updateState()
         updateProjectState(project)
@@ -94,7 +95,8 @@ function handleJobUpdate (state, event) {
             build = new Build(event.data.build.id,
                               event.data.build.build_number,
                               event.data.build.restart_counter,
-                              commit, event.data.pull_request)
+                              commit, event.data.pull_request,
+                              project)
 
             let builds = [build]
 
@@ -116,19 +118,28 @@ function handleJobUpdate (state, event) {
         const job = findJob(build, event.data.job.id)
         if (!job) {
             const d = event.data.job
-            const job = {
-                id: d.id,
-                name: d.name,
-                cpu: d.cpu,
-                memory: d.memory,
-                state: d.state,
-                start_date: new Date(d.start_date),
-                end_date: new Date(d.end_date)
+            let startDate = null
+
+            if (d.start_date) {
+                startDate = new Date(d.start_date)
             }
+
+            const job = new Job(
+                d.id,
+                d.name,
+                d.cpu,
+                d.memory,
+                d.state,
+                startDate,
+                new Date(d.end_date),
+                build,
+                project,
+                d.dependencies
+            )
             build.jobs.push(job)
         }
 
-        build._updateState(build)
+        build._updateState()
         updateProjectState(project)
     }
 }
@@ -137,13 +148,60 @@ function addProject (state, project) {
     state.projects.push(new Project(project.name, project.id, project.type))
 }
 
-function addBuild (state, project, build) {
-    project.builds.push(build)
+function addJobs (state, jobs) {
+    for (const job of jobs) {
+        handleJobUpdate(state, {
+            type: 'INSERT',
+            data: job
+        })
+    }
+}
+
+function addSecrets (state, data) {
+    const project = data.project
+    const secrets = data.secrets
+
+    if (!project.secrets) {
+        project.secrets = []
+    }
+
+    for (let s of secrets) {
+        project.secrets.push(s)
+    }
+}
+
+function addCollaborators (state, data) {
+    const project = data.project
+    const collaborators = data.collaborators
+
+    if (!project.collaborators) {
+        project.collaborators = []
+    }
+
+    for (let s of collaborators) {
+        project.collaborators.push(s)
+    }
+}
+
+function addTokens (state, data) {
+    const project = data.project
+    const tokens = data.tokens
+
+    if (!project.tokens) {
+        project.tokens = []
+    }
+
+    for (let s of tokens) {
+        project.tokens.push(s)
+    }
 }
 
 const mutations = {
     addProject,
-    addBuild,
+    addJobs,
+    addSecrets,
+    addCollaborators,
+    addTokens,
     handleJobUpdate
 }
 

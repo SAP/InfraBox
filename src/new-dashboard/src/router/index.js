@@ -20,6 +20,12 @@ export default new Router({
         path: '/project/:projectName/build/:buildNumber/:buildRestartCounter',
         name: 'BuildDetail',
         component: BuildDetail,
-        props: true
+        props: function (route) {
+            return {
+                projectName: route.params.projectName,
+                buildNumber: parseInt(route.params.buildNumber),
+                buildRestartCounter: parseInt(route.params.buildRestartCounter)
+            }
+        }
     }]
 })

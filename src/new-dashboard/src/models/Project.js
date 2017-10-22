@@ -1,5 +1,7 @@
 import APIService from '../services/APIService'
 import store from '../store'
+import NotificationService from '../services/NotificationService'
+import Notification from '../models/Notification'
 
 export default class Project {
     constructor (name, id, type) {
@@ -9,6 +11,9 @@ export default class Project {
         this.commits = []
         this.state = 'finished'
         this.type = type
+        this.secrets = null
+        this.collaborators = null
+        this.tokens = null
     }
 
     isGit () {
@@ -33,11 +38,56 @@ export default class Project {
             return new Promise((resolve) => { resolve(b) })
         }
 
-        return APIService.get('/api/dashboard/build')
-        .then((build) => {
-            this._addBuild(build)
-            return build
-        })
+        return APIService.get(`/api/dashboard/project/${this.id}/build/${number}/${restartCounter}`)
+            .then((jobs) => {
+                this._addJobs(jobs)
+                return this._getBuild(number, restartCounter)
+            })
+            .catch((err) => {
+                NotificationService.$emit('NOTIFICATION', new Notification(err))
+            })
+    }
+
+    _loadCollaborators () {
+        if (this.collaborators) {
+            return
+        }
+
+        return APIService.get(`/api/dashboard/project/${this.id}/collaborators`)
+            .then((collaborators) => {
+                store.commit('addCollaborators', { project: this, collaborators: collaborators })
+            })
+            .catch((err) => {
+                NotificationService.$emit('NOTIFICATION', new Notification(err))
+            })
+    }
+
+    _loadSecrets () {
+        if (this.secrets) {
+            return
+        }
+
+        return APIService.get(`/api/dashboard/project/${this.id}/secrets`)
+            .then((secrets) => {
+                store.commit('addSecrets', { project: this, secrets: secrets })
+            })
+            .catch((err) => {
+                NotificationService.$emit('NOTIFICATION', new Notification(err))
+            })
+    }
+
+    _loadTokens () {
+        if (this.secrets) {
+            return
+        }
+
+        return APIService.get(`/api/dashboard/project/${this.id}/tokens`)
+            .then((tokens) => {
+                store.commit('addTokens', { project: this, tokens: tokens })
+            })
+            .catch((err) => {
+                NotificationService.$emit('NOTIFICATION', new Notification(err))
+            })
     }
 
     _getBuild (number, restartCounter) {
@@ -48,11 +98,11 @@ export default class Project {
         }
     }
 
-    _addBuild (build) {
-        if (!build) {
+    _addJobs (jobs) {
+        if (!jobs) {
             return
         }
 
-        store.commit('addBuild', this, build)
+        store.commit('addJobs', jobs)
     }
 }
