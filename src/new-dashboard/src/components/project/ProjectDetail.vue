@@ -1,6 +1,6 @@
 <template>
-    <div class="example-box">
-		<md-card v-if="project" class="example-box-card">
+    <div v-if="project" class="example-box">
+		<md-card class="example-box-card">
 			<md-toolbar md-theme="white" class="md-dense">
 				<h3 class="md-title">{{ project.name }}</h3>
 			</md-toolbar>
@@ -23,15 +23,15 @@
   </template>
 
 
-				  <md-tab class="example-content" md-label="Builds" md-icon="search" :md-options="{new_badge: 1}" md-active>
-					<slot name="demo">
+				  <md-tab class="example-content" md-label="Builds" md-icon="search" :md-options="{new_badge: project.getActiveBuilds().length}" md-active>
+					<slot>
                        <ib-build-table :project="project"></ib-build-table>
                     </slot>
 				  </md-tab>
 
 				  <md-tab class="code-content" md-label="Settings" md-icon="phone">
-					<slot name="code">
-                        Settings
+					<slot>
+                        <ib-project-settings :project="project"></ib-project-settings>
                     </slot>
 				  </md-tab>
 				</md-tabs>
@@ -41,13 +41,18 @@
 </template>
 
 <script>
-/*
 import store from '../../store'
 import ProjectService from '../../services/ProjectService'
+import BuildTable from '../build/BuildTable'
+import ProjectSettings from './Settings'
 
 export default {
     name: 'ProjectDetail',
     props: ['projectName'],
+    components: {
+        'ib-build-table': BuildTable,
+        'ib-project-settings': ProjectSettings
+    },
     store,
     asyncComputed: {
         project: {
@@ -60,16 +65,6 @@ export default {
                 this.projectName
             }
         }
-    }
-}
-*/
-
-import BuildTable from './BuildTable'
-
-export default {
-    props: ['project'],
-    components: {
-        'ib-build-table': BuildTable
     }
 }
 </script>

@@ -1,4 +1,5 @@
 <template>
+<<<<<<< HEAD
     <div class="example-box" v-if="project">
                 <h3 class="md-title" style="background-color: yellow; padding: 8px">
                     <span v-if="project.isGit()"><md-icon md-iconset="fa fa-github"></md-icon></span>
@@ -40,34 +41,61 @@
                         </md-table-row>
                     </md-table-body>
                 </md-table>
+=======
+    <div v-if="project" class="example-box">
+		<md-card>
+            <md-table-card>
+                <md-card-header>
+                    <h3 class="md-title">
+                        <span v-if="project.isGit()"><md-icon md-iconset="fa fa-github"></md-icon></span>
+                        <span v-if="!project.isGit()"><md-icon md-iconset="fa fa-home"></md-icon></span>
+                        <router-link :to="{name: 'ProjectDetail', params: {projectName: project.name}}">{{ project.name }}</router-link>
+                    </h3>
+                    <h3 class="md-subhead">Subtitle here</h3>
+                </md-card-header>
+                <md-card-content>
+                    <md-table>
+                        <md-table-header>
+                            <md-table-row>
+                                <md-table-head>Build</md-table-head>
+                                <md-table-head v-if="project.isGit()">Author</md-table-head>
+                                <md-table-head v-if="project.isGit()">Branch</md-table-head>
+                                <md-table-head>Start Time</md-table-head>
+                                <md-table-head>Duration</md-table-head>
+                                <md-table-head v-if="project.isGit()">Type</md-table-head>
+                            </md-table-row>
+                        </md-table-header>
+
+                        <md-table-body>
+                            <md-table-row v-if="project.builds.length != 0">
+                                <md-table-cell><ib-state :state="project.builds[0].state"></ib-state>
+                                    {{ project.builds[0].number }}.{{ project.builds[0].restartCounter }}
+                                </md-table-cell>
+                                <md-table-cell v-if="project.isGit()">
+                                    {{ project.builds[0].commit.author_name }}
+                                </md-table-cell>
+                                <md-table-cell v-if="project.isGit()">
+                                    {{ project.builds[0].commit.branch }}
+                                </md-table-cell>
+                                <md-table-cell><ib-date :date="project.builds[0].start_date"></ib-date></md-table-cell>
+                                <md-table-cell>
+                                    <ib-duration :start="project.builds[0].start_date" :end="project.builds[0].end_date"></ib-duration>
+                                </md-table-cell>
+                                <md-table-cell v-if="project.isGit()">
+                                    <ib-gitjobtype :build="project.builds[0]"></ib-gitjobtype>
+                                </md-table-cell>
+                            </md-table-row>
+                        </md-table-body>
+                    </md-table>
+                </md-card-content>
+            </md-table-card>
+		</md-card>
+>>>>>>> upstream/master
     </div>
 </template>
 
 <script>
-/*
-    import store from '../../store'
-    import ProjectService from '../../services/ProjectService'
-
-    export default {
-        name: 'ProjectDetail',
-        props: ['projectName'],
-        store,
-        asyncComputed: {
-            project: {
-                get () {
-                    return ProjectService
-                        .findProjectByName(this.projectName)
-                },
-                watch () {
-                    // eslint-disable-next-line no-unused-expressions
-                    this.projectName
-                }
-            }
-        }
-    }
-    */
-
-import BuildTable from './BuildTable'
+import BuildTable from '../build/BuildTable'
 
 export default {
     props: ['project'],
