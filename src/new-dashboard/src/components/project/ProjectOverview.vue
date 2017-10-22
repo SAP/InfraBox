@@ -1,15 +1,12 @@
 <template>
-    <div class="example-box">
-		<md-card v-if="project">
-            <md-card-header>
-                <h3 class="md-title">
+    <div class="example-box" v-if="project">
+                <h3 class="md-title" style="background-color: yellow; padding: 8px">
                     <span v-if="project.isGit()"><md-icon md-iconset="fa fa-github"></md-icon></span>
                     <span v-if="!project.isGit()"><md-icon md-iconset="fa fa-home"></md-icon></span>
                     {{ project.name }}
                 </h3>
-                <h3 class="md-subhead">Subtitle here</h3>
-            </md-card-header>
-			<md-card-content>
+               <!-- <h3 class="md-subhead" v-if="project.builds[0] && project.builds[0].state === 'finished'"><span>Last build: <ib-state :state="project.builds[1].state"></ib-state></span></h3>-->
+
                 <md-table>
                     <md-table-header>
                         <md-table-row>
@@ -22,7 +19,7 @@
                         </md-table-row>
                     </md-table-header>
 
-                    <md-table-body>
+                    <md-table-body v-if="project.builds[0]">
                         <md-table-row>
                             <md-table-cell><ib-state :state="project.builds[0].state"></ib-state>
                                 {{ project.builds[0].number }}.{{ project.builds[0].restartCounter }}
@@ -43,8 +40,6 @@
                         </md-table-row>
                     </md-table-body>
                 </md-table>
-            </md-card-content>
-		</md-card>
     </div>
 </template>
 
@@ -90,25 +85,6 @@ export default {
     .md-title {
         position: relative;
         z-index: 3;
-    }
-
-    .example-tabs {
-        margin-top: -48px;
-        @media (max-width: 480px) {
-            margin-top: -1px;
-            background-color: #fff;
-        }
-    }
-
-    .label-with-new-badge {
-        font-weight: bolder
-    }
-
-    .new-badge {
-        background-color: red;
-        color: #fff;
-        padding: 3px;
-        border-radius: 3px
     }
 
 </style>
