@@ -14,6 +14,10 @@ class ProjectService {
         })
     }
 
+    loadProjects () {
+        return this.loaded
+    }
+
     _findProjectByName (name) {
         for (let p of store.state.projects) {
             if (p.name === name) {

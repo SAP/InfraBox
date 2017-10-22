@@ -32,13 +32,7 @@ Vue.use(VueMaterial)
 Vue.use(AsyncComputed, {
     useRawError: true,
     errorHandler (err) {
-        console.error(err)
-        let message = 'Internal Error occured'
-        if (err.body && err.body.message) {
-            message = err.body.message
-        }
-
-        NotificationService.$emit('NOTIFICATION', new Notification(message))
+        NotificationService.$emit('NOTIFICATION', new Notification(err))
     }
 })
 

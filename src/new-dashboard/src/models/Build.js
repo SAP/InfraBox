@@ -1,14 +1,49 @@
+import APIService from '../services/APIService'
+import NotificationService from '../services/NotificationService'
+import Notification from '../models/Notification'
+
 export default class Build {
-    constructor (id, number, restartCounter, commit, pr) {
+    constructor (id, number, restartCounter, commit, pr, project) {
         this.id = id
         this.number = number
         this.restartCounter = restartCounter
         this.state = 'running'
         this.jobs = []
         this.commit = commit
-        this.start_date = null
-        this.end_date = null
+        this.startDate = null
+        this.endDate = null
         this.pull_request = pr
+        this.project = project
+    }
+
+    abort () {
+        return APIService.get(`/api/dashboard/project/${this.project.id}/build/${this.id}/kill`)
+            .then((message) => {
+                NotificationService.$emit('NOTIFICATION', new Notification(message))
+            })
+            .catch((err) => {
+                NotificationService.$emit('NOTIFICATION', new Notification(err))
+            })
+    }
+
+    restart () {
+        return APIService.get(`/api/dashboard/project/${this.project.id}/build/${this.id}/restart`)
+            .then((message) => {
+                NotificationService.$emit('NOTIFICATION', new Notification(message))
+            })
+            .catch((err) => {
+                NotificationService.$emit('NOTIFICATION', new Notification(err))
+            })
+    }
+
+    clearCache () {
+        return APIService.get(`/api/dashboard/project/${this.project.id}/build/${this.id}/cache/clear`)
+            .then((message) => {
+                NotificationService.$emit('NOTIFICATION', new Notification(message))
+            })
+            .catch((err) => {
+                NotificationService.$emit('NOTIFICATION', new Notification(err))
+            })
     }
 
     _updateBuildState () {
@@ -31,13 +66,17 @@ export default class Build {
     }
 
     _updateStartDate () {
-        if (!this.start_date) {
-            this.start_date = this.jobs[0].start_date
+        if (!this.startDate) {
+            this.startDate = this.jobs[0].startDate
         }
 
         for (let j of this.jobs) {
-            if (j.start_date < this.start_date) {
-                this.start_date = j.start_date
+            if (!j.startDate) {
+                continue
+            }
+
+            if (j.startDate < this.startDate) {
+                this.startDate = j.startDate
             }
         }
     }
@@ -48,8 +87,8 @@ export default class Build {
         }
 
         for (let j of this.jobs) {
-            if (j.end_date > this.end_date) {
-                this.end_date = j.end_date
+            if (j.endDate > this.endDate) {
+                this.endDate = j.endDate
             }
         }
     }

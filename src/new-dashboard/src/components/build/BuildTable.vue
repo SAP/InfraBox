@@ -1,10 +1,6 @@
 <template>
 <div>
     <md-table-card class="no-shadow">
-      <md-toolbar>
-        <h1 class="md-title">Builds</h1>
-      </md-toolbar>
-
         <md-table>
             <md-table-header>
                 <md-table-row>
@@ -20,7 +16,13 @@
             <md-table-body>
                 <md-table-row v-for="b in project.builds" :key="b.id">
                     <md-table-cell><ib-state :state="b.state"></ib-state>
-                        {{ b.number }}.{{ b.restartCounter }}
+                        <router-link :to="{name: 'BuildDetail', params: {
+                            projectName: project.name,
+                            buildNumber: b.number,
+                            buildRestartCounter: b.restartCounter
+                        }}">
+                            {{ b.number }}.{{ b.restartCounter }}
+                        </router-link>
                     </md-table-cell>
                     <md-table-cell v-if="project.isGit()">
                         {{ b.commit.author_name }}
@@ -38,26 +40,13 @@
                 </md-table-row>
             </md-table-body>
         </md-table>
-      <md-table-pagination
-        md-size="5"
-        md-total="10"
-        md-page="1"
-        md-label="Rows"
-        md-separator="of"
-        :md-page-options="false"
-        @pagination="onPagination"></md-table-pagination>
     </md-table-card>
 </div>
 </template>
 
 <script>
 export default {
-    props: ['project'],
-    methods: {
-        onPagination (p) {
-            console.log(p)
-        }
-    }
+    props: ['project']
 }
 </script>
 

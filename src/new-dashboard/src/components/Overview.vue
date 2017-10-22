@@ -1,6 +1,10 @@
 <template>
   <div v-if="loaded">
-      <div class="md-headline" style="margin:25px"><md-icon md-iconset="fa fa-th-large"></md-icon> Overview</div>
+      <div class="md-headline" style="margin:25px">
+          <md-icon md-iconset="fa fa-th-large"></md-icon>
+          Overview
+      </div>
+
       <ib-overview v-for="project of $store.state.projects" :key="project.id" :project="project"></ib-overview>
   </div>
 </template>
@@ -15,7 +19,7 @@ export default {
     asyncComputed: {
         loaded () {
             return ProjectService
-            ._loadProjects().then(() => { return true })
+            .loadProjects().then(() => { return true })
         }
     }
 }
