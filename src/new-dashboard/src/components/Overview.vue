@@ -1,12 +1,13 @@
 <template>
-  <div v-if="loaded">
-      <div class="md-headline" style="margin:25px">
-          <md-icon md-iconset="fa fa-th-large"></md-icon>
-          Overview
-      </div>
-
-      <ib-overview v-for="project of $store.state.projects" :key="project.id" :project="project"></ib-overview>
-  </div>
+    <div v-if="loaded">
+        <md-layout md-gutter>
+            <md-layout  v-for="project of $store.state.projects" md-column md-gutter md-flex-xsmall="100" md-flex-small="100">
+                <md-table-card class="example-box">
+                    <ib-overview :key="project.id" :project="project"></ib-overview>
+                </md-table-card>
+            </md-layout>
+        </md-layout>
+    </div>
 </template>
 
 <script>
@@ -29,7 +30,7 @@ export default {
 <style scoped>
     .example-box {
         margin: 16px;
-        background-color: white
+        background-color: white;
     }
 
     .md-title {

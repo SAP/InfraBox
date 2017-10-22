@@ -6,7 +6,7 @@
         <md-icon>menu</md-icon>
       </md-button>
 
-      <h2 class="md-title" style="flex: 1">Default</h2>
+      <h2 class="md-title" style="flex: 1">InfraBox</h2>
 
       <md-button class="md-icon-button">
         <md-icon>favorite</md-icon>

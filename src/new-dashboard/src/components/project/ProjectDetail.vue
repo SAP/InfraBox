@@ -1,44 +1,42 @@
 <template>
     <div v-if="project" class="example-box">
-		<md-card class="example-box-card">
-			<md-toolbar md-theme="white" class="md-dense">
-				<h3 class="md-title">{{ project.name }}</h3>
-			</md-toolbar>
-
-			  <md-card-area>
-				<md-tabs md-right :md-dynamic-height="false" class="md-transparent example-tabs">
-
-
-  <template slot="header-item" scope="props">
-    <md-icon v-if="props.header.icon">{{ props.header.icon }}</md-icon>
-    <template v-if="props.header.options && props.header.options.new_badge">
-      <span v-if="props.header.label" class="label-with-new-badge">
-        {{ props.header.label }}
-        <span class="new-badge">{{ props.header.options.new_badge }}</span>
-      </span>
-    </template>
-    <template v-else>
-      <span v-if="props.header.label">{{ props.header.label }}</span>
-    </template>
-  </template>
+        <md-card class="example-box-card">
+                <div class="md-title" style="margin-top: 25px; margin-left: 25px">
+                    <span v-if="project.isGit()"><i class="fa fa-github"></i></span>
+                    <span v-if="!project.isGit()"><i class="fa fa-home"></i></span>
+                    {{ project.name }}
+                </div>
+            <md-card-area>
+                <md-tabs md-right :md-dynamic-height="false" class="md-transparent example-tabs">
+                    <template slot="header-item" scope="props">
+                        <md-icon v-if="props.header.icon">{{ props.header.icon }}</md-icon>
+                        <template v-if="props.header.options && props.header.options.new_badge">
+                            <span v-if="props.header.label" class="label-with-new-badge">{{ props.header.label }}</span>
+                            <span class="new-badge">{{ props.header.options.new_badge }}</span>
+                        </template>
+                        <template v-else>
+                            <span v-if="props.header.label">{{ props.header.label }}</span>
+                        </template>
+                    </template>
 
 
-				  <md-tab class="example-content" md-label="Builds" md-icon="search" :md-options="{new_badge: project.getActiveBuilds().length}" md-active>
-					<slot>
-                       <ib-build-table :project="project"></ib-build-table>
-                    </slot>
-				  </md-tab>
+                    <md-tab class="example-content" md-label="Builds" md-icon="dashboard" :md-options="{new_badge: project.getActiveBuilds().length}" md-active>
+                        <slot>
+                            <ib-build-table :project="project"></ib-build-table>
+                        </slot>
+                    </md-tab>
 
-				  <md-tab class="code-content" md-label="Settings" md-icon="phone">
-					<slot>
-                        <ib-project-settings :project="project"></ib-project-settings>
-                    </slot>
-				  </md-tab>
-				</md-tabs>
-			  </md-card-area>
-		</md-card>
+                    <md-tab class="code-content" md-label="Settings" md-icon="settings">
+                        <slot>
+                            <ib-project-settings :project="project"></ib-project-settings>
+                        </slot>
+                    </md-tab>
+                </md-tabs>
+            </md-card-area>
+        </md-card>
     </div>
 </template>
+
 
 <script>
 import store from '../../store'
@@ -86,4 +84,3 @@ export default {
   }
 .label-with-new-badge{font-weight:bolder}.new-badge{background-color:red;color:#fff;padding:3px;border-radius:3px}
 </style>
-

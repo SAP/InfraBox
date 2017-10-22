@@ -1,0 +1,59 @@
+.bg-grey {
+    background-color: inherit;
+}
+
+.m-xs {
+    margin: 5px;
+}
+
+.m-l-xs {
+    margin-left: 5px;
+}
+
+.m-sm {
+    margin: 10px;
+}
+
+.m-l-sm {
+    margin-left: 10px;
+}
+
+.m-md {
+    margin: 15px;
+}
+
+.m-lg {
+    margin: 20px;
+}
+
+.m-xl {
+    margin: 25px;
+}
+
+.m-l-xl {
+    margin-left: 25px;
+}
+
+.m-t-xl {
+    margin-top: 25px;
+}
+
+.p-xs {
+    padding: 5px;
+}
+
+.p-sm {
+    padding: 10px;
+}
+
+.p-md {
+    padding: 15px;
+}
+
+.p-lg {
+    padding: 20px;
+}
+
+.p-xl {
+    padding: 25px;
+}
