@@ -1,47 +1,51 @@
 <template>
-<div>
-    <md-table-card class="no-shadow">
-        <md-table>
-            <md-table-header>
-                <md-table-row>
-                    <md-table-head>Build</md-table-head>
-                    <md-table-head v-if="project.isGit()">Author</md-table-head>
-                    <md-table-head v-if="project.isGit()">Branch</md-table-head>
-                    <md-table-head>Start Time</md-table-head>
-                    <md-table-head>Duration</md-table-head>
-                    <md-table-head v-if="project.isGit()">Type</md-table-head>
-                </md-table-row>
-            </md-table-header>
+    <div>
+        <md-table-card class="no-shadow">
+            <md-table>
+                <md-table-header>
+                    <md-table-row>
+                        <md-table-head>State</md-table-head>
+                        <md-table-head>Build</md-table-head>
+                        <md-table-head v-if="project.isGit()">Author</md-table-head>
+                        <md-table-head v-if="project.isGit()">Branch</md-table-head>
+                        <md-table-head>Start Time</md-table-head>
+                        <md-table-head>Duration</md-table-head>
+                        <md-table-head v-if="project.isGit()">Type</md-table-head>
+                    </md-table-row>
+                </md-table-header>
 
-            <md-table-body>
-                <md-table-row v-for="b in project.builds" :key="b.id">
-                    <md-table-cell><ib-state :state="b.state"></ib-state>
-                        <router-link :to="{name: 'BuildDetail', params: {
-                            projectName: project.name,
-                            buildNumber: b.number,
-                            buildRestartCounter: b.restartCounter
-                        }}">
-                            {{ b.number }}.{{ b.restartCounter }}
-                        </router-link>
-                    </md-table-cell>
-                    <md-table-cell v-if="project.isGit()">
-                        {{ b.commit.author_name }}
-                    </md-table-cell>
-                    <md-table-cell v-if="project.isGit()">
-                        {{ b.commit.branch }}
-                    </md-table-cell>
-                    <md-table-cell><ib-date :date="b.start_date"></ib-date></md-table-cell>
-                    <md-table-cell>
-                        <ib-duration :start="b.start_date" :end="b.end_date"></ib-duration>
-                    </md-table-cell>
-                    <md-table-cell v-if="project.isGit()">
-                        <ib-gitjobtype :build="b"></ib-gitjobtype>
-                    </md-table-cell>
-                </md-table-row>
-            </md-table-body>
-        </md-table>
-    </md-table-card>
-</div>
+                <md-table-body>
+                    <md-table-row v-for="b in project.builds" :key="b.id">
+                        <md-table-cell>
+                            <ib-state :state="b.state"></ib-state>
+                        </md-table-cell>
+                        <md-table-cell>
+                            <router-link :to="{name: 'BuildDetail', params: {
+                                projectName: project.name,
+                                buildNumber: b.number,
+                                buildRestartCounter: b.restartCounter
+                            }}">
+                                {{ b.number }}.{{ b.restartCounter }}
+                            </router-link>
+                        </md-table-cell>
+                        <md-table-cell v-if="project.isGit()">
+                            {{ b.commit.author_name }}
+                        </md-table-cell>
+                        <md-table-cell v-if="project.isGit()">
+                            {{ b.commit.branch }}
+                        </md-table-cell>
+                        <md-table-cell><ib-date :date="b.start_date"></ib-date></md-table-cell>
+                        <md-table-cell>
+                            <ib-duration :start="b.start_date" :end="b.end_date"></ib-duration>
+                        </md-table-cell>
+                        <md-table-cell v-if="project.isGit()">
+                            <ib-gitjobtype :build="b"></ib-gitjobtype>
+                        </md-table-cell>
+                    </md-table-row>
+                </md-table-body>
+            </md-table>
+        </md-table-card>
+    </div>
 </template>
 
 <script>

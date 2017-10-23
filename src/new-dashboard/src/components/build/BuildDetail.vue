@@ -1,21 +1,25 @@
 <template>
     <div v-if="data">
 		<md-card class="example-box">
-            <md-table-card>
+            <md-card-header>
+                <md-card-header-text>
+                    <div class="md-title">
+                       <h3 class="md-title">
+                            <router-link :to="{name: 'ProjectDetail', params: {
+                                projectName: data.project.name
+                            }}">
+                                {{ data.project.name }}
+                            </router-link>
+                            / Build {{ data.build.number }}.{{ data.build.restartCounter }}
+                        </h3>
+                    </div>
+                </md-card-header-text>
                 <md-toolbar class="md-dense">
-                    <h3 class="md-title">
-                        <router-link :to="{name: 'ProjectDetail', params: {
-                            projectName: data.project.name
-                        }}">
-                            {{ data.project.name }}
-                        </router-link>
-                        / Build {{ data.build.number }}.{{ data.build.restartCounter }}
-                    </h3>
                     <md-button class="md-raised" v-on:click="data.build.abort()">Abort</md-button>
                     <md-button class="md-raised" v-on:click="data.build.restart()">Restart</md-button>
                     <md-button class="md-raised" v-on:click="data.build.clearCache()">Clear Cache</md-button>
                 </md-toolbar>
-            </md-table-card>
+            </md-card-header>
 		</md-card>
 
         <md-layout md-gutter>

@@ -13,6 +13,7 @@ import ProjectService from './services/ProjectService'
 
 import 'vue-material/dist/vue-material.css'
 import 'font-awesome/css/font-awesome.css'
+import '../static/css/infrabox.css'
 
 import NotificationComponent from '@/components/Notification'
 import StateComponent from '@/components/utils/State'
