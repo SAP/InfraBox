@@ -41,6 +41,9 @@ markup_uploads = 0
 badge_uploads = 0
 download = None
 
+def is_create_job():
+    return job_data['job']['type'] == 'create_job_matrix'
+
 def remember_download(section, name, object_name):
     global download
 
@@ -551,6 +554,21 @@ def set_running():
     conn.commit()
     return jsonify({})
 
+def find_leaf_jobs(jobs):
+    parent_jobs = {}
+    leaf_jobs = []
+
+    for j in jobs:
+        for d in j.get('depends_on', []):
+            parent_jobs[d['job']] = True
+
+    for j in jobs:
+        if not parent_jobs.get(j['name'], False):
+            leaf_jobs.append(j)
+
+    return leaf_jobs
+
+
 @app.route("/create_jobs", methods=['POST'])
 def create_jobs():
     d = request.json
@@ -655,6 +673,35 @@ def create_jobs():
 
     jobs.sort(key=lambda k: k.get('avg_duration', 0), reverse=True)
 
+    if not is_create_job():
+        # Update names, prefix with parent names
+        for j in jobs:
+            j['name'] = job_data['job']['name'] + '/' + j['name']
+
+        leaf_jobs = find_leaf_jobs(jobs)
+
+        for j in leaf_jobs:
+            wait_job = {
+                'job': j['name'],
+                'job-id': j['id'],
+                'on': ['finished']
+            }
+
+            # Update direct children of this job to now wait for the leaf jobs
+            cursor = c.cursor()
+            cursor.execute('''
+                UPDATE job
+                SET dependencies = dependencies || %s::jsonb
+                WHERE id IN (
+                    SELECT id parent_id
+                    FROM job, jsonb_array_elements(job.dependencies) as deps
+                    WHERE (deps->>'job-id')::uuid = %s
+                    AND build_id = %s
+                    AND project_id = %s
+                )
+            ''', (json.dumps(wait_job), JOB_ID, job_data['build']['id'], job_data['project']['id']))
+            cursor.close()
+
     for job in jobs:
         name = job["name"]
 
@@ -674,7 +721,7 @@ def create_jobs():
             for dep in depends_on:
                 dep['job-id'] = jobname_id[dep['job']]
         else:
-            depends_on = [{"job": "Create Jobs", "job-id": JOB_ID, "on": ["finished"]}]
+            depends_on = [{"job": job_data['job']['name'], "job-id": JOB_ID, "on": ["finished"]}]
 
         if job_type == "docker":
             f = job['docker_file']
