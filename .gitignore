@@ -14,6 +14,7 @@ results/
 .*.swp
 src/infraboxcli/infraboxcli.egg-info/
 .infrabox
+.infraboxwork
 *.yml.infrabox
 *.yaml.infrabox
 run_server.sh

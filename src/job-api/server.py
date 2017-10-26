@@ -726,19 +726,25 @@ def create_jobs():
         if 'env_var_refs' in job:
             env_var_refs = json.dumps(job['env_var_refs'])
 
+        # Handle resources
+        resources = None
+        if 'resources' in job:
+            resources = json.dumps(job['resources'])
+
         # Create job
         cursor = c.cursor()
         cursor.execute("""
             INSERT INTO job (id, state, build_id, type, dockerfile, name,
                 project_id, dependencies, build_only,
                 keep, created_at, repo, base_path, scan_container,
-                env_var_ref, env_var, build_arg, deployment, cpu, memory, timeout)
-            VALUES (%s, 'queued', %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);""",
+                env_var_ref, env_var, build_arg, deployment, cpu, memory, timeout, resources)
+            VALUES (%s, 'queued', %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);""",
                        (job_id, job_data['build']['id'], t, f, name,
                         job_data['project']['id'],
                         json.dumps(depends_on), build_only, keep, datetime.now(),
                         repo, base_path, scan_container, env_var_refs, env_vars,
-                        build_arguments, deployments, limits_cpu, limits_memory, timeout))
+                        build_arguments, deployments, limits_cpu, limits_memory, timeout,
+                        resources))
         cursor.close()
 
         # to make sure the get picked up in the right order by the scheduler

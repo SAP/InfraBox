@@ -11,9 +11,6 @@ from pyinfraboxutils import get_logger, get_env, print_stackdriver
 from pyinfraboxutils.leader import elect_leader
 from pyinfraboxutils.db import connect_db
 
-logger = get_logger("scheduler")
-
-namespace = 'infrabox-worker'
 
 # pylint: disable=no-value-for-parameter
 LOOP_SECONDS = Histogram('infrabox_scheduler_loop_seconds', 'Time spent for one scheduler loop iteration')
@@ -21,6 +18,7 @@ ORPHANED_JOBS = Counter('infrabox_scheduler_orphaned_jobs_total', 'Number of rem
 ABORTED_JOBS = Counter('infrabox_scheduler_killed_jobs_total', 'Number of killed jobs')
 SCHEDULED_JOBS = Counter('infrabox_scheduler_scheduled_jobs_total', 'Number of scheduled jobs')
 TIMEOUT_JOBS = Counter('infrabox_scheduler_timeout_jobs_total', 'Number of timed out scheduled jobs')
+ORPHANED_NAMESPACES = Counter('infrabox_scheduler_orphaned_namespaces_total', 'Number of removed orphaned namespaces')
 
 def use_gcs():
     return os.environ['INFRABOX_STORAGE_GCS_ENABLED'] == 'true'
@@ -38,6 +36,16 @@ class Scheduler(object):
     def __init__(self, conn, args):
         self.conn = conn
         self.args = args
+        self.namespace = 'infrabox-worker'
+        self.logger = get_logger("scheduler")
+
+        if self.args.loglevel == 'debug':
+            self.logger.setLevel(logging.DEBUG)
+        elif self.args.loglevel == 'info':
+            self.logger.setLevel(logging.INFO)
+        else:
+            self.logger.setLevel(logging.INFO)
+
 
     def get_database_env(self):
         env = ({
@@ -163,18 +171,28 @@ class Scheduler(object):
 
         return r
 
+    def kube_delete_namespace(self, job_id):
+        h = {'Authorization': 'Bearer %s' % self.args.token}
+        namespace_name = "infrabox-%s" % job_id
+
+        # delete the namespace
+        p = {"gracePeriodSeconds": 0}
+        requests.delete(self.args.api_server + '/api/v1/namespaces/%s' % (namespace_name,),
+                        headers=h, params=p, timeout=10)
+
+
     def kube_delete_job(self, job_id):
         h = {'Authorization': 'Bearer %s' % self.args.token}
 
         # find pods which belong to the job
         p = {"labelSelector": "job-name=%s" % job_id}
-        r = requests.get(self.args.api_server + '/api/v1/namespaces/%s/pods' % (namespace,),
+        r = requests.get(self.args.api_server + '/api/v1/namespaces/%s/pods' % (self.namespace,),
                          headers=h, params=p, timeout=5)
         pods = r.json()
 
         # delete the job
         p = {"gracePeriodSeconds": 0}
-        requests.delete(self.args.api_server + '/apis/batch/v1/namespaces/%s/jobs/%s' % (namespace, job_id,),
+        requests.delete(self.args.api_server + '/apis/batch/v1/namespaces/%s/jobs/%s' % (self.namespace, job_id,),
                         headers=h, params=p, timeout=5)
 
         # If there are no pods it is already set to None
@@ -187,10 +205,10 @@ class Scheduler(object):
             pod_name = pod['metadata']['name']
 
             p = {"gracePeriodSeconds": 0}
-            requests.delete(self.args.api_server + '/api/v1/namespaces/%s/pods/%s' % (namespace, pod_name,),
+            requests.delete(self.args.api_server + '/api/v1/namespaces/%s/pods/%s' % (self.namespace, pod_name,),
                             headers=h, params=p, timeout=5)
 
-    def kube_job(self, job_id, build_id, cpu, mem, job_type):
+    def kube_job(self, job_id, build_id, cpu, mem, job_type, additional_env=None):
         h = {'Authorization': 'Bearer %s' % self.args.token}
         volumes = [{
             "name": "data-dir",
@@ -266,6 +284,11 @@ class Scheduler(object):
             "name": "INFRABOX_DASHBOARD_URL",
             "value": os.environ['INFRABOX_DASHBOARD_URL']
         }]
+
+        if additional_env:
+            env += additional_env
+
+        self.logger.info(env)
 
         if use_gcs():
             volumes.append({
@@ -449,46 +472,118 @@ class Scheduler(object):
 
             run_job['spec']['template']['spec']['volumes'].extend(volumes)
 
-        r = requests.post(self.args.api_server + '/apis/batch/v1/namespaces/%s/jobs' % namespace,
-                          headers=h, json=run_job, timeout=5)
+        r = requests.post(self.args.api_server + '/apis/batch/v1/namespaces/%s/jobs' % self.namespace,
+                          headers=h, json=run_job, timeout=10)
 
         return r.status_code == 201
+
+    def create_kube_namespace(self, job_id, k8s_resources):
+        self.logger.info("Provisioning kubernetes namespace")
+        h = {'Authorization': 'Bearer %s' % self.args.token}
+
+        namespace_name = "infrabox-%s" % job_id
+        ns = {
+            "apiVersion": "v1",
+            "kind": "Namespace",
+            "metadata": {
+                "name": namespace_name,
+                "labels": {
+                    "infrabox-resource": "kubernetes",
+                    "infrabox-job-id": job_id,
+                }
+            }
+        }
+
+        r = requests.post(self.args.api_server + '/api/v1/namespaces',
+                          headers=h, json=ns, timeout=10)
+
+        if r.status_code != 201:
+            self.logger.warn("Failed to create Namespace: %s" % r.text)
+            return False
+
+        rq = {
+            "apiVersion": "v1",
+            "kind": "ResourceQuota",
+            "metadata": {
+                "name": "compute-resources",
+                "namespace": namespace_name
+            },
+            "spec": {
+                "hard": {
+                    "limits.cpu": k8s_resources['limits']['cpu'],
+                    "limits.memory": k8s_resources['limits']['memory']
+                }
+            }
+        }
+
+        r = requests.post(self.args.api_server + '/api/v1/namespaces/' + namespace_name + '/resourcequotas',
+                          headers=h, json=rq, timeout=10)
+
+        if r.status_code != 201:
+            self.logger.warn("Failed to create ResourceQuota: %s" % r.text)
+            return False
+
+        # find secret
+        r = requests.get(self.args.api_server + '/api/v1/namespaces/%s/secrets' % namespace_name,
+                         headers=h, timeout=5)
+
+        if r.status_code != 200:
+            self.logger.warn("Failed to get service account secret: %s" % r.txt)
+            return False
+
+        data = r.json()
+        secret = data['items'][0]
+
+        env = [
+            {"name": "INFRABOX_RESOURCES_KUBERNETES_CA_CRT", "value": secret['data']['ca.crt']},
+            {"name": "INFRABOX_RESOURCES_KUBERNETES_TOKEN", "value":  secret['data']['token']},
+            {"name": "INFRABOX_RESOURCES_KUBERNETES_NAMESPACE", "value": secret['data']['namespace']}
+        ]
+
+        return env
 
     def schedule_job(self, job_id, cpu, memory):
         cursor = self.conn.cursor()
         cursor.execute('''
-            SELECT j.type, build_id FROM job j WHERE j.id = %s
+            SELECT j.type, build_id, resources FROM job j WHERE j.id = %s
         ''', (job_id,))
         j = cursor.fetchone()
         cursor.close()
 
         job_type = j[0]
         build_id = j[1]
+        resources = j[2]
 
         if cpu == 1:
             cpu = cpu * 0.7
         else:
             cpu = cpu * 0.9
 
-        logger.info("Scheduling job to kubernetes")
+
+        additional_env = None
+        if resources and resources.get('kubernetes', None):
+            k8s = resources.get('kubernetes', None)
+            additional_env = self.create_kube_namespace(job_id, k8s)
+
+        self.logger.info("Scheduling job to kubernetes")
 
         if job_type == 'create_job_matrix':
             job_type = 'create'
         elif job_type == "run_project_container" or job_type == "run_docker_compose":
             job_type = 'run'
         else:
-            logger.error("Unknown job type: %s", job_type)
+            self.logger.error("Unknown job type: %s", job_type)
             return
 
-        if not self.kube_job(job_id, build_id, cpu, memory, job_type):
+        if not self.kube_job(job_id, build_id, cpu, memory, job_type, additional_env=additional_env):
             return
 
         cursor = self.conn.cursor()
         cursor.execute("UPDATE job SET state = 'scheduled' WHERE id = %s", [job_id])
         cursor.close()
 
-        logger.info("Finished scheduling job")
-        logger.info("")
+        self.logger.info("Finished scheduling job")
+        self.logger.info("")
 
         SCHEDULED_JOBS.inc()
 
@@ -516,9 +611,9 @@ class Scheduler(object):
             memory = j[3]
             dependencies = j[4]
 
-            logger.info("")
-            logger.info("Starting to schedule job: %s", job_id)
-            logger.info("Dependencies: %s", dependencies)
+            self.logger.info("")
+            self.logger.info("Starting to schedule job: %s", job_id)
+            self.logger.info("Dependencies: %s", dependencies)
 
             cursor = self.conn.cursor()
             cursor.execute('''
@@ -533,7 +628,7 @@ class Scheduler(object):
             result = cursor.fetchall()
             cursor.close()
 
-            logger.info("Parent states: %s", result)
+            self.logger.info("Parent states: %s", result)
 
             # check if there's still some parent running
             parents_running = False
@@ -545,7 +640,7 @@ class Scheduler(object):
                     break
 
             if parents_running:
-                logger.info("A parent is still running, not scheduling job")
+                self.logger.info("A parent is still running, not scheduling job")
                 continue
 
             # check if conditions are met
@@ -560,11 +655,11 @@ class Scheduler(object):
 
                 assert on
 
-                logger.info("Checking parent %s with state %s", parent_id, parent_state)
-                logger.info("Condition is %s", on)
+                self.logger.info("Checking parent %s with state %s", parent_id, parent_state)
+                self.logger.info("Condition is %s", on)
 
                 if parent_state not in on:
-                    logger.info("Condition is not met, skipping job")
+                    self.logger.info("Condition is not met, skipping job")
                     skipped = True
                     # dependency error, don't run this job_id
                     cursor = self.conn.cursor()
@@ -578,7 +673,7 @@ class Scheduler(object):
 
             # If it's a wait job we are done here
             if job_type == "wait":
-                logger.info("Wait job, we are done")
+                self.logger.info("Wait job, we are done")
                 cursor = self.conn.cursor()
                 cursor.execute('''
                     UPDATE job SET state = 'finished', start_date = now(), end_date = now() WHERE id = %s;
@@ -663,10 +758,50 @@ class Scheduler(object):
 
             TIMEOUT_JOBS.inc()
 
+    def handle_orphaned_namespaces(self):
+        h = {'Authorization': 'Bearer %s' % self.args.token}
+        r = requests.get(self.args.api_server + '/api/v1/namespaces', headers=h, timeout=10)
+        data = r.json()
+
+        for j in data['items']:
+            metadata = j.get('metadata', None)
+            if not metadata:
+                continue
+
+            labels = metadata.get('labels', None)
+            if not labels:
+                continue
+
+            for key in labels:
+                if key != 'infrabox-job-id':
+                    continue
+
+                job_id = labels[key]
+
+                cursor = self.conn.cursor()
+                cursor.execute('''SELECT state FROM job where id = %s''', (job_id,))
+                result = cursor.fetchall()
+                cursor.close()
+
+                if len(result) != 1:
+                    continue
+
+                state = result[0][0]
+
+                if state in ('queued', 'scheduled', 'running'):
+                    continue
+
+                self.logger.info('Deleting orphaned namespace %s', job_id)
+                ORPHANED_NAMESPACES.inc()
+                self.kube_delete_namespace(job_id)
+
+
 
     def handle_orphaned_jobs(self):
         h = {'Authorization': 'Bearer %s' % self.args.token}
-        r = requests.get(self.args.api_server + '/apis/batch/v1/namespaces/%s/jobs' % namespace, headers=h, timeout=5)
+        r = requests.get(self.args.api_server + '/apis/batch/v1/namespaces/%s/jobs' % self.namespace,
+                         headers=h,
+                         timeout=10)
         data = r.json()
 
         for j in data['items']:
@@ -698,7 +833,7 @@ class Scheduler(object):
                 if state in ('queued', 'scheduled', 'running'):
                     continue
 
-                logger.warn('Deleting orphaned job %s', job_id)
+                self.logger.info('Deleting orphaned job %s', job_id)
                 ORPHANED_JOBS.inc()
                 self.kube_delete_job(job_id)
 
@@ -708,8 +843,9 @@ class Scheduler(object):
             self.handle_timeouts()
             self.handle_aborts()
             self.handle_orphaned_jobs()
-        except:
-            pass
+            self.handle_orphaned_namespaces()
+        except Exception as e:
+            self.logger.warn(e)
 
         self.schedule()
 
@@ -729,13 +865,6 @@ def main():
                         help="Image tag to use for internal images")
 
     args = parser.parse_args()
-
-    if args.loglevel == 'debug':
-        logger.setLevel(logging.DEBUG)
-    elif args.loglevel == 'info':
-        logger.setLevel(logging.INFO)
-    else:
-        logger.setLevel(logging.INFO)
 
     get_env('INFRABOX_SERVICE')
     get_env('INFRABOX_VERSION')
