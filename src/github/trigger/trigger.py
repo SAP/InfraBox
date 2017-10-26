@@ -254,18 +254,25 @@ class Trigger(object):
 
         branch = event['pull_request']['head']['ref']
 
+        env = json.dumps({
+            "GITHUB_PULL_REQUEST_BASE_LABEL": event['pull_request']['base']['label'],
+            "GITHUB_PULL_REQUEST_BASE_REF": event['pull_request']['base']['ref'],
+            "GITHUB_PULL_REQUEST_BASE_SHA": event['pull_request']['base']['sha']
+        })
+
         if not result:
             result = self.execute('''
                 INSERT INTO "commit" (
                     id, message, repository_id, timestamp,
                     author_name, author_email, author_username,
                     committer_name, committer_email, committer_username, url, project_id,
-                    branch, pull_request_id, github_status_url)
+                    branch, pull_request_id, github_status_url, env_var)
                 VALUES (%s, %s, %s,
                     %s, %s, %s,
                     %s, %s, %s,
                     %s, %s, %s,
-                    %s, %s, %s)
+                    %s, %s, %s,
+                    %s)
                 RETURNING id
             ''', [hc['sha'], hc['commit']['message'],
                   repo_id, hc['commit']['author']['date'], hc['commit']['author']['name'],
@@ -273,7 +280,7 @@ class Trigger(object):
                   hc['commit']['committer']['name'],
                   hc['commit']['committer']['email'],
                   committer_login, hc['commit']['url'], project_id, branch, pr_id,
-                  event['pull_request']['statuses_url']])
+                  event['pull_request']['statuses_url']], env)
             commit_id = result[0][0]
         else:
             commit_id = result[0][0]

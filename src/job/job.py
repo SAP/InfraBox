@@ -526,9 +526,13 @@ class RunJob(Job):
             cmd += ['-e', '%s=%s' % (name, value)]
 
         # Add capabilities
-        add_capabilities = self.job.get('security_context', {}).get('capabilities', {}).get('add', [])
-        if add_capabilities:
-            cmd += ['--cap-add=%s' % ','.join(add_capabilities)]
+        security_context = self.job.get('security_context', {})
+
+        if security_context:
+            capabilities = security_context.get('capabilities', {})
+            add_capabilities = capabilities.get('add', [])
+            if add_capabilities:
+                cmd += ['--cap-add=%s' % ','.join(add_capabilities)]
 
         cmd += [image_name]
 
@@ -813,6 +817,7 @@ def main():
     except Exception as e:
         print_stackdriver()
         j.console.collect('## An error occured', show=True)
+        j.console.collect(e, show=True)
         j.console.flush()
         j.update_status('error')
 

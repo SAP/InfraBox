@@ -151,16 +151,6 @@ class Scheduler(object):
             "name": "job-api",
             "image": self.args.docker_registry + "/infrabox/job-api:%s" % self.args.tag,
             "env": env,
-            "resources": {
-                "requests": {
-                    "memory": "256Mi",
-                    "cpu": 0.1
-                },
-                "limits": {
-                    "memory": "256Mi",
-                    "cpu": 0.1
-                }
-            },
             "volumeMounts": []
         }
 

@@ -8,3 +8,4 @@ src/new-dashboard
 .git/*
 *.swp
 *.pyc
+.infraboxwork*
