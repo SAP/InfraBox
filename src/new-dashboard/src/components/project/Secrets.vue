@@ -4,7 +4,7 @@
             <h3 class="md-title">
                 Secrets
             </h3>
-            <md-button class="md-icon-button md-raised">
+            <md-button md-theme="running" class="md-icon-button md-raised md-primary">
                   <md-icon>add</md-icon>
             </md-button>
         </md-toolbar>
@@ -19,6 +19,14 @@
                 </md-table-header>
 
                 <md-table-body>
+                    <md-table-row>
+                        <md-table-cell>
+                            <md-input-container>
+                                <label>New Secret</label>
+                                <md-autocomplete v-model="autocompleteValue" :fetch="fetchFunction"></md-autocomplete>
+                            </md-input-container>
+                        </md-table-cell>
+                    </md-table-row>
                     <md-table-row v-for="secret in project.secrets" :key="secret.id">
                         <md-table-cell>{{ secret.name }}</md-table-cell>
                         <md-table-cell>

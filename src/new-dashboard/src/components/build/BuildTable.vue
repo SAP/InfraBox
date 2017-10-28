@@ -58,4 +58,5 @@ export default {
 .no-shadow {
     box-shadow: 0px 0px 0px #888888;
 }
+
 </style>
