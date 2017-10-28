@@ -250,8 +250,9 @@ exec "$@"
             for f in files:
                 tr_path = os.path.join(self.infrabox_testresult_dir, f)
                 c.collect("%s\n" % tr_path, show=True)
-                r = requests.post("http://localhost:5000/testresult",
-                                  files={"data": open(tr_path)}, timeout=60)
+                r = requests.post("%s/testresult" % self.api_server,
+                                  headers=self.get_headers(),
+                                  files={"data": open(tr_path)}, timeout=10)
                 c.collect("%s\n" % r.text, show=True)
 
 
@@ -263,8 +264,9 @@ exec "$@"
 
             for f in files:
                 file_name = os.path.basename(f)
-                r = requests.post("http://localhost:5000/markdown",
-                                  files={file_name: open(os.path.join(self.infrabox_markdown_dir, f))}, timeout=60)
+                r = requests.post("%s/markdown" % self.api_server,
+                                  headers=self.get_headers(),
+                                  files={file_name: open(os.path.join(self.infrabox_markdown_dir, f))}, timeout=10)
                 c.collect("%s\n" % r.text, show=False)
 
     def upload_markup_files(self):
@@ -276,8 +278,9 @@ exec "$@"
             for f in files:
                 file_name = os.path.basename(f)
                 f = open(os.path.join(self.infrabox_markup_dir, f))
-                r = requests.post("http://localhost:5000/markup",
-                                  files={file_name: f}, timeout=60)
+                r = requests.post("%s/markup" % self.api_server,
+                                  headers=self.get_headers(),
+                                  files={file_name: f}, timeout=10)
                 c.collect(f.read(), show=True)
                 c.collect("%s\n" % r.text, show=True)
 
@@ -289,8 +292,9 @@ exec "$@"
 
             for f in files:
                 file_name = os.path.basename(f)
-                r = requests.post("http://localhost:5000/badge",
-                                  files={file_name: open(os.path.join(self.infrabox_badge_dir, f))}, timeout=60)
+                r = requests.post("%s/badge" % self.api_server,
+                                  headers=self.get_headers(),
+                                  files={file_name: open(os.path.join(self.infrabox_badge_dir, f))}, timeout=10)
                 c.collect("%s\n" % r.text, show=True)
 
     def create_dynamic_jobs(self):
@@ -565,6 +569,7 @@ exec "$@"
 
 
         # Add capabilities
+
         security_context = self.job.get('security_context', {})
 
         if security_context:
@@ -836,6 +841,7 @@ def main():
     get_env('INFRABOX_GENERAL_NO_CHECK_CERTIFICATES')
     get_env('INFRABOX_LOCAL_CACHE_ENABLED')
     get_env('INFRABOX_JOB_MAX_OUTPUT_SIZE')
+    get_env('INFRABOX_JOB_API_URL')
 
     parser = argparse.ArgumentParser(description='Process some integers.')
     parser.add_argument('--type', choices=['create', 'run'], help="job type")

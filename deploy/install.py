@@ -146,7 +146,6 @@ class Kubernetes(Install):
                 "password": args.postgres_password
             }
 
-            self.create_secret("infrabox-postgres", "infrabox-worker", secret)
             self.create_secret("infrabox-postgres", "infrabox-system", secret)
         elif args.database == 'cloudsql':
             self.required_option('cloudsql-instance-connection-name')
@@ -167,7 +166,6 @@ class Kubernetes(Install):
                 "password": args.cloudsql_proxy_password
             }
 
-            self.create_secret("infrabox-postgres", "infrabox-worker", secret)
             self.create_secret("infrabox-postgres", "infrabox-system", secret)
 
             with open(args.cloudsql_proxy_service_account_key_file) as keyfile:
@@ -175,7 +173,6 @@ class Kubernetes(Install):
                     "credentials.json": keyfile.read()
                 }
 
-                self.create_secret("infrabox-cloudsql-instance-credentials", "infrabox-worker", secret)
                 self.create_secret("infrabox-cloudsql-instance-credentials", "infrabox-system", secret)
 
         else:
@@ -212,9 +209,7 @@ class Kubernetes(Install):
                 "accessKey": args.s3_access_key
             }
 
-            self.create_secret("infrabox-s3-credentials", "infrabox-worker", secret)
             self.create_secret("infrabox-s3-credentials", "infrabox-system", secret)
-
         elif args.storage == 'gcs':
             self.required_option('gcs-project-id')
             self.required_option('gcs-service-account-key-file')
@@ -238,7 +233,6 @@ class Kubernetes(Install):
                     "gcs_service_account.json": keyfile.read()
                 }
 
-                self.create_secret("infrabox-gcs", "infrabox-worker", secret)
                 self.create_secret("infrabox-gcs", "infrabox-system", secret)
         else:
             raise Exception("unknown storage")
@@ -253,8 +247,8 @@ class Kubernetes(Install):
             "password": self.args.docker_registry_admin_password
         }
 
-        self.create_secret("infrabox-docker-registry", "infrabox-system", secret)
         self.create_secret("infrabox-docker-registry", "infrabox-worker", secret)
+        self.create_secret("infrabox-docker-registry", "infrabox-system", secret)
 
         self.required_option('docker-registry')
         self.set('general.docker_registry', self.args.docker_registry)
@@ -437,10 +431,20 @@ class Kubernetes(Install):
         self.set('general.no_check_certificates', self.args.general_no_check_certificates)
 
     def setup_job(self):
+        self.required_option('job-api-url')
+        self.required_option('job-api-secret')
+
+        secret = {
+            "api-secret": self.args.job_api_secret
+        }
+
+        self.create_secret("infrabox-job-api", "infrabox-system", secret)
+
         self.set('job.mount_docker_socket', self.args.job_mount_docker_socket)
         self.set('job.use_host_docker_daemon', self.args.job_use_host_docker_daemon)
         self.set('job.security_context.capabilities.enabled',
                  self.args.job_security_context_capabilities_enabled)
+        self.set('job.api.url', self.args.job_api_url)
 
     def main(self):
         # Copy helm chart
@@ -736,6 +740,8 @@ def main():
     parser.add_argument('--job-mount-docker-socket', action='store_true', default=False)
     parser.add_argument('--job-use-host-docker-daemon', action='store_true', default=False)
     parser.add_argument('--job-security-context-capabilities-enabled', action='store_true', default=False)
+    parser.add_argument('--job-api-url')
+    parser.add_argument('--job-api-secret')
 
     # Parse options
     args = parser.parse_args()

@@ -33,7 +33,7 @@ services:
     test:
         build:
             context: ../../../
-            dockerfile: ./src/job-api/test/Dockerfile
+            dockerfile: ./infrabox/test/job-api/Dockerfile
         environment:
             - INFRABOX_DATABASE_HOST=postgres
             - INFRABOX_DATABASE_USER=postgres

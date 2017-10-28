@@ -176,9 +176,6 @@ dashboard:
     log:
         level: info
 
-        # If true prints output for stackdriver
-        stackdriver: false
-
     tls:
         enabled: false
 
@@ -264,6 +261,15 @@ job:
     security_context:
         capabilities:
             enabled: false
+
+    api:
+        # image: infrabox/github/api
+        tag: latest
+
+        url: <REQUIRED>
+
+        log:
+            level: info
 
 local_cache:
     enabled: false

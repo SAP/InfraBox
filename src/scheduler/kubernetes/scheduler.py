@@ -5,6 +5,7 @@ import os
 import psycopg2
 import psycopg2.extensions
 import requests
+import jwt
 from prometheus_client import start_http_server, Histogram, Counter
 
 from pyinfraboxutils import get_logger, get_env, print_stackdriver
@@ -19,12 +20,6 @@ ABORTED_JOBS = Counter('infrabox_scheduler_killed_jobs_total', 'Number of killed
 SCHEDULED_JOBS = Counter('infrabox_scheduler_scheduled_jobs_total', 'Number of scheduled jobs')
 TIMEOUT_JOBS = Counter('infrabox_scheduler_timeout_jobs_total', 'Number of timed out scheduled jobs')
 ORPHANED_NAMESPACES = Counter('infrabox_scheduler_orphaned_namespaces_total', 'Number of removed orphaned namespaces')
-
-def use_gcs():
-    return os.environ['INFRABOX_STORAGE_GCS_ENABLED'] == 'true'
-
-def use_s3():
-    return os.environ['INFRABOX_STORAGE_S3_ENABLED'] == 'true'
 
 def gerrit_enabled():
     return os.environ['INFRABOX_GERRIT_ENABLED'] == 'true'
@@ -46,130 +41,6 @@ class Scheduler(object):
         else:
             self.logger.setLevel(logging.INFO)
 
-
-    def get_database_env(self):
-        env = ({
-            "name": "INFRABOX_DATABASE_USER",
-            "valueFrom": {
-                "secretKeyRef": {
-                    "name": "infrabox-postgres",
-                    "key": "username"
-                }
-            }
-        }, {
-            "name": "INFRABOX_DATABASE_PASSWORD",
-            "valueFrom": {
-                "secretKeyRef": {
-                    "name": "infrabox-postgres",
-                    "key": "password"
-                }
-            }
-        }, {
-            "name": "INFRABOX_DATABASE_HOST",
-            "value": os.environ['INFRABOX_DATABASE_HOST']
-        }, {
-            "name": "INFRABOX_DATABASE_DB",
-            "value": os.environ['INFRABOX_DATABASE_DB']
-        }, {
-            "name": "INFRABOX_DATABASE_PORT",
-            "value": os.environ['INFRABOX_DATABASE_PORT']
-        })
-
-        return env
-
-    def get_api_server_container(self, job_id):
-        env = [{
-            "name": "INFRABOX_JOB_ID",
-            "value": job_id
-        }, {
-            "name": "INFRABOX_SERVICE",
-            "value": "job-api"
-        }, {
-            "name": "INFRABOX_VERSION",
-            "value": self.args.tag
-        }, {
-            "name": "INFRABOX_GENERAL_NO_CHECK_CERTIFICATES",
-            "value": os.environ['INFRABOX_GENERAL_NO_CHECK_CERTIFICATES']
-        }, {
-            "name": "INFRABOX_DASHBOARD_URL",
-            "value": os.environ['INFRABOX_DASHBOARD_URL']
-        }, {
-            "name": "INFRABOX_STORAGE_GCS_ENABLED",
-            "value": os.environ['INFRABOX_STORAGE_GCS_ENABLED']
-        }, {
-            "name": "INFRABOX_STORAGE_S3_ENABLED",
-            "value": os.environ['INFRABOX_STORAGE_S3_ENABLED']
-        }, {
-            "name": "INFRABOX_JOB_MAX_OUTPUT_SIZE",
-            "value": os.environ['INFRABOX_JOB_MAX_OUTPUT_SIZE']
-        }, {
-            "name": "INFRABOX_GERRIT_ENABLED",
-            "value": os.environ['INFRABOX_GERRIT_ENABLED']
-        }, {
-            "name": "INFRABOX_JOB_SECURITY_CONTEXT_CAPABILITIES_ENABLED",
-            "value": os.environ['INFRABOX_JOB_SECURITY_CONTEXT_CAPABILITIES_ENABLED']
-        }]
-
-        if use_gcs():
-            env.extend(({
-                "name": "INFRABOX_STORAGE_GCS_CONTAINER_OUTPUT_BUCKET",
-                "value": os.environ['INFRABOX_STORAGE_GCS_CONTAINER_OUTPUT_BUCKET']
-            }, {
-                "name": "INFRABOX_STORAGE_GCS_CONTAINER_CONTENT_CACHE_BUCKET",
-                "value": os.environ['INFRABOX_STORAGE_GCS_CONTAINER_CONTENT_CACHE_BUCKET']
-            }, {
-                "name": "INFRABOX_STORAGE_GCS_PROJECT_UPLOAD_BUCKET",
-                "value": os.environ['INFRABOX_STORAGE_GCS_PROJECT_UPLOAD_BUCKET']
-            }))
-
-        if use_s3():
-            env.extend(({
-                "name": "INFRABOX_STORAGE_S3_CONTAINER_OUTPUT_BUCKET",
-                "value": os.environ['INFRABOX_STORAGE_S3_CONTAINER_OUTPUT_BUCKET']
-            }, {
-                "name": "INFRABOX_STORAGE_S3_CONTAINER_CONTENT_CACHE_BUCKET",
-                "value": os.environ['INFRABOX_STORAGE_S3_CONTAINER_CONTENT_CACHE_BUCKET']
-            }, {
-                "name": "INFRABOX_STORAGE_S3_PROJECT_UPLOAD_BUCKET",
-                "value": os.environ['INFRABOX_STORAGE_S3_PROJECT_UPLOAD_BUCKET']
-            }, {
-                "name": "INFRABOX_STORAGE_S3_ENDPOINT",
-                "value": os.environ['INFRABOX_STORAGE_S3_ENDPOINT']
-            }, {
-                "name": "INFRABOX_STORAGE_S3_PORT",
-                "value": os.environ['INFRABOX_STORAGE_S3_PORT']
-            }, {
-                "name": "INFRABOX_STORAGE_S3_ACCESS_KEY",
-                "value": os.environ['INFRABOX_STORAGE_S3_ACCESS_KEY']
-            }, {
-                "name": "INFRABOX_STORAGE_S3_SECRET_KEY",
-                "value": os.environ['INFRABOX_STORAGE_S3_SECRET_KEY']
-            }, {
-                "name": "INFRABOX_STORAGE_S3_REGION",
-                "value": os.environ['INFRABOX_STORAGE_S3_REGION']
-            }, {
-                "name": "INFRABOX_STORAGE_S3_SECURE",
-                "value": os.environ['INFRABOX_STORAGE_S3_SECURE']
-            }))
-
-        db_env = self.get_database_env()
-        env.extend(db_env)
-
-        r = {
-            "name": "job-api",
-            "image": self.args.docker_registry + "/infrabox/job-api:%s" % self.args.tag,
-            "env": env,
-            "volumeMounts": []
-        }
-
-        if use_gcs():
-            r["volumeMounts"].append({
-                "name": "gcs-service-account",
-                "mountPath": "/etc/infrabox/gcs",
-                "readOnly": True
-            })
-
-        return r
 
     def kube_delete_namespace(self, job_id):
         h = {'Authorization': 'Bearer %s' % self.args.token}
@@ -241,8 +112,8 @@ class Scheduler(object):
             "name": "INFRABOX_GENERAL_NO_CHECK_CERTIFICATES",
             "value": os.environ['INFRABOX_GENERAL_NO_CHECK_CERTIFICATES']
         }, {
-            "name": "INFRABOX_API_SERVER",
-            "value": "localhost:5000"
+            "name": "INFRABOX_JOB_API_URL",
+            "value": os.environ['INFRABOX_JOB_API_URL']
         }, {
             "name": "INFRABOX_SERVICE",
             "value": "job"
@@ -283,20 +154,15 @@ class Scheduler(object):
         }, {
             "name": "INFRABOX_DASHBOARD_URL",
             "value": os.environ['INFRABOX_DASHBOARD_URL']
+        }, {
+            "name": "INFRABOX_JOB_API_TOKEN",
+            "value": jwt.encode({"job_id": job_id}, get_env('INFRABOX_JOB_API_SECRET'))
         }]
 
         if additional_env:
             env += additional_env
 
         self.logger.info(env)
-
-        if use_gcs():
-            volumes.append({
-                "name": "gcs-service-account",
-                "secret": {
-                    "secretName": "infrabox-gcs"
-                }
-            })
 
         if use_host_docker_daemon():
             volumes.append({
@@ -365,11 +231,10 @@ class Scheduler(object):
                     "spec": {
                         "imagePullSecrets": [{"name": "infrabox-docker-secret"}],
                         "imagePullPolicy": "Always",
-                        "containers": [self.get_api_server_container(job_id), {
+                        "containers": [{
                             "name": "run-job",
                             "image": self.args.docker_registry + "/infrabox/job:%s" % self.args.tag,
-                            "command": ["/usr/local/bin/wait-for-webserver.sh", "localhost:5000",
-                                        "/usr/local/bin/entrypoint.sh", "--type", job_type],
+                            "command": ["/usr/local/bin/entrypoint.sh", "--type", job_type],
 
                             "securityContext": {
                                 "privileged": True
@@ -393,84 +258,6 @@ class Scheduler(object):
                 }
             }
         }
-
-        db_env = self.get_database_env()
-
-        if os.environ['INFRABOX_CLAIR_ENABLED'] == "true":
-            clair_container = {
-                "name": "clair",
-                "image": self.args.docker_registry + "/infrabox/clair/analyzer:%s" % self.args.tag,
-                "env": db_env,
-                "resources": {
-                    "requests": {
-                        "memory": "256Mi",
-                        "cpu": 0.2
-                    },
-                    "limits": {
-                        "memory": "256Mi",
-                        "cpu": 0.2
-                    }
-                },
-                "volumeMounts": [{
-                    "mountPath": "/var/lib/docker",
-                    "name": "data-dir"
-                }, {
-                    "mountPath": "/tmp",
-                    "name": "analyzer-tmp"
-                }]
-            }
-
-            run_job['spec']['template']['spec']['containers'].append(clair_container)
-
-        if os.environ['INFRABOX_STORAGE_CLOUDSQL_ENABLED'] == "true":
-            cloudsql_container = {
-                "image": "gcr.io/cloudsql-docker/gce-proxy:1.09",
-                "name": "cloudsql-proxy",
-                "command": ["/cloud_sql_proxy", "--dir=/cloudsql",
-                            "-instances="
-                            + os.environ['INFRABOX_STORAGE_CLOUDSQL_INSTANCE_CONNECTION_NAME']
-                            + "=tcp:5432",
-                            "-credential_file=/secrets/cloudsql/credentials.json"],
-                "resources": {
-                    "requests": {
-                        "memory": "256Mi",
-                        "cpu": 0.1
-                    },
-                    "limits": {
-                        "memory": "256Mi",
-                        "cpu": 0.1
-                    }
-                },
-                "volumeMounts": [{
-                    "name": "cloudsql-instance-credentials",
-                    "mountPath": "/secrets/cloudsql",
-                    "readOnly": True
-                }, {
-                    "name": "ssl-certs",
-                    "mountPath": "/etc/ssl/certs"
-                }, {
-                    "name": "cloudsql",
-                    "mountPath": "/cloudsql"
-                }]
-            }
-
-            run_job['spec']['template']['spec']['containers'].append(cloudsql_container)
-            volumes = [{
-                "name": "cloudsql-instance-credentials",
-                "secret": {
-                    "secretName": "infrabox-cloudsql-instance-credentials"
-                }
-            }, {
-                "name": "ssl-certs",
-                "hostPath": {
-                    "path": "/etc/ssl/certs"
-                }
-            }, {
-                "name": "cloudsql",
-                "emptyDir": {}
-            }]
-
-            run_job['spec']['template']['spec']['volumes'].extend(volumes)
 
         r = requests.post(self.args.api_server + '/apis/batch/v1/namespaces/%s/jobs' % self.namespace,
                           headers=h, json=run_job, timeout=10)
@@ -868,7 +655,6 @@ def main():
 
     get_env('INFRABOX_SERVICE')
     get_env('INFRABOX_VERSION')
-    get_env('INFRABOX_STORAGE_CLOUDSQL_ENABLED')
     get_env('INFRABOX_DATABASE_DB')
     get_env('INFRABOX_DATABASE_USER')
     get_env('INFRABOX_DATABASE_PASSWORD')
@@ -877,28 +663,12 @@ def main():
     get_env('INFRABOX_DASHBOARD_URL')
     get_env('INFRABOX_DOCKER_REGISTRY_URL')
     get_env('INFRABOX_CLAIR_ENABLED')
-    get_env('INFRABOX_STORAGE_GCS_ENABLED')
-    get_env('INFRABOX_STORAGE_S3_ENABLED')
     get_env('INFRABOX_GENERAL_NO_CHECK_CERTIFICATES')
+    get_env('INFRABOX_JOB_API_URL')
+    get_env('INFRABOX_JOB_API_SECRET')
     get_env('INFRABOX_JOB_MAX_OUTPUT_SIZE')
     get_env('INFRABOX_JOB_MOUNT_DOCKER_SOCKET')
     get_env('INFRABOX_JOB_SECURITY_CONTEXT_CAPABILITIES_ENABLED')
-
-    if use_gcs():
-        get_env('INFRABOX_STORAGE_GCS_CONTAINER_OUTPUT_BUCKET')
-        get_env('INFRABOX_STORAGE_GCS_CONTAINER_CONTENT_CACHE_BUCKET')
-        get_env('INFRABOX_STORAGE_GCS_PROJECT_UPLOAD_BUCKET')
-
-    if use_s3():
-        get_env('INFRABOX_STORAGE_S3_CONTAINER_CONTENT_CACHE_BUCKET')
-        get_env('INFRABOX_STORAGE_S3_CONTAINER_OUTPUT_BUCKET')
-        get_env('INFRABOX_STORAGE_S3_PROJECT_UPLOAD_BUCKET')
-        get_env('INFRABOX_STORAGE_S3_ENDPOINT')
-        get_env('INFRABOX_STORAGE_S3_PORT')
-        get_env('INFRABOX_STORAGE_S3_ACCESS_KEY')
-        get_env('INFRABOX_STORAGE_S3_SECRET_KEY')
-        get_env('INFRABOX_STORAGE_S3_REGION')
-        get_env('INFRABOX_STORAGE_S3_SECURE')
 
     if get_env('INFRABOX_GERRIT_ENABLED') == 'true':
         get_env('INFRABOX_GERRIT_USERNAME')
