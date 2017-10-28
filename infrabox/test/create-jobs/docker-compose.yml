@@ -26,6 +26,7 @@ services:
             - INFRABOX_GITHUB_ENABLED=false
             - INFRABOX_JOB_MAX_OUTPUT_SIZE=1024
             - INFRABOX_JOB_SECURITY_CONTEXT_CAPABILITIES_ENABLED=false
+            - INFRABOX_JOB_API_SECRET=secret
         links:
             - postgres
         command: /wait-for-postgres.sh postgres /entrypoint.sh
@@ -34,9 +35,10 @@ services:
         build:
             context: ../../..
             dockerfile: infrabox/test/create-jobs/Dockerfile
-        command: /project/src/utils/wait-for-webserver.sh job-api:5000 /project/infrabox/test/create-jobs/entrypoint.sh
+        command: /project/src/utils/wait-for-webserver.sh job-api:8080 /project/infrabox/test/create-jobs/entrypoint.sh
         environment:
-            - INFRABOX_JOB_API_URL=http://job-api:5000
+            - INFRABOX_JOB_API_URL=http://job-api:8080
+            - INFRABOX_JOB_API_SECRET=secret
         links:
             - postgres
             - job-api
