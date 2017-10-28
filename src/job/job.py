@@ -5,6 +5,7 @@ import json
 import subprocess
 import logging
 import uuid
+import base64
 import argparse
 import requests
 import yaml
@@ -525,10 +526,29 @@ class RunJob(Job):
         for name, value in self.environment.iteritems():
             cmd += ['-e', '%s=%s' % (name, value)]
 
+        # add resource env vars
+        os.makedirs('/tmp/serviceaccount')
+        if os.environ.get('INFRABOX_RESOURCES_KUBERNETES_CA_CRT', None):
+            with open('/tmp/serviceaccount/ca.crt', 'w') as o:
+                o.write(base64.b64decode(os.environ['INFRABOX_RESOURCES_KUBERNETES_CA_CRT']))
+
+            with open('/tmp/serviceaccount/token', 'w') as o:
+                o.write(base64.b64decode(os.environ['INFRABOX_RESOURCES_KUBERNETES_TOKEN']))
+
+            with open('/tmp/serviceaccount/namespace', 'w') as o:
+                o.write(base64.b64decode(os.environ['INFRABOX_RESOURCES_KUBERNETES_NAMESPACE']))
+
+            cmd += ['-v', '/tmp/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount']
+
+
         # Add capabilities
-        add_capabilities = self.job.get('security_context', {}).get('capabilities', {}).get('add', [])
-        if add_capabilities:
-            cmd += ['--cap-add=%s' % ','.join(add_capabilities)]
+        security_context = self.job.get('security_context', {})
+
+        if security_context:
+            capabilities = security_context.get('capabilities', {})
+            add_capabilities = capabilities.get('add', [])
+            if add_capabilities:
+                cmd += ['--cap-add=%s' % ','.join(add_capabilities)]
 
         cmd += [image_name]
 
@@ -813,6 +833,7 @@ def main():
     except Exception as e:
         print_stackdriver()
         j.console.collect('## An error occured', show=True)
+        j.console.collect(e, show=True)
         j.console.flush()
         j.update_status('error')
 
