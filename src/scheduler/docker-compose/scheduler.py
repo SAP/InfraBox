@@ -59,7 +59,6 @@ class Scheduler(object):
                         "INFRABOX_SERVICE=job",
                         "INFRABOX_VERSION=latest",
                         "INFRABOX_DOCKER_REGISTRY_URL=localhost:30202",
-                        "INFRABOX_CLAIR_ENABLED=false",
                         "INFRABOX_LOCAL_CACHE_ENABLED=false",
                         "INFRABOX_JOB_MAX_OUTPUT_SIZE=%s" % os.environ['INFRABOX_JOB_MAX_OUTPUT_SIZE'],
                         "INFRABOX_DOCKER_REGISTRY_ADMIN_USERNAME=admin",

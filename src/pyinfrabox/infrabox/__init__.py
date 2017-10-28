@@ -119,13 +119,6 @@ def parse_workflow(d, path):
     if 'depends_on' in d:
         parse_depends_on(d['depends_on'], path + ".depends_on")
 
-def parse_security(d, path):
-    check_allowed_properties(d, path, ("scan_container",))
-    check_required_properties(d, path, ("scan_container",))
-
-    if not isinstance(d['scan_container'], bool):
-        raise ValidationError(path + ".scan_container", "Must be boolean")
-
 def parse_limits(d, path):
     check_allowed_properties(d, path, ("memory", "cpu"))
     check_required_properties(d, path, ("memory", "cpu"))
@@ -181,7 +174,7 @@ def parse_resources(d, path):
 
 def parse_docker(d, path):
     check_allowed_properties(d, path, ("type", "name", "docker_file", "depends_on", "resources",
-                                       "build_only", "security", "keep", "environment",
+                                       "build_only", "keep", "environment",
                                        "build_arguments", "deployments", "timeout", "security_context"))
     check_required_properties(d, path, ("type", "name", "docker_file", "resources"))
     check_name(d['name'], path + ".name")
@@ -196,9 +189,6 @@ def parse_docker(d, path):
 
     if 'depends_on' in d:
         parse_depends_on(d['depends_on'], path + ".depends_on")
-
-    if 'security' in d:
-        parse_security(d['security'], path + ".security")
 
     if 'environment' in d:
         parse_environment(d['environment'], path + ".environment")

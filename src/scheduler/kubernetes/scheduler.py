@@ -124,9 +124,6 @@ class Scheduler(object):
             "name": "INFRABOX_DOCKER_REGISTRY_URL",
             "value": os.environ['INFRABOX_DOCKER_REGISTRY_URL']
         }, {
-            "name": "INFRABOX_CLAIR_ENABLED",
-            "value": os.environ['INFRABOX_CLAIR_ENABLED']
-        }, {
             "name": "INFRABOX_LOCAL_CACHE_ENABLED",
             "value": os.environ['INFRABOX_LOCAL_CACHE_ENABLED']
         }, {
@@ -662,7 +659,6 @@ def main():
     get_env('INFRABOX_DATABASE_PORT')
     get_env('INFRABOX_DASHBOARD_URL')
     get_env('INFRABOX_DOCKER_REGISTRY_URL')
-    get_env('INFRABOX_CLAIR_ENABLED')
     get_env('INFRABOX_GENERAL_NO_CHECK_CERTIFICATES')
     get_env('INFRABOX_JOB_API_URL')
     get_env('INFRABOX_JOB_API_SECRET')
