@@ -13,7 +13,7 @@
     }, {
         "type": "docker-compose",
         "name": "job-api",
-        "docker_compose_file": "src/job-api/test/docker-compose.yml",
+        "docker_compose_file": "infrabox/test/job-api/docker-compose.yml",
         "resources": { "limits": { "cpu": 1, "memory": 2048 } }
     }, {
         "type": "docker-compose",

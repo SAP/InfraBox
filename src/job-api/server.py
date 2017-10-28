@@ -1,17 +1,15 @@
-# pylint: disable=too-many-lines,global-statement,too-many-locals,too-many-branches
+# pylint: disable=too-many-lines,global-statement,too-many-locals,too-many-branches,too-many-statements
 from __future__ import print_function
 import os
 import json
 import time
-import sys
 import subprocess
-import logging
 import uuid
 import copy
 from datetime import datetime
 
-import psycopg2
 from minio import Minio
+import jwt
 
 from flask import Flask, jsonify, request, send_file
 
@@ -20,40 +18,90 @@ from pyinfrabox.markup import validate_markup
 from pyinfrabox.testresult import validate_result
 from pyinfrabox import ValidationError
 
+from pyinfraboxutils import get_logger, get_env
+from pyinfraboxutils.db import connect_db
+
+logger = get_logger('job-api')
+
 app = Flask(__name__)
 
-logging.basicConfig(
-    format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s',
-    datefmt='%d-%m-%Y:%H:%M:%S',
-    level=logging.WARN
-)
 
-log = logging.getLogger('werkzeug')
+def execute_many(stmt, args):
+    c = conn.cursor()
+    c.execute(stmt, args)
+    r = c.fetchall()
+    c.close()
+
+    return r
+
+def execute_one(stmt, args):
+    r = execute_many(stmt, args)
+
+    if not r:
+        return r
+
+    return r[0]
 
 def allowed_file(filename, extensions):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in extensions
 
-job_data = None
-console_output_len = 0
-console_output_updates = 0
-markup_uploads = 0
-badge_uploads = 0
-download = None
-
-def is_create_job():
+def is_create_job()
     return job_data['job']['name'] == 'Create Jobs'
 
-def remember_download(section, name, object_name):
-    global download
+def validate_token():
+    conn.rollback()
+    token = request.headers.get('X-Infrabox-Token', None)
 
-    if not download:
-        download = {}
+    if not token:
+        logger.debug('No token header')
+        return None
 
-    if section not in download:
-        download[section] = []
+    decoded = None
+    try:
+        decoded = jwt.decode(token, get_env('INFRABOX_JOB_API_SECRET'))
+    except:
+        logger.debug('failed to decode token')
+        return None
 
-    download[section].append({"name": name, "id": object_name})
+    job_id = decoded['job_id']
+
+    if not validate_uuid4(job_id):
+        logger.warn('not a valid uuid')
+        return None
+
+    cur = conn.cursor()
+    cur.execute("SELECT state, project_id, name FROM job WHERE id = %s", [job_id])
+    r = cur.fetchone()
+    cur.close()
+
+    if not r:
+        logger.debug('job not found')
+        return None
+
+    job_state = r[0]
+    if job_state not in ('queued', 'running', 'scheduled'):
+        logger.warn('job in wrong state')
+        return None
+
+    return {
+        "job": {
+            "id": job_id,
+            "state": r[0],
+            "name": r[2]
+        },
+        "project": {
+            "id": r[1]
+        }
+    }
+
+def get_minio_client():
+    return Minio(get_env('INFRABOX_STORAGE_S3_ENDPOINT') +
+                 ":" + get_env('INFRABOX_STORAGE_S3_PORT'),
+                 access_key=get_env('INFRABOX_STORAGE_S3_ACCESS_KEY'),
+                 secret_key=get_env('INFRABOX_STORAGE_S3_SECRET_KEY'),
+                 secure=get_env('INFRABOX_STORAGE_S3_SECURE') == 'true')
+
 
 def validate_uuid4(uuid_string):
     try:
@@ -90,7 +138,7 @@ def execute(command):
         raise Exception(output)
 
 
-def get_job_data():
+def get_job_data(job_id):
     data = {}
 
     # get all the job details
@@ -137,12 +185,12 @@ def get_job_data():
 	INNER JOIN project p
 	    ON co.project_id = p.id
 	WHERE j.id = %s
-    ''', (JOB_ID, ))
+    ''', (job_id, ))
     r = cursor.fetchone()
     cursor.close()
 
     data['job'] = {
-        "id": JOB_ID,
+        "id": job_id,
         "name": r[0],
         "dockerfile": r[2],
         "build_only": r[12],
@@ -353,8 +401,25 @@ def get_job_data():
 
 @app.route("/source")
 def get_source():
+    token = validate_token()
+
+    if not token:
+        return "Forbidden", 403
+
+    job_id = token['job']['id']
+
+    r = execute_one('''
+        SELECT su.filename
+        FROM
+            source_upload su
+        INNER JOIN job j
+            ON j.source_upload_id = su.id
+        WHERE
+            j.id = %s
+    ''', (job_id,))
+
     source_zip = '/tmp/source.zip'
-    filename = job_data['source_upload']['filename']
+    filename = r[0]
 
     if use_gcs():
         bucket = os.environ['INFRABOX_STORAGE_GCS_PROJECT_UPLOAD_BUCKET']
@@ -368,7 +433,8 @@ def get_source():
         assert use_s3()
         try:
             bucket = os.environ['INFRABOX_STORAGE_S3_PROJECT_UPLOAD_BUCKET']
-            minioClient.fget_object(bucket, filename, source_zip)
+            mc = get_minio_client()
+            mc.fget_object(bucket, filename, source_zip)
         except Exception as e:
             app.logger.error(e)
             raise e
@@ -377,11 +443,18 @@ def get_source():
 
 @app.route("/cache", methods=['GET', 'POST'])
 def get_cache():
+    token = validate_token()
+
+    if not token:
+        return "Forbidden", 403
+
+    project_id = token['project']['id']
+    job_name = token['job']['name']
+
     path = '/tmp/cache.tar.gz'
-    template = 'project_%s_branch_%s_job_%s.tar.gz'
-    cache_identifier = template % (job_data['project']['id'],
-                                   job_data['commit']['branch'],
-                                   job_data['job']['name'])
+    template = 'project_%s__job_%s.tar.gz'
+    cache_identifier = template % (project_id,
+                                   job_name)
 
     if request.method == 'POST':
         if 'data' not in request.files:
@@ -406,7 +479,8 @@ def get_cache():
         else:
             assert use_s3()
             bucket = os.environ['INFRABOX_STORAGE_S3_CONTAINER_CONTENT_CACHE_BUCKET']
-            minioClient.fput_object(bucket, cache_identifier, path)
+            mc = get_minio_client()
+            mc.fput_object(bucket, cache_identifier, path)
 
         return "OK"
     elif request.method == 'GET':
@@ -427,7 +501,8 @@ def get_cache():
             assert use_s3()
             try:
                 bucket = os.environ['INFRABOX_STORAGE_S3_CONTAINER_CONTENT_CACHE_BUCKET']
-                minioClient.fget_object(bucket, cache_identifier, path)
+                mc = get_minio_client()
+                mc.fget_object(bucket, cache_identifier, path)
             except:
                 return "Not found", 404
 
@@ -437,6 +512,13 @@ def get_cache():
 
 @app.route('/output', methods=['POST'])
 def upload_output():
+    token = validate_token()
+
+    if not token:
+        return "Forbidden", 403
+
+    job_id = token['job']['id']
+
     if 'data' not in request.files:
         return "No file", 400
 
@@ -451,7 +533,7 @@ def upload_output():
     if os.path.getsize(path) > max_output_size:
         return "File too big", 400
 
-    object_name = "%s-%s.tar.gz" % (job_data['job']['id'], str(uuid.uuid4()))
+    object_name = "%s-%s.tar.gz" % (job_id, str(uuid.uuid4()))
 
     if use_gcs():
         bucket = os.environ['INFRABOX_STORAGE_GCS_CONTAINER_OUTPUT_BUCKET']
@@ -463,20 +545,32 @@ def upload_output():
     else:
         assert use_s3()
         bucket = os.environ['INFRABOX_STORAGE_S3_CONTAINER_OUTPUT_BUCKET']
-        minioClient.fput_object(bucket, object_name, path)
-
-    remember_download("Output", "output.tar.gz", object_name)
+        mc = get_minio_client()
+        mc.fput_object(bucket, object_name, path)
 
     return "OK"
 
 @app.route("/output/<job_id>")
 def get_output_of_job(job_id):
+    token = validate_token()
+
+    if not token:
+        return "Forbidden", 403
+
+    job_id = token['job']['id']
+
     if not validate_uuid4(job_id):
         return "Invalid uuid", 400
 
+    dependencies = execute_one('''
+        SELECT dependencies
+        FROM job
+        WHERE id = %s
+    ''', (job_id,))[0]
+
     is_valid_dependency = False
-    for dep in job_data['dependencies']:
-        if dep['id'] == job_id:
+    for dep in dependencies:
+        if dep['job-id'] == job_id:
             is_valid_dependency = True
             break
 
@@ -523,7 +617,8 @@ def get_output_of_job(job_id):
         assert use_s3()
         try:
             bucket = os.environ['INFRABOX_STORAGE_S3_CONTAINER_OUTPUT_BUCKET']
-            minioClient.fget_object(bucket, object_name, output_zip)
+            mc = get_minio_client()
+            mc.fget_object(bucket, object_name, output_zip)
         except:
             return "Not found", 404
 
@@ -531,8 +626,13 @@ def get_output_of_job(job_id):
 
 @app.route("/job")
 def get_job():
-    global job_data
-    job_data = get_job_data()
+    token = validate_token()
+
+    if not token:
+        return "Forbidden", 403
+
+    job_id = token['job']['id']
+    job_data = get_job_data(job_id)
 
     state = job_data['job']['state']
     if state in ("finished", "error", "failure", "skipped", "killed"):
@@ -540,18 +640,26 @@ def get_job():
 
     return jsonify(job_data)
 
-@app.route("/ping")
+@app.route("/")
 def ping():
-    return "pong"
+    return "ok"
 
 @app.route("/setrunning", methods=['POST'])
 def set_running():
+    token = validate_token()
+
+    if not token:
+        return "Forbidden", 403
+
+    job_id = token['job']['id']
+
     cursor = conn.cursor()
-    cursor.execute("DELETE FROM console WHERE job_id = %s", (JOB_ID,))
+    cursor.execute("DELETE FROM console WHERE job_id = %s", (job_id,))
     cursor.execute("""UPDATE job SET state = 'running', start_date = current_timestamp
-                      WHERE id = %s""", (JOB_ID,))
+                      WHERE id = %s""", (job_id,))
     cursor.close()
     conn.commit()
+
     return jsonify({})
 
 def find_leaf_jobs(jobs):
@@ -571,6 +679,14 @@ def find_leaf_jobs(jobs):
 
 @app.route("/create_jobs", methods=['POST'])
 def create_jobs():
+    token = validate_token()
+
+    if not token:
+        return "Forbidden", 403
+
+    project_id = token['project']['id']
+    parent_job_id = token['job']['id']
+
     d = request.json
     jobs = d['jobs']
 
@@ -584,18 +700,12 @@ def create_jobs():
             if sc.get('capabilities', None):
                 return 'Capabilities are disabled', 404
 
-
-    # Create new connection without auto commit
-    c = psycopg2.connect(dbname=os.environ['INFRABOX_DATABASE_DB'],
-                         user=os.environ['INFRABOX_DATABASE_USER'],
-                         password=os.environ['INFRABOX_DATABASE_PASSWORD'],
-                         host=os.environ['INFRABOX_DATABASE_HOST'],
-                         port=os.environ['INFRABOX_DATABASE_PORT'])
-
+    c = conn
     cursor = c.cursor()
-    cursor.execute("SELECT env_var FROM job WHERE id = %s", (JOB_ID,))
+    cursor.execute("SELECT env_var, build_id FROM job WHERE id = %s", (parent_job_id,))
     result = cursor.fetchone()
     base_env_var = result[0]
+    build_id = result[1]
 
     # Get some project info
     cursor = c.cursor()
@@ -607,12 +717,12 @@ def create_jobs():
             AND j.id = %s
         INNER JOIN build b
             ON b.id = j.build_id
-    """, (JOB_ID,))
+    """, (parent_job_id,))
     result = cursor.fetchone()
+    cursor.close()
 
     build_number = result[1]
     project_id = result[2]
-    cursor.close()
 
     # name->id mapping
     jobname_id = {}
@@ -654,7 +764,7 @@ def create_jobs():
                     env_var_ref_name = value['$ref']
                     cursor = c.cursor()
                     cursor.execute("""SELECT value FROM secret WHERE name = %s and project_id = %s""",
-                                   (env_var_ref_name, job_data['project']['id']))
+                                   (env_var_ref_name, project_id))
                     result = cursor.fetchall()
                     cursor.close()
 
@@ -721,7 +831,7 @@ def create_jobs():
             for dep in depends_on:
                 dep['job-id'] = jobname_id[dep['job']]
         else:
-            depends_on = [{"job": job_data['job']['name'], "job-id": JOB_ID, "on": ["finished"]}]
+            depends_on = [{"job": job_data['job']['name'], "job-id": parent_job_id, "on": ["finished"]}]
 
         if job_type == "docker":
             f = job['docker_file']
@@ -786,8 +896,8 @@ def create_jobs():
                 keep, created_at, repo, base_path, scan_container,
                 env_var_ref, env_var, build_arg, deployment, cpu, memory, timeout, resources)
             VALUES (%s, 'queued', %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);""",
-                       (job_id, job_data['build']['id'], t, f, name,
-                        job_data['project']['id'],
+                       (job_id, build_id, t, f, name,
+                        project_id,
                         json.dumps(depends_on), build_only, keep, datetime.now(),
                         repo, base_path, scan_container, env_var_refs, env_vars,
                         build_arguments, deployments, limits_cpu, limits_memory, timeout,
@@ -803,11 +913,23 @@ def create_jobs():
 @app.route("/consoleupdate", methods=['POST'])
 def post_console():
     output = request.json['output']
-    global console_output_len
-    global console_output_updates
 
-    console_output_len += len(output)
-    console_output_updates += 1
+    token = validate_token()
+
+    if not token:
+        return "Forbidden", 403
+
+    job_id = token['job']['id']
+
+    r = execute_one("""
+        SELECT sum(char_length(output)), count(*) FROM console WHERE job_id = %s
+    """, (job_id,))
+
+    if not r:
+        return "Not found", 404
+
+    console_output_len = r[0]
+    console_output_updates = r[1]
 
     if console_output_len > 16 * 1024 * 1024:
         return "Console output too big", 400
@@ -817,7 +939,7 @@ def post_console():
 
     try:
         cursor = conn.cursor()
-        cursor.execute("INSERT INTO console (job_id, output) VALUES (%s, %s)", (JOB_ID, output))
+        cursor.execute("INSERT INTO console (job_id, output) VALUES (%s, %s)", (job_id, output))
         cursor.close()
         conn.commit()
     except:
@@ -827,11 +949,18 @@ def post_console():
 
 @app.route("/stats", methods=['POST'])
 def post_stats():
+    token = validate_token()
+
+    if not token:
+        return "Forbidden", 403
+
+    job_id = token['job']['id']
+
     stats = request.json['stats']
 
     try:
         cursor = conn.cursor()
-        cursor.execute("UPDATE job SET stats = %s WHERE id = %s", (json.dumps(stats), JOB_ID))
+        cursor.execute("UPDATE job SET stats = %s WHERE id = %s", (json.dumps(stats), job_id))
         cursor.close()
         conn.commit()
     except:
@@ -857,14 +986,30 @@ def insert(c, cols, rows, table):
 
 @app.route('/markdown', methods=['POST'])
 def upload_markdown():
-    global markup_uploads
+    token = validate_token()
+
+    if not token:
+        return "Forbidden", 403
+
+    job_id = token['job']['id']
+    project_id = token['project']['id']
+
+    r = execute_one("""
+        SELECT count(*) FROM job_markup WHERE job_id = %s
+    """, (job_id,))
+
+    if not r:
+        return "Not found", 404
+
+    if r[0] > 0:
+        return "Forbidden", 403
+
+    if len(request.files) > 10:
+        return "Too many uploads", 400
 
     for name, f in request.files.iteritems():
         if not allowed_file(f.filename, ("md",)):
             return "Filetype not allowed", 400
-
-        if markup_uploads > 10:
-            return "Too many uploads", 400
 
         path = '/tmp/data.md'
         f.save(path)
@@ -875,26 +1020,38 @@ def upload_markdown():
         with open(path, 'r') as md:
             data = md.read()
 
-        markup_uploads += 1
         cursor = conn.cursor()
         cursor.execute("""INSERT INTO job_markup (job_id, name, data, project_id, type)
                           VALUES (%s, %s, %s, %s, 'markdown')""",
-                       (JOB_ID, name, data, job_data['project']['id']))
+                       (job_id, name, data, project_id))
         cursor.close()
         conn.commit()
         return ""
 
 @app.route('/markup', methods=['POST'])
 def upload_markup():
-    global markup_uploads
+    token = validate_token()
+
+    if not token:
+        return "Forbidden", 403
+
+    job_id = token['job']['id']
+    project_id = token['project']['id']
+
+    r = execute_one("""
+        SELECT count(*) FROM job_markup WHERE job_id = %s
+    """, (job_id,))
+
+    if r[0] > 0:
+        return "Forbidden", 403
+
+    if len(request.files) > 10:
+        return "Too many uploads", 400
 
     for name, f in request.files.iteritems():
         try:
             if not allowed_file(f.filename, ("json",)):
                 return "Filetype not allowed", 400
-
-            if markup_uploads > 10:
-                return "Too many uploads", 400
 
             path = '/tmp/data.json'
             f.save(path)
@@ -909,11 +1066,10 @@ def upload_markup():
                 data = json.loads(content)
                 validate_markup(data)
 
-            markup_uploads += 1
             cursor = conn.cursor()
             cursor.execute("""INSERT INTO job_markup (job_id, name, data, project_id, type)
                               VALUES (%s, %s, %s, %s, 'markup')""",
-                           (JOB_ID, name, content, job_data['project']['id']))
+                           (job_id, name, content, project_id))
             cursor.close()
             conn.commit()
         except ValidationError as e:
@@ -926,14 +1082,27 @@ def upload_markup():
 
 @app.route('/badge', methods=['POST'])
 def upload_badge():
-    global badge_uploads
+    token = validate_token()
+
+    if not token:
+        return "Forbidden", 403
+
+    job_id = token['job']['id']
+    project_id = token['project']['id']
+
+    r = execute_one("""
+        SELECT count(*) FROM job_badge WHERE job_id = %s
+    """, (job_id,))
+
+    if r[0] > 0:
+        return "Forbidden", 403
+
+    if len(request.files) > 10:
+        return "Too many uploads", 400
 
     for _, f in request.files.iteritems():
         if not allowed_file(f.filename, ("json",)):
             return "Filetype not allowed", 400
-
-        if badge_uploads > 10:
-            return "Too many uploads", 400
 
         path = '/tmp/data.json'
         f.save(path)
@@ -956,11 +1125,10 @@ def upload_badge():
         status = data['status']
         color = data['color']
 
-        badge_uploads += 1
         cursor = conn.cursor()
         cursor.execute("""INSERT INTO job_badge (job_id, subject, status, color, project_id)
                           VALUES (%s, %s, %s, %s, %s)""",
-                       (JOB_ID, subject, status, color, job_data['project']['id']))
+                       (job_id, subject, status, color, project_id))
         cursor.close()
         conn.commit()
         return ""
@@ -968,6 +1136,14 @@ def upload_badge():
 
 @app.route('/testresult', methods=['POST'])
 def upload_testresult():
+    token = validate_token()
+
+    if not token:
+        return "Forbidden", 403
+
+    job_id = token['job']['id']
+    project_id = token['project']['id']
+
     if 'data' not in request.files:
         return jsonify({}), 400
 
@@ -997,31 +1173,25 @@ def upload_testresult():
     except ValidationError as e:
         return e.message, 400
 
-    c = psycopg2.connect(dbname=os.environ['INFRABOX_DATABASE_DB'],
-                         user=os.environ['INFRABOX_DATABASE_USER'],
-                         password=os.environ['INFRABOX_DATABASE_PASSWORD'],
-                         host=os.environ['INFRABOX_DATABASE_HOST'],
-                         port=os.environ['INFRABOX_DATABASE_PORT'])
-
-    cursor = c.cursor()
-    cursor.execute("SELECT COUNT(*) as cnt FROM test_run WHERE job_id=%s", (JOB_ID,))
+    cursor = conn.cursor()
+    cursor.execute("SELECT COUNT(*) as cnt FROM test_run WHERE job_id=%s", (job_id,))
     testruns = cursor.fetchone()
 
     if testruns[0] > 0:
         return "", 404
 
-    cursor = c.cursor()
+    cursor = conn.cursor()
     cursor.execute("""SELECT j.project_id, b.build_number
             FROM job  j
             INNER JOIN build b
                 ON j.id = %s
                 AND b.id = j.build_id
-    """, (JOB_ID,))
+    """, (job_id,))
     rows = cursor.fetchone()
     project_id = rows[0]
     build_number = rows[1]
 
-    cursor = c.cursor()
+    cursor = conn.cursor()
     cursor.execute("""SELECT name, suite, id FROM test WHERE project_id = %s""", (project_id,))
     existing_tests = cursor.fetchall()
 
@@ -1079,7 +1249,7 @@ def upload_testresult():
         test_runs.append((
             test_run_id,
             t['status'],
-            JOB_ID,
+            job_id,
             test_id,
             t['duration'],
             project_id,
@@ -1098,61 +1268,58 @@ def upload_testresult():
             ))
 
     if missing_tests:
-        insert(c, ("name", "suite", "project_id", "id", "build_number"), missing_tests, 'test')
+        insert(conn, ("name", "suite", "project_id", "id", "build_number"), missing_tests, 'test')
 
     if measurements:
-        insert(c, ("test_run_id", "name", "unit", "value", "project_id"), measurements, 'measurement')
+        insert(conn, ("test_run_id", "name", "unit", "value", "project_id"), measurements, 'measurement')
 
-    insert(c, ("id", "state", "job_id", "test_id", "duration",
-               "project_id", "message", "stack"), test_runs, 'test_run')
+    insert(conn, ("id", "state", "job_id", "test_id", "duration",
+                  "project_id", "message", "stack"), test_runs, 'test_run')
 
-    insert(c, ("tests_added", "tests_duration", "tests_skipped", "tests_failed", "tests_error",
-               "tests_passed", "job_id", "project_id"),
+    insert(conn, ("tests_added", "tests_duration", "tests_skipped", "tests_failed", "tests_error",
+                  "tests_passed", "job_id", "project_id"),
            ((stats['tests_added'], stats['tests_duration'], stats['tests_skipped'],
              stats['tests_failed'], stats['tests_error'], stats['tests_passed'],
-             JOB_ID, project_id),), 'job_stat')
+             job_id, project_id),), 'job_stat')
 
-    c.commit()
+    conn.commit()
     return "", 200
 
 
 @app.route("/setfinished", methods=['POST'])
 def set_finished():
+    token = validate_token()
+
+    if not token:
+        return "Forbidden", 403
+
+    job_id = token['job']['id']
+
     state = request.json['state']
     # collect console output
     cursor = conn.cursor()
     cursor.execute("""SELECT output FROM console WHERE job_id = %s
-                      ORDER BY date""", (JOB_ID,))
+                      ORDER BY date""", (job_id,))
     lines = cursor.fetchall()
 
     output = ""
     for l in lines:
         output += l[0]
 
-    dl = None
-    if download:
-        dl = json.dumps(download)
-
     # Update state
     cursor.execute("""
     UPDATE job SET
         state = %s,
         console = %s,
-        end_date = current_timestamp,
-        download = %s
-    WHERE id = %s""", (state, output, dl, JOB_ID))
+        end_date = current_timestamp
+    WHERE id = %s""", (state, output, job_id))
 
     # remove form console table
-    cursor.execute("DELETE FROM console WHERE job_id = %s", (JOB_ID,))
+    cursor.execute("DELETE FROM console WHERE job_id = %s", (job_id,))
     cursor.close()
 
     conn.commit()
     return jsonify({})
-
-def get_env(name):
-    if name not in os.environ:
-        raise Exception("%s not set" % name)
-    return os.environ[name]
 
 if __name__ == "__main__":
     get_env('INFRABOX_DATABASE_USER')
@@ -1160,10 +1327,9 @@ if __name__ == "__main__":
     get_env('INFRABOX_DATABASE_DB')
     get_env('INFRABOX_DATABASE_HOST')
     get_env('INFRABOX_DATABASE_PORT')
-    get_env('INFRABOX_JOB_ID')
-    get_env('INFRABOX_DASHBOARD_URL')
     get_env('INFRABOX_JOB_MAX_OUTPUT_SIZE')
     get_env('INFRABOX_JOB_SECURITY_CONTEXT_CAPABILITIES_ENABLED')
+    get_env('INFRABOX_JOB_API_SECRET')
 
     if get_env('INFRABOX_STORAGE_GCS_ENABLED') == 'true':
         get_env('INFRABOX_STORAGE_GCS_CONTAINER_CONTENT_CACHE_BUCKET')
@@ -1176,26 +1342,6 @@ if __name__ == "__main__":
         get_env('INFRABOX_STORAGE_S3_PROJECT_UPLOAD_BUCKET')
         get_env('INFRABOX_STORAGE_S3_REGION')
 
-        minioClient = Minio(get_env('INFRABOX_STORAGE_S3_ENDPOINT') +
-                            ":" + get_env('INFRABOX_STORAGE_S3_PORT'),
-                            access_key=get_env('INFRABOX_STORAGE_S3_ACCESS_KEY'),
-                            secret_key=get_env('INFRABOX_STORAGE_S3_SECRET_KEY'),
-                            secure=get_env('INFRABOX_STORAGE_S3_SECURE') == 'true')
+    conn = connect_db()
 
-    JOB_ID = os.environ['INFRABOX_JOB_ID']
-
-    while True:
-        try:
-            conn = psycopg2.connect(dbname=os.environ['INFRABOX_DATABASE_DB'],
-                                    user=os.environ['INFRABOX_DATABASE_USER'],
-                                    password=os.environ['INFRABOX_DATABASE_PASSWORD'],
-                                    host=os.environ['INFRABOX_DATABASE_HOST'],
-                                    port=os.environ['INFRABOX_DATABASE_PORT'])
-            break
-        except Exception as e:
-            print(e, file=sys.stderr)
-            time.sleep(3)
-
-    conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
-
-    app.run(host="0.0.0.0", debug=True)
+    app.run(host="0.0.0.0", debug=True, port=8080)

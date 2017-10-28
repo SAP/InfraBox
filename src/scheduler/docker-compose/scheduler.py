@@ -55,7 +55,7 @@ class Scheduler(object):
                     "environment": [
                         "INFRABOX_JOB_ID=%s" % job_id,
                         "INFRABOX_GENERAL_NO_CHECK_CERTIFICATES=true",
-                        "INFRABOX_API_SERVER=localhost:5000",
+                        "INFRABOX_JOB_API_URL=http://localhost:5000",
                         "INFRABOX_SERVICE=job",
                         "INFRABOX_VERSION=latest",
                         "INFRABOX_DOCKER_REGISTRY_URL=localhost:30202",

@@ -50,13 +50,12 @@ spec:
                 imagePullPolicy: Always
                 env:
                 {{ include "env_database" . | indent 16 }}
-                {{ include "env_gcs" . | indent 16 }}
-                {{ include "env_s3" . | indent 16 }}
                 {{ include "env_gerrit" . | indent 16 }}
                 {{ include "env_local_cache" . | indent 16 }}
                 {{ include "env_job" . | indent 16 }}
                 {{ include "env_general" . | indent 16 }}
                 {{ include "env_kubernetes" . | indent 16 }}
+                {{ include "env_job_api_secret" . | indent 16 }}
                 -
                     name: INFRABOX_GENERAL_NO_CHECK_CERTIFICATES
                     value: {{ default "false" .Values.general.no_check_certificates | quote }}
@@ -78,6 +77,9 @@ spec:
                 -
                     name: INFRABOX_SCHEDULER_LOG_LEVEL
                     value: {{ default "info" .Values.scheduler.log.level }}
+                -
+                    name: INFRABOX_JOB_API_URL
+                    value: {{ default .Values.job.api.url }}
                 ports:
                 - containerPort: 8000
                   name: prometheus

@@ -1,0 +1,75 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+    name: infrabox-job-api
+    namespace: infrabox-system
+    annotations:
+        infrabox.net/checksum: {{ .Files.Get "values.yaml" | sha256sum }}
+    labels:
+        app: infrabox
+        infrabox.net/component: job-api
+spec:
+    replicas: {{ default 1 .Values.job.api.replicas }}
+    template:
+        metadata:
+            labels:
+                app: infrabox
+                infrabox.net/component: job-api
+        spec:
+            {{- if .Values.job.api.node_selector }}
+            nodeSelector:
+{{ toYaml .Values.job.api.node_selector | indent 16 }}
+            {{- end }}
+            containers:
+            {{ if .Values.storage.cloudsql.enabled }}
+            -
+                image: gcr.io/cloudsql-docker/gce-proxy:1.09
+                name: cloudsql-proxy
+                imagePullPolicy: Always
+                command: ["/cloud_sql_proxy", "--dir=/cloudsql",
+                          "-instances={{ .Values.storage.cloudsql.instance_connection_name }}=tcp:5432",
+                          "-credential_file=/secrets/cloudsql/credentials.json"]
+                volumeMounts:
+                - name: cloudsql-instance-credentials
+                  mountPath: /secrets/cloudsql
+                  readOnly: true
+                - name: ssl-certs
+                  mountPath: /etc/ssl/certs
+                - name: cloudsql
+                  mountPath: /cloudsql
+            {{ end }}
+            -
+                name: job-api
+                image: {{ .Values.general.docker_registry }}/{{ default "infrabox/job/api" .Values.job.api.image }}:{{ .Values.job.api.tag }}
+                imagePullPolicy: Always
+                volumeMounts:
+                {{ if .Values.storage.gcs.enabled }}
+                -
+                    name: gcs-service-account
+                    mountPath: /etc/infrabox/gcs
+                    readOnly: true
+                {{ end }}
+                env:
+                {{ include "env_database" . | indent 16 }}
+                {{ include "env_general" . | indent 16 }}
+                {{ include "env_job" . | indent 16 }}
+                {{ include "env_gcs" . | indent 16 }}
+                {{ include "env_s3" . | indent 16 }}
+                {{ include "env_job_api_secret" . | indent 16 }}
+                -
+                    name: INFRABOX_SERVICE
+                    value: {{ default "infrabox/job/api" .Values.job.api.image }}
+                -
+                    name: INFRABOX_VERSION
+                    value: {{ .Values.job.api.tag }}
+                -
+                    name: INFRABOX_JOB_API_LOG_LEVEL
+                    value: {{ default "info" .Values.job.api.log.level | quote }}
+            volumes:
+                {{ include "volumes_database" . | indent 16 }}
+                {{ if .Values.storage.gcs.enabled }}
+                -
+                    name: gcs-service-account
+                    secret:
+                        secretName: infrabox-gcs
+                {{ end }}
