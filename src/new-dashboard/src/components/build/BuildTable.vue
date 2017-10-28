@@ -1,6 +1,6 @@
 <template>
     <div>
-        <md-table-card class="no-shadow">
+        <md-table-card class="clean-card">
             <md-table>
                 <md-table-header>
                     <md-table-row>
