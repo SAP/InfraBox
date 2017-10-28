@@ -20,8 +20,6 @@ $cmd_prefix -- push ${docker_registry}infrabox/docs:$image_tag
 $cmd_prefix -- push ${docker_registry}infrabox/job:$image_tag
 $cmd_prefix -- push ${docker_registry}infrabox/dashboard:$image_tag
 $cmd_prefix -- push ${docker_registry}infrabox/scheduler/kubernetes:$image_tag
-$cmd_prefix -- push ${docker_registry}infrabox/clair/analyzer:$image_tag
-$cmd_prefix -- push ${docker_registry}infrabox/clair/updater:$image_tag
 $cmd_prefix -- push ${docker_registry}infrabox/docker-registry/auth:$image_tag
 $cmd_prefix -- push ${docker_registry}infrabox/docker-registry/nginx:$image_tag
 $cmd_prefix -- push ${docker_registry}infrabox/stats:$image_tag

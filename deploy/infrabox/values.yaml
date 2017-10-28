@@ -45,20 +45,8 @@ scheduler:
     # Tag
     tag: latest
 
-    clair:
-        enabled: false
-
     log:
         level: info
-
-clair:
-    enabled: false
-
-    # name of the clair updater image in your general.docker_registry
-    # image: infrabox/clair/updater
-
-    # Tag
-    tag: latest
 
 storage:
     gcs:

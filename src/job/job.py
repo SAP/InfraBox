@@ -488,15 +488,6 @@ exec "$@"
 
         return True
 
-    def scan_container(self, image_name):
-        c = self.console
-        if self.job['scan_container'] and os.environ['INFRABOX_CLAIR_ENABLED'] == "true":
-            c.header("Scanning container for vulnerabilities", show=True)
-            c.execute(['python', '/usr/local/bin/analyze.py',
-                       '--image', image_name,
-                       '--output', os.path.join(self.infrabox_markup_dir, "Container Scan.json")],
-                      show=True)
-
     def deploy_container(self, image_name):
         c = self.console
         c.header("Deploying", show=True)
@@ -645,7 +636,6 @@ exec "$@"
 
         self.build_docker_container(image_name)
         self.run_docker_container(image_name)
-        self.scan_container(image_name)
         self.deploy_container(image_name)
         self.push_container(image_name)
 
