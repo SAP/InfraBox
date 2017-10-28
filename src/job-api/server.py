@@ -42,7 +42,7 @@ badge_uploads = 0
 download = None
 
 def is_create_job():
-    return job_data['job']['type'] == 'create_job_matrix'
+    return job_data['job']['name'] == 'Create Jobs'
 
 def remember_download(section, name, object_name):
     global download

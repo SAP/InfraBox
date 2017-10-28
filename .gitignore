@@ -14,11 +14,10 @@ results/
 .*.swp
 src/infraboxcli/infraboxcli.egg-info/
 .infraboxwork
-.infraboxwork
 *.yml.infrabox
 *.yaml.infrabox
 run_server.sh
 certs/
 src/stats/run.sh
 src/new-dashboard/node_modules
-.infraboxwork
+.infrabox
