@@ -316,6 +316,28 @@ def test_security_context():
     d['jobs'][0]['security_context'] = {'capabilities': {'add': ['CAP']}}
     validate_json(d)
 
+def test_kubernetes_limits():
+    d = {
+        "version": 1,
+        "jobs": [{
+            "type": "docker",
+            "name": "test",
+            "docker_file": "Dockerfile",
+            "resources": {
+                "limits": {
+                    "cpu": 1, "memory": 1024
+                },
+                "kubernetes": {
+                    "limits": {
+                        "cpu": 1, "memory": 1024
+                    }
+                }
+            }
+        }]
+    }
+
+    validate_json(d)
+
 def test_valid():
     d = {
         "version": 1,

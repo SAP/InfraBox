@@ -147,58 +147,89 @@ router.get("/:project_id/job/:job_id/output", pv, token_auth, checkProjectAccess
 
 router.get("/:project_id/build/state.svg", pv, (req: Request, res: Response, next) => {
     const project_id = req.params['project_id'];
+    return db.any(`
+        SELECT type FROM project WHERE id = $1
+    `, [project_id])
+    .then((result: any[]) => {
+        if (result.length !== 1) {
+            throw new NotFound();
+        }
 
-    db.any(`SELECT state FROM job j
-            WHERE j.project_id = $1
-                AND j.build_id = (
-                    SELECT b.id
-                    FROM build b
-                    INNER JOIN job j
-                    ON b.id = j.build_id
-                        AND b.project_id = $1
-                        AND j.project_id = $1
-                    ORDER BY j.created_at DESC
-                    LIMIT 1
-        )`, [project_id]).then((rows: any[]) => {
-            let status = 'finished';
-            let color = 'brightgreen';
+        const t = result[0].type
 
-            for (const r of rows) {
-                const state = r.state;
-                if (state === 'finished') {
-                    continue;
-                }
+        if (req.query.branch && (t === 'github' || t === 'gerrit')) {
+            return db.any(`
+               SELECT state FROM job j
+                WHERE j.project_id = $1
+                    AND j.build_id = (
+                        SELECT b.id
+                        FROM build b
+                        INNER JOIN job j
+                        ON b.id = j.build_id
+                            AND b.project_id = $1
+                            AND j.project_id = $1
+                        INNER JOIN "commit" c
+                        ON c.id = b.commit_id
+                            AND c.project_id = $1
+                            AND c.branch = $2
+                        ORDER BY j.created_at DESC
+                        LIMIT 1
+                )`, [project_id, req.query.branch]);
+        } else {
+            return db.any(`
+                SELECT state FROM job j
+                WHERE j.project_id = $1
+                    AND j.build_id = (
+                        SELECT b.id
+                        FROM build b
+                        INNER JOIN job j
+                        ON b.id = j.build_id
+                            AND b.project_id = $1
+                            AND j.project_id = $1
+                        ORDER BY j.created_at DESC
+                        LIMIT 1
+                )`, [project_id]);
+        }
+    }).then((rows: any[]) => {
+        let status = 'finished';
+        let color = 'brightgreen';
 
-                if (state === 'failure' || state === 'error' || state === 'killed') {
-                    status = state;
-                    color = 'red';
-                    break;
-                }
-
-                if (state === 'skipped') {
-                    continue;
-                }
-
-                if (state !== 'failure') {
-                    status = 'running';
-                    color = 'grey';
-                    break;
-                }
+        for (const r of rows) {
+            const state = r.state;
+            if (state === 'finished') {
+                continue;
             }
 
-            badge({ text: ["build", status], colorscheme: color, template: "flat" }, (svg, err) => {
-                if (err) {
-                    throw new InternalError(err);
-                } else {
-                    res.setHeader('Surrogate-Control', 'no-store');
-                    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
-                    res.setHeader('Pragma', 'no-cache');
-                    res.setHeader('Expires', '0');
-                    res.setHeader('Content-Type', 'image/svg+xml');
-                    res.send(svg);
-                }
-            });
-        }).catch(handleDBError(next));
+            if (state === 'failure' || state === 'error' || state === 'killed') {
+                status = state;
+                color = 'red';
+                break;
+            }
+
+            if (state === 'skipped') {
+                continue;
+            }
+
+            if (state !== 'failure') {
+                status = 'running';
+                color = 'grey';
+                break;
+            }
+        }
+
+        badge({ text: ["build", status], colorscheme: color, template: "flat" }, (svg, err) => {
+            if (err) {
+                throw new InternalError(err);
+            } else {
+                res.setHeader('Surrogate-Control', 'no-store');
+                res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+                res.setHeader('Pragma', 'no-cache');
+                res.setHeader('Expires', '0');
+                res.setHeader('Content-Type', 'image/svg+xml');
+                res.send(svg);
+            }
+        });
+    }).catch(handleDBError(next));
 });
 
 router.get("/:project_id/build/tests.svg", pv, (req: Request, res: Response, next) => {
