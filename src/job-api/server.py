@@ -61,7 +61,11 @@ def validate_token():
         logger.debug('failed to decode token')
         return None
 
-    job_id = decoded['job_id']
+    job_id = decoded.get('job_id', None)
+
+    if not job_id:
+        logger.debug('no job_id in token')
+        return None
 
     if not validate_uuid4(job_id):
         logger.warn('not a valid uuid')
@@ -639,6 +643,10 @@ def get_job():
 
 @app.route("/")
 def ping():
+    return "ok"
+
+@app.route("/ping")
+def ping2():
     return "ok"
 
 @app.route("/setrunning", methods=['POST'])

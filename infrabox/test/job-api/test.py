@@ -5,6 +5,7 @@ from unittest import TestCase
 import requests
 import psycopg2
 import psycopg2.extensions
+import jwt
 
 if 'INFRABOX_DATABASE_USER' not in os.environ:
     print "INFRABOX_DATABASE_USER not set"
@@ -77,10 +78,44 @@ class Test(TestCase):
                         VALUES(%s, 'SECRET', 'my secret')''',
                     (self.project_id,))
 
+    def get_headers(self):
+        return {
+            'X-Infrabox-Token': jwt.encode({'job_id': self.job_id}, os.environ['INFRABOX_JOB_API_SECRET'])
+        }
+
+    def test_get_no_token(self):
+        r = requests.get('http://job-api:8080/job')
+        self.assertEqual(r.status_code, 403)
+
+    def test_invalid_token_format(self):
+        headers = {
+            'X-Infrabox-Token': jwt.encode({}, os.environ['INFRABOX_JOB_API_SECRET'])
+        }
+
+        r = requests.get('http://job-api:8080/job', headers=headers)
+        self.assertEqual(r.status_code, 403)
+
+    def test_invalid_job_id_format(self):
+        headers = {
+            'X-Infrabox-Token': jwt.encode({'job_id': 'asd'}, os.environ['INFRABOX_JOB_API_SECRET'])
+        }
+
+        r = requests.get('http://job-api:8080/job', headers=headers)
+        self.assertEqual(r.status_code, 403)
+
+    def test_unknown_job_id(self):
+        headers = {
+            'X-Infrabox-Token': jwt.encode({'job_id': '3b330a91-c1ed-42dd-b475-4b23fff26bb7'},
+                                           os.environ['INFRABOX_JOB_API_SECRET'])
+        }
+
+        r = requests.get('http://job-api:8080/job', headers=headers)
+        self.assertEqual(r.status_code, 403)
     def test_get_job(self):
         """GET: /job should return all the job data"""
-        r = requests.get('http://job-api:5000/job')
-        assert r.status_code == 200
+        r = requests.get('http://job-api:8080/job', headers=self.get_headers())
+        self.assertEqual(r.status_code, 200)
+
         data = {
             "build": {
                 "build_number": 1,
@@ -154,7 +189,7 @@ class Test(TestCase):
 
         with open('/tmp/testresult.json', 'r') as f:
             files = {"data": f}
-            r = requests.post('http://job-api:5000/testresult', files=files)
+            r = requests.post('http://job-api:8080/testresult', files=files, headers=self.get_headers())
 
             assert r.status_code == 400
             print r.text
@@ -167,7 +202,7 @@ class Test(TestCase):
 
         with open('/tmp/testresult.json', 'r') as f:
             files = {"data": f}
-            r = requests.post('http://job-api:5000/testresult', files=files)
+            r = requests.post('http://job-api:8080/testresult', files=files, headers=self.get_headers())
 
             assert r.status_code == 404
             print r.text
@@ -188,7 +223,7 @@ class Test(TestCase):
 
         with open('/tmp/testresult.json', 'r') as f:
             files = {"data": f}
-            r = requests.post('http://job-api:5000/testresult', files=files)
+            r = requests.post('http://job-api:8080/testresult', files=files, headers=self.get_headers())
 
             assert r.status_code == 400
             print r.text
@@ -210,7 +245,7 @@ class Test(TestCase):
 
         with open('/tmp/testresult.json', 'r') as f:
             files = {"data": f}
-            r = requests.post('http://job-api:5000/testresult', files=files)
+            r = requests.post('http://job-api:8080/testresult', files=files, headers=self.get_headers())
 
             assert r.status_code == 200
             assert r.text == ""
@@ -222,7 +257,7 @@ class Test(TestCase):
 
         with open('/tmp/test.md', 'r') as f:
             files = {"data": f}
-            r = requests.post('http://job-api:5000/markdown', files=files)
+            r = requests.post('http://job-api:8080/markdown', files=files, headers=self.get_headers())
 
             assert r.status_code == 200
             assert r.text == ""
