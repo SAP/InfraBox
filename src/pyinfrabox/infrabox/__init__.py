@@ -139,6 +139,19 @@ def parse_limits(d, path):
     if d['memory'] <= 255:
         raise ValidationError(path + ".memory", "must be greater than 255")
 
+def parse_kubernetes_limits(d, path):
+    check_allowed_properties(d, path, ("memory", "cpu"))
+    check_required_properties(d, path, ("memory", "cpu"))
+
+    check_number(d['cpu'], path + ".cpu")
+    check_number(d['memory'], path + ".memory")
+
+    if d['cpu'] <= 0:
+        raise ValidationError(path + ".cpu", "must be greater than 0")
+
+    if d['memory'] <= 255:
+        raise ValidationError(path + ".memory", "must be greater than 255")
+
 def parse_add_capabilities(d, path):
     check_string_array(d, path)
 
@@ -154,8 +167,14 @@ def parse_security_context(d, path):
     if 'capabilities' in d:
         parse_capabilities(d['capabilities'], path + '.capabilities')
 
+def parse_resources_kubernetes(d, path):
+    check_allowed_properties(d, path, ('limits',))
+    check_required_properties(d, path, ("limits",))
+
+    parse_kubernetes_limits(d['limits'], path + ".limits")
+
 def parse_resources(d, path):
-    check_allowed_properties(d, path, ("limits",))
+    check_allowed_properties(d, path, ("limits", "kubernetes"))
     check_required_properties(d, path, ("limits",))
 
     parse_limits(d['limits'], path + ".limits")
