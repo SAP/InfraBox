@@ -46,9 +46,6 @@ def allowed_file(filename, extensions):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in extensions
 
-def is_create_job()
-    return job_data['job']['name'] == 'Create Jobs'
-
 def validate_token():
     conn.rollback()
     token = request.headers.get('X-Infrabox-Token', None)
@@ -783,10 +780,10 @@ def create_jobs():
 
     jobs.sort(key=lambda k: k.get('avg_duration', 0), reverse=True)
 
-    if not is_create_job():
+    if token['job']['name'] != 'Create Jobs':
         # Update names, prefix with parent names
         for j in jobs:
-            j['name'] = job_data['job']['name'] + '/' + j['name']
+            j['name'] = token['job']['name'] + '/' + j['name']
 
         leaf_jobs = find_leaf_jobs(jobs)
 
@@ -809,7 +806,7 @@ def create_jobs():
                     AND build_id = %s
                     AND project_id = %s
                 )
-            ''', (json.dumps(wait_job), JOB_ID, job_data['build']['id'], job_data['project']['id']))
+            ''', (json.dumps(wait_job), job_id, build_id, project_id))
             cursor.close()
 
     for job in jobs:
@@ -831,7 +828,7 @@ def create_jobs():
             for dep in depends_on:
                 dep['job-id'] = jobname_id[dep['job']]
         else:
-            depends_on = [{"job": job_data['job']['name'], "job-id": parent_job_id, "on": ["finished"]}]
+            depends_on = [{"job": token['job']['name'], "job-id": parent_job_id, "on": ["finished"]}]
 
         if job_type == "docker":
             f = job['docker_file']
