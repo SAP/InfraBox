@@ -4,7 +4,9 @@ import shutil
 import json
 import subprocess
 import logging
+import stat
 import uuid
+import base64
 import argparse
 import requests
 import yaml
@@ -109,6 +111,15 @@ class RunJob(Job):
                 o['commit']["id"] = self.commit['id']
 
             json.dump(o, out)
+
+    def create_gosu(self):
+        infrabox_gosu = os.path.join(self.data_dir, 'gosu.sh')
+        with open(infrabox_gosu, 'w') as out:
+            out.write('''#!/bin/sh
+exec "$@"
+''')
+            st = os.stat(infrabox_gosu)
+            os.chmod(infrabox_gosu, st.st_mode | stat.S_IEXEC)
 
     def flush(self):
         self.console.flush()
@@ -240,7 +251,7 @@ class RunJob(Job):
                 tr_path = os.path.join(self.infrabox_testresult_dir, f)
                 c.collect("%s\n" % tr_path, show=True)
                 r = requests.post("http://localhost:5000/testresult",
-                                  files={"data": open(tr_path)}, timeout=10)
+                                  files={"data": open(tr_path)}, timeout=60)
                 c.collect("%s\n" % r.text, show=True)
 
 
@@ -253,7 +264,7 @@ class RunJob(Job):
             for f in files:
                 file_name = os.path.basename(f)
                 r = requests.post("http://localhost:5000/markdown",
-                                  files={file_name: open(os.path.join(self.infrabox_markdown_dir, f))}, timeout=10)
+                                  files={file_name: open(os.path.join(self.infrabox_markdown_dir, f))}, timeout=60)
                 c.collect("%s\n" % r.text, show=False)
 
     def upload_markup_files(self):
@@ -266,7 +277,7 @@ class RunJob(Job):
                 file_name = os.path.basename(f)
                 f = open(os.path.join(self.infrabox_markup_dir, f))
                 r = requests.post("http://localhost:5000/markup",
-                                  files={file_name: f}, timeout=10)
+                                  files={file_name: f}, timeout=60)
                 c.collect(f.read(), show=True)
                 c.collect("%s\n" % r.text, show=True)
 
@@ -279,12 +290,23 @@ class RunJob(Job):
             for f in files:
                 file_name = os.path.basename(f)
                 r = requests.post("http://localhost:5000/badge",
-                                  files={file_name: open(os.path.join(self.infrabox_badge_dir, f))}, timeout=10)
+                                  files={file_name: open(os.path.join(self.infrabox_badge_dir, f))}, timeout=60)
                 c.collect("%s\n" % r.text, show=True)
+
+    def create_dynamic_jobs(self):
+        c = self.console
+        infrabox_json_path = os.path.join(self.infrabox_output_dir, 'infrabox.json')
+        if os.path.exists(infrabox_json_path):
+            c.header("Creating jobs", show=True)
+            data = self.parse_infrabox_json(infrabox_json_path)
+            self.check_file_exist(data)
+            jobs = self.get_job_list(data, c, self.job['repo'], infrabox_paths={infrabox_json_path: True})
+            self.create_jobs(jobs)
 
     def main_run_job(self):
         c = self.console
         self.create_jobs_json()
+        self.create_gosu()
 
         # base dir for inputs
         storage_inputs_dir = os.path.join(self.storage_dir, 'inputs')
@@ -344,6 +366,8 @@ class RunJob(Job):
             self.upload_markdown_files()
             self.upload_markup_files()
             self.upload_badge_files()
+
+        self.create_dynamic_jobs()
 
         # Compressing output
         c.header("Compressing output", show=True)
@@ -525,10 +549,29 @@ class RunJob(Job):
         for name, value in self.environment.iteritems():
             cmd += ['-e', '%s=%s' % (name, value)]
 
+        # add resource env vars
+        os.makedirs('/tmp/serviceaccount')
+        if os.environ.get('INFRABOX_RESOURCES_KUBERNETES_CA_CRT', None):
+            with open('/tmp/serviceaccount/ca.crt', 'w') as o:
+                o.write(base64.b64decode(os.environ['INFRABOX_RESOURCES_KUBERNETES_CA_CRT']))
+
+            with open('/tmp/serviceaccount/token', 'w') as o:
+                o.write(base64.b64decode(os.environ['INFRABOX_RESOURCES_KUBERNETES_TOKEN']))
+
+            with open('/tmp/serviceaccount/namespace', 'w') as o:
+                o.write(base64.b64decode(os.environ['INFRABOX_RESOURCES_KUBERNETES_NAMESPACE']))
+
+            cmd += ['-v', '/tmp/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount']
+
+
         # Add capabilities
-        add_capabilities = self.job.get('security_context', {}).get('capabilities', {}).get('add', [])
-        if add_capabilities:
-            cmd += ['--cap-add=%s' % ','.join(add_capabilities)]
+        security_context = self.job.get('security_context', {})
+
+        if security_context:
+            capabilities = security_context.get('capabilities', {})
+            add_capabilities = capabilities.get('add', [])
+            if add_capabilities:
+                cmd += ['--cap-add=%s' % ','.join(add_capabilities)]
 
         cmd += [image_name]
 
@@ -813,6 +856,7 @@ def main():
     except Exception as e:
         print_stackdriver()
         j.console.collect('## An error occured', show=True)
+        j.console.collect(str(e), show=True)
         j.console.flush()
         j.update_status('error')
 
