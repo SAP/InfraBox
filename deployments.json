@@ -104,12 +104,6 @@
         "resources": { "limits": { "cpu": 1, "memory": 2048 } }
      }, {
         "type": "docker",
-        "name": "secrets",
-        "docker_file": "src/secrets/Dockerfile",
-        "build_only": true,
-        "resources": { "limits": { "cpu": 1, "memory": 2048 } }
-     }, {
-        "type": "docker",
         "name": "docker-gc",
         "docker_file": "src/docker-gc/Dockerfile",
         "build_only": true,

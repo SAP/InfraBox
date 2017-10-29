@@ -10,6 +10,7 @@ import base64
 import argparse
 import requests
 import yaml
+import traceback
 
 from pyinfrabox.infrabox import validate_json
 from pyinfrabox.docker_compose import create_from
@@ -849,10 +850,11 @@ def main():
         j.console.collect(e.message, show=True)
         j.console.flush()
         j.update_status('failure')
-    except Exception as e:
+    except:
         print_stackdriver()
         j.console.collect('## An error occured', show=True)
-        j.console.collect(str(e), show=True)
+        msg = traceback.format_exc()
+        j.console.collect(msg, show=True)
         j.console.flush()
         j.update_status('error')
 
