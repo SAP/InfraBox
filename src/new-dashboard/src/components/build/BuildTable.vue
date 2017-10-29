@@ -1,6 +1,6 @@
 <template>
     <div>
-        <md-table-card class="no-shadow">
+        <md-table-card class="clean-card">
             <md-table>
                 <md-table-header>
                     <md-table-row>
@@ -58,4 +58,5 @@ export default {
 .no-shadow {
     box-shadow: 0px 0px 0px #888888;
 }
+
 </style>

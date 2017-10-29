@@ -211,7 +211,10 @@ export class GanttChart {
 
      createRaphael() {
         const height = this.jobs.length * (this.box_height + this.box_padding) + this.box_padding
-        this.svg_width = 600
+        if (document.getElementById("build-graph")) {
+            this.svg_width = document.getElementById("build-graph").offsetWidth;
+            this.svg_width = this.svg_width * 0.95;
+        }
 
         if (this.r) {
             this.r.clear()

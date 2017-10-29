@@ -5,8 +5,8 @@
         <md-button class="md-icon-button" @click="toggleLeftSidenav">
             <md-icon>menu</md-icon>
         </md-button>
+        <div style="width: 110px"><img src="../static/logo_white_on_transparent.png" style="flex: 1"></div>
 
-        <h2 class="md-title" style="flex: 1">InfraBox</h2>
     </md-toolbar>
 
     <md-sidenav class="md-left" ref="leftSidenav">
@@ -48,7 +48,6 @@
             </md-list-item>
         </md-list>
     </md-sidenav>
-
     <router-view/>
 </div>
 </template>

@@ -16,6 +16,25 @@ export default class Build {
         this.project = project
     }
 
+    getJob (jobId) {
+        const j = this._getJob(jobId)
+
+        if (j) {
+            return new Promise((resolve) => { resolve(j) })
+        }
+
+        return null
+    }
+
+    _getJob (jobId) {
+        console.log(this.jobs)
+        for (let j of this.jobs) {
+            if (j.id === jobId) {
+                return j
+            }
+        }
+    }
+
     abort () {
         return APIService.get(`/api/dashboard/project/${this.project.id}/build/${this.id}/kill`)
             .then((message) => {

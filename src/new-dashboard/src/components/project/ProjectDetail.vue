@@ -1,6 +1,6 @@
 <template>
-    <div v-if="project" class="example-box">
-        <md-card class="example-box-card">
+    <div v-if="project">
+        <md-card class="main-card">
                 <div class="md-title" style="margin-top: 25px; margin-left: 25px">
                     <span v-if="project.isGit()"><i class="fa fa-github"></i></span>
                     <span v-if="!project.isGit()"><i class="fa fa-home"></i></span>
@@ -20,7 +20,7 @@
                     </template>
 
 
-                    <md-tab class="example-content" md-label="Builds" md-icon="dashboard" :md-options="{new_badge: project.getActiveBuilds().length}" md-active>
+                    <md-tab md-label="Builds" md-icon="dashboard" :md-options="{new_badge: project.getActiveBuilds().length}" md-active>
                         <slot>
                             <ib-build-table :project="project"></ib-build-table>
                         </slot>
@@ -68,9 +68,6 @@ export default {
 </script>
 
 <style scoped>
-  .example-box {
-    margin: 16px;
-  }
   .md-title {
     position: relative;
     z-index: 3;
