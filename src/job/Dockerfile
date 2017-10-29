@@ -5,6 +5,7 @@ RUN apk add --no-cache \
     py-pip \
     py-requests \
     bash \
+    git \
     openssh-client \
     pigz && \
     pip install docker-compose docker future PyJWT && \
