@@ -4,7 +4,7 @@
             <h3 class="md-title">
                 Collaborators
             </h3>
-            <md-button class="md-icon-button md-raised">
+            <md-button md-theme="running" class="md-icon-button md-raised md-primary">
                   <md-icon>add</md-icon>
             </md-button>
         </md-toolbar>
