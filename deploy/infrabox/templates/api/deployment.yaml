@@ -3,7 +3,7 @@ apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
     name: infrabox-api
-    namespace: infrabox-system
+    namespace: {{ default "infrabox-system" .Values.general.system_namespace }}
     annotations:
         infrabox.net/checksum: {{ .Files.Get "values.yaml" | sha256sum }}
     labels:
@@ -22,23 +22,7 @@ spec:
 {{ toYaml .Values.api.node_selector | indent 16 }}
             {{- end }}
             containers:
-            {{ if .Values.storage.cloudsql.enabled }}
-            -
-                image: gcr.io/cloudsql-docker/gce-proxy:1.09
-                name: cloudsql-proxy
-                imagePullPolicy: Always
-                command: ["/cloud_sql_proxy", "--dir=/cloudsql",
-                          "-instances={{ .Values.storage.cloudsql.instance_connection_name }}=tcp:5432",
-                          "-credential_file=/secrets/cloudsql/credentials.json"]
-                volumeMounts:
-                - name: cloudsql-instance-credentials
-                  mountPath: /secrets/cloudsql
-                  readOnly: true
-                - name: ssl-certs
-                  mountPath: /etc/ssl/certs
-                - name: cloudsql
-                  mountPath: /cloudsql
-            {{ end }}
+            {{ include "containers_database" . | indent 12 }}
             {{ if .Values.gerrit.enabled }}
             -
                 image: {{ .Values.general.docker_registry }}/{{ default "infrabox/gerrit/api" .Values.gerrit.api.image }}:{{ .Values.gerrit.api.tag }}

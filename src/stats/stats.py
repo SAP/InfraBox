@@ -128,10 +128,11 @@ def main():
         get_env('INFRABOX_KUBERNETES_MASTER_HOST')
         get_env('INFRABOX_KUBERNETES_MASTER_PORT')
 
-    elect_leader()
 
     conn = connect_db()
     os.environ['REQUESTS_CA_BUNDLE'] = '/var/run/secrets/kubernetes.io/serviceaccount/ca.crt'
+
+    elect_leader(conn, "stats")
 
     start_http_server(8000)
 

@@ -31,7 +31,7 @@ class Scheduler(object):
     def __init__(self, conn, args):
         self.conn = conn
         self.args = args
-        self.namespace = 'infrabox-worker'
+        self.namespace = get_env("INFRABOX_GENERAL_WORKER_NAMESPACE")
         self.logger = get_logger("scheduler")
 
         if self.args.loglevel == 'debug':
@@ -228,6 +228,7 @@ class Scheduler(object):
                     "spec": {
                         "imagePullSecrets": [{"name": "infrabox-docker-secret"}],
                         "imagePullPolicy": "Always",
+                        "automountServiceAccountToken": False,
                         "containers": [{
                             "name": "run-job",
                             "image": self.args.docker_registry + "/infrabox/job:%s" % self.args.tag,
@@ -660,6 +661,7 @@ def main():
     get_env('INFRABOX_DASHBOARD_URL')
     get_env('INFRABOX_DOCKER_REGISTRY_URL')
     get_env('INFRABOX_GENERAL_NO_CHECK_CERTIFICATES')
+    get_env('INFRABOX_GENERAL_WORKER_NAMESPACE')
     get_env('INFRABOX_JOB_API_URL')
     get_env('INFRABOX_JOB_API_SECRET')
     get_env('INFRABOX_JOB_MAX_OUTPUT_SIZE')
@@ -675,7 +677,6 @@ def main():
     with open('/var/run/secrets/kubernetes.io/serviceaccount/token', 'r') as f:
         args.token = f.read()
 
-    elect_leader()
 
     args.api_server = "https://" + get_env('INFRABOX_KUBERNETES_MASTER_HOST') \
                                  + ":" + get_env('INFRABOX_KUBERNETES_MASTER_PORT')
@@ -684,6 +685,8 @@ def main():
 
     conn = connect_db()
     conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
+
+    elect_leader(conn, "scheduler")
 
     start_http_server(8000)
 

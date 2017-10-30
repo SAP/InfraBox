@@ -3,7 +3,7 @@ apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
     name: infrabox-stats
-    namespace: infrabox-system
+    namespace: {{ default "infrabox-system" .Values.general.system_namespace }}
     labels:
         app: infrabox
         infrabox.net/component: stats
@@ -15,39 +15,12 @@ spec:
                 app: infrabox
                 infrabox.net/component: stats
         spec:
-            {{- if .Values.general.rbac.enabled }}
-            serviceAccountName: infrabox-leader-elector
-            {{- end }}
             {{- if .Values.stats.node_selector }}
             nodeSelector:
 {{ toYaml .Values.stats.node_selector | indent 16 }}
             {{- end }}
             containers:
-            {{ if .Values.storage.cloudsql.enabled }}
-            -
-                image: gcr.io/cloudsql-docker/gce-proxy:1.09
-                name: cloudsql-proxy
-                command: ["/cloud_sql_proxy", "--dir=/cloudsql",
-                          "-instances={{ .Values.storage.cloudsql.instance_connection_name }}=tcp:5432",
-                          "-credential_file=/secrets/cloudsql/credentials.json"]
-                volumeMounts:
-                - name: cloudsql-instance-credentials
-                  mountPath: /secrets/cloudsql
-                  readOnly: true
-                - name: ssl-certs
-                  mountPath: /etc/ssl/certs
-                - name: cloudsql
-                  mountPath: /cloudsql
-            {{ end }}
-            -
-                name: leader-elector
-                image: "gcr.io/google_containers/leader-elector:0.5"
-                args:
-                    - "--election"
-                    - infrabox-stats
-                    - "--http=0.0.0.0:4040"
-                ports:
-                - containerPort: 4040
+            {{ include "containers_database" . | indent 12 }}
             -
                 name: stats
                 image: {{ .Values.general.docker_registry }}/{{ default "infrabox/stats" .Values.stats.image }}:{{ .Values.stats.tag }}

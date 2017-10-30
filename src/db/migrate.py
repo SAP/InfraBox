@@ -2,7 +2,6 @@ import os
 
 from pyinfraboxutils import get_logger, get_env, print_stackdriver
 from pyinfraboxutils.db import connect_db
-from pyinfraboxutils.leader import elect_leader
 
 logger = get_logger("migrate")
 
@@ -78,7 +77,6 @@ def main():
     get_env('INFRABOX_DATABASE_HOST')
     get_env('INFRABOX_DATABASE_PORT')
 
-    elect_leader()
     conn = connect_db()
     migrate_db(conn)
     conn.close()

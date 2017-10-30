@@ -2,6 +2,6 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: infrabox-dockerd-config 
-  namespace: infrabox-worker
+  namespace: {{ default "infrabox-worker" .Values.general.worker_namespace }}
 data:
 {{ (.Files.Glob "config/docker/*").AsConfig | indent 2 }}
