@@ -65,7 +65,14 @@
         "name": "dashboard",
         "docker_file": "src/dashboard/Dockerfile",
         "build_only": false,
-        "resources": { "limits": { "cpu": 1, "memory": 2048 } }
+        "resources": { "limits": { "cpu": 1, "memory": 2048 } },
+		"deployments": [{
+				"type": "docker-registry",
+				"host": "quay.io/infrabox/",
+				"repository": "dashboard",
+				"username": "infrabox+infrabox_ci",
+				"password": { "$ref": "QUAY_PASSWORD" }
+		}]
      }, {
         "type": "docker",
         "name": "api",
