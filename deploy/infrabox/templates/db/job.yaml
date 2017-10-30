@@ -2,25 +2,13 @@ apiVersion: batch/v1
 kind: Job
 metadata:
     name: infrabox-db-migration
-    namespace: infrabox-system
+    namespace: {{ default "infrabox-system" .Values.general.system_namespace }}
 spec:
     template:
         metadata:
             name: infrabox-db-migration
         spec:
-            {{- if .Values.general.rbac.enabled }}
-            serviceAccountName: infrabox-leader-elector
-            {{- end }}
-            containers:
-            -
-                name: leader-elector
-                image: "gcr.io/google_containers/leader-elector:0.5"
-                args:
-                    - "--election"
-                    - infrabox-db
-                    - "--http=0.0.0.0:4040"
-                ports:
-                - containerPort: 4040
+            {{ include "containers_database" . | indent 12 }}
             -
                 name: migrate
                 image: {{ .Values.general.docker_registry }}/{{ default "infrabox/db" .Values.db.image }}:{{ .Values.db.tag }}
@@ -32,32 +20,6 @@ spec:
                 -
                     name: INFRABOX_VERSION
                     value: {{ .Values.db.tag }}
-            {{ if .Values.storage.cloudsql.enabled }}
-            -
-                image: gcr.io/cloudsql-docker/gce-proxy:1.09
-                name: cloudsql-proxy
-                command: ["/cloud_sql_proxy", "--dir=/cloudsql",
-                          "-instances={{ .Values.storage.cloudsql.instance_connection_name }}=tcp:5432",
-                          "-credential_file=/secrets/cloudsql/credentials.json"]
-                volumeMounts:
-                - name: cloudsql-instance-credentials
-                  mountPath: /secrets/cloudsql
-                  readOnly: true
-                - name: ssl-certs
-                  mountPath: /etc/ssl/certs
-                - name: cloudsql
-                  mountPath: /cloudsql
-            {{ end }}
             restartPolicy: OnFailure
-            {{- if .Values.storage.cloudsql.enabled }}
             volumes:
-              - name: cloudsql-instance-credentials
-                secret:
-                  secretName: infrabox-cloudsql-instance-credentials
-              - name: ssl-certs
-                hostPath:
-                  path: /etc/ssl/certs
-              - name: cloudsql
-                emptyDir:
-            {{- end }}
-
+                {{ include "volumes_database" . | indent 16 }}
