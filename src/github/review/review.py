@@ -27,11 +27,12 @@ def main(): # pragma: no cover
     get_env('INFRABOX_DATABASE_PORT')
     get_env('INFRABOX_DASHBOARD_URL')
 
-    elect_leader()
 
     conn = connect_db()
     conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
     logger.info("Connected to database")
+
+    elect_leader(conn, "github-review")
 
     curs = conn.cursor()
     curs.execute("LISTEN job_update;")

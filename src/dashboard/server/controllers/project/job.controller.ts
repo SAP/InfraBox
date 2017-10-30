@@ -13,7 +13,7 @@ router.get("/:job_id/restart", pv, (req: Request, res: Response, next) => {
     const job_id = req.params['job_id'];
 
     db.tx((tx) => {
-        let build = null;
+        const build = null;
         return tx.any(`
             SELECT state, type FROM job WHERE id = $1
         `, [job_id])
@@ -22,14 +22,14 @@ router.get("/:job_id/restart", pv, (req: Request, res: Response, next) => {
                 throw new NotFound();
             }
 
-            const state = jobs[0].state
+            const state = jobs[0].state;
             const typ = jobs[0].type;
 
-            if (typ != 'run_project_container') {
+            if (typ !== 'run_project_container') {
                 throw new BadRequest('Job type cannot be restarted');
             }
 
-            if (state !== 'error' && state !== 'failed' && state != 'finished' && state !== 'killed') {
+            if (state !== 'error' && state !== 'failure' && state !== 'finished' && state !== 'killed') {
                 throw new BadRequest(`Job in state '${state}' cannot be restarted`);
             }
 
@@ -70,7 +70,7 @@ router.get("/:build_id/cache/clear", pv, (req: Request, res: Response, next) => 
                 throw new NotFound();
             }
 
-            const j = jobs[0]
+            const j = jobs[0];
             const p = [];
             const key = 'project_' + req.params['project_id'] + '_branch_' + j['branch'] + '_job_' + j['name'] + '.tar.gz';
             return deleteCache(key);

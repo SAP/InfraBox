@@ -632,15 +632,27 @@ exec "$@"
 
         image_name = get_registry_name() + '/' \
                      + self.project['id'] + '/' \
-                     + self.job['name'] \
-                     + ':build_%s' % self.build['build_number']
+                     + self.job['name']
+        image_name_build = image_name + ':build_%s' % self.build['build_number']
+        image_name_latest = image_name + ':latest'
 
+        self.get_cached_image(image_name_latest)
         self.build_docker_container(image_name)
+        self.cache_docker_image(image_name_build, image_name_latest)
         self.run_docker_container(image_name)
         self.deploy_container(image_name)
         self.push_container(image_name)
 
         c.header("Finished succesfully", show=True)
+
+    def get_cached_image(self, image_name_latest):
+        c = self.console
+        c.execute(['docker', 'pull', image_name_latest], show=True, ignore_error=True)
+
+    def cache_docker_image(self, image_name_build, image_name_latest):
+        c = self.console
+        c.execute(['docker', 'tag', image_name_build, image_name_latest], show=True)
+        c.execute(['docker', 'push', image_name_latest], show=True)
 
     def parse_infrabox_json(self, path):
         with open(path, 'r') as f:

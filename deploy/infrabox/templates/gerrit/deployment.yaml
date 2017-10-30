@@ -3,7 +3,7 @@ apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
     name: infrabox-gerrit
-    namespace: infrabox-system
+    namespace: {{ default "infrabox-system" .Values.general.system_namespace }}
     labels:
         app: infrabox
         infrabox.net/component: gerrit
@@ -15,30 +15,12 @@ spec:
                 app: infrabox
                 infrabox.net/component: gerrit
         spec:
-            {{- if .Values.general.rbac.enabled }}
-            serviceAccountName: infrabox-leader-elector
-            {{ end }}
             {{- if .Values.gerrit.node_selector }}
             nodeSelector:
 {{ toYaml .Values.gerrit.node_selector | indent 16 }}
             {{- end }}
             containers:
-            {{ if .Values.storage.cloudsql.enabled }}
-            -
-                image: gcr.io/cloudsql-docker/gce-proxy:1.09
-                name: cloudsql-proxy
-                command: ["/cloud_sql_proxy", "--dir=/cloudsql",
-                          "-instances={{ .Values.storage.cloudsql.instance_connection_name }}=tcp:5432",
-                          "-credential_file=/secrets/cloudsql/credentials.json"]
-                volumeMounts:
-                - name: cloudsql-instance-credentials
-                  mountPath: /secrets/cloudsql
-                  readOnly: true
-                - name: ssl-certs
-                  mountPath: /etc/ssl/certs
-                - name: cloudsql
-                  mountPath: /cloudsql
-            {{ end }}
+            {{ include "containers_database" . | indent 12 }}
             -
                 name: gerrit-trigger
                 image: {{ required "general.docker_registry is required" .Values.general.docker_registry }}/{{ default "infrabox/gerrit/trigger" .Values.gerrit.trigger.image }}:{{ required "gerrit.trigger.tag is required" .Values.gerrit.trigger.tag }}
@@ -80,27 +62,10 @@ spec:
                   mountPath: /tmp/gerrit
                   readOnly: true
             {{ end }}
-            -
-                name: leader-elector
-                image: "gcr.io/google_containers/leader-elector:0.5"
-                args:
-                    - "--election"
-                    - infrabox-gerrit
-                    - "--http=0.0.0.0:4040"
-                ports:
-                - containerPort: 4040
             volumes:
-              - name: gerrit-ssh
-                secret:
-                  secretName: infrabox-gerrit-ssh
-            {{- if .Values.storage.cloudsql.enabled }}
-              - name: cloudsql-instance-credentials
-                secret:
-                  secretName: infrabox-cloudsql-instance-credentials
-              - name: ssl-certs
-                hostPath:
-                  path: /etc/ssl/certs
-              - name: cloudsql
-                emptyDir:
-            {{- end }}
+                {{ include "volumes_database" . | indent 16 }}
+                -
+                    name: gerrit-ssh
+                    secret:
+                    secretName: infrabox-gerrit-ssh
 {{ end }}

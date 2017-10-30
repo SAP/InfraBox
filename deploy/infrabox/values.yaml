@@ -5,6 +5,12 @@ general:
     # port of your kubernetes master
     # kubernetes_master_port: 443
 
+    # Namespace for system components
+    # system_namespace: infrabox-system
+
+    # Namespace in which all jobs will be started
+    # worker_namespace: infrabox-worker
+
     # Address of the docker registry which contains
     # all the InfraBox images. It must be accessible
     # by all hosts which run your kubernetes cluster.
