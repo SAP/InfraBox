@@ -159,8 +159,6 @@ class Scheduler(object):
         if additional_env:
             env += additional_env
 
-        self.logger.info(env)
-
         if use_host_docker_daemon():
             volumes.append({
                 "name": "docker-socket",
@@ -301,11 +299,37 @@ class Scheduler(object):
             }
         }
 
-        r = requests.post(self.args.api_server + '/api/v1/namespaces/' + namespace_name + '/resourcequotas',
-                          headers=h, json=rq, timeout=10)
+        #r = requests.post(self.args.api_server + '/api/v1/namespaces/' + namespace_name + '/resourcequotas',
+        #                  headers=h, json=rq, timeout=10)
 
         if r.status_code != 201:
             self.logger.warn("Failed to create ResourceQuota: %s" % r.text)
+            return False
+
+        rb = {
+            "kind": "ClusterRoleBinding",
+            "apiVersion": "rbac.authorization.k8s.io/v1beta1",
+            "metadata": {
+                "name": namespace_name
+            },
+            "subjects": [{
+                "kind": "ServiceAccount",
+                "name": "default",
+                "namespace": namespace_name
+            }],
+            "roleRef": {
+                "kind": "ClusterRole",
+                "name": "cluster-admin",
+                "apiGroup": "rbac.authorization.k8s.io"
+            }
+        }
+
+        r = requests.post(self.args.api_server +
+                          '/apis/rbac.authorization.k8s.io/v1beta1/clusterrolebindings',
+                          headers=h, json=rb, timeout=10)
+
+        if r.status_code != 201:
+            self.logger.warn("Failed to create RoleBinding: %s" % r.text)
             return False
 
         # find secret
@@ -322,7 +346,8 @@ class Scheduler(object):
         env = [
             {"name": "INFRABOX_RESOURCES_KUBERNETES_CA_CRT", "value": secret['data']['ca.crt']},
             {"name": "INFRABOX_RESOURCES_KUBERNETES_TOKEN", "value":  secret['data']['token']},
-            {"name": "INFRABOX_RESOURCES_KUBERNETES_NAMESPACE", "value": secret['data']['namespace']}
+            {"name": "INFRABOX_RESOURCES_KUBERNETES_NAMESPACE", "value": secret['data']['namespace']},
+            {"name": "INFRABOX_RESOURCES_KUBERNETES_MASTER_URL", "value": self.args.api_server}
         ]
 
         return env
@@ -344,11 +369,20 @@ class Scheduler(object):
         else:
             cpu = cpu * 0.9
 
-
         additional_env = None
         if resources and resources.get('kubernetes', None):
             k8s = resources.get('kubernetes', None)
             additional_env = self.create_kube_namespace(job_id, k8s)
+
+            if not additional_env:
+                self.logger.warn('Failed to create kubernetes namespace')
+                cursor = self.conn.cursor()
+                cursor.execute('''
+                    UPDATE job
+                    SET state = 'error', console = 'Failed to create kubernetes namespace'
+                    WHERE id = %s''', [job_id])
+                cursor.close()
+                return
 
         self.logger.info("Scheduling job to kubernetes")
 
