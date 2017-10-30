@@ -23,7 +23,7 @@ spec:
             {{ include "containers_database" . | indent 12 }}
             -
                 name: gerrit-trigger
-                image: {{ required "general.docker_registry is required" .Values.general.docker_registry }}/{{ default "infrabox/gerrit/trigger" .Values.gerrit.trigger.image }}:{{ required "gerrit.trigger.tag is required" .Values.gerrit.trigger.tag }}
+                image: {{ required "general.docker_registry is required" .Values.general.docker_registry }}/{{ default "gerrit-trigger" .Values.gerrit.trigger.image }}:{{ required "gerrit.trigger.tag is required" .Values.gerrit.trigger.tag }}
                 imagePullPolicy: Always
                 env:
                 {{ include "env_database" . | indent 16 }}
@@ -31,7 +31,7 @@ spec:
                 {{ include "env_general" . | indent 16 }}
                 -
                     name: INFRABOX_SERVICE
-                    value: {{ default "infrabox/gerrit/trigger" .Values.gerrit.trigger.image }}
+                    value: {{ default "gerrit-trigger" .Values.gerrit.trigger.image }}
                 -
                     name: INFRABOX_VERSION
                     value: {{ required "gerrit.trigger.tag is required" .Values.gerrit.trigger.tag }}
@@ -42,7 +42,7 @@ spec:
             {{ if .Values.gerrit.review.enabled }}
             -
                 name: gerrit-review
-                image: {{ required "general.docker_registry is required" .Values.general.docker_registry }}/{{ default "infrabox/gerrit/review" .Values.gerrit.review.image }}:{{ required "gerrit.review.tag is required" .Values.gerrit.review.tag }}
+                image: {{ required "general.docker_registry is required" .Values.general.docker_registry }}/{{ default "gerrit-review" .Values.gerrit.review.image }}:{{ required "gerrit.review.tag is required" .Values.gerrit.review.tag }}
                 imagePullPolicy: Always
                 env:
                 {{ include "env_database" . | indent 16 }}
@@ -50,7 +50,7 @@ spec:
                 {{ include "env_general" . | indent 16 }}
                 -
                     name: INFRABOX_SERVICE
-                    value: {{ default "infrabox/gerrit/review" .Values.gerrit.review.image }}
+                    value: {{ default "gerrit-review" .Values.gerrit.review.image }}
                 -
                     name: INFRABOX_VERSION
                     value: {{ required "gerrit.tag is required" .Values.gerrit.review.tag }}

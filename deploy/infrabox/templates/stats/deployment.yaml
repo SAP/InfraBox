@@ -23,7 +23,7 @@ spec:
             {{ include "containers_database" . | indent 12 }}
             -
                 name: stats
-                image: {{ .Values.general.docker_registry }}/{{ default "infrabox/stats" .Values.stats.image }}:{{ .Values.stats.tag }}
+                image: {{ .Values.general.docker_registry }}/{{ default "stats" .Values.stats.image }}:{{ .Values.stats.tag }}
                 imagePullPolicy: Always
                 command:
                 - "python"
@@ -40,7 +40,7 @@ spec:
                 {{ include "env_kubernetes" . | indent 16 }}
                 -
                     name: INFRABOX_SERVICE
-                    value: {{ default "infrabox/stats" .Values.stats.image }}
+                    value: {{ default "stats" .Values.stats.image }}
                 -
                     name: INFRABOX_VERSION
                     value: {{ .Values.stats.tag }}

@@ -250,6 +250,9 @@ class Kubernetes(Install):
         self.create_secret("infrabox-docker-registry", self.args.general_worker_namespace, secret)
         self.create_secret("infrabox-docker-registry", self.args.general_system_namespace, secret)
 
+        self.set('docker_registry.nginx_tag', self.args.version)
+        self.set('docker_registry.auth_tag', self.args.version)
+
         self.required_option('docker-registry')
         self.set('general.docker_registry', self.args.docker_registry)
 
@@ -316,6 +319,9 @@ class Kubernetes(Install):
         self.set('gerrit.enabled', True)
         self.set('gerrit.hostname', self.args.gerrit_hostname)
         self.set('gerrit.username', self.args.gerrit_username)
+        self.set('gerrit.review.tag', self.args.version)
+        self.set('gerrit.trigger.tag', self.args.version)
+        self.set('gerrit.api.tag', self.args.version)
 
         self.check_file_exists(self.args.gerrit_private_key)
 
@@ -340,6 +346,9 @@ class Kubernetes(Install):
         self.set('github.login.enabled', self.args.github_login_enabled)
         self.set('github.login.url', self.args.github_login_url)
         self.set('github.api_url', self.args.github_api_url)
+        self.set('github.trigger.tag', self.args.version)
+        self.set('github.api.tag', self.args.version)
+        self.set('github.review.tag', self.args.version)
 
         secret = {
             "client_id": self.args.github_client_id,
@@ -358,6 +367,8 @@ class Kubernetes(Install):
         }
 
         self.create_secret("infrabox-dashboard", self.args.general_system_namespace, secret)
+
+        self.set('dashboard.tag', self.args.version)
 
         if self.args.use_k8s_nodeports:
             self.set('dashboard.node_port', self.args.dashboard_k8s_nodeport)
@@ -387,6 +398,7 @@ class Kubernetes(Install):
             self.set('api.node_port', self.args.api_k8s_nodeport)
 
         self.set('api.url', self.args.api_url)
+        self.set('api.tag', self.args.version)
 
         if self.args.api_tls_enabled:
             self.required_option('api-tls-key-file')
@@ -411,6 +423,7 @@ class Kubernetes(Install):
             self.set('docs.node_port', self.args.docs_k8s_nodeport)
 
         self.set('docs.url', self.args.docs_url)
+        self.set('docs.tag', self.args.version)
 
         if self.args.docs_tls_enabled:
             self.required_option('docs-tls-key-file')
@@ -447,6 +460,16 @@ class Kubernetes(Install):
         self.set('job.security_context.capabilities.enabled',
                  self.args.job_security_context_capabilities_enabled)
         self.set('job.api.url', self.args.job_api_url)
+        self.set('job.api.tag', self.args.version)
+
+    def setup_db(self):
+        self.set('db.tag', self.args.version)
+
+    def setup_scheduler(self):
+        self.set('scheduler.tag', self.args.version)
+
+    def setup_stats(self):
+        self.set('stats.tag', self.args.version)
 
     def main(self):
         # Copy helm chart
@@ -458,6 +481,9 @@ class Kubernetes(Install):
         self.setup_docker_registry()
         self.setup_account()
         self.setup_job()
+        self.setup_db()
+        self.setup_stats()
+        self.setup_scheduler()
         self.setup_gerrit()
         self.setup_github()
         self.setup_dashboard()
@@ -528,7 +554,7 @@ class DockerCompose(Install):
         self.config.add('services.api.image', '%s/infrabox/api' % self.args.docker_registry)
         self.config.add('services.dashboard.image', '%s/infrabox/dashboard' % self.args.docker_registry)
         self.config.add('services.db.image', '%s/infrabox/db' % self.args.docker_registry)
-        self.config.add('services.scheduler.image', '%s/infrabox/scheduler/docker-compose' % self.args.docker_registry)
+        self.config.add('services.scheduler.image', '%s/infrabox/scheduler-docker-compose' % self.args.docker_registry)
         self.config.append('services.scheduler.environment',
                            ['INFRABOX_DOCKER_REGISTRY=%s' % self.args.docker_registry])
 
@@ -629,6 +655,7 @@ def main():
     parser.add_argument('--platform',
                         choices=['docker-compose', 'kubernetes'],
                         required=True)
+    parser.add_argument('--version', default='latest')
 
     # General
     parser.add_argument('--general-no-check-certificates', action='store_true', default=False)

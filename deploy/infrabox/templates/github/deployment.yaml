@@ -23,7 +23,7 @@ spec:
             {{ include "containers_database" . | indent 12 }}
             -
                 name: github-review
-                image: {{ required "general.docker_registry is required" .Values.general.docker_registry }}/{{ default "infrabox/github/review" .Values.github.review.image }}:{{ required "github.review.tag is required" .Values.github.review.tag }}
+                image: {{ required "general.docker_registry is required" .Values.general.docker_registry }}/{{ default "github-review" .Values.github.review.image }}:{{ required "github.review.tag is required" .Values.github.review.tag }}
                 imagePullPolicy: Always
                 env:
                 {{ include "env_database" . | indent 16 }}
@@ -31,7 +31,7 @@ spec:
                 {{ include "env_general" . | indent 16 }}
                 -
                     name: INFRABOX_SERVICE
-                    value: {{ default "infrabox/github/review" .Values.github.review.image }}
+                    value: {{ default "github-review" .Values.github.review.image }}
                 -
                     name: INFRABOX_VERSION
                     value: {{ required "github.review.tag is required" .Values.github.review.tag }}

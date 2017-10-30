@@ -14,7 +14,7 @@ def elect_leader(conn, service_name):
         c.execute("""
             INSERT INTO leader_election (service_name, last_seen_active)
             VALUES (%s, now())
-            ON CONFCLIT (service_name)
+            ON CONFLICT (service_name)
             DO UPDATE SET
                 service_name = CASE WHEN leader_election.last_seen_active < now() - interval '30 second'
                             THEN EXCLUDED.service_name

@@ -23,14 +23,14 @@ spec:
             {{ include "containers_database" . | indent 12 }}
             -
                 name: auth
-                image: {{ .Values.general.docker_registry }}/{{ default "infrabox/docker-registry/auth" .Values.docker_registry.auth_image }}:{{ .Values.docker_registry.auth_tag }}
+                image: {{ .Values.general.docker_registry }}/{{ default "docker-registry-auth" .Values.docker_registry.auth_image }}:{{ .Values.docker_registry.auth_tag }}
                 imagePullPolicy: Always
                 env:
                 {{ include "env_database" . | indent 16 }}
                 {{ include "env_docker_registry" . | indent 16 }}
                 -
                     name: INFRABOX_SERVICE
-                    value: {{ default "infrabox/docker-registry/auth" .Values.docker_registry.auth_image }}
+                    value: {{ default "docker-registry-auth" .Values.docker_registry.auth_image }}
                 -
                     name: INFRABOX_VERSION
                     value: {{ .Values.docker_registry.auth_tag }}
@@ -48,7 +48,7 @@ spec:
                     periodSeconds: 3
             -
                 name: nginx
-                image: {{ .Values.general.docker_registry }}/{{ default "infrabox/docker-registry/nginx" .Values.docker_registry.nginx_image }}:{{ .Values.docker_registry.nginx_tag }}
+                image: {{ .Values.general.docker_registry }}/{{ default "docker-registry-nginx" .Values.docker_registry.nginx_image }}:{{ .Values.docker_registry.nginx_tag }}
                 imagePullPolicy: Always
                 env:
                 -

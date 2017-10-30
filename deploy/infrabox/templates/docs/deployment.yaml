@@ -22,7 +22,7 @@ spec:
             containers:
             -
                 name: docs
-                image: {{ .Values.general.docker_registry }}/{{ default "infrabox/docs" .Values.docs.image }}:{{ .Values.docs.tag }}
+                image: {{ .Values.general.docker_registry }}/{{ default "docs" .Values.docs.image }}:{{ .Values.docs.tag }}
                 imagePullPolicy: Always
                 env:
                 -
