@@ -21,14 +21,13 @@ export function createServer(print: boolean) {
         const options = {
             key: fs.readFileSync(config.api.tls.key),
             cert: fs.readFileSync(config.api.tls.cert)
-        }
+        };
 
         server = https.createServer(options, app);
     } else {
         logger.warn("HTTPS is not enabled");
         server = http.createServer(app);
     }
-
 
     server['listeners']['console'] = new ConsoleListener();
     server['listeners']['job'] = new JobListener();

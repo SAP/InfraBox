@@ -27,7 +27,7 @@ router.post("/:project_id/upload", upload.single('project.zip'), (req: Request, 
 
     if (!req.headers['authorization']) {
         fs.unlinkSync(file);
-        logger.debug('no authorization header set');
+        logger.warn('no authorization header set');
         return next(new Unauthorized());
     }
 
