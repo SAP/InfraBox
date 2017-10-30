@@ -3,7 +3,7 @@ kind: Service
 apiVersion: v1
 metadata:
     name: infrabox-dashboard
-    namespace: infrabox-system
+    namespace: {{ default "infrabox-system" .Values.general.system_namespace }}
     labels:
         app: infrabox
         infrabox.net/component: dashboard
@@ -26,7 +26,7 @@ kind: Service
 apiVersion: v1
 metadata:
     name: infrabox-dashboard-monitoring
-    namespace: infrabox-system
+    namespace: {{ default "infrabox-system" .Values.general.system_namespace }}
     labels:
         app: infrabox
         infrabox.net/component: dashboard

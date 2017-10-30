@@ -3,7 +3,7 @@ apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
     name: infrabox-github
-    namespace: infrabox-system
+    namespace: {{ default "infrabox-system" .Values.general.system_namespace }}
     labels:
         app: infrabox
         infrabox.net/component: github
@@ -15,30 +15,12 @@ spec:
                 app: infrabox
                 infrabox.net/component: github
         spec:
-            {{- if .Values.general.rbac.enabled }}
-            serviceAccountName: infrabox-leader-elector
-            {{ end }}
             {{- if .Values.github.node_selector }}
             nodeSelector:
 {{ toYaml .Values.github.node_selector | indent 16 }}
             {{- end }}
             containers:
-            {{ if .Values.storage.cloudsql.enabled }}
-            -
-                image: gcr.io/cloudsql-docker/gce-proxy:1.09
-                name: cloudsql-proxy
-                command: ["/cloud_sql_proxy", "--dir=/cloudsql",
-                          "-instances={{ .Values.storage.cloudsql.instance_connection_name }}=tcp:5432",
-                          "-credential_file=/secrets/cloudsql/credentials.json"]
-                volumeMounts:
-                - name: cloudsql-instance-credentials
-                  mountPath: /secrets/cloudsql
-                  readOnly: true
-                - name: ssl-certs
-                  mountPath: /etc/ssl/certs
-                - name: cloudsql
-                  mountPath: /cloudsql
-            {{ end }}
+            {{ include "containers_database" . | indent 12 }}
             -
                 name: github-review
                 image: {{ required "general.docker_registry is required" .Values.general.docker_registry }}/{{ default "infrabox/github/review" .Values.github.review.image }}:{{ required "github.review.tag is required" .Values.github.review.tag }}
@@ -56,24 +38,6 @@ spec:
                 -
                     name: INFRABOX_DASHBOARD_URL
                     value: {{ .Values.dashboard.url }}
-            -
-                name: leader-elector
-                image: "gcr.io/google_containers/leader-elector:0.5"
-                args:
-                    - "--election"
-                    - infrabox-github
-                    - "--http=0.0.0.0:4040"
-                ports:
-                - containerPort: 4040
             volumes:
-            {{- if .Values.storage.cloudsql.enabled }}
-              - name: cloudsql-instance-credentials
-                secret:
-                  secretName: infrabox-cloudsql-instance-credentials
-              - name: ssl-certs
-                hostPath:
-                  path: /etc/ssl/certs
-              - name: cloudsql
-                emptyDir:
-            {{- end }}
+                {{ include "volumes_database" . | indent 16 }}
 {{ end }}

@@ -3,7 +3,7 @@ apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
     name: infrabox-scheduler
-    namespace: infrabox-system
+    namespace: {{ default "infrabox-system" .Values.general.system_namespace }}
     labels:
         app: infrabox
         infrabox.net/component: scheduler
@@ -15,30 +15,12 @@ spec:
                 app: infrabox
                 infrabox.net/component: scheduler
         spec:
-            {{- if .Values.general.rbac.enabled }}
-            serviceAccountName: infrabox-leader-elector
-            {{- end }}
             {{- if .Values.scheduler.node_selector }}
             nodeSelector:
 {{ toYaml .Values.scheduler.node_selector | indent 16 }}
             {{- end }}
             containers:
-            {{ if .Values.storage.cloudsql.enabled }}
-            -
-                image: gcr.io/cloudsql-docker/gce-proxy:1.09
-                name: cloudsql-proxy
-                command: ["/cloud_sql_proxy", "--dir=/cloudsql",
-                          "-instances={{ .Values.storage.cloudsql.instance_connection_name }}=tcp:5432",
-                          "-credential_file=/secrets/cloudsql/credentials.json"]
-                volumeMounts:
-                - name: cloudsql-instance-credentials
-                  mountPath: /secrets/cloudsql
-                  readOnly: true
-                - name: ssl-certs
-                  mountPath: /etc/ssl/certs
-                - name: cloudsql
-                  mountPath: /cloudsql
-            {{ end }}
+            {{ include "containers_database" . | indent 12 }}
             -
                 name: scheduler
                 image: {{ required "general.docker_registry is required" .Values.general.docker_registry }}/{{ default "infrabox/scheduler/kubernetes" .Values.scheduler.image }}:{{ required "scheduler.tag is required" .Values.scheduler.tag }}
@@ -56,9 +38,6 @@ spec:
                 {{ include "env_general" . | indent 16 }}
                 {{ include "env_kubernetes" . | indent 16 }}
                 {{ include "env_job_api_secret" . | indent 16 }}
-                -
-                    name: INFRABOX_GENERAL_NO_CHECK_CERTIFICATES
-                    value: {{ default "false" .Values.general.no_check_certificates | quote }}
                 -
                     name: INFRABOX_DASHBOARD_URL
                     value: {{ required "dashboard.url is required" .Values.dashboard.url }}
@@ -80,24 +59,6 @@ spec:
                 ports:
                 - containerPort: 8000
                   name: prometheus
-            -
-                name: leader-elector
-                image: "gcr.io/google_containers/leader-elector:0.5"
-                args:
-                    - "--election"
-                    - infrabox-scheduler
-                    - "--http=0.0.0.0:4040"
-                ports:
-                - containerPort: 4040
-            {{- if .Values.storage.cloudsql.enabled }}
             volumes:
-              - name: cloudsql-instance-credentials
-                secret:
-                  secretName: infrabox-cloudsql-instance-credentials
-              - name: ssl-certs
-                hostPath:
-                  path: /etc/ssl/certs
-              - name: cloudsql
-                emptyDir:
-            {{- end }}
+                {{ include "volumes_database" . | indent 16 }}
 {{ end }}
