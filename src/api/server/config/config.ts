@@ -50,7 +50,7 @@ export let config = {
         url: getFromEnv("INFRABOX_API_URL"),
         port: getFromEnv("INFRABOX_API_PORT"),
         express: {
-            use_request_logger: false,
+            use_request_logger: true,
             print_errors: true
         },
         log: {

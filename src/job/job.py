@@ -528,7 +528,7 @@ exec "$@"
         collector = StatsCollector()
 
         container_name = self.job['id']
-        cmd = ['docker', 'run', '--name', container_name, '-v', self.data_dir + ':/infrabox']
+        cmd = ['docker', 'run', '-t', '--name', container_name, '-v', self.data_dir + ':/infrabox']
 
         # Mount context
         cmd += ['-v', '/repo:/infrabox/context']
@@ -558,10 +558,10 @@ exec "$@"
                 o.write(base64.b64decode(os.environ['INFRABOX_RESOURCES_KUBERNETES_NAMESPACE']))
 
             cmd += ['-v', '/tmp/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount']
-
+            cmd += ['-e', 'INFRABOX_RESOURCES_KUBERNETES_MASTER_URL=%s' %
+                    os.environ['INFRABOX_RESOURCES_KUBERNETES_MASTER_URL']]
 
         # Add capabilities
-
         security_context = self.job.get('security_context', {})
 
         if security_context:
