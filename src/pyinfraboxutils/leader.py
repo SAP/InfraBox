@@ -27,7 +27,7 @@ def elect_leader(conn, service_name):
             RETURNING service_name = %s;
         """, [service_name, service_name])
         r = c.fetchone()
-        c.lose()
+        c.close()
         conn.commit()
         is_leader = r[0]
 
