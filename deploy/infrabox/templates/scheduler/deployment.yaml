@@ -23,7 +23,7 @@ spec:
             {{ include "containers_database" . | indent 12 }}
             -
                 name: scheduler
-                image: {{ required "general.docker_registry is required" .Values.general.docker_registry }}/{{ default "infrabox/scheduler/kubernetes" .Values.scheduler.image }}:{{ required "scheduler.tag is required" .Values.scheduler.tag }}
+                image: {{ required "general.docker_registry is required" .Values.general.docker_registry }}/{{ default "scheduler-kubernetes" .Values.scheduler.image }}:{{ required "scheduler.tag is required" .Values.scheduler.tag }}
                 args:
                     - "--docker-registry"
                     - "{{ .Values.general.docker_registry }}"
@@ -46,7 +46,7 @@ spec:
                     value: {{ required "docker_registry.url is required" .Values.docker_registry.url }}
                 -
                     name: INFRABOX_SERVICE
-                    value: {{ default "infrabox/scheduler" .Values.scheduler.image }}
+                    value: {{ default "scheduler" .Values.scheduler.image }}
                 -
                     name: INFRABOX_VERSION
                     value: {{ required "scheduler.tag is required" .Values.scheduler.tag }}

@@ -24,7 +24,7 @@ spec:
             {{ include "containers_database" . | indent 12 }}
             -
                 name: job-api
-                image: {{ .Values.general.docker_registry }}/{{ default "infrabox/job/api" .Values.job.api.image }}:{{ .Values.job.api.tag }}
+                image: {{ .Values.general.docker_registry }}/{{ default "job-api" .Values.job.api.image }}:{{ .Values.job.api.tag }}
                 imagePullPolicy: Always
                 volumeMounts:
                 {{ if .Values.storage.gcs.enabled }}
@@ -42,7 +42,7 @@ spec:
                 {{ include "env_job_api_secret" . | indent 16 }}
                 -
                     name: INFRABOX_SERVICE
-                    value: {{ default "infrabox/job/api" .Values.job.api.image }}
+                    value: {{ default "job-api" .Values.job.api.image }}
                 -
                     name: INFRABOX_VERSION
                     value: {{ .Values.job.api.tag }}
