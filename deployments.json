@@ -9,7 +9,7 @@
 		"deployments": [{
 				"type": "docker-registry",
 				"host": "quay.io/infrabox",
-				"repository": "docker-auth",
+				"repository": "docker-registry-auth",
 				"username": "infrabox+infrabox_ci",
 				"password": { "$ref": "QUAY_PASSWORD" }
 		}]
