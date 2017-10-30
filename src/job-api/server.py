@@ -408,19 +408,25 @@ def get_source():
         return "Forbidden", 403
 
     job_id = token['job']['id']
+    project_id = token['project']['id']
 
     r = execute_one('''
         SELECT su.filename
         FROM
             source_upload su
+        INNER JOIN build b
+            ON b.source_upload_id = su.id
         INNER JOIN job j
-            ON j.source_upload_id = su.id
+            ON j.build_id = b.id
         WHERE
-            j.id = %s
-    ''', (job_id,))
+            j.id = %s AND
+            b.project_id = %s AND
+            j.project_id = %s
+    ''', (job_id, project_id, project_id))
 
     source_zip = '/tmp/source.zip'
     filename = r[0]
+
 
     if use_gcs():
         bucket = os.environ['INFRABOX_STORAGE_GCS_PROJECT_UPLOAD_BUCKET']
