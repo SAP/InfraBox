@@ -9,5 +9,16 @@
         "name": "deploy",
         "infrabox_file": "deployments.json",
         "depends_on": ["test"]
+    }, {
+        "type": "docker",
+        "name": "e2e",
+        "docker_file": "infrabox/test/e2e/Dockerfile",
+        "resources": { "limits": { "cpu": 1, "memory": 2048 } },
+        "build_only": false,
+        "depends_on": ["deploy"],
+        "resources": {
+            "limits": { "cpu": 1, "memory": 1024 },
+            "kubernetes": { "limits": { "cpu": 2, "memory": 4096 } }
+        }
     }]
 }

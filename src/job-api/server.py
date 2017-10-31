@@ -358,7 +358,7 @@ def get_job_data(job_id):
                     data['deployments'].append(dep)
                     continue
 
-                secret_name = dep['password']['$ref']
+                secret_name = dep['password']['$secret']
                 secret = get_secret(secret_name)
 
                 if not secret:
@@ -772,7 +772,7 @@ def create_jobs():
                 value = job['environment'][ename]
 
                 if isinstance(value, dict):
-                    env_var_ref_name = value['$ref']
+                    env_var_ref_name = value['$secret']
                     cursor = c.cursor()
                     cursor.execute("""SELECT value FROM secret WHERE name = %s and project_id = %s""",
                                    (env_var_ref_name, project_id))
