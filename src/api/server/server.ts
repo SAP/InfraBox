@@ -41,7 +41,7 @@ export function createServer(print: boolean) {
         logger.info("New socket connection");
         const subs = new Array<Subscription>();
         let isAuthenticated = false;
-        let project_token: ProjectToken ;
+        let project_token: ProjectToken;
         openConnections += 1;
 
         socket.on("disconnect", () => {
