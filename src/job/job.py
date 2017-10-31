@@ -501,6 +501,17 @@ exec "$@"
             c.execute(['docker', 'tag', image_name, dep_image_name], show=True)
             c.execute(['docker', 'push', dep_image_name], show=True)
 
+    def login_docker_registry(self):
+        c = self.console
+        c.execute(['docker', 'login',
+                   '-u', os.environ['INFRABOX_DOCKER_REGISTRY_ADMIN_USERNAME'],
+                   '-p', os.environ['INFRABOX_DOCKER_REGISTRY_ADMIN_PASSWORD'],
+                   get_registry_name()], show=False)
+
+    def logout_docker_registry(self):
+        c = self.console
+        c.execute(['docker', 'login', get_registry_name()], show=False)
+
     def push_container(self, image_name):
         c = self.console
         c.header("Uploading to docker registry", show=True)
@@ -511,12 +522,9 @@ exec "$@"
             elif not self.job['keep']:
                 c.collect("Not pushing container, because keep is not set.\n", show=True)
             else:
-                c.execute(['docker', 'login',
-                           '-u', os.environ['INFRABOX_DOCKER_REGISTRY_ADMIN_USERNAME'],
-                           '-p', os.environ['INFRABOX_DOCKER_REGISTRY_ADMIN_PASSWORD'],
-                           get_registry_name()], show=False)
-
+                self.login_docker_registry()
                 c.execute(['docker', 'push', image_name], show=True)
+                self.logout_docker_registry()
         except Exception as e:
             raise Failure(e.__str__())
 
@@ -647,12 +655,17 @@ exec "$@"
 
     def get_cached_image(self, image_name_latest):
         c = self.console
+        self.login_docker_registry()
         c.execute(['docker', 'pull', image_name_latest], show=True, ignore_error=True)
+        self.logout_docker_registry()
 
     def cache_docker_image(self, image_name_build, image_name_latest):
         c = self.console
         c.execute(['docker', 'tag', image_name_build, image_name_latest], show=True)
+
+        self.login_docker_registry()
         c.execute(['docker', 'push', image_name_latest], show=True)
+        self.logout_docker_registry()
 
     def parse_infrabox_json(self, path):
         with open(path, 'r') as f:
