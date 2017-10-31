@@ -8,7 +8,7 @@
         "environment": {
             "NAME": "VALUE",
             "NAME2": "VALUE",
-            "NAME3": { "$ref": "OTHER" }
+            "NAME3": { "$secret": "OTHER" }
         }
     }]
 }

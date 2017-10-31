@@ -75,10 +75,10 @@ def parse_secret_ref(value, p):
     if not isinstance(value, dict):
         raise ValidationError(p, "must be an object")
 
-    if "$ref" not in value:
-        raise ValidationError(p, "must contain a $ref")
+    if "$secret" not in value:
+        raise ValidationError(p, "must contain a $secret")
 
-    check_text(value['$ref'], p + ".$ref")
+    check_text(value['$secret'], p + ".$secret")
 
 def parse_environment(e, path):
     if not isinstance(e, dict):

@@ -6,7 +6,7 @@
         "docker_file": "Dockerfile",
         "resources": { "limits": { "cpu": 1, "memory": 1024 } },
         "environment": {
-            "$ref": "DOES_NOT_EXIST"
+            "SECRET": { "$secret": "DOES_NOT_EXIST" }
         }
     }]
 }

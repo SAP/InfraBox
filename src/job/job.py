@@ -637,11 +637,11 @@ exec "$@"
         image_name_latest = image_name + ':latest'
 
         self.get_cached_image(image_name_latest)
-        self.build_docker_container(image_name)
+        self.build_docker_container(image_name_build)
         self.cache_docker_image(image_name_build, image_name_latest)
-        self.run_docker_container(image_name)
-        self.deploy_container(image_name)
-        self.push_container(image_name)
+        self.run_docker_container(image_name_build)
+        self.deploy_container(image_name_build)
+        self.push_container(image_name_build)
 
         c.header("Finished succesfully", show=True)
 
@@ -852,6 +852,7 @@ def main():
     args = parser.parse_args()
     console = ApiConsole()
 
+    j = None
     try:
         j = RunJob(console, args.type)
         j.main()
@@ -864,11 +865,12 @@ def main():
         j.update_status('failure')
     except:
         print_stackdriver()
-        j.console.collect('## An error occured', show=True)
-        msg = traceback.format_exc()
-        j.console.collect(msg, show=True)
-        j.console.flush()
-        j.update_status('error')
+        if j:
+            j.console.collect('## An error occured', show=True)
+            msg = traceback.format_exc()
+            j.console.collect(msg, show=True)
+            j.console.flush()
+            j.update_status('error')
 
 if __name__ == "__main__":
     try:

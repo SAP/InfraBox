@@ -58,7 +58,7 @@ class Test(TestCase):
                             keep, repo, base_path, deployment)
                         VALUES(%s, 'scheduled', now(), %s, 'run_project_container', 'Dockerfile',
                             'test', 1, 1024, %s, null, false, false, null, null,
-                            '[{"type": "docker-registry", "username": "user", "password": {"$ref": "SECRET"}, "host": "host", "repository": "repo"}]')''',
+                            '[{"type": "docker-registry", "username": "user", "password": {"$secret": "SECRET"}, "host": "host", "repository": "repo"}]')''',
                     (self.job_id, self.build_id, self.project_id))
         cur.execute('''INSERT INTO build(id, build_number, project_id, source_upload_id)
                         VALUES(%s, 1, %s, %s)''',
