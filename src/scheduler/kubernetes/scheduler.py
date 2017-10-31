@@ -229,7 +229,7 @@ class Scheduler(object):
                         "automountServiceAccountToken": False,
                         "containers": [{
                             "name": "run-job",
-                            "image": self.args.docker_registry + "/infrabox/job:%s" % self.args.tag,
+                            "image": self.args.docker_registry + "/job:%s" % self.args.tag,
                             "command": ["/usr/local/bin/entrypoint.sh", "--type", job_type],
 
                             "securityContext": {
