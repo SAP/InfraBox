@@ -11,7 +11,7 @@
                 "host": "quay.io/infrabox",
                 "repository": "docker-registry-auth",
                 "username": "infrabox+infrabox_ci",
-                "password": { "$ref": "QUAY_PASSWORD" }
+                "password": { "$secret": "QUAY_PASSWORD" }
         }]
     }, {
         "type": "docker",
@@ -24,7 +24,7 @@
                 "host": "quay.io/infrabox",
                 "repository": "db",
                 "username": "infrabox+infrabox_ci",
-                "password": { "$ref": "QUAY_PASSWORD" }
+                "password": { "$secret": "QUAY_PASSWORD" }
         }]
     }, {
         "type": "docker",
@@ -37,7 +37,7 @@
                 "host": "quay.io/infrabox",
                 "repository": "gerrit-trigger",
                 "username": "infrabox+infrabox_ci",
-                "password": { "$ref": "QUAY_PASSWORD" }
+                "password": { "$secret": "QUAY_PASSWORD" }
         }]
    }, {
         "type": "docker",
@@ -50,7 +50,7 @@
                 "host": "quay.io/infrabox",
                 "repository": "gerrit-api",
                 "username": "infrabox+infrabox_ci",
-                "password": { "$ref": "QUAY_PASSWORD" }
+                "password": { "$secret": "QUAY_PASSWORD" }
         }]
     }, {
         "type": "docker",
@@ -63,7 +63,7 @@
                 "host": "quay.io/infrabox",
                 "repository": "github-api",
                 "username": "infrabox+infrabox_ci",
-                "password": { "$ref": "QUAY_PASSWORD" }
+                "password": { "$secret": "QUAY_PASSWORD" }
         }]
     }, {
         "type": "docker",
@@ -76,7 +76,7 @@
                 "host": "quay.io/infrabox",
                 "repository": "github-trigger",
                 "username": "infrabox+infrabox_ci",
-                "password": { "$ref": "QUAY_PASSWORD" }
+                "password": { "$secret": "QUAY_PASSWORD" }
         }]
     }, {
         "type": "docker",
@@ -89,7 +89,7 @@
                 "host": "quay.io/infrabox",
                 "repository": "github-review",
                 "username": "infrabox+infrabox_ci",
-                "password": { "$ref": "QUAY_PASSWORD" }
+                "password": { "$secret": "QUAY_PASSWORD" }
         }]
     }, {
         "type": "docker",
@@ -102,7 +102,7 @@
                 "host": "quay.io/infrabox",
                 "repository": "gerrit-review",
                 "username": "infrabox+infrabox_ci",
-                "password": { "$ref": "QUAY_PASSWORD" }
+                "password": { "$secret": "QUAY_PASSWORD" }
         }]
     }, {
         "type": "docker",
@@ -115,7 +115,7 @@
                 "host": "quay.io/infrabox",
                 "repository": "docs",
                 "username": "infrabox+infrabox_ci",
-                "password": { "$ref": "QUAY_PASSWORD" }
+                "password": { "$secret": "QUAY_PASSWORD" }
         }]
     }, {
         "type": "docker",
@@ -128,7 +128,7 @@
                 "host": "quay.io/infrabox",
                 "repository": "docker-registry-nginx",
                 "username": "infrabox+infrabox_ci",
-                "password": { "$ref": "QUAY_PASSWORD" }
+                "password": { "$secret": "QUAY_PASSWORD" }
         }]
     }, {
         "type": "docker",
@@ -141,7 +141,7 @@
                 "host": "quay.io/infrabox",
                 "repository": "dashboard",
                 "username": "infrabox+infrabox_ci",
-                "password": { "$ref": "QUAY_PASSWORD" }
+                "password": { "$secret": "QUAY_PASSWORD" }
         }]
     }, {
         "type": "docker",
@@ -154,7 +154,7 @@
                 "host": "quay.io/infrabox",
                 "repository": "api",
                 "username": "infrabox+infrabox_ci",
-                "password": { "$ref": "QUAY_PASSWORD" }
+                "password": { "$secret": "QUAY_PASSWORD" }
         }]
     }, {
         "type": "docker",
@@ -167,7 +167,7 @@
                 "host": "quay.io/infrabox",
                 "repository": "job",
                 "username": "infrabox+infrabox_ci",
-                "password": { "$ref": "QUAY_PASSWORD" }
+                "password": { "$secret": "QUAY_PASSWORD" }
         }]
     }, {
         "type": "docker",
@@ -180,7 +180,7 @@
                 "host": "quay.io/infrabox",
                 "repository": "scheduler-kubernetes",
                 "username": "infrabox+infrabox_ci",
-                "password": { "$ref": "QUAY_PASSWORD" }
+                "password": { "$secret": "QUAY_PASSWORD" }
         }]
     }, {
         "type": "docker",
@@ -193,7 +193,7 @@
                 "host": "quay.io/infrabox",
                 "repository": "scheduler-docker-compose",
                 "username": "infrabox+infrabox_ci",
-                "password": { "$ref": "QUAY_PASSWORD" }
+                "password": { "$secret": "QUAY_PASSWORD" }
         }]
     }, {
         "type": "docker",
@@ -206,7 +206,7 @@
                 "host": "quay.io/infrabox",
                 "repository": "stats",
                 "username": "infrabox+infrabox_ci",
-                "password": { "$ref": "QUAY_PASSWORD" }
+                "password": { "$secret": "QUAY_PASSWORD" }
         }]
     }, {
         "type": "docker",
@@ -219,7 +219,7 @@
                 "host": "quay.io/infrabox",
                 "repository": "job-api",
                 "username": "infrabox+infrabox_ci",
-                "password": { "$ref": "QUAY_PASSWORD" }
+                "password": { "$secret": "QUAY_PASSWORD" }
         }]
     }, {
         "type": "docker",
@@ -232,7 +232,7 @@
                 "host": "quay.io/infrabox",
                 "repository": "postgres",
                 "username": "infrabox+infrabox_ci",
-                "password": { "$ref": "QUAY_PASSWORD" }
+                "password": { "$secret": "QUAY_PASSWORD" }
         }]
     }, {
         "type": "docker",
