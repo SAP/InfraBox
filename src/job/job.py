@@ -510,7 +510,7 @@ exec "$@"
 
     def logout_docker_registry(self):
         c = self.console
-        c.execute(['docker', 'login', get_registry_name()], show=False)
+        c.execute(['docker', 'logout', get_registry_name()], show=False)
 
     def push_container(self, image_name):
         c = self.console
