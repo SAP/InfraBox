@@ -12,7 +12,12 @@ class Job(object):
             print "INFRABOX_JOB_API_URL not set"
             sys.exit(1)
 
-        r = requests.get("%s/job" % self.api_server, headers=self.get_headers(), timeout=10)
+        while True:
+            try:
+                r = requests.get("%s/job" % self.api_server, headers=self.get_headers(), timeout=10)
+                break
+            except Exception as e:
+                print e
 
         if r.status_code != 200:
             print "Stopping, API Server returned error code %s" % r.status_code
