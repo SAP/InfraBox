@@ -557,7 +557,7 @@ def upload_output():
 
     return "OK"
 
-@app.route("/output/<job_id>")
+@app.route("/output/<parent_job_id>")
 def get_output_of_job(parent_job_id):
     token = validate_token()
 
