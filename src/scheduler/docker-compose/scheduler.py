@@ -46,7 +46,7 @@ class Scheduler(object):
             "version": "2",
             "services": {
                 "job-%s" % job_id: {
-                    "image": os.environ['INFRABOX_DOCKER_REGISTRY'] + '/infrabox/job',
+                    "image": os.environ['INFRABOX_DOCKER_REGISTRY'] + '/job',
                     "network_mode": "host",
                     "command": "/usr/local/bin/wait-for-webserver.sh localhost:5000 /usr/local/bin/entrypoint.sh --type %s" % job_type,
                     "volumes": [

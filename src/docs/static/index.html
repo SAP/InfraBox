@@ -1025,7 +1025,7 @@ CMD /usr/bin/test.py
     "type": "docker",
     ...
     "environment": {
-        "ENV_VAR_1": { "$ref": "NAME_OF_ENV_VAR_IN_DASHBOARD" }
+        "ENV_VAR_1": { "$secret": "NAME_OF_ENV_VAR_IN_DASHBOARD" }
     }
 }</code></pre>
                     <p>In your job the secret value will then be available as the environment variable <kbd>ENV_VAR_1</kbd>.</p>
@@ -1041,7 +1041,7 @@ CMD /usr/bin/test.py
             "host": "&lt;my_registry&gt;:5000",
             "repository": "repo-name",
             "username": "your_username",
-            "password": { "$ref": "SECRET_NAME_FOR_YOUR_PASSWORD" }
+            "password": { "$secret": "SECRET_NAME_FOR_YOUR_PASSWORD" }
     }]
 }</code></pre>
 

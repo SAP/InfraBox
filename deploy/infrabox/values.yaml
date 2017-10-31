@@ -30,14 +30,14 @@ general:
 
 db:
     # name of the db image in your general.docker_registry
-    # image: infrabox/db
+    # image: db
 
     # Tag
     tag: latest
 
 docker_gc:
     # name of the docker-gc image in your general.docker_registry
-    # image: infrabox/docker-gc
+    # image: docker-gc
 
     # Tag
     tag: latest
@@ -46,7 +46,7 @@ scheduler:
     enabled: true
 
     # name of the scheduler image in your general.docker_registry
-    # image: infrabox/scheduler
+    # image: scheduler
 
     # Tag
     tag: latest
@@ -121,13 +121,13 @@ docker_registry:
     url: <REQUIRED>
 
     # name of the docker-registry auth image in your general.docker_registry
-    # auth_image: infrabox/docker-registry/auth
+    # auth_image: docker-registry-auth
 
     # Tag
-    auth_tag: latest
+    auth_tagtag: latest
 
     # name of the docker-registry nginx image in your general.docker_registry
-    # nginx_image: infrabox/docker-registry/nginx
+    # nginx_image: docker-registry-nginx
 
     # Tag
     nginx_tag: latest
@@ -156,7 +156,7 @@ dashboard:
     enabled: true
 
     # name of the dashboard image in your general.docker_registry
-    # image: infrabox/dashboard
+    # image: dashboard
 
     # Tag
     tag: latest
@@ -177,7 +177,7 @@ stats:
     enabled: true
 
     # name of the stats image in your general.docker_registry
-    # image: infrabox/stats
+    # image: stats
 
     # Tag
     tag: latest
@@ -186,7 +186,7 @@ api:
     enabled: true
 
     # name of the api image in your general.docker_registry
-    # image: infrabox/api
+    # image: api
 
     # Tag
     tag: latest
@@ -223,21 +223,21 @@ gerrit:
         enabled: false
 
         # name of the gerrit review image in your general.docker_registry
-        # image: infrabox/gerrit/review
+        # image: gerrit-review
 
         # Tag
         tag: latest
 
     trigger:
         # name of the gerrit trigger image in your general.docker_registry
-        # image: infrabox/gerrit/trigger
+        # image: gerrit-trigger
 
         # Tag
         tag: latest
 
     api:
         # name of the gerrit api image in your general.docker_registry
-        # image: infrabox/gerrit/api
+        # image: gerrit-api
 
         # Tag
         tag: latest
@@ -257,7 +257,7 @@ job:
             enabled: false
 
     api:
-        # image: infrabox/github/api
+        # image: job-api
         tag: latest
 
         url: <REQUIRED>
@@ -274,17 +274,17 @@ github:
     enabled: false
 
     trigger:
-        # image: infrabox/github/trigger
+        # image: github-trigger
 
         tag: latest
 
     api:
-        # image: infrabox/github/api
+        # image: github-api
 
         tag: latest
 
     review:
-        # image: infrabox/review/api
+        # image: review-api
 
         tag: latest
 

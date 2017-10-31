@@ -227,10 +227,10 @@ def test_environment():
     raises_expect(d, "#jobs[0].environment.key: must be a string or object")
 
     d['jobs'][0]['environment'] = {'key': {}}
-    raises_expect(d, "#jobs[0].environment.key: must contain a $ref")
+    raises_expect(d, "#jobs[0].environment.key: must contain a $secret")
 
-    d['jobs'][0]['environment'] = {'key': {'$ref': None}}
-    raises_expect(d, "#jobs[0].environment.key.$ref: is not a string")
+    d['jobs'][0]['environment'] = {'key': {'$secret': None}}
+    raises_expect(d, "#jobs[0].environment.key.$secret: is not a string")
 
     d['jobs'][0]['environment'] = {}
     validate_json(d)
@@ -261,7 +261,7 @@ def test_deployments():
     d['jobs'][0]['deployments'] = [{'type': 'docker-registry', 'host': 'hostname', 'repository': 'repo', 'username': 'user', 'password': 'value'}]
     raises_expect(d, "#jobs[0].deployments[0].password: must be an object")
 
-    d['jobs'][0]['deployments'] = [{'type': 'docker-registry', 'host': 'hostname', 'repository': 'repo', 'username': 'user', 'password': {'$ref': 'blub'}}]
+    d['jobs'][0]['deployments'] = [{'type': 'docker-registry', 'host': 'hostname', 'repository': 'repo', 'username': 'user', 'password': {'$secret': 'blub'}}]
     validate_json(d)
 
 def test_build_arguments():

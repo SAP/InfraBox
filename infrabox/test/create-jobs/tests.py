@@ -62,7 +62,7 @@ class TestCreateJobs(object):
                 'username': 'myuser',
                 'host': 'myhost',
                 'password': {
-                    '$ref': 'MY_SECRET'
+                    '$secret': 'MY_SECRET'
                 },
                 'type': 'docker-registry',
                 'repository': 'repo'

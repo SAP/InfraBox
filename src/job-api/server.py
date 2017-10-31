@@ -358,7 +358,7 @@ def get_job_data(job_id):
                     data['deployments'].append(dep)
                     continue
 
-                secret_name = dep['password']['$ref']
+                secret_name = dep['password']['$secret']
                 secret = get_secret(secret_name)
 
                 if not secret:
@@ -557,8 +557,8 @@ def upload_output():
 
     return "OK"
 
-@app.route("/output/<job_id>")
-def get_output_of_job(job_id):
+@app.route("/output/<parent_job_id>")
+def get_output_of_job(parent_job_id):
     token = validate_token()
 
     if not token:
@@ -566,7 +566,7 @@ def get_output_of_job(job_id):
 
     job_id = token['job']['id']
 
-    if not validate_uuid4(job_id):
+    if not validate_uuid4(parent_job_id):
         return "Invalid uuid", 400
 
     dependencies = execute_one('''
@@ -577,7 +577,7 @@ def get_output_of_job(job_id):
 
     is_valid_dependency = False
     for dep in dependencies:
-        if dep['job-id'] == job_id:
+        if dep['job-id'] == parent_job_id:
             is_valid_dependency = True
             break
 
@@ -587,7 +587,7 @@ def get_output_of_job(job_id):
     cursor = conn.cursor()
     cursor.execute('''
         SELECT download FROM job WHERE id = %s
-    ''', (job_id, ))
+    ''', (parent_job_id, ))
     r = cursor.fetchall()
     cursor.close()
 
@@ -606,7 +606,7 @@ def get_output_of_job(job_id):
         return "Job not found 5: %s" % r, 500
 
     object_name = output[0]['id']
-    output_zip = os.path.join('/tmp', job_id + '.tar.gz')
+    output_zip = os.path.join('/tmp', parent_job_id + '.tar.gz')
 
     if use_gcs():
         bucket = os.environ['INFRABOX_STORAGE_GCS_CONTAINER_OUTPUT_BUCKET']
@@ -772,7 +772,7 @@ def create_jobs():
                 value = job['environment'][ename]
 
                 if isinstance(value, dict):
-                    env_var_ref_name = value['$ref']
+                    env_var_ref_name = value['$secret']
                     cursor = c.cursor()
                     cursor.execute("""SELECT value FROM secret WHERE name = %s and project_id = %s""",
                                    (env_var_ref_name, project_id))

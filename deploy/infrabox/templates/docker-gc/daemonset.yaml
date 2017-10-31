@@ -19,7 +19,7 @@ spec:
             containers:
             -
                 name: docker-gc
-                image: {{ .Values.general.docker_registry }}/{{ default "infrabox/docker-gc" .Values.docker_gc.image }}:{{ .Values.docker_gc.tag }}
+                image: {{ .Values.general.docker_registry }}/{{ default "docker-gc" .Values.docker_gc.image }}:{{ .Values.docker_gc.tag }}
                 volumeMounts:
                 -
                     name: docker-socket

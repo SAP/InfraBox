@@ -1,7 +1,9 @@
 #!/bin/bash -ev
 
 NAMESPACE=$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace)
-IMAGE_TAG=latest
+IMAGE_TAG=build_131
+
+env
 
 _prepareKubectl() {
     echo "## Prepare kubectl"
@@ -75,7 +77,7 @@ _installPostgres() {
     _deinstallPostgres
 
     echo "## Install postgres"
-    kubectl run postgres --image=us.gcr.io/infrabox-164418/infrabox/postgres:$IMAGE_TAG -n $NAMESPACE
+    kubectl run postgres --image=quay.io/infrabox/postgres:$IMAGE_TAG -n $NAMESPACE
     kubectl expose -n $NAMESPACE deployment postgres --port 5432 --target-port 5432 --name infrabox-postgres
 
     echo "## Prepare database"
@@ -109,8 +111,6 @@ _installPostgres() {
           VALUES ('$INFRABOX_CLI_TOKEN', 'desc', '$INFRABOX_CLI_PROJECT_ID', true, true)"
     _sql "INSERT INTO secret(project_id, name, value)
           VALUES ('$INFRABOX_CLI_PROJECT_ID', 'SECRET_ENV', 'hello world')"
-    _sql "INSERT INTO user_quota(user_id, max_concurrent_jobs, max_cpu_per_job, max_memory_per_job, max_jobs_per_build)
-          VALUES ('$USER_ID', 2, 2, 4096, 20)"
     echo "Finished preparing database"
 }
 
@@ -151,17 +151,19 @@ _deinstallInfrabox() {
 _installInfraboxMinio() {
     _deinstallInfrabox
 
+    echo "## Install infrabox"
     outdir=/tmp/test
     rm -rf $outdir
     python /infrabox/context/deploy/install.py \
         -o $outdir \
         --platform kubernetes \
+        --version $IMAGE_TAG \
         --general-worker-namespace $NAMESPACE \
         --general-system-namespace $NAMESPACE \
-        --docker-registry us.gcr.io/infrabox-164418 \
+        --docker-registry quay.io/infrabox \
         --docker-registry-admin-username admin \
         --docker-registry-admin-password admin \
-        --docker-registry-url http://infrabox-docker-registry.$NAMESPACE \
+        --docker-registry-url http://infrabox-docker-registry.$NAMESPACE:8080 \
         --database postgres \
         --postgres-host infrabox-postgres.$NAMESPACE \
         --postgres-username postgres \
@@ -175,10 +177,10 @@ _installInfraboxMinio() {
         --s3-region us-east-1 \
         --s3-port 9000 \
         --api-url https://api.infrabox.net \
-        --dashboard-url https://demo.infrabox.net \
+        --dashboard-url http://infrabox-dashboard.$NAMESPACE:8080 \
         --dashboard-secret secret \
         --docs-url https://docs.infrabox.net \
-        --job-api-url http://job-api.infrabox.net \
+        --job-api-url http://infrabox-job-api.$NAMESPACE:8080 \
         --job-api-secret kl23424
 
     pushd $outdir
@@ -190,6 +192,7 @@ _installInfraboxMinio() {
 }
 
 _runTests() {
+    echo "## Run tests"
     pushd /infrabox/context/tests
     ./tests.sh
     popd
