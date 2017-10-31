@@ -23,7 +23,7 @@ spec:
             {{ include "containers_database" . | indent 12 }}
             -
                 name: dashboard
-                image: {{ .Values.general.docker_registry }}/{{ default "infrabox/dashboard" .Values.dashboard.image }}:{{ .Values.dashboard.tag }}
+                image: {{ .Values.general.docker_registry }}/{{ default "dashboard" .Values.dashboard.image }}:{{ .Values.dashboard.tag }}
                 imagePullPolicy: Always
                 command:
                 - "node"
@@ -60,7 +60,7 @@ spec:
                             key: secret
                 -
                     name: INFRABOX_SERVICE
-                    value: {{ default "infrabox/dashboard" .Values.dashboard.image }}
+                    value: {{ default "dashboard" .Values.dashboard.image }}
                 -
                     name: INFRABOX_VERSION
                     value: {{ .Values.dashboard.tag }}

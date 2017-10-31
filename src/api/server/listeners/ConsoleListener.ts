@@ -6,6 +6,7 @@ import { db } from "../db";
 
 export class ConsoleOutput {
     public subject: ReplaySubject<string> = new ReplaySubject<string>();
+    public constructor(public project_id: string) {}
 }
 
 export class ConsoleListener {
@@ -79,20 +80,23 @@ export class ConsoleListener {
         });
     }
 
-    public getOutput(job_id: string, user_id: string): Observable<string> {
-        logger.debug("getOutput:", job_id, user_id);
+    public getOutput(job_id: string, project_id: string): Observable<string> {
+        logger.debug("getOutput:", job_id, project_id);
         if (this.output.has(job_id)) {
-            return this.output.get(job_id).subject;
+            const c = this.output.get(job_id);
+
+            if (c.project_id === project_id) {
+                return c.subject;
+            }
         }
 
-        const out = new ConsoleOutput();
+        const out = new ConsoleOutput(project_id);
 
-        db.any(`SELECT j.* FROM job j
-                INNER JOIN collaborator co
-                    ON co.project_id = j.project_id
-                    AND co.user_id = $1
-                    AND j.id = $2
-         `, [user_id, job_id])
+        db.any(`SELECT *
+                FROM job
+                WHERE project_id = $1
+                AND id = $2
+         `, [project_id, job_id])
         .then((jobs: any[]) => {
             if (jobs.length === 0) {
                 out.subject.complete();

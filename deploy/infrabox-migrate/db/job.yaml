@@ -8,15 +8,16 @@ spec:
         metadata:
             name: infrabox-db-migration
         spec:
+            containers:
             {{ include "containers_database" . | indent 12 }}
             -
                 name: migrate
-                image: {{ .Values.general.docker_registry }}/{{ default "infrabox/db" .Values.db.image }}:{{ .Values.db.tag }}
+                image: {{ .Values.general.docker_registry }}/{{ default "db" .Values.db.image }}:{{ .Values.db.tag }}
                 env:
                 {{ include "env_database" . | indent 16 }}
                 -
                     name: INFRABOX_SERVICE
-                    value: {{ default "infrabox/db" .Values.db.image }}
+                    value: {{ default "db" .Values.db.image }}
                 -
                     name: INFRABOX_VERSION
                     value: {{ .Values.db.tag }}
