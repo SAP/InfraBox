@@ -22,7 +22,9 @@ export function handleDBError(next) {
     return (err) => {
         if (err.infrabox_error) {
             // is our own error
-            next(err);
+            return next(err);
+        } else if (err.error && err.error.message) {
+            return next(new BadRequest(err.error.message));
         } else {
             return next(new InternalError(err));
         }

@@ -51,7 +51,7 @@ if (config.storage.gcs.enabled) {
             minioClient.getObject(config.storage.s3.container_output_bucket,
                                   file, (err, stream) => {
                 if (err) {
-                    if (err.code == 'NoSuchKey') {
+                    if (err.code === 'NoSuchKey') {
                         resolve(null);
                     } else {
                         reject(err);

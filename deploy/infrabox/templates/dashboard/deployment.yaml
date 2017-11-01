@@ -3,7 +3,7 @@ apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
     name: infrabox-dashboard
-    namespace: infrabox-system
+    namespace: {{ default "infrabox-system" .Values.general.system_namespace }}
     labels:
         app: infrabox
         infrabox.net/component: dashboard
@@ -20,25 +20,10 @@ spec:
 {{ toYaml .Values.dashboard.node_selector | indent 16 }}
             {{- end }}
             containers:
-            {{ if .Values.storage.cloudsql.enabled }}
-            -
-                image: gcr.io/cloudsql-docker/gce-proxy:1.09
-                name: cloudsql-proxy
-                command: ["/cloud_sql_proxy", "--dir=/cloudsql",
-                          "-instances={{ .Values.storage.cloudsql.instance_connection_name }}=tcp:5432",
-                          "-credential_file=/secrets/cloudsql/credentials.json"]
-                volumeMounts:
-                - name: cloudsql-instance-credentials
-                  mountPath: /secrets/cloudsql
-                  readOnly: true
-                - name: ssl-certs
-                  mountPath: /etc/ssl/certs
-                - name: cloudsql
-                  mountPath: /cloudsql
-            {{ end }}
+            {{ include "containers_database" . | indent 12 }}
             -
                 name: dashboard
-                image: {{ .Values.general.docker_registry }}/{{ default "infrabox/dashboard" .Values.dashboard.image }}:{{ .Values.dashboard.tag }}
+                image: {{ .Values.general.docker_registry }}/{{ default "dashboard" .Values.dashboard.image }}:{{ .Values.dashboard.tag }}
                 imagePullPolicy: Always
                 command:
                 - "node"
@@ -75,7 +60,7 @@ spec:
                             key: secret
                 -
                     name: INFRABOX_SERVICE
-                    value: {{ default "infrabox/dashboard" .Values.dashboard.image }}
+                    value: {{ default "dashboard" .Values.dashboard.image }}
                 -
                     name: INFRABOX_VERSION
                     value: {{ .Values.dashboard.tag }}

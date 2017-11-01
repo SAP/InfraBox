@@ -3,7 +3,7 @@ apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
     name: infrabox-docs
-    namespace: infrabox-system
+    namespace: {{ default "infrabox-system" .Values.general.system_namespace }}
     labels:
         app: infrabox
         infrabox.net/component: docs
@@ -22,7 +22,7 @@ spec:
             containers:
             -
                 name: docs
-                image: {{ .Values.general.docker_registry }}/{{ default "infrabox/docs" .Values.docs.image }}:{{ .Values.docs.tag }}
+                image: {{ .Values.general.docker_registry }}/{{ default "docs" .Values.docs.image }}:{{ .Values.docs.tag }}
                 imagePullPolicy: Always
                 env:
                 -

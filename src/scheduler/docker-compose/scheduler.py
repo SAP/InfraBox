@@ -46,7 +46,7 @@ class Scheduler(object):
             "version": "2",
             "services": {
                 "job-%s" % job_id: {
-                    "image": os.environ['INFRABOX_DOCKER_REGISTRY'] + '/infrabox/job',
+                    "image": os.environ['INFRABOX_DOCKER_REGISTRY'] + '/job',
                     "network_mode": "host",
                     "command": "/usr/local/bin/wait-for-webserver.sh localhost:5000 /usr/local/bin/entrypoint.sh --type %s" % job_type,
                     "volumes": [
@@ -55,11 +55,10 @@ class Scheduler(object):
                     "environment": [
                         "INFRABOX_JOB_ID=%s" % job_id,
                         "INFRABOX_GENERAL_NO_CHECK_CERTIFICATES=true",
-                        "INFRABOX_API_SERVER=localhost:5000",
+                        "INFRABOX_JOB_API_URL=http://localhost:5000",
                         "INFRABOX_SERVICE=job",
                         "INFRABOX_VERSION=latest",
                         "INFRABOX_DOCKER_REGISTRY_URL=localhost:30202",
-                        "INFRABOX_CLAIR_ENABLED=false",
                         "INFRABOX_LOCAL_CACHE_ENABLED=false",
                         "INFRABOX_JOB_MAX_OUTPUT_SIZE=%s" % os.environ['INFRABOX_JOB_MAX_OUTPUT_SIZE'],
                         "INFRABOX_DOCKER_REGISTRY_ADMIN_USERNAME=admin",

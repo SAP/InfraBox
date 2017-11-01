@@ -24,8 +24,8 @@ def main():
     get_env('INFRABOX_GERRIT_KEY_FILENAME')
     get_env('INFRABOX_DASHBOARD_URL')
 
-    elect_leader()
     conn = connect_db()
+    elect_leader(conn, "gerrit-review")
     conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
     logger.info("Connected to database")
 

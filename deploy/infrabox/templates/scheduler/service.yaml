@@ -2,7 +2,7 @@ kind: Service
 apiVersion: v1
 metadata:
     name: infrabox-scheduler
-    namespace: infrabox-system
+    namespace: {{ default "infrabox-system" .Values.general.system_namespace }}
     labels:
         app: infrabox
         infrabox.net/component: scheduler

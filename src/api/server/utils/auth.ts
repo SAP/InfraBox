@@ -31,7 +31,6 @@ export function token_auth(req: Request, res: Response, next: any) {
                 return next(new Unauthorized());
             }
 
-
             const pt = t[0];
             req["token"] = new ProjectToken(pt.project_id, new Scopes(pt.scope_push, pt.scope_pull));
             return next();
@@ -45,7 +44,7 @@ export function token_auth(req: Request, res: Response, next: any) {
 
 export function socket_token_auth(token: string) {
     return db.any(`
-        SELECT project_id, push, pull FROM auth_token at WHERE token = $1
+        SELECT project_id, scope_push, scope_pull FROM auth_token at WHERE token = $1
     `, [token])
     .then((t: any[]) => {
         if (t.length !== 1) {
@@ -53,8 +52,8 @@ export function socket_token_auth(token: string) {
             throw new Unauthorized();
         }
 
-        const pt = t[0]
-        const project_token = new ProjectToken(pt.project_id, new Scopes(pt.push, pt.pull));
+        const pt = t[0];
+        const project_token = new ProjectToken(pt.project_id, new Scopes(pt.scope_push, pt.scope_pull));
         return project_token;
     });
 }
