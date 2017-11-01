@@ -7,14 +7,14 @@ metadata:
     annotations:
         infrabox.net/checksum: {{ .Files.Get "values.yaml" | sha256sum }}
     labels:
-        app: infrabox
+        app: infrabox-api
         infrabox.net/component: api
 spec:
     replicas: {{ default 1 .Values.api.replicas }}
     template:
         metadata:
             labels:
-                app: infrabox
+                app: infrabox-api
                 infrabox.net/component: api
         spec:
             {{- if .Values.api.node_selector }}

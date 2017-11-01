@@ -1,4 +1,4 @@
-FROM docker:1.12.6-dind
+FROM docker:17.03.2-dind
 
 RUN apk add --no-cache \
     python \

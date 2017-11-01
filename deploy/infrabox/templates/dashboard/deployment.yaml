@@ -5,14 +5,14 @@ metadata:
     name: infrabox-dashboard
     namespace: {{ default "infrabox-system" .Values.general.system_namespace }}
     labels:
-        app: infrabox
+        app: infrabox-dashboard
         infrabox.net/component: dashboard
 spec:
     replicas: {{ default 1 .Values.dashboard.replicas }}
     template:
         metadata:
             labels:
-                app: infrabox
+                app: infrabox-dashboard
                 infrabox.net/component: dashboard
         spec:
             {{- if .Values.dashboard.node_selector }}

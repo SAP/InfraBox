@@ -132,9 +132,6 @@ docker_registry:
     # Tag
     nginx_tag: latest
 
-    # Kubernetes NodePort
-    # node_port: 30202
-
     tls:
         enabled: false
 
@@ -145,9 +142,6 @@ docs:
 
     # Tag
     tag: latest
-
-    # Kubernetes NodePort
-    # node_port: 30203
 
     tls:
         enabled: false
@@ -164,14 +158,16 @@ dashboard:
     # URL on which the dashboard will be reachable by your users
     url: <REQUIRED>
 
-    # Kubernetes NodePort
-    # node_port: 30201
-
     log:
         level: info
 
     tls:
         enabled: false
+
+    client:
+        replicas: 1
+        image: new-dashboard-client
+        tag: latest
 
 stats:
     enabled: true
@@ -193,9 +189,6 @@ api:
 
     # URL on which the api will be reachable by your users
     url: <REQUIRED>
-
-    # Kubernetes NodePort
-    # node_port: 30200
 
     log:
         level: info
