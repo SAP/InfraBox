@@ -4,6 +4,7 @@ import uuid
 import subprocess
 from distutils.dir_util import copy_tree
 
+import jwt
 import psycopg2
 import psycopg2.extensions
 
@@ -21,6 +22,8 @@ class TestCreateJobs(object):
         self.job_id = "5df0e731-6040-46a9-8540-f1bb7935d2bd"
         subprocess.check_call(['git', 'config', '--global', 'user.email', 'you@example.com'])
         subprocess.check_call(['git', 'config', '--global', 'user.name', 'name'])
+        self.token = jwt.encode({'job_id': self.job_id}, os.environ['INFRABOX_JOB_API_SECRET'])
+        os.environ['INFRABOX_JOB_API_TOKEN'] = self.token
 
     def execute(self, stmt, args=None):
         cur = self.conn.cursor()
@@ -59,7 +62,7 @@ class TestCreateJobs(object):
                 'username': 'myuser',
                 'host': 'myhost',
                 'password': {
-                    '$ref': 'MY_SECRET'
+                    '$secret': 'MY_SECRET'
                 },
                 'type': 'docker-registry',
                 'repository': 'repo'

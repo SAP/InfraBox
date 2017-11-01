@@ -10,6 +10,7 @@ import base64
 import argparse
 import requests
 import yaml
+import traceback
 
 from pyinfrabox.infrabox import validate_json
 from pyinfrabox.docker_compose import create_from
@@ -146,6 +147,37 @@ exec "$@"
 
         return result
 
+    def clone_repo(self, commit, clone_url, branch, ref):
+        c = self.console
+        if os.environ['INFRABOX_GENERAL_NO_CHECK_CERTIFICATES'] == 'true':
+            c.execute(('git', 'config', '--global', 'http.sslVerify', 'false'), show=True)
+
+        cmd = ['git', 'clone', '--depth=10']
+        if branch:
+            cmd += ['--single-branch', '-b', branch]
+
+        c.collect("## Clone repository", show=True)
+        cmd += [clone_url, '/repo']
+
+        c.collect(' '.join(cmd), show=True)
+        c.execute(cmd, show=True)
+
+        if ref:
+            cmd = ['git', 'fetch', '--depth=10', clone_url, ref]
+            c.collect(' '.join(cmd), show=True)
+            c.execute(cmd, cwd="/repo", show=True)
+
+        c.collect("#Checkout commit", show=True)
+        cmd = ['git', 'checkout', '-qf', '-b', 'job', commit]
+
+        c.collect(' '.join(cmd), show=True)
+        c.execute(cmd, cwd="/repo", show=True)
+
+        c.collect("## Init submodules", show=True)
+        c.execute(['git', 'submodule', 'init'], cwd="/repo", show=True)
+        c.execute(['git', 'submodule', 'update'], cwd="/repo", show=True)
+
+
     def get_source(self):
         c = self.console
 
@@ -161,38 +193,7 @@ exec "$@"
                 clone_url = clone_url.replace('github.com',
                                               '%s@github.com' % self.repository['github_api_token'])
 
-            env = [
-                "-e", "INFRABOX_CLONE_URL=%s" % clone_url,
-                "-e", "INFRABOX_COMMIT=%s" % commit,
-                "-e", "INFRABOX_GENERAL_NO_CHECK_CERTIFICATES=%s" % os.environ['INFRABOX_GENERAL_NO_CHECK_CERTIFICATES']
-            ]
-
-            gerrit_port = os.environ.get('INFRABOX_GERRIT_PORT', None)
-            gerrit_hostname = os.environ.get('INFRABOX_GERRIT_HOSTNAME', None)
-            if gerrit_port:
-                env += [
-                    "-e", "INFRABOX_GERRIT_PORT=%s" % gerrit_port,
-                    "-e", "INFRABOX_GERRIT_HOSTNAME=%s" % gerrit_hostname
-                ]
-
-            if ref:
-                env += ["-e", "INFRABOX_REF=%s" % ref]
-
-            if branch:
-                env += ["-e", "INFRABOX_BRANCH=%s" % branch]
-
-            cmd = ['docker', 'build', '-f', 'git/Dockerfile', '-t', 'clone', '.']
-            c.execute(cmd, show=True, cwd='/job')
-
-            cmd = ['docker', 'run', '-v', '/repo:/repo']
-            cmd += env
-
-            if os.path.exists('/tmp/gerrit/id_rsa'):
-                cmd += ['-v', '/tmp/gerrit/id_rsa:/tmp/gerrit/id_rsa']
-
-            cmd += ['clone']
-
-            c.execute(cmd, show=True)
+            self.clone_repo(commit, clone_url, branch, ref)
         elif self.project['type'] == 'upload':
             c.header("Downloading Source")
             storage_source_zip = os.path.join(self.storage_dir, 'source.zip')
@@ -250,8 +251,9 @@ exec "$@"
             for f in files:
                 tr_path = os.path.join(self.infrabox_testresult_dir, f)
                 c.collect("%s\n" % tr_path, show=True)
-                r = requests.post("http://localhost:5000/testresult",
-                                  files={"data": open(tr_path)}, timeout=60)
+                r = requests.post("%s/testresult" % self.api_server,
+                                  headers=self.get_headers(),
+                                  files={"data": open(tr_path)}, timeout=10)
                 c.collect("%s\n" % r.text, show=True)
 
 
@@ -263,8 +265,9 @@ exec "$@"
 
             for f in files:
                 file_name = os.path.basename(f)
-                r = requests.post("http://localhost:5000/markdown",
-                                  files={file_name: open(os.path.join(self.infrabox_markdown_dir, f))}, timeout=60)
+                r = requests.post("%s/markdown" % self.api_server,
+                                  headers=self.get_headers(),
+                                  files={file_name: open(os.path.join(self.infrabox_markdown_dir, f))}, timeout=10)
                 c.collect("%s\n" % r.text, show=False)
 
     def upload_markup_files(self):
@@ -276,8 +279,9 @@ exec "$@"
             for f in files:
                 file_name = os.path.basename(f)
                 f = open(os.path.join(self.infrabox_markup_dir, f))
-                r = requests.post("http://localhost:5000/markup",
-                                  files={file_name: f}, timeout=60)
+                r = requests.post("%s/markup" % self.api_server,
+                                  headers=self.get_headers(),
+                                  files={file_name: f}, timeout=10)
                 c.collect(f.read(), show=True)
                 c.collect("%s\n" % r.text, show=True)
 
@@ -289,8 +293,9 @@ exec "$@"
 
             for f in files:
                 file_name = os.path.basename(f)
-                r = requests.post("http://localhost:5000/badge",
-                                  files={file_name: open(os.path.join(self.infrabox_badge_dir, f))}, timeout=60)
+                r = requests.post("%s/badge" % self.api_server,
+                                  headers=self.get_headers(),
+                                  files={file_name: open(os.path.join(self.infrabox_badge_dir, f))}, timeout=10)
                 c.collect("%s\n" % r.text, show=True)
 
     def create_dynamic_jobs(self):
@@ -484,15 +489,6 @@ exec "$@"
 
         return True
 
-    def scan_container(self, image_name):
-        c = self.console
-        if self.job['scan_container'] and os.environ['INFRABOX_CLAIR_ENABLED'] == "true":
-            c.header("Scanning container for vulnerabilities", show=True)
-            c.execute(['python', '/usr/local/bin/analyze.py',
-                       '--image', image_name,
-                       '--output', os.path.join(self.infrabox_markup_dir, "Container Scan.json")],
-                      show=True)
-
     def deploy_container(self, image_name):
         c = self.console
         c.header("Deploying", show=True)
@@ -505,6 +501,17 @@ exec "$@"
             c.execute(['docker', 'tag', image_name, dep_image_name], show=True)
             c.execute(['docker', 'push', dep_image_name], show=True)
 
+    def login_docker_registry(self):
+        c = self.console
+        c.execute(['docker', 'login',
+                   '-u', os.environ['INFRABOX_DOCKER_REGISTRY_ADMIN_USERNAME'],
+                   '-p', os.environ['INFRABOX_DOCKER_REGISTRY_ADMIN_PASSWORD'],
+                   get_registry_name()], show=False)
+
+    def logout_docker_registry(self):
+        c = self.console
+        c.execute(['docker', 'logout', get_registry_name()], show=False)
+
     def push_container(self, image_name):
         c = self.console
         c.header("Uploading to docker registry", show=True)
@@ -515,12 +522,9 @@ exec "$@"
             elif not self.job['keep']:
                 c.collect("Not pushing container, because keep is not set.\n", show=True)
             else:
-                c.execute(['docker', 'login',
-                           '-u', os.environ['INFRABOX_DOCKER_REGISTRY_ADMIN_USERNAME'],
-                           '-p', os.environ['INFRABOX_DOCKER_REGISTRY_ADMIN_PASSWORD'],
-                           get_registry_name()], show=False)
-
+                self.login_docker_registry()
                 c.execute(['docker', 'push', image_name], show=True)
+                self.logout_docker_registry()
         except Exception as e:
             raise Failure(e.__str__())
 
@@ -532,7 +536,7 @@ exec "$@"
         collector = StatsCollector()
 
         container_name = self.job['id']
-        cmd = ['docker', 'run', '--name', container_name, '-v', self.data_dir + ':/infrabox']
+        cmd = ['docker', 'run', '-t', '--name', container_name, '-v', self.data_dir + ':/infrabox']
 
         # Mount context
         cmd += ['-v', '/repo:/infrabox/context']
@@ -562,7 +566,8 @@ exec "$@"
                 o.write(base64.b64decode(os.environ['INFRABOX_RESOURCES_KUBERNETES_NAMESPACE']))
 
             cmd += ['-v', '/tmp/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount']
-
+            cmd += ['-e', 'INFRABOX_RESOURCES_KUBERNETES_MASTER_URL=%s' %
+                    os.environ['INFRABOX_RESOURCES_KUBERNETES_MASTER_URL']]
 
         # Add capabilities
         security_context = self.job.get('security_context', {})
@@ -635,16 +640,32 @@ exec "$@"
 
         image_name = get_registry_name() + '/' \
                      + self.project['id'] + '/' \
-                     + self.job['name'] \
-                     + ':build_%s' % self.build['build_number']
+                     + self.job['name']
+        image_name_build = image_name + ':build_%s' % self.build['build_number']
+        image_name_latest = image_name + ':latest'
 
-        self.build_docker_container(image_name)
-        self.run_docker_container(image_name)
-        self.scan_container(image_name)
-        self.deploy_container(image_name)
-        self.push_container(image_name)
+        self.get_cached_image(image_name_latest)
+        self.build_docker_container(image_name_build)
+        self.cache_docker_image(image_name_build, image_name_latest)
+        self.run_docker_container(image_name_build)
+        self.deploy_container(image_name_build)
+        self.push_container(image_name_build)
 
         c.header("Finished succesfully", show=True)
+
+    def get_cached_image(self, image_name_latest):
+        c = self.console
+        self.login_docker_registry()
+        c.execute(['docker', 'pull', image_name_latest], show=True, ignore_error=True)
+        self.logout_docker_registry()
+
+    def cache_docker_image(self, image_name_build, image_name_latest):
+        c = self.console
+        c.execute(['docker', 'tag', image_name_build, image_name_latest], show=True)
+
+        self.login_docker_registry()
+        c.execute(['docker', 'push', image_name_latest], show=True)
+        self.logout_docker_registry()
 
     def parse_infrabox_json(self, path):
         with open(path, 'r') as f:
@@ -836,6 +857,7 @@ def main():
     get_env('INFRABOX_GENERAL_NO_CHECK_CERTIFICATES')
     get_env('INFRABOX_LOCAL_CACHE_ENABLED')
     get_env('INFRABOX_JOB_MAX_OUTPUT_SIZE')
+    get_env('INFRABOX_JOB_API_URL')
 
     parser = argparse.ArgumentParser(description='Process some integers.')
     parser.add_argument('--type', choices=['create', 'run'], help="job type")
@@ -843,6 +865,7 @@ def main():
     args = parser.parse_args()
     console = ApiConsole()
 
+    j = None
     try:
         j = RunJob(console, args.type)
         j.main()
@@ -853,12 +876,14 @@ def main():
         j.console.collect(e.message, show=True)
         j.console.flush()
         j.update_status('failure')
-    except Exception as e:
+    except:
         print_stackdriver()
-        j.console.collect('## An error occured', show=True)
-        j.console.collect(str(e), show=True)
-        j.console.flush()
-        j.update_status('error')
+        if j:
+            j.console.collect('## An error occured', show=True)
+            msg = traceback.format_exc()
+            j.console.collect(msg, show=True)
+            j.console.flush()
+            j.update_status('error')
 
 if __name__ == "__main__":
     try:

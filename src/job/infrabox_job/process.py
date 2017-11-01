@@ -1,5 +1,6 @@
 import subprocess
 import sys
+import os
 from datetime import datetime
 
 import requests
@@ -87,7 +88,14 @@ class ApiConsole(object):
             payload = {
                 "output": buf
             }
-            requests.post("http://localhost:5000/consoleupdate", json=payload).json()
+
+            api_server = os.environ.get("INFRABOX_JOB_API_URL", None)
+
+            headers = {
+                'x-infrabox-token': os.environ['INFRABOX_JOB_API_TOKEN']
+            }
+
+            requests.post("%s/consoleupdate" % api_server, headers=headers, json=payload).json()
         except Exception as e:
             print e
 

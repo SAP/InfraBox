@@ -1,21 +1,39 @@
 import os
 import time
-import requests
 from pyinfraboxutils import get_logger
 
 logger = get_logger('infrabox')
 
-def elect_leader():
+def elect_leader(conn, service_name):
     if os.environ.get('INFRABOX_DISABLE_LEADER_ELECTION', 'false') == 'true':
-        return
+        return True
 
     while True:
-        r = requests.get("http://localhost:4040", timeout=5)
-        leader = r.json()['name']
+        conn.rollback()
+        c = conn.cursor()
+        c.execute("""
+            INSERT INTO leader_election (service_name, last_seen_active)
+            VALUES (%s, now())
+            ON CONFLICT (service_name)
+            DO UPDATE SET
+                service_name = CASE WHEN leader_election.last_seen_active < now() - interval '30 second'
+                            THEN EXCLUDED.service_name
+                            ELSE leader_election.service_name
+                            END,
+                last_seen_active = CASE WHEN leader_election.service_name = EXCLUDED.service_name
+                                        THEN EXCLUDED.last_seen_active
+                                        ELSE leader_election.last_seen_active
+                                        END
+            RETURNING service_name = %s;
+        """, [service_name, service_name])
+        r = c.fetchone()
+        c.close()
+        conn.commit()
+        is_leader = r[0]
 
-        if leader == os.environ['HOSTNAME']:
+        if is_leader:
             logger.info("I'm the leader")
-            break
+            return True
         else:
-            logger.info("I'm not the leader, %s is the leader", leader)
-            time.sleep(1)
+            logger.info("Not the leader, retrying")
+            time.sleep(5)

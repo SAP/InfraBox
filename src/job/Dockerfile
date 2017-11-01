@@ -5,10 +5,10 @@ RUN apk add --no-cache \
     py-pip \
     py-requests \
     bash \
-    iptables \
+    git \
     openssh-client \
     pigz && \
-    pip install docker-compose docker future && \
+    pip install docker-compose docker future PyJWT && \
     apk del py-pip
 
 COPY src/job /job
@@ -16,14 +16,12 @@ COPY src/job /job
 COPY src/job/ecr_login.sh /usr/local/bin/
 COPY src/job/get_compose_exit_code.sh /usr/local/bin/
 COPY src/job/entrypoint.sh /usr/local/bin/
-COPY src/job/analyze.py /usr/local/bin/
 
-COPY src/utils/wait-for-webserver.sh /usr/local/bin/
 COPY src/pyinfrabox /pyinfrabox
 COPY src/pyinfraboxutils /pyinfraboxutils
 
 ENV PYTHONPATH=/utils:/
 ENV PATH=/utils:$PATH
 
-RUN chmod +x /usr/local/bin/wait-for-webserver.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
+ENTRYPOINT /usr/local/bin/entrypoint.sh

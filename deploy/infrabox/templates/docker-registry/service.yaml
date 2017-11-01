@@ -3,7 +3,7 @@ kind: Service
 apiVersion: v1
 metadata:
     name: infrabox-docker-registry
-    namespace: infrabox-system
+    namespace: {{ default "infrabox-system" .Values.general.system_namespace }}
     labels:
         app: infrabox
         infrabox.net/component: docker-registry

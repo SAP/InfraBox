@@ -3,7 +3,7 @@ apiVersion: extensions/v1beta1
 kind: DaemonSet
 metadata:
     name: infrabox-docker-gc
-    namespace: infrabox-system
+    namespace: {{ default "infrabox-system" .Values.general.system_namespace }}
     labels:
         app: infrabox
         infrabox.net/component: docker-gc
@@ -19,7 +19,7 @@ spec:
             containers:
             -
                 name: docker-gc
-                image: {{ .Values.general.docker_registry }}/{{ default "infrabox/docker-gc" .Values.docker_gc.image }}:{{ .Values.docker_gc.tag }}
+                image: {{ .Values.general.docker_registry }}/{{ default "docker-gc" .Values.docker_gc.image }}:{{ .Values.docker_gc.tag }}
                 volumeMounts:
                 -
                     name: docker-socket

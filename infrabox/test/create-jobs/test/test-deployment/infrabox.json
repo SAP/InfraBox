@@ -10,7 +10,7 @@
             "host": "myhost",
             "repository": "repo",
             "username": "myuser",
-            "password": { "$ref": "MY_SECRET" }
+            "password": { "$secret": "MY_SECRET" }
         }, {
             "type": "docker-registry",
             "host": "myhost",

@@ -1,3 +1,12 @@
+{{ define "env_job_api_secret" }}
+-
+    name: INFRABOX_JOB_API_SECRET
+    valueFrom:
+        secretKeyRef:
+            name: infrabox-job-api
+            key: api-secret
+{{ end }}
+
 {{ define "env_database" }}
 -
     name: INFRABOX_DATABASE_USER
@@ -198,6 +207,12 @@
 -
     name: INFRABOX_GENERAL_LOG_STACKDRIVER
     value: {{ default "false" .Values.general.log.stackdriver | quote }}
+-
+    name: INFRABOX_GENERAL_NO_CHECK_CERTIFICATES
+    value: {{ default "false" .Values.general.no_check_certificates | quote }}
+-
+    name: INFRABOX_GENERAL_WORKER_NAMESPACE
+    value: {{ default "infrabox-worker" .Values.general.worker_namespace }}
 {{ end }}
 
 

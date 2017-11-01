@@ -5,13 +5,8 @@ infrabox_host=${1:-"http://localhost:8080"}
 _runSingleTest() {
     pushd "$1"
     echo "## Run test: $1"
-    output=$(infrabox --host $infrabox_host push --show-console | tee /dev/tty)
-
-    if [ -e validate.py ]
-    then
-        python validate.py "$output"
-    fi
-
+    export INFRABOX_API_URL=$infrabox_host
+    infrabox push --show-console
     popd
 }
 
@@ -20,6 +15,7 @@ _runDockerJobTests() {
     _runSingleTest "docker_secure_env"
     _runSingleTest "docker_insecure_env"
     _runSingleTest "docker_input_output"
+    _runSingleTest "resources_kubernetes"
 
     echo "## TODO: docker: testresult"
     echo "## TODO: docker: badge"
@@ -40,10 +36,8 @@ _runDockerComposeJobTests() {
 }
 
 _runTests() {
-#    _runDockerJobTests
+    _runDockerJobTests
     _runDockerComposeJobTests
 }
 
-
 _runTests
-

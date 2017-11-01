@@ -5,6 +5,12 @@ general:
     # port of your kubernetes master
     # kubernetes_master_port: 443
 
+    # Namespace for system components
+    # system_namespace: infrabox-system
+
+    # Namespace in which all jobs will be started
+    # worker_namespace: infrabox-worker
+
     # Address of the docker registry which contains
     # all the InfraBox images. It must be accessible
     # by all hosts which run your kubernetes cluster.
@@ -24,14 +30,14 @@ general:
 
 db:
     # name of the db image in your general.docker_registry
-    # image: infrabox/db
+    # image: db
 
     # Tag
     tag: latest
 
 docker_gc:
     # name of the docker-gc image in your general.docker_registry
-    # image: infrabox/docker-gc
+    # image: docker-gc
 
     # Tag
     tag: latest
@@ -40,25 +46,13 @@ scheduler:
     enabled: true
 
     # name of the scheduler image in your general.docker_registry
-    # image: infrabox/scheduler
+    # image: scheduler
 
     # Tag
     tag: latest
-
-    clair:
-        enabled: false
 
     log:
         level: info
-
-clair:
-    enabled: false
-
-    # name of the clair updater image in your general.docker_registry
-    # image: infrabox/clair/updater
-
-    # Tag
-    tag: latest
 
 storage:
     gcs:
@@ -127,13 +121,13 @@ docker_registry:
     url: <REQUIRED>
 
     # name of the docker-registry auth image in your general.docker_registry
-    # auth_image: infrabox/docker-registry/auth
+    # auth_image: docker-registry-auth
 
     # Tag
-    auth_tag: latest
+    auth_tagtag: latest
 
     # name of the docker-registry nginx image in your general.docker_registry
-    # nginx_image: infrabox/docker-registry/nginx
+    # nginx_image: docker-registry-nginx
 
     # Tag
     nginx_tag: latest
@@ -162,7 +156,7 @@ dashboard:
     enabled: true
 
     # name of the dashboard image in your general.docker_registry
-    # image: infrabox/dashboard
+    # image: dashboard
 
     # Tag
     tag: latest
@@ -176,9 +170,6 @@ dashboard:
     log:
         level: info
 
-        # If true prints output for stackdriver
-        stackdriver: false
-
     tls:
         enabled: false
 
@@ -186,7 +177,7 @@ stats:
     enabled: true
 
     # name of the stats image in your general.docker_registry
-    # image: infrabox/stats
+    # image: stats
 
     # Tag
     tag: latest
@@ -195,7 +186,7 @@ api:
     enabled: true
 
     # name of the api image in your general.docker_registry
-    # image: infrabox/api
+    # image: api
 
     # Tag
     tag: latest
@@ -232,21 +223,21 @@ gerrit:
         enabled: false
 
         # name of the gerrit review image in your general.docker_registry
-        # image: infrabox/gerrit/review
+        # image: gerrit-review
 
         # Tag
         tag: latest
 
     trigger:
         # name of the gerrit trigger image in your general.docker_registry
-        # image: infrabox/gerrit/trigger
+        # image: gerrit-trigger
 
         # Tag
         tag: latest
 
     api:
         # name of the gerrit api image in your general.docker_registry
-        # image: infrabox/gerrit/api
+        # image: gerrit-api
 
         # Tag
         tag: latest
@@ -265,6 +256,15 @@ job:
         capabilities:
             enabled: false
 
+    api:
+        # image: job-api
+        tag: latest
+
+        url: <REQUIRED>
+
+        log:
+            level: info
+
 local_cache:
     enabled: false
 
@@ -274,17 +274,17 @@ github:
     enabled: false
 
     trigger:
-        # image: infrabox/github/trigger
+        # image: github-trigger
 
         tag: latest
 
     api:
-        # image: infrabox/github/api
+        # image: github-api
 
         tag: latest
 
     review:
-        # image: infrabox/review/api
+        # image: review-api
 
         tag: latest
 

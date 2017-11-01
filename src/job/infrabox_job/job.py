@@ -6,13 +6,18 @@ from infrabox_job.process import Failure
 
 class Job(object):
     def __init__(self):
-        self.api_server = os.environ.get("INFRABOX_API_SERVER")
+        self.api_server = os.environ.get("INFRABOX_JOB_API_URL", None)
 
         if not self.api_server:
-            print "INFRABOX_API_SERVER not set"
+            print "INFRABOX_JOB_API_URL not set"
             sys.exit(1)
 
-        r = requests.get("http://%s/job" % self.api_server, timeout=60)
+        while True:
+            try:
+                r = requests.get("%s/job" % self.api_server, headers=self.get_headers(), timeout=10)
+                break
+            except Exception as e:
+                print e
 
         if r.status_code != 200:
             print "Stopping, API Server returned error code %s" % r.status_code
@@ -33,38 +38,48 @@ class Job(object):
 
         self.deployments = data['deployments']
 
+    def get_headers(self):
+        return {
+            'x-infrabox-token': os.environ['INFRABOX_JOB_API_TOKEN']
+        }
+
     def create_jobs(self, jobs):
         payload = {
             "jobs": jobs,
         }
 
-        r = requests.post("http://%s/create_jobs" % self.api_server, json=payload, timeout=60)
+        r = requests.post("%s/create_jobs" % self.api_server,
+                          headers=self.get_headers(),
+                          json=payload, timeout=60)
 
         if r.status_code != 200:
             raise Failure(r.text)
 
-        return 0
-
     def set_running(self):
-        requests.post("http://%s/setrunning" % self.api_server, timeout=60).json()
-        return 0
+        requests.post("%s/setrunning" % self.api_server,
+                      headers=self.get_headers(),
+                      timeout=60).json()
 
     def set_finished(self, state):
         payload = {
             "state": state
         }
-        requests.post("http://%s/setfinished" % self.api_server, json=payload, timeout=60).json()
-        return 0
+        requests.post("%s/setfinished" % self.api_server,
+                      headers=self.get_headers(),
+                      json=payload, timeout=60).json()
 
     def post_stats(self, stat):
         payload = {
             "stats": stat
         }
-        requests.post("http://%s/stats" % self.api_server, json=payload, timeout=60).json()
-        return 0
+        requests.post("%s/stats" % self.api_server,
+                      headers=self.get_headers(),
+                      json=payload, timeout=60).json()
 
     def get_file_from_api_server(self, url, path):
-        r = requests.get("http://%s%s" % (self.api_server, url), timeout=600, stream=True)
+        r = requests.get("%s%s" % (self.api_server, url),
+                         headers=self.get_headers(),
+                         timeout=600, stream=True)
         if r.status_code == 404:
             return
 
@@ -78,7 +93,9 @@ class Job(object):
 
     def post_file_to_api_server(self, url, path):
         files = {'data': open(path, 'rb')}
-        r = requests.post("http://%s%s" % (self.api_server, url), files=files, timeout=600)
+        r = requests.post("%s%s" % (self.api_server, url),
+                          headers=self.get_headers(),
+                          files=files, timeout=600)
 
         if r.status_code != 200:
             raise Failure('Failed to upload file: %s' % r.text)

@@ -1,23 +1,21 @@
-{{ if .Values.api.enabled }}
 kind: Service
 apiVersion: v1
 metadata:
-    name: infrabox-api
+    name: infrabox-job-api
     namespace: {{ default "infrabox-system" .Values.general.system_namespace }}
     labels:
         app: infrabox
-        infrabox.net/component: api
+        infrabox.net/component: job-api
 spec:
     selector:
         app: infrabox
-        infrabox.net/component: api
+        infrabox.net/component: job-api
     type: NodePort
     ports:
     -
         protocol: TCP
         port: 8080
         targetPort: 8080
-    {{ if .Values.api.node_port }}
-        nodePort: {{ .Values.api.node_port }}
+    {{ if .Values.job.api.node_port }}
+        nodePort: {{ .Values.job.api.node_port }}
     {{ end }}
-{{ end }}

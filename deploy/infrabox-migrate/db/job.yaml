@@ -1,0 +1,26 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+    name: infrabox-db-migration
+    namespace: {{ default "infrabox-system" .Values.general.system_namespace }}
+spec:
+    template:
+        metadata:
+            name: infrabox-db-migration
+        spec:
+            containers:
+            {{ include "containers_database" . | indent 12 }}
+            -
+                name: migrate
+                image: {{ .Values.general.docker_registry }}/{{ default "db" .Values.db.image }}:{{ .Values.db.tag }}
+                env:
+                {{ include "env_database" . | indent 16 }}
+                -
+                    name: INFRABOX_SERVICE
+                    value: {{ default "db" .Values.db.image }}
+                -
+                    name: INFRABOX_VERSION
+                    value: {{ .Values.db.tag }}
+            restartPolicy: OnFailure
+            volumes:
+                {{ include "volumes_database" . | indent 16 }}

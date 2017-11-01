@@ -712,18 +712,6 @@ services:
                                     <td>object</td>
                                     <td>Can be used to set environment variables for the job. See <a href="#environment-vars">Environment Variables</a> for more details.</td>
                                 </tr>
-                                <tr>
-                                    <td>security</td>
-                                    <td>false</td>
-                                    <td>object</td>
-                                    <td>Security options</td>
-                                </tr>
-                                <tr>
-                                    <td>security.scan_container</td>
-                                    <td>false</td>
-                                    <td>boolean</td>
-                                    <td>Default false. If set to true the container will be scanned for security vulnerabilities with clair.</td>
-                                </tr>
                             </tbody>
                         </table>
                     </div>
@@ -1037,7 +1025,7 @@ CMD /usr/bin/test.py
     "type": "docker",
     ...
     "environment": {
-        "ENV_VAR_1": { "$ref": "NAME_OF_ENV_VAR_IN_DASHBOARD" }
+        "ENV_VAR_1": { "$secret": "NAME_OF_ENV_VAR_IN_DASHBOARD" }
     }
 }</code></pre>
                     <p>In your job the secret value will then be available as the environment variable <kbd>ENV_VAR_1</kbd>.</p>
@@ -1053,7 +1041,7 @@ CMD /usr/bin/test.py
             "host": "&lt;my_registry&gt;:5000",
             "repository": "repo-name",
             "username": "your_username",
-            "password": { "$ref": "SECRET_NAME_FOR_YOUR_PASSWORD" }
+            "password": { "$secret": "SECRET_NAME_FOR_YOUR_PASSWORD" }
     }]
 }</code></pre>
 

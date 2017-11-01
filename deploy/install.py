@@ -146,8 +146,7 @@ class Kubernetes(Install):
                 "password": args.postgres_password
             }
 
-            self.create_secret("infrabox-postgres", "infrabox-worker", secret)
-            self.create_secret("infrabox-postgres", "infrabox-system", secret)
+            self.create_secret("infrabox-postgres", self.args.general_system_namespace, secret)
         elif args.database == 'cloudsql':
             self.required_option('cloudsql-instance-connection-name')
             self.required_option('cloudsql-proxy-service-account-key-file')
@@ -167,16 +166,14 @@ class Kubernetes(Install):
                 "password": args.cloudsql_proxy_password
             }
 
-            self.create_secret("infrabox-postgres", "infrabox-worker", secret)
-            self.create_secret("infrabox-postgres", "infrabox-system", secret)
+            self.create_secret("infrabox-postgres", self.args.general_system_namespace, secret)
 
             with open(args.cloudsql_proxy_service_account_key_file) as keyfile:
                 secret = {
                     "credentials.json": keyfile.read()
                 }
 
-                self.create_secret("infrabox-cloudsql-instance-credentials", "infrabox-worker", secret)
-                self.create_secret("infrabox-cloudsql-instance-credentials", "infrabox-system", secret)
+                self.create_secret("infrabox-cloudsql-instance-credentials", self.args.general_system_namespace, secret)
 
         else:
             raise Exception('unknown database type')
@@ -212,9 +209,7 @@ class Kubernetes(Install):
                 "accessKey": args.s3_access_key
             }
 
-            self.create_secret("infrabox-s3-credentials", "infrabox-worker", secret)
-            self.create_secret("infrabox-s3-credentials", "infrabox-system", secret)
-
+            self.create_secret("infrabox-s3-credentials", self.args.general_system_namespace, secret)
         elif args.storage == 'gcs':
             self.required_option('gcs-project-id')
             self.required_option('gcs-service-account-key-file')
@@ -238,8 +233,7 @@ class Kubernetes(Install):
                     "gcs_service_account.json": keyfile.read()
                 }
 
-                self.create_secret("infrabox-gcs", "infrabox-worker", secret)
-                self.create_secret("infrabox-gcs", "infrabox-system", secret)
+                self.create_secret("infrabox-gcs", self.args.general_system_namespace, secret)
         else:
             raise Exception("unknown storage")
 
@@ -253,8 +247,11 @@ class Kubernetes(Install):
             "password": self.args.docker_registry_admin_password
         }
 
-        self.create_secret("infrabox-docker-registry", "infrabox-system", secret)
-        self.create_secret("infrabox-docker-registry", "infrabox-worker", secret)
+        self.create_secret("infrabox-docker-registry", self.args.general_worker_namespace, secret)
+        self.create_secret("infrabox-docker-registry", self.args.general_system_namespace, secret)
+
+        self.set('docker_registry.nginx_tag', self.args.version)
+        self.set('docker_registry.auth_tag', self.args.version)
 
         self.required_option('docker-registry')
         self.set('general.docker_registry', self.args.docker_registry)
@@ -276,7 +273,7 @@ class Kubernetes(Install):
                 "server.crt": open(self.args.docker_registry_tls_crt_file).read()
             }
 
-            self.create_secret("infrabox-docker-registry-tls", "infrabox-system", secret)
+            self.create_secret("infrabox-docker-registry-tls", self.args.general_system_namespace, secret)
             self.set('docker_registry.tls.enabled', True)
 
     def setup_account(self):
@@ -303,7 +300,7 @@ class Kubernetes(Install):
             "password": self.args.ldap_password
         }
 
-        self.create_secret("infrabox-ldap", "infrabox-system", secret)
+        self.create_secret("infrabox-ldap", self.args.general_system_namespace, secret)
 
         self.set('account.ldap.enabled', True)
         self.set('account.ldap.base', self.args.ldap_base)
@@ -322,6 +319,9 @@ class Kubernetes(Install):
         self.set('gerrit.enabled', True)
         self.set('gerrit.hostname', self.args.gerrit_hostname)
         self.set('gerrit.username', self.args.gerrit_username)
+        self.set('gerrit.review.tag', self.args.version)
+        self.set('gerrit.trigger.tag', self.args.version)
+        self.set('gerrit.api.tag', self.args.version)
 
         self.check_file_exists(self.args.gerrit_private_key)
 
@@ -329,8 +329,8 @@ class Kubernetes(Install):
             "id_rsa": open(self.args.gerrit_private_key).read()
         }
 
-        self.create_secret("infrabox-gerrit-ssh", "infrabox-system", secret)
-        self.create_secret("infrabox-gerrit-ssh", "infrabox-worker", secret)
+        self.create_secret("infrabox-gerrit-ssh", self.args.general_system_namespace, secret)
+        self.create_secret("infrabox-gerrit-ssh", self.args.general_worker_namespace, secret)
 
     def setup_github(self):
         if not self.args.github_enabled:
@@ -346,6 +346,9 @@ class Kubernetes(Install):
         self.set('github.login.enabled', self.args.github_login_enabled)
         self.set('github.login.url', self.args.github_login_url)
         self.set('github.api_url', self.args.github_api_url)
+        self.set('github.trigger.tag', self.args.version)
+        self.set('github.api.tag', self.args.version)
+        self.set('github.review.tag', self.args.version)
 
         secret = {
             "client_id": self.args.github_client_id,
@@ -353,7 +356,7 @@ class Kubernetes(Install):
             "webhook_secret": self.args.github_webhook_secret
         }
 
-        self.create_secret("infrabox-github", "infrabox-system", secret)
+        self.create_secret("infrabox-github", self.args.general_system_namespace, secret)
 
     def setup_dashboard(self):
         self.required_option('dashboard-url')
@@ -363,7 +366,9 @@ class Kubernetes(Install):
             "secret": self.args.dashboard_secret
         }
 
-        self.create_secret("infrabox-dashboard", "infrabox-system", secret)
+        self.create_secret("infrabox-dashboard", self.args.general_system_namespace, secret)
+
+        self.set('dashboard.tag', self.args.version)
 
         if self.args.use_k8s_nodeports:
             self.set('dashboard.node_port', self.args.dashboard_k8s_nodeport)
@@ -382,7 +387,7 @@ class Kubernetes(Install):
                 "server.crt": open(self.args.dashboard_tls_crt_file).read()
             }
 
-            self.create_secret("infrabox-dashboard-tls", "infrabox-system", secret)
+            self.create_secret("infrabox-dashboard-tls", self.args.general_system_namespace, secret)
             self.set('dashboard.tls.enabled', True)
 
 
@@ -393,6 +398,7 @@ class Kubernetes(Install):
             self.set('api.node_port', self.args.api_k8s_nodeport)
 
         self.set('api.url', self.args.api_url)
+        self.set('api.tag', self.args.version)
 
         if self.args.api_tls_enabled:
             self.required_option('api-tls-key-file')
@@ -406,7 +412,7 @@ class Kubernetes(Install):
                 "server.crt": open(self.args.api_tls_crt_file).read()
             }
 
-            self.create_secret("infrabox-api-tls", "infrabox-system", secret)
+            self.create_secret("infrabox-api-tls", self.args.general_system_namespace, secret)
             self.set('api.tls.enabled', True)
 
 
@@ -417,6 +423,7 @@ class Kubernetes(Install):
             self.set('docs.node_port', self.args.docs_k8s_nodeport)
 
         self.set('docs.url', self.args.docs_url)
+        self.set('docs.tag', self.args.version)
 
         if self.args.docs_tls_enabled:
             self.required_option('docs-tls-key-file')
@@ -430,17 +437,39 @@ class Kubernetes(Install):
                 "server.crt": open(self.args.docs_tls_crt_file).read()
             }
 
-            self.create_secret("infrabox-docs-tls", "infrabox-system", secret)
+            self.create_secret("infrabox-docs-tls", self.args.general_system_namespace, secret)
             self.set('docs.tls.enabled', True)
 
     def setup_general(self):
         self.set('general.no_check_certificates', self.args.general_no_check_certificates)
+        self.set('general.worker_namespace', self.args.general_worker_namespace)
+        self.set('general.system_namespace', self.args.general_system_namespace)
 
     def setup_job(self):
+        self.required_option('job-api-url')
+        self.required_option('job-api-secret')
+
+        secret = {
+            "api-secret": self.args.job_api_secret
+        }
+
+        self.create_secret("infrabox-job-api", self.args.general_system_namespace, secret)
+
         self.set('job.mount_docker_socket', self.args.job_mount_docker_socket)
         self.set('job.use_host_docker_daemon', self.args.job_use_host_docker_daemon)
         self.set('job.security_context.capabilities.enabled',
                  self.args.job_security_context_capabilities_enabled)
+        self.set('job.api.url', self.args.job_api_url)
+        self.set('job.api.tag', self.args.version)
+
+    def setup_db(self):
+        self.set('db.tag', self.args.version)
+
+    def setup_scheduler(self):
+        self.set('scheduler.tag', self.args.version)
+
+    def setup_stats(self):
+        self.set('stats.tag', self.args.version)
 
     def main(self):
         # Copy helm chart
@@ -452,6 +481,9 @@ class Kubernetes(Install):
         self.setup_docker_registry()
         self.setup_account()
         self.setup_job()
+        self.setup_db()
+        self.setup_stats()
+        self.setup_scheduler()
         self.setup_gerrit()
         self.setup_github()
         self.setup_dashboard()
@@ -468,11 +500,11 @@ class Kubernetes(Install):
 command -v helm >/dev/null 2>&1 || { echo >&2 "I require helm but it's not installed. Aborting."; exit 1; }
 command -v kubectl >/dev/null 2>&1 || { echo >&2 "I require kubectl but it's not installed. Aborting."; exit 1; }
 
-kubectl create namespace infrabox-system
-kubectl create namespace infrabox-worker
+kubectl create namespace %s || true
+kubectl create namespace %s || true
 
-helm install -n infrabox -f values-generated.yaml .
-'''
+helm install --tiller-namespace %s -n infrabox -f values-generated.yaml .
+''' % (self.args.general_system_namespace, self.args.general_worker_namespace, self.args.general_system_namespace)
 
         install_path = os.path.join(self.args.o, 'install.sh')
         self.make_executable_file(install_path, install)
@@ -483,10 +515,10 @@ helm install -n infrabox -f values-generated.yaml .
 command -v helm >/dev/null 2>&1 || { echo >&2 "I require helm but it's not installed. Aborting."; exit 1; }
 command -v kubectl >/dev/null 2>&1 || { echo >&2 "I require kubectl but it's not installed. Aborting."; exit 1; }
 
-kubectl delete job -n infrabox-system --all
+kubectl delete job -n %s --all
 
-helm upgrade infrabox -f values-generated.yaml .
-'''
+helm upgrade --tiller-namespace %s infrabox -f values-generated.yaml .
+''' % (self.args.general_system_namespace, self.args.general_system_namespace)
 
         update_path = os.path.join(self.args.o, 'update.sh')
         self.make_executable_file(update_path, update)
@@ -500,13 +532,13 @@ component=$1
 port=$2
 echo "Looking for a pod for: $component"
 
-pod=$(kubectl get pods -n infrabox-system | grep $component | awk '{ print $1 }')
+pod=$(kubectl get pods -n %s | grep $component | awk '{ print $1 }')
 
 echo "Found pod: $pod"
 echo "Starting port-forwarding: $port"
 
-kubectl port-forward -n infrabox-system $pod $port
-'''
+kubectl port-forward -n %s $pod $port
+''' % (self.args.general_system_namespace, self.args.general_system_namespace)
 
         pf_path = os.path.join(self.args.o, 'port-forward.sh')
         self.make_executable_file(pf_path, pf)
@@ -522,7 +554,7 @@ class DockerCompose(Install):
         self.config.add('services.api.image', '%s/infrabox/api' % self.args.docker_registry)
         self.config.add('services.dashboard.image', '%s/infrabox/dashboard' % self.args.docker_registry)
         self.config.add('services.db.image', '%s/infrabox/db' % self.args.docker_registry)
-        self.config.add('services.scheduler.image', '%s/infrabox/scheduler/docker-compose' % self.args.docker_registry)
+        self.config.add('services.scheduler.image', '%s/infrabox/scheduler-docker-compose' % self.args.docker_registry)
         self.config.append('services.scheduler.environment',
                            ['INFRABOX_DOCKER_REGISTRY=%s' % self.args.docker_registry])
 
@@ -623,9 +655,12 @@ def main():
     parser.add_argument('--platform',
                         choices=['docker-compose', 'kubernetes'],
                         required=True)
+    parser.add_argument('--version', default='latest')
 
     # General
     parser.add_argument('--general-no-check-certificates', action='store_true', default=False)
+    parser.add_argument('--general-worker-namespace', default='infrabox-worker')
+    parser.add_argument('--general-system-namespace', default='infrabox-system')
 
     # Docker configuration
     parser.add_argument('--docker-registry',
@@ -736,6 +771,8 @@ def main():
     parser.add_argument('--job-mount-docker-socket', action='store_true', default=False)
     parser.add_argument('--job-use-host-docker-daemon', action='store_true', default=False)
     parser.add_argument('--job-security-context-capabilities-enabled', action='store_true', default=False)
+    parser.add_argument('--job-api-url')
+    parser.add_argument('--job-api-secret')
 
     # Parse options
     args = parser.parse_args()

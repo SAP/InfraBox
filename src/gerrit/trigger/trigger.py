@@ -23,10 +23,11 @@ def main():
     gerrit_key_filename = get_env('INFRABOX_GERRIT_KEY_FILENAME')
 
 
-    elect_leader()
     conn = connect_db()
-
     logger.info("Connected to db")
+
+    elect_leader(conn, "gerrit-trigger")
+
     client = paramiko.SSHClient()
     client.load_system_host_keys()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())

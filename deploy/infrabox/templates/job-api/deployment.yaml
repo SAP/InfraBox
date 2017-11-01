@@ -1,33 +1,31 @@
-{{ if .Values.stats.enabled }}
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-    name: infrabox-stats
+    name: infrabox-job-api
     namespace: {{ default "infrabox-system" .Values.general.system_namespace }}
+    annotations:
+        infrabox.net/checksum: {{ .Files.Get "values.yaml" | sha256sum }}
     labels:
         app: infrabox
-        infrabox.net/component: stats
+        infrabox.net/component: job-api
 spec:
-    replicas: 1
+    replicas: {{ default 1 .Values.job.api.replicas }}
     template:
         metadata:
             labels:
                 app: infrabox
-                infrabox.net/component: stats
+                infrabox.net/component: job-api
         spec:
-            {{- if .Values.stats.node_selector }}
+            {{- if .Values.job.api.node_selector }}
             nodeSelector:
-{{ toYaml .Values.stats.node_selector | indent 16 }}
+{{ toYaml .Values.job.api.node_selector | indent 16 }}
             {{- end }}
             containers:
             {{ include "containers_database" . | indent 12 }}
             -
-                name: stats
-                image: {{ .Values.general.docker_registry }}/{{ default "stats" .Values.stats.image }}:{{ .Values.stats.tag }}
+                name: job-api
+                image: {{ .Values.general.docker_registry }}/{{ default "job-api" .Values.job.api.image }}:{{ .Values.job.api.tag }}
                 imagePullPolicy: Always
-                command:
-                - "python"
-                - "/stats/stats.py"
                 volumeMounts:
                 {{ if .Values.storage.gcs.enabled }}
                 -
@@ -37,16 +35,20 @@ spec:
                 {{ end }}
                 env:
                 {{ include "env_database" . | indent 16 }}
-                {{ include "env_kubernetes" . | indent 16 }}
+                {{ include "env_general" . | indent 16 }}
+                {{ include "env_job" . | indent 16 }}
+                {{ include "env_gcs" . | indent 16 }}
+                {{ include "env_s3" . | indent 16 }}
+                {{ include "env_job_api_secret" . | indent 16 }}
                 -
                     name: INFRABOX_SERVICE
-                    value: {{ default "stats" .Values.stats.image }}
+                    value: {{ default "job-api" .Values.job.api.image }}
                 -
                     name: INFRABOX_VERSION
-                    value: {{ .Values.stats.tag }}
+                    value: {{ .Values.job.api.tag }}
                 -
-                    name: INFRABOX_STATS_KUBERNETES_ENABLED
-                    value: "true"
+                    name: INFRABOX_JOB_API_LOG_LEVEL
+                    value: {{ default "info" .Values.job.api.log.level | quote }}
             volumes:
                 {{ include "volumes_database" . | indent 16 }}
                 {{ if .Values.storage.gcs.enabled }}
@@ -55,4 +57,3 @@ spec:
                     secret:
                         secretName: infrabox-gcs
                 {{ end }}
-{{ end }}
