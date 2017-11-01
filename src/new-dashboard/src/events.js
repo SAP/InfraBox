@@ -1,7 +1,18 @@
 import Vue from 'vue'
 import VueSocketio from 'vue-socket.io'
 
-Vue.use(VueSocketio, 'ws://localhost:3000')
+let protocol = 'ws:'
+if (window.location.protocol === 'https:') {
+    protocol = 'wss:'
+}
+
+const host = protocol + "//" + window.location.host
+let path = window.location.pathname.substr(0, window.location.pathname.search("/dashboard"))
+path += '/socket.io/'
+
+Vue.use(VueSocketio, 'ws://localhost:3000', {
+    path: path
+})
 
 function getCookie (cname) {
     const name = cname + '='

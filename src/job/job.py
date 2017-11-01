@@ -596,7 +596,7 @@ exec "$@"
             collector.stop()
             self.post_stats(collector.get_result())
 
-    def build_docker_container(self, image_name):
+    def build_docker_container(self, image_name, cache_image):
         c = self.console
 
         cwd = self.job.get('base_path', None)
@@ -608,7 +608,7 @@ exec "$@"
         try:
             c.header("Build container", show=True)
 
-            cmd = ['docker', 'build', '-t', image_name, '.', '-f', self.job['dockerfile']]
+            cmd = ['docker', 'build', '--cache-from', cache_image, '-t', image_name, '.', '-f', self.job['dockerfile']]
 
             if 'build_arguments' in self.job and self.job['build_arguments']:
                 for name, value in self.job['build_arguments'].iteritems():
@@ -645,7 +645,7 @@ exec "$@"
         image_name_latest = image_name + ':latest'
 
         self.get_cached_image(image_name_latest)
-        self.build_docker_container(image_name_build)
+        self.build_docker_container(image_name_build, image_name_latest)
         self.cache_docker_image(image_name_build, image_name_latest)
         self.run_docker_container(image_name_build)
         self.deploy_container(image_name_build)

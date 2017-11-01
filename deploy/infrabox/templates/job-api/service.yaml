@@ -4,11 +4,11 @@ metadata:
     name: infrabox-job-api
     namespace: {{ default "infrabox-system" .Values.general.system_namespace }}
     labels:
-        app: infrabox
+        app: infrabox-job-api
         infrabox.net/component: job-api
 spec:
     selector:
-        app: infrabox
+        app: infrabox-job-api
         infrabox.net/component: job-api
     type: NodePort
     ports:
@@ -16,6 +16,4 @@ spec:
         protocol: TCP
         port: 8080
         targetPort: 8080
-    {{ if .Values.job.api.node_port }}
-        nodePort: {{ .Values.job.api.node_port }}
-    {{ end }}
+        name: http-web

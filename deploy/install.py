@@ -256,9 +256,6 @@ class Kubernetes(Install):
         self.required_option('docker-registry')
         self.set('general.docker_registry', self.args.docker_registry)
 
-        if self.args.use_k8s_nodeports:
-            self.set('docker_registry.node_port', self.args.docker_registry_k8s_nodeport)
-
         self.set('docker_registry.url', self.args.docker_registry_url)
 
         if self.args.docker_registry_tls_enabled:
@@ -370,9 +367,6 @@ class Kubernetes(Install):
 
         self.set('dashboard.tag', self.args.version)
 
-        if self.args.use_k8s_nodeports:
-            self.set('dashboard.node_port', self.args.dashboard_k8s_nodeport)
-
         self.set('dashboard.url', self.args.dashboard_url)
 
         if self.args.dashboard_tls_enabled:
@@ -393,9 +387,6 @@ class Kubernetes(Install):
 
     def setup_api(self):
         self.required_option('api-url')
-
-        if self.args.use_k8s_nodeports:
-            self.set('api.node_port', self.args.api_k8s_nodeport)
 
         self.set('api.url', self.args.api_url)
         self.set('api.tag', self.args.version)
@@ -418,9 +409,6 @@ class Kubernetes(Install):
 
     def setup_docs(self):
         self.required_option('docs-url')
-
-        if self.args.use_k8s_nodeports:
-            self.set('docs.node_port', self.args.docs_k8s_nodeport)
 
         self.set('docs.url', self.args.docs_url)
         self.set('docs.tag', self.args.version)
@@ -467,6 +455,7 @@ class Kubernetes(Install):
 
     def setup_scheduler(self):
         self.set('scheduler.tag', self.args.version)
+        self.set('scheduler.enabled', not self.args.scheduler_disabled)
 
     def setup_stats(self):
         self.set('stats.tag', self.args.version)
@@ -499,12 +488,11 @@ class Kubernetes(Install):
 
 command -v helm >/dev/null 2>&1 || { echo >&2 "I require helm but it's not installed. Aborting."; exit 1; }
 command -v kubectl >/dev/null 2>&1 || { echo >&2 "I require kubectl but it's not installed. Aborting."; exit 1; }
+kubectl create namespace %(system_ns)s || true
+kubectl create namespace %(worker_ns)s || true
 
-kubectl create namespace %s || true
-kubectl create namespace %s || true
-
-helm install --tiller-namespace %s -n infrabox -f values-generated.yaml .
-''' % (self.args.general_system_namespace, self.args.general_worker_namespace, self.args.general_system_namespace)
+helm install --tiller-namespace %(system_ns)s -n infrabox -f values-generated.yaml .
+''' % {"system_ns": self.args.general_system_namespace, "worker_ns": self.args.general_worker_namespace}
 
         install_path = os.path.join(self.args.o, 'install.sh')
         self.make_executable_file(install_path, install)
@@ -667,7 +655,6 @@ def main():
                         required=True)
     parser.add_argument('--docker-registry-admin-username')
     parser.add_argument('--docker-registry-admin-password')
-    parser.add_argument('--docker-registry-k8s-nodeport', type=int, default=30202)
     parser.add_argument('--docker-registry-url')
     parser.add_argument('--docker-registry-tls-enabled', action='store_true', default=False)
     parser.add_argument('--docker-registry-tls-key-file')
@@ -712,12 +699,8 @@ def main():
     parser.add_argument('--gcs-container-content-cache-bucket', default='infrabox-container-cache-bucket')
     parser.add_argument('--gcs-docker-registry-bucket', default='infrabox-docker-registry-bucket')
 
-    # Nodeport
-    parser.add_argument('--use-k8s-nodeports', action='store_true', default=False)
-
     # Dashboard
     parser.add_argument('--dashboard-url')
-    parser.add_argument('--dashboard-k8s-nodeport', type=int, default=30201)
     parser.add_argument('--dashboard-tls-enabled', action='store_true', default=False)
     parser.add_argument('--dashboard-tls-key-file')
     parser.add_argument('--dashboard-tls-crt-file')
@@ -725,17 +708,18 @@ def main():
 
     # API
     parser.add_argument('--api-url')
-    parser.add_argument('--api-k8s-nodeport', type=int, default=30200)
     parser.add_argument('--api-tls-enabled', action='store_true', default=False)
     parser.add_argument('--api-tls-key-file')
     parser.add_argument('--api-tls-crt-file')
 
     # Docs
     parser.add_argument('--docs-url')
-    parser.add_argument('--docs-k8s-nodeport', type=int, default=30203)
     parser.add_argument('--docs-tls-enabled', action='store_true', default=False)
     parser.add_argument('--docs-tls-key-file')
     parser.add_argument('--docs-tls-crt-file')
+
+    # Scheduler
+    parser.add_argument('--scheduler-disabled', action='store_true', default=False)
 
     # LDAP
     parser.add_argument('--ldap-enabled', action='store_true', default=False)

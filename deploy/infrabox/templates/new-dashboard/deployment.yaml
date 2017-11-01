@@ -1,0 +1,21 @@
+{{ if .Values.dashboard.enabled }}
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+    name: infrabox-new-dashboard-client
+    namespace: {{ default "infrabox-system" .Values.general.system_namespace }}
+    labels:
+        app: infrabox-new-dashboard-client
+spec:
+    replicas: {{ default 1 .Values.dashboard.client.replicas }}
+    template:
+        metadata:
+            labels:
+                app: infrabox-new-dashboard-client
+        spec:
+            containers:
+            -
+                name: dashboard-client
+                image: {{ .Values.general.docker_registry }}/{{ default "dashboard-client" .Values.dashboard.client.image }}:{{ .Values.dashboard.client.tag }}
+                imagePullPolicy: Always
+{{ end }}
