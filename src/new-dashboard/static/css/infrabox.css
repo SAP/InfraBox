@@ -118,8 +118,16 @@
     margin: 25px;
 }
 
+.m-b-xl {
+    margin-bottom: 25px;
+}
+
 .m-l-xl {
     margin-left: 25px;
+}
+
+.m-r-xl {
+    margin-right: 25px;
 }
 
 .m-t-xl {
@@ -256,6 +264,13 @@
 
 .p-t-xxl {
     padding-top: 60px;
+}
+
+.setting-list {
+    background-color: white;
+    border-bottom-style: solid;
+    border-bottom-width: thin;
+    border-color: #eaeaea;
 }
 
 .text-bottom {
