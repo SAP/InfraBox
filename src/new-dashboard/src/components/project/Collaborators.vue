@@ -1,52 +1,71 @@
 <template>
-    <md-table-card>
-        <md-toolbar class="md-dense">
-            <h3 class="md-title">
-                Collaborators
-            </h3>
-            <md-button md-theme="running" class="md-icon-button md-raised md-primary">
-                  <md-icon>add</md-icon>
-            </md-button>
-        </md-toolbar>
+    <md-list-item class="setting-list">
+        <md-icon>people</md-icon>
+        <span>Collaborators</span>
 
-        <md-card-content>
-            <md-table>
-                <md-table-header>
-                    <md-table-row>
-                        <md-table-head>Avatar</md-table-head>
-                        <md-table-head>Username</md-table-head>
-                        <md-table-head>Email</md-table-head>
-                        <md-table-head>Remove</md-table-head>
-                    </md-table-row>
-                </md-table-header>
+        <md-list-expand>
+            <md-list class="m-t-md m-b-md md-double-line">
+                <md-list-item class="md-inset m-r-xl">
+                    <md-avatar class="md-avatar-icon">
+                        <md-icon>face</md-icon>
+                    </md-avatar>
 
-                <md-table-body>
-                    <md-table-row v-for="co in project.collaborators" :key="co.id">
-                        <md-table-cell>
-                            <span>
-                                <img v-if="co.avatar_url" alt="image" class="img-circle" style="width: 40px;" :src="co.avatar_url"/>
-                                <img v-if="!co.avatar_url" alt="image" class="img-circle" style="width: 40px;" src="../../../static/logo_image_only.png"/>
-                            </span>
-                        </md-table-cell>
-                        <md-table-cell>{{ co.username }}</md-table-cell>
-                        <md-table-cell>{{ co.email }}</md-table-cell>
-                        <md-table-cell>
-                            <md-button class="md-icon-button md-raised">
-                                  <md-icon>delete</md-icon>
-                            </md-button>
-                        </md-table-cell>
-                    </md-table-row>
-                </md-table-body>
-            </md-table>
-        </md-card-content>
-    </md-table-card>
+                    <div class="md-list-text-container">
+                        <span>
+                            <md-input-container>
+                                <label>User Name</label>
+                                <md-input required></md-input>
+                            </md-input-container>
+                        </span>
+                    </div>
+
+                    <md-button class="md-icon-button md-list-action">
+                        <md-icon md-theme="running" class="md-primary">add_circle</md-icon>
+                        <md-tooltip>Add collaborator</md-tooltip>
+                    </md-button>
+                </md-list-item>
+                <md-list-item v-for="co in project.collaborators" :key="co.id" class="md-inset m-r-xl">
+                    <md-avatar>
+                        <img v-if="co.avatar_url" alt="image" class="img-circle" style="width: 40px;" :src="co.avatar_url"/>
+                        <img v-if="!co.avatar_url" alt="image" class="img-circle" style="width: 40px;" src="../../../static/logo_image_only.png"/>
+                    </md-avatar>
+
+                    <div class="md-list-text-container">
+                        <span>{{ co.username }}</span>
+                        <span>{{ co.email }}</span>
+                    </div>
+
+                    <md-button type="submit" class="md-icon-button md-list-action" @click="$refs.snackbar.open()">
+                        <md-icon class="md-primary">delete</md-icon>
+                        <md-tooltip>Remove collaborator</md-tooltip>
+                    </md-button>
+                </md-list-item>
+            </md-list>
+        </md-list-expand>
+        <md-snackbar :md-position="vertical + ' ' + horizontal" ref="snackbar" :md-duration="duration">
+            <span>
+                  <i class="fa fa-chain-broken"></i>
+                <span class="m-l-xl"> Collaborator successfully removed.</span>
+            </span>
+        </md-snackbar>
+    </md-list-item>
 </template>
 
 <script>
 export default {
     props: ['project'],
+    data: () => ({
+        vertical: 'top',
+        horizontal: 'center',
+        duration: 4000
+    }),
     created () {
         this.project._loadCollaborators()
+    },
+    methods: {
+        open () {
+            this.$refs.snackbar.open()
+        }
     }
 }
 </script>
