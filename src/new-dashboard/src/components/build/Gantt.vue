@@ -389,6 +389,7 @@ export class GanttChart {
             jobLabel.attr({
                 'font': '13px Helvetica, Arial',
                 'font-weight': 'bold',
+                'font-style': 'normal',
                 'fill': '#676a6c',
                 'cursor': 'pointer'
             })
@@ -433,13 +434,15 @@ export class GanttChart {
 
             this.label[0].attr({
                 'text': job.name,
+                'font-style': 'normal',
                 'fill': '#676a6c',
                 'font-weight': 'bold'
             }).show()
 
             this.label[1].attr({
-                text: 'State: ' + job.state,
-                fill: '#676a6c'
+                'text': 'State: ' + job.state,
+                'font-style': 'normal',
+                'fill': '#676a6c'
             }).show()
 
             for (const e of job.parentElements) {
@@ -475,6 +478,7 @@ export class GanttChart {
         job.text.attr({
             'font-family': 'FontAwesome',
             'font-size': this.symbolSize,
+            'font-style': 'normal',
             'fill': 'white',
             'cursor': 'pointer'
         })

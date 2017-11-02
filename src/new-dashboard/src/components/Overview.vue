@@ -7,6 +7,11 @@
                 </md-table-card>
             </md-layout>
         </md-layout>
+        <router-link to="/AddProject/" style="color: inherit">
+            <md-button class="md-fab md-fab-bottom-right">
+                <md-icon>add</md-icon>
+            </md-button>
+        </router-link>
     </div>
 </template>
 

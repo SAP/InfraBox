@@ -126,6 +126,18 @@
     margin-top: 25px;
 }
 
+.m-xxl {
+    margin: 60px;
+}
+
+.m-b-xxl {
+    margin-bottom: 60px;
+}
+
+.m-t-xxl {
+    margin-top: 60px;
+}
+
 .no-border {
     border-style: none;
 }
