@@ -7,14 +7,12 @@ metadata:
         infrabox.net/checksum: {{ .Files.Get "values.yaml" | sha256sum }}
     labels:
         app: infrabox-job-api
-        infrabox.net/component: job-api
 spec:
     replicas: {{ default 1 .Values.job.api.replicas }}
     template:
         metadata:
             labels:
                 app: infrabox-job-api
-                infrabox.net/component: job-api
         spec:
             {{- if .Values.job.api.node_selector }}
             nodeSelector:

@@ -24,7 +24,7 @@
                     <span>Projects</span>
                     <md-list-expand>
                         <md-list>
-                            <md-list-item v-for="project of $store.state.projects" class="md-inset">
+                            <md-list-item v-for="project of $store.state.projects" class="md-inset" :key="project.id">
                                 <router-link :to="{name: 'ProjectDetail', params: {projectName: project.name}}">
                                     <span>
                                         <i v-if="project.isGit()" class="fa fa-github"></i>
@@ -37,7 +37,7 @@
                 </md-list-item>
 
                 <md-list-item class="navi-link">
-                    <a href="#"
+                    <a href="/docs/"
                        class="md-list-item-container md-button"
                        target="_blank">
                         <md-icon><i class="fa fa-book fa-fw"></i></md-icon>

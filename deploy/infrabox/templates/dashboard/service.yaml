@@ -6,12 +6,9 @@ metadata:
     namespace: {{ default "infrabox-system" .Values.general.system_namespace }}
     labels:
         app: infrabox-dashboard
-        infrabox.net/component: dashboard
 spec:
     selector:
         app: infrabox-dashboard
-        infrabox.net/component: dashboard
-    type: NodePort
     ports:
     -
         name: http-web

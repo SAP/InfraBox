@@ -89,7 +89,7 @@
             <md-dialog-content>Your project will be permanently removed from InfraBox. Your builds and metadata cannot be restored.</md-dialog-content>
                 <md-dialog-actions>
                 <md-button md-theme="running" class="md-primary" @click="closeDialog('confirmDeleteProject')">Cancel</md-button>
-                <md-button md-theme="running" class="md-primary" @click="closeDialog('confirmDeleteProject')">Yes, delete</md-button>
+                <md-button md-theme="running" class="md-primary" @click="deleteProject()">Yes, delete</md-button>
             </md-dialog-actions>
         </md-dialog>
     </div>
@@ -97,6 +97,7 @@
 
 <script>
 import BuildTable from '../build/BuildTable'
+import ProjectService from '../../services/ProjectService'
 
 export default {
     props: ['project'],
@@ -110,11 +111,9 @@ export default {
         closeDialog (ref) {
             this.$refs[ref].close()
         },
-        onOpen () {
-            console.log('Opened')
-        },
-        onClose (type) {
-            console.log('Closed', type)
+        deleteProject () {
+            this.closeDialog('confirmDeleteProject')
+            ProjectService.deleteProject(this.project.id)
         }
     }
 }

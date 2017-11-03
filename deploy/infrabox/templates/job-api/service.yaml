@@ -5,12 +5,9 @@ metadata:
     namespace: {{ default "infrabox-system" .Values.general.system_namespace }}
     labels:
         app: infrabox-job-api
-        infrabox.net/component: job-api
 spec:
     selector:
         app: infrabox-job-api
-        infrabox.net/component: job-api
-    type: NodePort
     ports:
     -
         protocol: TCP

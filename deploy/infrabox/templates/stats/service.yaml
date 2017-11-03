@@ -5,12 +5,10 @@ metadata:
     name: infrabox-stats
     namespace: {{ default "infrabox-system" .Values.general.system_namespace }}
     labels:
-        app: infrabox
-        infrabox.net/component: stats
+        app: infrabox-stats
 spec:
     selector:
-        app: infrabox
-        infrabox.net/component: stats
+        app: infrabox-stats
     ports:
     -
         name: monitoring

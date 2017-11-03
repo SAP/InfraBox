@@ -14,12 +14,12 @@
                         <span>
                             <md-input-container>
                                 <label>User Name</label>
-                                <md-input required></md-input>
+                                <md-input required v-model="username"></md-input>
                             </md-input-container>
                         </span>
                     </div>
 
-                    <md-button class="md-icon-button md-list-action">
+                    <md-button class="md-icon-button md-list-action" @click="addCollaborator()">
                         <md-icon md-theme="running" class="md-primary">add_circle</md-icon>
                         <md-tooltip>Add collaborator</md-tooltip>
                     </md-button>
@@ -35,36 +35,30 @@
                         <span>{{ co.email }}</span>
                     </div>
 
-                    <md-button type="submit" class="md-icon-button md-list-action" @click="$refs.snackbar.open()">
+                    <md-button class="md-icon-button md-list-action" @click="project.removeCollaborator(co)">
                         <md-icon class="md-primary">delete</md-icon>
                         <md-tooltip>Remove collaborator</md-tooltip>
                     </md-button>
                 </md-list-item>
             </md-list>
         </md-list-expand>
-        <md-snackbar :md-position="vertical + ' ' + horizontal" ref="snackbar" :md-duration="duration">
-            <span>
-                  <i class="fa fa-chain-broken"></i>
-                <span class="m-l-xl"> Collaborator successfully removed.</span>
-            </span>
-        </md-snackbar>
     </md-list-item>
 </template>
 
 <script>
 export default {
     props: ['project'],
-    data: () => ({
-        vertical: 'top',
-        horizontal: 'center',
-        duration: 4000
-    }),
+    data: () => {
+        return {
+            'username': ''
+        }
+    },
     created () {
         this.project._loadCollaborators()
     },
     methods: {
-        open () {
-            this.$refs.snackbar.open()
+        addCollaborator () {
+            this.project.addCollaborator(this.username)
         }
     }
 }
