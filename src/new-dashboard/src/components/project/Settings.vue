@@ -1,8 +1,10 @@
 <template>
     <div>
+        <md-list md-theme="white">
             <ib-project-secrets :project="project"></ib-project-secrets>
             <ib-project-collaborators :project="project"></ib-project-collaborators>
             <ib-project-tokens :project="project"></ib-project-tokens>
+        </md-list>
     </div>
 </template>
 
@@ -20,3 +22,7 @@ export default {
     }
 }
 </script>
+
+<style scoped>
+
+</style>
