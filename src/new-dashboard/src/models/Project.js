@@ -1,7 +1,7 @@
 import APIService from '../services/APIService'
-import store from '../store'
 import NotificationService from '../services/NotificationService'
 import Notification from '../models/Notification'
+import store from '../store'
 
 export default class Project {
     constructor (name, id, type) {
@@ -38,14 +38,45 @@ export default class Project {
             return new Promise((resolve) => { resolve(b) })
         }
 
-        return APIService.get(`/api/dashboard/project/${this.id}/build/${number}/${restartCounter}`)
+        return APIService.get(`project/${this.id}/build/${number}/${restartCounter}`)
             .then((jobs) => {
                 this._addJobs(jobs)
                 return this._getBuild(number, restartCounter)
             })
-            .catch((err) => {
-                NotificationService.$emit('NOTIFICATION', new Notification(err))
+    }
+
+    removeCollaborator (co) {
+        return APIService.delete(`project/${this.id}/collaborators/${co.id}`)
+            .then((response) => {
+                NotificationService.$emit('NOTIFICATION', new Notification(response))
+                this._reloadCollaborators()
             })
+    }
+
+    deleteToken (id) {
+        delete APIService.delete(`project/${this.id}/tokens/${id}`)
+        .then((response) => {
+            NotificationService.$emit('NOTIFICATION', new Notification(response))
+            this._reloadTokens()
+        })
+    }
+
+    addToken (description) {
+        const d = { description: description, scope_pull: true, scope_push: true }
+        return APIService.post(`project/${this.id}/tokens`, d)
+        .then((response) => {
+            const token = response.data.token
+            this._reloadTokens()
+            return token
+        })
+    }
+
+    addCollaborator (username) {
+        const d = { username: username }
+        return APIService.post(`project/${this.id}/collaborators`, d)
+        .then((response) => {
+            this._reloadCollaborators()
+        })
     }
 
     _loadCollaborators () {
@@ -53,12 +84,13 @@ export default class Project {
             return
         }
 
-        return APIService.get(`/api/dashboard/project/${this.id}/collaborators`)
+        this._reloadCollaborators()
+    }
+
+    _reloadCollaborators () {
+        return APIService.get(`project/${this.id}/collaborators`)
             .then((collaborators) => {
-                store.commit('addCollaborators', { project: this, collaborators: collaborators })
-            })
-            .catch((err) => {
-                NotificationService.$emit('NOTIFICATION', new Notification(err))
+                store.commit('setCollaborators', { project: this, collaborators: collaborators })
             })
     }
 
@@ -67,26 +99,28 @@ export default class Project {
             return
         }
 
-        return APIService.get(`/api/dashboard/project/${this.id}/secrets`)
+        this._reloadSecrets()
+    }
+
+    _reloadSecrets () {
+        return APIService.get(`project/${this.id}/secrets`)
             .then((secrets) => {
-                store.commit('addSecrets', { project: this, secrets: secrets })
-            })
-            .catch((err) => {
-                NotificationService.$emit('NOTIFICATION', new Notification(err))
+                store.commit('setSecrets', { project: this, secrets: secrets })
             })
     }
 
     _loadTokens () {
-        if (this.secrets) {
+        if (this.tokens) {
             return
         }
 
-        return APIService.get(`/api/dashboard/project/${this.id}/tokens`)
+        this._reloadTokens()
+    }
+
+    _reloadTokens () {
+        return APIService.get(`project/${this.id}/tokens`)
             .then((tokens) => {
-                store.commit('addTokens', { project: this, tokens: tokens })
-            })
-            .catch((err) => {
-                NotificationService.$emit('NOTIFICATION', new Notification(err))
+                store.commit('setTokens', { project: this, tokens: tokens })
             })
     }
 

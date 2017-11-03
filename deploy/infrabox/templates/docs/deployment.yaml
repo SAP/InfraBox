@@ -6,14 +6,12 @@ metadata:
     namespace: {{ default "infrabox-system" .Values.general.system_namespace }}
     labels:
         app: infrabox-docs
-        infrabox.net/component: docs
 spec:
     replicas: 1
     template:
         metadata:
             labels:
                 app: infrabox-docs
-                infrabox.net/component: docs
         spec:
             {{- if .Values.docs.node_selector }}
             nodeSelector:

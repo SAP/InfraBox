@@ -1,18 +1,19 @@
 import Vue from 'vue'
 import VueSocketio from 'vue-socket.io'
+import Socket from 'socket.io-client'
 
 let protocol = 'ws:'
 if (window.location.protocol === 'https:') {
     protocol = 'wss:'
 }
 
-const host = protocol + "//" + window.location.host
-let path = window.location.pathname.substr(0, window.location.pathname.search("/dashboard"))
-path += '/socket.io/'
+const host = protocol + '//' + process.env.DASHBOARD_HOST
 
-Vue.use(VueSocketio, 'ws://localhost:3000', {
-    path: path
+const socket = Socket(host, {
+    path: '/live/dashboard/'
 })
+
+Vue.use(VueSocketio, socket)
 
 function getCookie (cname) {
     const name = cname + '='
@@ -42,11 +43,20 @@ export default new Vue({
         },
         'notify:jobs' (val) {
             this.$emit('NOTIFY_JOBS', val)
+        },
+        'notify:console' (val) {
+            console.log('notify:console', val)
+            this.$emit('NOTIFY_CONSOLE', val)
         }
     },
     methods: {
         listenJobs (project) {
+            console.log('listen:jobs', project)
             this.$socket.emit('listen:jobs', project.id)
+        },
+        listenConsole (id) {
+            console.log('listen:console', id)
+            this.$socket.emit('listen:console', id)
         }
     }
 })

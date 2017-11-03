@@ -22,6 +22,7 @@ import ProjectDetailComponent from '@/components/project/ProjectDetail'
 import ProjectOverviewComponent from '@/components/project/ProjectOverview'
 import DurationComponent from '@/components/utils/Duration'
 import GitJobTypeComponent from '@/components/utils/GitJobType'
+import UserService from './services/UserService'
 import NotificationService from './services/NotificationService'
 import Notification from './models/Notification'
 
@@ -37,6 +38,7 @@ Vue.use(AsyncComputed, {
     }
 })
 
+UserService.init()
 ProjectService.init()
 
 Vue.component('ib-notifications', NotificationComponent)

@@ -6,12 +6,9 @@ metadata:
     namespace: {{ default "infrabox-system" .Values.general.system_namespace }}
     labels:
         app: infrabox-api
-        infrabox.net/component: api
 spec:
     selector:
         app: infrabox-api
-        infrabox.net/component: api
-    type: NodePort
     ports:
     -
         name: http-web

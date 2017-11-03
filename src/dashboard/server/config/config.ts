@@ -60,7 +60,7 @@ export let config = {
             port: getFromEnv("INFRABOX_DASHBOARD_MONITORING_PORT", 8010)
         },
         express: {
-            use_request_logger: false,
+            use_request_logger: true,
             print_errors: true
         },
         log: {

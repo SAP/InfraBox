@@ -152,12 +152,14 @@ class Kubernetes(Install):
             self.required_option('cloudsql-proxy-service-account-key-file')
             self.required_option('cloudsql-proxy-username')
             self.required_option('cloudsql-proxy-password')
+            self.required_option('postgres-database')
 
             self.check_file_exists(args.cloudsql_proxy_service_account_key_file)
 
             self.set('storage.postgres.enabled', False)
             self.set('storage.postgres.host', "localhost")
             self.set('storage.postgres.port', 5432)
+            self.set('storage.postgres.db', args.postgres_database)
             self.set('storage.cloudsql.instance_connection_name', args.cloudsql_instance_connection_name)
             self.set('storage.cloudsql.enabled', True)
 
@@ -240,7 +242,6 @@ class Kubernetes(Install):
     def setup_docker_registry(self):
         self.required_option('docker-registry-admin-username')
         self.required_option('docker-registry-admin-password')
-        self.required_option('docker-registry-url')
 
         secret = {
             "username": self.args.docker_registry_admin_username,
@@ -256,7 +257,10 @@ class Kubernetes(Install):
         self.required_option('docker-registry')
         self.set('general.docker_registry', self.args.docker_registry)
 
-        self.set('docker_registry.url', self.args.docker_registry_url)
+        if self.args.docker_registry_url:
+            self.set('docker_registry.url', self.args.docker_registry_url)
+        else:
+            self.set('docker_registry.url', self.args.root_url)
 
         if self.args.docker_registry_tls_enabled:
             self.required_option('docker-registry-tls-key-file')
@@ -356,7 +360,6 @@ class Kubernetes(Install):
         self.create_secret("infrabox-github", self.args.general_system_namespace, secret)
 
     def setup_dashboard(self):
-        self.required_option('dashboard-url')
         self.required_option('dashboard-secret')
 
         secret = {
@@ -367,7 +370,10 @@ class Kubernetes(Install):
 
         self.set('dashboard.tag', self.args.version)
 
-        self.set('dashboard.url', self.args.dashboard_url)
+        if self.args.dashboard_url:
+            self.set('dashboard.url', self.args.dashboard_url)
+        else:
+            self.set('dashboard.url', self.args.root_url)
 
         if self.args.dashboard_tls_enabled:
             self.required_option('dashboard-tls-key-file')
@@ -386,9 +392,11 @@ class Kubernetes(Install):
 
 
     def setup_api(self):
-        self.required_option('api-url')
+        if self.args.api_url:
+            self.set('api.url', self.args.api_url)
+        else:
+            self.set('api.url', self.args.root_url + '/api/cli/')
 
-        self.set('api.url', self.args.api_url)
         self.set('api.tag', self.args.version)
 
         if self.args.api_tls_enabled:
@@ -408,25 +416,13 @@ class Kubernetes(Install):
 
 
     def setup_docs(self):
-        self.required_option('docs-url')
+        docs_url = self.args.root_url + '/docs/'
 
-        self.set('docs.url', self.args.docs_url)
+        if self.args.docs_url:
+            docs_url = self.args.docs_url
+
+        self.set('docs.url', docs_url)
         self.set('docs.tag', self.args.version)
-
-        if self.args.docs_tls_enabled:
-            self.required_option('docs-tls-key-file')
-            self.required_option('docs-tls-crt-file')
-
-            self.check_file_exists(self.args.docs_tls_key_file)
-            self.check_file_exists(self.args.docs_tls_crt_file)
-
-            secret = {
-                "server.key": open(self.args.docs_tls_key_file).read(),
-                "server.crt": open(self.args.docs_tls_crt_file).read()
-            }
-
-            self.create_secret("infrabox-docs-tls", self.args.general_system_namespace, secret)
-            self.set('docs.tls.enabled', True)
 
     def setup_general(self):
         self.set('general.no_check_certificates', self.args.general_no_check_certificates)
@@ -434,7 +430,6 @@ class Kubernetes(Install):
         self.set('general.system_namespace', self.args.general_system_namespace)
 
     def setup_job(self):
-        self.required_option('job-api-url')
         self.required_option('job-api-secret')
 
         secret = {
@@ -447,7 +442,12 @@ class Kubernetes(Install):
         self.set('job.use_host_docker_daemon', self.args.job_use_host_docker_daemon)
         self.set('job.security_context.capabilities.enabled',
                  self.args.job_security_context_capabilities_enabled)
-        self.set('job.api.url', self.args.job_api_url)
+
+        if self.args.job_api_url:
+            self.set('job.api.url', self.args.job_api_url)
+        else:
+            self.set('job.api.url', self.args.root_url + '/api/job/')
+
         self.set('job.api.tag', self.args.version)
 
     def setup_db(self):
@@ -488,8 +488,6 @@ class Kubernetes(Install):
 
 command -v helm >/dev/null 2>&1 || { echo >&2 "I require helm but it's not installed. Aborting."; exit 1; }
 command -v kubectl >/dev/null 2>&1 || { echo >&2 "I require kubectl but it's not installed. Aborting."; exit 1; }
-kubectl create namespace %(system_ns)s || true
-kubectl create namespace %(worker_ns)s || true
 
 helm install --tiller-namespace %(system_ns)s -n infrabox -f values-generated.yaml .
 ''' % {"system_ns": self.args.general_system_namespace, "worker_ns": self.args.general_worker_namespace}
@@ -644,6 +642,7 @@ def main():
                         choices=['docker-compose', 'kubernetes'],
                         required=True)
     parser.add_argument('--version', default='latest')
+    parser.add_argument('--root-url', required=True)
 
     # General
     parser.add_argument('--general-no-check-certificates', action='store_true', default=False)
@@ -714,9 +713,6 @@ def main():
 
     # Docs
     parser.add_argument('--docs-url')
-    parser.add_argument('--docs-tls-enabled', action='store_true', default=False)
-    parser.add_argument('--docs-tls-key-file')
-    parser.add_argument('--docs-tls-crt-file')
 
     # Scheduler
     parser.add_argument('--scheduler-disabled', action='store_true', default=False)

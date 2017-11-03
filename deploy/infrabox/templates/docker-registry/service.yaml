@@ -5,19 +5,14 @@ metadata:
     name: infrabox-docker-registry
     namespace: {{ default "infrabox-system" .Values.general.system_namespace }}
     labels:
-        app: infrabox
-        infrabox.net/component: docker-registry
+        app: infrabox-docker-registry
 spec:
-    type: NodePort
     selector:
-        app: infrabox
-        infrabox.net/component: docker-registry
+        app: infrabox-docker-registry
     ports:
     -
+        name: http-web
         protocol: TCP
         port: 8080
         targetPort: 8080
-    {{ if .Values.docker_registry.node_port }}
-        nodePort: {{ .Values.docker_registry.node_port }}
-    {{ end }}
 {{ end }}

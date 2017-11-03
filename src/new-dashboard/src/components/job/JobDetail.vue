@@ -41,7 +41,7 @@
                     <md-layout md-flex-xsmall="100" md-flex-small="75" md-flex-medium="75" md-flex-large="75">
                         <md-tabs md-fixed class="md-transparent">
                             <md-tab id="console" md-label="Console" class="widget-container">
-                                <ib-console></ib-console>
+                                <ib-console :job="data.job"></ib-console>
                             </md-tab>
                             <md-tab id="test-list" md-label="Tests">
                                 tests
@@ -140,6 +140,7 @@ export default {
                     })
                     .then((j) => {
                         job = j
+                        job.listenConsole()
                         return {
                             project,
                             build,
