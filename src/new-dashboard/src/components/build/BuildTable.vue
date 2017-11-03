@@ -1,7 +1,7 @@
 <template>
     <div>
-        <md-table-card class="clean-card">
-            <md-table>
+        <md-table-card class="clean-card add-overflow">
+            <md-table class="min-medium">
                 <md-table-header>
                     <md-table-row>
                         <md-table-head>State</md-table-head>
