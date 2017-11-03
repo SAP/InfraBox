@@ -155,7 +155,7 @@ router.get("/:project_id/build/state.svg", pv, (req: Request, res: Response, nex
             throw new NotFound();
         }
 
-        const t = result[0].type
+        const t = result[0].type;
 
         if (req.query.branch && (t === 'github' || t === 'gerrit')) {
             return db.any(`

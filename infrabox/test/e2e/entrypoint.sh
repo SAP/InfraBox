@@ -1,9 +1,7 @@
 #!/bin/bash -ev
 
 NAMESPACE=$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace)
-IMAGE_TAG=build_131
-
-env
+IMAGE_TAG=build_135
 
 _prepareKubectl() {
     echo "## Prepare kubectl"
@@ -176,15 +174,15 @@ _installInfraboxMinio() {
         --s3-access-key AKIAIOSFODNN7EXAMPLE \
         --s3-region us-east-1 \
         --s3-port 9000 \
-        --api-url https://api.infrabox.net \
+        --api-url http://infrabox-api.$NAMESPACE:8080 \
         --dashboard-url http://infrabox-dashboard.$NAMESPACE:8080 \
         --dashboard-secret secret \
-        --docs-url https://docs.infrabox.net \
+        --docs-url http://infrabox-docs.$NAMESPACE:8080 \
         --job-api-url http://infrabox-job-api.$NAMESPACE:8080 \
         --job-api-secret kl23424
 
     pushd $outdir
-    cat ./install.sh
+    echo "{\"insecure-registries\": [\"infrabox-docker-registry.$NAMESPACE:8080\"]}" > config/docker/daemon.json
     ./install.sh
     popd
 
