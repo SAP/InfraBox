@@ -16,10 +16,7 @@
 
             <md-list>
                 <md-list-item>
-                    <md-icon><i class="fa fa-th-large fa-fw"></i></md-icon>
-                    <span>
-                        <router-link to="/" style="color: inherit">Overview</router-link>
-                    </span>
+                    <router-link to="/" style="color: inherit"><span><md-icon><i class="fa fa-th-large fa-fw"></i></md-icon><span class="fix-list">Overview</span></span></router-link>
                 </md-list-item>
 
                 <md-list-item>
@@ -28,7 +25,7 @@
                     <md-list-expand>
                         <md-list>
                             <md-list-item v-for="project of $store.state.projects" class="md-inset">
-                                <router-link :to="{name: 'ProjectDetail', params: {projectName: project.name}}" style="color: inherit">
+                                <router-link :to="{name: 'ProjectDetail', params: {projectName: project.name}}">
                                     <span>
                                         <i v-if="project.isGit()" class="fa fa-github"></i>
                                         <i v-if="!project.isGit()" class="fa fa-home"></i>{{ project.name }}
@@ -102,6 +99,10 @@
     .infrabox-logo img {
         width: 160px;
         margin-bottom: 16px;
+    }
+
+    .fix-list{
+        margin-left: 30px;
     }
 
 </style>
