@@ -1,6 +1,7 @@
 import Vue from 'vue'
 import Router from 'vue-router'
 import Overview from '@/components/Overview'
+import AddProject from '@/components/AddProject'
 import ProjectDetail from '@/components/project/ProjectDetail'
 import BuildDetail from '@/components/build/BuildDetail'
 import JobDetail from '@/components/job/JobDetail'
@@ -12,6 +13,10 @@ export default new Router({
         path: '/',
         name: 'Overview',
         component: Overview
+    }, {
+        path: '/AddProject/',
+        name: 'AddProject',
+        component: AddProject
     }, {
         path: '/project/:projectName',
         name: 'ProjectDetail',
@@ -40,6 +45,5 @@ export default new Router({
                 jobId: route.params.jobId
             }
         }
-    }
-    ]
+    }]
 })
