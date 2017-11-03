@@ -1,7 +1,7 @@
 <template>
     <md-snackbar :md-position="vertical + ' ' + horizontal" ref="snackbar" :md-duration="duration">
         <span>{{ message }}</span>
-        <md-button class="md-accent" md-theme="light-blue" @click="$refs.snackbar.close()">Close</md-button>
+        <md-button class="md-accent" md-theme="running" @click="$refs.snackbar.close()">Close</md-button>
     </md-snackbar>
 </template>
 

@@ -14,8 +14,8 @@ export default new Router({
         name: 'Overview',
         component: Overview
     }, {
-        path: '/AddProject/',
-        name: 'AddProject',
+        path: '/addproject/',
+        name: 'addproject',
         component: AddProject
     }, {
         path: '/project/:projectName',
