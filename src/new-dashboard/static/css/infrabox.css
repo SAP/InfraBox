@@ -1,3 +1,7 @@
+.add-overflow {
+    overflow-x: auto;
+}
+
 .bg-neutral {
     background-color: lightgrey;
     color: #ffffff;
@@ -49,6 +53,11 @@
 
 .bg-grey {
     background-color: inherit;
+}
+
+.card-title {
+    margin-top: 25px !important;
+    margin-left: 25px !important;
 }
 
 .clean-card {
@@ -144,6 +153,10 @@
 
 .m-t-xxl {
     margin-top: 60px;
+}
+
+.min-medium {
+    min-width: 960px;
 }
 
 .no-border {

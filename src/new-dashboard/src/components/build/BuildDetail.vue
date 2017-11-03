@@ -1,10 +1,9 @@
 <template>
     <div v-if="data">
 		<md-card class="main-card">
-            <md-card-header class="main-card-header">
-                <md-toolbar class="md-transparent">
+            <md-card-header class="main-card-header" style="padding-bottom: 10px">
                     <md-card-header-text>
-                        <h3 class="md-title">
+                        <h3 class="md-title card-title">
                             <router-link :to="{name: 'ProjectDetail', params: {
                                 projectName: data.project.name
                             }}">
@@ -16,6 +15,7 @@
                         </h3>
                     </md-card-header-text>
 
+                <md-toolbar class="md-transparent">
                     <md-button class="md-icon-button" v-on:click="data.build.abort()"><md-icon>not_interested</md-icon><md-tooltip md-direction="bottom">Stop Build</md-tooltip></md-button>
                     <md-button class="md-icon-button" v-on:click="data.build.restart()"><md-icon>replay</md-icon><md-tooltip md-direction="bottom">Restart Build</md-tooltip></md-button>
                     <md-button class="md-icon-button" v-on:click="data.build.clearCache()"><md-icon>delete_sweep</md-icon><md-tooltip md-direction="bottom">Clear Cache</md-tooltip></md-button>
@@ -23,7 +23,7 @@
             </md-card-header>
             <md-card-content>
                 <md-layout>
-                    <md-layout md-flex-xsmall="100" md-flex-small="75" md-flex-medium="75" md-flex-large="75">
+                    <md-layout md-flex-xsmall="100" md-flex-small="100" md-flex-medium="100" md-flex-large="75">
                         <md-tabs md-fixed class="md-transparent">
                             <md-tab id="build-graph" md-label="Build" class="widget-container">
                                 <ib-job-gantt :jobs="data.build.jobs"></ib-job-gantt>
@@ -34,7 +34,7 @@
                             </md-tab>
                         </md-tabs>
                     </md-layout>
-                    <md-layout md-flex-xsmall="100" md-flex-small="25" md-flex-medium="25" md-flex-large="25">
+                    <md-layout md-flex-xsmall="100" md-flex-small="100" md-flex-medium="100" md-flex-large="25" md-flex-xlarge="25">
                         <md-list class="md-dense widget-container" style="margin: 16px">
                             <ib-state-big :state="data.build.state"></ib-state-big>
                             <md-list-item class="p-l-md p-r-md p-t-md">
