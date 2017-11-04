@@ -20,7 +20,7 @@ const CACHED_CONSOLE = new prom.Gauge({
 class ConsoleOutputCache {
     private output = new Map<string, ReplaySubject<string>>();
 
-    public has(job_id: string) : boolean {
+    public has(job_id: string): boolean {
         return this.output.has(job_id);
     }
 

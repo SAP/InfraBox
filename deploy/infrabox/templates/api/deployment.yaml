@@ -7,15 +7,13 @@ metadata:
     annotations:
         infrabox.net/checksum: {{ .Files.Get "values.yaml" | sha256sum }}
     labels:
-        app: infrabox
-        infrabox.net/component: api
+        app: infrabox-api
 spec:
     replicas: {{ default 1 .Values.api.replicas }}
     template:
         metadata:
             labels:
-                app: infrabox
-                infrabox.net/component: api
+                app: infrabox-api
         spec:
             {{- if .Values.api.node_selector }}
             nodeSelector:
@@ -121,7 +119,7 @@ spec:
                 -
                     name: INFRABOX_DOCKER_REGISTRY_URL
                     value: {{ .Values.docker_registry.url }}
-                {{ if .Values.general.no_check_certificates }}
+                {{ if .Values.general.dont_check_certificates }}
                 -
                     name: NODE_TLS_REJECT_UNAUTHORIZED
                     value: "0"

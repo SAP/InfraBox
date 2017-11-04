@@ -5,39 +5,18 @@ metadata:
     name: infrabox-dashboard
     namespace: {{ default "infrabox-system" .Values.general.system_namespace }}
     labels:
-        app: infrabox
-        infrabox.net/component: dashboard
+        app: infrabox-dashboard
 spec:
     selector:
-        app: infrabox
-        infrabox.net/component: dashboard
-    type: NodePort
+        app: infrabox-dashboard
     ports:
     -
-        name: web
+        name: http-web
         protocol: TCP
         port: 8080
         targetPort: 8080
-    {{ if .Values.dashboard.node_port }}
-        nodePort: {{ .Values.dashboard.node_port }}
-    {{ end }}
----
-kind: Service
-apiVersion: v1
-metadata:
-    name: infrabox-dashboard-monitoring
-    namespace: {{ default "infrabox-system" .Values.general.system_namespace }}
-    labels:
-        app: infrabox
-        infrabox.net/component: dashboard
-spec:
-    selector:
-        app: infrabox
-        infrabox.net/component: dashboard
-    type: NodePort
-    ports:
     -
-        name: monitoring
+        name: http-monitoring
         protocol: TCP
         port: 8000
         targetPort: 8000

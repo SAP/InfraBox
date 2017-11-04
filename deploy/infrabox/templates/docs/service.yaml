@@ -5,19 +5,14 @@ metadata:
     name: infrabox-docs
     namespace: {{ default "infrabox-system" .Values.general.system_namespace }}
     labels:
-        app: infrabox
-        infrabox.net/component: docs
+        app: infrabox-docs
 spec:
     selector:
-        app: infrabox
-        infrabox.net/component: docs
-    type: NodePort
+        app: infrabox-docs
     ports:
     -
+        name: http-web
         protocol: TCP
-        port: 8080
-        targetPort: 8080
-    {{ if .Values.docs.node_port }}
-        nodePort: {{ .Values.docs.node_port }}
-    {{ end }}
+        port: 80
+        targetPort: 80
 {{ end }}

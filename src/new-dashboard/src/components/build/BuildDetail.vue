@@ -51,21 +51,21 @@
                                   </ib-duration>
                                 </span>
                             </md-list-item>
-                            <md-list-item class="p-l-md p-r-md">
+                            <md-list-item v-if="data.build.commit" class="p-l-md p-r-md">
                                 <span class="md-body-2"><i class="fa fa-list-ol fa-fw p-r-xl" aria-hidden="true"></i>
                                 Commit</span>
                                 <span class="md-list-action">
                                     <ib-commit-sha :sha="data.build.commit.id"></ib-commit-sha>
                                 </span>
                             </md-list-item>
-                            <md-list-item class="p-l-md p-r-md">
+                            <md-list-item v-if="data.build.commit" class="p-l-md p-r-md">
                                 <span class="md-body-2"><i class="fa fa-user fa-fw p-r-xl" aria-hidden="true"></i>
                                 Author</span>
                                 <span class="md-list-action">
                                     {{ data.build.commit.author_name }}
                                 </span>
                             </md-list-item>
-                            <md-list-item class="p-l-md p-r-md">
+                            <md-list-item v-if="data.build.commit" class="p-l-md p-r-md">
                                 <span class="md-body-2"><i class="fa fa-code-fork fa-fw p-r-xl" aria-hidden="true"></i>
                                 Branch</span>
                                 <span class="md-list-action">

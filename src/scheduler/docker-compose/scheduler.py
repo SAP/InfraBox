@@ -54,7 +54,7 @@ class Scheduler(object):
                     ],
                     "environment": [
                         "INFRABOX_JOB_ID=%s" % job_id,
-                        "INFRABOX_GENERAL_NO_CHECK_CERTIFICATES=true",
+                        "INFRABOX_GENERAL_DONT_CHECK_CERTIFICATES=true",
                         "INFRABOX_JOB_API_URL=http://localhost:5000",
                         "INFRABOX_SERVICE=job",
                         "INFRABOX_VERSION=latest",
@@ -75,7 +75,7 @@ class Scheduler(object):
                     "network_mode": "host",
                     "environment": [
                         "INFRABOX_JOB_ID=%s" % job_id,
-                        "INFRABOX_GENERAL_NO_CHECK_CERTIFICATES=true",
+                        "INFRABOX_GENERAL_DONT_CHECK_CERTIFICATES=true",
                         "INFRABOX_SERVICE=job-api",
                         "INFRABOX_VERSION=latest",
                         "INFRABOX_JOB_MAX_OUTPUT_SIZE=%s" % os.environ['INFRABOX_JOB_MAX_OUTPUT_SIZE'],

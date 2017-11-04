@@ -149,7 +149,7 @@ exec "$@"
 
     def clone_repo(self, commit, clone_url, branch, ref):
         c = self.console
-        if os.environ['INFRABOX_GENERAL_NO_CHECK_CERTIFICATES'] == 'true':
+        if os.environ['INFRABOX_GENERAL_DONT_CHECK_CERTIFICATES'] == 'true':
             c.execute(('git', 'config', '--global', 'http.sslVerify', 'false'), show=True)
 
         cmd = ['git', 'clone', '--depth=10']
@@ -253,6 +253,7 @@ exec "$@"
                 c.collect("%s\n" % tr_path, show=True)
                 r = requests.post("%s/testresult" % self.api_server,
                                   headers=self.get_headers(),
+                                  verify=self.verify,
                                   files={"data": open(tr_path)}, timeout=10)
                 c.collect("%s\n" % r.text, show=True)
 
@@ -267,6 +268,7 @@ exec "$@"
                 file_name = os.path.basename(f)
                 r = requests.post("%s/markdown" % self.api_server,
                                   headers=self.get_headers(),
+                                  verify=self.verify,
                                   files={file_name: open(os.path.join(self.infrabox_markdown_dir, f))}, timeout=10)
                 c.collect("%s\n" % r.text, show=False)
 
@@ -281,6 +283,7 @@ exec "$@"
                 f = open(os.path.join(self.infrabox_markup_dir, f))
                 r = requests.post("%s/markup" % self.api_server,
                                   headers=self.get_headers(),
+                                  verify=self.verify,
                                   files={file_name: f}, timeout=10)
                 c.collect(f.read(), show=True)
                 c.collect("%s\n" % r.text, show=True)
@@ -295,6 +298,7 @@ exec "$@"
                 file_name = os.path.basename(f)
                 r = requests.post("%s/badge" % self.api_server,
                                   headers=self.get_headers(),
+                                  verify=self.verify,
                                   files={file_name: open(os.path.join(self.infrabox_badge_dir, f))}, timeout=10)
                 c.collect("%s\n" % r.text, show=True)
 
@@ -596,7 +600,7 @@ exec "$@"
             collector.stop()
             self.post_stats(collector.get_result())
 
-    def build_docker_container(self, image_name):
+    def build_docker_container(self, image_name, cache_image):
         c = self.console
 
         cwd = self.job.get('base_path', None)
@@ -608,7 +612,7 @@ exec "$@"
         try:
             c.header("Build container", show=True)
 
-            cmd = ['docker', 'build', '-t', image_name, '.', '-f', self.job['dockerfile']]
+            cmd = ['docker', 'build', '--cache-from', cache_image, '-t', image_name, '.', '-f', self.job['dockerfile']]
 
             if 'build_arguments' in self.job and self.job['build_arguments']:
                 for name, value in self.job['build_arguments'].iteritems():
@@ -645,7 +649,7 @@ exec "$@"
         image_name_latest = image_name + ':latest'
 
         self.get_cached_image(image_name_latest)
-        self.build_docker_container(image_name_build)
+        self.build_docker_container(image_name_build, image_name_latest)
         self.cache_docker_image(image_name_build, image_name_latest)
         self.run_docker_container(image_name_build)
         self.deploy_container(image_name_build)
@@ -854,7 +858,7 @@ def main():
     get_env('INFRABOX_DOCKER_REGISTRY_ADMIN_PASSWORD')
     get_env('INFRABOX_DOCKER_REGISTRY_URL')
     get_env('INFRABOX_DASHBOARD_URL')
-    get_env('INFRABOX_GENERAL_NO_CHECK_CERTIFICATES')
+    get_env('INFRABOX_GENERAL_DONT_CHECK_CERTIFICATES')
     get_env('INFRABOX_LOCAL_CACHE_ENABLED')
     get_env('INFRABOX_JOB_MAX_OUTPUT_SIZE')
     get_env('INFRABOX_JOB_API_URL')

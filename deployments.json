@@ -240,5 +240,17 @@
         "docker_file": "src/docker-gc/Dockerfile",
         "build_only": true,
         "resources": { "limits": { "cpu": 1, "memory": 2048 } }
+    }, {
+        "type": "docker",
+        "name": "build-dashboard-client",
+        "docker_file": "src/new-dashboard/Dockerfile_build",
+        "resources": { "limits": { "cpu": 1, "memory": 2048 } },
+        "build_only": false
+    }, {
+        "type": "docker",
+        "name": "dashboard-client",
+        "docker_file": "src/new-dashboard/Dockerfile",
+        "resources": { "limits": { "cpu": 1, "memory": 2048 } },
+        "depends_on": ["build-dashboard-client"]
     }]
 }

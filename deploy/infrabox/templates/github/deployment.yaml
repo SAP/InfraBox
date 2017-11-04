@@ -5,15 +5,13 @@ metadata:
     name: infrabox-github
     namespace: {{ default "infrabox-system" .Values.general.system_namespace }}
     labels:
-        app: infrabox
-        infrabox.net/component: github
+        app: infrabox-github
 spec:
     replicas: 1
     template:
         metadata:
             labels:
-                app: infrabox
-                infrabox.net/component: github
+                app: infrabox-github
         spec:
             {{- if .Values.github.node_selector }}
             nodeSelector:

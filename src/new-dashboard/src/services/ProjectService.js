@@ -1,7 +1,9 @@
 import store from '../store'
-import events from '../events'
 
 import APIService from '../services/APIService'
+import NotificationService from './NotificationService'
+import Notification from '../models/Notification'
+import router from '../router'
 
 class ProjectService {
     init () {
@@ -18,6 +20,24 @@ class ProjectService {
         return this.loaded
     }
 
+    deleteProject (id) {
+        APIService.delete(`project/${id}`)
+        .then((response) => {
+            NotificationService.$emit('NOTIFICATION', new Notification(response))
+            store.commit('deleteProject', id)
+        })
+    }
+
+    addProject (name, priv, type) {
+        const d = { name: name, type: type, private: priv }
+        return APIService.post('project', d)
+        .then((response) => {
+            NotificationService.$emit('NOTIFICATION', new Notification(response))
+            this._loadProjects()
+            router.push('/')
+        })
+    }
+
     _findProjectByName (name) {
         for (let p of store.state.projects) {
             if (p.name === name) {
@@ -29,12 +49,9 @@ class ProjectService {
     }
 
     _loadProjects () {
-        return APIService.get('/api/dashboard/project')
+        return APIService.get('project')
         .then((response) => {
-            for (let p of response) {
-                store.commit('addProject', p)
-                events.listenJobs(p)
-            }
+            store.commit('setProjects', response)
         })
     }
 }

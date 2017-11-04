@@ -1,18 +1,18 @@
-{{ if .Values.docker_registry.enabled }}
+{{ if .Values.dashboard.enabled }}
 kind: Service
 apiVersion: v1
 metadata:
-    name: infrabox-docker-registry
+    name: infrabox-new-dashboard-client
     namespace: {{ default "infrabox-system" .Values.general.system_namespace }}
     labels:
-        app: infrabox-docker-registry
+        app: infrabox-new-dashboard-client
 spec:
     selector:
-        app: infrabox-docker-registry
+        app: infrabox-new-dashboard-client
     ports:
     -
         name: http-web
         protocol: TCP
-        port: 8080
-        targetPort: 8080
+        port: 80
+        targetPort: 80
 {{ end }}

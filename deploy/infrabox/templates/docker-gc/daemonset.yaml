@@ -5,16 +5,15 @@ metadata:
     name: infrabox-docker-gc
     namespace: {{ default "infrabox-system" .Values.general.system_namespace }}
     labels:
-        app: infrabox
-        infrabox.net/component: docker-gc
+        app: infrabox-docker-gc
 spec:
     selector:
         matchLabels:
-            name: infrabox-docker-gc
+            app: infrabox-docker-gc
     template:
         metadata:
             labels:
-                name: infrabox-docker-gc
+               app: infrabox-docker-gc
         spec:
             containers:
             -
