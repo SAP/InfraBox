@@ -1,7 +1,7 @@
 <template>
     <div v-if="loaded">
         <md-layout md-gutter>
-            <md-layout  v-for="project of $store.state.projects" md-column md-gutter md-flex-xsmall="100" md-flex-small="100" md-flex-medium="50" md-flex-large="33">
+            <md-layout  v-for="project of $store.state.projects" :key="project.id" md-column md-gutter md-flex-xsmall="100" md-flex-small="100" md-flex-medium="50" md-flex-large="33">
                 <md-table-card class="overview-card">
                     <ib-overview :key="project.id" :project="project"></ib-overview>
                 </md-table-card>
@@ -30,7 +30,6 @@ export default {
     }
 }
 </script>
-
 
 <style scoped>
     .overview-card {

@@ -10,7 +10,9 @@ import Job from './models/Job'
 Vue.use(Vuex)
 
 const state = {
-    projects: []
+    user: null,
+    projects: [],
+    jobs: {}
 }
 
 function findProject (state, projectId) {
@@ -137,6 +139,7 @@ function handleJobUpdate (state, event) {
                 d.dependencies
             )
             build.jobs.push(job)
+            state.jobs[d.id] = job
         }
 
         build._updateState()
@@ -144,8 +147,16 @@ function handleJobUpdate (state, event) {
     }
 }
 
-function addProject (state, project) {
-    state.projects.push(new Project(project.name, project.id, project.type))
+function setProjects (state, projects) {
+    for (const project of projects) {
+        const p = findProject(state, project.id)
+        if (p) {
+            continue
+        }
+
+        state.projects.push(new Project(project.name, project.id, project.type))
+        events.listenJobs(project)
+    }
 }
 
 function addJobs (state, jobs) {
@@ -157,52 +168,65 @@ function addJobs (state, jobs) {
     }
 }
 
-function addSecrets (state, data) {
+function setSecrets (state, data) {
     const project = data.project
     const secrets = data.secrets
-
-    if (!project.secrets) {
-        project.secrets = []
-    }
-
-    for (let s of secrets) {
-        project.secrets.push(s)
-    }
+    project.secrets = secrets
 }
 
-function addCollaborators (state, data) {
+function setCollaborators (state, data) {
     const project = data.project
     const collaborators = data.collaborators
-
-    if (!project.collaborators) {
-        project.collaborators = []
-    }
-
-    for (let s of collaborators) {
-        project.collaborators.push(s)
-    }
+    project.collaborators = collaborators
 }
 
-function addTokens (state, data) {
+function setTokens (state, data) {
     const project = data.project
     const tokens = data.tokens
+    project.tokens = tokens
+}
 
-    if (!project.tokens) {
-        project.tokens = []
+function setUser (state, user) {
+    state.user = user
+}
+
+function setGithubRepos (state, repos) {
+    state.user.githubRepos = repos
+    console.log(repos)
+}
+
+function handleConsoleUpdate (state, update) {
+    const job = state.jobs[update.job_id]
+    if (!job) {
+        return
     }
 
-    for (let s of tokens) {
-        project.tokens.push(s)
+    const lines = update.data.split('\n')
+    job._addLines(lines)
+}
+
+function deleteProject (state, projectId) {
+    let i = 0
+    for (; i < state.projects.length; ++i) {
+        const p = state.projects[i]
+        if (p.id === projectId) {
+            state.projects.splice(i, 1)
+            break
+        }
     }
 }
 
 const mutations = {
-    addProject,
+    setProjects,
     addJobs,
-    addSecrets,
-    addCollaborators,
-    addTokens,
-    handleJobUpdate
+    setSecrets,
+    setCollaborators,
+    setTokens,
+    handleJobUpdate,
+    setUser,
+    setGithubRepos,
+    handleConsoleUpdate,
+    deleteProject
 }
 
 const getters = {}
@@ -217,6 +241,10 @@ const store = new Vuex.Store({
 
 events.$on('NOTIFY_JOBS', (update) => {
     store.commit('handleJobUpdate', update)
+})
+
+events.$on('NOTIFY_CONSOLE', (update) => {
+    store.commit('handleConsoleUpdate', update)
 })
 
 export default store

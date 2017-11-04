@@ -44,11 +44,11 @@ router.post("/", pv, (req: Request, res: Response, next) => {
     let scope_push = req['body']['scope_push'];
     let scope_pull = req['body']['scope_pull'];
 
-    db.none(`INSERT INTO auth_token (description, scope_push, scope_pull, project_id)
-            VALUES ($1, $2, $3, $4)`,
+    db.one(`INSERT INTO auth_token (description, scope_push, scope_pull, project_id)
+            VALUES ($1, $2, $3, $4) RETURNING token`,
         [description, scope_push, scope_pull, project_id])
-    .then(() => {
-        return OK(res, "Successfully added token");
+    .then((r) => {
+        return OK(res, "Successfully added token", { token: r.token });
     }).catch(handleDBError(next));
 });
 

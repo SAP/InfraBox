@@ -44,7 +44,7 @@ class Section {
             t += "Output too large, only showing last 500 lines:\n";
         }
 
-        for (let l of this.lines_raw) {
+        for (const l of this.lines_raw) {
             t += l;
         }
 
@@ -126,7 +126,7 @@ export class ConsoleComponent implements OnInit, OnDestroy {
                 splitted.push.apply(splitted, l.split("\n"));
             }
 
-            for (let line of splitted) {
+            for (const line of splitted) {
                 if (line === "") {
                     continue;
                 }

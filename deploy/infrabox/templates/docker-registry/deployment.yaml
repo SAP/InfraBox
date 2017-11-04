@@ -5,15 +5,13 @@ metadata:
     name: infrabox-docker-registry
     namespace: {{ default "infrabox-system" .Values.general.system_namespace }}
     labels:
-        app: infrabox
-        infrabox.net/component: docker-registry
+        app: infrabox-docker-registry
 spec:
     replicas: 1
     template:
         metadata:
             labels:
-                app: infrabox
-                infrabox.net/component: docker-registry
+                app: infrabox-docker-registry
         spec:
             {{- if .Values.docker_registry.node_selector }}
             nodeSelector:
@@ -34,18 +32,6 @@ spec:
                 -
                     name: INFRABOX_VERSION
                     value: {{ .Values.docker_registry.auth_tag }}
-                livenessProbe:
-                    httpGet:
-                        path: /ping
-                        port: 8081
-                    initialDelaySeconds: 5
-                    periodSeconds: 30
-                readinessProbe:
-                    httpGet:
-                        path: /ping
-                        port: 8081
-                    initialDelaySeconds: 3
-                    periodSeconds: 3
             -
                 name: nginx
                 image: {{ .Values.general.docker_registry }}/{{ default "docker-registry-nginx" .Values.docker_registry.nginx_image }}:{{ .Values.docker_registry.nginx_tag }}

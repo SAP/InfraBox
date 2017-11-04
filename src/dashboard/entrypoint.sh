@@ -15,10 +15,6 @@ npm install
 echo "## compiling server"
 ./node_modules/gulp/bin/gulp.js build-server
 
-echo "## running webpack"
-./node_modules/webpack/bin/webpack.js
-rm -rf /tmp/*
-
 echo "## Copy to dist dir"
 cp -r /project/dist  /dashboard
 cp -r /project/node_modules /dashboard

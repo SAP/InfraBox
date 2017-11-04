@@ -5,19 +5,14 @@ metadata:
     name: infrabox-api
     namespace: {{ default "infrabox-system" .Values.general.system_namespace }}
     labels:
-        app: infrabox
-        infrabox.net/component: api
+        app: infrabox-api
 spec:
     selector:
-        app: infrabox
-        infrabox.net/component: api
-    type: NodePort
+        app: infrabox-api
     ports:
     -
+        name: http-web
         protocol: TCP
         port: 8080
         targetPort: 8080
-    {{ if .Values.api.node_port }}
-        nodePort: {{ .Values.api.node_port }}
-    {{ end }}
 {{ end }}

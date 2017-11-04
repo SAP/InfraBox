@@ -11,28 +11,13 @@ const cookieParser = require("cookie-parser");
 const bodyParser = require("body-parser");
 const compress = require("compression");
 const methodOverride = require("method-override");
-const swig = require("swig");
 const passport = require("passport");
-const favicon = require('serve-favicon');
 const validator = require('express-validator');
 
 module.exports = (app) => {
     const env = process.env.NODE_ENV || "development";
     app.locals.ENV = env;
     app.locals.ENV_DEVELOPMENT = env === "development";
-
-    app.engine("swig", swig.renderFile);
-    if (env === "development") {
-        app.set("view cache", false);
-        swig.setDefaults({
-            cache: false
-        });
-    }
-    app.set("views", config.root + "/views");
-    app.set("view engine", "swig");
-
-    app.use(favicon(config.root + "/public/favicon.ico"));
-    app.use(express.static(config.root + "/../client"));
 
     if (config.dashboard.express.use_request_logger) {
         app.use(morgan("dev", { stream: stream }));
@@ -52,29 +37,15 @@ module.exports = (app) => {
 
     app.use('/api/dashboard/project', require('../controllers/project/routes'));
     app.use('/api/dashboard/user', require('../controllers/user/routes'));
-    app.use('/account', require('../controllers/account/routes'));
+    app.use('/api/dashboard/account', require('../controllers/account/routes'));
 
     if (config.github.enabled) {
         app.use('/api/dashboard/github', require('../controllers/github/repos.controller'));
         app.use('/github/auth', require('../controllers/github/routes'));
     }
 
-    app.get("/dashboard/*", (req, res) => {
-        res.render("dashboard", {
-            INFRABOX_DOCS_URL: config.docs.url,
-            INFRABOX_API_URL: config.api.url,
-            INFRABOX_DASHBOARD_URL: config.dashboard.url,
-            INFRABOX_GITHUB_ENABLED: config.github.enabled,
-            INFRABOX_GERRIT_ENABLED: config.gerrit.enabled
-        });
-    });
-
     app.get('/', (req, res) => {
-        const show_login_form = config.account.signup.enabled || config.account.ldap.enabled;
-        res.render('index', {
-            github_login_enabled: config.github.login.enabled,
-            show_login_form: show_login_form
-        });
+        res.json({});
     });
 
     app.get('/ping', (req, res) => {

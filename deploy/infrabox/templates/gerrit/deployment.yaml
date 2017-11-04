@@ -5,15 +5,13 @@ metadata:
     name: infrabox-gerrit
     namespace: {{ default "infrabox-system" .Values.general.system_namespace }}
     labels:
-        app: infrabox
-        infrabox.net/component: gerrit
+        app: infrabox-gerrit
 spec:
     replicas: 1
     template:
         metadata:
             labels:
-                app: infrabox
-                infrabox.net/component: gerrit
+                app: infrabox-gerrit
         spec:
             {{- if .Values.gerrit.node_selector }}
             nodeSelector:

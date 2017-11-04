@@ -40,7 +40,7 @@
                     <md-layout md-flex-xsmall="100" md-flex-small="100" md-flex-medium="100" md-flex-large="75">
                         <md-tabs md-fixed class="md-transparent">
                             <md-tab id="console" md-label="Console" class="widget-container">
-                                <ib-console></ib-console>
+                                <ib-console :job="data.job"></ib-console>
                             </md-tab>
                             <md-tab id="test-list" md-label="Tests">
                                 tests
@@ -71,33 +71,30 @@
                                   </ib-duration>
                                 </span>
                             </md-list-item>
-                            <md-list-item class="p-l-md p-r-md">
+                            <md-list-item v-if="data.build.commit" class="p-l-md p-r-md">
                                 <span class="md-body-2"><i class="fa fa-list-ol fa-fw p-r-xl" aria-hidden="true"></i>
                                 Commit</span>
                                 <span class="md-list-action">
                                     <ib-commit-sha :sha="data.build.commit.id"></ib-commit-sha>
                                 </span>
                             </md-list-item>
-                            <md-list-item class="p-l-md p-r-md">
+                            <md-list-item v-if="data.build.commit" class="p-l-md p-r-md">
                                 <span class="md-body-2"><i class="fa fa-user fa-fw p-r-xl" aria-hidden="true"></i>
                                 Author</span>
                                 <span class="md-list-action">
                                     {{ data.build.commit.author_name }}
                                 </span>
                             </md-list-item>
-                            <md-list-item class="p-l-md p-r-md">
+                            <md-list-item v-if="data.build.commit" class="p-l-md p-r-md">
                                 <span class="md-body-2"><i class="fa fa-code-fork fa-fw p-r-xl" aria-hidden="true"></i>
                                 Branch</span>
                                 <span class="md-list-action">
                                     {{ data.build.commit.branch }}
                                 </span>
                             </md-list-item>
-
                         </md-list>
-
                     </md-layout>
                 </md-layout>
-
             </md-card-content>
 		</md-card>
     </div>
@@ -139,6 +136,7 @@ export default {
                     })
                     .then((j) => {
                         job = j
+                        job.listenConsole()
                         return {
                             project,
                             build,

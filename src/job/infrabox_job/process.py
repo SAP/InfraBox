@@ -17,6 +17,10 @@ class ApiConsole(object):
         self.is_finish = False
         self.enable_logging = False
 
+        self.verify = True
+        if os.environ.get('INFRABOX_GENERAL_DONT_CHECK_CERTIFICATES', 'false') == 'true':
+            self.verify = False
+
     def collect(self, line, show=False):
         if self.enable_logging:
             sys.stdout.write(line)
@@ -38,7 +42,10 @@ class ApiConsole(object):
 
     def execute(self, command, cwd=None, show=False, env=None, background=False, ignore_error=False):
         self.collect(' '.join(command) + '\n', show=False)
-        process = subprocess.Popen(command, shell=False, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, cwd=cwd, env=env, universal_newlines=True)
+        process = subprocess.Popen(command, shell=False,
+                                   stdout=subprocess.PIPE,
+                                   stderr=subprocess.STDOUT,
+                                   cwd=cwd, env=env, universal_newlines=True)
 
         if background:
             return
@@ -95,7 +102,10 @@ class ApiConsole(object):
                 'x-infrabox-token': os.environ['INFRABOX_JOB_API_TOKEN']
             }
 
-            requests.post("%s/consoleupdate" % api_server, headers=headers, json=payload).json()
+            requests.post("%s/consoleupdate" % api_server,
+                          headers=headers,
+                          verify=self.verify,
+                          json=payload).json()
         except Exception as e:
             print e
 

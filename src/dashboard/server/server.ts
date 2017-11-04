@@ -61,7 +61,9 @@ export function createServer(print: boolean) {
     server['listeners']['job'] = new JobListener();
 
     require("./config/express")(app, config);
-    const io = require("socket.io").listen(server);
+    const io = require("socket.io").listen(server, {
+        path: "/live/dashboard"
+    });
 
     io.on("connection", (socket) => {
         logger.info("New socket connection");
