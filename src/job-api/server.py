@@ -400,7 +400,7 @@ def get_job_data(job_id):
 
     return data
 
-@app.route("/source")
+@app.route("/api/job/source")
 def get_source():
     token = validate_token()
 
@@ -448,7 +448,7 @@ def get_source():
 
     return send_file(source_zip)
 
-@app.route("/cache", methods=['GET', 'POST'])
+@app.route("/api/job/cache", methods=['GET', 'POST'])
 def get_cache():
     token = validate_token()
 
@@ -517,7 +517,7 @@ def get_cache():
     else:
         return "Not found", 404
 
-@app.route('/output', methods=['POST'])
+@app.route('/api/job/output', methods=['POST'])
 def upload_output():
     token = validate_token()
 
@@ -557,7 +557,7 @@ def upload_output():
 
     return "OK"
 
-@app.route("/output/<parent_job_id>")
+@app.route("/api/job/output/<parent_job_id>")
 def get_output_of_job(parent_job_id):
     token = validate_token()
 
@@ -631,7 +631,7 @@ def get_output_of_job(parent_job_id):
 
     return send_file(output_zip)
 
-@app.route("/job")
+@app.route("/api/job/job")
 def get_job():
     token = validate_token()
 
@@ -643,7 +643,7 @@ def get_job():
 
     state = job_data['job']['state']
     if state in ("finished", "error", "failure", "skipped", "killed"):
-        return jsonify({}), 404
+        return jsonify({}), 409
 
     return jsonify(job_data)
 
@@ -655,7 +655,7 @@ def ping():
 def ping2():
     return "ok"
 
-@app.route("/setrunning", methods=['POST'])
+@app.route("/api/job/setrunning", methods=['POST'])
 def set_running():
     token = validate_token()
 
@@ -688,7 +688,7 @@ def find_leaf_jobs(jobs):
     return leaf_jobs
 
 
-@app.route("/create_jobs", methods=['POST'])
+@app.route("/api/job/create_jobs", methods=['POST'])
 def create_jobs():
     token = validate_token()
 
@@ -921,7 +921,7 @@ def create_jobs():
     c.commit()
     return "Successfully create jobs"
 
-@app.route("/consoleupdate", methods=['POST'])
+@app.route("/api/job/consoleupdate", methods=['POST'])
 def post_console():
     output = request.json['output']
 
@@ -958,7 +958,7 @@ def post_console():
 
     return jsonify({})
 
-@app.route("/stats", methods=['POST'])
+@app.route("/api/job/stats", methods=['POST'])
 def post_stats():
     token = validate_token()
 
@@ -995,7 +995,7 @@ def insert(c, cols, rows, table):
     cursor.execute(stmt)
     cursor.close()
 
-@app.route('/markdown', methods=['POST'])
+@app.route('/api/job/markdown', methods=['POST'])
 def upload_markdown():
     token = validate_token()
 
@@ -1039,7 +1039,7 @@ def upload_markdown():
         conn.commit()
         return ""
 
-@app.route('/markup', methods=['POST'])
+@app.route('/api/job/markup', methods=['POST'])
 def upload_markup():
     token = validate_token()
 
@@ -1091,7 +1091,7 @@ def upload_markup():
 
     return ""
 
-@app.route('/badge', methods=['POST'])
+@app.route('/api/job/badge', methods=['POST'])
 def upload_badge():
     token = validate_token()
 
@@ -1145,7 +1145,7 @@ def upload_badge():
         return ""
 
 
-@app.route('/testresult', methods=['POST'])
+@app.route('/api/job/testresult', methods=['POST'])
 def upload_testresult():
     token = validate_token()
 
@@ -1297,7 +1297,7 @@ def upload_testresult():
     return "", 200
 
 
-@app.route("/setfinished", methods=['POST'])
+@app.route("/api/job/setfinished", methods=['POST'])
 def set_finished():
     token = validate_token()
 

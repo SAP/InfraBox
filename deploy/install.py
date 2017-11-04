@@ -395,7 +395,7 @@ class Kubernetes(Install):
         if self.args.api_url:
             self.set('api.url', self.args.api_url)
         else:
-            self.set('api.url', self.args.root_url + '/api/cli/')
+            self.set('api.url', self.args.root_url + '/api/cli')
 
         self.set('api.tag', self.args.version)
 
@@ -425,7 +425,7 @@ class Kubernetes(Install):
         self.set('docs.tag', self.args.version)
 
     def setup_general(self):
-        self.set('general.no_check_certificates', self.args.general_no_check_certificates)
+        self.set('general.dont_check_certificates', self.args.general_dont_check_certificates)
         self.set('general.worker_namespace', self.args.general_worker_namespace)
         self.set('general.system_namespace', self.args.general_system_namespace)
 
@@ -446,7 +446,7 @@ class Kubernetes(Install):
         if self.args.job_api_url:
             self.set('job.api.url', self.args.job_api_url)
         else:
-            self.set('job.api.url', self.args.root_url + '/api/job/')
+            self.set('job.api.url', self.args.root_url + '/api/job')
 
         self.set('job.api.tag', self.args.version)
 
@@ -645,7 +645,7 @@ def main():
     parser.add_argument('--root-url', required=True)
 
     # General
-    parser.add_argument('--general-no-check-certificates', action='store_true', default=False)
+    parser.add_argument('--general-dont-check-certificates', action='store_true', default=False)
     parser.add_argument('--general-worker-namespace', default='infrabox-worker')
     parser.add_argument('--general-system-namespace', default='infrabox-system')
 
@@ -759,6 +759,12 @@ def main():
     if os.path.exists(args.o):
         print "%s does already exist" % args.o
         sys.exit(1)
+
+    while True:
+        if args.root_url.endswith('/'):
+            args.root_url = args.root_url[:-1]
+        else:
+            break
 
     if args.platform == 'docker-compose':
         d = DockerCompose(args)

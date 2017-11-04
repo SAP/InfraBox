@@ -33,7 +33,7 @@ module.exports = (app) => {
     app.use(compress());
     app.use(methodOverride());
 
-    app.use('/v1', require('../controllers/routes'));
+    app.use('/api/cli/v1', require('../controllers/routes'));
 
     app.get('/', (req, res) => {
         // used by other services to check if the server is already up
