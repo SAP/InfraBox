@@ -109,8 +109,8 @@ class Scheduler(object):
             "name": "INFRABOX_JOB_ID",
             "value": job_id
         }, {
-            "name": "INFRABOX_GENERAL_NO_CHECK_CERTIFICATES",
-            "value": os.environ['INFRABOX_GENERAL_NO_CHECK_CERTIFICATES']
+            "name": "INFRABOX_GENERAL_DONT_CHECK_CERTIFICATES",
+            "value": os.environ['INFRABOX_GENERAL_DONT_CHECK_CERTIFICATES']
         }, {
             "name": "INFRABOX_JOB_API_URL",
             "value": os.environ['INFRABOX_JOB_API_URL']
@@ -694,7 +694,7 @@ def main():
     get_env('INFRABOX_DATABASE_PORT')
     get_env('INFRABOX_DASHBOARD_URL')
     get_env('INFRABOX_DOCKER_REGISTRY_URL')
-    get_env('INFRABOX_GENERAL_NO_CHECK_CERTIFICATES')
+    get_env('INFRABOX_GENERAL_DONT_CHECK_CERTIFICATES')
     get_env('INFRABOX_GENERAL_WORKER_NAMESPACE')
     get_env('INFRABOX_JOB_API_URL')
     get_env('INFRABOX_JOB_API_SECRET')

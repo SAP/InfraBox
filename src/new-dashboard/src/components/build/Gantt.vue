@@ -4,6 +4,8 @@
 </template>
 
 <script>
+import router from '../../router'
+
 import Raphael from 'raphael'
 /* eslint-disable */
 class StateFormat {
@@ -163,14 +165,15 @@ class StateFormat {
 
 class GanttJob {
     constructor (id, name, dependencies, level,
-        state, project_id, build_id) {
+        state, projectName, buildNumber, buildRestartCounter) {
         this.id = id
         this.name = name
         this.dependencies = dependencies
         this.level = level
         this.state = state
-        this.project_id = project_id
-        this.build_id = build_id
+        this.projectName = projectName
+        this.buildNumber = buildNumber
+        this.buildRestartCounter = buildRestartCounter
         this.parentElements = []
     }
 }
@@ -266,7 +269,8 @@ export class GanttChart {
             }
         }
 
-        const job = new GanttJob(j.id, j.name, j.dependencies, 0, j.state, j.project.id, j.build.id)
+        const job = new GanttJob(j.id, j.name, j.dependencies, 0, j.state, j.project.name,
+                                 j.build.number, j.build.restartCounter)
         this.jobs.push(job)
     }
 
@@ -395,7 +399,10 @@ export class GanttChart {
             })
 
             jobLabel.click(() => {
-                this.router.navigate(['/dashboard', 'project', job.project_id, 'build', job.build_id, 'job', job.id])
+                router.push('/project/' + job.projectName +
+                            '/build/' + job.buildNumber +
+                            '/' + job.buildRestartCounter +
+                            '/job/' + job.id)
             })
 
             const labelLength = jobLabel.getBBox().width
@@ -405,7 +412,10 @@ export class GanttChart {
         this.setNodeAttributes(job)
 
         s.click(() => {
-            this.router.navigate(['/dashboard', 'project', job.project_id, 'build', job.build_id, 'job', job.id])
+            router.push('/project/' + job.projectName +
+                        '/build/' + job.buildNumber +
+                        '/' + job.buildRestartCounter +
+                        '/job/' + job.id)
         })
 
         const hoverEnter = () => {

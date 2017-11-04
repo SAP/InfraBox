@@ -16,10 +16,9 @@ general:
     # by all hosts which run your kubernetes cluster.
     docker_registry: <REQUIRED>
 
-    # Set it to false if certificates of your
-    # Github enterprise should not be checked (cause they are self signed)
-    # no_check_certificates: false
-
+    # Set it to true if certificates of your Github Enterprise the SSL
+    # certificate you are using for InfraBox itself are self signed.
+    # dont_check_certificates: false
 
     log:
         # If true the log output will be formatted for google's stackdriver

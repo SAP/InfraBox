@@ -119,7 +119,7 @@ spec:
                 -
                     name: INFRABOX_DOCKER_REGISTRY_URL
                     value: {{ .Values.docker_registry.url }}
-                {{ if .Values.general.no_check_certificates }}
+                {{ if .Values.general.dont_check_certificates }}
                 -
                     name: NODE_TLS_REJECT_UNAUTHORIZED
                     value: "0"

@@ -103,7 +103,7 @@ export default class Job {
             let date = null
 
             if (idx >= 0) {
-                header = line.substr(idx + 1)
+                header = line.substr(idx + 3)
                 const d = line.substr(0, idx)
                 date = this._getTime(d)
                 isSection = true
@@ -111,7 +111,7 @@ export default class Job {
 
             idx = line.indexOf('|Step')
             if (idx >= 0) {
-                header = line.substr(idx + 1)
+                header = line.substr(idx + 5)
                 const d = line.substr(0, idx)
                 date = this._getTime(d)
                 isSection = true
@@ -126,6 +126,11 @@ export default class Job {
                 this.linesProcessed++
                 this.sections.push(this.currentSection)
             } else {
+                if (!this.currentSection) {
+                    this.currentSection = new Section(this.linesProcessed, 'Console Output', date)
+                    this.sections.push(this.currentSection)
+                }
+
                 this.currentSection.addLine(line)
                 this.linesProcessed++
             }

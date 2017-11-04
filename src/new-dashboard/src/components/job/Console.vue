@@ -26,10 +26,10 @@
                             </md-card-expand>
                         </md-table-cell>
                         <md-table-cell class="console-table text-top">
-                            <div class="p-t-sm">10 lines</div>
+                            <div class="p-t-sm">{{ section.linesInSection }} lines</div>
                         </md-table-cell>
                         <md-table-cell class="console-table text-top">
-                            <div class="p-t-sm">1023 sec</div>
+                            <div class="p-t-sm">{{ section.duration }} seconds</div>
                         </md-table-cell>
                     </md-table-row>
                 </md-table-body>

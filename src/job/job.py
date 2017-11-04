@@ -149,7 +149,7 @@ exec "$@"
 
     def clone_repo(self, commit, clone_url, branch, ref):
         c = self.console
-        if os.environ['INFRABOX_GENERAL_NO_CHECK_CERTIFICATES'] == 'true':
+        if os.environ['INFRABOX_GENERAL_DONT_CHECK_CERTIFICATES'] == 'true':
             c.execute(('git', 'config', '--global', 'http.sslVerify', 'false'), show=True)
 
         cmd = ['git', 'clone', '--depth=10']
@@ -253,6 +253,7 @@ exec "$@"
                 c.collect("%s\n" % tr_path, show=True)
                 r = requests.post("%s/testresult" % self.api_server,
                                   headers=self.get_headers(),
+                                  verify=self.verify,
                                   files={"data": open(tr_path)}, timeout=10)
                 c.collect("%s\n" % r.text, show=True)
 
@@ -267,6 +268,7 @@ exec "$@"
                 file_name = os.path.basename(f)
                 r = requests.post("%s/markdown" % self.api_server,
                                   headers=self.get_headers(),
+                                  verify=self.verify,
                                   files={file_name: open(os.path.join(self.infrabox_markdown_dir, f))}, timeout=10)
                 c.collect("%s\n" % r.text, show=False)
 
@@ -281,6 +283,7 @@ exec "$@"
                 f = open(os.path.join(self.infrabox_markup_dir, f))
                 r = requests.post("%s/markup" % self.api_server,
                                   headers=self.get_headers(),
+                                  verify=self.verify,
                                   files={file_name: f}, timeout=10)
                 c.collect(f.read(), show=True)
                 c.collect("%s\n" % r.text, show=True)
@@ -295,6 +298,7 @@ exec "$@"
                 file_name = os.path.basename(f)
                 r = requests.post("%s/badge" % self.api_server,
                                   headers=self.get_headers(),
+                                  verify=self.verify,
                                   files={file_name: open(os.path.join(self.infrabox_badge_dir, f))}, timeout=10)
                 c.collect("%s\n" % r.text, show=True)
 
@@ -854,7 +858,7 @@ def main():
     get_env('INFRABOX_DOCKER_REGISTRY_ADMIN_PASSWORD')
     get_env('INFRABOX_DOCKER_REGISTRY_URL')
     get_env('INFRABOX_DASHBOARD_URL')
-    get_env('INFRABOX_GENERAL_NO_CHECK_CERTIFICATES')
+    get_env('INFRABOX_GENERAL_DONT_CHECK_CERTIFICATES')
     get_env('INFRABOX_LOCAL_CACHE_ENABLED')
     get_env('INFRABOX_JOB_MAX_OUTPUT_SIZE')
     get_env('INFRABOX_JOB_API_URL')
