@@ -1,44 +1,43 @@
 <template>
     <div v-if="data">
         <md-card class="main-card">
-            <md-card-header class="main-card-header">
-                <md-toolbar class="md-transparent">
-                    <md-card-header-text>
-                        <h3 class="md-title">
-                            <router-link :to="{name: 'ProjectDetail', params: {
-                                projectName: data.project.name
-                            }}">
-                                <span v-if="data.project.isGit()"><i class="fa fa-github"></i></span>
-                                <span v-if="!data.project.isGit()"><i class="fa fa-home"></i></span>
-                                {{ data.project.name }}
-                            </router-link>
-                            / <router-link :to="{name: 'BuildDetail', params: {
-                                        projectName: data.project.name,
-                                        buildNumber: data.build.number,
-                                        buildRestartCounter: data.build.restartCounter
-                                    }}">
-                                Build {{ data.build.number }}.{{ data.build.restartCounter }}
-                            </router-link>
-                            / <!--<router-link :to="{name: 'JobDetail', params: {
-                                        projectName: data.project.name,
-                                        buildNumber: data.build.number,
-                                        buildRestartCounter: data.build.restartCounter,
-                                        jobId: data.job.id
-                                    }}">
-                                Job
-                            </router-link>-->
-                            {{ data.job.name}}
-                        </h3>
-                    </md-card-header-text>
-
-                    <md-button class="md-icon-button" v-on:click="data.job.abort()"><md-icon>not_interested</md-icon><md-tooltip md-direction="bottom">Stop Job</md-tooltip></md-button>
-                    <md-button class="md-icon-button" v-on:click="data.job.restart()"><md-icon>replay</md-icon><md-tooltip md-direction="bottom">Restart Job</md-tooltip></md-button>
-                    <md-button class="md-icon-button" v-on:click="data.job.clearCache()"><md-icon>delete_sweep</md-icon><md-tooltip md-direction="bottom">Clear Cache</md-tooltip></md-button>
-                </md-toolbar>
+            <md-card-header class="main-card-header" style="padding-bottom: 10px">
+            <md-card-header-text>
+                <h3 class="md-title card-title">
+                <router-link :to="{name: 'ProjectDetail', params: {
+                projectName: data.project.name
+                }}">
+                    <span v-if="data.project.isGit()"><i class="fa fa-github"></i></span>
+                    <span v-if="!data.project.isGit()"><i class="fa fa-home"></i></span>
+                    {{ data.project.name }}
+                </router-link>
+                / <router-link :to="{name: 'BuildDetail', params: {
+                    projectName: data.project.name,
+                    buildNumber: data.build.number,
+                    buildRestartCounter: data.build.restartCounter
+                    }}">
+                    Build {{ data.build.number }}.{{ data.build.restartCounter }}
+                </router-link>
+                / <!--<router-link :to="{name: 'JobDetail', params: {
+                projectName: data.project.name,
+                buildNumber: data.build.number,
+                buildRestartCounter: data.build.restartCounter,
+                jobId: data.job.id
+                }}">
+                Job
+                </router-link>-->
+                {{ data.job.name}}
+                </h3>
+            </md-card-header-text>
+            <md-toolbar class="md-transparent">
+                <md-button class="md-icon-button" v-on:click="data.job.abort()"><md-icon>not_interested</md-icon><md-tooltip md-direction="bottom">Stop Job</md-tooltip></md-button>
+                <md-button class="md-icon-button" v-on:click="data.job.restart()"><md-icon>replay</md-icon><md-tooltip md-direction="bottom">Restart Job</md-tooltip></md-button>
+                <md-button class="md-icon-button" v-on:click="data.job.clearCache()"><md-icon>delete_sweep</md-icon><md-tooltip md-direction="bottom">Clear Cache</md-tooltip></md-button>
+            </md-toolbar>
             </md-card-header>
             <md-card-content>
                 <md-layout>
-                    <md-layout md-flex-xsmall="100" md-flex-small="75" md-flex-medium="75" md-flex-large="75">
+                    <md-layout md-flex-xsmall="100" md-flex-small="100" md-flex-medium="100" md-flex-large="75">
                         <md-tabs md-fixed class="md-transparent">
                             <md-tab id="console" md-label="Console" class="widget-container">
                                 <ib-console :job="data.job"></ib-console>
@@ -54,7 +53,7 @@
                             </md-tab>
                         </md-tabs>
                     </md-layout>
-                    <md-layout md-flex-xsmall="100" md-flex-small="25" md-flex-medium="25" md-flex-large="25">
+                    <md-layout md-flex-xsmall="100" md-flex-small="100" md-flex-medium="100" md-flex-large="25">
                         <md-list class="md-dense widget-container" style="margin: 16px">
                             <ib-state-big :state="data.job.state"></ib-state-big>
                             <md-list-item class="p-l-md p-r-md p-t-md">

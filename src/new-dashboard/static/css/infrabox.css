@@ -16,8 +16,7 @@
     background-color: #ffffff;
 }
 
-.bg-success,
-.bg-blue {
+.bg-success {
     background-color: #1ab394;
     color: #ffffff;
 }
@@ -304,4 +303,12 @@
 
 .text-top {
     vertical-align: text-top;
+}
+
+pre.wrap-text {
+    white-space: pre-wrap;       /* Since CSS 2.1 */
+    white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */
+    white-space: -pre-wrap;      /* Opera 4-6 */
+    white-space: -o-pre-wrap;    /* Opera 7 */
+    word-wrap: break-word;
 }
