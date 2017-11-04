@@ -34,9 +34,9 @@
                         <md-table-cell v-if="project.isGit()">
                             {{ b.commit.branch }}
                         </md-table-cell>
-                        <md-table-cell><ib-date :date="b.start_date"></ib-date></md-table-cell>
+                        <md-table-cell><ib-date :date="b.startDate"></ib-date></md-table-cell>
                         <md-table-cell>
-                            <ib-duration :start="b.start_date" :end="b.end_date"></ib-duration>
+                            <ib-duration :start="b.startDate" :end="b.endDate"></ib-duration>
                         </md-table-cell>
                         <md-table-cell v-if="project.isGit()">
                             <ib-gitjobtype :build="b"></ib-gitjobtype>

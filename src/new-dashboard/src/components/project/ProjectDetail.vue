@@ -75,5 +75,5 @@ export default {
       background-color: #fff;
     }
   }
-.label-with-new-badge{font-weight:bolder}.new-badge{background-color:red;color:#fff;padding:3px;border-radius:3px}
+.label-with-new-badge{font-weight:bolder}.new-badge{background-color:#23c6c8;color:#fff;padding:4px;border-radius:25%}
 </style>
