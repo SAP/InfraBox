@@ -2,19 +2,18 @@
     <div v-if="data">
 		<md-card class="main-card">
             <md-card-header class="main-card-header" style="padding-bottom: 10px">
-                    <md-card-header-text>
-                        <h3 class="md-title card-title">
-                            <router-link :to="{name: 'ProjectDetail', params: {
-                                projectName: data.project.name
-                            }}">
-                                <span v-if="data.project.isGit()"><i class="fa fa-github"></i></span>
-                                <span v-if="!data.project.isGit()"><i class="fa fa-home"></i></span>
-                                {{ data.project.name }}
-                            </router-link>
-                            / Build {{ data.build.number }}.{{ data.build.restartCounter }}
-                        </h3>
-                    </md-card-header-text>
-
+                <md-card-header-text>
+                    <h3 class="md-title card-title">
+                        <router-link :to="{name: 'ProjectDetail', params: {
+                            projectName: data.project.name
+                        }}">
+                            <span v-if="data.project.isGit()"><i class="fa fa-github"></i></span>
+                            <span v-if="!data.project.isGit()"><i class="fa fa-home"></i></span>
+                            {{ data.project.name }}
+                        </router-link>
+                        / Build {{ data.build.number }}.{{ data.build.restartCounter }}
+                    </h3>
+                </md-card-header-text>
                 <md-toolbar class="md-transparent">
                     <md-button class="md-icon-button" v-on:click="data.build.abort()"><md-icon>not_interested</md-icon><md-tooltip md-direction="bottom">Stop Build</md-tooltip></md-button>
                     <md-button class="md-icon-button" v-on:click="data.build.restart()"><md-icon>replay</md-icon><md-tooltip md-direction="bottom">Restart Build</md-tooltip></md-button>
