@@ -26,9 +26,10 @@ const AddProjectSchema = {
     id: "/EnvVarSchema",
     type: "object",
     properties: {
-        name: { type: "string" },
+        name: { type: "string", pattern: "^[0-9a-zA-Z_-]+$", minLength: 5, maxLength: 20 },
         private: { type: "boolean" },
-        type: ["upload", "gerrit"]
+        type: ["upload", "gerrit"],
+        github_repo_name: { type: "string" }
     },
     required: ["name", "private", "type"]
 };
@@ -38,12 +39,13 @@ router.post("/", pv, (req: Request, res: Response, next) => {
     const envResult = v.validate(req['body'], AddProjectSchema);
 
     if (envResult.errors.length > 0) {
-        return next(new BadRequest("Invalid values"));
+        return next(new BadRequest(envResult.errors[0]));
     }
 
     const name = req['body']['name'];
     const typ = req['body']['type'];
     const priv = req['body']['private'] === 'true';
+    const github_repo_name = req['body']['github_repo_name'];
 
     const user_id = req['user'].id;
     let project_id = null;
@@ -62,7 +64,11 @@ router.post("/", pv, (req: Request, res: Response, next) => {
             }
 
             if (typ === "github") {
-                const split = name.split('/');
+                if (!github_repo_name) {
+                    throw new BadRequest("github_repo_name not set");
+                }
+
+                const split = github_repo_name.split('/');
                 const owner = split[0];
                 const repo_name = split[1];
 
