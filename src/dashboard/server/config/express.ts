@@ -39,10 +39,21 @@ module.exports = (app) => {
     app.use('/api/dashboard/user', require('../controllers/user/routes'));
     app.use('/api/dashboard/account', require('../controllers/account/routes'));
 
+    app.use('/api/dashboard/account', require('../controllers/account/routes'));
+
     if (config.github.enabled) {
         app.use('/api/dashboard/github', require('../controllers/github/repos.controller'));
         app.use('/github/auth', require('../controllers/github/routes'));
     }
+
+    app.get('/api/dashboard/settings', (req, res) => {
+        res.json({
+            INFRABOX_GITHUB_ENABLED: config.github.enabled,
+            INFRABOX_GERRIT_ENABLED: config.gerrit.enabled,
+            INFRABOX_ACCOUNT_SIGNUP_ENABLED: config.account.signup.enabled,
+            INFRABOX_ACCOUNT_LDAP_ENABLED: config.account.ldap.enabled
+        });
+    });
 
     app.get('/', (req, res) => {
         res.json({});

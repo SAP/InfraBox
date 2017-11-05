@@ -11,7 +11,7 @@
                         </div>
                         <div class="md-subheading text-center">Welcome to InfraBox!</div>
                     </md-card-header>
-                    <md-card-content class="m-xl">
+                    <md-card-content class="m-xl" v-if="$store.state.settings.INFRABOX_ACCOUNT_SIGNUP_ENABLED || $store.state.settings.INFRABOX_ACCOUNT_LDAP_ENABLED">
                         <form novalidate @submit.stop.prevent="submit">
                             <md-input-container :class="{'md-input-invalid': !mailValid}">
                                 <md-input type="email" v-model="mail" required/>
@@ -30,9 +30,20 @@
                 <md-card-content class="m-xl">
                     <h3 class="md-subheading">Don't have an InfraBox account?</h3>
                     <div class=" m-b-md"></div>
-                    <md-button md-theme="default" class="md-raised md-primary"><i class="fa fa-fw fa-github"></i><span> Login with GitHub</span></md-button>
-                    <md-button disabled>or</md-button>
-                    <md-button md-theme="default" class="md-raised md-primary"><i class="fa fa-fw fa-user-plus"></i><span> Signup</span></md-button>
+                    <md-button @click="loginGithub()"
+                        v-if="$store.state.settings.INFRABOX_GITHUB_ENABLED"
+                        md-theme="default"
+                        class="md-raised md-primary">
+                        <i class="fa fa-fw fa-github"></i>
+                        <span> Login with GitHub</span>
+                    </md-button>
+                    <div v-if="$store.state.settings.INFRABOX_GITHUB_ENABLED && $store.state.settings.INFRABOX_ACCOUNT_SIGNUP_ENABLED">
+                        <md-button disabled>or</md-button>
+                    </div>
+                    <md-button md-theme="default"
+                        v-if="$store.state.settings.INFRABOX_ACCOUNT_SIGNUP_ENABLED"
+                        class="md-raised md-primary">
+                        <i class="fa fa-fw fa-user-plus"></i><span> Signup</span></md-button>
                 </md-card-content>
             </md-card>
         </md-layout>
@@ -41,8 +52,11 @@
 </template>
 
 <script>
+import store from '../../store'
+
 export default {
     name: 'Login',
+    store,
     data: () => ({
         mail: '',
         mailValid: false,
@@ -60,6 +74,11 @@ export default {
             // eslint-disable-next-line
             var pwRegex = /^.{5,20}$/
             this.pwValid = pwRegex.test(this.password)
+        }
+    },
+    methods: {
+        loginGithub () {
+            window.location.href = '/github/auth/'
         }
     }
 }
