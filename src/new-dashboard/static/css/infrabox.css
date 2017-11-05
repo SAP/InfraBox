@@ -238,6 +238,22 @@
     padding: 20px;
 }
 
+.p-l-lg {
+    padding-left: 20px;
+}
+
+.p-r-lg {
+    padding-right: 20px;
+}
+
+.p-b-lg {
+    padding-bottom: 20px;
+}
+
+.p-t-lg {
+    padding-top: 20px;
+}
+
 .p-xl {
     padding: 25px;
 }
