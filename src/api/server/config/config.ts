@@ -64,8 +64,7 @@ export let config = {
         }
     },
     github: {
-        enabled: getFromEnvBool("INFRABOX_GITHUB_ENABLED", false),
-        trigger_host: getFromEnv("INFRABOX_GITHUB_TRIGGER_HOST", "localhost")
+        enabled: getFromEnvBool("INFRABOX_GITHUB_ENABLED", false)
     },
     docker_registry: {
         url: getFromEnv("INFRABOX_DOCKER_REGISTRY_URL")
