@@ -73,7 +73,7 @@ class Trigger(object):
         build_id = result[0][0]
         return build_id
 
-    def create_job(self, commit_id, clone_url, build_id, project_id, github_private_repo, branch):
+    def create_job(self, commit_id, clone_url, build_id, project_id, github_private_repo, branch, env=None):
         git_repo = {
             "commit": commit_id,
             "clone_url": clone_url,
@@ -84,10 +84,10 @@ class Trigger(object):
         self.execute('''
             INSERT INTO job (id, state, build_id, type,
                              name, project_id, build_only,
-                             dockerfile, cpu, memory, repo)
+                             dockerfile, cpu, memory, repo, env_var)
             VALUES (gen_random_uuid(), 'queued', %s, 'create_job_matrix',
-                    'Create Jobs', %s, false, '', 1, 1024, %s)
-        ''', [build_id, project_id, json.dumps(git_repo)], fetch=False)
+                    'Create Jobs', %s, false, '', 1, 1024, %s, %s)
+        ''', [build_id, project_id, json.dumps(git_repo), env], fetch=False)
 
 
     def create_push(self, c, repository, branch, tag):
@@ -266,13 +266,12 @@ class Trigger(object):
                     id, message, repository_id, timestamp,
                     author_name, author_email, author_username,
                     committer_name, committer_email, committer_username, url, project_id,
-                    branch, pull_request_id, github_status_url, env_var)
+                    branch, pull_request_id, github_status_url)
                 VALUES (%s, %s, %s,
                     %s, %s, %s,
                     %s, %s, %s,
                     %s, %s, %s,
-                    %s, %s, %s,
-                    %s)
+                    %s, %s, %s)
                 RETURNING id
             ''', [hc['sha'], hc['commit']['message'],
                   repo_id, hc['commit']['author']['date'], hc['commit']['author']['name'],
@@ -280,7 +279,7 @@ class Trigger(object):
                   hc['commit']['committer']['name'],
                   hc['commit']['committer']['email'],
                   committer_login, hc['commit']['url'], project_id, branch, pr_id,
-                  event['pull_request']['statuses_url']], env)
+                  event['pull_request']['statuses_url']])
             commit_id = result[0][0]
         else:
             commit_id = result[0][0]
@@ -288,7 +287,7 @@ class Trigger(object):
         build_id = self.create_build(commit_id, project_id)
         self.create_job(event['pull_request']['head']['sha'],
                         event['pull_request']['head']['repo']['clone_url'],
-                        build_id, project_id, github_repo_private, branch)
+                        build_id, project_id, github_repo_private, branch, env)
 
         self.conn.commit()
         return res(200, 'ok')

@@ -137,7 +137,7 @@ export function createHook(token: string, repo: string, owner: string) {
                 "create", "delete", "public", "pull_request", "push"
             ],
             config: {
-                url: config.api.url + '/v1/github/hook',
+                url: config.root_url + '/github/hook',
                 content_type: "json",
                 secret: config.github.webhook_secret
             }

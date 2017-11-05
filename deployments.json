@@ -133,7 +133,7 @@
     }, {
         "type": "docker",
         "name": "dashboard-api",
-        "docker_file": "src/dashboard-api/Dockerfile",
+        "docker_file": "src/dashboard/Dockerfile",
         "build_only": false,
         "resources": { "limits": { "cpu": 1, "memory": 2048 } },
         "deployments": [{

@@ -27,6 +27,8 @@ general:
     rbac:
         enabled: true
 
+root_url: <REQUIRED>
+
 db:
     # name of the db image in your general.docker_registry
     # image: db
@@ -151,9 +153,6 @@ dashboard:
     # URL on which the dashboard will be reachable by your users
     url: <REQUIRED>
 
-    log:
-        level: info
-
     api:
         # name of the dashboard-api image in your general.docker_registry
         # image: dashboard-api
@@ -164,9 +163,12 @@ dashboard:
         tls:
             enabled: false
 
+        log:
+            level: info
+
     client:
         # name of the dashboard-client image in your general.docker_registry
-        image: dashboard-client
+        # image: dashboard-client
 
         # Tag
         tag: latest

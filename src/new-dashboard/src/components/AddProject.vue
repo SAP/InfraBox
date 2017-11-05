@@ -125,7 +125,7 @@ export default {
     }),
     watch: {
         projName () {
-            var nameRegex = /^[A-Za-z0-9]+$/
+            var nameRegex = /^[A-Za-z0-9-_]+$/
 
             this.nameValid = nameRegex.test(this.projName)
             console.log(this.nameValid, this.projName)

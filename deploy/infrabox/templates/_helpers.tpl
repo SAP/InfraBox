@@ -213,6 +213,9 @@
 -
     name: INFRABOX_GENERAL_WORKER_NAMESPACE
     value: {{ default "infrabox-worker" .Values.general.worker_namespace }}
+-
+    name: INFRABOX_ROOT_URL
+    value: {{ .Values.root_url }}
 {{ end }}
 
 

@@ -39,7 +39,7 @@ export default new Router({
             }
         }
     }, {
-        path: '/project/:projectName/build/:buildNumber/:buildRestartCounter/job/:jobId',
+        path: '/project/:projectName/build/:buildNumber/:buildRestartCounter/job/:jobName',
         name: 'JobDetail',
         component: JobDetail,
         props: function (route) {
@@ -47,7 +47,7 @@ export default new Router({
                 projectName: route.params.projectName,
                 buildNumber: parseInt(route.params.buildNumber),
                 buildRestartCounter: parseInt(route.params.buildRestartCounter),
-                jobId: route.params.jobId
+                jobName: route.params.jobName
             }
         }
     }]

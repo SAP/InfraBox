@@ -26,7 +26,7 @@ const AddProjectSchema = {
     id: "/EnvVarSchema",
     type: "object",
     properties: {
-        name: { type: "string", pattern: "^[0-9a-zA-Z_-]+$", minLength: 5, maxLength: 20 },
+        name: { type: "string", pattern: "^[0-9a-zA-Z_-]+$", minLength: 2, maxLength: 20 },
         private: { type: "boolean" },
         type: ["upload", "gerrit"],
         github_repo_name: { type: "string" }
@@ -39,7 +39,7 @@ router.post("/", pv, (req: Request, res: Response, next) => {
     const envResult = v.validate(req['body'], AddProjectSchema);
 
     if (envResult.errors.length > 0) {
-        return next(new BadRequest(envResult.errors[0]));
+        return next(new BadRequest(envResult.errors[0].message));
     }
 
     const name = req['body']['name'];
@@ -61,6 +61,12 @@ router.post("/", pv, (req: Request, res: Response, next) => {
         ).then((data: any) => {
             if (data.cnt > 50) {
                 throw new BadRequest("too many projects");
+            }
+
+            return tx.one("SELECT count(*) as cnt FROM project WHERE name = $1", [name]);
+        }).then((data: any) => {
+            if (data.cnt > 0) {
+                throw new BadRequest("A project with this name already exists");
             }
 
             if (typ === "github") {
@@ -103,7 +109,7 @@ router.post("/", pv, (req: Request, res: Response, next) => {
             );
         }).then(() => {
             if (typ === "github") {
-                const split = name.split('/');
+                const split = github_repo_name.split('/');
                 const owner = split[0];
                 const repo_name = split[1];
 
