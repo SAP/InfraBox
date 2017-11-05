@@ -3,7 +3,7 @@ import { Request, Response } from "express";
 import { auth } from "../../utils/auth";
 import { OK, BadRequest } from "../../utils/status";
 import { db, handleDBError } from "../../db";
-import { getRepos, getRepo, createDeployKey, createHook } from "../../utils/github";
+import { getRepos, createDeployKey, createHook } from "../../utils/github";
 
 const router = Router();
 router.use(auth);

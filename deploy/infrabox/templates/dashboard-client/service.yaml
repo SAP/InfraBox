@@ -2,22 +2,17 @@
 kind: Service
 apiVersion: v1
 metadata:
-    name: infrabox-dashboard
+    name: infrabox-dashboard-client
     namespace: {{ default "infrabox-system" .Values.general.system_namespace }}
     labels:
-        app: infrabox-dashboard
+        app: infrabox-dashboard-client
 spec:
     selector:
-        app: infrabox-dashboard
+        app: infrabox-dashboard-client
     ports:
     -
         name: http-web
         protocol: TCP
-        port: 8080
-        targetPort: 8080
-    -
-        name: http-monitoring
-        protocol: TCP
-        port: 8000
-        targetPort: 8000
+        port: 80
+        targetPort: 80
 {{ end }}

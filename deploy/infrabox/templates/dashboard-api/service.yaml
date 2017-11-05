@@ -1,0 +1,23 @@
+{{ if .Values.dashboard.enabled }}
+kind: Service
+apiVersion: v1
+metadata:
+    name: infrabox-dashboard-api
+    namespace: {{ default "infrabox-system" .Values.general.system_namespace }}
+    labels:
+        app: infrabox-dashboard-api
+spec:
+    selector:
+        app: infrabox-dashboard-api
+    ports:
+    -
+        name: http-web
+        protocol: TCP
+        port: 8080
+        targetPort: 8080
+    -
+        name: http-monitoring
+        protocol: TCP
+        port: 8000
+        targetPort: 8000
+{{ end }}
