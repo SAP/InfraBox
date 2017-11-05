@@ -37,7 +37,7 @@ services:
             dockerfile: infrabox/test/create-jobs/Dockerfile
         command: /project/src/utils/wait-for-webserver.sh job-api:8080 /project/infrabox/test/create-jobs/entrypoint.sh
         environment:
-            - INFRABOX_JOB_API_URL=http://job-api:8080
+            - INFRABOX_JOB_API_URL=http://job-api:8080/api/job
             - INFRABOX_JOB_API_SECRET=secret
         links:
             - postgres
