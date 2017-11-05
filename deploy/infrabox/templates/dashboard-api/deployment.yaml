@@ -2,16 +2,16 @@
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-    name: infrabox-dashboard
+    name: infrabox-dashboard-api
     namespace: {{ default "infrabox-system" .Values.general.system_namespace }}
     labels:
-        app: infrabox-dashboard
+        app: infrabox-dashboard-api
 spec:
     replicas: {{ default 1 .Values.dashboard.replicas }}
     template:
         metadata:
             labels:
-                app: infrabox-dashboard
+                app: infrabox-dashboard-api
         spec:
             {{- if .Values.dashboard.node_selector }}
             nodeSelector:
@@ -21,7 +21,7 @@ spec:
             {{ include "containers_database" . | indent 12 }}
             -
                 name: dashboard
-                image: {{ .Values.general.docker_registry }}/{{ default "dashboard" .Values.dashboard.image }}:{{ .Values.dashboard.tag }}
+                image: {{ .Values.general.docker_registry }}/{{ default "dashboard" .Values.dashboard.api.image }}:{{ .Values.dashboard.api.tag }}
                 imagePullPolicy: Always
                 command:
                 - "node"
@@ -33,7 +33,7 @@ spec:
                     mountPath: /etc/infrabox/gcs
                     readOnly: true
                 {{ end }}
-                {{ if .Values.dashboard.tls.enabled }}
+                {{ if .Values.dashboard.api.tls.enabled }}
                 -
                     name: dashboard-tls
                     mountPath: /var/run/infrabox
@@ -58,16 +58,16 @@ spec:
                             key: secret
                 -
                     name: INFRABOX_SERVICE
-                    value: {{ default "dashboard" .Values.dashboard.image }}
+                    value: {{ default "dashboard" .Values.dashboard.api.image }}
                 -
                     name: INFRABOX_VERSION
-                    value: {{ .Values.dashboard.tag }}
+                    value: {{ .Values.dashboard.api.tag }}
                 -
                     name: INFRABOX_DASHBOARD_LOG_CONSOLE
                     value: "true"
                 -
                     name: INFRABOX_DASHBOARD_LOG_LEVEL
-                    value: {{ default "info" .Values.dashboard.log.level }}
+                    value: {{ default "info" .Values.dashboard.api.log.level }}
                 -
                     name: INFRABOX_DASHBOARD_URL
                     value: {{ .Values.dashboard.url }}
@@ -76,7 +76,7 @@ spec:
                     value: "8080"
                 -
                     name: INFRABOX_DASHBOARD_TLS_ENABLED
-                    value: {{ default "false" .Values.dashboard.tls.enabled | quote }}
+                    value: {{ default "false" .Values.dashboard.api.tls.enabled | quote }}
                 -
                     name: INFRABOX_DOCKER_REGISTRY_URL
                     value: {{ .Values.docker_registry.url }}
@@ -102,7 +102,7 @@ spec:
                     secret:
                         secretName: infrabox-gcs
                 {{ end }}
-                {{ if .Values.dashboard.tls.enabled }}
+                {{ if .Values.dashboard.api.tls.enabled }}
                 -
                     name: dashboard-tls
                     secret:

@@ -35,12 +35,12 @@
                         <md-input type="text" v-model="projName" required/>
                         <label>Project Name</label>
                     </md-input-container>
-                    <div class="p-t-md">
+                    <div v-if="type=='github'" class="p-t-md">
                         <h3>Select the GitHub repository to connect</h3>
                     </div>
-                    <div v-if="$store.state.user && $store.state.user.hasGithubAccount()">
+                    <div v-if="$store.state.user && $store.state.user.hasGithubAccount() && type=='github'">
                         <md-button-toggle md-single class="m-xl">
-                            <md-card class="md-button" v-for="r of $store.state.user.githubRepos" >
+                            <md-card class="md-button" v-for="r of $store.state.user.githubRepos" :key="r.id">
                                 <md-card-header>
                                     <md-card-header-text>
                                         <div class="md-title">{{ r.name }}</div>
@@ -82,7 +82,7 @@
                                     </md-list>
                                 </md-card-content>
                                 <md-card-actions>
-                                    <md-button md-theme="default" class="md-raised md-primary" href="r.html_url" target="_blank">See @ GitHub</md-button>
+                                    <md-button md-theme="default" class="md-raised md-primary" @click="selectGithubRepo(r)">Select</md-button>
                                 </md-card-actions>
                             </md-card>
                         </md-button-toggle>
@@ -120,6 +120,7 @@ export default {
         nameValid: false,
         type: 'upload',
         priv: true,
+        githubRepo: null,
         invalidMessage: 'Name required'
     }),
     watch: {
@@ -137,7 +138,17 @@ export default {
     },
     methods: {
         addProject () {
-            ProjectService.addProject(this.projName, this.priv, this.type)
+            let repoName = null
+            console.log(this.githubRepo)
+
+            if (this.githubRepo) {
+                repoName = this.githubRepo.owner.login + '/' + this.githubRepo.name
+            }
+
+            ProjectService.addProject(this.projName, this.priv, this.type, repoName)
+        },
+        selectGithubRepo (r) {
+            this.githubRepo = r
         }
     }
 }
