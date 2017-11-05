@@ -15,7 +15,7 @@ module.exports = router;
 
 const GITHUB_CLIENT_ID = config.github.client_id;
 const GITHUB_CLIENT_SECRET = config.github.client_secret;
-const GITHUB_CALLBACK_URL = config.dashboard_url + "/github/auth/callback";
+const GITHUB_CALLBACK_URL = config.dashboard.url + "/github/auth/callback";
 const GITHUB_AUTHORIZATION_URL = config.github.login.url + "/oauth/authorize";
 const GITHUB_TOKEN_URL = config.github.login.url + "/oauth/access_token";
 const GITHUB_USER_PROFILE_URL = config.github.api_url + "/user";

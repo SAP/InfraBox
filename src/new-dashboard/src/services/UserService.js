@@ -1,10 +1,20 @@
 import store from '../store'
-import APIService from '../services/APIService'
+import APIService from './APIService'
+import ProjectService from './ProjectService'
 import User from '../models/User'
 
 class UserService {
     init () {
+        this._loadSettings()
         this._loadUser()
+    }
+
+    _loadSettings () {
+        return APIService.get(`settings`)
+            .then((s) => {
+                console.log(s)
+                store.commit('setSettings', s)
+            })
     }
 
     _loadUser () {
@@ -17,14 +27,15 @@ class UserService {
                                    d.github_id)
                 store.commit('setUser', u)
 
-                console.log(u)
                 if (u.hasGithubAccount()) {
-                    console.log('Load repos')
                     return APIService.get('github/repos')
                 }
             })
             .then((d) => {
-                store.commit('setGithubRepos', d)
+                if (d) {
+                    store.commit('setGithubRepos', d)
+                }
+                ProjectService.init()
             })
     }
 }

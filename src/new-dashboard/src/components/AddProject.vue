@@ -19,11 +19,11 @@
                             <i class="fa fa-fw fa-upload"></i><span> Upload</span>
                           </md-button>
 
-                          <md-button @click="type = 'github'">
+                          <md-button v-if="$store.state.settings.INFRABOX_GITHUB_ENABLED" @click="type = 'github'">
                             <i class="fa fa-fw fa-github"></i><span> GitHub</span>
                           </md-button>
 
-                          <md-button @click="type = 'gerrit'">
+                          <md-button v-if="$store.state.settings.INFRABOX_GERRIT_ENABLED" @click="type = 'gerrit'">
                             <i class="fa fa-fw fa-binoculars"></i><span> Gerrit</span>
                           </md-button>
                         </md-button-toggle>

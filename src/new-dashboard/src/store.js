@@ -12,7 +12,8 @@ Vue.use(Vuex)
 const state = {
     user: null,
     projects: [],
-    jobs: {}
+    jobs: {},
+    settings: {}
 }
 
 function findProject (state, projectId) {
@@ -192,7 +193,10 @@ function setUser (state, user) {
 
 function setGithubRepos (state, repos) {
     state.user.githubRepos = repos
-    console.log(repos)
+}
+
+function setSettings (state, settings) {
+    state.settings = settings
 }
 
 function handleConsoleUpdate (state, update) {
@@ -226,7 +230,8 @@ const mutations = {
     setUser,
     setGithubRepos,
     handleConsoleUpdate,
-    deleteProject
+    deleteProject,
+    setSettings
 }
 
 const getters = {}

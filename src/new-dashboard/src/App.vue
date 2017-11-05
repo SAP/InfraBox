@@ -2,13 +2,13 @@
     <div id='app'>
         <ib-notifications></ib-notifications>
         <md-toolbar>
-            <md-button class="md-icon-button" @click="toggleLeftSidenav">
+            <md-button v-if="$store.state.user" class="md-icon-button" @click="toggleLeftSidenav">
                 <md-icon>menu</md-icon>
             </md-button>
             <div style="width: 110px"><img src="../static/logo_white_on_transparent.png" style="flex: 1"></div>
         </md-toolbar>
 
-        <md-sidenav class="md-left" ref="leftSidenav">
+        <md-sidenav v-if="$store.state.user" class="md-left" ref="leftSidenav">
             <md-toolbar class="infrabox-logo">
                 <img src="../static/logo_image_only.png">
                 <span>InfraBox</span>

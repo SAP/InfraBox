@@ -9,7 +9,6 @@ import AsyncComputed from 'vue-async-computed'
 import App from './App'
 import router from './router'
 import store from './store'
-import ProjectService from './services/ProjectService'
 
 import 'vue-material/dist/vue-material.css'
 import 'font-awesome/css/font-awesome.css'
@@ -39,7 +38,6 @@ Vue.use(AsyncComputed, {
 })
 
 UserService.init()
-ProjectService.init()
 
 Vue.component('ib-notifications', NotificationComponent)
 Vue.component('ib-state', StateComponent)

@@ -2,6 +2,7 @@ import Vue from 'vue'
 
 import NotificationService from '../services/NotificationService'
 import Notification from '../models/Notification'
+import router from '../router'
 
 class APIService {
     constructor () {
@@ -16,7 +17,13 @@ class APIService {
                 return response.body
             })
             .catch((err) => {
-                NotificationService.$emit('NOTIFICATION', new Notification(err))
+                if (err.status === 401) {
+                    router.push('/login')
+                } else {
+                    NotificationService.$emit('NOTIFICATION', new Notification(err))
+                }
+
+                throw err
             })
     }
 
@@ -28,7 +35,12 @@ class APIService {
                 return response.body
             })
             .catch((err) => {
-                NotificationService.$emit('NOTIFICATION', new Notification(err))
+                if (err.status === 401) {
+                    router.push('/login')
+                } else {
+                    NotificationService.$emit('NOTIFICATION', new Notification(err))
+                }
+
                 throw err
             })
     }
@@ -41,7 +53,13 @@ class APIService {
                 return response.body
             })
             .catch((err) => {
-                NotificationService.$emit('NOTIFICATION', new Notification(err))
+                if (err.status === 401) {
+                    router.push('/login')
+                } else {
+                    NotificationService.$emit('NOTIFICATION', new Notification(err))
+                }
+
+                throw err
             })
     }
 }
