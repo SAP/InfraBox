@@ -1,0 +1,38 @@
+{{ if .Values.github.enabled }}
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+    name: infrabox-github-trigger
+    namespace: {{ default "infrabox-system" .Values.general.system_namespace }}
+    labels:
+        app: infrabox-github-trigger
+spec:
+    replicas: 1
+    template:
+        metadata:
+            labels:
+                app: infrabox-github-trigger
+        spec:
+            {{- if .Values.github.node_selector }}
+            nodeSelector:
+{{ toYaml .Values.github.node_selector | indent 16 }}
+            {{- end }}
+            containers:
+            {{ include "containers_database" . | indent 12 }}
+            -
+                image: {{ .Values.general.docker_registry }}/{{ default "github-trigger" .Values.github.trigger.image }}:{{ .Values.github.trigger.tag }}
+                imagePullPolicy: Always
+                name: github-trigger
+                env:
+                {{ include "env_database" . | indent 16 }}
+                {{ include "env_general" . | indent 16 }}
+                {{ include "env_github_secrets" . | indent 16 }}
+                -
+                    name: INFRABOX_SERVICE
+                    value: {{ default "github-trigger" .Values.github.trigger.image }}
+                -
+                    name: INFRABOX_VERSION
+                    value: {{ .Values.github.trigger.tag }}
+            volumes:
+                {{ include "volumes_database" . | indent 16 }}
+{{ end }}

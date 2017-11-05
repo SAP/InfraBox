@@ -1,62 +1,59 @@
 import uuid
 import json
 import os
+import unittest
+import xmlrunner
 
 import psycopg2
 import psycopg2.extensions
 import requests
 
-from nose.tools import raises
-
 POSTGRES_URL = "postgres://postgres:postgres@postgres/postgres"
+conn = psycopg2.connect(POSTGRES_URL)
+conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
+api_url = "http://github-trigger:8080/github/hook"
 
-class TestGithubHook(object):
-    def __init__(self):
-        self.conn = psycopg2.connect(POSTGRES_URL)
-        self.conn.set_isolation_level(
-            psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
-        self.api_url = "http://api:8080/v1/github/hook"
-
+class TestGithubHook(unittest.TestCase):
     def get_file(self, p):
         p = os.path.join("test", p)
         with open(p) as f:
             return json.load(f)
 
     def test_no_github_event_header(self):
-        r = requests.post(self.api_url, json={})
+        r = requests.post(api_url, json={})
         res = r.json()
         print res
         assert r.status_code == 400
-        assert res['message'] == "No x-github-event found"
+        assert res['message'] == "X-Github-Event not set"
 
     def test_no_hub_signature(self):
-        h = {"x-github-event": "pull_request"}
-        r = requests.post(self.api_url, json={}, headers=h)
+        h = {"X-Github-Event": "pull_request"}
+        r = requests.post(api_url, json={}, headers=h)
         res = r.json()
         print res
         assert r.status_code == 400
-        assert res['message'] == "No x-hub-signature found"
+        assert res['message'] == "X-Hub-Signature not set"
 
     def get_headers(self, event):
         h = {
             "content-type": "application/json",
-            "x-github-event": event,
-            "x-hub-signature": "sha1=somehex"
+            "X-Github-Event": event,
+            "X-Hub-Signature": "sha1=somehex"
         }
         return h
 
-    def test_pr_repo_does_not_exist(self):
+    def disabled_test_pr_repo_does_not_exist(self):
         self.execute("""DELETE FROM repository""")
 
         pr = self.get_file("pr_open.json")
-        r = requests.post(self.api_url, json=pr, headers=self.get_headers("pull_request"))
+        r = requests.post(api_url, json=pr, headers=self.get_headers("pull_request"))
         res = r.json()
         print  res
-        assert r.status_code == 404
-        assert res['message'] == "Not Found"
+        self.assertEqual(r.status_code, 404)
+        self.assertEqual(res['message'], "Not Found")
 
     def execute(self, stmt, args=None):
-        cur = self.conn.cursor()
+        cur = conn.cursor()
         cur.execute(stmt, args)
         cur.close()
 
@@ -91,3 +88,7 @@ class TestGithubHook(object):
             INSERT INTO secret (project_id, name, value)
             VALUES (%s, 'OTHER', 'value');
         """, (project_id,))
+
+if __name__ == '__main__':
+    with open('results.xml', 'wb') as output:
+        unittest.main(testRunner=xmlrunner.XMLTestRunner(output=output))
