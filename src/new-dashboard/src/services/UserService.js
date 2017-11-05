@@ -5,14 +5,14 @@ import User from '../models/User'
 
 class UserService {
     init () {
-        this._loadSettings()
-        this._loadUser()
+        this._loadSettings().then(() => {
+            return this._loadUser()
+        })
     }
 
     _loadSettings () {
         return APIService.get(`settings`)
             .then((s) => {
-                console.log(s)
                 store.commit('setSettings', s)
             })
     }
@@ -27,12 +27,13 @@ class UserService {
                                    d.github_id)
                 store.commit('setUser', u)
 
-                if (u.hasGithubAccount()) {
+                if (u.hasGithubAccount() && store.state.settings.INFRABOX_GITHUB_ENABLED) {
                     return APIService.get('github/repos')
                 }
             })
             .then((d) => {
                 if (d) {
+                    console.log(d)
                     store.commit('setGithubRepos', d)
                 }
                 ProjectService.init()

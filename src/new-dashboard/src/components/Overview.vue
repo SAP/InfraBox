@@ -1,5 +1,5 @@
 <template>
-    <div v-if="loaded">
+    <div>
         <md-layout md-gutter>
             <md-layout  v-for="project of $store.state.projects" :key="project.id" md-column md-gutter md-flex-xsmall="100" md-flex-small="100" md-flex-medium="50" md-flex-large="33">
                 <md-table-card class="overview-card">
@@ -17,17 +17,10 @@
 
 <script>
 import store from '../store'
-import ProjectService from '../services/ProjectService'
 
 export default {
     name: 'ProjectDetail',
-    store,
-    asyncComputed: {
-        loaded () {
-            return ProjectService
-            .loadProjects().then(() => { return true })
-        }
-    }
+    store
 }
 </script>
 
