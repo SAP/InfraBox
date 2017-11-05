@@ -2,16 +2,16 @@
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-    name: infrabox-github
+    name: infrabox-github-review
     namespace: {{ default "infrabox-system" .Values.general.system_namespace }}
     labels:
-        app: infrabox-github
+        app: infrabox-github-review
 spec:
     replicas: 1
     template:
         metadata:
             labels:
-                app: infrabox-github
+                app: infrabox-github-review
         spec:
             {{- if .Values.github.node_selector }}
             nodeSelector:

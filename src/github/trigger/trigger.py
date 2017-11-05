@@ -8,7 +8,7 @@ from pyinfraboxutils import get_env, get_logger
 from pyinfraboxutils.ibbottle import InfraBoxPostgresPlugin
 from pyinfraboxutils.db import connect_db
 
-from bottle import post, run, request, response, install
+from bottle import post, run, request, response, install, get
 
 logger = get_logger("github")
 
@@ -297,7 +297,7 @@ class Trigger(object):
 def sign_blob(key, blob):
     return 'sha1=' + hmac.new(key, blob, hashlib.sha1).hexdigest()
 
-@post('/api/v1/trigger')
+@post('/github/hook')
 def trigger_build(conn):
     headers = dict(request.headers)
 
@@ -325,6 +325,10 @@ def trigger_build(conn):
 
     return res(200, "OK")
 
+@get('/ping')
+def ping():
+    return res(200, "OK")
+
 def main():
     get_env('INFRABOX_SERVICE')
     get_env('INFRABOX_VERSION')
@@ -338,7 +342,7 @@ def main():
     connect_db() # Wait until DB is ready
 
     install(InfraBoxPostgresPlugin())
-    run(host='0.0.0.0', port=8083)
+    run(host='0.0.0.0', port=8080)
 
 if __name__ == '__main__':
     main()
