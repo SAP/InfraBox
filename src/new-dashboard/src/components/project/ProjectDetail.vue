@@ -24,11 +24,11 @@
                             <span v-if="props.header.label">{{ props.header.label }}</span>
                         </template>
                     </template>
-                    <md-tab id="build-table" md-label="Builds" :md-options="{new_badge: project.getActiveBuilds().length}" class="widget-container">
+                    <md-tab id="build-table" md-label="Builds" md-icon="view_module" :md-options="{new_badge: project.getActiveBuilds().length}" class="widget-container">
                         <ib-build-table :project="project"/>
                     </md-tab>
 
-                    <md-tab id="project-settings" md-label="Settings">
+                    <md-tab id="project-settings" md-icon="settings" md-label="Settings">
                         <ib-project-settings :project="project"/>
                     </md-tab>
                 </md-tabs>
