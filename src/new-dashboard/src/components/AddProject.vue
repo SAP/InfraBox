@@ -30,14 +30,62 @@
                     </div>
                 </md-step>
                 <md-step :md-editable="true" md-label="Project Name" :md-error="!nameValid" :md-continue="nameValid" :md-message="invalidMessage">
-                    <p>Please enter your project name</p>
+                    <h3>Please enter your project name</h3>
                     <md-input-container :class="{'md-input-invalid': !nameValid}">
                         <md-input type="text" v-model="projName" required/>
                         <label>Project Name</label>
                     </md-input-container>
-
+                    <div class="p-t-md">
+                        <h3>Select the GitHub repository to connect</h3>
+                    </div>
                     <div v-if="$store.state.user && $store.state.user.hasGithubAccount()">
-                        <div v-for="r of $store.state.user.githubRepos">{{ r.name }}</div>
+                        <md-button-toggle md-single class="m-xl">
+                            <md-card class="md-button" v-for="r of $store.state.user.githubRepos" >
+                                <md-card-header>
+                                    <md-card-header-text>
+                                        <div class="md-title">{{ r.name }}</div>
+                                        <div class="md-subhead">{{ r.owner.login }}</div>
+                                    </md-card-header-text>
+
+                                    <md-card-media>
+                                        <div class="m-t-md">
+                                            <md-icon>
+                                                <i v-if="r.private" class="fa fa-fw fa-home fa-3x"></i>
+                                                <i v-if="!r.private" class="fa fa-fw fa-globe fa-3x"></i>
+                                            </md-icon>
+                                        </div>
+                                    </md-card-media>
+                                </md-card-header>
+                                <md-card-content>
+                                    <md-list>
+                                        <md-list-item>
+                                            <md-icon class="md-primary"><i class="fa fa-calendar fa-fw"></i></md-icon>
+                                            <div class="md-list-text-container">
+                                            <span>Created:</span>
+                                            <span><ib-date :date="r.created_at"></ib-date></span>
+                                            </div>
+                                        </md-list-item>
+                                        <md-list-item>
+                                            <md-icon class="md-primary"><i class="fa fa-tasks fa-fw"></i></md-icon>
+                                            <div class="md-list-text-container">
+                                            <span>Open issues:</span>
+                                            <span>{{ r.open_issues_count }}</span>
+                                            </div>
+                                        </md-list-item>
+                                        <md-list-item>
+                                            <md-icon class="md-primary"><i class="fa fa-code-fork fa-fw"></i></md-icon>
+                                            <div class="md-list-text-container">
+                                            <span>Forks:</span>
+                                            <span>{{ r.forks_count }}</span>
+                                            </div>
+                                        </md-list-item>
+                                    </md-list>
+                                </md-card-content>
+                                <md-card-actions>
+                                    <md-button md-theme="default" class="md-raised md-primary" href="r.html_url" target="_blank">See @ GitHub</md-button>
+                                </md-card-actions>
+                            </md-card>
+                        </md-button-toggle>
                     </div>
                 </md-step>
                 <md-step>
