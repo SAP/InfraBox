@@ -2,13 +2,13 @@
 kind: Service
 apiVersion: v1
 metadata:
-    name: infrabox-dashboard
+    name: infrabox-dashboard-api
     namespace: {{ default "infrabox-system" .Values.general.system_namespace }}
     labels:
-        app: infrabox-dashboard
+        app: infrabox-dashboard-api
 spec:
     selector:
-        app: infrabox-dashboard
+        app: infrabox-dashboard-api
     ports:
     -
         name: http-web

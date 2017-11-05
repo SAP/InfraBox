@@ -19,9 +19,9 @@ infrabox run deploy/scheduler-kubernetes -t ${docker_registry}infrabox/scheduler
 infrabox run deploy/scheduler-docker-compose -t ${docker_registry}infrabox/scheduler-docker-compose:$image_tag
 infrabox run deploy/api              -t ${docker_registry}infrabox/api:$image_tag
 infrabox run deploy/docs             -t ${docker_registry}infrabox/docs:$image_tag
-infrabox run deploy/dashboard        -t ${docker_registry}infrabox/dashboard:$image_tag
+infrabox run deploy/dashboard-api    -t ${docker_registry}infrabox/dashboard-api:$image_tag
 infrabox run deploy/build-dashboard-client
-infrabox run deploy/dashboard-client -t ${docker_registry}infrabox/new-dashboard-client:$image_tag
+infrabox run deploy/dashboard-client -t ${docker_registry}infrabox/dashboard-client:$image_tag
 infrabox run deploy/docker-auth      -t ${docker_registry}infrabox/docker-registry-auth:$image_tag
 infrabox run deploy/docker-nginx     -t ${docker_registry}infrabox/docker-registry-nginx:$image_tag
 infrabox run deploy/stats            -t ${docker_registry}infrabox/stats:$image_tag

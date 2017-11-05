@@ -2,16 +2,16 @@
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-    name: infrabox-new-dashboard-client
+    name: infrabox-dashboard-client
     namespace: {{ default "infrabox-system" .Values.general.system_namespace }}
     labels:
-        app: infrabox-new-dashboard-client
+        app: infrabox-dashboard-client
 spec:
     replicas: {{ default 1 .Values.dashboard.client.replicas }}
     template:
         metadata:
             labels:
-                app: infrabox-new-dashboard-client
+                app: infrabox-dashboard-client
         spec:
             containers:
             -

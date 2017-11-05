@@ -148,24 +148,27 @@ docs:
 dashboard:
     enabled: true
 
-    # name of the dashboard image in your general.docker_registry
-    # image: dashboard
-
-    # Tag
-    tag: latest
-
     # URL on which the dashboard will be reachable by your users
     url: <REQUIRED>
 
     log:
         level: info
 
-    tls:
-        enabled: false
+    api:
+        # name of the dashboard-api image in your general.docker_registry
+        # image: dashboard-api
+
+        # Tag
+        tag: latest
+
+        tls:
+            enabled: false
 
     client:
-        replicas: 1
-        image: new-dashboard-client
+        # name of the dashboard-client image in your general.docker_registry
+        image: dashboard-client
+
+        # Tag
         tag: latest
 
 stats:
