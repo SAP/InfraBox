@@ -35,6 +35,7 @@ function getFromEnvBool(name, def: boolean = null): boolean {
 export let config = {
     // local values
     root: rootPath,
+    root_url: getFromEnv("INFRABOX_ROOT_URL"),
     service: {
         name: getFromEnv("INFRABOX_NAME", "dashboard"),
         version: getFromEnv("INFRABOX_VERSION", "local"),

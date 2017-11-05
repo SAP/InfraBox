@@ -20,7 +20,7 @@
                                         projectName: project.name,
                                         buildNumber: build.number,
                                         buildRestartCounter: build.restartCounter,
-                                        jobId: j.id
+                                        jobName: j.name
                                     }}">
                                 {{ j.name }}
                             </router-link>

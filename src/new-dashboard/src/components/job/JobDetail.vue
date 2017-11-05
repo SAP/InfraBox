@@ -22,7 +22,7 @@
                 projectName: data.project.name,
                 buildNumber: data.build.number,
                 buildRestartCounter: data.build.restartCounter,
-                jobId: data.job.id
+                jobId: data.job.name
                 }}">
                 Job
                 </router-link>-->
@@ -110,7 +110,7 @@ import Console from './Console'
 
 export default {
     name: 'JobDetail',
-    props: ['jobId', 'projectName', 'buildNumber', 'buildRestartCounter'],
+    props: ['jobName', 'projectName', 'buildNumber', 'buildRestartCounter'],
     components: {
         'ib-state-big': StateBig,
         'ib-commit-sha': CommitSha,
@@ -132,7 +132,7 @@ export default {
                     })
                     .then((b) => {
                         build = b
-                        return build.getJob(this.jobId)
+                        return build.getJob(this.jobName)
                     })
                     .then((j) => {
                         job = j

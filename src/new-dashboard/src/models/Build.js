@@ -26,13 +26,14 @@ export default class Build {
         return null
     }
 
-    _getJob (jobId) {
-        console.log(this.jobs)
+    _getJob (jobName) {
         for (let j of this.jobs) {
-            if (j.id === jobId) {
+            if (j.name === jobName) {
                 return j
             }
         }
+
+        return null
     }
 
     abort () {
