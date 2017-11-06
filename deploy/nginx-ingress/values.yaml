@@ -1,0 +1,10 @@
+controller:
+    config:
+        proxy-body-size: "0"
+    scope:
+        enabled: true
+        namespace: infrabox-system
+    service:
+        loadBalancerIP: 35.202.186.233
+rbac:
+    create: true
