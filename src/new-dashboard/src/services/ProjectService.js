@@ -6,18 +6,23 @@ import Notification from '../models/Notification'
 import router from '../router'
 
 class ProjectService {
-    init () {
-        this.loaded = this._loadProjects()
+    constructor () {
+        this.resolve = null
+        this.reject = null
+        this.promise = new Promise((resolve, reject) => {
+            this.resolve = resolve
+            this.reject = reject
+        })
     }
 
     findProjectByName (name) {
-        return this.loaded.then(() => {
+        return this.promise.then(() => {
             return this._findProjectByName(name)
         })
     }
 
-    loadProjects () {
-        return this.loaded
+    init () {
+        this._loadProjects()
     }
 
     deleteProject (id) {
@@ -52,6 +57,9 @@ class ProjectService {
         return APIService.get('project')
         .then((response) => {
             store.commit('setProjects', response)
+            this.resolve()
+        }).catch((err) => {
+            this.reject(err)
         })
     }
 }
