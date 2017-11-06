@@ -7,9 +7,9 @@
     color: #ffffff;
 }
 
-.bg-grey {
-    background-color: dimgrey;
-    color: #ffffff;
+.bg-light {
+    background-color: #f4f4f5;
+    color: black;
 }
 
 .bg-white {
@@ -48,10 +48,6 @@
 
 .bg-dark {
     background-color: #293846;
-}
-
-.bg-grey {
-    background-color: inherit;
 }
 
 .card-title {
@@ -98,6 +94,18 @@
     margin-left: 10px;
 }
 
+.m-r-sm {
+    margin-right: 10px;
+}
+
+.m-t-sm {
+    margin-top: 10px;
+}
+
+.m-b-sm {
+    margin-bottom: 10px;
+}
+
 .m-md {
     margin: 15px;
 }
@@ -120,6 +128,22 @@
 
 .m-lg {
     margin: 20px;
+}
+
+.m-l-lg {
+    margin-left: 20px;
+}
+
+.m-r-lg {
+    margin-right: 20px;
+}
+
+.m-t-lg {
+    margin-top: 20px;
+}
+
+.m-b-lg {
+    margin-bottom: 20px;
 }
 
 .m-xl {
@@ -319,6 +343,10 @@
 
 .text-top {
     vertical-align: text-top;
+}
+
+.text-white {
+    color: white;
 }
 
 pre.wrap-text {

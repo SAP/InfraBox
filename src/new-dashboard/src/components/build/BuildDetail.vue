@@ -24,17 +24,17 @@
                 <md-layout>
                     <md-layout md-flex-xsmall="100" md-flex-small="100" md-flex-medium="100" md-flex-large="75">
                         <md-tabs md-fixed class="md-transparent">
-                            <md-tab id="build-graph" md-label="Build" class="widget-container">
+                            <md-tab id="build-graph" md-label="Build" md-icon="widgets" class="widget-container">
                                 <ib-job-gantt :jobs="data.build.jobs"></ib-job-gantt>
                             </md-tab>
 
-                            <md-tab id="job-list" md-label="Jobs">
+                            <md-tab id="job-list" md-label="Jobs" md-icon="view_list">
                                 <ib-job-list :jobs="data.build.jobs" :project="data.project" :build="data.build"></ib-job-list>
                             </md-tab>
                         </md-tabs>
                     </md-layout>
                     <md-layout md-flex-xsmall="100" md-flex-small="100" md-flex-medium="100" md-flex-large="25" md-flex-xlarge="25">
-                        <md-list class="md-dense widget-container" style="margin: 16px">
+                        <md-list class="md-dense widget-container m-md">
                             <ib-state-big :state="data.build.state"></ib-state-big>
                             <md-list-item class="p-l-md p-r-md p-t-md">
                                 <span class="md-body-2"><i class="fa fa-calendar fa-fw p-r-xl" aria-hidden="true"></i>
@@ -72,15 +72,20 @@
                                     {{ data.build.commit.branch }}
                                 </span>
                             </md-list-item>
-
+                            <md-list-item class="p-l-md p-r-md">
+                                <span class="md-body-2"><i class="fa fa-shield fa-fw p-r-xl" aria-hidden="true"></i>
+                                Badges</span>
+                            </md-list-item>
+                            <ib-badge :project_id="data.project.id" job_name="myJob" subject="test" status="80%" color="green"></ib-badge>
+                            <ib-badge :project_id="data.project.id" job_name="test/InfraBox" subject="Coverage" status="80%" color="yellow"></ib-badge>
+                            <ib-badge :project_id="data.project.id" job_name="myJob" subject="test" status="80%" color="green"></ib-badge>
+                            <ib-badge :project_id="data.project.id" job_name="myJob" subject="test" status="80%" color="green"></ib-badge>
                         </md-list>
-
                     </md-layout>
                 </md-layout>
 
             </md-card-content>
 		</md-card>
-
     </div>
 </template>
 
@@ -93,6 +98,7 @@
     import Duration from '../utils/Duration'
     import CommitSha from '../utils/CommitSha'
     import JobList from '../job/JobList'
+    import Badge from '../utils/Badge'
 
     export default {
         name: 'BuildDetail',
@@ -103,7 +109,8 @@
             'ib-date': Date,
             'ib-duration': Duration,
             'ib-commit-sha': CommitSha,
-            'ib-job-list': JobList
+            'ib-job-list': JobList,
+            'ib-badge': Badge
         },
         store,
         asyncComputed: {
