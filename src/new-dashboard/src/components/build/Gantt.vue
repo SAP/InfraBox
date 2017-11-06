@@ -402,7 +402,7 @@ export class GanttChart {
                 router.push('/project/' + job.projectName +
                             '/build/' + job.buildNumber +
                             '/' + job.buildRestartCounter +
-                            '/job/' + job.id)
+                            '/job/' + job.name)
             })
 
             const labelLength = jobLabel.getBBox().width
@@ -415,7 +415,7 @@ export class GanttChart {
             router.push('/project/' + job.projectName +
                         '/build/' + job.buildNumber +
                         '/' + job.buildRestartCounter +
-                        '/job/' + job.id)
+                        '/job/' + job.name)
         })
 
         const hoverEnter = () => {

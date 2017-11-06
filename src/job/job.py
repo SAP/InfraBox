@@ -744,11 +744,11 @@ exec "$@"
             job['base_path'] = base_path
 
             if parent_name != '':
-                job['name'] = parent_name + "/" + job['name']
+                job['name'] = parent_name + "-" + job['name']
 
                 deps = job.get('depends_on', [])
                 for x in xrange(0, len(deps)):
-                    deps[x]['job'] = parent_name + "/" + deps[x]['job']
+                    deps[x]['job'] = parent_name + "-" + deps[x]['job']
 
             job_name = job['name']
             if job['type'] != "workflow" and job['type'] != "git":

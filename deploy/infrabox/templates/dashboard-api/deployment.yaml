@@ -21,7 +21,7 @@ spec:
             {{ include "containers_database" . | indent 12 }}
             -
                 name: dashboard
-                image: {{ .Values.general.docker_registry }}/{{ default "dashboard" .Values.dashboard.api.image }}:{{ .Values.dashboard.api.tag }}
+                image: {{ .Values.general.docker_registry }}/{{ default "dashboard-api" .Values.dashboard.api.image }}:{{ .Values.dashboard.api.tag }}
                 imagePullPolicy: Always
                 command:
                 - "node"
