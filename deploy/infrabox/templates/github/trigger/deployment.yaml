@@ -20,11 +20,12 @@ spec:
             containers:
             {{ include "containers_database" . | indent 12 }}
             -
-                image: {{ .Values.general.docker_registry }}/{{ default "github-trigger" .Values.github.trigger.image }}:{{ .Values.github.trigger.tag }}
-                imagePullPolicy: Always
                 name: github-trigger
+                image: {{ required "general.docker_registry is required" .Values.general.docker_registry }}/{{ default "github-trigger" .Values.github.trigger.image }}:{{ required "github.trigger.tag is required" .Values.github.trigger.tag }}
+                imagePullPolicy: Always
                 env:
                 {{ include "env_database" . | indent 16 }}
+                {{ include "env_github" . | indent 16 }}
                 {{ include "env_general" . | indent 16 }}
                 {{ include "env_github_secrets" . | indent 16 }}
                 -
@@ -32,7 +33,7 @@ spec:
                     value: {{ default "github-trigger" .Values.github.trigger.image }}
                 -
                     name: INFRABOX_VERSION
-                    value: {{ .Values.github.trigger.tag }}
+                    value: {{ required "github.trigger.tag is required" .Values.github.trigger.tag }}
             volumes:
                 {{ include "volumes_database" . | indent 16 }}
 {{ end }}

@@ -428,6 +428,7 @@ class Kubernetes(Install):
         self.set('general.dont_check_certificates', self.args.general_dont_check_certificates)
         self.set('general.worker_namespace', self.args.general_worker_namespace)
         self.set('general.system_namespace', self.args.general_system_namespace)
+        self.set('root_url', self.args.root_url)
 
     def setup_job(self):
         self.required_option('job-api-secret')

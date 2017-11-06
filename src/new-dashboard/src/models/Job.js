@@ -120,7 +120,6 @@ export default class Job {
             if (isSection) {
                 if (this.currentSection) {
                     this.currentSection.setEndTime(date)
-                    this.currentSection.generateHtml()
                 }
                 this.currentSection = new Section(this.linesProcessed, header, date)
                 this.linesProcessed++
@@ -134,6 +133,8 @@ export default class Job {
                 this.currentSection.addLine(line)
                 this.linesProcessed++
             }
+
+            this.currentSection.generateHtml()
         }
     }
 
