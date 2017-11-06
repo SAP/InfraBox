@@ -1,6 +1,6 @@
 <template>
 <div>
-    <md-list-item class="bg-white">
+    <md-list-item class="setting-list">
         <md-icon>bookmark</md-icon>
         <span>Tokens</span>
 
