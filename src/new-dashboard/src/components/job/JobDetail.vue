@@ -39,16 +39,16 @@
                 <md-layout>
                     <md-layout md-flex-xsmall="100" md-flex-small="100" md-flex-medium="100" md-flex-large="75">
                         <md-tabs md-fixed class="md-transparent">
-                            <md-tab id="console" md-label="Console" class="widget-container">
+                            <md-tab id="console" md-label="Console" md-icon="subtitles" class="widget-container">
                                 <ib-console :job="data.job"></ib-console>
                             </md-tab>
-                            <md-tab id="test-list" md-label="Tests">
+                            <md-tab id="test-list" md-icon="multiline_chart" md-label="Tests">
                                 tests
                             </md-tab>
-                            <md-tab id="stat-list" md-label="Stats">
+                            <md-tab id="stat-list" md-icon="insert_chart" md-label="Stats">
                                 tests
                             </md-tab>
-                            <md-tab id="downloads" md-label="Downloads">
+                            <md-tab id="downloads" md-icon="file_download" md-label="Downloads">
                                 downloads
                             </md-tab>
                         </md-tabs>
@@ -75,7 +75,7 @@
                                 <span class="md-body-2"><i class="fa fa-list-ol fa-fw p-r-xl" aria-hidden="true"></i>
                                 Commit</span>
                                 <span class="md-list-action">
-                                    <ib-commit-sha :sha="data.build.commit.id"></ib-commit-sha>
+                                    <a target="_blank" :href="data.build.commit.url"><ib-commit-sha :sha="data.build.commit.id"></ib-commit-sha></a>
                                 </span>
                             </md-list-item>
                             <md-list-item v-if="data.build.commit" class="p-l-md p-r-md">
@@ -92,11 +92,38 @@
                                     {{ data.build.commit.branch }}
                                 </span>
                             </md-list-item>
+                            <md-list-item v-if="data.build.commit" class="p-l-md p-r-xs">
+                                <span class="md-body-2"><i class="fa fa-download fa-fw p-r-xl" aria-hidden="true"></i>
+                                Run Lokal</span>
+                                <span class="md-list-action">
+                                    <md-button class="md-raised md-dense" @click="openDialog('cli_dialog')">CLI Command</md-button>
+                                </span>
+                            </md-list-item>
+                            <md-list-item v-if="data.build.commit" class="p-l-md p-r-xs">
+                                <span class="md-body-2"><i class="fa fa-file-archive-o fa-fw p-r-xl" aria-hidden="true"></i>
+                                Console Output</span>
+                                <span class="md-list-action">
+                                    <md-button class="md-raised md-dense">Download</md-button>
+                                </span>
+                            </md-list-item>
                         </md-list>
                     </md-layout>
                 </md-layout>
             </md-card-content>
 		</md-card>
+        <md-dialog ref="cli_dialog" width="100%">
+            <md-dialog-title>Run it with infraboxcli</md-dialog-title>
+
+            <md-dialog-content class="bg-white">
+                <md-card class="main-card">
+                    <div class="md-subtitle bg-light p-md">CLI command</div>
+                    <div class="m-md">lorem ipsum</div>
+                </md-card>
+            </md-dialog-content>
+            <md-dialog-actions>
+                <md-button class="md-icon-button md-primary" @click="closeDialog('cli_dialog')"><md-icon>close</md-icon></md-button>
+            </md-dialog-actions>
+        </md-dialog>
     </div>
 </template>
 
@@ -154,6 +181,14 @@ export default {
                 // eslint-disable-next-line no-unused-expressions
                 this.jobId
             }
+        }
+    },
+    methods: {
+        openDialog (ref) {
+            this.$refs[ref].open()
+        },
+        closeDialog (ref) {
+            this.$refs[ref].close()
         }
     }
 }

@@ -55,7 +55,7 @@
                                 <span class="md-body-2"><i class="fa fa-list-ol fa-fw p-r-xl" aria-hidden="true"></i>
                                 Commit</span>
                                 <span class="md-list-action">
-                                    <ib-commit-sha :sha="data.build.commit.id"></ib-commit-sha>
+                                    <a target="_blank" :href="data.build.commit.url"><ib-commit-sha :sha="data.build.commit.id"></ib-commit-sha></a>
                                 </span>
                             </md-list-item>
                             <md-list-item v-if="data.build.commit" class="p-l-md p-r-md">

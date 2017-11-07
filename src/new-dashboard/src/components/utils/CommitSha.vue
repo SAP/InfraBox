@@ -1,6 +1,6 @@
 <template>
     <div>
-        {{ sha.substring(0, 8) }}
+        <i class="fa fa-fw fa-github"></i><span> {{ sha.substring(0, 8) }}</span>
     </div>
 </template>
 
