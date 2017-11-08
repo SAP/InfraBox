@@ -65,5 +65,5 @@ spec:
                 -
                     name: gerrit-ssh
                     secret:
-                    secretName: infrabox-gerrit-ssh
+                        secretName: infrabox-gerrit-ssh
 {{ end }}

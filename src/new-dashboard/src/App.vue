@@ -16,7 +16,7 @@
 
             <md-list>
                 <md-list-item>
-                    <router-link to="/" style="color: inherit"><span><md-icon><i class="fa fa-th-large fa-fw"></i></md-icon><span class="fix-list">Overview</span></span></router-link>
+                    <router-link to="/" style="color: inherit"><span @click="toggleLeftSidenav()"><md-icon><i class="fa fa-th-large fa-fw"></i></md-icon><span class="fix-list">Overview</span></span></router-link>
                 </md-list-item>
 
                 <md-list-item>
@@ -26,7 +26,7 @@
                         <md-list>
                             <md-list-item v-for="project of $store.state.projects" class="md-inset" :key="project.id">
                                 <router-link :to="{name: 'ProjectDetail', params: {projectName: project.name}}">
-                                    <span>
+                                    <span @click="toggleLeftSidenav()">
                                         <i v-if="project.isGit()" class="fa fa-github"></i>
                                         <i v-if="!project.isGit()" class="fa fa-home"></i>{{ project.name }}
                                     </span>
@@ -39,7 +39,7 @@
                 <md-list-item class="navi-link">
                     <a href="/docs/"
                        class="md-list-item-container md-button"
-                       target="_blank">
+                       target="_blank" @click="toggleLeftSidenav()">
                         <md-icon><i class="fa fa-book fa-fw"></i></md-icon>
                         <span>Docs</span>
                     </a>
@@ -48,7 +48,7 @@
                 <md-list-item class="navi-link">
                     <a href="https://github.com/InfraBox/infrabox/issues"
                        class="md-list-item-container md-button"
-                       target="_blank">
+                       target="_blank" @click="toggleLeftSidenav()">
                         <md-icon><i class="fa fa-bug fa-fw"></i></md-icon>
                         <span>Report Issue</span>
                     </a>
@@ -67,20 +67,23 @@
 </template>
 
 <script>
-    import store from './store'
+import store from './store'
+import router from './router'
 
-    export default {
-        name: 'app',
-        methods: {
-            toggleLeftSidenav () {
-                this.$refs.leftSidenav.toggle()
-            },
-            logout () {
-                console.log('logout')
-            }
+export default {
+    name: 'app',
+    methods: {
+        toggleLeftSidenav () {
+            this.$refs.leftSidenav.toggle()
         },
-        store
-    }
+        logout () {
+            this.toggleLeftSidenav()
+            document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:01 GMT;'
+            router.push('/login')
+        }
+    },
+    store
+}
 </script>
 
 <style>
@@ -104,5 +107,4 @@
     .fix-list{
         margin-left: 30px;
     }
-
 </style>

@@ -5,7 +5,7 @@
     <h1 class="m-xs">QUEUED</h1>
 </div>
 
-<div v-if="state=='scheduled'" class="state-widget bg-grey">
+<div v-if="state=='scheduled'" class="state-widget bg-neutral">
     <i class="fa fa-th-list fa-4x"></i>
     <h1 class="m-xs">SCHEDULED</h1>
 </div>
@@ -20,7 +20,7 @@
     <h1 class="m-xs">OK</h1>
 </div>
 
-<div v-if="state=='skipped'" class="state-widget bg-grey">
+<div v-if="state=='skipped'" class="state-widget bg-neutral">
     <i class="fa fa-share fa-4x"></i>
     <h1 class="m-xs">SKIPPED</h1>
 </div>
@@ -35,7 +35,7 @@
     <h1 class="m-xs">ERROR</h1>
 </div>
 
-<div v-if="state=='killed'" class="state-widget bg-grey">
+<div v-if="state=='killed'" class="state-widget bg-error">
     <i class="fa fa-ban fa-4x"></i>
     <h1 class="m-xs">KILLED</h1>
 </div>

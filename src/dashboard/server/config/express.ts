@@ -39,8 +39,6 @@ module.exports = (app) => {
     app.use('/api/dashboard/user', require('../controllers/user/routes'));
     app.use('/api/dashboard/account', require('../controllers/account/routes'));
 
-    app.use('/api/dashboard/account', require('../controllers/account/routes'));
-
     if (config.github.enabled) {
         app.use('/api/dashboard/github', require('../controllers/github/repos.controller'));
         app.use('/github/auth', require('../controllers/github/routes'));
@@ -51,7 +49,9 @@ module.exports = (app) => {
             INFRABOX_GITHUB_ENABLED: config.github.enabled,
             INFRABOX_GERRIT_ENABLED: config.gerrit.enabled,
             INFRABOX_ACCOUNT_SIGNUP_ENABLED: config.account.signup.enabled,
-            INFRABOX_ACCOUNT_LDAP_ENABLED: config.account.ldap.enabled
+            INFRABOX_ACCOUNT_LDAP_ENABLED: config.account.ldap.enabled,
+            INFRABOX_API_URL: config.api.url,
+            INFRABOX_DASHBOARD_URL: config.dashboard.url
         });
     });
 

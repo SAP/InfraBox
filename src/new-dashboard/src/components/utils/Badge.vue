@@ -3,7 +3,6 @@
         <md-list-item class="m-l-md m-r-md m-b-sm main-card-header">
             <div class="md-list-text-container">
                 <span><img :src="badgeUrl" height="20px" /></span>
-                <span class="small-font">{{ job_name }}</span>
             </div>
             <md-button class="md-icon-button md-list-action" @click="openDialog(dialog_id)">
                 <md-icon>
@@ -44,15 +43,14 @@
 </template>
 
 <script>
+import store from '../../store'
 
 export default {
     props: ['project_id', 'job_name', 'subject', 'status', 'color'],
     created () {
         this.dialog_id = `${this.job_name}_${this.subject}_dialog`
-        // this.api_host = window['INFRABOX_API_URL']
-        this.api_host = 'http://localhost:8080/'
-        // this.dashboard_host = window['INFRABOX_DASHBOARD_URL']
-        this.dashboard_host = 'http://localhost:8080/'
+        this.api_host = store.state.settings.INFRABOX_API_URL
+        this.dashboard_host = store.state.settings.INFRABOX_DASHBOARD_URL
         this.statusEncoded = encodeURI(this.status)
         this.id = `badge-${this.subject}-${this.status}`
         this.id = this.id.replace(/\W+/g, '')

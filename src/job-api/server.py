@@ -138,8 +138,14 @@ def execute(command):
     if exitCode != 0:
         raise Exception(output)
 
+@app.route("/api/job/job")
+def get_job():
+    token = validate_token()
 
-def get_job_data(job_id):
+    if not token:
+        return "Forbidden", 403
+
+    job_id = token['job']['id']
     data = {}
 
     # get all the job details
@@ -206,6 +212,10 @@ def get_job_data(job_id):
         "build_arguments": r[25],
         "security_context": r[27]
     }
+
+    state = data['job']['state']
+    if state in ("finished", "error", "failure", "skipped", "killed"):
+        return jsonify({}), 409
 
     env_vars = r[20]
     env_var_refs = r[21]
@@ -362,7 +372,7 @@ def get_job_data(job_id):
                 secret = get_secret(secret_name)
 
                 if not secret:
-                    return "Secret %s not found" % secret_name
+                    return "Secret %s not found" % secret_name, 400
 
                 dep['password'] = secret
                 data['deployments'].append(dep)
@@ -394,11 +404,11 @@ def get_job_data(job_id):
             secret = get_secret(value)
 
             if not secret:
-                return "Secret %s not found" % value
+                return "Secret %s not found" % value, 400
 
             data['environment'][name] = secret
 
-    return data
+    return jsonify(data)
 
 @app.route("/api/job/source")
 def get_source():
@@ -630,22 +640,6 @@ def get_output_of_job(parent_job_id):
             return "Not found", 404
 
     return send_file(output_zip)
-
-@app.route("/api/job/job")
-def get_job():
-    token = validate_token()
-
-    if not token:
-        return "Forbidden", 403
-
-    job_id = token['job']['id']
-    job_data = get_job_data(job_id)
-
-    state = job_data['job']['state']
-    if state in ("finished", "error", "failure", "skipped", "killed"):
-        return jsonify({}), 409
-
-    return jsonify(job_data)
 
 @app.route("/")
 def ping():

@@ -68,6 +68,7 @@ router.get("/:job_id/console", pv, (req: Request, res: Response, next) => {
                 throw new NotFound();
 			}
 
+            res.set({"Content-Disposition":`attachment; filename="${job_id}-console-output.txt"`});
             res.send(d);
         }).catch(handleDBError(next));
 });

@@ -670,6 +670,7 @@ class Scheduler(object):
 
     def run(self):
         while True:
+            elect_leader(self.conn, "scheduler")
             self.handle()
             time.sleep(2)
 
@@ -719,8 +720,6 @@ def main():
 
     conn = connect_db()
     conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
-
-    elect_leader(conn, "scheduler")
 
     start_http_server(8000)
 

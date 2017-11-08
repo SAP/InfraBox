@@ -8,8 +8,15 @@ if [ ! -e /var/run/docker.sock ]; then
     dockerd-entrypoint.sh --storage-driver overlay --graph /data/docker &
 
     # Wait until daemon is ready
+    COUNTER=0
     until docker version &> /dev/null; do
+      let COUNTER=COUNTER+1
       sleep 1
+
+      if [ $COUNTER -gt 60 ]; then
+        echo "Docker daemon not started"
+        exit 1
+      fi
     done
 else
     echo "Using host docker daemon socket"

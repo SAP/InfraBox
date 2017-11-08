@@ -65,87 +65,84 @@ function updateProjectState (project) {
 }
 
 function handleJobUpdate (state, event) {
-    if (event.type === 'UPDATE') {
-        const project = findProject(state, event.data.project.id)
-        const build = findBuild(project, event.data.build.id)
-        const job = findJob(build, event.data.job.id)
+    const project = findProject(state, event.data.project.id)
 
-        const j = event.data.job
-        job.state = j.state
-        job.endDate = new Date(j.end_date)
+    let commit = null
 
-        build._updateState()
-        updateProjectState(project)
-    } else if (event.type === 'INSERT') {
-        const project = findProject(state, event.data.project.id)
-
-        let commit = null
-
-        if (project.isGit()) {
-            // Update Commit
-            findCommit(project, event.data.commit.id)
-            if (event.data.commit) {
-                if (!commit) {
-                    commit = event.data.commit
-                    project.commits.push(commit)
-                }
+    if (project.isGit()) {
+        // Update Commit
+        findCommit(project, event.data.commit.id)
+        if (event.data.commit) {
+            if (!commit) {
+                commit = event.data.commit
+                project.commits.push(commit)
             }
         }
-
-        // Update Build
-        let build = findBuild(project, event.data.build.id)
-        if (!build) {
-            build = new Build(event.data.build.id,
-                              event.data.build.build_number,
-                              event.data.build.restart_counter,
-                              commit, event.data.pull_request,
-                              project)
-
-            let builds = [build]
-
-            for (let b of project.builds) {
-                builds.push(b)
-            }
-
-            builds = _(builds)
-                .chain()
-                .sortBy((b) => { return b.restartCounter })
-                .sortBy((b) => { return b.number })
-                .value()
-                .reverse()
-
-            project.builds = builds
-        }
-
-        // Update Job
-        const job = findJob(build, event.data.job.id)
-        if (!job) {
-            const d = event.data.job
-            let startDate = null
-
-            if (d.start_date) {
-                startDate = new Date(d.start_date)
-            }
-
-            const job = new Job(
-                d.id,
-                d.name,
-                d.cpu,
-                d.memory,
-                d.state,
-                startDate,
-                new Date(d.end_date),
-                build,
-                project,
-                d.dependencies
-            )
-            build.jobs.push(job)
-            state.jobs[d.id] = job
-        }
-
-        build._updateState()
-        updateProjectState(project)
     }
+
+    // Update Build
+    let build = findBuild(project, event.data.build.id)
+    if (!build) {
+        build = new Build(event.data.build.id,
+                          event.data.build.build_number,
+                          event.data.build.restart_counter,
+                          commit, event.data.pull_request,
+                          project)
+
+        let builds = [build]
+
+        for (let b of project.builds) {
+            builds.push(b)
+        }
+
+        builds = _(builds)
+            .chain()
+            .sortBy((b) => { return b.restartCounter })
+            .sortBy((b) => { return b.number })
+            .value()
+            .reverse()
+
+        project.builds = builds
+    }
+
+    // Update Job
+    const job = findJob(build, event.data.job.id)
+    const d = event.data.job
+
+    let startDate = null
+    let endDate = null
+
+    if (d.start_date) {
+        startDate = new Date(d.start_date)
+    }
+
+    if (d.end_data) {
+        endDate = new Date(d.end_date)
+    }
+
+    if (!job) {
+        const job = new Job(
+            d.id,
+            d.name,
+            d.cpu,
+            d.memory,
+            d.state,
+            startDate,
+            endDate,
+            build,
+            project,
+            d.dependencies
+        )
+        build.jobs.push(job)
+        state.jobs[d.id] = job
+    } else {
+        job.state = d.state
+        job.startDate = startDate
+        job.endDate = endDate
+    }
+
+    build._updateState()
+    updateProjectState(project)
 }
 
 function setProjects (state, projects) {
@@ -199,9 +196,19 @@ function setSettings (state, settings) {
     state.settings = settings
 }
 
+function setBadges (state, data) {
+    const job = data.job
+    const badges = data.badges
+    job.badges = badges
+}
+
 function handleConsoleUpdate (state, update) {
     const job = state.jobs[update.job_id]
     if (!job) {
+        return
+    }
+
+    if (!update.data) {
         return
     }
 
@@ -231,7 +238,8 @@ const mutations = {
     setGithubRepos,
     handleConsoleUpdate,
     deleteProject,
-    setSettings
+    setSettings,
+    setBadges
 }
 
 const getters = {}

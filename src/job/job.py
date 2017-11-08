@@ -8,9 +8,9 @@ import stat
 import uuid
 import base64
 import argparse
+import traceback
 import requests
 import yaml
-import traceback
 
 from pyinfrabox.infrabox import validate_json
 from pyinfrabox.docker_compose import create_from
@@ -235,6 +235,7 @@ exec "$@"
 
     def main(self):
         self.update_status('running')
+        self.load_data()
         self.get_source()
 
         if self.job_type == 'create':
@@ -744,11 +745,11 @@ exec "$@"
             job['base_path'] = base_path
 
             if parent_name != '':
-                job['name'] = parent_name + "-" + job['name']
+                job['name'] = parent_name + "/" + job['name']
 
                 deps = job.get('depends_on', [])
                 for x in xrange(0, len(deps)):
-                    deps[x]['job'] = parent_name + "-" + deps[x]['job']
+                    deps[x]['job'] = parent_name + "/" + deps[x]['job']
 
             job_name = job['name']
             if job['type'] != "workflow" and job['type'] != "git":

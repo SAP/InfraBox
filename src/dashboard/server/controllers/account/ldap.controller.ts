@@ -7,6 +7,7 @@ import { Router } from "express";
 import { db, handleDBError } from "../../db";
 import { config } from "../../config/config";
 import { logger } from "../../utils/logger";
+import { OK, BadRequest } from "../../utils/status";
 
 const router = Router();
 module.exports = router;
@@ -69,14 +70,10 @@ router.post("/login", (req: Request, res: Response, next) => {
             user = u;
             const token = jwt.sign({ user: { id: user.id } }, config.dashboard.secret);
             res.cookie("token", token);
-            res.redirect('/dashboard/start');
+            return OK(res, "logged in successfully");
         });
     })
     .catch((err) => {
-        logger.warn(err);
-        res.render("index", {
-            message: "Invalid email/password combination",
-            github_enabled: config.github.enabled
-        });
+        return next(new BadRequest("Wrong email/password combination"));
     });
 });
