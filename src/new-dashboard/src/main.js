@@ -25,6 +25,8 @@ import UserService from './services/UserService'
 import NotificationService from './services/NotificationService'
 import Notification from './models/Notification'
 
+require('../static/git-commit.svg')
+
 sync(store, router)
 
 Vue.config.productionTip = false

@@ -10,9 +10,14 @@ class UserService {
         })
     }
 
+    login () {
+        this.init()
+    }
+
     _loadSettings () {
         return APIService.get(`settings`)
             .then((s) => {
+                console.log(s)
                 store.commit('setSettings', s)
             })
     }
@@ -33,7 +38,6 @@ class UserService {
             })
             .then((d) => {
                 if (d) {
-                    console.log(d)
                     store.commit('setGithubRepos', d)
                 }
                 ProjectService.init()

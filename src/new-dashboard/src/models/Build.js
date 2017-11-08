@@ -1,13 +1,14 @@
 import APIService from '../services/APIService'
 import NotificationService from '../services/NotificationService'
 import Notification from '../models/Notification'
+import router from '../router'
 
 export default class Build {
     constructor (id, number, restartCounter, commit, pr, project) {
         this.id = id
         this.number = number
         this.restartCounter = restartCounter
-        this.state = 'running'
+        this.state = null
         this.jobs = []
         this.commit = commit
         this.startDate = null
@@ -49,7 +50,9 @@ export default class Build {
     restart () {
         return APIService.get(`project/${this.project.id}/build/${this.id}/restart`)
             .then((message) => {
+                console.log(message)
                 NotificationService.$emit('NOTIFICATION', new Notification(message))
+                router.push(`/project/${this.project.name}/build/${this.number}/${message.data.build.restartCounter}/`)
             })
             .catch((err) => {
                 NotificationService.$emit('NOTIFICATION', new Notification(err))
@@ -72,11 +75,11 @@ export default class Build {
         for (let j of this.jobs) {
             if (j.state === 'queued' || j.state === 'scheduled' || j.state === 'running') {
                 this.state = 'running'
-                return
+                break
             }
 
             if (j.state === 'error' || j.state === 'failure' || j.state === 'killed') {
-                this.state = 'failure'
+                this.state = j.state
             }
         }
     }

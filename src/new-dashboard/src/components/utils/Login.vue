@@ -12,19 +12,17 @@
                         <div class="md-subheading text-center">Welcome to InfraBox!</div>
                     </md-card-header>
                     <md-card-content class="m-xl" v-if="$store.state.settings.INFRABOX_ACCOUNT_SIGNUP_ENABLED || $store.state.settings.INFRABOX_ACCOUNT_LDAP_ENABLED">
-                        <form novalidate @submit.stop.prevent="submit">
-                            <md-input-container :class="{'md-input-invalid': !mailValid}">
-                                <md-input type="email" v-model="mail" required/>
-                                <label>E-Mail</label>
-                                <span v-if="!mailValid" class="md-error">Invalid E-Mail</span>
-                            </md-input-container>
-                            <md-input-container md-has-password :class="{'md-input-invalid': !pwValid}">
-                                <label>Password</label>
-                                <md-input type="password" v-model="password" required></md-input>
-                                <span v-if="!pwValid" class="md-error">Invalid Password</span>
-                            </md-input-container>
-                            <md-button :md-disabled="!mailValid || !pwValid" class="md-raised md-primary"><i class="fa fa-fw fa-sign-in"></i><span> Login</span></md-button>
-                        </form>
+                        <md-input-container :class="{'md-input-invalid': !mailValid}">
+                            <md-input type="email" v-model="mail" name="email" @keyup.enter.native="login" required/>
+                            <label>E-Mail</label>
+                            <span v-if="!mailValid" class="md-error">Invalid E-Mail</span>
+                        </md-input-container>
+                        <md-input-container md-has-password :class="{'md-input-invalid': !pwValid}">
+                            <label>Password</label>
+                            <md-input type="password" v-model="password" name="password" @keyup.enter="login" required></md-input>
+                            <span v-if="!pwValid" class="md-error">Invalid Password</span>
+                        </md-input-container>
+                        <md-button :disabled="!mailValid || !pwValid" class="md-raised md-primary" @click="login"><i class="fa fa-fw fa-sign-in"></i><span> Login</span></md-button>
                     </md-card-content>
                 </md-card-area>
                 <md-card-content class="m-xl">
@@ -53,6 +51,9 @@
 
 <script>
 import store from '../../store'
+import router from '../../router'
+import APIService from '../../services/APIService'
+import UserService from '../../services/UserService'
 
 export default {
     name: 'Login',
@@ -66,19 +67,27 @@ export default {
     watch: {
         mail () {
             // eslint-disable-next-line
-            var emailRegex = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
-
+            const emailRegex = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
             this.mailValid = emailRegex.test(this.mail)
         },
         password () {
             // eslint-disable-next-line
-            var pwRegex = /^.{5,20}$/
+            const pwRegex = /^.{5,20}$/
             this.pwValid = pwRegex.test(this.password)
         }
     },
     methods: {
         loginGithub () {
             window.location.href = '/github/auth/'
+        },
+        login () {
+            APIService.post('account/login', {
+                email: this.mail,
+                password: this.password
+            }).then(() => {
+                UserService.login()
+                router.push('/')
+            })
         }
     }
 }

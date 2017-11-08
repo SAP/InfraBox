@@ -72,14 +72,6 @@
                                     {{ data.build.commit.branch }}
                                 </span>
                             </md-list-item>
-                            <md-list-item class="p-l-md p-r-md">
-                                <span class="md-body-2"><i class="fa fa-shield fa-fw p-r-xl" aria-hidden="true"></i>
-                                Badges</span>
-                            </md-list-item>
-                            <ib-badge :project_id="data.project.id" job_name="myJob" subject="test" status="80%" color="green"></ib-badge>
-                            <ib-badge :project_id="data.project.id" job_name="test/InfraBox" subject="Coverage" status="80%" color="yellow"></ib-badge>
-                            <ib-badge :project_id="data.project.id" job_name="myJob" subject="test" status="80%" color="green"></ib-badge>
-                            <ib-badge :project_id="data.project.id" job_name="myJob" subject="test" status="80%" color="green"></ib-badge>
                         </md-list>
                     </md-layout>
                 </md-layout>
@@ -90,58 +82,58 @@
 </template>
 
 <script>
-    import store from '../../store'
-    import ProjectService from '../../services/ProjectService'
-    import GanttChart from './Gantt'
-    import StateBig from '../utils/StateBig'
-    import Date from '../utils/Date'
-    import Duration from '../utils/Duration'
-    import CommitSha from '../utils/CommitSha'
-    import JobList from '../job/JobList'
-    import Badge from '../utils/Badge'
+import store from '../../store'
+import ProjectService from '../../services/ProjectService'
+import GanttChart from './Gantt'
+import StateBig from '../utils/StateBig'
+import Date from '../utils/Date'
+import Duration from '../utils/Duration'
+import CommitSha from '../utils/CommitSha'
+import JobList from '../job/JobList'
+import Badge from '../utils/Badge'
 
-    export default {
-        name: 'BuildDetail',
-        props: ['projectName', 'buildNumber', 'buildRestartCounter'],
-        components: {
-            'ib-job-gantt': GanttChart,
-            'ib-state-big': StateBig,
-            'ib-date': Date,
-            'ib-duration': Duration,
-            'ib-commit-sha': CommitSha,
-            'ib-job-list': JobList,
-            'ib-badge': Badge
-        },
-        store,
-        asyncComputed: {
-            data: {
-                get () {
-                    let project = null
-                    return ProjectService
-                        .findProjectByName(this.projectName)
-                        .then((p) => {
-                            project = p
-                            return p.getBuild(this.buildNumber, this.buildRestartCounter)
-                        })
-                        .then((build) => {
-                            build._updateState()
-                            return {
-                                project,
-                                build
-                            }
-                        })
-                },
-                watch () {
-                    // eslint-disable-next-line no-unused-expressions
-                    this.projectName
-                    // eslint-disable-next-line no-unused-expressions
-                    this.buildNumber
-                    // eslint-disable-next-line no-unused-expressions
-                    this.buildRestartCounter
-                }
+export default {
+    name: 'BuildDetail',
+    props: ['projectName', 'buildNumber', 'buildRestartCounter'],
+    components: {
+        'ib-job-gantt': GanttChart,
+        'ib-state-big': StateBig,
+        'ib-date': Date,
+        'ib-duration': Duration,
+        'ib-commit-sha': CommitSha,
+        'ib-job-list': JobList,
+        'ib-badge': Badge
+    },
+    store,
+    asyncComputed: {
+        data: {
+            get () {
+                let project = null
+                return ProjectService
+                    .findProjectByName(this.projectName)
+                    .then((p) => {
+                        project = p
+                        return p.getBuild(this.buildNumber, this.buildRestartCounter)
+                    })
+                    .then((build) => {
+                        build._updateState()
+                        return {
+                            project,
+                            build
+                        }
+                    })
+            },
+            watch () {
+                // eslint-disable-next-line no-unused-expressions
+                this.projectName
+                // eslint-disable-next-line no-unused-expressions
+                this.buildNumber
+                // eslint-disable-next-line no-unused-expressions
+                this.buildRestartCounter
             }
         }
     }
+}
 </script>
 
 <style scoped>

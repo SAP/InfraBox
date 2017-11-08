@@ -191,11 +191,9 @@ export class GanttChart {
      maxChain = 0
      label_visible = true
      symbolSize = 0
-     router = null
      svg_width = 0
 
-    constructor(router) {
-        this.router = router
+    constructor() {
         this.symbolSize = this.box_height * 0.7
         if (this.box_width <= this.box_height) {
             this.symbolSize = this.box_width * 0.7
@@ -402,7 +400,7 @@ export class GanttChart {
                 router.push('/project/' + job.projectName +
                             '/build/' + job.buildNumber +
                             '/' + job.buildRestartCounter +
-                            '/job/' + job.name)
+                            '/job/' + encodeURIComponent(job.name))
             })
 
             const labelLength = jobLabel.getBBox().width
@@ -415,7 +413,7 @@ export class GanttChart {
             router.push('/project/' + job.projectName +
                         '/build/' + job.buildNumber +
                         '/' + job.buildRestartCounter +
-                        '/job/' + job.name)
+                        '/job/' + encodeURIComponent(job.name))
         })
 
         const hoverEnter = () => {

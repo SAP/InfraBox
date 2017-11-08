@@ -1,4 +1,7 @@
 import events from '../events'
+import NotificationService from '../services/NotificationService'
+import APIService from '../services/APIService'
+import store from '../store'
 const Convert = require('ansi-to-html')
 
 class Section {
@@ -77,6 +80,7 @@ export default class Job {
         this.project = project
         this.dependencies = dependencies || []
         this.sections = []
+        this.badges = []
     }
 
     _getTime (d) {
@@ -138,7 +142,22 @@ export default class Job {
         }
     }
 
+    loadBadges () {
+        return APIService.get(`project/${this.project.id}/job/${this.id}/badges`)
+            .then((badges) => {
+                store.commit('setBadges', { job: this, badges: badges })
+            })
+            .catch((err) => {
+                NotificationService.$emit('NOTIFICATION', new Notification(err))
+            })
+    }
+
     listenConsole () {
         events.listenConsole(this.id)
+    }
+
+    downloadOutput () {
+        const url = `project/${this.project.id}/job/${this.id}/console`
+        APIService.openAPIUrl(url)
     }
 }

@@ -7,6 +7,7 @@ import { Router } from "express";
 import { db, handleDBError } from "../../db";
 import { config } from "../../config/config";
 import { logger } from "../../utils/logger";
+import { BadRequest, OK } from "../../utils/status";
 
 const router = Router();
 module.exports = router;
@@ -35,26 +36,15 @@ router.post("/login", (req: Request, res: Response, next) => {
 
         const token = jwt.sign({ user: { id: user.id } }, config.dashboard.secret);
         res.cookie("token", token);
-        res.redirect('/dashboard/start');
+        return OK(res, "logged in successfully");
     })
     .catch((err) => {
         if (err.error_message) {
-            res.render("index", {
-                message: err.error_message,
-                github_enabled: config.github.enabled
-            });
+            return next(new BadRequest(err.error_message));
         } else {
-            logger.warn(err);
-            res.render("index", {
-                message: "An internal error occured. Please try again later.",
-                github_enabled: config.github.enabled
-            });
+            return next(new BadRequest("An internal error occured. Please try again later."));
         }
     });
-});
-
-router.get('/register', (req, res) => {
-    res.render('register');
 });
 
 router.post("/register", (req: Request, res: Response, next) => {
@@ -98,15 +88,14 @@ router.post("/register", (req: Request, res: Response, next) => {
             user = u;
             const token = jwt.sign({ user: { id: user.id } }, config.dashboard.secret);
             res.cookie("token", token);
-            res.redirect('/dashboard/start');
+            return OK(res, "logged in successfully");
         });
     })
     .catch((err) => {
         if (err.error_message) {
-            res.render("register", { message: err.error_message });
+            return next(new BadRequest(err.error_message));
         } else {
-            logger.warn(err);
-            res.render("register", { message: "An internal error occured. Please try again later." });
+            return next(new BadRequest("An internal error occured. Please try again later."));
         }
     });
 });

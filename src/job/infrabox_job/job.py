@@ -17,6 +17,18 @@ class Job(object):
             print "INFRABOX_JOB_API_URL not set"
             sys.exit(1)
 
+        self.job = None
+        self.project = None
+        self.build = None
+        self.repository = None
+        self.commit = None
+        self.dependencies = None
+        self.parents = None
+        self.environment = None
+        self.source_upload = None
+        self.deployments = None
+
+    def load_data(self):
         while True:
             try:
                 r = requests.get("%s/job" % self.api_server,
@@ -26,13 +38,16 @@ class Job(object):
                 time.sleep(1)
 
                 if r.status_code == 409:
-                    print "Stopping, already finished"
                     sys.exit(0)
+                elif r.status_code == 400:
+                    raise Failure(r.text)
                 elif r.status_code == 200:
                     break
                 else:
                     # Retry on any other error
                     continue
+            except Failure:
+                raise
             except Exception as e:
                 print e
 
@@ -68,26 +83,40 @@ class Job(object):
         if r.status_code != 200:
             raise Failure(r.text)
 
+    def post_api_server(self, endpoint, data=None):
+        while True:
+            try:
+                r = requests.post("%s/%s" % (self.api_server, endpoint),
+                                  headers=self.get_headers(),
+                                  timeout=20,
+                                  json=data,
+                                  verify=self.verify)
+                time.sleep(1)
+                if r.status_code == 200:
+                    return
+                else:
+                    # Retry on any other error
+                    continue
+            except Exception as e:
+                print e
+
+
     def set_running(self):
-        requests.post("%s/setrunning" % self.api_server,
-                      headers=self.get_headers(),
-                      timeout=60, verify=self.verify).json()
+        self.post_api_server('setrunning')
 
     def set_finished(self, state):
         payload = {
             "state": state
         }
-        requests.post("%s/setfinished" % self.api_server,
-                      headers=self.get_headers(),
-                      json=payload, timeout=60, verify=self.verify).json()
+
+        self.post_api_server('setfinished', data=payload)
 
     def post_stats(self, stat):
         payload = {
             "stats": stat
         }
-        requests.post("%s/stats" % self.api_server,
-                      headers=self.get_headers(),
-                      json=payload, timeout=60, verify=self.verify).json()
+
+        self.post_api_server('stats', data=payload)
 
     def get_file_from_api_server(self, url, path):
         r = requests.get("%s%s" % (self.api_server, url),

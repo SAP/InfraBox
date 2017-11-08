@@ -1,6 +1,7 @@
 import json
 import select
 
+import urllib
 import requests
 import psycopg2
 
@@ -27,7 +28,6 @@ def main(): # pragma: no cover
     get_env('INFRABOX_DATABASE_PORT')
     get_env('INFRABOX_DASHBOARD_URL')
 
-
     conn = connect_db()
     conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
     logger.info("Connected to database")
@@ -52,11 +52,13 @@ def handle_job_update(conn, update):
         return
 
     project_id = update['data']['project']['id']
+    project_name = update['data']['project']['name']
     job_state = update['data']['job']['state']
     job_id = update['data']['job']['id']
     job_name = update['data']['job']['name']
     commit_sha = update['data']['commit']['id']
-    build_id = update['data']['build']['id']
+    build_number = update['data']['build']['build_number']
+    build_restartCounter = update['data']['build']['restart_counter']
     dashboard_url = get_env('INFRABOX_DASHBOARD_URL')
 
     # determine github commit state
@@ -97,10 +99,12 @@ def handle_job_update(conn, update):
 
     payload = {
         "state": state,
-        "target_url":  dashboard_url + \
-                       '/dashboard/project/' + \
-                       project_id + '/build/' + \
-                       build_id + '/job/' + job_id,
+        "target_url":  '%s/dashboard/#/project/%s/build/%s/%s/job/%s' %
+                       (dashboard_url,
+                        project_name,
+                        build_number,
+                        build_restartCounter,
+                        urllib.quote(job_name)),
         "description": "InfraBox",
         "context": "Job: %s" % job_name
     }

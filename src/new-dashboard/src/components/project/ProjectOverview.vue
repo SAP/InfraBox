@@ -53,32 +53,14 @@
                             {{ project.builds[0].number }}.{{ project.builds[0].restartCounter }}
                         </md-table-cell>
                     </md-table-row>
-                    <md-table-row v-if="project.isGit()">
-                        <md-table-cell class="md-body-2"><i class="fa fa-fw fa-user"></i><span style="padding-left: 16px">Author</span></md-table-cell>
-                        <md-table-cell v-if="project.isGit()">
-                            {{ project.builds[0].commit.author_name }}
-                        </md-table-cell>
-                    </md-table-row>
-                    <md-table-row v-if="project.isGit()">
-                        <md-table-cell class="md-body-2"><i class="fa fa-fw fa-code-fork"></i><span style="padding-left: 16px">Branch</span></md-table-cell>
-                        <md-table-cell v-if="project.isGit()">
-                            {{ project.builds[0].commit.branch }}
-                        </md-table-cell>
-                    </md-table-row>
                     <md-table-row>
                         <md-table-cell class="md-body-2"><i class="fa fa-fw fa-calendar"></i><span style="padding-left: 16px"> Started</span></md-table-cell>
-                        <md-table-cell><ib-date :date="project.builds[0].start_date"></ib-date></md-table-cell>
+                        <md-table-cell><ib-date :date="project.builds[0].startDate"></ib-date></md-table-cell>
                     </md-table-row>
                     <md-table-row>
                         <md-table-cell class="md-body-2"><i class="fa fa-fw fa-clock-o"></i><span style="padding-left: 16px">Duration</span></md-table-cell>
                         <md-table-cell>
-                            <ib-duration :start="project.builds[0].start_date" :end="project.builds[0].end_date"></ib-duration>
-                        </md-table-cell>
-                    </md-table-row>
-                    <md-table-row v-if="project.isGit()">
-                        <md-table-cell class="md-body-2"><i class="fa fa-fw fa-file"></i><span style="padding-left: 16px">Type</span></md-table-cell>
-                        <md-table-cell v-if="project.isGit()">
-                            <ib-gitjobtype :build="project.builds[0]"></ib-gitjobtype>
+                            <ib-duration :start="project.builds[0].startDate" :end="project.builds[0].endDate"></ib-duration>
                         </md-table-cell>
                     </md-table-row>
                 </md-table-body>

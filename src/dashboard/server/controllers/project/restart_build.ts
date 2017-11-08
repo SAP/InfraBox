@@ -7,6 +7,7 @@ export function restart_build(req: Request, res: Response, next)  {
     const user_id = req['user'].id;
     const project_id = req.params['project_id'];
     const build_id = req.params['build_id'];
+    let restartCounter = null;
 
     db.tx((tx) => {
         let build = null;
@@ -31,12 +32,13 @@ export function restart_build(req: Request, res: Response, next)  {
             `, [build.build_number, build.project_id]);
         })
         .then((r: any) => {
+            restartCounter = r.restart_counter + 1;
             return tx.one(`
                 INSERT INTO build (commit_id, build_number,
                           project_id, restart_counter, source_upload_id)
                 VALUES ($1, $2, $3, $4, $5) RETURNING ID
             `, [build.commit_id, build.build_number, build.project_id,
-                r.restart_counter + 1, build.source_upload_id]);
+                restartCounter, build.source_upload_id]);
         })
         .then((b: any) => {
             new_build_id = b.id;
@@ -57,6 +59,6 @@ export function restart_build(req: Request, res: Response, next)  {
         });
     })
     .then(() => {
-        return OK(res, 'successfully restarted build', {build: {id: new_build_id}});
+        return OK(res, 'successfully restarted build', {build: {id: new_build_id, restartCounter: restartCounter}});
     }).catch(handleDBError(next));
 }

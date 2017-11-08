@@ -15,11 +15,11 @@ export default new Router({
         name: 'Overview',
         component: Overview
     }, {
-        path: '/addproject/',
+        path: '/addproject',
         name: 'addproject',
         component: AddProject
     }, {
-        path: '/login/',
+        path: '/login',
         name: 'login',
         component: Login
     }, {

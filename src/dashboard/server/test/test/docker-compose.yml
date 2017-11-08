@@ -31,6 +31,7 @@ services:
             - INFRABOX_DASHBOARD_BASIC_AUTH_PASSWORD=none
             - INFRABOX_DOCKER_REGISTRY_URL=127.0.0.1
             - INFRABOX_GITHUB_ENABLED=false
+            - INFRABOX_ROOT_URL=http://dashboard
             - INFRABOX_DOCS_URL=docs
             - INFRABOX_DASHBOARD_SECRET=asd
         links:

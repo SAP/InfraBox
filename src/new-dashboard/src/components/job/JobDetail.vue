@@ -103,9 +103,16 @@
                                 <span class="md-body-2"><i class="fa fa-file-archive-o fa-fw p-r-xl" aria-hidden="true"></i>
                                 Console Output</span>
                                 <span class="md-list-action">
-                                    <md-button class="md-raised md-dense">Download</md-button>
+                                    <md-button class="md-raised md-dense" @click="downloadOutput()">Download</md-button>
                                 </span>
                             </md-list-item>
+                            <ib-badge v-for="b of data.job.badges" :key="b.subject"
+                                :project_id="data.project.id"
+                                :job_name="data.job.name"
+                                :subject="b.subject"
+                                :status="b.status"
+                                :color="b.color">
+                            </ib-badge>
                         </md-list>
                     </md-layout>
                 </md-layout>
@@ -134,6 +141,7 @@ import CommitSha from '../utils/CommitSha'
 import Date from '../utils/Date'
 import Duration from '../utils/Duration'
 import Console from './Console'
+import Badge from '../utils/Badge'
 
 export default {
     name: 'JobDetail',
@@ -143,7 +151,8 @@ export default {
         'ib-commit-sha': CommitSha,
         'ib-date': Date,
         'ib-duration': Duration,
-        'ib-console': Console
+        'ib-console': Console,
+        'ib-badge': Badge
     },
     asyncComputed: {
         data: {
@@ -164,6 +173,7 @@ export default {
                     .then((j) => {
                         job = j
                         job.listenConsole()
+                        job.loadBadges()
                         return {
                             project,
                             build,
@@ -189,6 +199,9 @@ export default {
         },
         closeDialog (ref) {
             this.$refs[ref].close()
+        },
+        downloadOutput () {
+            this.data.job.downloadOutput()
         }
     }
 }

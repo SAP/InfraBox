@@ -27,6 +27,11 @@ class APIService {
             })
     }
 
+    openAPIUrl (u) {
+        const url = this.api + u
+        window.open(url, '_blank')
+    }
+
     delete (url) {
         const u = this.api + url
         console.log(`DELETE API: ${url}`)

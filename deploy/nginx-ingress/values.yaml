@@ -1,10 +1,10 @@
-controller:
-    config:
-        proxy-body-size: "0"
-    scope:
-        enabled: true
-        namespace: infrabox-system
-    service:
-        loadBalancerIP: 35.202.186.233
 rbac:
     create: true
+controller:
+    service:
+        type: NodePort
+        nodePorts:
+            http: 30080
+            https: 30443
+    config:
+        proxy-body-size: "0"

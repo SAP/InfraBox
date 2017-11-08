@@ -38,24 +38,20 @@ export function getToken () {
 export default new Vue({
     sockets: {
         connect () {
-            console.log('socket connected')
             this.$socket.emit('auth', getToken())
         },
         'notify:jobs' (val) {
             this.$emit('NOTIFY_JOBS', val)
         },
         'notify:console' (val) {
-            console.log('notify:console', val)
             this.$emit('NOTIFY_CONSOLE', val)
         }
     },
     methods: {
         listenJobs (project) {
-            console.log('listen:jobs', project)
             this.$socket.emit('listen:jobs', project.id)
         },
         listenConsole (id) {
-            console.log('listen:console', id)
             this.$socket.emit('listen:console', id)
         }
     }

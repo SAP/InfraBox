@@ -490,8 +490,8 @@ class Kubernetes(Install):
 command -v helm >/dev/null 2>&1 || { echo >&2 "I require helm but it's not installed. Aborting."; exit 1; }
 command -v kubectl >/dev/null 2>&1 || { echo >&2 "I require kubectl but it's not installed. Aborting."; exit 1; }
 
-helm install --tiller-namespace %(system_ns)s -n infrabox -f values-generated.yaml .
-''' % {"system_ns": self.args.general_system_namespace, "worker_ns": self.args.general_worker_namespace}
+helm install -n infrabox -f values-generated.yaml .
+'''
 
         install_path = os.path.join(self.args.o, 'install.sh')
         self.make_executable_file(install_path, install)
@@ -504,8 +504,8 @@ command -v kubectl >/dev/null 2>&1 || { echo >&2 "I require kubectl but it's not
 
 kubectl delete job -n %s --all
 
-helm upgrade --tiller-namespace %s infrabox -f values-generated.yaml .
-''' % (self.args.general_system_namespace, self.args.general_system_namespace)
+helm upgrade infrabox -f values-generated.yaml .
+''' % self.args.general_system_namespace
 
         update_path = os.path.join(self.args.o, 'update.sh')
         self.make_executable_file(update_path, update)
