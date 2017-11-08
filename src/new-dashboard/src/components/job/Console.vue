@@ -13,7 +13,7 @@
                     <md-table-row v-for="section of job.sections" :key="section.text">
                         <md-table-cell class="console-table"><md-card-expand>
                             <md-card-actions class="console-table text-left text-top">
-                                <md-button class="md-icon-button md-raised md-accent m-r-md" md-expand-trigger>
+                                <md-button md-theme="skipped" class="md-icon-button md-primary md-raised md-dense" md-expand-trigger>
                                     <md-icon>expand_less</md-icon>
                                 </md-button>
                                 <span class="m-l-md md-body-2" style="flex: 1">
@@ -21,15 +21,15 @@
                                 </span>
                                 </md-card-actions>
                                 <md-card-content class="no-padding">
-                                    <pre class="inherit-font no-margin p-l-xxl" v-html="section.lines_html"></pre>
+                                    <pre class="inherit-font no-margin p-l-xxl wrap-text" v-html="section.lines_html"></pre>
                                 </md-card-content>
                             </md-card-expand>
                         </md-table-cell>
-                        <md-table-cell class="console-table text-top">
-                            <div class="p-t-sm">{{ section.linesInSection }} lines</div>
+                        <md-table-cell class="console-table text-top text-right dont-wrap">
+                            <div class="p-t-sm">{{ section.linesInSection }} Lines</div>
                         </md-table-cell>
-                        <md-table-cell class="console-table text-top">
-                            <div class="p-t-sm">{{ section.duration }} seconds</div>
+                        <md-table-cell class="console-table text-top text-right dont-wrap">
+                            <div class="p-t-sm">{{ section.duration }} Seconds</div>
                         </md-table-cell>
                     </md-table-row>
                 </md-table-body>
