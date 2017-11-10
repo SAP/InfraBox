@@ -202,6 +202,12 @@ function setBadges (state, data) {
     job.badges = badges
 }
 
+function setEnvironment (state, data) {
+    const job = data.job
+    const env = data.env
+    job.env = env
+}
+
 function handleConsoleUpdate (state, update) {
     const job = state.jobs[update.job_id]
     if (!job) {
@@ -239,7 +245,8 @@ const mutations = {
     handleConsoleUpdate,
     deleteProject,
     setSettings,
-    setBadges
+    setBadges,
+    setEnvironment
 }
 
 const getters = {}

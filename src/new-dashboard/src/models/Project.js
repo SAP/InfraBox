@@ -48,7 +48,7 @@ export default class Project {
     removeCollaborator (co) {
         return APIService.delete(`project/${this.id}/collaborators/${co.id}`)
             .then((response) => {
-                NotificationService.$emit('NOTIFICATION', new Notification(response))
+                NotificationService.$emit('NOTIFICATION', new Notification(response, 'done'))
                 this._reloadCollaborators()
             })
     }
@@ -56,7 +56,7 @@ export default class Project {
     deleteToken (id) {
         delete APIService.delete(`project/${this.id}/tokens/${id}`)
         .then((response) => {
-            NotificationService.$emit('NOTIFICATION', new Notification(response))
+            NotificationService.$emit('NOTIFICATION', new Notification(response, 'done'))
             this._reloadTokens()
         })
     }
