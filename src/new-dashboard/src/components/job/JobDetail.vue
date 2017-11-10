@@ -94,7 +94,7 @@
                             </md-list-item>
                             <md-list-item v-if="data.build.commit" class="p-l-md p-r-xs">
                                 <span class="md-body-2"><i class="fa fa-download fa-fw p-r-xl" aria-hidden="true"></i>
-                                Run Lokal</span>
+                                Run Local</span>
                                 <span class="md-list-action">
                                     <md-button class="md-raised md-dense" @click="openDialog('cli_dialog')">CLI Command</md-button>
                                 </span>
@@ -123,8 +123,10 @@
 
             <md-dialog-content class="bg-white">
                 <md-card class="main-card">
-                    <div class="md-subtitle bg-light p-md">CLI command</div>
-                    <div class="m-md">lorem ipsum</div>
+                    <pre>export INFRABOX_CLI_TOKEN=&lt;YOUR_TOKEN&gt;
+infrabox pull</pre>
+                    <pre v-for="e of data.job.env" :key="e.name">  -e {{ e.name }}={{ e.value }}</pre>
+                    <pre>  --job-id {{ data.job.id }}</pre>
                 </md-card>
             </md-dialog-content>
             <md-dialog-actions>
@@ -174,6 +176,7 @@ export default {
                         job = j
                         job.listenConsole()
                         job.loadBadges()
+                        job.loadEnvironment()
                         return {
                             project,
                             build,

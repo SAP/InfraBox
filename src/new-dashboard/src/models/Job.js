@@ -1,4 +1,5 @@
 import events from '../events'
+import Notification from '../models/Notification'
 import NotificationService from '../services/NotificationService'
 import APIService from '../services/APIService'
 import store from '../store'
@@ -65,6 +66,7 @@ class Section {
         return text.replace(/[&<>'']/g, (m) => map[m])
     }
 }
+
 export default class Job {
     constructor (id, name, cpu, memory, state,
             startDate, endDate, build, project,
@@ -81,6 +83,7 @@ export default class Job {
         this.dependencies = dependencies || []
         this.sections = []
         this.badges = []
+        this.env = []
     }
 
     _getTime (d) {
@@ -124,6 +127,7 @@ export default class Job {
             if (isSection) {
                 if (this.currentSection) {
                     this.currentSection.setEndTime(date)
+                    this.currentSection.generateHtml()
                 }
                 this.currentSection = new Section(this.linesProcessed, header, date)
                 this.linesProcessed++
@@ -137,15 +141,25 @@ export default class Job {
                 this.currentSection.addLine(line)
                 this.linesProcessed++
             }
-
-            this.currentSection.generateHtml()
         }
+
+        this.currentSection.generateHtml()
     }
 
     loadBadges () {
         return APIService.get(`project/${this.project.id}/job/${this.id}/badges`)
             .then((badges) => {
                 store.commit('setBadges', { job: this, badges: badges })
+            })
+            .catch((err) => {
+                NotificationService.$emit('NOTIFICATION', new Notification(err))
+            })
+    }
+
+    loadEnvironment () {
+        return APIService.get(`project/${this.project.id}/job/${this.id}/env`)
+            .then((env) => {
+                store.commit('setEnvironment', { job: this, env: env })
             })
             .catch((err) => {
                 NotificationService.$emit('NOTIFICATION', new Notification(err))
@@ -159,5 +173,35 @@ export default class Job {
     downloadOutput () {
         const url = `project/${this.project.id}/job/${this.id}/console`
         APIService.openAPIUrl(url)
+    }
+
+    abort () {
+        return APIService.get(`project/${this.project.id}/job/${this.id}/kill`)
+            .then((message) => {
+                NotificationService.$emit('NOTIFICATION', new Notification(message, 'done'))
+            })
+            .catch((err) => {
+                NotificationService.$emit('NOTIFICATION', new Notification(err))
+            })
+    }
+
+    restart () {
+        return APIService.get(`project/${this.project.id}/job/${this.id}/restart`)
+            .then((message) => {
+                NotificationService.$emit('NOTIFICATION', new Notification(message, 'done'))
+            })
+            .catch((err) => {
+                NotificationService.$emit('NOTIFICATION', new Notification(err))
+            })
+    }
+
+    clearCache () {
+        return APIService.get(`project/${this.project.id}/job/${this.id}/cache/clear`)
+            .then((message) => {
+                NotificationService.$emit('NOTIFICATION', new Notification(message, 'done'))
+            })
+            .catch((err) => {
+                NotificationService.$emit('NOTIFICATION', new Notification(err))
+            })
     }
 }

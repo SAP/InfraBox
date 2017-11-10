@@ -40,7 +40,7 @@ export default class Build {
     abort () {
         return APIService.get(`project/${this.project.id}/build/${this.id}/kill`)
             .then((message) => {
-                NotificationService.$emit('NOTIFICATION', new Notification(message))
+                NotificationService.$emit('NOTIFICATION', new Notification(message, 'done'))
             })
             .catch((err) => {
                 NotificationService.$emit('NOTIFICATION', new Notification(err))
@@ -50,8 +50,7 @@ export default class Build {
     restart () {
         return APIService.get(`project/${this.project.id}/build/${this.id}/restart`)
             .then((message) => {
-                console.log(message)
-                NotificationService.$emit('NOTIFICATION', new Notification(message))
+                NotificationService.$emit('NOTIFICATION', new Notification(message, 'done'))
                 router.push(`/project/${this.project.name}/build/${this.number}/${message.data.build.restartCounter}/`)
             })
             .catch((err) => {
@@ -62,7 +61,7 @@ export default class Build {
     clearCache () {
         return APIService.get(`project/${this.project.id}/build/${this.id}/cache/clear`)
             .then((message) => {
-                NotificationService.$emit('NOTIFICATION', new Notification(message))
+                NotificationService.$emit('NOTIFICATION', new Notification(message, 'done'))
             })
             .catch((err) => {
                 NotificationService.$emit('NOTIFICATION', new Notification(err))
@@ -110,6 +109,10 @@ export default class Build {
         }
 
         for (let j of this.jobs) {
+            if (!this.endDate) {
+                this.endDate = j.endDate
+            }
+
             if (j.endDate > this.endDate) {
                 this.endDate = j.endDate
             }

@@ -1,8 +1,8 @@
 class Notification {
-    constructor (n) {
-        console.log(n)
+    constructor (n, icon) {
+        this.icon = icon || n.icon || 'error'
+
         let message = 'Internal Error occured'
-        let type = 'error'
         if (n.body && n.body.message) {
             message = n.body.message
         }
@@ -11,12 +11,7 @@ class Notification {
             message = n.message
         }
 
-        if (n.type) {
-            type = n.type
-        }
-
         this.message = message
-        this.type = type
     }
 }
 
