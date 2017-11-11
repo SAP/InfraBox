@@ -1,9 +1,11 @@
-FROM debian:9.1
+FROM docker:17.06
 
-RUN apt-get update -y && apt-get install -y python python-psycopg2 python-requests python-yaml curl
-RUN curl -L https://github.com/docker/compose/releases/download/1.16.1/docker-compose-`uname -s`-`uname -m` -o /usr/bin/docker-compose
-RUN chmod +x /usr/bin/docker-compose
+RUN apk add --no-cache python2 py2-requests py2-yaml py2-psycopg2 py2-pip
+RUN pip install PyJWT
 
 COPY src/scheduler/docker-compose scheduler
+COPY src/pyinfraboxutils /pyinfraboxutils
 
-CMD python scheduler/scheduler.py
+ENV PYTHONPATH=/
+
+ENTRYPOINT python scheduler/scheduler.py

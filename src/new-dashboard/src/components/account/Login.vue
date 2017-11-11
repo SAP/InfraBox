@@ -5,7 +5,6 @@
             <md-card class="clean-card">
                 <md-card-area>
                     <md-card-header class="text-center">
-<!--                        <div class="md-title text-center"><i class="fa fa-fw fa-sign-in"></i><span> Welcome to InfraBox!</span></div>-->
                         <div class="m-xl text-center">
                             <img src="../../../static/logo_on_transparent.svg" width="50%">
                         </div>
@@ -40,6 +39,7 @@
                     </div>
                     <md-button md-theme="default"
                         v-if="$store.state.settings.INFRABOX_ACCOUNT_SIGNUP_ENABLED"
+                        @click="signup()"
                         class="md-raised md-primary">
                         <i class="fa fa-fw fa-user-plus"></i><span> Signup</span></md-button>
                 </md-card-content>
@@ -79,6 +79,10 @@ export default {
     methods: {
         loginGithub () {
             window.location.href = '/github/auth/'
+        },
+        signup () {
+            console.log('signup')
+            router.push('signup')
         },
         login () {
             APIService.post('account/login', {
