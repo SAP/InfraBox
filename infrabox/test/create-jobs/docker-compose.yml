@@ -39,6 +39,7 @@ services:
         environment:
             - INFRABOX_JOB_API_URL=http://job-api:8080/api/job
             - INFRABOX_JOB_API_SECRET=secret
+            - INFRABOX_DASHBOARD_URL=http://localhost
         links:
             - postgres
             - job-api

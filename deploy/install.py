@@ -1,5 +1,6 @@
 import argparse
 import os
+import json
 import sys
 import stat
 import shutil
@@ -536,14 +537,37 @@ class DockerCompose(Install):
         super(DockerCompose, self).__init__(args)
         self.config = Configuration()
 
+    def setup_dashboard(self):
+        self.config.append('services.dashboard-api.environment', ['INFRABOX_ROOT_URL=%s' % self.args.root_url])
+
     def setup_docker_registry(self):
         self.required_option('docker-registry')
-        self.config.add('services.api.image', '%s/infrabox/api' % self.args.docker_registry)
-        self.config.add('services.dashboard.image', '%s/infrabox/dashboard' % self.args.docker_registry)
-        self.config.add('services.db.image', '%s/infrabox/db' % self.args.docker_registry)
-        self.config.add('services.scheduler.image', '%s/infrabox/scheduler-docker-compose' % self.args.docker_registry)
+        self.config.add('services.docker-registry-auth.image', '%s/docker-registry-auth' % self.args.docker_registry)
+        self.config.add('services.docker-registry-nginx.image', '%s/docker-registry-nginx' % self.args.docker_registry)
+        self.config.add('services.minio-init.image', '%s/docker-compose-minio-init' % self.args.docker_registry)
+        self.config.add('services.docs.image', '%s/docs' % self.args.docker_registry)
+
+        self.config.add('services.cli-api.image', '%s/api' % self.args.docker_registry)
+        self.config.add('services.job-api.image', '%s/job-api' % self.args.docker_registry)
+        self.config.add('services.dashboard-api.image', '%s/dashboard-api' % self.args.docker_registry)
+        self.config.add('services.dashboard-client.image', '%s/dashboard-client' % self.args.docker_registry)
+
+    def setup_scheduler(self):
+        self.config.add('services.scheduler.image', '%s/scheduler-docker-compose' % self.args.docker_registry)
+
+        daemon_config = os.path.join(self.args.o, 'daemon.json')
+
+        json.dump({ 'insecure-registry': ['nginx-ingress'], 'disable-legacy-registry': True}, open(daemon_config, 'w'))
+
         self.config.append('services.scheduler.environment',
-                           ['INFRABOX_DOCKER_REGISTRY=%s' % self.args.docker_registry])
+                           [
+                               'INFRABOX_DOCKER_REGISTRY=%s' % self.args.docker_registry,
+                               'INFRABOX_JOB_DAEMON_CONFIG_PATH=%s' % daemon_config
+                           ])
+
+
+    def setup_nginx_ingress(self):
+        self.config.add('services.nginx-ingress.image', '%s/docker-compose-ingress' % self.args.docker_registry)
 
     def setup_ldap(self):
         if self.args.ldap_enabled:
@@ -566,10 +590,10 @@ class DockerCompose(Install):
                 "INFRABOX_ACCOUNT_SIGNUP_ENABLED=true"
             ]
 
-        self.config.append('services.dashboard.environment', env)
-
+        self.config.append('services.dashboard-api.environment', env)
 
     def setup_database(self):
+        self.config.add('services.postgres.image', '%s/postgres' % self.args.docker_registry)
         if self.args.database == 'postgres':
             self.required_option('postgres-host')
             self.required_option('postgres-port')
@@ -593,41 +617,27 @@ class DockerCompose(Install):
             env = [
                 'INFRABOX_DATABASE_USER=postgres',
                 'INFRABOX_DATABASE_PASSWORD=postgres',
-                'INFRABOX_DATABASE_HOST=localhost',
+                'INFRABOX_DATABASE_HOST=postgres',
                 'INFRABOX_DATABASE_PORT=5432',
                 'INFRABOX_DATABASE_DB=postgres'
             ]
 
-
-        self.config.append('services.db.environment', env)
-        self.config.append('services.dashboard.environment', env)
-        self.config.append('services.api.environment', env)
+        self.config.append('services.dashboard-api.environment', env)
+        self.config.append('services.job-api.environment', env)
+        self.config.append('services.cli-api.environment', env)
         self.config.append('services.scheduler.environment', env)
-
-    def setup_init_file(self):
-        init = '''
-#!/bin/bash -e
-
-mc config host add compose http://localhost:9000 AKIAIOSFODNN7EXAMPLE wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY S3v4
-mc mb compose/infrabox-container-content-cache
-mc mb compose/infrabox-project-upload
-mc mb compose/infrabox-container-output
-mc mb compose/infrabox-docker-registry
-'''
-
-        init_path = os.path.join(self.args.o, 'init.sh')
-        self.make_executable_file(init_path, init)
-
 
     def main(self):
         copy_files(self.args, 'compose')
 
         compose_path = os.path.join(self.args.o, 'docker-compose.yml')
         self.config.load(compose_path)
+        self.setup_scheduler()
         self.setup_database()
         self.setup_docker_registry()
-        self.setup_init_file()
         self.setup_ldap()
+        self.setup_dashboard()
+        self.setup_nginx_ingress()
         self.config.dump(compose_path)
 
 

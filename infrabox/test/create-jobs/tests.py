@@ -311,7 +311,7 @@ class TestCreateJobs(object):
         copy_tree(path, '/repo')
 
         console = ApiConsole()
-        job = RunJob(console, 'create')
+        job = RunJob(console)
         job.main()
 
         self.expect(expect,
@@ -331,7 +331,7 @@ class TestCreateJobs(object):
         self.execute("""
             INSERT INTO job (id, state, build_id, type, name,
                 cpu, memory, project_id, build_only)
-            VALUES(%s, 'scheduled', %s, 'test', 'Create Jobs',
+            VALUES(%s, 'scheduled', %s, 'create_job_matrix', 'Create Jobs',
                 1, 1024, %s, false);
         """, (self.job_id, build_id, project_id))
 
