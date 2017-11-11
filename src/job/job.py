@@ -3,11 +3,9 @@ import os
 import shutil
 import json
 import subprocess
-import logging
 import stat
 import uuid
 import base64
-import argparse
 import traceback
 import requests
 import yaml
@@ -20,6 +18,8 @@ from infrabox_job.process import ApiConsole, Failure
 from infrabox_job.job import Job
 
 from pyinfraboxutils import get_env, print_stackdriver
+from pyinfraboxutils import get_logger
+logger = get_logger('scheduler')
 
 def makedirs(path):
     os.makedirs(path)
@@ -31,11 +31,10 @@ def get_registry_name():
     return n
 
 class RunJob(Job):
-    def __init__(self, console, job_type):
+    def __init__(self, console):
         Job.__init__(self)
         self.console = console
         self.data_dir = '/data/infrabox'
-        self.job_type = job_type
         self.storage_dir = '/tmp/storage'
 
         if os.path.exists(self.data_dir):
@@ -238,7 +237,7 @@ exec "$@"
         self.load_data()
         self.get_source()
 
-        if self.job_type == 'create':
+        if self.job['type'] == 'create_job_matrix':
             self.main_create_jobs()
         else:
             self.main_run_job()
@@ -368,7 +367,7 @@ exec "$@"
             elif self.job['type'] == 'run_docker_compose':
                 self.run_docker_compose(c)
             else:
-                raise Exception('Unknown job type')
+                raise Exception('Unknown job type: %s' % self.job['type'])
         except:
             raise
         finally:
@@ -411,7 +410,7 @@ exec "$@"
                 try:
                     self.post_file_to_api_server('/cache', storage_cache_tar)
                 except:
-                    logging.exception("message")
+                    logger.exception("message")
         else:
             c.collect("Cache is empty\n", show=True)
 
@@ -863,16 +862,14 @@ def main():
     get_env('INFRABOX_LOCAL_CACHE_ENABLED')
     get_env('INFRABOX_JOB_MAX_OUTPUT_SIZE')
     get_env('INFRABOX_JOB_API_URL')
+    get_env('INFRABOX_JOB_MOUNT_DOCKER_SOCKET')
+    get_env('INFRABOX_LOCAL_CACHE_ENABLED')
 
-    parser = argparse.ArgumentParser(description='Process some integers.')
-    parser.add_argument('--type', choices=['create', 'run'], help="job type")
-
-    args = parser.parse_args()
     console = ApiConsole()
 
     j = None
     try:
-        j = RunJob(console, args.type)
+        j = RunJob(console)
         j.main()
         j.console.flush()
         j.update_status('finished')

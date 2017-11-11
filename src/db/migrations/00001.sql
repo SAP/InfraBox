@@ -38,8 +38,7 @@ CREATE TYPE job_type AS ENUM (
     'create_job_matrix',
     'run_project_container',
     'run_docker_compose',
-    'wait',
-    'test'
+    'wait'
 );
 
 
