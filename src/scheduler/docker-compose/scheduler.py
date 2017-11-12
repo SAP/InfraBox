@@ -39,7 +39,7 @@ class Scheduler(object):
         self.conn = connect_db()
         self.conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
 
-    def kube_job(self, job_id, build_id, cpu, memory, job_type):
+    def kube_job(self, job_id, _build_id, _cpu, _memory, _job_type):
         cmd = 'rm -rf /data/infrabox/*'
         subprocess.check_output(cmd, shell=True)
 
@@ -57,16 +57,16 @@ class Scheduler(object):
                '-e', "INFRABOX_DOCKER_REGISTRY_ADMIN_PASSWORD=admin",
                '-e', "INFRABOX_DASHBOARD_URL=http://localhost",
                '-e', "INFRABOX_JOB_MOUNT_DOCKER_SOCKET=false",
-               '-e', "INFRABOX_JOB_API_TOKEN=%s" % jwt.encode({"job_id": job_id}, os.environ['INFRABOX_JOB_API_SECRET']),
+               '-e', "INFRABOX_JOB_API_TOKEN=%s" % jwt.encode({"job_id":job_id}, os.environ['INFRABOX_JOB_API_SECRET']),
                '--privileged',
-               '--network=infraboxcompose_infrabox',
+               '--network=compose_infrabox',
                '-v', '/var/run/docker.sock:/var/run/docker.sock',
                '-v', '%s=/etc/docker/daemon.json' % os.environ['INFRABOX_JOB_DAEMON_CONFIG_PATH'],
                '-v', '/data:/data',
                '--name=ib-job-%s' % job_id,
-               '--link=infraboxcompose_nginx-ingress_1:nginx-ingress',
-                os.environ['INFRABOX_DOCKER_REGISTRY'] + '/job'
-        ]
+               '--link=compose_nginx-ingress_1:nginx-ingress',
+               os.environ['INFRABOX_DOCKER_REGISTRY'] + '/job'
+              ]
 
         execute(cmd)
 
@@ -255,7 +255,7 @@ class Scheduler(object):
     def run(self):
         while True:
             self.handle()
-            time.sleep(5)
+            time.sleep(1)
 
 def get_env(name):
     if name not in os.environ:
