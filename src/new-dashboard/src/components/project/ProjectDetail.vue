@@ -12,7 +12,7 @@
             </md-card-header>
             <md-card-area>
                 <md-tabs md-fixed class="md-transparent">
-                    <template slot="header-item" slot-scope="props">
+                    <template slot="header-item" scope="props">
                         <md-icon v-if="props.header.icon">{{ props.header.icon }}</md-icon>
                         <template v-if="props.header.options && props.header.options.new_badge">
                             <span v-if="props.header.label" class="label-with-new-badge">
