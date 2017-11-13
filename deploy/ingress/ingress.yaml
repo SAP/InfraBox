@@ -4,7 +4,7 @@ metadata:
     name: infrabox
     namespace: infrabox-system
     annotations:
-        #kubernetes.io/ingress.class: "nginx"
+        kubernetes.io/ingress.class: "nginx"
         #kubernetes.io/tls-acme: "true"
         #ingress.kubernetes.io/force-ssl-redirect: "true"
 spec:

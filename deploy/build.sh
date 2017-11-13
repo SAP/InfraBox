@@ -17,6 +17,8 @@ infrabox run deploy/job              -t ${docker_registry}infrabox/job:$image_ta
 infrabox run deploy/job-api          -t ${docker_registry}infrabox/job-api:$image_tag
 infrabox run deploy/scheduler-kubernetes -t ${docker_registry}infrabox/scheduler-kubernetes:$image_tag
 infrabox run deploy/scheduler-docker-compose -t ${docker_registry}infrabox/scheduler-docker-compose:$image_tag
+infrabox run deploy/docker-compose-ingress -t ${docker_registry}infrabox/docker-compose-ingress:$image_tag
+infrabox run deploy/docker-compose-minio-init -t ${docker_registry}infrabox/docker-compose-minio-init:$image_tag
 infrabox run deploy/api              -t ${docker_registry}infrabox/api:$image_tag
 infrabox run deploy/docs             -t ${docker_registry}infrabox/docs:$image_tag
 infrabox run deploy/dashboard-api    -t ${docker_registry}infrabox/dashboard-api:$image_tag
@@ -27,3 +29,4 @@ infrabox run deploy/docker-nginx     -t ${docker_registry}infrabox/docker-regist
 infrabox run deploy/stats            -t ${docker_registry}infrabox/stats:$image_tag
 infrabox run deploy/db               -t ${docker_registry}infrabox/db:$image_tag
 infrabox run deploy/docker-gc        -t ${docker_registry}infrabox/docker-gc:$image_tag
+infrabox run deploy/postgres         -t ${docker_registry}infrabox/postgres:$image_tag

@@ -17,7 +17,8 @@ class TestIt(unittest.TestCase):
             'data': {
                 'project': {
                     'type': 'github',
-                    'id': 'projectid'
+                    'id': 'projectid',
+                    'name': 'projectname'
                 },
                 'job': {
                     'state': 'scheduled',
@@ -28,7 +29,9 @@ class TestIt(unittest.TestCase):
                     'id': 'commitid',
                 },
                 'build': {
-                    'id': 'buildid'
+                    'id': 'buildid',
+                    'build_number': 123,
+                    'restart_counter': 123
                 }
             }
         }
@@ -69,7 +72,7 @@ class TestIt(unittest.TestCase):
 
         requests_post.assert_called_with(
             'status_url',
-            data='{"state": "pending", "target_url": "GITHUB_URL/dashboard/project/projectid/build/buildid/job/jobid", "description": "InfraBox", "context": "Job: jobname"}', headers={'Authorization': 'token token', 'User-Agent': 'InfraBox'}, timeout=5, verify=False)
+            data='{"state": "pending", "target_url": "GITHUB_URL/dashboard/#/project/projectname/build/123/123/job/jobname", "description": "InfraBox", "context": "Job: jobname"}', headers={'Authorization': 'token token', 'User-Agent': 'InfraBox'}, timeout=5, verify=False)
 
     @mock.patch('requests.post')
     @mock.patch('review.get_env')
@@ -86,7 +89,7 @@ class TestIt(unittest.TestCase):
 
         execute_sql.side_effect = side_effect
         handle_job_update(None, self.update)
-        data = '{"state": "%s", "target_url": "GITHUB_URL/dashboard/project/projectid/build/buildid/job/jobid", "description": "InfraBox", "context": "Job: jobname"}' % self.expected_github_status
+        data = '{"state": "%s", "target_url": "GITHUB_URL/dashboard/#/project/projectname/build/123/123/job/jobname", "description": "InfraBox", "context": "Job: jobname"}' % self.expected_github_status
         requests_post.assert_called_with(
             'status_url',
             data=data,

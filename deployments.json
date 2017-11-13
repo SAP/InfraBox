@@ -248,9 +248,19 @@
         "build_only": false
     }, {
         "type": "docker",
+        "name": "docker-compose-ingress",
+        "docker_file": "src/docker-compose/ingress/Dockerfile",
+        "resources": { "limits": { "cpu": 1, "memory": 512 } }
+    }, {
+        "type": "docker",
+        "name": "docker-compose-minio-init",
+        "docker_file": "src/docker-compose/minio-init/Dockerfile",
+        "resources": { "limits": { "cpu": 1, "memory": 512 } }
+    }, {
+        "type": "docker",
         "name": "dashboard-client",
         "docker_file": "src/new-dashboard/Dockerfile",
-        "resources": { "limits": { "cpu": 1, "memory": 2048 } },
+        "resources": { "limits": { "cpu": 1, "memory": 512 } },
         "depends_on": ["build-dashboard-client"],
         "deployments": [{
              "type": "docker-registry",

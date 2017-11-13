@@ -1,5 +1,6 @@
 import argparse
 import os
+import json
 import sys
 import stat
 import shutil
@@ -59,7 +60,8 @@ class Configuration(object):
 def copy_files(args, directory):
     dir_path = os.path.dirname(os.path.realpath(__file__))
     chart_dir = os.path.join(dir_path, directory)
-    shutil.copytree(chart_dir, args.o)
+    target_path = os.path.join(args.o, directory)
+    shutil.copytree(chart_dir, target_path)
 
 def option_not_supported(args, name):
     args = vars(args)
@@ -85,7 +87,7 @@ class Install(object):
             sys.exit(1)
 
     def create_secret(self, name, namespace, data):
-        secrets_dir = os.path.join(self.args.o, 'templates', 'secrets')
+        secrets_dir = os.path.join(self.args.o, 'infrabox', 'templates', 'secrets')
 
         if not os.path.exists(secrets_dir):
             os.mkdir(secrets_dir)
@@ -464,6 +466,11 @@ class Kubernetes(Install):
     def main(self):
         # Copy helm chart
         copy_files(self.args, 'infrabox')
+        copy_files(self.args, 'ingress')
+
+        # Load values
+        values_path = os.path.join(self.args.o, 'infrabox', 'values.yaml')
+        self.config.load(values_path)
 
         self.setup_general()
         self.setup_postgres()
@@ -482,68 +489,55 @@ class Kubernetes(Install):
         self.setup_ldap()
         self.setup_local_cache()
 
-        self.config.dump(os.path.join(self.args.o, 'values-generated.yaml'))
+        daemon_config = {
+            'disable-legacy-registry': True
+        }
 
-        install = '''
-#!/bin/bash -e
+        if self.args.general_dont_check_certificates:
+            registry_name = self.args.root_url.replace('http://', '')
+            registry_name = registry_name.replace('https://', '')
+            daemon_config['insecure-registries'] = [registry_name]
+            daemon_config_path = os.path.join(self.args.o, 'infrabox', 'config', 'docker', 'daemon.json')
+            json.dump(daemon_config, open(daemon_config_path, 'w'))
 
-command -v helm >/dev/null 2>&1 || { echo >&2 "I require helm but it's not installed. Aborting."; exit 1; }
-command -v kubectl >/dev/null 2>&1 || { echo >&2 "I require kubectl but it's not installed. Aborting."; exit 1; }
-
-helm install -n infrabox -f values-generated.yaml .
-'''
-
-        install_path = os.path.join(self.args.o, 'install.sh')
-        self.make_executable_file(install_path, install)
-
-        update = '''
-#!/bin/bash -e
-
-command -v helm >/dev/null 2>&1 || { echo >&2 "I require helm but it's not installed. Aborting."; exit 1; }
-command -v kubectl >/dev/null 2>&1 || { echo >&2 "I require kubectl but it's not installed. Aborting."; exit 1; }
-
-kubectl delete job -n %s --all
-
-helm upgrade infrabox -f values-generated.yaml .
-''' % self.args.general_system_namespace
-
-        update_path = os.path.join(self.args.o, 'update.sh')
-        self.make_executable_file(update_path, update)
-
-        pf = '''
-#!/bin/bash -e
-command -v kubectl >/dev/null 2>&1 || { echo >&2 "I require kubectl but it's not installed. Aborting."; exit 1; }
-
-#!/bin/bash -e
-component=$1
-port=$2
-echo "Looking for a pod for: $component"
-
-pod=$(kubectl get pods -n %s | grep $component | awk '{ print $1 }')
-
-echo "Found pod: $pod"
-echo "Starting port-forwarding: $port"
-
-kubectl port-forward -n %s $pod $port
-''' % (self.args.general_system_namespace, self.args.general_system_namespace)
-
-        pf_path = os.path.join(self.args.o, 'port-forward.sh')
-        self.make_executable_file(pf_path, pf)
-
+        self.config.dump(values_path)
 
 class DockerCompose(Install):
     def __init__(self, args):
         super(DockerCompose, self).__init__(args)
         self.config = Configuration()
 
+    def setup_dashboard(self):
+        self.config.append('services.dashboard-api.environment', ['INFRABOX_ROOT_URL=%s' % self.args.root_url])
+
     def setup_docker_registry(self):
         self.required_option('docker-registry')
-        self.config.add('services.api.image', '%s/infrabox/api' % self.args.docker_registry)
-        self.config.add('services.dashboard.image', '%s/infrabox/dashboard' % self.args.docker_registry)
-        self.config.add('services.db.image', '%s/infrabox/db' % self.args.docker_registry)
-        self.config.add('services.scheduler.image', '%s/infrabox/scheduler-docker-compose' % self.args.docker_registry)
+        self.config.add('services.docker-registry-auth.image', '%s/docker-registry-auth' % self.args.docker_registry)
+        self.config.add('services.docker-registry-nginx.image', '%s/docker-registry-nginx' % self.args.docker_registry)
+        self.config.add('services.minio-init.image', '%s/docker-compose-minio-init' % self.args.docker_registry)
+        self.config.add('services.docs.image', '%s/docs' % self.args.docker_registry)
+
+        self.config.add('services.cli-api.image', '%s/api' % self.args.docker_registry)
+        self.config.add('services.job-api.image', '%s/job-api' % self.args.docker_registry)
+        self.config.add('services.dashboard-api.image', '%s/dashboard-api' % self.args.docker_registry)
+        self.config.add('services.dashboard-client.image', '%s/dashboard-client' % self.args.docker_registry)
+
+    def setup_scheduler(self):
+        self.config.add('services.scheduler.image', '%s/scheduler-docker-compose' % self.args.docker_registry)
+
+        daemon_config = os.path.join(self.args.o, 'daemon.json')
+
+        json.dump({'insecure-registry': ['nginx-ingress'], 'disable-legacy-registry': True}, open(daemon_config, 'w'))
+
         self.config.append('services.scheduler.environment',
-                           ['INFRABOX_DOCKER_REGISTRY=%s' % self.args.docker_registry])
+                           [
+                               'INFRABOX_DOCKER_REGISTRY=%s' % self.args.docker_registry,
+                               'INFRABOX_JOB_DAEMON_CONFIG_PATH=%s' % daemon_config
+                           ])
+
+
+    def setup_nginx_ingress(self):
+        self.config.add('services.nginx-ingress.image', '%s/docker-compose-ingress' % self.args.docker_registry)
 
     def setup_ldap(self):
         if self.args.ldap_enabled:
@@ -566,10 +560,10 @@ class DockerCompose(Install):
                 "INFRABOX_ACCOUNT_SIGNUP_ENABLED=true"
             ]
 
-        self.config.append('services.dashboard.environment', env)
-
+        self.config.append('services.dashboard-api.environment', env)
 
     def setup_database(self):
+        self.config.add('services.postgres.image', '%s/postgres' % self.args.docker_registry)
         if self.args.database == 'postgres':
             self.required_option('postgres-host')
             self.required_option('postgres-port')
@@ -593,41 +587,27 @@ class DockerCompose(Install):
             env = [
                 'INFRABOX_DATABASE_USER=postgres',
                 'INFRABOX_DATABASE_PASSWORD=postgres',
-                'INFRABOX_DATABASE_HOST=localhost',
+                'INFRABOX_DATABASE_HOST=postgres',
                 'INFRABOX_DATABASE_PORT=5432',
                 'INFRABOX_DATABASE_DB=postgres'
             ]
 
-
-        self.config.append('services.db.environment', env)
-        self.config.append('services.dashboard.environment', env)
-        self.config.append('services.api.environment', env)
+        self.config.append('services.dashboard-api.environment', env)
+        self.config.append('services.job-api.environment', env)
+        self.config.append('services.cli-api.environment', env)
         self.config.append('services.scheduler.environment', env)
-
-    def setup_init_file(self):
-        init = '''
-#!/bin/bash -e
-
-mc config host add compose http://localhost:9000 AKIAIOSFODNN7EXAMPLE wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY S3v4
-mc mb compose/infrabox-container-content-cache
-mc mb compose/infrabox-project-upload
-mc mb compose/infrabox-container-output
-mc mb compose/infrabox-docker-registry
-'''
-
-        init_path = os.path.join(self.args.o, 'init.sh')
-        self.make_executable_file(init_path, init)
-
 
     def main(self):
         copy_files(self.args, 'compose')
 
-        compose_path = os.path.join(self.args.o, 'docker-compose.yml')
+        compose_path = os.path.join(self.args.o, 'compose', 'docker-compose.yml')
         self.config.load(compose_path)
+        self.setup_scheduler()
         self.setup_database()
         self.setup_docker_registry()
-        self.setup_init_file()
         self.setup_ldap()
+        self.setup_dashboard()
+        self.setup_nginx_ingress()
         self.config.dump(compose_path)
 
 
@@ -686,10 +666,10 @@ def main():
     parser.add_argument('--s3-region')
     parser.add_argument('--s3-endpoint')
     parser.add_argument('--s3-port', default=443, type=int)
-    parser.add_argument('--s3-container-output-bucket', default='infrabox-container-output-bucket')
-    parser.add_argument('--s3-project-upload-bucket', default='infrabox-project-upload-bucket')
-    parser.add_argument('--s3-container-content-cache-bucket', default='infrabox-container-cache-bucket')
-    parser.add_argument('--s3-docker-registry-bucket', default='infrabox-docker-registry-bucket')
+    parser.add_argument('--s3-container-output-bucket', default='infrabox-container-output')
+    parser.add_argument('--s3-project-upload-bucket', default='infrabox-project-upload')
+    parser.add_argument('--s3-container-content-cache-bucket', default='infrabox-container-cache')
+    parser.add_argument('--s3-docker-registry-bucket', default='infrabox-docker-registry')
     parser.add_argument('--s3-secure', default='true')
 
     parser.add_argument('--gcs-project-id')

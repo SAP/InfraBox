@@ -3,10 +3,23 @@ import logging
 import json
 import traceback
 
+def get_log_level():
+    l = os.environ.get('INFRABOX_LOG_LEVEL', 'info')
+    print "Log level: %s" % l
+
+    if l == 'debug':
+        return logging.DEBUG
+    elif l == 'info':
+        return logging.INFO
+    elif l == 'warning':
+        return logging.WARNING
+    else:
+        return logging.WARNING
+
 logging.basicConfig(
     format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s',
     datefmt='%d-%m-%Y:%H:%M:%S',
-    level=logging.DEBUG
+    level=logging.WARNING
 )
 
 def print_stackdriver():
@@ -28,4 +41,6 @@ def get_env(name):
     return os.environ[name]
 
 def get_logger(name):
-    return logging.getLogger(name)
+    l = logging.getLogger(name)
+    l.setLevel(get_log_level())
+    return l
