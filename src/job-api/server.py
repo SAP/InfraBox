@@ -11,7 +11,7 @@ from datetime import datetime
 from minio import Minio
 import jwt
 
-from flask import Flask, jsonify, request, send_file
+from flask import Flask, jsonify, request, send_file, g
 
 from pyinfrabox.badge import validate_badge
 from pyinfrabox.markup import validate_markup
@@ -25,9 +25,8 @@ logger = get_logger('job-api')
 
 app = Flask(__name__)
 
-
 def execute_many(stmt, args):
-    c = conn.cursor()
+    c = g.conn.cursor()
     c.execute(stmt, args)
     r = c.fetchall()
     c.close()
@@ -47,7 +46,6 @@ def allowed_file(filename, extensions):
            filename.rsplit('.', 1)[1].lower() in extensions
 
 def validate_token():
-    conn.rollback()
     token = request.headers.get('X-Infrabox-Token', None)
 
     if not token:
@@ -71,10 +69,7 @@ def validate_token():
         logger.warn('not a valid uuid')
         return None
 
-    cur = conn.cursor()
-    cur.execute("SELECT state, project_id, name FROM job WHERE id = %s", [job_id])
-    r = cur.fetchone()
-    cur.close()
+    r = execute_one("SELECT state, project_id, name FROM job WHERE id = %s", [job_id])
 
     if not r:
         logger.debug('job not found')
@@ -138,6 +133,14 @@ def execute(command):
     if exitCode != 0:
         raise Exception(output)
 
+@app.before_request
+def before_request():
+    g.conn = connect_db()
+
+@app.teardown_request
+def teardown_request(exception):
+    g.conn.close()
+
 @app.route("/api/job/job")
 def get_job():
     token = validate_token()
@@ -149,8 +152,7 @@ def get_job():
     data = {}
 
     # get all the job details
-    cursor = conn.cursor()
-    cursor.execute('''
+    r = execute_one('''
 	SELECT
 	    j.name,
 	    null,
@@ -193,8 +195,6 @@ def get_job():
 	    ON co.project_id = p.id
 	WHERE j.id = %s
     ''', (job_id, ))
-    r = cursor.fetchone()
-    cursor.close()
 
     data['job'] = {
         "id": job_id,
@@ -248,31 +248,25 @@ def get_job():
 
     pull_request_id = None
     if data['project']['type'] == 'github' or data['project']['type'] == 'gerrit':
-        cursor = conn.cursor()
-        cursor.execute('''
+        r = execute_one('''
             SELECT
                 r.clone_url, r.name, r.private
             FROM repository r
             WHERE r.project_id = %s
         ''', (data['project']['id'],))
-        r = cursor.fetchone()
-        cursor.close()
 
         data['repository']['clone_url'] = r[0]
         data['repository']['name'] = r[1]
         data['repository']['private'] = r[2]
 
         # A regular commit
-        cursor = conn.cursor()
-        cursor.execute('''
+        r = execute_one('''
             SELECT
                 c.branch, c.committer_name, c.tag, c.pull_request_id
             FROM commit c
             WHERE c.id = %s
                 AND c.project_id = %s
         ''', (data['build']['commit_id'], data['project']['id']))
-        r = cursor.fetchone()
-        cursor.close()
 
         data['commit'] = {
             "id": data['build']['commit_id'],
@@ -283,21 +277,17 @@ def get_job():
         pull_request_id = r[3]
 
     if data['project']['type'] == 'upload':
-        cursor = conn.cursor()
-        cursor.execute('''
+        r = execute_one('''
 	    SELECT filename FROM source_upload
 	    WHERE id = %s
 	''', (data['build']['source_upload_id'], ))
-        r = cursor.fetchone()
-        cursor.close()
 
         data['source_upload'] = {
             "filename": r[0]
         }
 
     # get dependencies
-    cursor = conn.cursor()
-    cursor.execute('''
+    r = execute_many('''
           WITH RECURSIVE next_job(id, parent) AS (
                   SELECT j.id, (p->>'job-id')::uuid parent
                   FROM job j, jsonb_array_elements(j.dependencies) AS p
@@ -311,8 +301,6 @@ def get_job():
           SELECT id, name, state, start_date, end_date, dependencies
           FROM job WHERE id IN (SELECT distinct id FROM next_job WHERE id != %s)
     ''', (data['job']['id'], data['job']['id']))
-    r = cursor.fetchall()
-    cursor.close()
 
     data['dependencies'] = []
 
@@ -327,13 +315,10 @@ def get_job():
         })
 
     # get parents
-    cursor = conn.cursor()
-    cursor.execute('''
+    r = execute_many('''
       SELECT id, name FROM job where id
           IN (SELECT (deps->>'job-id')::uuid FROM job, jsonb_array_elements(job.dependencies) as deps WHERE id = %s)
     ''', (data['job']['id'], ))
-    r = cursor.fetchall()
-    cursor.close()
 
     data['parents'] = []
 
@@ -344,14 +329,11 @@ def get_job():
         })
 
     # get the secrets
-    cursor = conn.cursor()
-    cursor.execute('''
+    secrets = execute_many('''
          SELECT name, value
          FROM secret
          WHERE project_id = %s
     ''', (data['project']['id'], ))
-    secrets = cursor.fetchall()
-    cursor.close()
 
     def get_secret(name):
         for ev in secrets:
@@ -594,12 +576,9 @@ def get_output_of_job(parent_job_id):
     if not is_valid_dependency:
         return "Job not found", 404
 
-    cursor = conn.cursor()
-    cursor.execute('''
+    r = execute_many('''
         SELECT download FROM job WHERE id = %s
     ''', (parent_job_id, ))
-    r = cursor.fetchall()
-    cursor.close()
 
     if len(r) != 1:
         return "Job not found 2: %s" % r, 500
@@ -658,12 +637,12 @@ def set_running():
 
     job_id = token['job']['id']
 
-    cursor = conn.cursor()
+    cursor = g.conn.cursor()
     cursor.execute("DELETE FROM console WHERE job_id = %s", (job_id,))
     cursor.execute("""UPDATE job SET state = 'running', start_date = current_timestamp
                       WHERE id = %s""", (job_id,))
     cursor.close()
-    conn.commit()
+    g.conn.commit()
 
     return jsonify({})
 
@@ -705,7 +684,7 @@ def create_jobs():
             if sc.get('capabilities', None):
                 return 'Capabilities are disabled', 404
 
-    c = conn
+    c = g.conn
     cursor = c.cursor()
     cursor.execute("SELECT env_var, build_id FROM job WHERE id = %s", (parent_job_id,))
     result = cursor.fetchone()
@@ -943,10 +922,10 @@ def post_console():
         return "Too many console updates", 400
 
     try:
-        cursor = conn.cursor()
+        cursor = g.conn.cursor()
         cursor.execute("INSERT INTO console (job_id, output) VALUES (%s, %s)", (job_id, output))
         cursor.close()
-        conn.commit()
+        g.conn.commit()
     except:
         pass
 
@@ -964,10 +943,10 @@ def post_stats():
     stats = request.json['stats']
 
     try:
-        cursor = conn.cursor()
+        cursor = g.conn.cursor()
         cursor.execute("UPDATE job SET stats = %s WHERE id = %s", (json.dumps(stats), job_id))
         cursor.close()
-        conn.commit()
+        g.conn.commit()
     except:
         pass
 
@@ -1025,12 +1004,12 @@ def upload_markdown():
         with open(path, 'r') as md:
             data = md.read()
 
-        cursor = conn.cursor()
+        cursor = g.conn.cursor()
         cursor.execute("""INSERT INTO job_markup (job_id, name, data, project_id, type)
                           VALUES (%s, %s, %s, %s, 'markdown')""",
                        (job_id, name, data, project_id))
         cursor.close()
-        conn.commit()
+        g.conn.commit()
         return ""
 
 @app.route('/api/job/markup', methods=['POST'])
@@ -1071,12 +1050,12 @@ def upload_markup():
                 data = json.loads(content)
                 validate_markup(data)
 
-            cursor = conn.cursor()
+            cursor = g.conn.cursor()
             cursor.execute("""INSERT INTO job_markup (job_id, name, data, project_id, type)
                               VALUES (%s, %s, %s, %s, 'markup')""",
                            (job_id, name, content, project_id))
             cursor.close()
-            conn.commit()
+            g.conn.commit()
         except ValidationError as e:
             return e.message, 400
         except Exception as e:
@@ -1130,12 +1109,12 @@ def upload_badge():
         status = data['status']
         color = data['color']
 
-        cursor = conn.cursor()
+        cursor = g.conn.cursor()
         cursor.execute("""INSERT INTO job_badge (job_id, subject, status, color, project_id)
                           VALUES (%s, %s, %s, %s, %s)""",
                        (job_id, subject, status, color, project_id))
         cursor.close()
-        conn.commit()
+        g.conn.commit()
         return ""
 
 
@@ -1178,27 +1157,21 @@ def upload_testresult():
     except ValidationError as e:
         return e.message, 400
 
-    cursor = conn.cursor()
-    cursor.execute("SELECT COUNT(*) as cnt FROM test_run WHERE job_id=%s", (job_id,))
-    testruns = cursor.fetchone()
+    testruns = execute_one("SELECT COUNT(*) as cnt FROM test_run WHERE job_id=%s", (job_id,))
 
     if testruns[0] > 0:
         return "", 404
 
-    cursor = conn.cursor()
-    cursor.execute("""SELECT j.project_id, b.build_number
+    rows = execute_one("""SELECT j.project_id, b.build_number
             FROM job  j
             INNER JOIN build b
                 ON j.id = %s
                 AND b.id = j.build_id
     """, (job_id,))
-    rows = cursor.fetchone()
     project_id = rows[0]
     build_number = rows[1]
 
-    cursor = conn.cursor()
-    cursor.execute("""SELECT name, suite, id FROM test WHERE project_id = %s""", (project_id,))
-    existing_tests = cursor.fetchall()
+    existing_tests = execute_many("""SELECT name, suite, id FROM test WHERE project_id = %s""", (project_id,))
 
     test_index = {}
     for t in existing_tests:
@@ -1273,21 +1246,21 @@ def upload_testresult():
             ))
 
     if missing_tests:
-        insert(conn, ("name", "suite", "project_id", "id", "build_number"), missing_tests, 'test')
+        insert(g.conn, ("name", "suite", "project_id", "id", "build_number"), missing_tests, 'test')
 
     if measurements:
-        insert(conn, ("test_run_id", "name", "unit", "value", "project_id"), measurements, 'measurement')
+        insert(g.conn, ("test_run_id", "name", "unit", "value", "project_id"), measurements, 'measurement')
 
-    insert(conn, ("id", "state", "job_id", "test_id", "duration",
-                  "project_id", "message", "stack"), test_runs, 'test_run')
+    insert(g.conn, ("id", "state", "job_id", "test_id", "duration",
+                    "project_id", "message", "stack"), test_runs, 'test_run')
 
-    insert(conn, ("tests_added", "tests_duration", "tests_skipped", "tests_failed", "tests_error",
-                  "tests_passed", "job_id", "project_id"),
+    insert(g.conn, ("tests_added", "tests_duration", "tests_skipped", "tests_failed", "tests_error",
+                    "tests_passed", "job_id", "project_id"),
            ((stats['tests_added'], stats['tests_duration'], stats['tests_skipped'],
              stats['tests_failed'], stats['tests_error'], stats['tests_passed'],
              job_id, project_id),), 'job_stat')
 
-    conn.commit()
+    g.conn.commit()
     return "", 200
 
 
@@ -1302,16 +1275,15 @@ def set_finished():
 
     state = request.json['state']
     # collect console output
-    cursor = conn.cursor()
-    cursor.execute("""SELECT output FROM console WHERE job_id = %s
+    lines = execute_many("""SELECT output FROM console WHERE job_id = %s
                       ORDER BY date""", (job_id,))
-    lines = cursor.fetchall()
 
     output = ""
     for l in lines:
         output += l[0]
 
     # Update state
+    cursor = g.conn.cursor()
     cursor.execute("""
     UPDATE job SET
         state = %s,
@@ -1323,7 +1295,7 @@ def set_finished():
     cursor.execute("DELETE FROM console WHERE job_id = %s", (job_id,))
     cursor.close()
 
-    conn.commit()
+    g.conn.commit()
     return jsonify({})
 
 if __name__ == "__main__":
@@ -1346,7 +1318,5 @@ if __name__ == "__main__":
         get_env('INFRABOX_STORAGE_S3_CONTAINER_OUTPUT_BUCKET')
         get_env('INFRABOX_STORAGE_S3_PROJECT_UPLOAD_BUCKET')
         get_env('INFRABOX_STORAGE_S3_REGION')
-
-    conn = connect_db()
 
     app.run(host="0.0.0.0", debug=True, port=8080)

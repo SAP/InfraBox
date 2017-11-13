@@ -2,7 +2,8 @@ import Vue from 'vue'
 import Router from 'vue-router'
 import Overview from '@/components/Overview'
 import AddProject from '@/components/AddProject'
-import Login from '@/components/utils/Login'
+import Login from '@/components/account/Login'
+import Signup from '@/components/account/Signup'
 import ProjectDetail from '@/components/project/ProjectDetail'
 import BuildDetail from '@/components/build/BuildDetail'
 import JobDetail from '@/components/job/JobDetail'
@@ -22,6 +23,10 @@ export default new Router({
         path: '/login',
         name: 'login',
         component: Login
+    }, {
+        path: '/signup',
+        name: 'signup',
+        component: Signup
     }, {
         path: '/project/:projectName',
         name: 'ProjectDetail',

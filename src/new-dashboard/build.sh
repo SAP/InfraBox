@@ -3,7 +3,7 @@ cp -r /infrabox/context/src/new-dashboard /dashboard
 
 echo "## Link cache"
 mkdir -p /infrabox/cache/node_modules
-cp -r /infrabox/cache/node_modules /dashboard
+#cp -r /infrabox/cache/node_modules /dashboard
 
 cd /dashboard
 
@@ -16,8 +16,8 @@ echo "## build"
 npm run build
 
 echo "## Copy to cache"
-rm -rf /infrabox/cache/node_modules
-cp -r /dashboard/node_modules /infrabox/cache
+#rm -rf /infrabox/cache/node_modules
+#cp -r /dashboard/node_modules /infrabox/cache
 
 echo "## Copy to output"
 cp -r /dashboard/dist /infrabox/output

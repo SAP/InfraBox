@@ -2,17 +2,14 @@ import logging
 import time
 import os
 import subprocess
-import yaml
+import jwt
 import psycopg2
 import psycopg2.extensions
 
-logging.basicConfig(
-    format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s',
-    datefmt='%d-%m-%Y:%H:%M:%S',
-    level=logging.WARN
-)
+from pyinfraboxutils import get_logger
+from pyinfraboxutils.db import connect_db
 
-logger = logging.getLogger("scheduler")
+logger = get_logger('scheduler')
 
 def execute(command):
     logger.info(command)
@@ -38,75 +35,40 @@ def execute(command):
         raise Exception("")
 
 class Scheduler(object):
-    def __init__(self, conn):
-        self.conn = conn
+    def __init__(self):
+        self.conn = connect_db()
+        self.conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
 
-    def kube_job(self, job_id, build_id, cpu, memory, job_type):
-        compose = {
-            "version": "2",
-            "services": {
-                "job-%s" % job_id: {
-                    "image": os.environ['INFRABOX_DOCKER_REGISTRY'] + '/job',
-                    "network_mode": "host",
-                    "command": "/usr/local/bin/wait-for-webserver.sh localhost:5000 /usr/local/bin/entrypoint.sh --type %s" % job_type,
-                    "volumes": [
-                        "/var/run/docker.sock:/var/run/docker.sock"
-                    ],
-                    "environment": [
-                        "INFRABOX_JOB_ID=%s" % job_id,
-                        "INFRABOX_GENERAL_DONT_CHECK_CERTIFICATES=true",
-                        "INFRABOX_JOB_API_URL=http://localhost:5000",
-                        "INFRABOX_SERVICE=job",
-                        "INFRABOX_VERSION=latest",
-                        "INFRABOX_DOCKER_REGISTRY_URL=localhost:30202",
-                        "INFRABOX_LOCAL_CACHE_ENABLED=false",
-                        "INFRABOX_JOB_MAX_OUTPUT_SIZE=%s" % os.environ['INFRABOX_JOB_MAX_OUTPUT_SIZE'],
-                        "INFRABOX_DOCKER_REGISTRY_ADMIN_USERNAME=admin",
-                        "INFRABOX_DOCKER_REGISTRY_ADMIN_PASSWORD=admin",
-                        "INFRABOX_DASHBOARD_URL=http://localhost:30201"
-                    ],
-                    "privileged": True,
-                    "depends_on": [
-                        "job-api-%s" % job_id
-                    ]
-                },
-                "job-api-%s" % job_id: {
-                    "image": os.environ['INFRABOX_DOCKER_REGISTRY'] + '/infrabox/job-api',
-                    "network_mode": "host",
-                    "environment": [
-                        "INFRABOX_JOB_ID=%s" % job_id,
-                        "INFRABOX_GENERAL_DONT_CHECK_CERTIFICATES=true",
-                        "INFRABOX_SERVICE=job-api",
-                        "INFRABOX_VERSION=latest",
-                        "INFRABOX_JOB_MAX_OUTPUT_SIZE=%s" % os.environ['INFRABOX_JOB_MAX_OUTPUT_SIZE'],
-                        "INFRABOX_DASHBOARD_URL=http://localhost:30201",
-                        "INFRABOX_STORAGE_GCS_ENABLED=false",
-                        "INFRABOX_STORAGE_S3_ENABLED=true",
-                        "INFRABOX_GERRIT_ENABLED=false",
-                        "INFRABOX_STORAGE_S3_ACCESS_KEY=AKIAIOSFODNN7EXAMPLE",
-                        "INFRABOX_STORAGE_S3_SECRET_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
-                        "INFRABOX_STORAGE_S3_PORT=9000",
-                        "INFRABOX_STORAGE_S3_ENDPOINT=localhost",
-                        "INFRABOX_STORAGE_S3_SECURE=false",
-                        "INFRABOX_STORAGE_S3_REGION=us-east-1",
-                        "INFRABOX_STORAGE_S3_CONTAINER_CONTENT_CACHE_BUCKET=infrabox-container-content-cache",
-                        "INFRABOX_STORAGE_S3_PROJECT_UPLOAD_BUCKET=infrabox-project-upload",
-                        "INFRABOX_STORAGE_S3_CONTAINER_OUTPUT_BUCKET=infrabox-container-output",
-                        "INFRABOX_DATABASE_USER=%s" % os.environ['INFRABOX_DATABASE_USER'],
-                        "INFRABOX_DATABASE_PASSWORD=%s" % os.environ['INFRABOX_DATABASE_PASSWORD'],
-                        "INFRABOX_DATABASE_HOST=%s" % os.environ['INFRABOX_DATABASE_HOST'],
-                        "INFRABOX_DATABASE_PORT=%s" % os.environ['INFRABOX_DATABASE_PORT'],
-                        "INFRABOX_DATABASE_DB=%s" % os.environ['INFRABOX_DATABASE_DB']
-                    ],
-                }
-            }
-        }
+    def kube_job(self, job_id, _build_id, _cpu, _memory, _job_type):
+        cmd = 'rm -rf /data/infrabox/*'
+        subprocess.check_output(cmd, shell=True)
 
+        cmd = ['docker',
+               'run',
+               '-e', "INFRABOX_JOB_ID=%s" % job_id,
+               '-e', "INFRABOX_GENERAL_DONT_CHECK_CERTIFICATES=true",
+               '-e', "INFRABOX_JOB_API_URL=http://nginx-ingress/api/job",
+               '-e', "INFRABOX_SERVICE=job",
+               '-e', "INFRABOX_VERSION=latest",
+               '-e', "INFRABOX_DOCKER_REGISTRY_URL=localhost",
+               '-e', "INFRABOX_LOCAL_CACHE_ENABLED=false",
+               '-e', "INFRABOX_JOB_MAX_OUTPUT_SIZE=%s" % os.environ['INFRABOX_JOB_MAX_OUTPUT_SIZE'],
+               '-e', "INFRABOX_DOCKER_REGISTRY_ADMIN_USERNAME=admin",
+               '-e', "INFRABOX_DOCKER_REGISTRY_ADMIN_PASSWORD=admin",
+               '-e', "INFRABOX_DASHBOARD_URL=http://localhost",
+               '-e', "INFRABOX_JOB_MOUNT_DOCKER_SOCKET=false",
+               '-e', "INFRABOX_JOB_API_TOKEN=%s" % jwt.encode({"job_id":job_id}, os.environ['INFRABOX_JOB_API_SECRET']),
+               '--privileged',
+               '--network=compose_infrabox',
+               '-v', '/var/run/docker.sock:/var/run/docker.sock',
+               '-v', '%s=/etc/docker/daemon.json' % os.environ['INFRABOX_JOB_DAEMON_CONFIG_PATH'],
+               '-v', '/data:/data',
+               '--name=ib-job-%s' % job_id,
+               '--link=compose_nginx-ingress_1:nginx-ingress',
+               os.environ['INFRABOX_DOCKER_REGISTRY'] + '/job'
+              ]
 
-        with open("/tmp/docker-compose.yaml", "w") as outfile:
-            yaml.dump(compose, outfile, default_flow_style=False)
-
-        execute(("docker-compose", "-f", "/tmp/docker-compose.yaml", "up", "--abort-on-container-exit"))
+        execute(cmd)
 
     def schedule_job(self, job_id, cpu, memory):
         cursor = self.conn.cursor()
@@ -241,14 +203,59 @@ class Scheduler(object):
                 continue
 
             self.schedule_job(job_id, cpu, memory)
+            return
+
+    def handle_aborts(self):
+        cursor = self.conn.cursor()
+        cursor.execute('''
+            WITH all_aborts AS (
+                DELETE FROM "abort" RETURNING job_id
+            ), jobs_to_abort AS (
+                SELECT j.id, j.state FROM all_aborts
+                JOIN job j
+                    ON all_aborts.job_id = j.id
+                    AND j.state not in ('finished', 'failure', 'error', 'killed')
+            ), jobs_not_started_yet AS (
+                UPDATE job SET state = 'killed'
+                WHERE id in (SELECT id FROM jobs_to_abort WHERE state in ('queued'))
+            )
+
+            SELECT id FROM jobs_to_abort WHERE state in ('scheduled', 'running', 'queued')
+        ''')
+
+        aborts = cursor.fetchall()
+        cursor.close()
+
+        for abort in aborts:
+            job_id = abort[0]
+            try:
+                execute(('docker', 'kill', job_id))
+            except:
+                pass
+
+            cursor = self.conn.cursor()
+            cursor.execute("SELECT output FROM console WHERE job_id = %s ORDER BY date", (job_id,))
+            lines = cursor.fetchall()
+
+            output = ""
+            for line in lines:
+                output += line[0]
+
+            # Update state
+            cursor.execute("""
+                UPDATE job SET state = 'killed', console = %s, end_date = current_timestamp
+                WHERE id = %s AND state IN ('scheduled', 'running', 'queued')""", (output, job_id,))
+
+            cursor.close()
 
     def handle(self):
+        self.handle_aborts()
         self.schedule()
 
     def run(self):
         while True:
             self.handle()
-            time.sleep(5)
+            time.sleep(1)
 
 def get_env(name):
     if name not in os.environ:
@@ -266,16 +273,9 @@ def main():
     get_env('INFRABOX_DATABASE_HOST')
     get_env('INFRABOX_DATABASE_PORT')
     get_env('INFRABOX_DOCKER_REGISTRY')
+    get_env('INFRABOX_JOB_API_SECRET')
 
-    conn = psycopg2.connect(dbname=os.environ['INFRABOX_DATABASE_DB'],
-                            user=os.environ['INFRABOX_DATABASE_USER'],
-                            password=os.environ['INFRABOX_DATABASE_PASSWORD'],
-                            host=os.environ['INFRABOX_DATABASE_HOST'],
-                            port=os.environ['INFRABOX_DATABASE_PORT'])
-
-    conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
-
-    scheduler = Scheduler(conn)
+    scheduler = Scheduler()
     scheduler.run()
 
 if __name__ == "__main__":

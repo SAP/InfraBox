@@ -138,9 +138,7 @@ export default {
     },
     methods: {
         addProject () {
-            let repoName = null
-            console.log(this.githubRepo)
-
+            let repoName = ''
             if (this.githubRepo) {
                 repoName = this.githubRepo.owner.login + '/' + this.githubRepo.name
             }

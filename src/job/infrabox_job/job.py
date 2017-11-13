@@ -91,7 +91,6 @@ class Job(object):
                                   timeout=20,
                                   json=data,
                                   verify=self.verify)
-                time.sleep(1)
                 if r.status_code == 200:
                     return
                 else:
@@ -99,7 +98,7 @@ class Job(object):
                     continue
             except Exception as e:
                 print e
-
+            time.sleep(1)
 
     def set_running(self):
         self.post_api_server('setrunning')
