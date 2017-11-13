@@ -1,7 +1,7 @@
 <template>
     <md-layout md-gutter>
-        <md-layout md-column md-gutter md-flex-medium="10" md-flex-large="25" md-hide-xsmall md-hide-small></md-layout>
-        <md-layout md-column md-gutter md-flex-medium="80" md-flex-large="50">
+        <md-layout md-column md-gutter md-flex-xsmall="5" md-flex-small="5" md-flex-medium="10" md-flex-large="25"></md-layout>
+        <md-layout md-column md-gutter md-flex-xsmall="90" md-flex-small="90" md-flex-medium="80" md-flex-large="50">
             <md-card class="clean-card">
                 <md-card-area>
                     <md-card-header class="text-center">
@@ -45,7 +45,7 @@
                 </md-card-content>
             </md-card>
         </md-layout>
-        <md-layout md-column md-gutter md-flex-medium="10" md-flex-large="25" md-hide-xsmall md-hide-small></md-layout>
+        <md-layout md-column md-gutter md-flex-xsmall="5" md-flex-small="5" md-flex-medium="10" md-flex-large="25"></md-layout>
     </md-layout>
 </template>
 
