@@ -44,21 +44,21 @@
             <md-table>
                 <md-table-body v-if="project.builds.length != 0">
                     <md-table-row>
-                        <md-table-cell class="md-body-2"><i class="fa fa-fw fa-circle-thin"></i><span style="padding-left: 16px">State</span></md-table-cell>
-                        <md-table-cell><ib-state :state="project.builds[0].state" look="small"></ib-state></md-table-cell>
+                        <md-table-cell class="md-body-2"><i class="fa fa-fw fa-circle-thin"></i><span class="p-l-md">State</span></md-table-cell>
+                        <md-table-cell><ib-state :state="project.builds[0].state"></ib-state></md-table-cell>
                     </md-table-row>
                     <md-table-row>
-                        <md-table-cell class="md-body-2"><i class="fa fa-fw fa-cube"></i><span style="padding-left: 16px">Build</span></md-table-cell>
+                        <md-table-cell class="md-body-2"><i class="fa fa-fw fa-cube"></i><span class="p-l-md">Build</span></md-table-cell>
                         <md-table-cell>
                             {{ project.builds[0].number }}.{{ project.builds[0].restartCounter }}
                         </md-table-cell>
                     </md-table-row>
                     <md-table-row>
-                        <md-table-cell class="md-body-2"><i class="fa fa-fw fa-calendar"></i><span style="padding-left: 16px"> Started</span></md-table-cell>
+                        <md-table-cell class="md-body-2"><i class="fa fa-fw fa-calendar"></i><span class="p-l-md"> Started</span></md-table-cell>
                         <md-table-cell><ib-date :date="project.builds[0].startDate"></ib-date></md-table-cell>
                     </md-table-row>
                     <md-table-row>
-                        <md-table-cell class="md-body-2"><i class="fa fa-fw fa-clock-o"></i><span style="padding-left: 16px">Duration</span></md-table-cell>
+                        <md-table-cell class="md-body-2"><i class="fa fa-fw fa-clock-o"></i><span class="p-l-md">Duration</span></md-table-cell>
                         <md-table-cell>
                             <ib-duration :start="project.builds[0].startDate" :end="project.builds[0].endDate"></ib-duration>
                         </md-table-cell>

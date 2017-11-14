@@ -37,7 +37,7 @@
             </md-icon>
         </span>
         <span v-if="state=='error'">
-            <md-icon md-theme="killed" class="md-primary" style="font-size: 150%">
+            <md-icon md-theme="error" class="md-primary" style="font-size: 150%">
                 <i class="fa fa-fw fa-bomb"></i>
                 <md-tooltip>error</md-tooltip>
             </md-icon>
@@ -48,7 +48,6 @@
                 <md-tooltip>killed</md-tooltip>
             </md-icon>
         </span>
-        {{ state }}
     </span>
 </template>
 
