@@ -1,0 +1,13 @@
+{
+    "version": 1,
+    "jobs": [{
+        "type": "workflow",
+        "name": "test",
+        "infrabox_file": "infrabox/generator/tests.json"
+    }, {
+        "type": "workflow",
+        "name": "deploy",
+        "infrabox_file": "infrabox/generator/deployments.json",
+        "depends_on": ["test"]
+    }]
+}

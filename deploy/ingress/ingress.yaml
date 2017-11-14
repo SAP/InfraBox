@@ -16,12 +16,12 @@ spec:
             -
                 path: /docs
                 backend:
-                    serviceName: infrabox-docs
+                    serviceName: infrabox-static
                     servicePort: 80
             -
                 path: /dashboard
                 backend:
-                    serviceName: infrabox-dashboard-client
+                    serviceName: infrabox-static
                     servicePort: 80
             -
                 path: /api/dashboard

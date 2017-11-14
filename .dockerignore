@@ -2,8 +2,8 @@ src/dashboard/dist/*
 src/dashboard/node_modules/*
 src/api/node_modules/*
 src/api/dist/*
-src/new-dashboard/node_modules/*
-src/new-dashboard/dist/*
+src/dashboard-client/node_modules/*
+src/dashboard-client/dist/*
 .vscode/*
 .git/*
 *.swp

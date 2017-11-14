@@ -106,19 +106,6 @@
         }]
     }, {
         "type": "docker",
-        "name": "docs",
-        "docker_file": "src/docs/Dockerfile",
-        "build_only": true,
-        "resources": { "limits": { "cpu": 1, "memory": 2048 } },
-        "deployments": [{
-                "type": "docker-registry",
-                "host": "quay.io/infrabox",
-                "repository": "docs",
-                "username": "infrabox+infrabox_ci",
-                "password": { "$secret": "QUAY_PASSWORD" }
-        }]
-    }, {
-        "type": "docker",
         "name": "docker-nginx",
         "docker_file": "src/docker-registry/nginx/Dockerfile",
         "build_only": true,
@@ -243,7 +230,7 @@
     }, {
         "type": "docker",
         "name": "build-dashboard-client",
-        "docker_file": "src/new-dashboard/Dockerfile_build",
+        "docker_file": "infrabox/deploy/build-dashboard-client/Dockerfile",
         "resources": { "limits": { "cpu": 1, "memory": 2048 } },
         "build_only": false
     }, {
@@ -258,8 +245,8 @@
         "resources": { "limits": { "cpu": 1, "memory": 512 } }
     }, {
         "type": "docker",
-        "name": "dashboard-client",
-        "docker_file": "src/new-dashboard/Dockerfile",
+        "name": "static",
+        "docker_file": "infrabox/deploy/static/Dockerfile",
         "resources": { "limits": { "cpu": 1, "memory": 512 } },
         "depends_on": ["build-dashboard-client"],
         "deployments": [{
