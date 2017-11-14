@@ -38,9 +38,9 @@
                     <div v-if="type=='github'" class="p-t-md">
                         <h3>Select the GitHub repository to connect</h3>
                     </div>
-                    <div v-if="$store.state.user && $store.state.user.hasGithubAccount() && type=='github'">
-                        <md-button-toggle md-single class="m-xl">
-                            <md-card class="md-button" v-for="r of $store.state.user.githubRepos" :key="r.id">
+                    <div v-if="$store.state.user && $store.state.user.hasGithubAccount() && type=='github'" class="md-layout md-gutter">
+                        <md-button-toggle md-single class="m-xl md-layout">
+                            <md-card class="md-button no-shadow" v-for="r of $store.state.user.githubRepos" :key="r.id">
                                 <md-card-header>
                                     <md-card-header-text>
                                         <div class="md-title">{{ r.name }}</div>
