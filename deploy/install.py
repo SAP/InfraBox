@@ -264,21 +264,6 @@ class Kubernetes(Install):
         else:
             self.set('docker_registry.url', self.args.root_url)
 
-        if self.args.docker_registry_tls_enabled:
-            self.required_option('docker-registry-tls-key-file')
-            self.required_option('docker-registry-tls-crt-file')
-
-            self.check_file_exists(self.args.docker_registry_tls_key_file)
-            self.check_file_exists(self.args.docker_registry_tls_crt_file)
-
-            secret = {
-                "server.key": open(self.args.docker_registry_tls_key_file).read(),
-                "server.crt": open(self.args.docker_registry_tls_crt_file).read()
-            }
-
-            self.create_secret("infrabox-docker-registry-tls", self.args.general_system_namespace, secret)
-            self.set('docker_registry.tls.enabled', True)
-
     def setup_account(self):
         self.set('account.signup.enabled', self.args.account_signup_enabled)
 
@@ -377,22 +362,6 @@ class Kubernetes(Install):
         else:
             self.set('dashboard.url', self.args.root_url)
 
-        if self.args.dashboard_tls_enabled:
-            self.required_option('dashboard-tls-key-file')
-            self.required_option('dashboard-tls-crt-file')
-
-            self.check_file_exists(self.args.dashboard_tls_key_file)
-            self.check_file_exists(self.args.dashboard_tls_crt_file)
-
-            secret = {
-                "server.key": open(self.args.dashboard_tls_key_file).read(),
-                "server.crt": open(self.args.dashboard_tls_crt_file).read()
-            }
-
-            self.create_secret("infrabox-dashboard-tls", self.args.general_system_namespace, secret)
-            self.set('dashboard.tls.enabled', True)
-
-
     def setup_api(self):
         if self.args.api_url:
             self.set('api.url', self.args.api_url)
@@ -400,22 +369,6 @@ class Kubernetes(Install):
             self.set('api.url', self.args.root_url + '/api/cli')
 
         self.set('api.tag', self.args.version)
-
-        if self.args.api_tls_enabled:
-            self.required_option('api-tls-key-file')
-            self.required_option('api-tls-crt-file')
-
-            self.check_file_exists(self.args.api_tls_key_file)
-            self.check_file_exists(self.args.api_tls_crt_file)
-
-            secret = {
-                "server.key": open(self.args.api_tls_key_file).read(),
-                "server.crt": open(self.args.api_tls_crt_file).read()
-            }
-
-            self.create_secret("infrabox-api-tls", self.args.general_system_namespace, secret)
-            self.set('api.tls.enabled', True)
-
 
     def setup_docs(self):
         docs_url = self.args.root_url + '/docs/'
@@ -464,6 +417,14 @@ class Kubernetes(Install):
         self.set('stats.tag', self.args.version)
 
     def main(self):
+        self.required_option('root-url')
+
+        while True:
+            if args.root_url.endswith('/'):
+                args.root_url = args.root_url[:-1]
+            else:
+                break
+
         # Copy helm chart
         copy_files(self.args, 'infrabox')
         copy_files(self.args, 'ingress')
@@ -520,7 +481,7 @@ class DockerCompose(Install):
         self.config.add('services.cli-api.image', '%s/api' % self.args.docker_registry)
         self.config.add('services.job-api.image', '%s/job-api' % self.args.docker_registry)
         self.config.add('services.dashboard-api.image', '%s/dashboard-api' % self.args.docker_registry)
-        self.config.add('services.dashboard-client.image', '%s/dashboard-client' % self.args.docker_registry)
+        self.config.add('services.static.image', '%s/static' % self.args.docker_registry)
 
     def setup_scheduler(self):
         self.config.add('services.scheduler.image', '%s/scheduler-docker-compose' % self.args.docker_registry)
@@ -578,8 +539,6 @@ class DockerCompose(Install):
                 'INFRABOX_DATABASE_PORT=%s' % self.args.postgres_port,
                 'INFRABOX_DATABASE_DB=%s' % self.args.postgres_database
             ]
-
-            del self.config.config['services']['postgres']
         else:
             if self.args.database:
                 logger.warn("--database=%s not supported", self.args.database)
@@ -596,9 +555,11 @@ class DockerCompose(Install):
         self.config.append('services.job-api.environment', env)
         self.config.append('services.cli-api.environment', env)
         self.config.append('services.scheduler.environment', env)
+        self.config.append('services.docker-registry-auth.environment', env)
 
     def main(self):
         copy_files(self.args, 'compose')
+        self.args.root_url = 'http://localhost:8090'
 
         compose_path = os.path.join(self.args.o, 'compose', 'docker-compose.yml')
         self.config.load(compose_path)
@@ -623,7 +584,7 @@ def main():
                         choices=['docker-compose', 'kubernetes'],
                         required=True)
     parser.add_argument('--version', default='latest')
-    parser.add_argument('--root-url', required=True)
+    parser.add_argument('--root-url')
 
     # General
     parser.add_argument('--general-dont-check-certificates', action='store_true', default=False)
@@ -636,9 +597,6 @@ def main():
     parser.add_argument('--docker-registry-admin-username')
     parser.add_argument('--docker-registry-admin-password')
     parser.add_argument('--docker-registry-url')
-    parser.add_argument('--docker-registry-tls-enabled', action='store_true', default=False)
-    parser.add_argument('--docker-registry-tls-key-file')
-    parser.add_argument('--docker-registry-tls-crt-file')
 
     # Database configuration
     parser.add_argument('--database',
@@ -681,16 +639,10 @@ def main():
 
     # Dashboard
     parser.add_argument('--dashboard-url')
-    parser.add_argument('--dashboard-tls-enabled', action='store_true', default=False)
-    parser.add_argument('--dashboard-tls-key-file')
-    parser.add_argument('--dashboard-tls-crt-file')
     parser.add_argument('--dashboard-secret')
 
     # API
     parser.add_argument('--api-url')
-    parser.add_argument('--api-tls-enabled', action='store_true', default=False)
-    parser.add_argument('--api-tls-key-file')
-    parser.add_argument('--api-tls-crt-file')
 
     # Docs
     parser.add_argument('--docs-url')
@@ -740,12 +692,6 @@ def main():
     if os.path.exists(args.o):
         print "%s does already exist" % args.o
         sys.exit(1)
-
-    while True:
-        if args.root_url.endswith('/'):
-            args.root_url = args.root_url[:-1]
-        else:
-            break
 
     if args.platform == 'docker-compose':
         d = DockerCompose(args)

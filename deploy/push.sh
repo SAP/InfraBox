@@ -19,7 +19,6 @@ docker push ${docker_registry}infrabox/dashboard-client:$image_tag
 docker push ${docker_registry}infrabox/dashboard-api:$image_tag
 docker push ${docker_registry}infrabox/scheduler-kubernetes:$image_tag
 docker push ${docker_registry}infrabox/api:$image_tag
-docker push ${docker_registry}infrabox/docs:$image_tag
 docker push ${docker_registry}infrabox/docker-registry-auth:$image_tag
 docker push ${docker_registry}infrabox/docker-registry-nginx:$image_tag
 docker push ${docker_registry}infrabox/stats:$image_tag

@@ -29,18 +29,7 @@ const WEBSOCKET_EMIT_JOB_UPDATE = new prom.Counter({
 });
 
 function createServerImpl(app): any {
-    if (config.dashboard.tls.enabled) {
-        logger.info("HTTPS is enabled");
-        const options = {
-            key: fs.readFileSync(config.dashboard.tls.key),
-            cert: fs.readFileSync(config.dashboard.tls.cert)
-        };
-
-        return https.createServer(options, app);
-    } else {
-        logger.warn("HTTPS is not enabled");
-        return http.createServer(app);
-    }
+    return http.createServer(app);
 }
 
 function createMonitoringServerImpl() {

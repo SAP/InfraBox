@@ -125,7 +125,7 @@ docker_registry:
     # auth_image: docker-registry-auth
 
     # Tag
-    auth_tagtag: latest
+    auth_tag: latest
 
     # name of the docker-registry nginx image in your general.docker_registry
     # nginx_image: docker-registry-nginx
@@ -133,19 +133,12 @@ docker_registry:
     # Tag
     nginx_tag: latest
 
-    tls:
-        enabled: false
-
-docs:
-    enabled: true
-
-    url: <REQUIRED>
+static:
+    # name of the static image in your general.docker_registry
+    # image: static
 
     # Tag
     tag: latest
-
-    tls:
-        enabled: false
 
 dashboard:
     enabled: true
@@ -160,18 +153,8 @@ dashboard:
         # Tag
         tag: latest
 
-        tls:
-            enabled: false
-
         log:
             level: info
-
-    client:
-        # name of the dashboard-client image in your general.docker_registry
-        # image: dashboard-client
-
-        # Tag
-        tag: latest
 
 stats:
     enabled: true
@@ -199,9 +182,6 @@ api:
 
         # If true prints output for stackdriver
         stackdriver: false
-
-    tls:
-        enabled: false
 
 account:
     signup:
