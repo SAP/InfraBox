@@ -50,7 +50,7 @@ class Scheduler(object):
                '-e', "INFRABOX_JOB_API_URL=http://nginx-ingress/api/job",
                '-e', "INFRABOX_SERVICE=job",
                '-e', "INFRABOX_VERSION=latest",
-               '-e', "INFRABOX_DOCKER_REGISTRY_URL=localhost",
+               '-e', "INFRABOX_DOCKER_REGISTRY_URL=localhost:8090",
                '-e', "INFRABOX_LOCAL_CACHE_ENABLED=false",
                '-e', "INFRABOX_JOB_MAX_OUTPUT_SIZE=%s" % os.environ['INFRABOX_JOB_MAX_OUTPUT_SIZE'],
                '-e', "INFRABOX_DOCKER_REGISTRY_ADMIN_USERNAME=admin",
