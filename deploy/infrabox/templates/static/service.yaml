@@ -1,18 +1,16 @@
-{{ if .Values.dashboard.enabled }}
 kind: Service
 apiVersion: v1
 metadata:
-    name: infrabox-dashboard-client
+    name: infrabox-static
     namespace: {{ default "infrabox-system" .Values.general.system_namespace }}
     labels:
-        app: infrabox-dashboard-client
+        app: infrabox-static
 spec:
     selector:
-        app: infrabox-dashboard-client
+        app: infrabox-static
     ports:
     -
         name: http-web
         protocol: TCP
         port: 80
         targetPort: 80
-{{ end }}

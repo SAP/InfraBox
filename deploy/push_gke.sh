@@ -16,7 +16,6 @@ $cmd_prefix -- push ${docker_registry}infrabox/github-trigger:$image_tag
 $cmd_prefix -- push ${docker_registry}infrabox/github-review:$image_tag
 $cmd_prefix -- push ${docker_registry}infrabox/github-api:$image_tag
 $cmd_prefix -- push ${docker_registry}infrabox/api:$image_tag
-$cmd_prefix -- push ${docker_registry}infrabox/docs:$image_tag
 $cmd_prefix -- push ${docker_registry}infrabox/job:$image_tag
 $cmd_prefix -- push ${docker_registry}infrabox/dashboard-api:$image_tag
 $cmd_prefix -- push ${docker_registry}infrabox/dashboard-client:$image_tag

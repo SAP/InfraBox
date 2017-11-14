@@ -4,10 +4,10 @@ services:
     nginx-ingress:
         image: docker-compose-ingress
         ports:
-            - "80:80"
+            - "8090:80"
         links:
             - dashboard-api
-            - dashboard-client
+            - static
             - docker-registry-nginx
             - cli-api
             - job-api
@@ -54,11 +54,6 @@ services:
         environment:
             - INFRABOX_SERVICE=registry-auth
             - INFRABOX_VERSION=latest
-            - INFRABOX_DATABASE_USER=postgres
-            - INFRABOX_DATABASE_PASSWORD=postgres
-            - INFRABOX_DATABASE_HOST=postgres
-            - INFRABOX_DATABASE_PORT=5432
-            - INFRABOX_DATABASE_DB=postgres
         links:
             - postgres
         networks:
@@ -96,8 +91,8 @@ services:
         networks:
             - infrabox
 
-    dashboard-client:
-        image: $INFRABOX_DOCKER_REGISTRY/infrabox/dashboard-client
+    static:
+        image: $INFRABOX_DOCKER_REGISTRY/infrabox/static
         networks:
             - infrabox
 

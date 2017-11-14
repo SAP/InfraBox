@@ -56,11 +56,6 @@ export let config = {
         log: {
             level: getFromEnv("INFRABOX_API_LOG_LEVEL", "info"),
             stackdriver: getFromEnvBool("INFRABOX_GENERAL_LOG_STACKDRIVER", false),
-        },
-        tls: {
-            enabled: getFromEnvBool("INFRABOX_API_TLS_ENABLED", false),
-            key: "",
-            cert: ""
         }
     },
     github: {
@@ -117,9 +112,4 @@ if (config.storage.s3.enabled) {
 if (!config.storage.s3.enabled && !config.storage.gcs.enabled) {
     console.error("No storage enabled");
     process.exit(1);
-}
-
-if (config.api.tls.enabled) {
-    config.api.tls.key = getFromEnv("INFRABOX_API_TLS_KEY", "/var/run/infrabox/server.key");
-    config.api.tls.cert = getFromEnv("INFRABOX_API_TLS_CERT", "/var/run/infrabox/server.crt");
 }

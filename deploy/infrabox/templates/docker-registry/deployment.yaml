@@ -50,21 +50,12 @@ spec:
                             name: infrabox-docker-registry
                             key: username
                 -
-                    name: INFRABOX_DOCKER_REGISTRY_TLS_ENABLED
-                    value: {{ default "false" .Values.docker_registry.tls.enabled | quote }}
-                -
                     name: INFRABOX_AUTH_HOST
                     value: localhost
                 -
                     name: INFRABOX_REGISTRY_HOST
                     value: localhost
                 volumeMounts:
-                {{ if .Values.docker_registry.tls.enabled }}
-                -
-                    name: registry-tls
-                    mountPath: /var/run/infrabox
-                    readOnly: true
-                {{ end }}
             -
                 name: registry
                 image: registry:2.6
@@ -132,12 +123,6 @@ spec:
 
             volumes:
                 {{ include "volumes_database" . | indent 16 }}
-                {{ if .Values.docker_registry.tls.enabled }}
-                -
-                    name: registry-tls
-                    secret:
-                        secretName: infrabox-docker-registry-tls
-                {{ end }}
                 {{ if .Values.storage.gcs.enabled }}
                 -
                     name: gcs-service-account

@@ -36,7 +36,6 @@ Optionally you may want to configure:
 4. [Gerrit](docs/configure/gerrit.md)
 5. [GitHub](docs/configure/github.md)
 6. [LDAP](docs/configure/ldap.md)
-7. [TLS](docs/configure/tls.md)
 
 ## Configure URLs
 InfraBox internally needs to know under which URL the different services will be reachable at the end. Without this information some generated links would not work and InfraBox would not be able to push to its internal registry.

@@ -14,20 +14,7 @@ import { ProjectToken, socket_token_auth } from "./utils/auth";
 
 export function createServer(print: boolean) {
     const app = express();
-    let server = null;
-
-    if (config.api.tls.enabled) {
-        logger.info("HTTPS is enabled");
-        const options = {
-            key: fs.readFileSync(config.api.tls.key),
-            cert: fs.readFileSync(config.api.tls.cert)
-        };
-
-        server = https.createServer(options, app);
-    } else {
-        logger.warn("HTTPS is not enabled");
-        server = http.createServer(app);
-    }
+    let server = http.createServer(app);
 
     server['listeners']['console'] = new ConsoleListener();
     server['listeners']['job'] = new JobListener();

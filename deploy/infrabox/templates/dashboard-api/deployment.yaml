@@ -33,12 +33,6 @@ spec:
                     mountPath: /etc/infrabox/gcs
                     readOnly: true
                 {{ end }}
-                {{ if .Values.dashboard.api.tls.enabled }}
-                -
-                    name: dashboard-tls
-                    mountPath: /var/run/infrabox
-                    readOnly: true
-                {{ end }}
                 env:
                 {{ include "env_database" . | indent 16 }}
                 {{ include "env_gcs" . | indent 16 }}
@@ -75,9 +69,6 @@ spec:
                     name: INFRABOX_DASHBOARD_PORT
                     value: "8080"
                 -
-                    name: INFRABOX_DASHBOARD_TLS_ENABLED
-                    value: {{ default "false" .Values.dashboard.api.tls.enabled | quote }}
-                -
                     name: INFRABOX_DOCKER_REGISTRY_URL
                     value: {{ .Values.docker_registry.url }}
                 -
@@ -101,11 +92,5 @@ spec:
                     name: gcs-service-account
                     secret:
                         secretName: infrabox-gcs
-                {{ end }}
-                {{ if .Values.dashboard.api.tls.enabled }}
-                -
-                    name: dashboard-tls
-                    secret:
-                        secretName: infrabox-dashboard-tls
                 {{ end }}
 {{ end }}
