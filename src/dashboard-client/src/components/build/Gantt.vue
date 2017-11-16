@@ -634,7 +634,7 @@ export default {
             this.chart.draw()
             setTimeout(draw, 2000)
         }
-        this.redraw = setTimeout(draw, 500)
+        this.redraw = setTimeout(draw, 1000)
     },
     beforeDestroy () {
         clearTimeout(this.redraw)

@@ -355,7 +355,7 @@ class Kubernetes(Install):
 
         self.create_secret("infrabox-dashboard", self.args.general_system_namespace, secret)
 
-        self.set('dashboard.tag', self.args.version)
+        self.set('dashboard.api.tag', self.args.version)
 
         if self.args.dashboard_url:
             self.set('dashboard.url', self.args.dashboard_url)
@@ -370,14 +370,10 @@ class Kubernetes(Install):
 
         self.set('api.tag', self.args.version)
 
-    def setup_docs(self):
+    def setup_static(self):
         docs_url = self.args.root_url + '/docs/'
-
-        if self.args.docs_url:
-            docs_url = self.args.docs_url
-
         self.set('docs.url', docs_url)
-        self.set('docs.tag', self.args.version)
+        self.set('static.tag', self.args.version)
 
     def setup_general(self):
         self.set('general.dont_check_certificates', self.args.general_dont_check_certificates)
@@ -420,8 +416,8 @@ class Kubernetes(Install):
         self.required_option('root-url')
 
         while True:
-            if args.root_url.endswith('/'):
-                args.root_url = args.root_url[:-1]
+            if self.args.root_url.endswith('/'):
+                self.args.root_url = self.args.root_url[:-1]
             else:
                 break
 
@@ -446,7 +442,7 @@ class Kubernetes(Install):
         self.setup_github()
         self.setup_dashboard()
         self.setup_api()
-        self.setup_docs()
+        self.setup_static()
         self.setup_ldap()
         self.setup_local_cache()
 
@@ -473,18 +469,18 @@ class DockerCompose(Install):
 
     def setup_docker_registry(self):
         self.required_option('docker-registry')
-        self.config.add('services.docker-registry-auth.image', '%s/docker-registry-auth' % self.args.docker_registry)
-        self.config.add('services.docker-registry-nginx.image', '%s/docker-registry-nginx' % self.args.docker_registry)
-        self.config.add('services.minio-init.image', '%s/docker-compose-minio-init' % self.args.docker_registry)
-        self.config.add('services.docs.image', '%s/docs' % self.args.docker_registry)
+        self.config.add('services.docker-registry-auth.image', '%s/docker-registry-auth:%s' % (self.args.docker_registry, self.args.version))
+        self.config.add('services.docker-registry-nginx.image', '%s/docker-registry-nginx:%s' % (self.args.docker_registry, self.args.version))
+        self.config.add('services.minio-init.image', '%s/docker-compose-minio-init:%s' % (self.args.docker_registry, self.args.version))
+        self.config.add('services.static.image', '%s/docs"%s' % (self.args.docker_registry, self.args.version))
 
-        self.config.add('services.cli-api.image', '%s/api' % self.args.docker_registry)
-        self.config.add('services.job-api.image', '%s/job-api' % self.args.docker_registry)
-        self.config.add('services.dashboard-api.image', '%s/dashboard-api' % self.args.docker_registry)
-        self.config.add('services.static.image', '%s/static' % self.args.docker_registry)
+        self.config.add('services.cli-api.image', '%s/api:%s' % (self.args.docker_registry, self.args.version))
+        self.config.add('services.job-api.image', '%s/job-api:%s' % (self.args.docker_registry, self.args.version))
+        self.config.add('services.dashboard-api.image', '%s/dashboard-api:%s' % (self.args.docker_registry, self.args.version))
+        self.config.add('services.static.image', '%s/static:%s' % (self.args.docker_registry, self.args.version))
 
     def setup_scheduler(self):
-        self.config.add('services.scheduler.image', '%s/scheduler-docker-compose' % self.args.docker_registry)
+        self.config.add('services.scheduler.image', '%s/scheduler-docker-compose:%s' % (self.args.docker_registry, self.args.version))
 
         daemon_config = os.path.join(self.args.o, 'daemon.json')
 
@@ -498,7 +494,7 @@ class DockerCompose(Install):
 
 
     def setup_nginx_ingress(self):
-        self.config.add('services.nginx-ingress.image', '%s/docker-compose-ingress' % self.args.docker_registry)
+        self.config.add('services.nginx-ingress.image', '%s/docker-compose-ingress:%s' % (self.args.docker_registry, self.args.version))
 
     def setup_ldap(self):
         if self.args.ldap_enabled:
@@ -585,6 +581,7 @@ def main():
                         required=True)
     parser.add_argument('--version', default='latest')
     parser.add_argument('--root-url')
+    parser.add_argument('--docker-registry', default='quay.io/infrabox')
 
     # General
     parser.add_argument('--general-dont-check-certificates', action='store_true', default=False)
@@ -592,8 +589,6 @@ def main():
     parser.add_argument('--general-system-namespace', default='infrabox-system')
 
     # Docker configuration
-    parser.add_argument('--docker-registry',
-                        required=True)
     parser.add_argument('--docker-registry-admin-username')
     parser.add_argument('--docker-registry-admin-password')
     parser.add_argument('--docker-registry-url')
@@ -643,9 +638,6 @@ def main():
 
     # API
     parser.add_argument('--api-url')
-
-    # Docs
-    parser.add_argument('--docs-url')
 
     # Scheduler
     parser.add_argument('--scheduler-disabled', action='store_true', default=False)
