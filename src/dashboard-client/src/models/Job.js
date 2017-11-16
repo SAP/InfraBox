@@ -29,7 +29,7 @@ class Section {
         line += '\n'
         this.lines_raw.push(line)
 
-        if (this.lines_raw.length > 500) {
+        if (this.lines_raw.length > 200) {
             this.lines_raw.splice(0, 1)
         }
 
@@ -39,8 +39,8 @@ class Section {
     generateHtml () {
         let t = ''
 
-        if (this.lines_raw.length >= 500) {
-            t += 'Output too large, only showing last 500 lines:\n'
+        if (this.lines_raw.length >= 200) {
+            t += 'Output too large, only showing last 200 lines:\n'
         }
 
         for (let l of this.lines_raw) {
