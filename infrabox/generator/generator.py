@@ -17,6 +17,7 @@ def main():
                 d['tag'] = tag
 
     with open('/infrabox/output/deployments.json', 'w') as out:
+        print json.dumps(deployments, indent=4)
         json.dump(deployments, out)
 
 if __name__ == "__main__":
