@@ -29,6 +29,20 @@ general:
 
 root_url: <REQUIRED>
 
+ingress:
+    enabled: true
+    annotations:
+        kubernetes.io/ingress.class: "nginx"
+        # kubernetes.io/tls-acme: "true"
+        # ingress.kubernetes.io/force-ssl-redirect: "true"
+
+    host:
+
+    tls:
+        #- hosts:
+        #    - infrabox.example.com
+        #  secretName: infrabox-tls-certs
+
 db:
     # name of the db image in your general.docker_registry
     # image: db

@@ -423,7 +423,6 @@ class Kubernetes(Install):
 
         # Copy helm chart
         copy_files(self.args, 'infrabox')
-        copy_files(self.args, 'ingress')
 
         # Load values
         values_path = os.path.join(self.args.o, 'infrabox', 'values.yaml')
@@ -469,18 +468,27 @@ class DockerCompose(Install):
 
     def setup_docker_registry(self):
         self.required_option('docker-registry')
-        self.config.add('services.docker-registry-auth.image', '%s/docker-registry-auth:%s' % (self.args.docker_registry, self.args.version))
-        self.config.add('services.docker-registry-nginx.image', '%s/docker-registry-nginx:%s' % (self.args.docker_registry, self.args.version))
-        self.config.add('services.minio-init.image', '%s/docker-compose-minio-init:%s' % (self.args.docker_registry, self.args.version))
-        self.config.add('services.static.image', '%s/docs"%s' % (self.args.docker_registry, self.args.version))
+        self.config.add('services.docker-registry-auth.image',
+                        '%s/docker-registry-auth:%s' % (self.args.docker_registry, self.args.version))
+        self.config.add('services.docker-registry-nginx.image',
+                        '%s/docker-registry-nginx:%s' % (self.args.docker_registry, self.args.version))
+        self.config.add('services.minio-init.image',
+                        '%s/docker-compose-minio-init:%s' % (self.args.docker_registry, self.args.version))
+        self.config.add('services.static.image',
+                        '%s/docs"%s' % (self.args.docker_registry, self.args.version))
 
-        self.config.add('services.cli-api.image', '%s/api:%s' % (self.args.docker_registry, self.args.version))
-        self.config.add('services.job-api.image', '%s/job-api:%s' % (self.args.docker_registry, self.args.version))
-        self.config.add('services.dashboard-api.image', '%s/dashboard-api:%s' % (self.args.docker_registry, self.args.version))
-        self.config.add('services.static.image', '%s/static:%s' % (self.args.docker_registry, self.args.version))
+        self.config.add('services.cli-api.image',
+                        '%s/api:%s' % (self.args.docker_registry, self.args.version))
+        self.config.add('services.job-api.image',
+                        '%s/job-api:%s' % (self.args.docker_registry, self.args.version))
+        self.config.add('services.dashboard-api.image',
+                        '%s/dashboard-api:%s' % (self.args.docker_registry, self.args.version))
+        self.config.add('services.static.image',
+                        '%s/static:%s' % (self.args.docker_registry, self.args.version))
 
     def setup_scheduler(self):
-        self.config.add('services.scheduler.image', '%s/scheduler-docker-compose:%s' % (self.args.docker_registry, self.args.version))
+        self.config.add('services.scheduler.image',
+                        '%s/scheduler-docker-compose:%s' % (self.args.docker_registry, self.args.version))
 
         daemon_config = os.path.join(self.args.o, 'daemon.json')
 
@@ -494,7 +502,8 @@ class DockerCompose(Install):
 
 
     def setup_nginx_ingress(self):
-        self.config.add('services.nginx-ingress.image', '%s/docker-compose-ingress:%s' % (self.args.docker_registry, self.args.version))
+        self.config.add('services.nginx-ingress.image',
+                        '%s/docker-compose-ingress:%s' % (self.args.docker_registry, self.args.version))
 
     def setup_ldap(self):
         if self.args.ldap_enabled:
