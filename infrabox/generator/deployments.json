@@ -252,7 +252,7 @@
         "deployments": [{
              "type": "docker-registry",
              "host": "quay.io/infrabox",
-             "repository": "dashboard-client",
+             "repository": "static",
              "username": "infrabox+infrabox_ci",
              "password": { "$secret": "QUAY_PASSWORD" }
         }]
