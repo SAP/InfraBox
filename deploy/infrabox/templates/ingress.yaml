@@ -1,16 +1,19 @@
+{{ if .Values.ingress.enabled }}
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
     name: infrabox
     namespace: infrabox-system
     annotations:
-        kubernetes.io/ingress.class: "nginx"
-        #kubernetes.io/tls-acme: "true"
-        #ingress.kubernetes.io/force-ssl-redirect: "true"
+        {{- if .Values.ingress.annotations }}
+        {{ toYaml .Values.ingress.annotations | indent 8 }}
+        {{- end }}
 spec:
     rules:
     -
-        host: infrabox.example.com
+        {{- if .Values.ingress.host }}
+        host: {{ .Values.ingress.host }}
+        {{- end }}
         http:
             paths:
             -
@@ -38,6 +41,7 @@ spec:
                 backend:
                     serviceName: infrabox-job-api
                     servicePort: 8080
+            {{ if .Values.github.enabled }}
             -
                 path: /github/hook
                 backend:
@@ -48,6 +52,7 @@ spec:
                 backend:
                     serviceName: infrabox-dashboard-api
                     servicePort: 8080
+            {{ end }}
             -
                 path: /live/dashboard
                 backend:
@@ -58,8 +63,15 @@ spec:
                 backend:
                     serviceName: infrabox-docker-registry
                     servicePort: 8080
-#    tls:
-#        - hosts:
-#            - infrabox.example.com
-#          secretName: infrabox-tls-certs
-
+            -
+                path: /
+                backend:
+                    serviceName: infrabox-static
+                    servicePort: 80
+    {{- if .Values.ingress.tls }}
+    tls:
+        {{- if .Values.ingress.annotations }}
+        {{ toYaml .Values.ingress.tls | indent 8 }}
+        {{- end }}
+    {{- end }}
+{{ end }}
