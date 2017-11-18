@@ -181,7 +181,7 @@ class TestCreateJobs(object):
         expect = (
             ('external', None, ['external/flow'], None),
             ('external/flow', None, ['external/flow/test-server'], None),
-            ('external/flow/test-server', 'Dockerfile_flow',
+            ('external/flow/test-server', 'flow/Dockerfile_flow',
              ['Create Jobs'],
              {
                  "commit": "master",
@@ -212,16 +212,16 @@ class TestCreateJobs(object):
         )
         self.run(path, expect)
 
-    def test_nested_workflows(self):
+    def nested_workflows(self):
         path = '/project/infrabox/test/create-jobs/test/test-nested-workflows'
         expect = (
             ('flow', None, ['flow/sub-2', 'flow/sub-3'], None),
-            ('flow/sub-1', 'Dockerfile_flow', ['Create Jobs'], 'flow'),
+            ('flow/sub-1', 'flow/Dockerfile_flow', ['Create Jobs'], 'flow'),
             ('flow/sub-2', None, ['flow/sub-2/nested-2', 'flow/sub-2/nested-3'], None),
-            ('flow/sub-2/nested-1', 'Dockerfile_nested', ['flow/sub-1'], 'flow/nested-flow'),
-            ('flow/sub-2/nested-2', 'Dockerfile_nested', ['flow/sub-2/nested-1'], 'flow/nested-flow'),
-            ('flow/sub-2/nested-3', 'Dockerfile_nested', ['flow/sub-2/nested-1'], 'flow/nested-flow'),
-            ('flow/sub-3', 'Dockerfile_flow', ['flow/sub-1'], 'flow'),
+            ('flow/sub-2/nested-1', 'flow/nested-flow/Dockerfile_nested', ['flow/sub-1'], 'flow/nested-flow'),
+            ('flow/sub-2/nested-2', 'flow/nested-flow/Dockerfile_nested', ['flow/sub-2/nested-1'], 'flow/nested-flow'),
+            ('flow/sub-2/nested-3', 'flow/nested-flow/Dockerfile_nested', ['flow/sub-2/nested-1'], 'flow/nested-flow'),
+            ('flow/sub-3', 'flow/Dockerfile_flow', ['flow/sub-1'], 'flow'),
         )
         self.run(path, expect, with_base_path=True)
 
@@ -238,7 +238,7 @@ class TestCreateJobs(object):
         path = '/project/infrabox/test/create-jobs/test/test-workflow-base-path'
         expect = (
             ('flow', None, ['flow/test-sub'], None),
-            ('flow/test-sub', 'Dockerfile_flow', ['Create Jobs'], "flow"),
+            ('flow/test-sub', 'flow/Dockerfile_flow', ['Create Jobs'], "flow"),
         )
         self.run(path, expect, with_base_path=True)
 
@@ -309,8 +309,9 @@ class TestCreateJobs(object):
 
     def run(self, path, expect, with_external_git_id=False, with_base_path=False, with_environment=False,
             with_deployment=False):
-        if os.path.exists('/repo'):
-            shutil.rmtree('/repo')
+        if os.path.exists('/repo/.infrabox'):
+            shutil.rmtree('/repo/.infrabox')
+
         copy_tree(path, '/repo')
 
         console = ApiConsole()
