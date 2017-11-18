@@ -412,6 +412,16 @@ class Kubernetes(Install):
     def setup_stats(self):
         self.set('stats.tag', self.args.version)
 
+    def setup_ingress(self):
+        host = self.args.root_url.replace('http://', '')
+        host = host.replace('https://', '')
+
+        if not self.args.ingress_tls_host:
+            self.args.ingress_tls_host = host
+
+        self.set('ingress.tls.host', self.args.ingress_tls_host)
+        self.set('ingress.tls.acme', self.args.ingress_tls_acme)
+
     def main(self):
         self.required_option('root-url')
 
@@ -429,8 +439,8 @@ class Kubernetes(Install):
         self.config.load(values_path)
 
         self.setup_general()
-        self.setup_postgres()
         self.setup_storage()
+        self.setup_postgres()
         self.setup_docker_registry()
         self.setup_account()
         self.setup_job()
@@ -444,6 +454,7 @@ class Kubernetes(Install):
         self.setup_static()
         self.setup_ldap()
         self.setup_local_cache()
+        self.setup_ingress()
 
         daemon_config = {
             'disable-legacy-registry': True
@@ -636,10 +647,10 @@ def main():
 
     parser.add_argument('--gcs-project-id')
     parser.add_argument('--gcs-service-account-key-file')
-    parser.add_argument('--gcs-container-output-bucket', default='infrabox-container-output-bucket')
-    parser.add_argument('--gcs-project-upload-bucket', default='infrabox-project-upload-bucket')
-    parser.add_argument('--gcs-container-content-cache-bucket', default='infrabox-container-cache-bucket')
-    parser.add_argument('--gcs-docker-registry-bucket', default='infrabox-docker-registry-bucket')
+    parser.add_argument('--gcs-container-output-bucket')
+    parser.add_argument('--gcs-project-upload-bucket')
+    parser.add_argument('--gcs-container-content-cache-bucket')
+    parser.add_argument('--gcs-docker-registry-bucket')
 
     # Dashboard
     parser.add_argument('--dashboard-url')
@@ -673,6 +684,10 @@ def main():
     parser.add_argument('--github-api-url', default='https://api.github.com')
     parser.add_argument('--github-login-enabled', action='store_true', default=False)
     parser.add_argument('--github-login-url', default='https://github.com/login')
+
+    # TLS
+    parser.add_argument('--ingress-tls-host')
+    parser.add_argument('--ingress-tls-acme', action='store_true', default=False)
 
     # Account
     parser.add_argument('--account-signup-enabled', action='store_true', default=False)
