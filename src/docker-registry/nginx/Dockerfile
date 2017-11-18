@@ -17,6 +17,4 @@ RUN chown nginx /home/nginx
 RUN touch /var/run/nginx.pid
 RUN chown nginx /var/run/nginx.pid
 
-RUN rm /etc/nginx/nginx.conf
-
 CMD ["/entrypoint.sh"]
