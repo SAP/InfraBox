@@ -1,6 +1,7 @@
 import json
 import os
 import uuid
+import shutil
 import subprocess
 from distutils.dir_util import copy_tree
 
@@ -308,6 +309,8 @@ class TestCreateJobs(object):
 
     def run(self, path, expect, with_external_git_id=False, with_base_path=False, with_environment=False,
             with_deployment=False):
+        if os.path.exists('/repo'):
+            shutil.rmtree('/repo')
         copy_tree(path, '/repo')
 
         console = ApiConsole()
