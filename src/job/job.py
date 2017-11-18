@@ -59,6 +59,8 @@ class RunJob(Job):
         self.infrabox_inputs_dir = os.path.join(self.data_dir, 'inputs')
         makedirs(self.infrabox_inputs_dir)
 
+        self.infrabox_repo_inputs_dir = os.path.join('/repo', '.infrabox', 'inputs')
+
         # <data_dir>/output is mounted in the job to /infrabox/output
         self.infrabox_output_dir = os.path.join(self.data_dir, 'output')
         makedirs(self.infrabox_output_dir)
@@ -204,6 +206,7 @@ exec "$@"
         else:
             raise Exception('Unknown project type')
 
+        makedirs(self.infrabox_repo_inputs_dir)
 
     def main_create_jobs(self):
         c = self.console
@@ -333,8 +336,11 @@ exec "$@"
                 c.collect("output found for %s\n" % dep['name'], show=True)
                 c.execute(['ls', '-alh', storage_input_file_tar], show=True)
                 infrabox_input_dir = os.path.join(self.infrabox_inputs_dir, dep['name'].split('/')[-1])
+                infrabox_repo_input_dir = os.path.join(self.infrabox_repo_inputs_dir, dep['name'].split('/')[-1])
                 os.makedirs(infrabox_input_dir)
+                os.makedirs(infrabox_repo_input_dir)
                 self.uncompress(storage_input_file_tar, infrabox_input_dir, c)
+                self.uncompress(storage_input_file_tar, infrabox_repo_input_dir, c)
                 os.remove(storage_input_file_tar)
             else:
                 c.collect("no output found for %s\n" % dep['name'], show=True)
@@ -420,9 +426,6 @@ exec "$@"
     def run_docker_compose(self, c):
         c.header("Build containers", show=True)
         f = self.job['dockerfile']
-
-        if self.job.get('base_path', None):
-            f = os.path.join(self.job['base_path'], f)
 
         compose_file = os.path.join('/repo', f)
         compose_file_new = compose_file + ".infrabox"
@@ -603,12 +606,6 @@ exec "$@"
     def build_docker_container(self, image_name, cache_image):
         c = self.console
 
-        cwd = self.job.get('base_path', None)
-        if cwd:
-            cwd = os.path.join('/repo', cwd)
-        else:
-            cwd = "/repo"
-
         try:
             c.header("Build container", show=True)
 
@@ -618,7 +615,7 @@ exec "$@"
                 for name, value in self.job['build_arguments'].iteritems():
                     cmd += ['--build-arg', '%s=%s' % (name, value)]
 
-            c.execute(cmd, cwd=cwd, show=True)
+            c.execute(cmd, cwd="/repo", show=True)
         except:
             raise Failure("Failed to build the container")
 
@@ -802,7 +799,7 @@ exec "$@"
                 infrabox_paths[p] = True
 
                 yml = self.parse_infrabox_json(p)
-                self.check_file_exist(yml, base_path=os.path.dirname(p))
+                self.check_file_exist(yml, base_path=repo_path)
 
                 sub = self.get_job_list(yml, c, repo,
                                         parent_name=job_name,
