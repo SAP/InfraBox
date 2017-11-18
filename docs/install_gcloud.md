@@ -13,7 +13,8 @@ A few things need to be created before we can install InfraBox.
 ### External IP address
 To make your InfraBox installation available externally you need an IP address.
 You may create one in the GCP Console under "VPC Network" -> "External IP addresses".
-Give it a name, select IPv4 and Type Global. After you have create it remember the IP as you will need it in the following steps.
+Give it a name, select IPv4 and Type Regional and a region. Your kubernetes cluster should be created in the same region later on.
+After you have create it remember the IP as you will need it in the following steps.
 
 ### Create a Kubernetes cluster
 InfraBox runs on Kubernetes. So we have to create a cluster first. In the GCP Console go to "Kubernetes Engine" and create a cluster.
@@ -57,9 +58,6 @@ Currently InfraBox only supports an nginx-ingress controller. To add one to your
 
 **Don't forget to add your external IP address, which you have created earlier, as loadBalancerIP**
 
-### Configure TLS
-TODO
-
 ### Install Minio
 [Minio][minio] is S3 compatible storage. We use it as storage for the internal docker registry as well as for storing caches, input/outup
 
@@ -87,7 +85,7 @@ After minio has been started create a Job to initalize the minio buckets:
                     name: init-minio
                     image: minio/mc
                     command: ["/bin/sh", "-c"]
-                    args: ["mc config host add infrabox http://minio-minio-svc.infrabox-system:9000 AKIAIOSFODNN7EXAMPLE wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY S3v4 && mc mb infrabox/infrabox-container-output && mc mb infrabox/infrabox-project-upload && mc mb infrabox/infrabox-container-content-cache && mc mb infrabox/infrabox-docker-registry && mc ls infrabox-minio"]
+                    args: ["mc config host add infrabox http://minio-minio-svc.infrabox-system:9000 AKIAIOSFODNN7EXAMPLE wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY S3v4 && mc mb infrabox/infrabox-container-output && mc mb infrabox/infrabox-project-upload && mc mb infrabox/infrabox-container-content-cache && mc mb infrabox/infrabox-docker-registry && mc ls infrabox"]
                 restartPolicy: Never
 
 Save it to minio-init.yaml and run:
@@ -110,14 +108,78 @@ If you have not already cloned the InfraBox repository do so with:
 
 ## Configure InfraBox
 InfraBox contains a python script to generate all the neccessary configuration files for you. You find it under _deplpy/install.py_.
-To create a very basic configuration use:
+To create a very basic configuration use (don't forget to insert your external IP address!):
 
-    $ python deploy/install.py
-        -o /tmp/infrabox-configuration
-        --platform kubernetes
+    $ python deploy/install.py \
+        -o /tmp/infrabox-configuration \
+        --platform kubernetes \
+        --root-url http://<INSERT_YOUR_EXTERNAL_IP_ADDRESS_HERE> \
+        --general-dont-check-certificates \
+        --database postgres \
+        --postgres-host postgres-postgresql.infrabox-system \
+        --postgres-username infrabox \
+        --postgres-database infrabox \
+        --postgres-port 5432 \
+        --postgres-password qweasdzxc1 \
+        --storage s3 \
+        --s3-access-key AKIAIOSFODNN7EXAMPLE \
+        --s3-secret-key wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY \
+        --s3-secure false \
+        --s3-endpoint minio-minio-svc.infrabox-system \
+        --s3-port 9000 \
+        --s3-region us-east-1 \
+        --docker-registry-admin-username admin \
+        --docker-registry-admin-password admin \
+        --job-api-secret somesecret \
+        --dashboard-secret someothersecret \
+        --account-signup-enabled
 
+This command generated the neccessary files in /tmp/infrabox-configuration.
 
-python deploy/install.py -o /tmp/ninja --platform kubernetes --root-url http://35.186.193.34 --database postgres --postgres-host postgres-postgresql.infrabox-system --postgres-username infrabox --postgres-database infrabox --postgres-port 5432 --postgres-password qweasdzxc1 --storage s3 --s3-access-key AKIAIOSFODNN7EXAMPLE --s3-secret-key wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY --s3-secure false --s3-endpoint minio-minio-svc.infrabox-system --s3-port 9000 --s3-region us-east-1 --docker-registry-admin-username admin --docker-registry-admin-password admin --job-api-secret somesecret --dashboard-secret someothersecret --version test
+### Options
+
+    --job-api-secret
+    --dashboard-secret
+
+You should use some secret values for these options.
+
+    --docker-registry-admin-username admin
+    --docker-registry-admin-password admin
+
+This is the admin username and password which you can use to login to InfraBox's internal docker registry. Keep them secret, because you will have full access to the registry.
+
+    --general-dont-check-certificates
+
+With this option the hosted docker registry will be marked as insecure and HTTPS certificates will not be checked.
+If you have setup TLS properly for your ingress (this can be done in a later step) you should remove this.
+
+    --root-url
+
+This should be set to the URL which will be used by you to access your InfraBox installation. This can either be
+the IP address of your load balancer or a FQDN (i.e. infrabox.yourcompony.com, in this case you have to configure your DNS).
+
+For detailed explanation of all the available options see TODO
+
+### Configure TLS
+It's highly recommended to setup TLS for your InfraBox installation, but not required. For this you need a valid TLS certificate.
+You may either
+
+See [these instructions](components/tls.md) for configuring TLS.
+
+### Deploy InfraBox
+To deploy InfraBox:
+
+    $ cd /tmp/infrabox-configuration/infrabox
+    $ helm install -n infrabox .
+
+After a few seconds you can open your browser and access http://<INSERT_YOUR_EXTERNAL_IP_ADDRESS_HERE>.
+
+## Create project and run your first job
+
+## Optional Configuration
+With this guide you setup a basic InfraBox installation.
+
+It's highly recommended to configure TLS.
 
 [helm]: https://github.com/kubernetes/helm
 [minio]: https://www.minio.io/
