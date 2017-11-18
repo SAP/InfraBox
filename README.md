@@ -1,10 +1,10 @@
-# InfraBox [![Build Status](https://api.infrabox.net/v1/project/e8a9bf87-10c8-41fa-b632-f6bb40d0d14e/build/state.svg?branch=master)](https://demo.infrabox.net/dashboard/project/e8a9bf87-10c8-41fa-b632-f6bb40d0d14e)
+# InfraBox [![Build Status](https://infrabox.ninja/api/cli/v1/project/0c8204bb-7ce5-48a3-aa08-0fc38d7255d0/build/state.svg?branch=master)](https://demo.infrabox.net/dashboard/project/e8a9bf87-10c8-41fa-b632-f6bb40d0d14e)
 
 |Component|Coverage|
 |---------|--------|
-|github-api|[![coverage](https://api.infrabox.net/v1/project/e8a9bf87-10c8-41fa-b632-f6bb40d0d14e/badge.svg?subject=coverage&job_name=test/github-api&branch=master)](https://demo.infrabox.net/dashboard/project/e8a9bf87-10c8-41fa-b632-f6bb40d0d14e)|
-|github-review|[![coverage](https://api.infrabox.net/v1/project/e8a9bf87-10c8-41fa-b632-f6bb40d0d14e/badge.svg?subject=coverage&job_name=test/github-api&branch=master)](https://demo.infrabox.net/dashboard/project/e8a9bf87-10c8-41fa-b632-f6bb40d0d14e)|
-|pyinfrabox|[![coverage](https://api.infrabox.net/v1/project/e8a9bf87-10c8-41fa-b632-f6bb40d0d14e/badge.svg?subject=coverage&job_name=test/pyinfrabox&branch=master)](https://demo.infrabox.net/dashboard/project/e8a9bf87-10c8-41fa-b632-f6bb40d0d14e)|
+|github-api|[![coverage](https://infrabox.ninja/api/cli/v1/project/0c8204bb-7ce5-48a3-aa08-0fc38d7255d0/badge.svg?subject=coverage&job_name=test/github-api&branch=master)](https://infrabox.ninja/dashboard/#/project/infrabox)|
+|github-review|[![coverage](https://infrabox.ninja/api/cli/v1/project/0c8204bb-7ce5-48a3-aa08-0fc38d7255d0/badge.svg?subject=coverage&job_name=test/github-api&branch=master)](https://infrabox.ninja/dashboard/#/project/infrabox)|
+|pyinfrabox|[![coverage](https://infrabox.ninja/api/cli/v1/project/0c8204bb-7ce5-48a3-aa08-0fc38d7255d0/badge.svg?subject=coverage&job_name=test/pyinfrabox&branch=master)](https://infrabox.ninja/dashboard/#/project/infrabox)|
 
 InfraBox is a serverless computing platform focusing on efficiently executing build and test workflows for your project. You may execute everything on InfraBox which runs in a docker container. Some of InfraBox features include:
 
