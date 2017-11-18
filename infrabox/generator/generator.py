@@ -13,7 +13,7 @@ def main():
     tag = os.environ.get('INFRABOX_GIT_TAG', None)
     if tag:
         for j in deployments['jobs']:
-            for d in j['deployments']:
+            for d in j.get('deployments', []):
                 d['tag'] = tag
 
     with open('/infrabox/output/deployments.json', 'w') as out:
