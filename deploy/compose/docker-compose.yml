@@ -24,12 +24,6 @@ services:
             - infrabox
 
 
-    docs:
-        image: $INFRABOX_DOCKER_REGISTRY/infrabox/docs
-        networks:
-            - infrabox
-
-
     minio-init:
         image: $INFRABOX_DOCKER_REGISTRY/infrabox/docker-compose-minio-init
         networks:

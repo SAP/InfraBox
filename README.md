@@ -19,11 +19,11 @@ InfraBox is a serverless computing platform focusing on efficiently executing bu
 
 - Kubernetes 1.7
 - Postgres 9.6
-- S3 compatible storage (i.e. minio)
+- S3 compatible storage (i.e. minio) or Google Cloud Storage
 
 ## Install InfraBox
 You have multiple options to install InfraBox.
 
 - [Docker Compose](docs/install_docker_compose.md)
-- [Minikube](docs/install_minikube.md)
-- [On your own Kubernetes cluster](docs/install_kubernetes.md)
+- [Kubernetes Engine (Google Cloud)](docs/install_kubernetes.md)
+- Your own Kubernetes Cluster
