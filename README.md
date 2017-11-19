@@ -28,5 +28,8 @@ You have multiple options to install InfraBox.
 - [Minikube](docs/install_minikube.md)
 - [On your own Kubernetes cluster](docs/install_kubernetes.md)
 
+## You want to try it?
+Have a look at the InfraBox playground: [https://infrabox.ninja/](https://infrabox.ninja/)
+
 ## Contact
 Follow us on Twitter: [@Infra_Box](https://twitter.com/Infra_Box) or have look at our Slack channel [infrabox.slack.com](https://infrabox.slack.com/).
