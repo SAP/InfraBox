@@ -14,7 +14,7 @@
                         / Build {{ data.build.number }}.{{ data.build.restartCounter }}
                     </h3>
                 </md-card-header-text>
-                <md-toolbar class="md-transparent">
+                <md-toolbar v-if="$store.state.user" class="md-transparent">
                     <md-button class="md-icon-button" v-on:click="data.build.abort()"><md-icon>not_interested</md-icon><md-tooltip md-direction="bottom">Stop Build</md-tooltip></md-button>
                     <md-button class="md-icon-button" v-on:click="data.build.restart()"><md-icon>replay</md-icon><md-tooltip md-direction="bottom">Restart Build</md-tooltip></md-button>
                     <md-button class="md-icon-button" v-on:click="data.build.clearCache()"><md-icon>delete_sweep</md-icon><md-tooltip md-direction="bottom">Clear Cache</md-tooltip></md-button>
@@ -94,6 +94,7 @@ import Badge from '../utils/Badge'
 
 export default {
     name: 'BuildDetail',
+    store,
     props: ['projectName', 'buildNumber', 'buildRestartCounter'],
     components: {
         'ib-job-gantt': GanttChart,
@@ -104,7 +105,6 @@ export default {
         'ib-job-list': JobList,
         'ib-badge': Badge
     },
-    store,
     asyncComputed: {
         data: {
             get () {

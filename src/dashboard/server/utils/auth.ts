@@ -19,10 +19,9 @@ export function parseCookies(request) {
     return list;
 }
 
-
 export function auth(req: Request, res: Response, next: any) {
     try {
-		const cookies = parseCookies(req);
+        const cookies = parseCookies(req);
         const t = cookies["token"];
         const decoded = jwt.verify(t, config.dashboard.secret);
 
@@ -50,6 +49,7 @@ export function auth(req: Request, res: Response, next: any) {
             return next();
         }).catch(handleDBError(next));
     } catch (e) {
+        console.log(e);
         return next(new Unauthorized());
     }
 }
@@ -75,6 +75,7 @@ export function socket_auth(token: string) {
 }
 
 export function checkProjectAccess(req: Request, res: Response, next: any) {
+    console.log("checkProjectAccess");
     const user_id = req['user'].id;
     const project_id = req.params['project_id'];
 
@@ -131,6 +132,46 @@ export function checkProjectAccessPublic(req: Request, res: Response, next: any)
                 return checkProjectAccess(req, res, next);
             } else {
                 logger.debug("checkProjectAccessPublic: project " + project_id + " is neither public nor the user has access to it");
+                throw new Unauthorized();
+            }
+        }
+    }).catch(handleDBError(next));
+}
+
+export function checkProjectAccessPublicName(req: Request, res: Response, next: any) {
+    const project_name = req.params['project_name'];
+
+    try {
+		const cookies = parseCookies(req);
+        const t = cookies["token"];
+        const decoded = jwt.verify(t, config.dashboard.secret);
+
+        if (decoded.user && isUUID(decoded.user.id)) {
+            req["user"] = decoded.user;
+        }
+    } catch (e) {
+       logger.debug("checkProjectAccessPublicName: project " + project_name + " received invalid token");
+    }
+
+    db.any(`
+        SELECT public FROM project WHERE name = $1
+    `, [project_name]
+    ).then((result: any[]) => {
+        if (result.length !== 1) {
+            logger.debug("checkProjectAccessPublicName: project " + project_name + " not found");
+            throw new NotFound();
+        }
+
+        const r = result[0];
+
+        if (r.public) {
+            logger.debug("checkProjectAccessPublicName: project " + project_name + " is public");
+            return next();
+        } else {
+            if (req['user']) {
+                return checkProjectAccess(req, res, next);
+            } else {
+                logger.debug("checkProjectAccessPublicName: project " + project_name + " is neither public nor the user has access to it");
                 throw new Unauthorized();
             }
         }
