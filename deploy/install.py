@@ -540,7 +540,8 @@ class DockerCompose(Install):
         self.config.append('services.dashboard-api.environment', env)
 
     def setup_database(self):
-        self.config.add('services.postgres.image', '%s/postgres' % self.args.docker_registry)
+        self.config.add('services.postgres.image',
+                        '%s/postgres:%s' % (self.args.docker_registry, self.args.version))
         if self.args.database == 'postgres':
             self.required_option('postgres-host')
             self.required_option('postgres-port')
