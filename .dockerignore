@@ -8,4 +8,5 @@ src/dashboard-client/dist/*
 .git/*
 *.swp
 *.pyc
-.infraboxwork*
+.infrabox*
+!.infrabox/inputs
