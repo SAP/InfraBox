@@ -2,9 +2,9 @@
 
 |Component|Coverage|
 |---------|--------|
-|github-api|[![coverage](https://infrabox.ninja/api/cli/v1/project/0c8204bb-7ce5-48a3-aa08-0fc38d7255d0/badge.svg?subject=coverage&job_name=test/github-api&branch=master)](https://infrabox.ninja/dashboard/#/project/infrabox)|
-|github-review|[![coverage](https://infrabox.ninja/api/cli/v1/project/0c8204bb-7ce5-48a3-aa08-0fc38d7255d0/badge.svg?subject=coverage&job_name=test/github-api&branch=master)](https://infrabox.ninja/dashboard/#/project/infrabox)|
-|pyinfrabox|[![coverage](https://infrabox.ninja/api/cli/v1/project/0c8204bb-7ce5-48a3-aa08-0fc38d7255d0/badge.svg?subject=coverage&job_name=test/pyinfrabox&branch=master)](https://infrabox.ninja/dashboard/#/project/infrabox)|
+|github-api|[![coverage](https://infrabox.ninja/api/cli/v1/project/0c8204bb-7ce5-48a3-aa08-0fc38d7255d0/badge.svg?subject=coverage&job_name=ib/github-api)](https://infrabox.ninja/dashboard/#/project/infrabox)|
+|github-review|[![coverage](https://infrabox.ninja/api/cli/v1/project/0c8204bb-7ce5-48a3-aa08-0fc38d7255d0/badge.svg?subject=coverage&job_name=ib/test/github-review)](https://infrabox.ninja/dashboard/#/project/infrabox)|
+|pyinfrabox|[![coverage](https://infrabox.ninja/api/cli/v1/project/0c8204bb-7ce5-48a3-aa08-0fc38d7255d0/badge.svg?subject=coverage&job_name=ib/test/pyinfrabox)](https://infrabox.ninja/dashboard/#/project/infrabox)|
 
 InfraBox is a serverless computing platform focusing on efficiently executing build and test workflows for your project. You may execute everything on InfraBox which runs in a docker container. Some of InfraBox features include:
 
@@ -19,12 +19,13 @@ InfraBox is a serverless computing platform focusing on efficiently executing bu
 
 - Kubernetes 1.7
 - Postgres 9.6
-- S3 compatible storage (i.e. minio)
+- S3 compatible storage (i.e. minio) or Google Cloud Storage
 
 ## Install InfraBox
 You have multiple options to install InfraBox.
 
 - [Docker Compose](docs/install_docker_compose.md)
+<<<<<<< HEAD
 - [Minikube](docs/install_minikube.md)
 - [On your own Kubernetes cluster](docs/install_kubernetes.md)
 
@@ -33,3 +34,7 @@ Have a look at the InfraBox playground: [https://infrabox.ninja/](https://infrab
 
 ## Contact
 Follow us on Twitter: [@Infra_Box](https://twitter.com/Infra_Box) or have look at our Slack channel [infrabox.slack.com](https://infrabox.slack.com/).
+=======
+- [Kubernetes Engine (Google Cloud)](docs/install_kubernetes.md)
+- Your own Kubernetes Cluster
+>>>>>>> upstream/master

@@ -4,11 +4,12 @@ import { db, handleDBError } from "../../db";
 import { OK, BadRequest } from "../../utils/status";
 import { Validator } from 'jsonschema';
 import { param_validation as pv } from "../../utils/validation";
+import { auth, checkProjectAccess } from "../../utils/auth";
 
 const router = Router({ mergeParams: true });
 module.exports = router;
 
-router.get("/", pv, (req: Request, res: Response, next) => {
+router.get("/", pv, auth, checkProjectAccess, (req: Request, res: Response, next) => {
     const project_id = req.params['project_id'];
 
     db.any(`
@@ -30,7 +31,7 @@ const SecretSchema = {
     required: ["name", "value"]
 };
 
-router.post("/", pv, (req: Request, res: Response, next) => {
+router.post("/", pv, auth, checkProjectAccess, (req: Request, res: Response, next) => {
     const project_id = req.params['project_id'];
 
     const v = new Validator();
@@ -58,7 +59,7 @@ router.post("/", pv, (req: Request, res: Response, next) => {
     .catch(handleDBError(next));
 });
 
-router.delete("/:secret_id", pv, (req: Request, res: Response, next) => {
+router.delete("/:secret_id", pv, auth, checkProjectAccess, (req: Request, res: Response, next) => {
     const project_id = req.params['project_id'];
     const secret_id = req.params['secret_id'];
 

@@ -145,7 +145,7 @@ function handleJobUpdate (state, event) {
     updateProjectState(project)
 }
 
-function setProjects (state, projects) {
+function addProjects (state, projects) {
     for (const project of projects) {
         const p = findProject(state, project.id)
         if (p) {
@@ -234,7 +234,7 @@ function deleteProject (state, projectId) {
 }
 
 const mutations = {
-    setProjects,
+    addProjects,
     addJobs,
     setSecrets,
     setCollaborators,

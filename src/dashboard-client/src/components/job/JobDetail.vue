@@ -29,7 +29,7 @@
                 {{ data.job.name}}
                 </h3>
             </md-card-header-text>
-            <md-toolbar class="md-transparent">
+            <md-toolbar v-if="$store.state.user" class="md-transparent">
                 <md-button class="md-icon-button" v-on:click="data.job.abort()"><md-icon>not_interested</md-icon><md-tooltip md-direction="bottom">Stop Job</md-tooltip></md-button>
                 <md-button class="md-icon-button" v-on:click="data.job.restart()"><md-icon>replay</md-icon><md-tooltip md-direction="bottom">Restart Job</md-tooltip></md-button>
                 <md-button class="md-icon-button" v-on:click="data.job.clearCache()"><md-icon>delete_sweep</md-icon><md-tooltip md-direction="bottom">Clear Cache</md-tooltip></md-button>
@@ -143,9 +143,11 @@ import Date from '../utils/Date'
 import Duration from '../utils/Duration'
 import Console from './Console'
 import Badge from '../utils/Badge'
+import store from '../../store'
 
 export default {
     name: 'JobDetail',
+    store,
     props: ['jobName', 'projectName', 'buildNumber', 'buildRestartCounter'],
     components: {
         'ib-state-big': StateBig,

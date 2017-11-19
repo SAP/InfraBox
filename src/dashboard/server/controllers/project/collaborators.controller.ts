@@ -3,11 +3,12 @@ import { Router } from "express";
 import { db, handleDBError } from "../../db";
 import { BadRequest, OK } from "../../utils/status";
 import { param_validation as pv } from "../../utils/validation";
+import { auth, checkProjectAccess } from "../../utils/auth";
 
 const router = Router({ mergeParams: true });
 module.exports = router;
 
-router.post("/", pv, (req, res: Response, next) => {
+router.post("/", pv, auth, checkProjectAccess, (req, res: Response, next) => {
     req.checkBody('username', 'Invalid username').notEmpty();
     if (req.validationErrors()) {
         return next(new BadRequest("Invalid values"));
@@ -39,7 +40,7 @@ router.post("/", pv, (req, res: Response, next) => {
     .catch(handleDBError(next));
 });
 
-router.delete("/:user_id", pv, (req, res: Response, next) => {
+router.delete("/:user_id", pv, auth, checkProjectAccess, (req, res: Response, next) => {
     const user_id = req.params['user_id'];
     const project_id = req.params['project_id'];
     const owner_id = req['user'].id;
@@ -63,7 +64,7 @@ router.delete("/:user_id", pv, (req, res: Response, next) => {
     .catch(handleDBError(next));
 });
 
-router.get("/", pv, (req: Request, res: Response, next) => {
+router.get("/", pv, auth, checkProjectAccess, (req: Request, res: Response, next) => {
     const project_id = req.params['project_id'];
 
     db.any(`SELECT u.name, u.id, u.email, u.avatar_url, u.username FROM "user" u

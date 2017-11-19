@@ -17,9 +17,7 @@ class APIService {
                 return response.body
             })
             .catch((err) => {
-                if (err.status === 401) {
-                    router.push('/login')
-                } else {
+                if (err.status !== 401) {
                     NotificationService.$emit('NOTIFICATION', new Notification(err))
                 }
 
