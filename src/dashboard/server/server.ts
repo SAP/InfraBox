@@ -79,8 +79,7 @@ export function createServer(print: boolean) {
             logger.info("auth: received auth");
 
             if (!token) {
-                logger.warn("auth: no token");
-                socket.disconnect();
+                // user accesses public data
                 return;
             }
 

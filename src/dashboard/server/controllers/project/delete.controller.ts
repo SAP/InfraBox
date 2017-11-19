@@ -7,11 +7,12 @@ import { param_validation as pv } from "../../utils/validation";
 import { OK, BadRequest, NotFound } from "../../utils/status";
 import { Validator } from 'jsonschema';
 import { deleteHook } from "../../utils/github";
+import { auth, checkProjectAccess } from "../../utils/auth";
 
 const router = Router({ mergeParams: true });
 module.exports = router;
 
-router.delete("/", pv, (req: Request, res: Response, next) => {
+router.delete("/", pv, auth, checkProjectAccess, (req: Request, res: Response, next) => {
     const user_id = req['user'].id;
     const project_id = req.params['project_id'];
     let project_type;
