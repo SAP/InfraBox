@@ -2,9 +2,9 @@
 
 |Component|Coverage|
 |---------|--------|
-|github-api|[![coverage](https://infrabox.ninja/api/cli/v1/project/0c8204bb-7ce5-48a3-aa08-0fc38d7255d0/badge.svg?subject=coverage&job_name=test/github-api&branch=master)](https://infrabox.ninja/dashboard/#/project/infrabox)|
-|github-review|[![coverage](https://infrabox.ninja/api/cli/v1/project/0c8204bb-7ce5-48a3-aa08-0fc38d7255d0/badge.svg?subject=coverage&job_name=test/github-api&branch=master)](https://infrabox.ninja/dashboard/#/project/infrabox)|
-|pyinfrabox|[![coverage](https://infrabox.ninja/api/cli/v1/project/0c8204bb-7ce5-48a3-aa08-0fc38d7255d0/badge.svg?subject=coverage&job_name=test/pyinfrabox&branch=master)](https://infrabox.ninja/dashboard/#/project/infrabox)|
+|github-api|[![coverage](https://infrabox.ninja/api/cli/v1/project/0c8204bb-7ce5-48a3-aa08-0fc38d7255d0/badge.svg?subject=coverage&job_name=ib/github-api)](https://infrabox.ninja/dashboard/#/project/infrabox)|
+|github-review|[![coverage](https://infrabox.ninja/api/cli/v1/project/0c8204bb-7ce5-48a3-aa08-0fc38d7255d0/badge.svg?subject=coverage&job_name=ib/test/github-review)](https://infrabox.ninja/dashboard/#/project/infrabox)|
+|pyinfrabox|[![coverage](https://infrabox.ninja/api/cli/v1/project/0c8204bb-7ce5-48a3-aa08-0fc38d7255d0/badge.svg?subject=coverage&job_name=ib/test/pyinfrabox)](https://infrabox.ninja/dashboard/#/project/infrabox)|
 
 InfraBox is a serverless computing platform focusing on efficiently executing build and test workflows for your project. You may execute everything on InfraBox which runs in a docker container. Some of InfraBox features include:
 
