@@ -46,17 +46,17 @@
 import store from '../../store'
 
 export default {
-    props: ['project_id', 'job_name', 'subject', 'status', 'color'],
+    props: ['job', 'subject', 'status', 'color'],
     created () {
-        this.dialog_id = `${this.job_name}_${this.subject}_dialog`
+        this.dialog_id = `${this.job.name}_${this.subject}_dialog`
         this.api_host = store.state.settings.INFRABOX_API_URL
         this.dashboard_host = store.state.settings.INFRABOX_DASHBOARD_URL
         this.statusEncoded = encodeURI(this.status)
         this.id = `badge-${this.subject}-${this.status}`
         this.id = this.id.replace(/\W+/g, '')
-        this.url = `${this.api_host}/v1/project/${this.project_id}/badge.svg?subject=${this.subject}&job_name=${this.job_name}`
+        this.url = `${this.api_host}/v1/project/${this.job.project.id}/badge.svg?subject=${this.subject}&job_name=${this.job.name}`
         this.url = encodeURI(this.url)
-        this.link = `${this.dashboard_host}/dashboard/project/${this.project_id}`
+        this.link = `${this.dashboard_host}/dashboard/#/project/${this.job.project.name}`
         this.badgeUrl = `https://img.shields.io/badge/${this.subject}-${this.statusEncoded}-${this.color}.svg`
         this.markdown = `[![${this.subject}](${this.url})](${this.link})`
         this.html = `<a href="${this.link}"><img src="${this.url}" alt="${this.subject}"/></a>`

@@ -34,16 +34,17 @@ class RunJob(Job):
     def __init__(self, console):
         Job.__init__(self)
         self.console = console
-        self.data_dir = '/data/infrabox'
+        self.data_dir = '/repo/.infrabox'
         self.storage_dir = '/tmp/storage'
-
-        if os.path.exists(self.data_dir):
-            shutil.rmtree(self.data_dir)
 
         if os.path.exists(self.storage_dir):
             shutil.rmtree(self.storage_dir)
 
         os.makedirs(self.storage_dir)
+
+    def create_infrabox_directories(self):
+        if os.path.exists(self.data_dir):
+            shutil.rmtree(self.data_dir)
 
         #
         # /tmp/infrabox is mounted to the same path on the host
@@ -204,7 +205,6 @@ exec "$@"
         else:
             raise Exception('Unknown project type')
 
-
     def main_create_jobs(self):
         c = self.console
 
@@ -236,6 +236,7 @@ exec "$@"
         self.update_status('running')
         self.load_data()
         self.get_source()
+        self.create_infrabox_directories()
 
         if self.job['type'] == 'create_job_matrix':
             self.main_create_jobs()
@@ -310,6 +311,7 @@ exec "$@"
             data = self.parse_infrabox_json(infrabox_json_path)
             self.check_file_exist(data)
             jobs = self.get_job_list(data, c, self.job['repo'], infrabox_paths={infrabox_json_path: True})
+            c.collect(json.dumps(jobs, indent=4), show=True)
             self.create_jobs(jobs)
 
     def main_run_job(self):
@@ -421,9 +423,6 @@ exec "$@"
         c.header("Build containers", show=True)
         f = self.job['dockerfile']
 
-        if self.job.get('base_path', None):
-            f = os.path.join(self.job['base_path'], f)
-
         compose_file = os.path.join('/repo', f)
         compose_file_new = compose_file + ".infrabox"
 
@@ -495,9 +494,10 @@ exec "$@"
 
     def deploy_container(self, image_name):
         c = self.console
-        c.header("Deploying", show=True)
         if not self.deployments:
-            c.collect("No deployments configured\n", show=True)
+            return
+
+        c.header("Deploying", show=True)
 
         for dep in self.deployments:
             tag = dep.get('tag', 'build_%s' % self.build['build_number'])
@@ -603,12 +603,6 @@ exec "$@"
     def build_docker_container(self, image_name, cache_image):
         c = self.console
 
-        cwd = self.job.get('base_path', None)
-        if cwd:
-            cwd = os.path.join('/repo', cwd)
-        else:
-            cwd = "/repo"
-
         try:
             c.header("Build container", show=True)
 
@@ -618,7 +612,7 @@ exec "$@"
                 for name, value in self.job['build_arguments'].iteritems():
                     cmd += ['--build-arg', '%s=%s' % (name, value)]
 
-            c.execute(cmd, cwd=cwd, show=True)
+            c.execute(cmd, cwd="/repo", show=True)
         except:
             raise Failure("Failed to build the container")
 
@@ -802,7 +796,7 @@ exec "$@"
                 infrabox_paths[p] = True
 
                 yml = self.parse_infrabox_json(p)
-                self.check_file_exist(yml, base_path=os.path.dirname(p))
+                self.check_file_exist(yml, base_path=repo_path)
 
                 sub = self.get_job_list(yml, c, repo,
                                         parent_name=job_name,

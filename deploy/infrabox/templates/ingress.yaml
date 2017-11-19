@@ -5,15 +5,15 @@ metadata:
     name: infrabox
     namespace: infrabox-system
     annotations:
-        {{- if .Values.ingress.annotations }}
-        {{ toYaml .Values.ingress.annotations | indent 8 }}
+        kubernetes.io/ingress.class: "nginx"
+        ingress.kubernetes.io/force-ssl-redirect: "true"
+        {{- if .Values.ingress.tls.acme }}
+        kubernetes.io/tls-acme: "true"
         {{- end }}
 spec:
     rules:
     -
-        {{- if .Values.ingress.host }}
-        host: {{ .Values.ingress.host }}
-        {{- end }}
+        host: {{ .Values.ingress.tls.host }}
         http:
             paths:
             -
@@ -68,10 +68,8 @@ spec:
                 backend:
                     serviceName: infrabox-static
                     servicePort: 80
-    {{- if .Values.ingress.tls }}
     tls:
-        {{- if .Values.ingress.annotations }}
-        {{ toYaml .Values.ingress.tls | indent 8 }}
-        {{- end }}
-    {{- end }}
+        - hosts:
+            - {{ .Values.ingress.tls.host }}
+          secretName: infrabox-tls-certs
 {{ end }}

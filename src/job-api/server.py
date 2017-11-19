@@ -532,7 +532,7 @@ def upload_output():
     if os.path.getsize(path) > max_output_size:
         return "File too big", 400
 
-    object_name = "%s-%s.tar.gz" % (job_id, str(uuid.uuid4()))
+    object_name = "%s.tar.gz" % job_id
 
     if use_gcs():
         bucket = os.environ['INFRABOX_STORAGE_GCS_CONTAINER_OUTPUT_BUCKET']
@@ -576,26 +576,8 @@ def get_output_of_job(parent_job_id):
     if not is_valid_dependency:
         return "Job not found", 404
 
-    r = execute_many('''
-        SELECT download FROM job WHERE id = %s
-    ''', (parent_job_id, ))
-
-    if len(r) != 1:
-        return "Job not found 2: %s" % r, 500
-
-    if not r[0][0]:
-        return "Job not found 3: %s" % r, 404
-
-    if 'Output' not in r[0][0]:
-        return "Job not found 4: %s" % r[0], 500
-
-    output = r[0][0]["Output"]
-
-    if len(output) != 1:
-        return "Job not found 5: %s" % r, 500
-
-    object_name = output[0]['id']
-    output_zip = os.path.join('/tmp', parent_job_id + '.tar.gz')
+    object_name = "%s.tar.gz" % parent_job_id
+    output_zip = os.path.join('/tmp', object_name)
 
     if use_gcs():
         bucket = os.environ['INFRABOX_STORAGE_GCS_CONTAINER_OUTPUT_BUCKET']
