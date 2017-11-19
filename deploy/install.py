@@ -486,7 +486,7 @@ class DockerCompose(Install):
         self.config.add('services.minio-init.image',
                         '%s/docker-compose-minio-init:%s' % (self.args.docker_registry, self.args.version))
         self.config.add('services.static.image',
-                        '%s/docs"%s' % (self.args.docker_registry, self.args.version))
+                        '%s/static"%s' % (self.args.docker_registry, self.args.version))
 
         self.config.add('services.cli-api.image',
                         '%s/api:%s' % (self.args.docker_registry, self.args.version))

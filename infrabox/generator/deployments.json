@@ -237,12 +237,26 @@
         "type": "docker",
         "name": "docker-compose-ingress",
         "docker_file": "src/docker-compose/ingress/Dockerfile",
-        "resources": { "limits": { "cpu": 1, "memory": 512 } }
+        "resources": { "limits": { "cpu": 1, "memory": 512 } },
+        "deployments": [{
+                "type": "docker-compose-ingress",
+                "host": "quay.io/infrabox",
+                "repository": "postgres",
+                "username": "infrabox+infrabox_ci",
+                "password": { "$secret": "QUAY_PASSWORD" }
+        }]
     }, {
         "type": "docker",
         "name": "docker-compose-minio-init",
         "docker_file": "src/docker-compose/minio-init/Dockerfile",
-        "resources": { "limits": { "cpu": 1, "memory": 512 } }
+        "resources": { "limits": { "cpu": 1, "memory": 512 } },
+        "deployments": [{
+                "type": "docker-compose-minio-init",
+                "host": "quay.io/infrabox",
+                "repository": "postgres",
+                "username": "infrabox+infrabox_ci",
+                "password": { "$secret": "QUAY_PASSWORD" }
+        }]
     }, {
         "type": "docker",
         "name": "static",
@@ -256,6 +270,5 @@
              "username": "infrabox+infrabox_ci",
              "password": { "$secret": "QUAY_PASSWORD" }
         }]
-
     }]
 }
