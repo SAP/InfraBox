@@ -75,11 +75,13 @@ Vue.material.registerTheme({
     error: {
         primary: {
             color: 'black',
+            hue: '900',
             textColor: 'white'
         },
         accent: {
             color: 'grey',
-            textColor: 'white'
+            hue: 100,
+            textColor: 'black'
         }
     },
     failure: {

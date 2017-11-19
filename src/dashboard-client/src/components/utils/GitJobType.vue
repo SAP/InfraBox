@@ -1,7 +1,7 @@
 <template>
     <div>
         <div v-if="build.commit && build.commit.tag">
-            <a target="_blank" :href="b.commit.url">
+            <a target="_blank" :href="build.commit.url">
                 <img src="../../../static/tag.svg">
                 <md-tooltip>Tag</md-tooltip>
             </a>
