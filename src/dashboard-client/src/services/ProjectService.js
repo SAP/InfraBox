@@ -46,9 +46,6 @@ class ProjectService {
         return APIService.get('project')
         .then((response) => {
             store.commit('Projects', response)
-            this.resolve()
-        }).catch((err) => {
-            this.reject(err)
         })
     }
 }
