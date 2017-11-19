@@ -1,4 +1,4 @@
-# InfraBox [![Build Status](https://infrabox.ninja/api/cli/v1/project/0c8204bb-7ce5-48a3-aa08-0fc38d7255d0/build/state.svg?branch=master)](https://demo.infrabox.net/dashboard/project/e8a9bf87-10c8-41fa-b632-f6bb40d0d14e)
+# <img src="src\dashboard-client\static\logo_compact_transparent.png" width="200"> [![Build Status](https://infrabox.ninja/api/cli/v1/project/0c8204bb-7ce5-48a3-aa08-0fc38d7255d0/build/state.svg?branch=master)](https://demo.infrabox.net/dashboard/project/e8a9bf87-10c8-41fa-b632-f6bb40d0d14e)
 
 |Component|Coverage|
 |---------|--------|
@@ -25,5 +25,12 @@ InfraBox is a serverless computing platform focusing on efficiently executing bu
 You have multiple options to install InfraBox.
 
 - [Docker Compose](docs/install_docker_compose.md)
+- [Minikube](docs/install_minikube.md)
 - [Kubernetes Engine (Google Cloud)](docs/install_kubernetes.md)
-- Your own Kubernetes Cluster
+- [On your own Kubernetes cluster](docs/install_kubernetes.md)
+
+## You want to try it?
+Have a look at the InfraBox playground: [https://infrabox.ninja/](https://infrabox.ninja/)
+
+## Contact
+Follow us on Twitter: [@Infra_Box](https://twitter.com/Infra_Box) or have look at our Slack channel [infrabox.slack.com](https://infrabox.slack.com/).
