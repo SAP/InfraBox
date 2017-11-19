@@ -5,11 +5,12 @@ import { db, handleDBError } from '../../db';
 import { NotFound, BadRequest, OK } from "../../utils/status";
 import { deleteCache } from "../../utils/gcs";
 import { param_validation as pv } from "../../utils/validation";
+import { auth, checkProjectAccess } from "../../utils/auth";
 
 const router = Router({ mergeParams: true });
 module.exports = router;
 
-router.get("/:job_id/restart", pv, (req: Request, res: Response, next) => {
+router.get("/:job_id/restart", pv, auth, checkProjectAccess, (req: Request, res: Response, next) => {
     const job_id = req.params['job_id'];
 
     db.tx((tx) => {
@@ -43,7 +44,7 @@ router.get("/:job_id/restart", pv, (req: Request, res: Response, next) => {
     }).catch(handleDBError(next));
 });
 
-router.get("/:job_id/kill", pv, (req: Request, res: Response, next) => {
+router.get("/:job_id/kill", pv, auth, checkProjectAccess, (req: Request, res: Response, next) => {
     const job_id = req.params['job_id'];
 
     db.any('INSERT INTO abort (job_id) VALUES($1)', [job_id])
@@ -52,7 +53,7 @@ router.get("/:job_id/kill", pv, (req: Request, res: Response, next) => {
     }).catch(handleDBError(next));
 });
 
-router.get("/:build_id/cache/clear", pv, (req: Request, res: Response, next) => {
+router.get("/:build_id/cache/clear", pv, auth, checkProjectAccess, (req: Request, res: Response, next) => {
     const job_id = req.params['build_id'];
     const project_id = req.params['project_id'];
 

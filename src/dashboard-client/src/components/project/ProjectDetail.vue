@@ -28,7 +28,7 @@
                         <ib-build-table :project="project"/>
                     </md-tab>
 
-                    <md-tab id="project-settings" md-icon="settings" md-label="Settings">
+                    <md-tab v-if="$store.state.user" id="project-settings" md-icon="settings" md-label="Settings">
                         <ib-project-settings :project="project"/>
                     </md-tab>
                 </md-tabs>

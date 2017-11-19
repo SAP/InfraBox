@@ -1,12 +1,20 @@
 import { Router } from "express";
-import { auth, checkProjectAccess, checkProjectAccessPublic } from "../../utils/auth";
+import { checkProjectAccessPublic, checkProjectAccessPublicName } from "../../utils/auth";
+import { db, handleDBError } from "../../db";
 
 const p = Router();
 
+p.get('/name/:project_name/', checkProjectAccessPublicName, (req, res, next) => {
+    const project_name = req.params['project_name'];
+
+    db.one(`SELECT p.id, p.name, p.type FROM project p
+            WHERE name = $1`, [project_name]).then((pr: any) => {
+            res.json(pr);
+        }).catch(handleDBError(next));
+});
+
 // Private project routes
 const project = Router({ mergeParams: true });
-project.use(auth);
-project.use(checkProjectAccess);
 project.use('/tokens/', require('./tokens.controller'));
 project.use('/collaborators/', require('./collaborators.controller'));
 project.use('/secrets/', require('./secret.controller'));
@@ -15,7 +23,7 @@ project.use('/job/', require('./job.controller'));
 project.use('/', require('./delete.controller'));
 
 p.use('/:project_id/', project);
-p.use('/', auth, require('./project.controller'));
+p.use('/', require('./project.controller'));
 
 const public_project = Router({ mergeParams: true });
 // public project routes

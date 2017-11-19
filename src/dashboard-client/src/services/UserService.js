@@ -42,6 +42,9 @@ class UserService {
                 }
                 ProjectService.init()
             })
+            .catch(() => {
+                // ignore
+            })
     }
 }
 

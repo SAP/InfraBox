@@ -9,7 +9,6 @@ const router = Router({ mergeParams: true });
 module.exports = router;
 
 router.get("/", pv, (req: Request, res: Response, next) => {
-    // TODO(Steffen): check if public
     const project_id = req.params['project_id'];
 
     db.one(`SELECT p.id, p.name, p.type FROM project p

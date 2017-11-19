@@ -7,11 +7,12 @@ import { param_validation as pv } from "../../utils/validation";
 import { OK, BadRequest, NotFound } from "../../utils/status";
 import { Validator } from 'jsonschema';
 import { getRepos, getRepo, createDeployKey, createHook } from "../../utils/github";
+import { auth } from "../../utils/auth";
 
 const router = Router({ mergeParams: true });
 module.exports = router;
 
-router.get("/", pv, (req: Request, res: Response, next) => {
+router.get("/", pv, auth, (req: Request, res: Response, next) => {
     const user_id = req['user'].id;
 
     db.any(`SELECT p.id, p.name, p.type FROM project p
@@ -34,7 +35,7 @@ const AddProjectSchema = {
     required: ["name", "private", "type"]
 };
 
-router.post("/", pv, (req: Request, res: Response, next) => {
+router.post("/", pv, auth, (req: Request, res: Response, next) => {
     const v = new Validator();
     const envResult = v.validate(req['body'], AddProjectSchema);
 
