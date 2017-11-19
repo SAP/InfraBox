@@ -107,8 +107,7 @@
                                 </span>
                             </md-list-item>
                             <ib-badge v-for="b of data.job.badges" :key="b.subject"
-                                :project_id="data.project.id"
-                                :job_name="data.job.name"
+                                :job="data.job"
                                 :subject="b.subject"
                                 :status="b.status"
                                 :color="b.color">
