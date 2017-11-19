@@ -25,9 +25,8 @@ InfraBox is a serverless computing platform focusing on efficiently executing bu
 You have multiple options to install InfraBox.
 
 - [Docker Compose](docs/install_docker_compose.md)
-- [Minikube](docs/install_minikube.md)
 - [Kubernetes Engine (Google Cloud)](docs/install_kubernetes.md)
-- [On your own Kubernetes cluster](docs/install_kubernetes.md)
+- Your own Kubernetes Cluster
 
 ## You want to try it?
 Have a look at the InfraBox playground: [https://infrabox.ninja/](https://infrabox.ninja/)
