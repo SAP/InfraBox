@@ -34,16 +34,17 @@ class RunJob(Job):
     def __init__(self, console):
         Job.__init__(self)
         self.console = console
-        self.data_dir = '/data/infrabox'
+        self.data_dir = '/repo/.infrabox'
         self.storage_dir = '/tmp/storage'
-
-        if os.path.exists(self.data_dir):
-            shutil.rmtree(self.data_dir)
 
         if os.path.exists(self.storage_dir):
             shutil.rmtree(self.storage_dir)
 
         os.makedirs(self.storage_dir)
+
+    def create_infrabox_directories(self):
+        if os.path.exists(self.data_dir):
+            shutil.rmtree(self.data_dir)
 
         #
         # /tmp/infrabox is mounted to the same path on the host
@@ -58,8 +59,6 @@ class RunJob(Job):
         # <data_dir>/inputs is mounted in the job to /infrabox/inputs
         self.infrabox_inputs_dir = os.path.join(self.data_dir, 'inputs')
         makedirs(self.infrabox_inputs_dir)
-
-        self.infrabox_repo_inputs_dir = os.path.join('/repo', '.infrabox', 'inputs')
 
         # <data_dir>/output is mounted in the job to /infrabox/output
         self.infrabox_output_dir = os.path.join(self.data_dir, 'output')
@@ -206,8 +205,6 @@ exec "$@"
         else:
             raise Exception('Unknown project type')
 
-        makedirs(self.infrabox_repo_inputs_dir)
-
     def main_create_jobs(self):
         c = self.console
 
@@ -239,6 +236,7 @@ exec "$@"
         self.update_status('running')
         self.load_data()
         self.get_source()
+        self.create_infrabox_directories()
 
         if self.job['type'] == 'create_job_matrix':
             self.main_create_jobs()
@@ -313,6 +311,7 @@ exec "$@"
             data = self.parse_infrabox_json(infrabox_json_path)
             self.check_file_exist(data)
             jobs = self.get_job_list(data, c, self.job['repo'], infrabox_paths={infrabox_json_path: True})
+            c.collect(json.dumps(jobs, indent=4), show=True)
             self.create_jobs(jobs)
 
     def main_run_job(self):
@@ -336,11 +335,8 @@ exec "$@"
                 c.collect("output found for %s\n" % dep['name'], show=True)
                 c.execute(['ls', '-alh', storage_input_file_tar], show=True)
                 infrabox_input_dir = os.path.join(self.infrabox_inputs_dir, dep['name'].split('/')[-1])
-                infrabox_repo_input_dir = os.path.join(self.infrabox_repo_inputs_dir, dep['name'].split('/')[-1])
                 os.makedirs(infrabox_input_dir)
-                os.makedirs(infrabox_repo_input_dir)
                 self.uncompress(storage_input_file_tar, infrabox_input_dir, c)
-                self.uncompress(storage_input_file_tar, infrabox_repo_input_dir, c)
                 os.remove(storage_input_file_tar)
             else:
                 c.collect("no output found for %s\n" % dep['name'], show=True)
@@ -498,9 +494,10 @@ exec "$@"
 
     def deploy_container(self, image_name):
         c = self.console
-        c.header("Deploying", show=True)
         if not self.deployments:
-            c.collect("No deployments configured\n", show=True)
+            return
+
+        c.header("Deploying", show=True)
 
         for dep in self.deployments:
             tag = dep.get('tag', 'build_%s' % self.build['build_number'])
