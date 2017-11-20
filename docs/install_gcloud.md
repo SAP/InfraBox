@@ -6,7 +6,7 @@ For this guide you should have some basic experience with GCP. If you don't have
 - [docker](https://www.docker.com/)
 - [helm][helm]
 - [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
-- a domain with access to the DNS configuration (i.e. infrabox.example.com)
+- a domain with access to the DNS configuration (i.e. `infrabox.example.com`)
 
 ## Setup your GCP Account
 A few things need to be created before we can install InfraBox.
@@ -148,7 +148,7 @@ To create a very basic configuration use (don't forget to insert your external I
 
 **Set --root-url to your domain name**
 
-This command generated the neccessary files in /tmp/infrabox-configuration.
+This command generated the neccessary files in `/tmp/infrabox-configuration`.
 
 ### Options
 
@@ -173,7 +173,7 @@ To deploy InfraBox:
     $ cd /tmp/infrabox-configuration/infrabox
     $ helm install -n infrabox .
 
-After a few seconds you can open your browser and access https://infrabox.example.com.
+After a few seconds you can open your browser and access `https://infrabox.example.com`.
 
 [helm]: https://github.com/kubernetes/helm
 [minio]: https://www.minio.io/
