@@ -6,6 +6,7 @@ For this guide you should have some basic experience with GCP. If you don't have
 - [docker](https://www.docker.com/)
 - [helm][helm]
 - [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
+- a domain with access to the DNS configuration
 
 ## Setup your GCP Account
 A few things need to be created before we can install InfraBox.
@@ -14,7 +15,9 @@ A few things need to be created before we can install InfraBox.
 To make your InfraBox installation available externally you need an IP address.
 You may create one in the GCP Console under "VPC Network" -> "External IP addresses".
 Give it a name, select IPv4 and Type Regional and a region. Your kubernetes cluster should be created in the same region later on.
-After you have create it remember the IP as you will need it in the following steps.
+
+### Configure DNS
+Configure your DNS to point to the external IP address. 
 
 ### Create a Kubernetes cluster
 InfraBox runs on Kubernetes. So we have to create a cluster first. In the GCP Console go to "Kubernetes Engine" and create a cluster.
@@ -58,6 +61,15 @@ Currently InfraBox only supports an nginx-ingress controller. To add one to your
 
 **Don't forget to add your external IP address, which you have created earlier, as loadBalancerIP**
 
+### Create TLS certificate
+If you already have a certificate for your domain you may skip this.
+
+    $ openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /tmp/tls.key -out /tmp/tls.crt -subj "/CN=infrabox.example.com"
+
+Now create a Kubernetes secret for the certificate:
+
+    $ kubectl create secret tls infrabox-tls-certs --key /tmp/tls.key --cert /tmp/tls.crt
+
 ### Install Minio
 [Minio][minio] is S3 compatible storage. We use it as storage for the internal docker registry as well as for storing caches, input/outup
 
@@ -66,7 +78,7 @@ Currently InfraBox only supports an nginx-ingress controller. To add one to your
 **This configuration is not for production use**
 
 If you want to setup minio for a production setup please read the minio guide how to do it.
-You may also use S3 directly or any other S3 API compatible storage. [See S3 configuration](components/s3.md) for the configuration options.
+You may also use S3 directly or any other S3 API compatible storage. [See S3 configuration](configure/s3.md) for the configuration options.
 
 After minio has been started create a Job to initalize the minio buckets:
 
@@ -99,7 +111,7 @@ To install a PostgreSQL database in kubernetes simply run:
 
 **This is also not meant for production**
 
-You can use any PostgreSQL 9.6 database. See [Configuring PostgreSQL](components/postgres.md) for the available options.
+You can use any PostgreSQL 9.6 database. See [Configuring PostgreSQL](configure/postgres.md) for the available options.
 
 ## Clone InfraBox repository
 If you have not already cloned the InfraBox repository do so with:
@@ -113,7 +125,7 @@ To create a very basic configuration use (don't forget to insert your external I
     $ python deploy/install.py \
         -o /tmp/infrabox-configuration \
         --platform kubernetes \
-        --root-url http://<INSERT_YOUR_EXTERNAL_IP_ADDRESS_HERE> \
+        --root-url https://infrabox.example.com \
         --general-dont-check-certificates \
         --database postgres \
         --postgres-host postgres-postgresql.infrabox-system \
@@ -134,6 +146,8 @@ To create a very basic configuration use (don't forget to insert your external I
         --dashboard-secret someothersecret \
         --account-signup-enabled
 
+**Set --root-url to your domain name**
+
 This command generated the neccessary files in /tmp/infrabox-configuration.
 
 ### Options
@@ -151,20 +165,7 @@ This is the admin username and password which you can use to login to InfraBox's
     --general-dont-check-certificates
 
 With this option the hosted docker registry will be marked as insecure and HTTPS certificates will not be checked.
-If you have setup TLS properly for your ingress (this can be done in a later step) you should remove this.
-
-    --root-url
-
-This should be set to the URL which will be used by you to access your InfraBox installation. This can either be
-the IP address of your load balancer or a FQDN (i.e. infrabox.yourcompony.com, in this case you have to configure your DNS).
-
-For detailed explanation of all the available options see TODO
-
-### Configure TLS
-It's highly recommended to setup TLS for your InfraBox installation, but not required. For this you need a valid TLS certificate.
-You may either
-
-See [these instructions](components/tls.md) for configuring TLS.
+Remove this option if you have used a TLS certificate has been signed by a CA.
 
 ### Deploy InfraBox
 To deploy InfraBox:
@@ -172,14 +173,7 @@ To deploy InfraBox:
     $ cd /tmp/infrabox-configuration/infrabox
     $ helm install -n infrabox .
 
-After a few seconds you can open your browser and access http://<INSERT_YOUR_EXTERNAL_IP_ADDRESS_HERE>.
-
-## Create project and run your first job
-
-## Optional Configuration
-With this guide you setup a basic InfraBox installation.
-
-It's highly recommended to configure TLS.
+After a few seconds you can open your browser and access https://infrabox.example.com.
 
 [helm]: https://github.com/kubernetes/helm
 [minio]: https://www.minio.io/
