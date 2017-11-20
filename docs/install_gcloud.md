@@ -24,14 +24,14 @@ InfraBox runs on Kubernetes. So we have to create a cluster first. In the GCP Co
 Give it a name (i.e. InfraBox), select a Zone and use a Kubernetes version 1.7.x. You should choose a machine type with at least 2 vCPU.
 A cluster size of 2 nodes is sufficient for a test, but you may have to increase it later if you want to run more jobs in parallel.
 
-If you want to use the kubernetes dashboard you may have to give the service account more permissions:
-
-    $ kubectl create clusterrolebinding dashboard --clusterrole=cluster-admin --serviceaccount=kube-system:default
-
 **Important: Set "Legacy Authorization" to disabled**
 
 You may keep the default values for the other options.
 As soon as your cluster has been created click on connect and follow the instructions.
+
+If you want to use the kubernetes dashboard you may have to give the service account more permissions:
+
+    $ kubectl create clusterrolebinding dashboard --clusterrole=cluster-admin --serviceaccount=kube-system:default
 
 ## Configure prerequisuites
 
