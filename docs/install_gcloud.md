@@ -6,7 +6,7 @@ For this guide you should have some basic experience with GCP. If you don't have
 - [docker](https://www.docker.com/)
 - [helm][helm]
 - [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
-- a domain with access to the DNS configuration
+- a domain with access to the DNS configuration (i.e. infrabox.example.com)
 
 ## Setup your GCP Account
 A few things need to be created before we can install InfraBox.
