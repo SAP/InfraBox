@@ -9,7 +9,7 @@ import jwt
 from prometheus_client import start_http_server, Histogram, Counter
 
 from pyinfraboxutils import get_logger, get_env, print_stackdriver
-from pyinfraboxutils.leader import elect_leader
+from pyinfraboxutils.leader import is_leader
 from pyinfraboxutils.db import connect_db
 
 
@@ -364,10 +364,7 @@ class Scheduler(object):
         build_id = j[1]
         resources = j[2]
 
-        if cpu == 1:
-            cpu = cpu * 0.7
-        else:
-            cpu = cpu * 0.9
+        cpu -= 0.2
 
         additional_env = None
         if resources and resources.get('kubernetes', None):
@@ -670,7 +667,7 @@ class Scheduler(object):
 
     def run(self):
         while True:
-            elect_leader(self.conn, "scheduler")
+            is_leader(self.conn, "scheduler")
             self.handle()
             time.sleep(2)
 

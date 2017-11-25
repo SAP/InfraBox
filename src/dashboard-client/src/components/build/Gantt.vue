@@ -632,7 +632,7 @@ export default {
         let draw = () => {
             this.chart.setJobs(this.jobs)
             this.chart.draw()
-            setTimeout(draw, 2000)
+            this.redraw = setTimeout(draw, 2000)
         }
         this.redraw = setTimeout(draw, 1000)
     },

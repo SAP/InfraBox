@@ -84,6 +84,10 @@ export default class Job {
         this.sections = []
         this.badges = []
         this.env = []
+        this.downloads = []
+        this.tests = []
+        this.stats = []
+        this.tabs = []
     }
 
     _getTime (d) {
@@ -156,6 +160,16 @@ export default class Job {
             })
     }
 
+    loadTabs () {
+        return APIService.get(`project/${this.project.id}/job/${this.id}/tabs`)
+            .then((tabs) => {
+                store.commit('setTabs', { job: this, tabs: tabs })
+            })
+            .catch((err) => {
+                NotificationService.$emit('NOTIFICATION', new Notification(err))
+            })
+    }
+
     loadEnvironment () {
         return APIService.get(`project/${this.project.id}/job/${this.id}/env`)
             .then((env) => {
@@ -164,6 +178,40 @@ export default class Job {
             .catch((err) => {
                 NotificationService.$emit('NOTIFICATION', new Notification(err))
             })
+    }
+
+    loadTests () {
+        return APIService.get(`project/${this.project.id}/job/${this.id}/testruns`)
+            .then((tests) => {
+                store.commit('setTests', { job: this, tests: tests })
+            })
+            .catch((err) => {
+                NotificationService.$emit('NOTIFICATION', new Notification(err))
+            })
+    }
+
+    loadStats () {
+        return APIService.get(`project/${this.project.id}/job/${this.id}/Stats`)
+            .then((values) => {
+                const stats = []
+                for (const n of Object.keys(values)) {
+                    let i = 0
+                    for (const o of values[n]) {
+                        stats.push({ cpu: o.cpu, date: i, mem: o.mem })
+                        ++i
+                    }
+                }
+
+                store.commit('setStats', { job: this, stats: stats })
+            })
+            .catch((err) => {
+                NotificationService.$emit('NOTIFICATION', new Notification(err))
+            })
+    }
+
+    downloadDataOutput () {
+        const url = `project/${this.project.id}/job/${this.id}/output`
+        APIService.openAPIUrl(url)
     }
 
     listenConsole () {

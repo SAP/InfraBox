@@ -6,7 +6,7 @@ import paramiko
 
 from pyinfraboxutils import get_logger, get_env, print_stackdriver
 from pyinfraboxutils.db import connect_db
-from pyinfraboxutils.leader import elect_leader
+from pyinfraboxutils.leader import elect_leader, is_leader
 
 logger = get_logger("gerrit")
 
@@ -25,16 +25,18 @@ def main():
     get_env('INFRABOX_DASHBOARD_URL')
 
     conn = connect_db()
-    elect_leader(conn, "gerrit-review")
     conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
     logger.info("Connected to database")
+
+    elect_leader(conn, "gerrit-review")
 
     curs = conn.cursor()
     curs.execute("LISTEN job_update;")
 
     logger.info("Waiting for job updates")
 
-    while 1:
+    while True:
+        is_leader(conn, "gerrit-review")
         if select.select([conn], [], [], 5) != ([], [], []):
             conn.poll()
             while conn.notifies:

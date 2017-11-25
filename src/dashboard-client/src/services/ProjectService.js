@@ -45,7 +45,6 @@ class ProjectService {
     _loadProjects () {
         return APIService.get('project')
         .then((response) => {
-            console.log(response)
             store.commit('addProjects', response)
         })
     }
