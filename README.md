@@ -9,15 +9,19 @@ InfraBox is a serverless computing platform focusing on efficiently executing bu
 - LDAP support
 - and many more
 
-## You want to try it?
-Have a look at the InfraBox playground: [https://infrabox.ninja/](https://infrabox.ninja/)
+## You want to try it for free?
+Have a look at the InfraBox playground [https://infrabox.ninja/](https://infrabox.ninja/dashboard/#/login).
+It's a hosted version of InfraBox. You can use it for free with up to 1 CPU and 1024MB per job.
+
+Quickstart Guides:
+- [Connect your github repository](docs/guides/connect_github.md)
+- [Upload a workflow (you don't need a git repository)](docs/guides/upload.md)
 
 ## Install InfraBox
 You have multiple options to install InfraBox.
 
 - [Docker Compose](docs/install_docker_compose.md)
 - [Kubernetes Engine (Google Cloud)](docs/install_gcloud.md)
-- Your own Kubernetes Cluster
 
 ## Contact
 Follow us on Twitter: [@Infra_Box](https://twitter.com/Infra_Box) or have look at our Slack channel [infrabox.slack.com](https://infrabox.slack.com/).
