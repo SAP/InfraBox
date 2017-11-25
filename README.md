@@ -9,6 +9,9 @@ InfraBox is a serverless computing platform focusing on efficiently executing bu
 - LDAP support
 - and many more
 
+## Want to see it in action?
+InfraBox is build on InfraBox. See all the builds [here](https://infrabox.ninja/dashboard/#/project/infrabox).
+
 ## You want to try it for free?
 Have a look at the InfraBox playground [https://infrabox.ninja/](https://infrabox.ninja/dashboard/#/login).
 It's a hosted version of InfraBox. You can use it for free with up to 1 CPU and 1024MB per job.
