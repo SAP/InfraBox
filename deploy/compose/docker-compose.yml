@@ -29,14 +29,6 @@ services:
         networks:
             - infrabox
 
-
-    postgres:
-        image: $INFRABOX_DOCKER_REGISTRY/infrabox/postgres
-        networks:
-            - infrabox
-        restart: always
-
-
     docker-registry:
         image: registry
         networks:
@@ -49,7 +41,6 @@ services:
             - INFRABOX_SERVICE=registry-auth
             - INFRABOX_VERSION=latest
         links:
-            - postgres
         networks:
             - infrabox
 
@@ -81,7 +72,6 @@ services:
             - INFRABOX_JOB_MAX_OUTPUT_SIZE=104857600
             - INFRABOX_JOB_API_SECRET=secret
         links:
-           - postgres
         networks:
             - infrabox
 
@@ -118,7 +108,6 @@ services:
             - INFRABOX_DOCS_URL="localhost/docs"
             - INFRABOX_DOCKER_REGISTRY_URL="localhost"
         links:
-           - postgres
            - minio
         networks:
             - infrabox
@@ -175,7 +164,6 @@ services:
             - INFRABOX_DOCS_URL="localhost/docs/"
             - INFRABOX_DOCKER_REGISTRY_URL="localhost"
         links:
-           - postgres
         networks:
             - infrabox
 networks:

@@ -38,7 +38,7 @@ spec:
                 app: infrabox-scheduler
         spec:
             {{ if .Values.general.rbac.enabled }}
-            serviceAccountName: infrabox-stats
+            serviceAccountName: infrabox-scheduler
             {{ end }}
             {{- if .Values.scheduler.node_selector }}
             nodeSelector:

@@ -116,7 +116,7 @@ function handleJobUpdate (state, event) {
         startDate = new Date(d.start_date)
     }
 
-    if (d.end_data) {
+    if (d.end_date) {
         endDate = new Date(d.end_date)
     }
 
@@ -196,10 +196,34 @@ function setSettings (state, settings) {
     state.settings = settings
 }
 
+function setDownloads (state, data) {
+    const job = data.job
+    const downloads = data.downloads
+    job.downloads = downloads
+}
+
 function setBadges (state, data) {
     const job = data.job
     const badges = data.badges
     job.badges = badges
+}
+
+function setTests (state, data) {
+    const job = data.job
+    const tests = data.tests
+    job.tests = tests
+}
+
+function setStats (state, data) {
+    const job = data.job
+    const stats = data.stats
+    job.stats = stats
+}
+
+function setTabs (state, data) {
+    const job = data.job
+    const tabs = data.tabs
+    job.tabs = tabs
 }
 
 function setEnvironment (state, data) {
@@ -246,7 +270,11 @@ const mutations = {
     deleteProject,
     setSettings,
     setBadges,
-    setEnvironment
+    setEnvironment,
+    setTests,
+    setStats,
+    setDownloads,
+    setTabs
 }
 
 const getters = {}
