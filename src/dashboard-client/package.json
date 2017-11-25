@@ -18,6 +18,7 @@
     "font-awesome": "^4.7.0",
     "moment": "^2.19.0",
     "raphael": "^2.2.7",
+    "taucharts": "^1.2.2",
     "underscore": "^1.8.3",
     "vue": "^2.4.2",
     "vue-async-computed": "^3.3.1",

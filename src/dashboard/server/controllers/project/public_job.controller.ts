@@ -36,21 +36,6 @@ router.get("/:job_id/tabs", pv, (req: Request, res: Response, next) => {
         }).catch(handleDBError(next));
 });
 
-router.get("/:job_id/downloads", pv, (req: Request, res: Response, next) => {
-    const project_id = req.params['project_id'];
-    const job_id = req.params['job_id'];
-
-    db.any(`SELECT download FROM job WHERE id = $1 and project_id = $2`,
-           [job_id, project_id])
-        .then((result: any[]) => {
-            if (result.length != 1 || !result[0].download) {
-                res.json({});
-            } else {
-                res.json(result[0].download);
-            }
-        }).catch(handleDBError(next));
-});
-
 router.get("/:job_id/console", pv, (req: Request, res: Response, next) => {
     const project_id = req.params['project_id'];
     const job_id = req.params['job_id'];
@@ -73,40 +58,17 @@ router.get("/:job_id/console", pv, (req: Request, res: Response, next) => {
         }).catch(handleDBError(next));
 });
 
-router.get("/:job_id/downloads/:file_id", pv, (req: Request, res: Response, next) => {
-    const project_id = req.params['project_id'];
+router.get("/:job_id/output", pv, (req: Request, res: Response, next) => {
     const job_id = req.params['job_id'];
-    const file_id = req.params['file_id'];
-
-    db.any(`SELECT download FROM job WHERE id = $1 and project_id = $2`,
-           [job_id, project_id])
-        .then((result: any[]) => {
-            if (result.length != 1) {
-                throw new NotFound();
-            }
-
-			const d = result[0].download;
-
-			if (!d) {
-                throw new NotFound();
-			}
-
-            for (let s in d) {
-                for (let f of d[s]) {
-					if (f.id === file_id) {
-						return downloadOutput(file_id);
-					}
-                }
-            }
-
-			return null;
-		}).then((stream: any) => {
-			if (!stream) {
-				throw new NotFound();
-			} else {
-				stream.pipe(res);
-			}
-        }).catch(handleDBError(next));
+    const file_id = job_id + '.tar.gz'
+    downloadOutput(file_id)
+    .then((stream: any) => {
+        if (!stream) {
+            throw new NotFound();
+        } else {
+            stream.pipe(res);
+        }
+    }).catch(handleDBError(next));
 });
 
 router.get("/:job_id/badges", pv, (req: Request, res: Response, next) => {

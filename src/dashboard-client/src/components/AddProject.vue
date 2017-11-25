@@ -38,6 +38,9 @@
                     <div v-if="type=='github'" class="p-t-md">
                         <h3>Select the GitHub repository to connect</h3>
                     </div>
+                    <div "$store.state.user && !$store.state.user.hasGithubAccount() && type=='github'">
+                        <md-button @click="connectGithubAccount()"></md-button>
+                    </div>
                     <div v-if="$store.state.user && $store.state.user.hasGithubAccount() && type=='github'" class="md-layout md-gutter">
                         <md-button-toggle md-single class="m-xl md-layout">
                             <md-card class="md-button no-shadow" v-for="r of $store.state.user.githubRepos" :key="r.id">
@@ -147,6 +150,9 @@ export default {
         },
         selectGithubRepo (r) {
             this.githubRepo = r
+        },
+        connectGithubAccount () {
+            window.location.href = '/github/auth/connect'
         }
     }
 }

@@ -44,7 +44,7 @@ class Configuration(object):
 
 
         k = elements[-1]
-        if k not in c:
+        if k not in c or not c[k]:
             c[k] = []
 
         c[k] += values
@@ -258,11 +258,7 @@ class Kubernetes(Install):
 
         self.required_option('docker-registry')
         self.set('general.docker_registry', self.args.docker_registry)
-
-        if self.args.docker_registry_url:
-            self.set('docker_registry.url', self.args.docker_registry_url)
-        else:
-            self.set('docker_registry.url', self.args.root_url)
+        self.set('docker_registry.url', self.args.root_url)
 
     def setup_account(self):
         self.set('account.signup.enabled', self.args.account_signup_enabled)
@@ -307,6 +303,7 @@ class Kubernetes(Install):
         self.set('gerrit.enabled', True)
         self.set('gerrit.hostname', self.args.gerrit_hostname)
         self.set('gerrit.username', self.args.gerrit_username)
+        self.set('gerrit.review.enabled', self.args.gerrit_review_enabled)
         self.set('gerrit.review.tag', self.args.version)
         self.set('gerrit.trigger.tag', self.args.version)
         self.set('gerrit.api.tag', self.args.version)
@@ -356,18 +353,10 @@ class Kubernetes(Install):
         self.create_secret("infrabox-dashboard", self.args.general_system_namespace, secret)
 
         self.set('dashboard.api.tag', self.args.version)
-
-        if self.args.dashboard_url:
-            self.set('dashboard.url', self.args.dashboard_url)
-        else:
-            self.set('dashboard.url', self.args.root_url)
+        self.set('dashboard.url', self.args.root_url)
 
     def setup_api(self):
-        if self.args.api_url:
-            self.set('api.url', self.args.api_url)
-        else:
-            self.set('api.url', self.args.root_url + '/api/cli')
-
+        self.set('api.url', self.args.root_url + '/api/cli')
         self.set('api.tag', self.args.version)
 
     def setup_static(self):
@@ -395,11 +384,7 @@ class Kubernetes(Install):
         self.set('job.security_context.capabilities.enabled',
                  self.args.job_security_context_capabilities_enabled)
 
-        if self.args.job_api_url:
-            self.set('job.api.url', self.args.job_api_url)
-        else:
-            self.set('job.api.url', self.args.root_url + '/api/job')
-
+        self.set('job.api.url', self.args.root_url + '/api/job')
         self.set('job.api.tag', self.args.version)
 
     def setup_db(self):
@@ -540,8 +525,6 @@ class DockerCompose(Install):
         self.config.append('services.dashboard-api.environment', env)
 
     def setup_database(self):
-        self.config.add('services.postgres.image',
-                        '%s/postgres:%s' % (self.args.docker_registry, self.args.version))
         if self.args.database == 'postgres':
             self.required_option('postgres-host')
             self.required_option('postgres-port')
@@ -568,11 +551,23 @@ class DockerCompose(Install):
                 'INFRABOX_DATABASE_DB=postgres'
             ]
 
+            self.config.add('services.postgres', {
+                'image': '%s/postgres:%s' % (self.args.docker_registry, self.args.version),
+                'networks': ['infrabox'],
+                'restart': 'always'
+            })
+
+            self.config.append('services.docker-registry-auth.links', ['postgres'])
+            self.config.append('services.scheduler.links', ['postgres'])
+            self.config.append('services.dashboard-api.links', ['postgres'])
+            self.config.append('services.cli-api.links', ['postgres'])
+
         self.config.append('services.dashboard-api.environment', env)
         self.config.append('services.job-api.environment', env)
         self.config.append('services.cli-api.environment', env)
         self.config.append('services.scheduler.environment', env)
         self.config.append('services.docker-registry-auth.environment', env)
+
 
     def main(self):
         copy_files(self.args, 'compose')
@@ -612,7 +607,6 @@ def main():
     # Docker configuration
     parser.add_argument('--docker-registry-admin-username')
     parser.add_argument('--docker-registry-admin-password')
-    parser.add_argument('--docker-registry-url')
 
     # Database configuration
     parser.add_argument('--database',
@@ -654,11 +648,7 @@ def main():
     parser.add_argument('--gcs-docker-registry-bucket')
 
     # Dashboard
-    parser.add_argument('--dashboard-url')
     parser.add_argument('--dashboard-secret')
-
-    # API
-    parser.add_argument('--api-url')
 
     # Scheduler
     parser.add_argument('--scheduler-disabled', action='store_true', default=False)
@@ -676,6 +666,7 @@ def main():
     parser.add_argument('--gerrit-port')
     parser.add_argument('--gerrit-username')
     parser.add_argument('--gerrit-private-key')
+    parser.add_argument('--gerrit-review-enabled', action='store_true', default=False)
 
     # Github
     parser.add_argument('--github-enabled', action='store_true', default=False)
@@ -701,7 +692,6 @@ def main():
     parser.add_argument('--job-mount-docker-socket', action='store_true', default=False)
     parser.add_argument('--job-use-host-docker-daemon', action='store_true', default=False)
     parser.add_argument('--job-security-context-capabilities-enabled', action='store_true', default=False)
-    parser.add_argument('--job-api-url')
     parser.add_argument('--job-api-secret')
 
     # Parse options

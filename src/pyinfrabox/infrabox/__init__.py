@@ -267,9 +267,6 @@ def parse_jobs(e, path):
     if not isinstance(e, list):
         raise ValidationError(path, "must be an array")
 
-    if not e:
-        raise ValidationError(path, "must not be empty")
-
     for i in range(0, len(e)):
         elem = e[i]
         p = "%s[%s]" % (path, i)

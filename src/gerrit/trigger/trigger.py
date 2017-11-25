@@ -4,7 +4,7 @@ import datetime
 import paramiko
 
 from pyinfraboxutils import get_logger, get_env, print_stackdriver
-from pyinfraboxutils.leader import elect_leader
+from pyinfraboxutils.leader import elect_leader, is_leader
 from pyinfraboxutils.db import connect_db
 
 logger = get_logger("gerrit")
@@ -21,7 +21,6 @@ def main():
     gerrit_hostname = get_env('INFRABOX_GERRIT_HOSTNAME')
     gerrit_username = get_env('INFRABOX_GERRIT_USERNAME')
     gerrit_key_filename = get_env('INFRABOX_GERRIT_KEY_FILENAME')
-
 
     conn = connect_db()
     logger.info("Connected to db")
@@ -43,6 +42,7 @@ def main():
     logger.info("Waiting for stream-events")
     for line in stdout:
         event = json.loads(line)
+        is_leader(conn, "gerrit-trigger")
 
         if event['type'] == "patchset-created":
             logger.info(json.dumps(event, indent=4))

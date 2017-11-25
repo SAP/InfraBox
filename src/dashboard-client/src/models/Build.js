@@ -105,6 +105,7 @@ export default class Build {
 
     _updateEndDate () {
         if (this._isActive()) {
+            this.endDate = null
             return
         }
 

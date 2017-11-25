@@ -4,7 +4,6 @@ import requests
 from prometheus_client import start_http_server, Gauge
 
 from pyinfraboxutils import get_env, get_logger, print_stackdriver
-from pyinfraboxutils.leader import elect_leader
 from pyinfraboxutils.db import connect_db
 
 logger = get_logger("stats")
@@ -131,8 +130,6 @@ def main():
 
     conn = connect_db()
     os.environ['REQUESTS_CA_BUNDLE'] = '/var/run/secrets/kubernetes.io/serviceaccount/ca.crt'
-
-    elect_leader(conn, "stats")
 
     start_http_server(8000)
 

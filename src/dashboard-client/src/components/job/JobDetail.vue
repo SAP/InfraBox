@@ -43,13 +43,13 @@
                                 <ib-console :job="data.job"></ib-console>
                             </md-tab>
                             <md-tab id="test-list" md-icon="multiline_chart" md-label="Tests">
-                                tests
+                                <ib-tests :job="data.job"></ib-tests>
                             </md-tab>
-                            <md-tab id="stat-list" md-icon="insert_chart" md-label="Stats">
-                                tests
+                            <md-tab id="stats" md-icon="insert_chart" md-label="Stats" style="height:500px">
+                                <ib-stats :job="data.job"></ib-stats>
                             </md-tab>
-                            <md-tab id="downloads" md-icon="file_download" md-label="Downloads">
-                                downloads
+                            <md-tab v-for="t in data.job.tabs" :id="'tab_' + t.name" md-icon="insert_chart" :md-label="t.name">
+                                <ib-tab :tab="t"></ib-tab>
                             </md-tab>
                         </md-tabs>
                     </md-layout>
@@ -72,11 +72,9 @@
                                 </span>
                             </md-list-item>
                             <md-list-item v-if="data.build.commit" class="p-l-md p-r-md">
-                                <span class="md-body-2"><i class="fa fa-list-ol fa-fw p-r-xl" aria-hidden="true"></i>
-                                Commit</span>
-                                <span class="md-list-action">
-                                    <a target="_blank" :href="data.build.commit.url"><ib-commit-sha :sha="data.build.commit.id"></ib-commit-sha></a>
-                                </span>
+                                <span class="md-body-2"><i class="fa fa-list-ol fa-fw p-r-xl" aria-hidden="true"></i>Change</span>
+                                <ib-gitjobtype :build="data.build"></ib-gitjobtype>
+
                             </md-list-item>
                             <md-list-item v-if="data.build.commit" class="p-l-md p-r-md">
                                 <span class="md-body-2"><i class="fa fa-user fa-fw p-r-xl" aria-hidden="true"></i>
@@ -92,18 +90,25 @@
                                     {{ data.build.commit.branch }}
                                 </span>
                             </md-list-item>
-                            <md-list-item v-if="data.build.commit" class="p-l-md p-r-xs">
+                            <md-list-item class="p-l-md p-r-xs">
                                 <span class="md-body-2"><i class="fa fa-download fa-fw p-r-xl" aria-hidden="true"></i>
                                 Run Local</span>
                                 <span class="md-list-action">
                                     <md-button class="md-raised md-dense" @click="openDialog('cli_dialog')">CLI Command</md-button>
                                 </span>
                             </md-list-item>
-                            <md-list-item v-if="data.build.commit" class="p-l-md p-r-xs">
+                            <md-list-item class="p-l-md p-r-xs">
                                 <span class="md-body-2"><i class="fa fa-file-archive-o fa-fw p-r-xl" aria-hidden="true"></i>
                                 Console Output</span>
                                 <span class="md-list-action">
-                                    <md-button class="md-raised md-dense" @click="downloadOutput()">Download</md-button>
+                                    <md-button class="md-raised md-dense" @click="downloadOutput()" :disabled="data.job.state=='running'||data.job.state=='queued'||data.job.state=='scheduled'">Download</md-button>
+                                </span>
+                            </md-list-item>
+                            <md-list-item class="p-l-md p-r-xs">
+                                <span class="md-body-2"><i class="fa fa-file-archive-o fa-fw p-r-xl" aria-hidden="true"></i>
+                                Data Output</span>
+                                <span class="md-list-action">
+                                    <md-button class="md-raised md-dense" @click="downloadDataOutput()" :disabled="data.job.state=='running'||data.job.state=='queued'||data.job.state=='scheduled'">Download</md-button>
                                 </span>
                             </md-list-item>
                             <ib-badge v-for="b of data.job.badges" :key="b.subject"
@@ -138,10 +143,12 @@ infrabox pull</pre>
 <script>
 import ProjectService from '../../services/ProjectService'
 import StateBig from '../utils/StateBig'
-import CommitSha from '../utils/CommitSha'
 import Date from '../utils/Date'
 import Duration from '../utils/Duration'
 import Console from './Console'
+import Tab from './Tab'
+import Stats from './Stats'
+import Tests from './TestList'
 import Badge from '../utils/Badge'
 import store from '../../store'
 
@@ -151,11 +158,13 @@ export default {
     props: ['jobName', 'projectName', 'buildNumber', 'buildRestartCounter'],
     components: {
         'ib-state-big': StateBig,
-        'ib-commit-sha': CommitSha,
         'ib-date': Date,
         'ib-duration': Duration,
         'ib-console': Console,
-        'ib-badge': Badge
+        'ib-badge': Badge,
+        'ib-tests': Tests,
+        'ib-stats': Stats,
+        'ib-tab': Tab
     },
     asyncComputed: {
         data: {
@@ -178,6 +187,7 @@ export default {
                         job.listenConsole()
                         job.loadBadges()
                         job.loadEnvironment()
+                        job.loadTabs()
                         return {
                             project,
                             build,
@@ -206,6 +216,9 @@ export default {
         },
         downloadOutput () {
             this.data.job.downloadOutput()
+        },
+        downloadDataOutput () {
+            this.data.job.downloadDataOutput()
         }
     }
 }
