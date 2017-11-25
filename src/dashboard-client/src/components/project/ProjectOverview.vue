@@ -17,10 +17,6 @@
                 </md-button>
 
                 <md-menu-content>
-                    <md-menu-item>
-                        <span>Edit</span>
-                        <md-button class="md-icon-button"><md-icon>mode_edit</md-icon><md-tooltip md-direction="bottom">Edit project</md-tooltip></md-button>
-                    </md-menu-item>
                     <md-menu-item v-if="project.builds[0] && project.builds[0].state==='running'" v-on:click="project.builds[0].abort()">
                         <span>Stop Build</span>
                         <md-button class="md-icon-button"><md-icon>not_interested</md-icon><md-tooltip md-direction="bottom">Stop latest build</md-tooltip></md-button>

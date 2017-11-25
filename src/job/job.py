@@ -866,7 +866,6 @@ def main():
     get_env('INFRABOX_JOB_MAX_OUTPUT_SIZE')
     get_env('INFRABOX_JOB_API_URL')
     get_env('INFRABOX_JOB_MOUNT_DOCKER_SOCKET')
-    get_env('INFRABOX_LOCAL_CACHE_ENABLED')
 
     console = ApiConsole()
 
