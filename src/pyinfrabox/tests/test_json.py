@@ -17,8 +17,10 @@ def test_version():
 
 def test_jobs():
     raises_expect({'version': 1, 'jobs': 'asd'}, "#jobs: must be an array")
-    raises_expect({'version': 1, 'jobs': []}, "#jobs: must not be empty")
     raises_expect({'version': 1, 'jobs': [{}]}, "#jobs[0]: does not contain a 'type'")
+
+def test_empty_jobs():
+    validate_json({'version': 1, 'jobs': []})
 
 def test_dep_defined_later():
     d = {

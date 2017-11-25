@@ -217,8 +217,12 @@ exec "$@"
 
         c.header("Creating jobs", show=True)
         jobs = self.get_job_list(data, c, self.job['repo'], infrabox_paths={"/repo/infrabox.json": True})
-        self.create_jobs(jobs)
-        c.collect("Done creating jobs\n")
+
+        if jobs:
+            self.create_jobs(jobs)
+            c.collect("Done creating jobs\n")
+        else:
+            c.collect("No jobs\n")
 
     def check_container_crashed(self):
         # if the started file exists already this
@@ -312,7 +316,12 @@ exec "$@"
             self.check_file_exist(data)
             jobs = self.get_job_list(data, c, self.job['repo'], infrabox_paths={infrabox_json_path: True})
             c.collect(json.dumps(jobs, indent=4), show=True)
-            self.create_jobs(jobs)
+
+            if jobs:
+                self.create_jobs(jobs)
+                c.collect("Done creating jobs\n")
+            else:
+                c.collect("No jobs\n")
 
     def main_run_job(self):
         c = self.console

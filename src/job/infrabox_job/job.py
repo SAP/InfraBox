@@ -72,6 +72,9 @@ class Job(object):
         }
 
     def create_jobs(self, jobs):
+        if not jobs:
+            return
+
         payload = {
             "jobs": jobs,
         }

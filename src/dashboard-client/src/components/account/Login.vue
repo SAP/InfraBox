@@ -24,7 +24,7 @@
                         <md-button :disabled="!mailValid || !pwValid" class="md-raised md-primary" @click="login"><i class="fa fa-fw fa-sign-in"></i><span> Login</span></md-button>
                     </md-card-content>
                 </md-card-area>
-                <md-card-content class="m-xl">
+                <md-card-content class="m-xl" v-if="$store.state.settings.INFRABOX_GITHUB_ENABLED || $store.state.settings.INFRABOX_ACCOUNT_SIGNUP_ENABLED">
                     <h3 class="md-subheading">Don't have an InfraBox account?</h3>
                     <div class=" m-b-md"></div>
                     <md-button @click="loginGithub()"
@@ -91,6 +91,7 @@ export default {
             }).then(() => {
                 UserService.login()
                 router.push('/')
+                location.reload()
             })
         }
     }

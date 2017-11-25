@@ -7,7 +7,7 @@ import psycopg2
 
 from pyinfraboxutils import get_logger, print_stackdriver, get_env
 from pyinfraboxutils.db import connect_db
-from pyinfraboxutils.leader import elect_leader
+from pyinfraboxutils.leader import elect_leader, is_leader
 
 logger = get_logger("github")
 
@@ -39,7 +39,8 @@ def main(): # pragma: no cover
 
     logger.info("Waiting for job updates")
 
-    while 1:
+    while True:
+        is_leader(conn, "github-review")
         if select.select([conn], [], [], 5) != ([], [], []):
             conn.poll()
             while conn.notifies:

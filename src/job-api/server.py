@@ -1,4 +1,4 @@
-# pylint: disable=too-many-lines,global-statement,too-many-locals,too-many-branches,too-many-statements
+# pylint: disable=too-many-lines,global-statement,too-many-locals,too-many-branches,too-many-statements,unused-variable
 from __future__ import print_function
 import os
 import json
@@ -11,7 +11,7 @@ from datetime import datetime
 from minio import Minio
 import jwt
 
-from flask import Flask, jsonify, request, send_file, g
+from flask import Flask, jsonify, request, send_file, g, after_this_request
 
 from pyinfrabox.badge import validate_badge
 from pyinfrabox.markup import validate_markup
@@ -138,7 +138,7 @@ def before_request():
     g.conn = connect_db()
 
 @app.teardown_request
-def teardown_request(exception):
+def teardown_request(_):
     g.conn.close()
 
 @app.route("/api/job/job")
@@ -440,6 +440,13 @@ def get_source():
 
     return send_file(source_zip)
 
+def delete_file(path):
+    if os.path.exists(path):
+        try:
+            os.remove(path)
+        except Exception as error:
+            logger.warn("Failed to delete file", error)
+
 @app.route("/api/job/cache", methods=['GET', 'POST'])
 def get_cache():
     token = validate_token()
@@ -450,10 +457,15 @@ def get_cache():
     project_id = token['project']['id']
     job_name = token['job']['name']
 
-    path = '/tmp/cache.tar.gz'
+    path = '/tmp/%s.tar.gz' % uuid.uuid4()
     template = 'project_%s__job_%s.tar.gz'
     cache_identifier = template % (project_id,
                                    job_name)
+
+    @after_this_request
+    def remove_file(response):
+        delete_file(path)
+        return response
 
     if request.method == 'POST':
         if 'data' not in request.files:
@@ -525,8 +537,13 @@ def upload_output():
     if not allowed_file(f.filename, ("gz",)):
         return "Filetype not allowed", 400
 
-    path = '/tmp/output.tar.gz'
+    path = '/tmp/%s.tar.gz' % uuid.uuid4()
     f.save(path)
+
+    @after_this_request
+    def remove_file(response):
+        delete_file(path)
+        return response
 
     max_output_size = os.environ['INFRABOX_JOB_MAX_OUTPUT_SIZE']
     if os.path.getsize(path) > max_output_size:
@@ -578,6 +595,11 @@ def get_output_of_job(parent_job_id):
 
     object_name = "%s.tar.gz" % parent_job_id
     output_zip = os.path.join('/tmp', object_name)
+
+    @after_this_request
+    def remove_file(response):
+        delete_file(output_zip)
+        return response
 
     if use_gcs():
         bucket = os.environ['INFRABOX_STORAGE_GCS_CONTAINER_OUTPUT_BUCKET']
@@ -655,6 +677,9 @@ def create_jobs():
 
     d = request.json
     jobs = d['jobs']
+
+    if not jobs:
+        return "No jobs"
 
     # Check if capabilities are set and allowed
     if get_env('INFRABOX_JOB_SECURITY_CONTEXT_CAPABILITIES_ENABLED') != 'true':
@@ -973,11 +998,17 @@ def upload_markdown():
     if len(request.files) > 10:
         return "Too many uploads", 400
 
+    path = '/tmp/%s.md' % uuid.uuid4()
+
+    @after_this_request
+    def remove_file(response):
+        delete_file(path)
+        return response
+
     for name, f in request.files.iteritems():
         if not allowed_file(f.filename, ("md",)):
             return "Filetype not allowed", 400
 
-        path = '/tmp/data.md'
         f.save(path)
 
         if os.path.getsize(path) > 8 * 1024 * 1024:
@@ -1014,12 +1045,18 @@ def upload_markup():
     if len(request.files) > 10:
         return "Too many uploads", 400
 
+    path = '/tmp/%s.json' % uuid.uuid4()
+
+    @after_this_request
+    def remove_file(response):
+        delete_file(path)
+        return response
+
     for name, f in request.files.iteritems():
         try:
             if not allowed_file(f.filename, ("json",)):
                 return "Filetype not allowed", 400
 
-            path = '/tmp/data.json'
             f.save(path)
 
             # Check size
@@ -1066,11 +1103,17 @@ def upload_badge():
     if len(request.files) > 10:
         return "Too many uploads", 400
 
+    path = '/tmp/%s.json' % uuid.uuid4()
+
+    @after_this_request
+    def remove_file(response):
+        delete_file(path)
+        return response
+
     for _, f in request.files.iteritems():
         if not allowed_file(f.filename, ("json",)):
             return "Filetype not allowed", 400
 
-        path = '/tmp/data.json'
         f.save(path)
 
         # check file size
@@ -1118,7 +1161,12 @@ def upload_testresult():
     if not allowed_file(f.filename, ("json"),):
         return jsonify({}), 400
 
-    path = '/tmp/testresult.json'
+    path = '/tmp/%s.json' % uuid.uuid4()
+
+    @after_this_request
+    def remove_file(response):
+        delete_file(path)
+        return response
 
     f.save(path)
 
