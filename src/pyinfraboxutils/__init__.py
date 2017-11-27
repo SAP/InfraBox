@@ -5,7 +5,7 @@ import traceback
 
 def get_log_level():
     l = os.environ.get('INFRABOX_LOG_LEVEL', 'info')
-    print "Log level: %s" % l
+    print("Log level: %s" % l)
 
     if l == 'debug':
         return logging.DEBUG
@@ -24,16 +24,16 @@ logging.basicConfig(
 
 def print_stackdriver():
     if 'INFRABOX_GENERAL_LOG_STACKDRIVER' in os.environ and os.environ['INFRABOX_GENERAL_LOG_STACKDRIVER'] == 'true':
-        print json.dumps({
+        print(json.dumps({
             "serviceContext": {
                 "service": os.environ.get('INFRABOX_SERVICE', 'unknown'),
                 "version": os.environ.get('INFRABOX_VERSION', 'unknown')
             },
             "message": traceback.format_exc(),
             "severity": 'ERROR'
-        })
+        }))
     else:
-        print traceback.format_exc()
+        print(traceback.format_exc())
 
 def get_env(name):
     if name not in os.environ:
