@@ -2,6 +2,7 @@ import logging
 import argparse
 import time
 import os
+import sys
 import psycopg2
 import psycopg2.extensions
 import requests
@@ -33,6 +34,7 @@ class Scheduler(object):
         self.args = args
         self.namespace = get_env("INFRABOX_GENERAL_WORKER_NAMESPACE")
         self.logger = get_logger("scheduler")
+        self.daemon_json = None
 
         if self.args.loglevel == 'debug':
             self.logger.setLevel(logging.DEBUG)
@@ -87,11 +89,6 @@ class Scheduler(object):
         }, {
             "name": "analyzer-tmp",
             "emptyDir": {}
-        }, {
-            "name": "dockerd-config",
-            "configMap": {
-                "name": "infrabox-dockerd-config"
-            }
         }]
 
         volume_mounts = [{
@@ -100,9 +97,6 @@ class Scheduler(object):
         }, {
             "mountPath": "/tmp",
             "name": "analyzer-tmp"
-        }, {
-            "mountPath": "/etc/docker",
-            "name": "dockerd-config"
         }]
 
         env = [{
@@ -133,6 +127,9 @@ class Scheduler(object):
             "name": "INFRABOX_JOB_MOUNT_DOCKER_SOCKET",
             "value": os.environ['INFRABOX_JOB_MOUNT_DOCKER_SOCKET']
         }, {
+            "name": "INFRABOX_JOB_DAEMON_JSON",
+            "value": self.daemon_json
+        }, {
             "name": "INFRABOX_DOCKER_REGISTRY_ADMIN_USERNAME",
             "valueFrom": {
                 "secretKeyRef": {
@@ -153,7 +150,7 @@ class Scheduler(object):
             "value": os.environ['INFRABOX_DASHBOARD_URL']
         }, {
             "name": "INFRABOX_JOB_API_TOKEN",
-            "value": jwt.encode({"job_id": job_id}, get_env('INFRABOX_JOB_API_SECRET'))
+            "value": str(jwt.encode({"job_id": job_id}, get_env('INFRABOX_JOB_API_SECRET')))
         }]
 
         if additional_env:
@@ -666,6 +663,14 @@ class Scheduler(object):
         self.schedule()
 
     def run(self):
+        daemon_json_path = '/etc/docker/daemon.json'
+        if not os.path.exists(daemon_json_path):
+            self.logger.error('%s does not exist' % daemon_json_path)
+            sys.exit(1)
+
+        with open(daemon_json_path) as daemon_json:
+            self.daemon_json = str(daemon_json.read())
+
         while True:
             is_leader(self.conn, "scheduler")
             self.handle()
@@ -707,8 +712,7 @@ def main():
 
     # try to read from filesystem
     with open('/var/run/secrets/kubernetes.io/serviceaccount/token', 'r') as f:
-        args.token = f.read()
-
+        args.token = str(f.read()).strip()
 
     args.api_server = "https://" + get_env('INFRABOX_KUBERNETES_MASTER_HOST') \
                                  + ":" + get_env('INFRABOX_KUBERNETES_MASTER_PORT')
