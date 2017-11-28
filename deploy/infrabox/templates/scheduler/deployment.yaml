@@ -84,6 +84,14 @@ spec:
                 ports:
                 - containerPort: 8000
                   name: prometheus
+                volumeMounts:
+                -
+                    mountPath: /etc/docker
+                    name: dockerd-config
             volumes:
                 {{ include "volumes_database" . | indent 16 }}
+                -
+                    name: dockerd-config
+                    configMap:
+                        name: infrabox-dockerd-config
 {{ end }}
