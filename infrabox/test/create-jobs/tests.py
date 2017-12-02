@@ -5,13 +5,14 @@ import shutil
 import subprocess
 from distutils.dir_util import copy_tree
 
-import jwt
 import psycopg2
 import psycopg2.extensions
 
 from nose.tools import raises
 from job import RunJob
 from infrabox_job.process import ApiConsole
+
+from pyinfraboxutils.token import encode_job_token
 
 POSTGRES_URL = "postgres://postgres:postgres@postgres/postgres"
 
@@ -23,7 +24,8 @@ class TestCreateJobs(object):
         self.job_id = "5df0e731-6040-46a9-8540-f1bb7935d2bd"
         subprocess.check_call(['git', 'config', '--global', 'user.email', 'you@example.com'])
         subprocess.check_call(['git', 'config', '--global', 'user.name', 'name'])
-        self.token = jwt.encode({'job_id': self.job_id}, os.environ['INFRABOX_JOB_API_SECRET'])
+
+        self.token = encode_job_token(self.job_id)
         os.environ['INFRABOX_JOB_TOKEN'] = self.token
 
     def execute(self, stmt, args=None):
