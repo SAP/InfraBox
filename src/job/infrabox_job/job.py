@@ -68,7 +68,7 @@ class Job(object):
 
     def get_headers(self):
         return {
-            'x-infrabox-token': os.environ['INFRABOX_JOB_API_TOKEN']
+            'Authorization': 'token ' + os.environ['INFRABOX_JOB_TOKEN']
         }
 
     def create_jobs(self, jobs):
@@ -96,11 +96,9 @@ class Job(object):
                                   verify=self.verify)
                 if r.status_code == 200:
                     return
-                else:
-                    # Retry on any other error
-                    continue
             except Exception as e:
                 print e
+
             time.sleep(1)
 
     def set_running(self):

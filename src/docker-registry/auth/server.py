@@ -1,125 +1,105 @@
-import base64
-from uuid import UUID
+from flask import request, g, abort, jsonify
 
-from bottle import get, request, run, response, install
+from pyinfraboxutils import get_env, print_stackdriver, get_logger
+from pyinfraboxutils.ibflask import token_required, app
 
-from pyinfraboxutils import get_env, print_stackdriver
-from pyinfraboxutils.ibbottle import InfraBoxPostgresPlugin
-from pyinfraboxutils.db import connect_db
+logger = get_logger('docker-registry-auth')
 
-def validate_uuid4(uuid_string):
-    try:
-        val = UUID(uuid_string, version=4)
-    except ValueError:
-        return False
+@app.route('/v2/') # prevent 301 redirects
+@app.route('/v2')
+@token_required
+def v2():
+    token = g.token
+    if token['type'] == 'project':
+        r = g.db.execute_many('''
+            SELECT id FROM auth_token
+            WHERE token = %s
+        ''', (token['project']['token'],))
 
-    return val.hex == uuid_string.replace('-', '')
+        if len(r) != 1:
+            logger.warn('project not found')
+            abort(401, 'Unauthorized')
 
-def auth_project(project_id, conn):
-    if request.method != 'GET':
-        response.status = 401
-        return "UNAUTHORIZED"
+    elif token['type'] == 'job':
+        r = g.db.execute_many('''
+            SELECT state FROM job
+            WHERE id = %s
+        ''', (token['job']['id'],))
 
-    auth = dict(request.headers).get('Authorization', None)
+        if len(r) != 1:
+            logger.warn('job not found')
+            abort(401, 'Unauthorized')
 
-    if not auth:
-        response.status = 401
-        return "UNAUTHORIZED"
+        state = r[0][0]
 
-    if not auth.startswith("Basic "):
-        response.status = 401
-        return "UNAUTHORIZED"
+        if state != 'running':
+            logger.warn('job not running anymore')
+            abort(401, 'Unauthorized')
+    else: # pragma: no cover
+        logger.warn('unsupported token type')
+        abort(401, 'Unauthorized')
 
-    auth = auth.split(" ")[1]
+    return jsonify({'status': 200})
 
-    decoded = base64.b64decode(auth)
-    s = decoded.split('infrabox:')
-
-    if len(s) != 2:
-        response.status = 401
-        return "UNAUTHORIZED"
-
-    token = s[1]
-
-    if not validate_uuid4(token) or not validate_uuid4(project_id):
-        response.status = 401
-        return "BAD REQUEST"
-
-    cur = conn.cursor()
-    cur.execute('''SELECT * FROM auth_token WHERE project_id = %s AND token = %s''', (project_id, token))
-    r = cur.fetchall()
-
-    if len(r) == 1:
-        return "OK"
-
-    response.status = 401
-    return "UNAUTHORIZED"
-
-
-@get('/v2/') # prevent 301 redirects
-@get('/v2')
-def v2(conn):
-    auth = dict(request.headers).get('Authorization', None)
-
-    if not auth:
-        response.status = 401
-        return "UNAUTHORIZED"
-
-    if not auth.startswith("Basic "):
-        response.status = 401
-        return "UNAUTHORIZED"
-
-    auth = auth.split(" ")[1]
-
-    decoded = base64.b64decode(auth)
-    s = decoded.split(':')
-
-    if len(s) != 2:
-        response.status = 401
-        return "UNAUTHORIZED"
-
-    token = s[1]
-
-    if not validate_uuid4(token):
-        response.status = 401
-        return "BAD REQUEST"
-
-    cur = conn.cursor()
-    cur.execute('SELECT * FROM auth_token WHERE token = %s', (token, ))
-    r = cur.fetchall()
-
-    if len(r) == 1:
-        response.status = 200
-        return "OK"
-
-    response.status = 401
-    return "UNAUTHORIZED"
-
-@get('/v2/<path:path>/') # prevent 301 redirects
-@get('/v2/<path:path>')
-def v2_project_tags_list(path, conn):
-    if dict(request.headers)['X-Original-Method'] != 'GET':
-        response.status = 401
-        return "UNAUTHORIZED"
-
+@app.route('/v2/<path:path>/') # prevent 301 redirects
+@app.route('/v2/<path:path>')
+@token_required
+def v2_path(path):
     p = path.split('/')
+    method = dict(request.headers).get('X-Original-Method', None)
 
-    if len(p) < 3:
-        response.status = 401
-        return "UNAUTHORIZED"
+    if not method:
+        logger.warn('no x-original-method header')
+        abort(401, 'Unauthorized')
 
-    if p[2] not in ('manifests', 'blobs'):
-        response.status = 401
-        return "UNAUTHORIZED"
+    if len(p) < 2:
+        logger.warn('invalid repo')
+        abort(401, 'Unauthorized')
 
     project_id = p[0]
-    return auth_project(project_id, conn)
+    token = g.token
 
-@get('/ping')
-def ping():
-    return "OK"
+    if token['type'] == 'project':
+        if method != 'GET':
+            logger.warn('%s not allowed with project token', request.method)
+            abort(401, 'Unauthorized')
 
-def main():
+        r = g.db.execute_many('''
+            SELECT * FROM auth_token
+            WHERE project_id = %s AND token = %s
+        ''', (project_id, token['project']['token']))
+
+        if len(r) != 1:
+            logger.warn('project not found')
+            abort(401, 'Unauthorized')
+    elif token['type'] == 'job':
+        r = g.db.execute_one('''
+            SELECT state, project_id FROM job
+            WHERE id = %s
+        ''', (token['job']['id'],))
+
+        if not r:
+            logger.warn('job not found')
+            abort(401, 'Unauthorized')
+
+        state = r[0]
+        job_project_id = r[1]
+
+        if state != 'running':
+            logger.warn('job not running anymore')
+            abort(401, 'Unauthorized')
+
+        if project_id != job_project_id:
+            logger.warn('job does not belong to project')
+            abort(401, 'Unauthorized')
+
+    else: # pragma: no cover
+        logger.warn('unsupported token type')
+        abort(401, 'Unauthorized')
+
+    return jsonify({'status': 200})
+
+def main(): # pragma: no cover
     get_env('INFRABOX_SERVICE')
     get_env('INFRABOX_VERSION')
     get_env('INFRABOX_DATABASE_HOST')
@@ -128,12 +108,11 @@ def main():
     get_env('INFRABOX_DATABASE_PORT')
     get_env('INFRABOX_DATABASE_DB')
 
-    connect_db() # Wait until db is ready
+    from gevent.wsgi import WSGIServer
+    http_server = WSGIServer(('', 8081), app, log=logger)
+    http_server.serve_forever()
 
-    install(InfraBoxPostgresPlugin())
-    run(host='0.0.0.0', port=8081)
-
-if __name__ == "__main__":
+if __name__ == "__main__": # pragma: no cover
     try:
         main()
     except:

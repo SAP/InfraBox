@@ -6,6 +6,8 @@ import psycopg2
 import psycopg2.extensions
 import requests
 
+from pyinfraboxutils.token import encode_project_token
+
 conn = psycopg2.connect(dbname=os.environ['INFRABOX_DATABASE_DB'],
                         host=os.environ['INFRABOX_DATABASE_HOST'],
                         port=os.environ['INFRABOX_DATABASE_PORT'],
@@ -15,21 +17,13 @@ conn = psycopg2.connect(dbname=os.environ['INFRABOX_DATABASE_DB'],
 conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
 
 class InputTests(TestCase):
-    def get(self, url, username='infrabox', password='b514af82-3c4f-4bb5-b1da-a89a0ced5e6f'):
-        auth = base64.b64encode('%s:%s' % (username, password,))
+    def get(self, url, password='b514af82-3c4f-4bb5-b1da-a89a0ced5e6f'):
+        auth = base64.b64encode('infrabox:%s' % encode_project_token(password))
         headers = {'authorization': "Basic " + auth}
         return requests.get(url, headers=headers)
 
     def test_token_does_not_exist(self):
         r = self.get('http://docker-registry:8080/v2')
-        self.assertEqual(r.status_code, 401)
-
-    def test_username_not_valid_uuid(self):
-        r = self.get('http://docker-registry:8080/v2', '3c4f-4bb5-b1da-a89a0ced5e6f', 'b514af82-3c4f-4bb5-b1da-a89a0ced5e6f')
-        self.assertEqual(r.status_code, 401)
-
-    def test_password_not_valid_uuid(self):
-        r = self.get('http://docker-registry:8080/v2', 'b514af82-3c4f-4bb5-b1da-a89a0ced5e6f', '3c4f-4bb5-b1da-a89a0ced5e6f')
         self.assertEqual(r.status_code, 401)
 
 class Test(TestCase):
@@ -39,30 +33,25 @@ class Test(TestCase):
     foreign_project_id = '4514af82-3c4f-4bb5-b1da-a89a0ced5e6f'
     image_path = project_id + '/image_name'
 
-    def get(self, url):
-        auth = base64.b64encode('%s:%s' % ("infrabox", self.token,))
+    def _get_headers(self):
+        auth = base64.b64encode('infrabox:%s' % encode_project_token(self.token))
         headers = {'authorization': "Basic " + auth}
-        return requests.get(url, headers=headers)
+        return headers
+
+    def get(self, url):
+        return requests.get(url, headers=self._get_headers())
 
     def put(self, url):
-        auth = base64.b64encode('%s:%s' % ("infrabox", self.token,))
-        headers = {'authorization': "Basic " + auth}
-        return requests.put(url, headers=headers)
+        return requests.put(url, headers=self._get_headers())
 
     def post(self, url):
-        auth = base64.b64encode('%s:%s' % ("infrabox", self.token,))
-        headers = {'authorization': "Basic " + auth}
-        return requests.post(url, headers=headers)
+        return requests.post(url, headers=self._get_headers())
 
     def patch(self, url):
-        auth = base64.b64encode('%s:%s' % ("infrabox", self.token,))
-        headers = {'authorization': "Basic " + auth}
-        return requests.patch(url, headers=headers)
+        return requests.patch(url, headers=self._get_headers())
 
     def delete(self, url):
-        auth = base64.b64encode('%s:%s' % ("infrabox", self.token,))
-        headers = {'authorization': "Basic " + auth}
-        return requests.delete(url, headers=headers)
+        return requests.delete(url, headers=self._get_headers())
 
     def setUp(self):
         cur = conn.cursor()
@@ -94,14 +83,14 @@ class Test(TestCase):
 
     # /v2/<name>/tags/list
     def test_v2_project_tags_list_get(self):
-        "GET /v2/<p>/tags/list should not be accessible by collaborators"
+        "GET /v2/<p>/tags/list should be accessible by collaborators"
         r = self.get('http://docker-registry:8080/v2/%s/tags/list' % self.image_path)
-        self.assertEqual(r.status_code, 401)
+        self.assertEqual(r.status_code, 200)
 
     def test_v2_project_tags_list_get_2(self):
-        "GET /v2/<p>/tags/list/ should not be accessible by collaborators"
+        "GET /v2/<p>/tags/list/ should be accessible by collaborators"
         r = self.get('http://docker-registry:8080/v2/%s/tags/list/' % self.image_path)
-        self.assertEqual(r.status_code, 401)
+        self.assertEqual(r.status_code, 200)
 
     def test_v2_project_tags_list_get_foreign(self):
         "GET /v2/<p>/tags/list should not be accessible by foreign users"

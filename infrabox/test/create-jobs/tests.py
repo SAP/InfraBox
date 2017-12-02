@@ -24,7 +24,7 @@ class TestCreateJobs(object):
         subprocess.check_call(['git', 'config', '--global', 'user.email', 'you@example.com'])
         subprocess.check_call(['git', 'config', '--global', 'user.name', 'name'])
         self.token = jwt.encode({'job_id': self.job_id}, os.environ['INFRABOX_JOB_API_SECRET'])
-        os.environ['INFRABOX_JOB_API_TOKEN'] = self.token
+        os.environ['INFRABOX_JOB_TOKEN'] = self.token
 
     def execute(self, stmt, args=None):
         cur = self.conn.cursor()

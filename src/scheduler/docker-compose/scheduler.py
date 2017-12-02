@@ -1,13 +1,14 @@
 import logging
 import time
 import os
+import sys
 import subprocess
-import jwt
 import psycopg2
 import psycopg2.extensions
 
 from pyinfraboxutils import get_logger
 from pyinfraboxutils.db import connect_db
+from pyinfraboxutils.token import encode_job_token
 
 logger = get_logger('scheduler')
 
@@ -38,13 +39,16 @@ class Scheduler(object):
     def __init__(self):
         self.conn = connect_db()
         self.conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
+        self.daemon_json = None
 
     def kube_job(self, job_id, _build_id, _cpu, _memory, _job_type):
         cmd = 'rm -rf /data/infrabox/*'
         subprocess.check_output(cmd, shell=True)
+        token = encode_job_token(job_id)
 
         cmd = ['docker',
                'run',
+               '--rm',
                '-e', "INFRABOX_JOB_ID=%s" % job_id,
                '-e', "INFRABOX_GENERAL_DONT_CHECK_CERTIFICATES=true",
                '-e', "INFRABOX_JOB_API_URL=http://nginx-ingress/api/job",
@@ -53,15 +57,13 @@ class Scheduler(object):
                '-e', "INFRABOX_DOCKER_REGISTRY_URL=localhost:8090",
                '-e', "INFRABOX_LOCAL_CACHE_ENABLED=false",
                '-e', "INFRABOX_JOB_MAX_OUTPUT_SIZE=%s" % os.environ['INFRABOX_JOB_MAX_OUTPUT_SIZE'],
-               '-e', "INFRABOX_DOCKER_REGISTRY_ADMIN_USERNAME=admin",
-               '-e', "INFRABOX_DOCKER_REGISTRY_ADMIN_PASSWORD=admin",
                '-e', "INFRABOX_DASHBOARD_URL=http://localhost",
                '-e', "INFRABOX_JOB_MOUNT_DOCKER_SOCKET=false",
-               '-e', "INFRABOX_JOB_API_TOKEN=%s" % jwt.encode({"job_id":job_id}, os.environ['INFRABOX_JOB_API_SECRET']),
+               '-e', "INFRABOX_JOB_TOKEN=%s" % token,
+               '-e', "INFRABOX_JOB_DAEMON_JSON=%s" % self.daemon_json,
                '--privileged',
                '--network=compose_infrabox',
                '-v', '/var/run/docker.sock:/var/run/docker.sock',
-               '-v', '%s=/etc/docker/daemon.json' % os.environ['INFRABOX_JOB_DAEMON_CONFIG_PATH'],
                '-v', '/data:/data',
                '--name=ib-job-%s' % job_id,
                '--link=compose_nginx-ingress_1:nginx-ingress',
@@ -253,6 +255,14 @@ class Scheduler(object):
         self.schedule()
 
     def run(self):
+        daemon_json_path = '/etc/docker/daemon.json'
+        if not os.path.exists(daemon_json_path):
+            logger.error('%s does not exist', daemon_json_path)
+            sys.exit(1)
+
+        with open(daemon_json_path) as daemon_json:
+            self.daemon_json = str(daemon_json.read())
+
         while True:
             self.handle()
             time.sleep(1)

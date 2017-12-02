@@ -113,8 +113,9 @@ spec:
                     name: REGISTRY_STORAGE_GCS_KEYFILE
                     value: /etc/infrabox/gcs/gcs_service_account.json
                 {{ end }}
-                {{ if .Values.storage.gcs.enabled }}
                 volumeMounts:
+                {{ include "mounts_rsa_public" . | indent 16 }}
+                {{ if .Values.storage.gcs.enabled }}
                 -
                     name: gcs-service-account
                     mountPath: /etc/infrabox/gcs
@@ -123,6 +124,7 @@ spec:
 
             volumes:
                 {{ include "volumes_database" . | indent 16 }}
+                {{ include "volumes_rsa" . | indent 16 }}
                 {{ if .Values.storage.gcs.enabled }}
                 -
                     name: gcs-service-account

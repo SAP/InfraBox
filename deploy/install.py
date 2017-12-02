@@ -370,6 +370,16 @@ class Kubernetes(Install):
         self.set('general.system_namespace', self.args.general_system_namespace)
         self.set('root_url', self.args.root_url)
 
+        self.check_file_exists(self.args.general_rsa_private_key)
+        self.check_file_exists(self.args.general_rsa_public_key)
+
+        secret = {
+            "id_rsa": self.args.general_rsa_private_key,
+            "id_rsa.pub": self.args.general_rsa_public_key
+        }
+
+        self.create_secret("infrabox-rsa", self.args.general_system_namespace, secret)
+
     def setup_job(self):
         self.required_option('job-api-secret')
 
@@ -462,6 +472,14 @@ class DockerCompose(Install):
     def setup_dashboard(self):
         self.config.append('services.dashboard-api.environment', ['INFRABOX_ROOT_URL=%s' % self.args.root_url])
 
+    def setup_rsa(self):
+        self.check_file_exists(self.args.general_rsa_private_key)
+        self.check_file_exists(self.args.general_rsa_public_key)
+
+        shutil.copy(self.args.general_rsa_private_key, os.path.join(self.args.o, 'id_rsa'))
+        shutil.copy(self.args.general_rsa_public_key, os.path.join(self.args.o, 'id_rsa.pub'))
+
+
     def setup_docker_registry(self):
         self.required_option('docker-registry')
         self.config.add('services.docker-registry-auth.image',
@@ -475,12 +493,23 @@ class DockerCompose(Install):
 
         self.config.add('services.cli-api.image',
                         '%s/api:%s' % (self.args.docker_registry, self.args.version))
-        self.config.add('services.job-api.image',
-                        '%s/job-api:%s' % (self.args.docker_registry, self.args.version))
         self.config.add('services.dashboard-api.image',
                         '%s/dashboard-api:%s' % (self.args.docker_registry, self.args.version))
         self.config.add('services.static.image',
                         '%s/static:%s' % (self.args.docker_registry, self.args.version))
+
+        self.config.append('services.docker-registry-auth.volumes', [
+            '%s:/var/run/secrets/infrabox.net/rsa/id_rsa.pub' % os.path.join(self.args.o, 'id_rsa.pub'),
+        ])
+
+
+    def setup_job_api(self):
+        self.config.add('services.job-api.image',
+                        '%s/job-api:%s' % (self.args.docker_registry, self.args.version))
+
+        self.config.append('services.job-api.volumes', [
+            '%s:/var/run/secrets/infrabox.net/rsa/id_rsa.pub' % os.path.join(self.args.o, 'id_rsa.pub'),
+        ])
 
     def setup_scheduler(self):
         self.config.add('services.scheduler.image',
@@ -490,12 +519,15 @@ class DockerCompose(Install):
 
         json.dump({'insecure-registry': ['nginx-ingress'], 'disable-legacy-registry': True}, open(daemon_config, 'w'))
 
-        self.config.append('services.scheduler.environment',
-                           [
-                               'INFRABOX_DOCKER_REGISTRY=%s' % self.args.docker_registry,
-                               'INFRABOX_JOB_DAEMON_CONFIG_PATH=%s' % daemon_config
-                           ])
+        self.config.append('services.scheduler.environment', [
+            'INFRABOX_DOCKER_REGISTRY=%s' % self.args.docker_registry,
+        ])
 
+        self.config.append('services.scheduler.volumes', [
+            '%s:/etc/docker/daemon.json' % daemon_config,
+            '%s:/var/run/secrets/infrabox.net/rsa/id_rsa' % os.path.join(self.args.o, 'id_rsa'),
+            '%s:/var/run/secrets/infrabox.net/rsa/id_rsa.pub' % os.path.join(self.args.o, 'id_rsa.pub'),
+        ])
 
     def setup_nginx_ingress(self):
         self.config.add('services.nginx-ingress.image',
@@ -575,12 +607,14 @@ class DockerCompose(Install):
 
         compose_path = os.path.join(self.args.o, 'compose', 'docker-compose.yml')
         self.config.load(compose_path)
+        self.setup_rsa()
         self.setup_scheduler()
         self.setup_database()
         self.setup_docker_registry()
         self.setup_ldap()
         self.setup_dashboard()
         self.setup_nginx_ingress()
+        self.setup_job_api()
         self.config.dump(compose_path)
 
 
@@ -603,6 +637,8 @@ def main():
     parser.add_argument('--general-dont-check-certificates', action='store_true', default=False)
     parser.add_argument('--general-worker-namespace', default='infrabox-worker')
     parser.add_argument('--general-system-namespace', default='infrabox-system')
+    parser.add_argument('--general-rsa-public-key', required=True)
+    parser.add_argument('--general-rsa-private-key', required=True)
 
     # Docker configuration
     parser.add_argument('--docker-registry-admin-username')

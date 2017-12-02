@@ -517,8 +517,8 @@ exec "$@"
     def login_docker_registry(self):
         c = self.console
         c.execute(['docker', 'login',
-                   '-u', os.environ['INFRABOX_DOCKER_REGISTRY_ADMIN_USERNAME'],
-                   '-p', os.environ['INFRABOX_DOCKER_REGISTRY_ADMIN_PASSWORD'],
+                   '-u', 'infrabox',
+                   '-p', os.environ['INFRABOX_JOB_TOKEN'],
                    get_registry_name()], show=False)
 
     def logout_docker_registry(self):
@@ -857,8 +857,6 @@ exec "$@"
 def main():
     get_env('INFRABOX_SERVICE')
     get_env('INFRABOX_VERSION')
-    get_env('INFRABOX_DOCKER_REGISTRY_ADMIN_USERNAME')
-    get_env('INFRABOX_DOCKER_REGISTRY_ADMIN_PASSWORD')
     get_env('INFRABOX_DOCKER_REGISTRY_URL')
     get_env('INFRABOX_DASHBOARD_URL')
     get_env('INFRABOX_GENERAL_DONT_CHECK_CERTIFICATES')
