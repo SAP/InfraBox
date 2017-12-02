@@ -32,6 +32,8 @@ spec:
                 -
                     name: INFRABOX_VERSION
                     value: {{ .Values.docker_registry.auth_tag }}
+                volumeMounts:
+                {{ include "mounts_rsa_public" . | indent 16 }}
             -
                 name: nginx
                 image: {{ .Values.general.docker_registry }}/{{ default "docker-registry-nginx" .Values.docker_registry.nginx_image }}:{{ .Values.docker_registry.nginx_tag }}
@@ -114,7 +116,6 @@ spec:
                     value: /etc/infrabox/gcs/gcs_service_account.json
                 {{ end }}
                 volumeMounts:
-                {{ include "mounts_rsa_public" . | indent 16 }}
                 {{ if .Values.storage.gcs.enabled }}
                 -
                     name: gcs-service-account

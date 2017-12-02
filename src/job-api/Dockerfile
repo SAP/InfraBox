@@ -1,6 +1,8 @@
 FROM alpine:3.6
 
 RUN apk add --no-cache \
+    curl \
+    bash \
     py2-pip \
     py2-cryptography \
     py2-jwt \
@@ -9,7 +11,12 @@ RUN apk add --no-cache \
     py2-flask \
     py2-pip && \
     pip install minio && \
-    apk del py2-pip
+    apk del py2-pip && \
+    rm -rf /var/cache/apk/*
+
+ENV HOME /
+RUN curl https://sdk.cloud.google.com | bash
+ENV PATH /google-cloud-sdk/bin:$PATH
 
 COPY src/pyinfrabox/ /pyinfrabox
 COPY src/job-api/server.py /server.py

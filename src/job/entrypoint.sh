@@ -3,6 +3,7 @@ mkdir -p /data/docker
 mkdir -p /data/infrabox
 
 if [ ! -e /var/run/docker.sock ]; then
+    mkdir -p /etc/docker
     echo $INFRABOX_JOB_DAEMON_JSON > /etc/docker/daemon.json
 
     echo "Waiting for docker daemon to start up"
