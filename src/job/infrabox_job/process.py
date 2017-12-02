@@ -99,7 +99,7 @@ class ApiConsole(object):
             api_server = os.environ.get("INFRABOX_JOB_API_URL", None)
 
             headers = {
-                'x-infrabox-token': os.environ['INFRABOX_JOB_API_TOKEN']
+                'Authorization': 'token ' + os.environ['INFRABOX_JOB_TOKEN']
             }
 
             requests.post("%s/consoleupdate" % api_server,

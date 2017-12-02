@@ -25,6 +25,7 @@ spec:
                 image: {{ .Values.general.docker_registry }}/{{ default "job-api" .Values.job.api.image }}:{{ .Values.job.api.tag }}
                 imagePullPolicy: Always
                 volumeMounts:
+                {{ include "mounts_rsa_public" . | indent 16 }}
                 {{ if .Values.storage.gcs.enabled }}
                 -
                     name: gcs-service-account
@@ -49,6 +50,7 @@ spec:
                     value: {{ default "info" .Values.job.api.log.level | quote }}
             volumes:
                 {{ include "volumes_database" . | indent 16 }}
+                {{ include "volumes_rsa" . | indent 16 }}
                 {{ if .Values.storage.gcs.enabled }}
                 -
                     name: gcs-service-account

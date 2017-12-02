@@ -12,7 +12,7 @@ services:
     docker_auth:
         build:
             context: ../..
-            dockerfile: src/docker-registry/auth/Dockerfile
+            dockerfile: infrabox/test-registry/Dockerfile_auth
         environment:
             - INFRABOX_SERVICE=registry-auth
             - INFRABOX_VERSION=testing
@@ -37,7 +37,7 @@ services:
         build:
             context: ../..
             dockerfile: infrabox/test-registry/Dockerfile
-        command: /wait-for-webserver.sh docker-auth:8081 /entrypoint.sh
+        command: /wait-for-webserver.sh docker-auth:8081 /test/entrypoint.sh
         links:
             - docker_nginx:docker-registry
             - docker_auth:docker-auth

@@ -6,12 +6,12 @@ import sys
 import psycopg2
 import psycopg2.extensions
 import requests
-import jwt
 from prometheus_client import start_http_server, Histogram, Counter
 
 from pyinfraboxutils import get_logger, get_env, print_stackdriver
 from pyinfraboxutils.leader import is_leader
 from pyinfraboxutils.db import connect_db
+from pyinfraboxutils.token import encode_job_token
 
 
 # pylint: disable=no-value-for-parameter
@@ -130,27 +130,11 @@ class Scheduler(object):
             "name": "INFRABOX_JOB_DAEMON_JSON",
             "value": self.daemon_json
         }, {
-            "name": "INFRABOX_DOCKER_REGISTRY_ADMIN_USERNAME",
-            "valueFrom": {
-                "secretKeyRef": {
-                    "name": "infrabox-docker-registry",
-                    "key": "username"
-                }
-            }
-        }, {
-            "name": "INFRABOX_DOCKER_REGISTRY_ADMIN_PASSWORD",
-            "valueFrom": {
-                "secretKeyRef": {
-                    "name": "infrabox-docker-registry",
-                    "key": "password"
-                }
-            }
-        }, {
             "name": "INFRABOX_DASHBOARD_URL",
             "value": os.environ['INFRABOX_DASHBOARD_URL']
         }, {
-            "name": "INFRABOX_JOB_API_TOKEN",
-            "value": str(jwt.encode({"job_id": job_id}, get_env('INFRABOX_JOB_API_SECRET')))
+            "name": "INFRABOX_JOB_TOKEN",
+            "value": encode_job_token(job_id)
         }]
 
         if additional_env:
@@ -257,7 +241,7 @@ class Scheduler(object):
 
         return r.status_code == 201
 
-    def create_kube_namespace(self, job_id, k8s_resources):
+    def create_kube_namespace(self, job_id, _k8s_resources):
         self.logger.info("Provisioning kubernetes namespace")
         h = {'Authorization': 'Bearer %s' % self.args.token}
 
@@ -278,30 +262,30 @@ class Scheduler(object):
                           headers=h, json=ns, timeout=10)
 
         if r.status_code != 201:
-            self.logger.warn("Failed to create Namespace: %s" % r.text)
+            self.logger.warn("Failed to create Namespace: %s", r.text)
             return False
 
-        rq = {
-            "apiVersion": "v1",
-            "kind": "ResourceQuota",
-            "metadata": {
-                "name": "compute-resources",
-                "namespace": namespace_name
-            },
-            "spec": {
-                "hard": {
-                    "limits.cpu": k8s_resources['limits']['cpu'],
-                    "limits.memory": k8s_resources['limits']['memory']
-                }
-            }
-        }
-
-        #r = requests.post(self.args.api_server + '/api/v1/namespaces/' + namespace_name + '/resourcequotas',
-        #                  headers=h, json=rq, timeout=10)
-
-        if r.status_code != 201:
-            self.logger.warn("Failed to create ResourceQuota: %s" % r.text)
-            return False
+#        rq = {
+#            "apiVersion": "v1",
+#            "kind": "ResourceQuota",
+#            "metadata": {
+#                "name": "compute-resources",
+#                "namespace": namespace_name
+#            },
+#            "spec": {
+#                "hard": {
+#                    "limits.cpu": k8s_resources['limits']['cpu'],
+#                    "limits.memory": k8s_resources['limits']['memory']
+#                }
+#            }
+#        }
+#
+#        #r = requests.post(self.args.api_server + '/api/v1/namespaces/' + namespace_name + '/resourcequotas',
+#        #                  headers=h, json=rq, timeout=10)
+#
+#        if r.status_code != 201:
+#            self.logger.warn("Failed to create ResourceQuota: %s" % r.text)
+#            return False
 
         rb = {
             "kind": "ClusterRoleBinding",
@@ -326,7 +310,7 @@ class Scheduler(object):
                           headers=h, json=rb, timeout=10)
 
         if r.status_code != 201:
-            self.logger.warn("Failed to create RoleBinding: %s" % r.text)
+            self.logger.warn("Failed to create RoleBinding: %s", r.text)
             return False
 
         # find secret
@@ -334,7 +318,7 @@ class Scheduler(object):
                          headers=h, timeout=5)
 
         if r.status_code != 200:
-            self.logger.warn("Failed to get service account secret: %s" % r.txt)
+            self.logger.warn("Failed to get service account secret: %s", r.txt)
             return False
 
         data = r.json()
@@ -665,7 +649,7 @@ class Scheduler(object):
     def run(self):
         daemon_json_path = '/etc/docker/daemon.json'
         if not os.path.exists(daemon_json_path):
-            self.logger.error('%s does not exist' % daemon_json_path)
+            self.logger.error('%s does not exist', daemon_json_path)
             sys.exit(1)
 
         with open(daemon_json_path) as daemon_json:

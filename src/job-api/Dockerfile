@@ -1,8 +1,15 @@
-FROM stege/baseimage-gcloud:1
+FROM alpine:3.6
 
-RUN apk update && apk add --no-cache py-pip && \
-    pip install future minio PyJWT && \
-    apk del py-pip
+RUN apk add --no-cache \
+    py2-pip \
+    py2-cryptography \
+    py2-jwt \
+    py2-future \
+    py2-psycopg2 \
+    py2-flask \
+    py2-pip && \
+    pip install minio && \
+    apk del py2-pip
 
 COPY src/pyinfrabox/ /pyinfrabox
 COPY src/job-api/server.py /server.py

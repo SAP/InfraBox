@@ -1,10 +1,11 @@
-FROM stege/baseimage:1
+FROM alpine:3.6
 
-COPY infrabox/test-registry/test.py test.py
-COPY infrabox/test-registry/entrypoint.sh entrypoint.sh
-COPY src/utils/wait-for-webserver.sh wait-for-webserver.sh
+RUN apk add --no-cache py2-flask py2-cryptography py2-jwt curl py-nose py2-psycopg2 py2-requests
 
-RUN adduser -S tester
-USER tester
+ENV PYTHONPATH=/
 
-CMD ["entrypoint.sh"]
+COPY infrabox/test-registry/ /test/
+COPY infrabox/test/utils/id_rsa /var/run/secrets/infrabox.net/id_rsa
+COPY src/utils/wait-for-webserver.sh /wait-for-webserver.sh
+COPY src/pyinfraboxutils /pyinfraboxutils
+

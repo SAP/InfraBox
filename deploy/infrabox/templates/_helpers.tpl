@@ -39,6 +39,30 @@
 {{ end }}
 {{ end }}
 
+{{ define "volumes_rsa" }}
+-
+    name: rsa-key
+    secret:
+        secretName: infrabox-rsa
+        defaultMode: 0400
+{{ end }}
+
+{{ define "mounts_rsa_private" }}
+-
+    name: rsa-key
+    mountPath: "/var/run/secrets/infrabox.net/rsa/id_rsa"
+    subPath: id_rsa
+    readOnly: true
+{{ end }}
+
+{{ define "mounts_rsa_public" }}
+-
+    name: rsa-key
+    mountPath: "/var/run/secrets/infrabox.net/rsa/id_rsa.pub"
+    subPath: id_rsa.pub
+    readOnly: true
+{{ end }}
+
 {{ define "volumes_database" }}
 {{ if .Values.storage.cloudsql.enabled }}
 -

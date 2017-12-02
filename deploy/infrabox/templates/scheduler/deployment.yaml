@@ -88,8 +88,10 @@ spec:
                 -
                     mountPath: /etc/docker
                     name: dockerd-config
+                {{ include "mounts_rsa_private" . | indent 16 }}
             volumes:
                 {{ include "volumes_database" . | indent 16 }}
+                {{ include "volumes_rsa" . | indent 16 }}
                 -
                     name: dockerd-config
                     configMap:

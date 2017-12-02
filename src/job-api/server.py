@@ -9,87 +9,20 @@ import copy
 from datetime import datetime
 
 from minio import Minio
-import jwt
 
-from flask import Flask, jsonify, request, send_file, g, after_this_request
+from flask import jsonify, request, send_file, g, after_this_request, abort
 
 from pyinfrabox.badge import validate_badge
 from pyinfrabox.markup import validate_markup
 from pyinfrabox.testresult import validate_result
 from pyinfrabox import ValidationError
 
-from pyinfraboxutils import get_logger, get_env
-from pyinfraboxutils.db import connect_db
-
-logger = get_logger('job-api')
-
-app = Flask(__name__)
-
-def execute_many(stmt, args):
-    c = g.conn.cursor()
-    c.execute(stmt, args)
-    r = c.fetchall()
-    c.close()
-
-    return r
-
-def execute_one(stmt, args):
-    r = execute_many(stmt, args)
-
-    if not r:
-        return r
-
-    return r[0]
+from pyinfraboxutils import get_env
+from pyinfraboxutils.ibflask import job_token_required, app
 
 def allowed_file(filename, extensions):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in extensions
-
-def validate_token():
-    token = request.headers.get('X-Infrabox-Token', None)
-
-    if not token:
-        logger.debug('No token header')
-        return None
-
-    decoded = None
-    try:
-        decoded = jwt.decode(token, get_env('INFRABOX_JOB_API_SECRET'))
-    except:
-        logger.debug('failed to decode token')
-        return None
-
-    job_id = decoded.get('job_id', None)
-
-    if not job_id:
-        logger.debug('no job_id in token')
-        return None
-
-    if not validate_uuid4(job_id):
-        logger.warn('not a valid uuid')
-        return None
-
-    r = execute_one("SELECT state, project_id, name FROM job WHERE id = %s", [job_id])
-
-    if not r:
-        logger.debug('job not found')
-        return None
-
-    job_state = r[0]
-    if job_state not in ('queued', 'running', 'scheduled'):
-        logger.warn('job in wrong state')
-        return None
-
-    return {
-        "job": {
-            "id": job_id,
-            "state": r[0],
-            "name": r[2]
-        },
-        "project": {
-            "id": r[1]
-        }
-    }
 
 def get_minio_client():
     return Minio(get_env('INFRABOX_STORAGE_S3_ENDPOINT') +
@@ -133,26 +66,14 @@ def execute(command):
     if exitCode != 0:
         raise Exception(output)
 
-@app.before_request
-def before_request():
-    g.conn = connect_db()
-
-@app.teardown_request
-def teardown_request(_):
-    g.conn.close()
-
 @app.route("/api/job/job")
+@job_token_required
 def get_job():
-    token = validate_token()
-
-    if not token:
-        return "Forbidden", 403
-
-    job_id = token['job']['id']
+    job_id = g.token['job']['id']
     data = {}
 
     # get all the job details
-    r = execute_one('''
+    r = g.db.execute_one('''
 	SELECT
 	    j.name,
 	    null,
@@ -215,7 +136,7 @@ def get_job():
 
     state = data['job']['state']
     if state in ("finished", "error", "failure", "skipped", "killed"):
-        return jsonify({}), 409
+        abort(409, 'job not running anymore')
 
     env_vars = r[20]
     env_var_refs = r[21]
@@ -248,7 +169,7 @@ def get_job():
 
     pull_request_id = None
     if data['project']['type'] == 'github' or data['project']['type'] == 'gerrit':
-        r = execute_one('''
+        r = g.db.execute_one('''
             SELECT
                 r.clone_url, r.name, r.private
             FROM repository r
@@ -260,7 +181,7 @@ def get_job():
         data['repository']['private'] = r[2]
 
         # A regular commit
-        r = execute_one('''
+        r = g.db.execute_one('''
             SELECT
                 c.branch, c.committer_name, c.tag, c.pull_request_id
             FROM commit c
@@ -277,7 +198,7 @@ def get_job():
         pull_request_id = r[3]
 
     if data['project']['type'] == 'upload':
-        r = execute_one('''
+        r = g.db.execute_one('''
 	    SELECT filename FROM source_upload
 	    WHERE id = %s
 	''', (data['build']['source_upload_id'], ))
@@ -287,7 +208,7 @@ def get_job():
         }
 
     # get dependencies
-    r = execute_many('''
+    r = g.db.execute_many('''
           WITH RECURSIVE next_job(id, parent) AS (
                   SELECT j.id, (p->>'job-id')::uuid parent
                   FROM job j, jsonb_array_elements(j.dependencies) AS p
@@ -315,7 +236,7 @@ def get_job():
         })
 
     # get parents
-    r = execute_many('''
+    r = g.db.execute_many('''
       SELECT id, name FROM job where id
           IN (SELECT (deps->>'job-id')::uuid FROM job, jsonb_array_elements(job.dependencies) as deps WHERE id = %s)
     ''', (data['job']['id'], ))
@@ -329,7 +250,7 @@ def get_job():
         })
 
     # get the secrets
-    secrets = execute_many('''
+    secrets = g.db.execute_many('''
          SELECT name, value
          FROM secret
          WHERE project_id = %s
@@ -354,12 +275,12 @@ def get_job():
                 secret = get_secret(secret_name)
 
                 if not secret:
-                    return "Secret %s not found" % secret_name, 400
+                    abort(400, "Secret %s not found" % secret_name)
 
                 dep['password'] = secret
                 data['deployments'].append(dep)
             else:
-                return "Unknown deployment type", 400
+                abort(400, "Unknown deployment type")
 
     # Default env vars
     data['environment'] = {
@@ -386,23 +307,19 @@ def get_job():
             secret = get_secret(value)
 
             if not secret:
-                return "Secret %s not found" % value, 400
+                abort(400, "Secret %s not found" % value)
 
             data['environment'][name] = secret
 
     return jsonify(data)
 
 @app.route("/api/job/source")
+@job_token_required
 def get_source():
-    token = validate_token()
+    job_id = g.token['job']['id']
+    project_id = g.token['project']['id']
 
-    if not token:
-        return "Forbidden", 403
-
-    job_id = token['job']['id']
-    project_id = token['project']['id']
-
-    r = execute_one('''
+    r = g.db.execute_one('''
         SELECT su.filename
         FROM
             source_upload su
@@ -445,17 +362,13 @@ def delete_file(path):
         try:
             os.remove(path)
         except Exception as error:
-            logger.warn("Failed to delete file", error)
+            app.logger.warn("Failed to delete file: %s", error)
 
 @app.route("/api/job/cache", methods=['GET', 'POST'])
+@job_token_required
 def get_cache():
-    token = validate_token()
-
-    if not token:
-        return "Forbidden", 403
-
-    project_id = token['project']['id']
-    job_name = token['job']['name']
+    project_id = g.token['project']['id']
+    job_name = g.token['job']['name']
 
     path = '/tmp/%s.tar.gz' % uuid.uuid4()
     template = 'project_%s__job_%s.tar.gz'
@@ -469,16 +382,16 @@ def get_cache():
 
     if request.method == 'POST':
         if 'data' not in request.files:
-            return "No file", 400
+            abort(400, "No file")
 
         f = request.files['data']
         if not allowed_file(f.filename, ("gz",)):
-            return "Filetype not allowed", 400
+            abort(400, "Filetype not allowed")
 
         f.save(path)
 
         if os.path.getsize(path) > 100 * 1024 * 1024:
-            return "File too big", 400
+            abort(400, "File too big")
 
         if use_gcs():
             execute(('gcloud', 'auth', 'activate-service-account',
@@ -493,7 +406,7 @@ def get_cache():
             mc = get_minio_client()
             mc.fput_object(bucket, cache_identifier, path)
 
-        return "OK"
+        return jsonify({})
     elif request.method == 'GET':
         if use_gcs():
             execute(('gcloud', 'auth', 'activate-service-account',
@@ -505,7 +418,7 @@ def get_cache():
             try:
                 execute(('gsutil', 'stat', key))
             except:
-                return "Not found", 404
+                abort(404, "Not found")
 
             execute(('gsutil', 'cp', key, path))
         else:
@@ -515,27 +428,23 @@ def get_cache():
                 mc = get_minio_client()
                 mc.fget_object(bucket, cache_identifier, path)
             except:
-                return "Not found", 404
+                abort(404, "Not found")
 
         return send_file(path)
     else:
-        return "Not found", 404
+        abort(404, "Not found")
 
 @app.route('/api/job/output', methods=['POST'])
+@job_token_required
 def upload_output():
-    token = validate_token()
-
-    if not token:
-        return "Forbidden", 403
-
-    job_id = token['job']['id']
+    job_id = g.token['job']['id']
 
     if 'data' not in request.files:
-        return "No file", 400
+        abort(400, "No file")
 
     f = request.files['data']
     if not allowed_file(f.filename, ("gz",)):
-        return "Filetype not allowed", 400
+        abort(400, "Filetype not allowed")
 
     path = '/tmp/%s.tar.gz' % uuid.uuid4()
     f.save(path)
@@ -547,7 +456,7 @@ def upload_output():
 
     max_output_size = os.environ['INFRABOX_JOB_MAX_OUTPUT_SIZE']
     if os.path.getsize(path) > max_output_size:
-        return "File too big", 400
+        abort(400, "File too big")
 
     object_name = "%s.tar.gz" % job_id
 
@@ -564,21 +473,17 @@ def upload_output():
         mc = get_minio_client()
         mc.fput_object(bucket, object_name, path)
 
-    return "OK"
+    return jsonify({})
 
 @app.route("/api/job/output/<parent_job_id>")
+@job_token_required
 def get_output_of_job(parent_job_id):
-    token = validate_token()
-
-    if not token:
-        return "Forbidden", 403
-
-    job_id = token['job']['id']
+    job_id = g.token['job']['id']
 
     if not validate_uuid4(parent_job_id):
-        return "Invalid uuid", 400
+        abort(400, "Invalid uuid")
 
-    dependencies = execute_one('''
+    dependencies = g.db.execute_one('''
         SELECT dependencies
         FROM job
         WHERE id = %s
@@ -591,7 +496,7 @@ def get_output_of_job(parent_job_id):
             break
 
     if not is_valid_dependency:
-        return "Job not found", 404
+        abort(404, "Job not found")
 
     object_name = "%s.tar.gz" % parent_job_id
     output_zip = os.path.join('/tmp', object_name)
@@ -610,7 +515,7 @@ def get_output_of_job(parent_job_id):
         try:
             execute(('gsutil', 'stat', key))
         except:
-            return "Not found", 404
+            abort(404, "Not found")
 
         execute(('gsutil', 'cp', key, output_zip))
     else:
@@ -620,7 +525,7 @@ def get_output_of_job(parent_job_id):
             mc = get_minio_client()
             mc.fget_object(bucket, object_name, output_zip)
         except:
-            return "Not found", 404
+            abort(404, "Not found")
 
     return send_file(output_zip)
 
@@ -633,20 +538,15 @@ def ping2():
     return "ok"
 
 @app.route("/api/job/setrunning", methods=['POST'])
+@job_token_required
 def set_running():
-    token = validate_token()
+    job_id = g.token['job']['id']
 
-    if not token:
-        return "Forbidden", 403
-
-    job_id = token['job']['id']
-
-    cursor = g.conn.cursor()
-    cursor.execute("DELETE FROM console WHERE job_id = %s", (job_id,))
-    cursor.execute("""UPDATE job SET state = 'running', start_date = current_timestamp
-                      WHERE id = %s""", (job_id,))
-    cursor.close()
-    g.conn.commit()
+    g.db.execute("DELETE FROM console WHERE job_id = %s", (job_id,))
+    g.db.execute("""
+        UPDATE job SET state = 'running', start_date = current_timestamp
+        WHERE id = %s""", (job_id,))
+    g.db.commit()
 
     return jsonify({})
 
@@ -666,14 +566,10 @@ def find_leaf_jobs(jobs):
 
 
 @app.route("/api/job/create_jobs", methods=['POST'])
+@job_token_required
 def create_jobs():
-    token = validate_token()
-
-    if not token:
-        return "Forbidden", 403
-
-    project_id = token['project']['id']
-    parent_job_id = token['job']['id']
+    project_id = g.token['project']['id']
+    parent_job_id = g.token['job']['id']
 
     d = request.json
     jobs = d['jobs']
@@ -689,18 +585,14 @@ def create_jobs():
                 continue
 
             if sc.get('capabilities', None):
-                return 'Capabilities are disabled', 404
+                abort(404, 'Capabilities are disabled')
 
-    c = g.conn
-    cursor = c.cursor()
-    cursor.execute("SELECT env_var, build_id FROM job WHERE id = %s", (parent_job_id,))
-    result = cursor.fetchone()
+    result = g.db.execute_one("SELECT env_var, build_id FROM job WHERE id = %s", (parent_job_id,))
     base_env_var = result[0]
     build_id = result[1]
 
     # Get some project info
-    cursor = c.cursor()
-    cursor.execute("""
+    result = g.db.execute_one("""
         SELECT co.user_id, b.build_number, j.project_id FROM collaborator co
         INNER JOIN job j
             ON j.project_id = co.project_id
@@ -709,8 +601,6 @@ def create_jobs():
         INNER JOIN build b
             ON b.id = j.build_id
     """, (parent_job_id,))
-    result = cursor.fetchone()
-    cursor.close()
 
     build_number = result[1]
     project_id = result[2]
@@ -729,8 +619,7 @@ def create_jobs():
         if job['type'] == "wait":
             continue
 
-        cursor = c.cursor()
-        cursor.execute("""
+        avg_duration = g.db.execute_one("""
             SELECT EXTRACT(EPOCH FROM avg(j.end_date - j.start_date))
             FROM job j
             INNER JOIN build b
@@ -740,9 +629,7 @@ def create_jobs():
                 AND b.build_number between %s and %s
                 AND j.name = %s
                 AND j.state = 'finished'
-        """, (project_id, project_id, build_number - 10, build_number, job['name'],))
-        avg_duration = cursor.fetchone()[0]
-        cursor.close()
+        """, (project_id, project_id, build_number - 10, build_number, job['name'],))[0]
 
         job['avg_duration'] = avg_duration
 
@@ -753,14 +640,12 @@ def create_jobs():
 
                 if isinstance(value, dict):
                     env_var_ref_name = value['$secret']
-                    cursor = c.cursor()
-                    cursor.execute("""SELECT value FROM secret WHERE name = %s and project_id = %s""",
-                                   (env_var_ref_name, project_id))
-                    result = cursor.fetchall()
-                    cursor.close()
+                    result = g.db.execute_many("""
+                            SELECT value FROM secret WHERE name = %s and project_id = %s""",
+                                               (env_var_ref_name, project_id))
 
                     if not result:
-                        return "Environment variable '%s' not found in project" % env_var_ref_name, 400
+                        abort(400, "Environment variable '%s' not found in project" % env_var_ref_name)
 
                     if not job['env_var_refs']:
                         job['env_var_refs'] = {}
@@ -774,10 +659,10 @@ def create_jobs():
 
     jobs.sort(key=lambda k: k.get('avg_duration', 0), reverse=True)
 
-    if token['job']['name'] != 'Create Jobs':
+    if g.token['job']['name'] != 'Create Jobs':
         # Update names, prefix with parent names
         for j in jobs:
-            j['name'] = token['job']['name'] + '/' + j['name']
+            j['name'] = g.token['job']['name'] + '/' + j['name']
 
         leaf_jobs = find_leaf_jobs(jobs)
 
@@ -789,8 +674,7 @@ def create_jobs():
             }
 
             # Update direct children of this job to now wait for the leaf jobs
-            cursor = c.cursor()
-            cursor.execute('''
+            g.db.execute('''
                 UPDATE job
                 SET dependencies = dependencies || %s::jsonb
                 WHERE id IN (
@@ -801,7 +685,6 @@ def create_jobs():
                     AND project_id = %s
                 )
             ''', (json.dumps(wait_job), job_id, build_id, project_id))
-            cursor.close()
 
     for job in jobs:
         name = job["name"]
@@ -822,7 +705,7 @@ def create_jobs():
             for dep in depends_on:
                 dep['job-id'] = jobname_id[dep['job']]
         else:
-            depends_on = [{"job": token['job']['name'], "job-id": parent_job_id, "on": ["finished"]}]
+            depends_on = [{"job": g.token['job']['name'], "job-id": parent_job_id, "on": ["finished"]}]
 
         if job_type == "docker":
             f = job['docker_file']
@@ -834,7 +717,7 @@ def create_jobs():
             f = None
             t = 'wait'
         else:
-            return "Unknown job type", 400
+            abort(400, "Unknown job type")
 
         limits_cpu = 1
         limits_memory = 1024
@@ -880,79 +763,65 @@ def create_jobs():
             resources = json.dumps(job['resources'])
 
         # Create job
-        cursor = c.cursor()
-        cursor.execute("""
+        g.db.execute("""
             INSERT INTO job (id, state, build_id, type, dockerfile, name,
                 project_id, dependencies, build_only,
                 keep, created_at, repo, base_path, scan_container,
                 env_var_ref, env_var, build_arg, deployment, cpu, memory, timeout, resources)
             VALUES (%s, 'queued', %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);""",
-                       (job_id, build_id, t, f, name,
-                        project_id,
-                        json.dumps(depends_on), build_only, keep, datetime.now(),
-                        repo, base_path, scan_container, env_var_refs, env_vars,
-                        build_arguments, deployments, limits_cpu, limits_memory, timeout,
-                        resources))
-        cursor.close()
+                     (job_id, build_id, t, f, name,
+                      project_id,
+                      json.dumps(depends_on), build_only, keep, datetime.now(),
+                      repo, base_path, scan_container, env_var_refs, env_vars,
+                      build_arguments, deployments, limits_cpu, limits_memory, timeout,
+                      resources))
 
         # to make sure the get picked up in the right order by the scheduler
         time.sleep(0.1)
 
-    c.commit()
+    g.db.commit()
     return "Successfully create jobs"
 
 @app.route("/api/job/consoleupdate", methods=['POST'])
+@job_token_required
 def post_console():
     output = request.json['output']
 
-    token = validate_token()
+    job_id = g.token['job']['id']
 
-    if not token:
-        return "Forbidden", 403
-
-    job_id = token['job']['id']
-
-    r = execute_one("""
+    r = g.db.execute_one("""
         SELECT sum(char_length(output)), count(*) FROM console WHERE job_id = %s
     """, (job_id,))
 
     if not r:
-        return "Not found", 404
+        abort(404, "Not found")
 
     console_output_len = r[0]
     console_output_updates = r[1]
 
     if console_output_len > 16 * 1024 * 1024:
-        return "Console output too big", 400
+        abort(400, "Console output too big")
 
     if console_output_updates > 4000:
-        return "Too many console updates", 400
+        abort(400, "Too many console updates")
 
     try:
-        cursor = g.conn.cursor()
-        cursor.execute("INSERT INTO console (job_id, output) VALUES (%s, %s)", (job_id, output))
-        cursor.close()
-        g.conn.commit()
+        g.db.execute("INSERT INTO console (job_id, output) VALUES (%s, %s)", (job_id, output))
+        g.db.commit()
     except:
         pass
 
     return jsonify({})
 
 @app.route("/api/job/stats", methods=['POST'])
+@job_token_required
 def post_stats():
-    token = validate_token()
-
-    if not token:
-        return "Forbidden", 403
-
-    job_id = token['job']['id']
+    job_id = g.token['job']['id']
 
     stats = request.json['stats']
 
     try:
-        cursor = g.conn.cursor()
-        cursor.execute("UPDATE job SET stats = %s WHERE id = %s", (json.dumps(stats), job_id))
-        cursor.close()
+        g.db.execute("UPDATE job SET stats = %s WHERE id = %s", (json.dumps(stats), job_id))
         g.conn.commit()
     except:
         pass
@@ -976,27 +845,23 @@ def insert(c, cols, rows, table):
     cursor.close()
 
 @app.route('/api/job/markdown', methods=['POST'])
+@job_token_required
 def upload_markdown():
-    token = validate_token()
+    job_id = g.token['job']['id']
+    project_id = g.token['project']['id']
 
-    if not token:
-        return "Forbidden", 403
-
-    job_id = token['job']['id']
-    project_id = token['project']['id']
-
-    r = execute_one("""
+    r = g.db.execute_one("""
         SELECT count(*) FROM job_markup WHERE job_id = %s
     """, (job_id,))
 
     if not r:
-        return "Not found", 404
+        abort(404, "Not found")
 
     if r[0] > 0:
-        return "Forbidden", 403
+        abort(403, "Forbidden")
 
     if len(request.files) > 10:
-        return "Too many uploads", 400
+        abort(400, "Too many uploads")
 
     path = '/tmp/%s.md' % uuid.uuid4()
 
@@ -1007,43 +872,38 @@ def upload_markdown():
 
     for name, f in request.files.iteritems():
         if not allowed_file(f.filename, ("md",)):
-            return "Filetype not allowed", 400
+            abort(400, "Filetype not allowed")
 
         f.save(path)
 
         if os.path.getsize(path) > 8 * 1024 * 1024:
-            return "File too big", 400
+            abort(400, "File too big")
 
         with open(path, 'r') as md:
             data = md.read()
 
-        cursor = g.conn.cursor()
-        cursor.execute("""INSERT INTO job_markup (job_id, name, data, project_id, type)
+        g.db.execute("""INSERT INTO job_markup (job_id, name, data, project_id, type)
                           VALUES (%s, %s, %s, %s, 'markdown')""",
-                       (job_id, name, data, project_id))
-        cursor.close()
-        g.conn.commit()
-        return ""
+                     (job_id, name, data, project_id))
+        g.db.commit()
+
+    return jsonify({})
 
 @app.route('/api/job/markup', methods=['POST'])
+@job_token_required
 def upload_markup():
-    token = validate_token()
+    job_id = g.token['job']['id']
+    project_id = g.token['project']['id']
 
-    if not token:
-        return "Forbidden", 403
-
-    job_id = token['job']['id']
-    project_id = token['project']['id']
-
-    r = execute_one("""
+    r = g.db.execute_one("""
         SELECT count(*) FROM job_markup WHERE job_id = %s
     """, (job_id,))
 
     if r[0] > 0:
-        return "Forbidden", 403
+        abort(403, "Forbidden")
 
     if len(request.files) > 10:
-        return "Too many uploads", 400
+        abort(400, "Too many uploads")
 
     path = '/tmp/%s.json' % uuid.uuid4()
 
@@ -1055,13 +915,13 @@ def upload_markup():
     for name, f in request.files.iteritems():
         try:
             if not allowed_file(f.filename, ("json",)):
-                return "Filetype not allowed", 400
+                abort(400, "Filetype not allowed")
 
             f.save(path)
 
             # Check size
             if os.path.getsize(path) > 8 * 1024 * 1024:
-                return "File too big", 400
+                abort(400, "File too big")
 
             # Parse it
             with open(path, 'r') as md:
@@ -1069,39 +929,33 @@ def upload_markup():
                 data = json.loads(content)
                 validate_markup(data)
 
-            cursor = g.conn.cursor()
-            cursor.execute("""INSERT INTO job_markup (job_id, name, data, project_id, type)
+            g.db.execute("""INSERT INTO job_markup (job_id, name, data, project_id, type)
                               VALUES (%s, %s, %s, %s, 'markup')""",
-                           (job_id, name, content, project_id))
-            cursor.close()
-            g.conn.commit()
+                         (job_id, name, content, project_id))
+            g.db.commit()
         except ValidationError as e:
-            return e.message, 400
+            abort(400, e.message)
         except Exception as e:
             app.logger.error(e)
-            return "Failed to parse json", 400
+            abort(400, "Failed to parse json")
 
-    return ""
+    return jsonify({})
 
 @app.route('/api/job/badge', methods=['POST'])
+@job_token_required
 def upload_badge():
-    token = validate_token()
+    job_id = g.token['job']['id']
+    project_id = g.token['project']['id']
 
-    if not token:
-        return "Forbidden", 403
-
-    job_id = token['job']['id']
-    project_id = token['project']['id']
-
-    r = execute_one("""
+    r = g.db.execute_one("""
         SELECT count(*) FROM job_badge WHERE job_id = %s
     """, (job_id,))
 
     if r[0] > 0:
-        return "Forbidden", 403
+        abort(403, "Forbidden")
 
     if len(request.files) > 10:
-        return "Too many uploads", 400
+        abort(400, "Too many uploads")
 
     path = '/tmp/%s.json' % uuid.uuid4()
 
@@ -1112,13 +966,13 @@ def upload_badge():
 
     for _, f in request.files.iteritems():
         if not allowed_file(f.filename, ("json",)):
-            return "Filetype not allowed", 400
+            abort(400, "Filetype not allowed")
 
         f.save(path)
 
         # check file size
         if os.path.getsize(path) > 4 * 1024:
-            return "File too big", 400
+            abort(400, "File too big")
 
         # Parse it
         try:
@@ -1126,40 +980,35 @@ def upload_badge():
                 data = json.load(md)
                 validate_badge(data)
         except ValidationError as e:
-            return e.message, 400
+            abort(400, e.message)
         except:
-            return "Failed to parse json", 400
+            abort(400, "Failed to parse json")
 
         subject = data['subject']
         status = data['status']
         color = data['color']
 
-        cursor = g.conn.cursor()
-        cursor.execute("""INSERT INTO job_badge (job_id, subject, status, color, project_id)
+        g.db.execute("""INSERT INTO job_badge (job_id, subject, status, color, project_id)
                           VALUES (%s, %s, %s, %s, %s)""",
-                       (job_id, subject, status, color, project_id))
-        cursor.close()
-        g.conn.commit()
-        return ""
+                     (job_id, subject, status, color, project_id))
+        g.db.commit()
+
+    return jsonify({})
 
 
 @app.route('/api/job/testresult', methods=['POST'])
+@job_token_required
 def upload_testresult():
-    token = validate_token()
-
-    if not token:
-        return "Forbidden", 403
-
-    job_id = token['job']['id']
-    project_id = token['project']['id']
+    job_id = g.token['job']['id']
+    project_id = g.token['project']['id']
 
     if 'data' not in request.files:
-        return jsonify({}), 400
+        abort(400, 'data not set')
 
     f = request.files['data']
 
     if not allowed_file(f.filename, ("json"),):
-        return jsonify({}), 400
+        abort(400, 'file ending not allowed')
 
     path = '/tmp/%s.json' % uuid.uuid4()
 
@@ -1172,27 +1021,27 @@ def upload_testresult():
 
     # check size
     if os.path.getsize(path) > 16 * 1024 * 1024:
-        return "File too big", 400
+        abort(400, "File too big")
 
     # Parse it
     try:
         with open(path, 'r') as testresult:
             data = json.load(testresult)
     except:
-        return 'Failed to parse json', 404
+        abort(404, 'Failed to parse json')
 
     # Validate it
     try:
         validate_result(data)
     except ValidationError as e:
-        return e.message, 400
+        abort(400, e.message)
 
-    testruns = execute_one("SELECT COUNT(*) as cnt FROM test_run WHERE job_id=%s", (job_id,))
+    testruns = g.db.execute_one("SELECT COUNT(*) as cnt FROM test_run WHERE job_id=%s", (job_id,))
 
     if testruns[0] > 0:
-        return "", 404
+        abort(404, "testrun already created")
 
-    rows = execute_one("""SELECT j.project_id, b.build_number
+    rows = g.db.execute_one("""SELECT j.project_id, b.build_number
             FROM job  j
             INNER JOIN build b
                 ON j.id = %s
@@ -1201,7 +1050,7 @@ def upload_testresult():
     project_id = rows[0]
     build_number = rows[1]
 
-    existing_tests = execute_many("""SELECT name, suite, id FROM test WHERE project_id = %s""", (project_id,))
+    existing_tests = g.db.execute_many("""SELECT name, suite, id FROM test WHERE project_id = %s""", (project_id,))
 
     test_index = {}
     for t in existing_tests:
@@ -1276,36 +1125,32 @@ def upload_testresult():
             ))
 
     if missing_tests:
-        insert(g.conn, ("name", "suite", "project_id", "id", "build_number"), missing_tests, 'test')
+        insert(g.db.conn, ("name", "suite", "project_id", "id", "build_number"), missing_tests, 'test')
 
     if measurements:
-        insert(g.conn, ("test_run_id", "name", "unit", "value", "project_id"), measurements, 'measurement')
+        insert(g.db.conn, ("test_run_id", "name", "unit", "value", "project_id"), measurements, 'measurement')
 
-    insert(g.conn, ("id", "state", "job_id", "test_id", "duration",
-                    "project_id", "message", "stack"), test_runs, 'test_run')
+    insert(g.db.conn, ("id", "state", "job_id", "test_id", "duration",
+                       "project_id", "message", "stack"), test_runs, 'test_run')
 
-    insert(g.conn, ("tests_added", "tests_duration", "tests_skipped", "tests_failed", "tests_error",
-                    "tests_passed", "job_id", "project_id"),
+    insert(g.db.conn, ("tests_added", "tests_duration", "tests_skipped", "tests_failed", "tests_error",
+                       "tests_passed", "job_id", "project_id"),
            ((stats['tests_added'], stats['tests_duration'], stats['tests_skipped'],
              stats['tests_failed'], stats['tests_error'], stats['tests_passed'],
              job_id, project_id),), 'job_stat')
 
-    g.conn.commit()
-    return "", 200
+    g.db.commit()
+    return jsonify({})
 
 
 @app.route("/api/job/setfinished", methods=['POST'])
+@job_token_required
 def set_finished():
-    token = validate_token()
-
-    if not token:
-        return "Forbidden", 403
-
-    job_id = token['job']['id']
+    job_id = g.token['job']['id']
 
     state = request.json['state']
     # collect console output
-    lines = execute_many("""SELECT output FROM console WHERE job_id = %s
+    lines = g.db.execute_many("""SELECT output FROM console WHERE job_id = %s
                       ORDER BY date""", (job_id,))
 
     output = ""
@@ -1313,8 +1158,7 @@ def set_finished():
         output += l[0]
 
     # Update state
-    cursor = g.conn.cursor()
-    cursor.execute("""
+    g.db.execute("""
     UPDATE job SET
         state = %s,
         console = %s,
@@ -1322,10 +1166,9 @@ def set_finished():
     WHERE id = %s""", (state, output, job_id))
 
     # remove form console table
-    cursor.execute("DELETE FROM console WHERE job_id = %s", (job_id,))
-    cursor.close()
+    g.db.execute("DELETE FROM console WHERE job_id = %s", (job_id,))
 
-    g.conn.commit()
+    g.db.commit()
     return jsonify({})
 
 if __name__ == "__main__":

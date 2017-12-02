@@ -43,6 +43,7 @@ services:
         links:
         networks:
             - infrabox
+        volumes: []
 
 
     docker-registry-nginx:
@@ -136,7 +137,7 @@ services:
             - INFRABOX_JOB_SECURITY_CONTEXT_CAPABILITIES_ENABLED=false
         networks:
             - infrabox
-
+        volumes: []
 
     cli-api:
         image: $INFRABOX_DOCKER_REGISTRY/infrabox/api
