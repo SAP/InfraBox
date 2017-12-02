@@ -44,7 +44,6 @@
     name: rsa-key
     secret:
         secretName: infrabox-rsa
-        defaultMode: 0400
 {{ end }}
 
 {{ define "mounts_rsa_private" }}

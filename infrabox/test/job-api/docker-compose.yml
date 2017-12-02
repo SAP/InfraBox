@@ -29,7 +29,6 @@ services:
             - INFRABOX_JOB_API_SECRET=secret
         links:
             - postgres
-        command: /wait-for-postgres.sh postgres /entrypoint.sh
 
     test:
         build:

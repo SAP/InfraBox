@@ -9,8 +9,7 @@ def encode_user_token(user_id):
             'type': 'user'
         }
 
-        token = jwt.encode(data, key=secret.read(), algorithm='RS256')
-        return str(token)
+        return jwt.encode(data, key=secret.read(), algorithm='RS256')
 
 def encode_project_token(token):
     with open('/var/run/secrets/infrabox.net/rsa/id_rsa') as secret:
@@ -21,8 +20,7 @@ def encode_project_token(token):
             'type': 'project'
         }
 
-        token = jwt.encode(data, key=secret.read(), algorithm='RS256')
-        return str(token)
+        return jwt.encode(data, key=secret.read(), algorithm='RS256')
 
 def encode_job_token(job_id):
     with open('/var/run/secrets/infrabox.net/rsa/id_rsa') as secret:
@@ -33,9 +31,7 @@ def encode_job_token(job_id):
             'type': 'job'
         }
 
-        token = jwt.encode(data, key=secret.read(), algorithm='RS256')
-        return str(token)
-
+        return jwt.encode(data, key=secret.read(), algorithm='RS256')
 
 def decode(encoded):
     with open('/var/run/secrets/infrabox.net/rsa/id_rsa.pub') as secret:
