@@ -371,3 +371,124 @@ pre.wrap-text {
     /* Opera 7 */
     word-wrap: break-word;
 }
+
+/*css for custom panels */
+
+div.custom-grid {
+    margin-bottom: 20px;
+}
+
+td > .custom-grid {
+    margin-bottom: 0;
+}
+
+h4.custom-box,
+h5.custom-box,
+h6.custom-box,
+    {
+    font-weight: 200;
+    margin-left: 5px;
+    padding: 5px;
+}
+
+h1.custom-box {
+    color: #757575;
+    font-family: inherit;
+    font-size: 16px;
+    font-style: inherit;
+    font-variant: inherit;
+    font-weight: 500;
+    letter-spacing: inherit;
+    line-height: 36px;
+    margin-left: 8px;
+    text-align: left;
+    text-transform: none;
+    text-decoration: none;
+    vertical-align: top;
+    white-space: nowrap;
+}
+
+h2.custom-box {
+    font-size: 14px;
+    font-weight: bold;
+    font-size: medium;
+    padding: 8px;
+}
+
+h3.custom-box {
+    padding: 5px;
+    font-size: 14px;
+    margin-left: 5px;
+    margin-top: 10px;
+}
+
+h4.custom-box {
+    font-size: 12px;
+}
+
+h5.custom-box {
+    font-size: 10px;
+}
+
+h6.custom-box {
+    font-size: 8px;
+}
+
+h4.custom-box,
+h5.custom-box {
+    margin-top: 5px;
+    font-weight: 600;
+}
+
+pre.custom-box {
+    margin-left: 20px;
+    margin-right: 20px;
+    margin-bottom: 5px;
+    margin-top: 5px;
+}
+
+div.custom-box {
+    margin-left: 10px;
+}
+
+table.custom-box {
+    margin-bottom: 20px;
+    padding: 5px;
+    width: 100%;
+}
+
+td.custom-box {
+    line-height: 48px;
+    text-align: left;
+    vertical-align: top;
+    border-top-style: solid;
+    border-top-width: 1px;
+    border-top-color: #e0e0e0;
+}
+
+td.custom-box > div > div.custom-grid {
+    margin: 0;
+}
+
+tr.custom-box:nth-child(odd) {
+    font-size: 13px;
+    font-weight: normal;
+}
+
+tr.custom-box:nth-child(even) {
+    font-size: 13px;
+    font-weight: normal;
+}
+
+thead.custom-box {
+    text-align: left;
+    font-size: 12px;
+    font-weight: bold;
+    line-height: 56px;
+    vertical-align: top;
+    color: rgba(0, 0, 0, 0.54);
+}
+
+th.custom-box {
+    padding-left: 0;
+}

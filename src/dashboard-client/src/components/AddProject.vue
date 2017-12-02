@@ -38,7 +38,7 @@
                     <div v-if="type=='github'" class="p-t-md">
                         <h3>Select the GitHub repository to connect</h3>
                     </div>
-                    <div "$store.state.user && !$store.state.user.hasGithubAccount() && type=='github'">
+                    <div v-if="$store.state.user && !$store.state.user.hasGithubAccount() && type=='github'">
                         <md-button @click="connectGithubAccount()"></md-button>
                     </div>
                     <div v-if="$store.state.user && $store.state.user.hasGithubAccount() && type=='github'" class="md-layout md-gutter">
