@@ -134,7 +134,7 @@ class Scheduler(object):
             "value": os.environ['INFRABOX_DASHBOARD_URL']
         }, {
             "name": "INFRABOX_JOB_TOKEN",
-            "value": encode_job_token(job_id)
+            "value": encode_job_token(job_id).decode()
         }]
 
         if additional_env:
@@ -239,7 +239,12 @@ class Scheduler(object):
         r = requests.post(self.args.api_server + '/apis/batch/v1/namespaces/%s/jobs' % self.namespace,
                           headers=h, json=run_job, timeout=10)
 
-        return r.status_code == 201
+        if r.status_code != 201:
+            self.logger.info('API Server response')
+            self.logger.info(r.text)
+            return False
+
+        return True
 
     def create_kube_namespace(self, job_id, _k8s_resources):
         self.logger.info("Provisioning kubernetes namespace")

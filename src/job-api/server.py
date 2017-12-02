@@ -17,6 +17,7 @@ from pyinfrabox.markup import validate_markup
 from pyinfrabox.testresult import validate_result
 from pyinfrabox import ValidationError
 
+from pyinfraboxutils.db import connect_db
 from pyinfraboxutils import get_env
 from pyinfraboxutils.ibflask import job_token_required, app
 
@@ -1191,5 +1192,7 @@ if __name__ == "__main__":
         get_env('INFRABOX_STORAGE_S3_CONTAINER_OUTPUT_BUCKET')
         get_env('INFRABOX_STORAGE_S3_PROJECT_UPLOAD_BUCKET')
         get_env('INFRABOX_STORAGE_S3_REGION')
+
+    connect_db() # Wait for db to be ready
 
     app.run(host="0.0.0.0", debug=True, port=8080)

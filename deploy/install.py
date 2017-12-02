@@ -374,8 +374,8 @@ class Kubernetes(Install):
         self.check_file_exists(self.args.general_rsa_public_key)
 
         secret = {
-            "id_rsa": self.args.general_rsa_private_key,
-            "id_rsa.pub": self.args.general_rsa_public_key
+            "id_rsa": open(self.args.general_rsa_private_key).read(),
+            "id_rsa.pub": open(self.args.general_rsa_public_key).read()
         }
 
         self.create_secret("infrabox-rsa", self.args.general_system_namespace, secret)

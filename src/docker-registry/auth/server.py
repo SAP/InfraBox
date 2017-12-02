@@ -5,6 +5,10 @@ from pyinfraboxutils.ibflask import token_required, app
 
 logger = get_logger('docker-registry-auth')
 
+@app.route('/ping')
+def ping():
+    return jsonify({'status': 200})
+
 @app.route('/v2/') # prevent 301 redirects
 @app.route('/v2')
 @token_required

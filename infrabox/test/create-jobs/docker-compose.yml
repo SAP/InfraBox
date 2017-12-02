@@ -9,7 +9,7 @@ services:
     job-api:
         build:
             context: ../../..
-            dockerfile: src/job-api/Dockerfile
+            dockerfile: infrabox/test/create-jobs/Dockerfile_job_api
         environment:
             - INFRABOX_DATABASE_USER=postgres
             - INFRABOX_DATABASE_PASSWORD=postgres
@@ -29,7 +29,6 @@ services:
             - INFRABOX_JOB_API_SECRET=secret
         links:
             - postgres
-        command: /wait-for-postgres.sh postgres /entrypoint.sh
 
     test:
         build:

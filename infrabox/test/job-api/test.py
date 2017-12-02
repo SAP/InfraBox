@@ -1,5 +1,4 @@
 import os
-import sys
 import json
 from unittest import TestCase
 import requests
@@ -7,28 +6,10 @@ import psycopg2
 import psycopg2.extensions
 import jwt
 
-if 'INFRABOX_DATABASE_USER' not in os.environ:
-    print "INFRABOX_DATABASE_USER not set"
-    sys.exit(1)
+from pyinfraboxutils.db import connect_db
+from pyinfraboxutils.token import encode_job_token
 
-if 'INFRABOX_DATABASE_PASSWORD' not in os.environ:
-    print "INFRABOX_DATABASE_PASSWORD not set"
-    sys.exit(1)
-
-if 'INFRABOX_DATABASE_DB' not in os.environ:
-    print "INFRABOX_DATABASE_DB not set"
-    sys.exit(1)
-
-if 'INFRABOX_DATABASE_HOST' not in os.environ:
-    print "INFRABOX_DATABASE_HOST not set"
-    sys.exit(1)
-
-conn = psycopg2.connect(dbname=os.environ['INFRABOX_DATABASE_DB'],
-                        user=os.environ['INFRABOX_DATABASE_USER'],
-                        password=os.environ['INFRABOX_DATABASE_PASSWORD'],
-                        host=os.environ['INFRABOX_DATABASE_HOST'],
-                        port=os.environ['INFRABOX_DATABASE_PORT'])
-
+conn = connect_db()
 conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
 
 class Test(TestCase):
@@ -80,37 +61,13 @@ class Test(TestCase):
 
     def get_headers(self):
         return {
-            'X-Infrabox-Token': jwt.encode({'job_id': self.job_id}, os.environ['INFRABOX_JOB_API_SECRET'])
+            'Authorization': encode_job_token(self.job_id)
         }
 
     def test_get_no_token(self):
         r = requests.get('http://job-api:8080/api/job/job')
         self.assertEqual(r.status_code, 403)
 
-    def test_invalid_token_format(self):
-        headers = {
-            'X-Infrabox-Token': jwt.encode({}, os.environ['INFRABOX_JOB_API_SECRET'])
-        }
-
-        r = requests.get('http://job-api:8080/api/job/job', headers=headers)
-        self.assertEqual(r.status_code, 403)
-
-    def test_invalid_job_id_format(self):
-        headers = {
-            'X-Infrabox-Token': jwt.encode({'job_id': 'asd'}, os.environ['INFRABOX_JOB_API_SECRET'])
-        }
-
-        r = requests.get('http://job-api:8080/api/job/job', headers=headers)
-        self.assertEqual(r.status_code, 403)
-
-    def test_unknown_job_id(self):
-        headers = {
-            'X-Infrabox-Token': jwt.encode({'job_id': '3b330a91-c1ed-42dd-b475-4b23fff26bb7'},
-                                           os.environ['INFRABOX_JOB_API_SECRET'])
-        }
-
-        r = requests.get('http://job-api:8080/api/job/job', headers=headers)
-        self.assertEqual(r.status_code, 403)
     def test_get_job(self):
         """GET: /job should return all the job data"""
         r = requests.get('http://job-api:8080/api/job/job', headers=self.get_headers())

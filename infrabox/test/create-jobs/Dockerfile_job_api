@@ -22,6 +22,7 @@ COPY src/pyinfrabox/ /pyinfrabox
 COPY src/job-api/server.py /server.py
 COPY src/job-api/entrypoint.sh /entrypoint.sh
 COPY src/pyinfraboxutils /pyinfraboxutils
+COPY infrabox/test/utils/id_rsa.pub /var/run/secrets/infrabox.net/rsa/id_rsa.pub
 
 ENV PYTHONPATH=/pyinfrabox:/
 
