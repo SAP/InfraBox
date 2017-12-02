@@ -1,23 +1,27 @@
 <template>
-    <md-list-item class="setting-list">
-        <md-icon>security</md-icon>
-        <span>Badges</span>
+    <md-list md-theme="white">
+        <md-list-item class="white-bg">
+            <md-icon>security</md-icon>
+            <span>Badges</span>
 
-        <md-list-expand>
-            <md-list class="m-t-md m-b-md">
-                <md-list-item class="md-inset m-r-xl">
-                    <div>
-                        <img :src="api_host + '/v1/project/' + project.id + '/build/state.svg'" />
-                        <pre>[![Build Status]({{ api_host }}/v1/project/{{ project.id }}/build/state.svg)]({{ dashboard_host }}/dashboard/project/{{ project.id }})</pre>
-                    </div>
-                    <div class="m-t-md">
-                        <img :src="api_host + '/v1/project/' +  project.id + '/build/tests.svg'" />
-                        <pre>[![Test Status]({{ api_host }}/v1/project/{{ project.id }}/build/tests.svg)]({{ dashboard_host }}/dashboard/project/{{ project.id }})</pre>
-                    </div>
-                </md-list-item>
-            </md-list>
-        </md-list-expand>
-    </md-list-item>
+            <md-list-expand>
+                <md-list class="m-b-md">
+                    <md-list-item class="md-inset m-r-xl">
+                        <div>
+                            <img :src="buildState" />
+                            <pre>[![Build Status]({{ api_host }}/v1/project/{{ project.id }}/build/state.svg)]({{ dashboard_host }}/dashboard/project/{{ project.id }})</pre>
+                        </div>
+                    </md-list-item>
+                    <md-list-item class="md-inset m-r-xl">
+                        <div>
+                            <img :src="testState" />
+                            <pre>[![Test Status]({{ api_host }}/v1/project/{{ project.id }}/build/tests.svg)]({{ dashboard_host }}/dashboard/project/{{ project.id }})</pre>
+                        </div>
+                    </md-list-item>
+                </md-list>
+            </md-list-expand>
+        </md-list-item>
+    </md-list>
 </template>
 
 <script>
@@ -28,6 +32,8 @@ export default {
     created () {
         this.api_host = store.state.settings.INFRABOX_API_URL
         this.dashboard_host = store.state.settings.INFRABOX_DASHBOARD_URL
+        this.buildState = `${this.api_host}/v1/project/${this.project.id}/build/state.svg`
+        this.testState = `${this.api_host}/v1/project/${this.project.id}/build/tests.svg`
     }
 }
 </script>

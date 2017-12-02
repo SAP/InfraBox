@@ -37,7 +37,7 @@
             </md-card-header>
             <md-card-content>
                 <md-layout>
-                    <md-layout md-flex-xsmall="100" md-flex-small="100" md-flex-medium="100" md-flex-large="75">
+                    <md-layout md-flex-xsmall="100" md-flex-small="100" md-flex-medium="100" md-flex-large="75" md-flex-xlarge="75">
                         <md-tabs md-fixed class="md-transparent">
                             <md-tab id="console" md-label="Console" md-icon="subtitles" class="widget-container">
                                 <ib-console :job="data.job"></ib-console>
@@ -53,7 +53,7 @@
                             </md-tab>
                         </md-tabs>
                     </md-layout>
-                    <md-layout md-flex-xsmall="100" md-flex-small="100" md-flex-medium="100" md-flex-large="25">
+                    <md-layout md-flex-xsmall="100" md-flex-small="100" md-flex-medium="100" md-flex-large="25" md-flex-xlarge="25">
                         <md-list class="md-dense widget-container" style="margin: 16px">
                             <ib-state-big :state="data.job.state"></ib-state-big>
                             <md-list-item class="p-l-md p-r-md p-t-md">
