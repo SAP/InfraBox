@@ -21,7 +21,6 @@ ENV PATH /google-cloud-sdk/bin:$PATH
 COPY src/pyinfrabox/ /pyinfrabox
 COPY src/job-api/server.py /server.py
 COPY src/job-api/entrypoint.sh /entrypoint.sh
-COPY src/utils/wait-for-postgres.sh /wait-for-postgres.sh
 COPY src/pyinfraboxutils /pyinfraboxutils
 
 ENV PYTHONPATH=/pyinfrabox:/
