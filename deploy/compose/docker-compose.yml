@@ -71,7 +71,6 @@ services:
             - INFRABOX_SERVICE=scheduler
             - INFRABOX_VERSION=latest
             - INFRABOX_JOB_MAX_OUTPUT_SIZE=104857600
-            - INFRABOX_JOB_API_SECRET=secret
         links:
         networks:
             - infrabox
@@ -132,7 +131,6 @@ services:
             - INFRABOX_STORAGE_S3_CONTAINER_OUTPUT_BUCKET=infrabox-container-output
             - INFRABOX_GITHUB_ENABLED=false
             - INFRABOX_GERRIT_ENABLED=false
-            - INFRABOX_JOB_API_SECRET=secret
             - INFRABOX_JOB_MAX_OUTPUT_SIZE=104857600
             - INFRABOX_JOB_SECURITY_CONTEXT_CAPABILITIES_ENABLED=false
         networks:

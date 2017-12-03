@@ -26,7 +26,6 @@ services:
             - INFRABOX_GITHUB_ENABLED=false
             - INFRABOX_JOB_MAX_OUTPUT_SIZE=1024
             - INFRABOX_JOB_SECURITY_CONTEXT_CAPABILITIES_ENABLED=false
-            - INFRABOX_JOB_API_SECRET=secret
         links:
             - postgres
 
@@ -40,7 +39,6 @@ services:
             - INFRABOX_DATABASE_PASSWORD=postgres
             - INFRABOX_DATABASE_DB=postgres
             - INFRABOX_DATABASE_PORT=5432
-            - INFRABOX_JOB_API_SECRET=secret
         links:
             - job-api
             - postgres
