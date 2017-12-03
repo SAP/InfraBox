@@ -5,6 +5,7 @@ import sys
 import stat
 import shutil
 import base64
+import hashlib
 import logging
 import yaml
 
@@ -344,10 +345,10 @@ class Kubernetes(Install):
         self.create_secret("infrabox-github", self.args.general_system_namespace, secret)
 
     def setup_dashboard(self):
-        self.required_option('dashboard-secret')
+        secret = hashlib.sha256(open(self.args.general_rsa_private_key, 'rb').read()).hexdigest()
 
         secret = {
-            "secret": self.args.dashboard_secret
+            "secret": secret
         }
 
         self.create_secret("infrabox-dashboard", self.args.general_system_namespace, secret)
@@ -381,14 +382,6 @@ class Kubernetes(Install):
         self.create_secret("infrabox-rsa", self.args.general_system_namespace, secret)
 
     def setup_job(self):
-        self.required_option('job-api-secret')
-
-        secret = {
-            "api-secret": self.args.job_api_secret
-        }
-
-        self.create_secret("infrabox-job-api", self.args.general_system_namespace, secret)
-
         self.set('job.mount_docker_socket', self.args.job_mount_docker_socket)
         self.set('job.use_host_docker_daemon', self.args.job_use_host_docker_daemon)
         self.set('job.security_context.capabilities.enabled',
@@ -683,9 +676,6 @@ def main():
     parser.add_argument('--gcs-container-content-cache-bucket')
     parser.add_argument('--gcs-docker-registry-bucket')
 
-    # Dashboard
-    parser.add_argument('--dashboard-secret')
-
     # Scheduler
     parser.add_argument('--scheduler-disabled', action='store_true', default=False)
 
@@ -728,7 +718,6 @@ def main():
     parser.add_argument('--job-mount-docker-socket', action='store_true', default=False)
     parser.add_argument('--job-use-host-docker-daemon', action='store_true', default=False)
     parser.add_argument('--job-security-context-capabilities-enabled', action='store_true', default=False)
-    parser.add_argument('--job-api-secret')
 
     # Parse options
     args = parser.parse_args()

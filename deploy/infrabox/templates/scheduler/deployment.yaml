@@ -62,7 +62,6 @@ spec:
                 {{ include "env_job" . | indent 16 }}
                 {{ include "env_general" . | indent 16 }}
                 {{ include "env_kubernetes" . | indent 16 }}
-                {{ include "env_job_api_secret" . | indent 16 }}
                 -
                     name: INFRABOX_DASHBOARD_URL
                     value: {{ required "dashboard.url is required" .Values.dashboard.url }}

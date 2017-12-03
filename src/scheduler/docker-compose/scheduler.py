@@ -283,7 +283,6 @@ def main():
     get_env('INFRABOX_DATABASE_HOST')
     get_env('INFRABOX_DATABASE_PORT')
     get_env('INFRABOX_DOCKER_REGISTRY')
-    get_env('INFRABOX_JOB_API_SECRET')
 
     scheduler = Scheduler()
     scheduler.run()

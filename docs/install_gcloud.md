@@ -17,7 +17,7 @@ You may create one in the GCP Console under "VPC Network" -> "External IP addres
 Give it a name, select IPv4 and Type Regional and a region. Your kubernetes cluster should be created in the same region later on.
 
 ### Configure DNS
-Configure your DNS to point to the external IP address. 
+Configure your DNS to point to the external IP address.
 
 ### Create a Kubernetes cluster
 InfraBox runs on Kubernetes. So we have to create a cluster first. In the GCP Console go to "Kubernetes Engine" and create a cluster.
@@ -118,6 +118,11 @@ If you have not already cloned the InfraBox repository do so with:
 
     $ git clone https://github.com/infrabox/infrabox /tmp/infrabox
 
+## Generate RSA Key
+InfraBox uses a RSA key to sign certain information for security reasons. You need to generate a RSA key and keep it at a secure place
+
+    ssh-keygen -N '' -t rsa -f id_rsa
+
 ## Configure InfraBox
 InfraBox contains a python script to generate all the neccessary configuration files for you. You find it under _deplpy/install.py_.
 To create a very basic configuration use (don't forget to insert your external IP address!):
@@ -125,6 +130,8 @@ To create a very basic configuration use (don't forget to insert your external I
     $ python deploy/install.py \
         -o /tmp/infrabox-configuration \
         --platform kubernetes \
+        --general-rsa-public-key ./id_rsa.pub \
+        --general-rsa-private-key ./id_rsa \
         --root-url https://infrabox.example.com \
         --general-dont-check-certificates \
         --database postgres \
@@ -142,7 +149,6 @@ To create a very basic configuration use (don't forget to insert your external I
         --s3-region us-east-1 \
         --docker-registry-admin-username admin \
         --docker-registry-admin-password admin \
-        --job-api-secret somesecret \
         --dashboard-secret someothersecret \
         --account-signup-enabled
 
@@ -151,11 +157,6 @@ To create a very basic configuration use (don't forget to insert your external I
 This command generated the neccessary files in `/tmp/infrabox-configuration`.
 
 ### Options
-
-    --job-api-secret
-    --dashboard-secret
-
-You should use some secret values for these options.
 
     --docker-registry-admin-username admin
     --docker-registry-admin-password admin
