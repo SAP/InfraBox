@@ -98,30 +98,24 @@
                             <li><a href="#tutorial-5">Show Test Results</a></li>
                         </ul>
                     </li>
-                    <!-- Builds & Configuration -->
                     <li>
-                        <a href="#builds-and-configuration">Builds &amp; Configuration</a>
+                        <a href="#workflow-config">Workflow Configuration</a>
                         <ul>
-                            <li>
-                                <a href="#workflow-config">Workflow Configuration</a>
-                                <ul>
-                                    <li><a href="#job-type-docker">docker</a></li>
-                                    <li><a href="#job-type-docker-compose">docker-compose</a></li>
-                                    <li><a href="#job-type-git">git</a></li>
-                                    <li><a href="#job-type-workflow">workflow</a></li>
-                                </ul>
-                            </li>
-                            <li><a href="#job-dependencies">Job Dependencies</a></li>
-                            <li><a href="#environment-vars">Environment Variables</a></li>
-                            <li><a href="#using-image-registries">Using Image Registries</a></li>
-                            <li><a href="#caching">Caching on InfraBox</a></li>
-                            <li><a href="#create-badges">Create Badges</a></li>
-                            <li><a href="#dynamic-workflow">Dynamic Workflows</a></li>
-                            <li><a href="#create-upload-project">Create an Upload Project</a></li>
-                            <li><a href="#connect-github-repo">Connect a Github Repository</a></li>
-                            <li><a href="#create-auth-token">Create Auth Token</a></li>
+                            <li><a href="#job-type-docker">docker</a></li>
+                            <li><a href="#job-type-docker-compose">docker-compose</a></li>
+                            <li><a href="#job-type-git">git</a></li>
+                            <li><a href="#job-type-workflow">workflow</a></li>
                         </ul>
                     </li>
+                    <li><a href="#job-dependencies">Job Dependencies</a></li>
+                    <li><a href="#environment-vars">Environment Variables</a></li>
+                    <li><a href="#using-image-registries">Using Image Registries</a></li>
+                    <li><a href="#caching">Caching on InfraBox</a></li>
+                    <li><a href="#create-badges">Create Badges</a></li>
+                    <li><a href="#dynamic-workflow">Dynamic Workflows</a></li>
+                    <li><a href="#create-upload-project">Create an Upload Project</a></li>
+                    <li><a href="#connect-github-repo">Connect a Github Repository</a></li>
+                    <li><a href="#create-auth-token">Create Auth Token</a></li>
                 </ul>
             </aside>
             <!-- END Sidebar -->
@@ -585,9 +579,7 @@ services:
 
                 <!-- Builds & Configuration -->
                 <section>
-                    <h2 id="builds-and-configuration">Builds &amp; Configuration</h2>
-
-                    <h3 id="workflow-config">Workflow Configuration</h3>
+                    <h2 id="workflow-config">Workflow Configuration</h2>
                     <p>If you want to run jobs on InfraBox you have to create a file called <kbd>infrabox.json</kbd> in the root directory of your project. It tells InfraBox what jobs are part of the project and which dependencies between the jobs exist. The basic structure of the file is as follows:</p>
 
                     <pre class="line-numbers"><code  class="language-javascript">{
@@ -632,7 +624,7 @@ services:
                     </div>
 
 
-                    <h4 id="job-type-docker">docker</h4>
+                    <h3 id="job-type-docker">docker</h3>
                     <p>The job type docker is one of the most important jobs. You can use it to run any Docker container you like.</p>
                     <pre class="line-numbers"><code  class="language-javascript">{
     "type": "docker",
@@ -641,10 +633,7 @@ services:
     "resources": { "limits": { "cpu": 1, "memory": 1024 } },
     "build_only": false,
     "depends_on": ["other_job_name"],
-    "environment": { ... },
-    "security": {
-        "scan_container": false
-    }
+    "environment": { ... }
 }</code></pre>
 
                     <div class="table-responsive">
@@ -741,7 +730,7 @@ CMD /usr/bin/test.py
 
                     <p>As you can see the COPY uses <kbd>src/test.py</kbd> and is therefore relative to the root directory of the project and not the Dockerfile.</p>
 
-                    <h4 id="job-type-docker-compose">docker-compose</h4>
+                    <h3 id="job-type-docker-compose">docker-compose</h3>
                     <p>Sometimes it's useful to run multiple Docker containers, i.e. if you want to test your web application you may want to start the database, web server and the actual tests in separate Docker containers. For this docker-compose jobs can be used. Instead of specifying only one Docker container you can give an entire docker-compose file.
                     </p>
 
@@ -820,7 +809,7 @@ CMD /usr/bin/test.py
                         </table>
                     </div>
 
-                    <h4 id="job-type-git">git</h4>
+                    <h3 id="job-type-git">git</h3>
                     <p>It's not necessary to have all your job definitions in your own project. With the git job type you can include job definitions for any accessible git repository.</p>
                     <p>An example git job definition:</p>
                     <pre class="line-numbers"><code class="language-javascript">{
@@ -882,7 +871,7 @@ CMD /usr/bin/test.py
                         </table>
                     </div>
 
-                    <h4 id="job-type-workflow">workflow</h4>
+                    <h3 id="job-type-workflow">workflow</h3>
                     <p>If you have many jobs you might want to structure them in different files.</p>
                     <p>An example job definition:</p>
                     <pre class="line-numbers"><code class="language-javascript">{
@@ -936,13 +925,11 @@ CMD /usr/bin/test.py
                             </tbody>
                         </table>
                     </div>
+                </section>
 
-                    <h3 id="job-dependencies">Job Dependencies</h3>
-                    <p>With InfraBox you may execute arbitray complex job graphs.
-
-                    <h4 id="job-dependencies-define">Define Dependencies</h4>
-
-                    To model dependencies between jobs you simply use <kbd>depends_on</kbd> in the job description.
+                <section>
+                    <h2 id="job-dependencies">Job Dependencies</h2>
+                    <p>To model dependencies between jobs you simply use <kbd>depends_on</kbd> in the job description.
                     As an example we create tree jobs <i>A</i>, <i>B</i> and <i>C</i>. <i>C</i> depends on <i>A</i> and <i>B</i>.</p>
 
 <pre class="line-numbers"><code class="language-javascript">
@@ -980,15 +967,17 @@ CMD /usr/bin/test.py
     }]
 }</code></pre>
                     <p>If the the <i>parent</i> job would create the file <kbd>/infrabox/output/hello_world.txt</kbd> then the <i>child</i> job would be able to access it under <kbd>/infrabox/inputs/parent</kbd>.</p>
+                </section>
 
-                    <h3 id="environment-vars">Environment Variables</h3>
+                <section>
+                    <h2 id="environment-vars">Environment Variables</h2>
                     <p>With InfraBox you have two ways of setting environment variables for your jobs. The easiest way is to add it to your job definition like this:</p>
 <pre class="line-numbers"><code class="language-javascript">{
     "type": "docker",
     ...
     "environment": {
         "ENV_VAR_1": "some value",
-        "ENV_VAR_2": "some other value
+        "ENV_VAR_2": "some other value"
     }
 }</code></pre>
                     <p>You may use this approach to store values which don't contain and secret information like passwords, because everybody could read it in you repository.</p>
@@ -997,40 +986,33 @@ CMD /usr/bin/test.py
                         <li>
                             <h5>Login to the InfraBox Dashboard</h5>
                         </li>
-
                         <li>
-                            <h5>Click on <i>projects</i> on the top</h5>
-                        </li>
-
-                        <li>
-                            <h5>Click on the project for which you wan to set an environment variable</h5>
-                        </li>
-
-                        <li>
-                            <h5>Click on "Edit Project"</h5>
+                            <h5>Select the project for which you wan to set a secrets</h5>
                         </li>
                         <li>
-                            <h5>Navigate to the "Environment" tab</h5>
+                            <h5>Navigate to the "Settings" tab</h5>
                         </li>
                         <li>
-                            <h5>Insert a name and value</h5>
+                            <h5>In the "Secrets" section insert a name and value</h5>
                         </li>
                         <li>
                             <h5>Click on the "+" sign</h5>
                         </li>
                     </ul>
-                    <p>With this you now have created an environment variable which you can use in your jobs without writing the value into a text file.</p>
+                    <p>With this you now have created a secret value which you can use in your jobs without writing the value into a text file.</p>
                     <p>To use it in your job reference it in your job definition like this:</p>
 <pre class="line-numbers"><code class="language-javascript">{
     "type": "docker",
     ...
     "environment": {
-        "ENV_VAR_1": { "$secret": "NAME_OF_ENV_VAR_IN_DASHBOARD" }
+        "ENV_VAR_1": { "$secret": "NAME_OF_SECRET" }
     }
 }</code></pre>
                     <p>In your job the secret value will then be available as the environment variable <kbd>ENV_VAR_1</kbd>.</p>
+                </section>
 
-                    <h3 id="using-image-registries">Using Image Registries</h3>
+                <section>
+                    <h2 id="using-image-registries">Using Image Registries</h2>
                     <p>The docker images which have been build can also be pushed to a docker registry by InfraBox. You would add a deployment to your job: </p>
 
 <pre class="line-numbers"><code class="language-javascript">{
@@ -1047,10 +1029,14 @@ CMD /usr/bin/test.py
 
                     <p>Deployments are currently only supported for <i>docker</i> job types. <i>username</i> and <i>password</i> are optional if you don't have any authentication setup for your registry.</p>
 
-                    <h3 id="caching">Caching on InfraBox</h3>
+                </section>
+                <section>
+                    <h2 id="caching">Caching on InfraBox</h2>
                     <p>Sometimes it's useful to keep some data from one run of a container to the next one. Maybe you have a <i>nodejs</i> project and don't want to install your dependencies every time. For such uses cases InfraBox mounts the directory <kbd>/infrabox/cache</kbd> into every container. Everything which you store in this directory will be available at the same place in the next run. So for your <i>nodejs</i> project you could simply copy your <i>node_modules</i> directory in there.</p>
+                </section>
 
-                    <h3 id="create-badges">Create Badges</h3>
+                <section>
+                    <h2 id="create-badges">Create Badges</h2>
                     <p>
                         With InfraBox you can easily create one or mutiple badges like
                         <img src="https://img.shields.io/badge/style-flat-green.svg?style=flat"></img> or
@@ -1066,11 +1052,17 @@ CMD /usr/bin/test.py
                         and save it to <kbd>/infrabox/upload/badges/badge.json</kbd>. You can also save multiple files with different names in this directory. For every file a separate badge will be created.
 
                     </p>
+                </section>
 
-                    <h3 id="dynamic-workflows">Dynamic Workflows</h3>
-                    TODO
+                <section>
+                    <h2 id="dynamic-workflows">Dynamic Workflows</h2>
+                    <p>Often a pre-defined static workflow is not sufficient to handle all use cases. For this InfraBox supports dynamic workflows. Every job in your workflow may produce an <kbd>infrabox.json</kbd> in its output directory <kbd>/infrabox/output/infrabox.json</kbb>. All jobs defined in there will be automatically added as predecessor jobs. This give you the options to extend your workflow at runtime.</p>
 
-                    <h3 id="create-upload-project">Create an Upload Project</h3>
+                    </p>This feature is extremely useful for bigger projects. Maybe you don't want to run certain tests on a branch or you want to additionaly deploy your containers to an registry if you create a tag.</p>
+
+                </section>
+                <section>
+                    <h2 id="create-upload-project">Create an Upload Project</h2>
                     <p>Upload project can be used for executing workflows without storing them in a git repository.</p>
                     <ul class="step-text">
                         <li>
@@ -1078,82 +1070,86 @@ CMD /usr/bin/test.py
                         </li>
 
                         <li>
-                            <h5>Click on <i>projects</i> on the top</h5>
+                            <h5>On the "Overview" page click on "+" on the bottom right corner</h5>
                         </li>
 
                         <li>
-                            <h5>Click on "Add New Project"</h5>
+                            <h5>Select upload and click continue</h5>
                         </li>
 
                         <li>
-                            <h5>Enter a name of the project</h5>
-                        </li>
-                        <li>
-                            <h5>Click the "+" button</h5>
-                            <p>Now you should see your project in your project list at the top.</p>
-                            <p>To upload workflows to your projects see TODO Upload a workflow to InfraBox.</p>
+                            <h5>Enter a name and click continue</h5>
                         </li>
 
                         <li>
-                            <h5>Refresh the page - TODO check if this is still needed</h5>
+                            <h5>Select if your project should be visible by everybody (public) or only collaborators (private). Click on continue.</h5>
                         </li>
                     </ul>
+                </section>
+                <section>
 
-                    <h3 id="connect-github-repo">Connect a Github Repository</h3>
+                    <h2 id="connect-github-repo">Connect a Github Repository</h2>
                     <p>Connecting a Github Repository is very simple.</p>
+
+                    <div class="alert alert-info" role="alert">
+                        This is only possible if your InfraBox installation has been setup to work either with github.com or a GitHub Enterprise installation.
+                    </div>
+
                     <ul class="step-text">
                         <li>
                             <h5>Login to the InfraBox Dashboard</h5>
                         </li>
 
                         <li>
-                            <h5>Select <i>Settings</i> at the top</h5>
+                            <h5>On the "Overview" page click on "+" on the bottom right corner</h5>
                         </li>
 
                         <li>
-                            <h5>Select <i>My Github Repositories</i></h5>
+                            <h5>Select GitHub and click continue</h5>
                         </li>
 
                         <li>
-                            <h5>Click on the repository you want to connect </h5>
-                            <p>After connecting a repository InfraBox will be notified about every new commit. This will automatically trigger a new build for the project.</p>
+                            <h5>Enter a name for your project</h5>
+                        </li>
+
+                        <li>
+                            <h5>Click on the repository you want to connect and click continue</h5>
+                        </li>
+
+                        <li>
+                            <h5>Select if your project should be visible by everybody (public) or only collaborators (private). Click on continue.</h5>
                         </li>
                     </ul>
 
-                    <h3 id="create-auth-token">Create Auth Token</h3>
+                    <p>Now every push to your github repository will automatically trigger a build.</p>
+                 </section>
+
+                 <section>
+                    <h2 id="create-auth-token">Create Auth Token</h2>
+                    <p>Auth tokens are used by <kbd>infraboxcli</kbd> and are like passwords. So make sure you store them at a secure place.</p>
+
                     <ul class="step-text">
                         <li>
                             <h5>Login to the InfraBox Dashboard</h5>
                         </li>
 
                         <li>
-                            <h5>Select <i>Settings</i> at the top</h5>
+                            <h5>Select the project for which you want to create a token</h5>
                         </li>
 
                         <li>
-                            <h5>Select <i>Authentication Tokens</i></h5>
+                            <h5>Go to the settings tab</h5>
                         </li>
 
                         <li>
-                            <h5>Click on "Add new token"</h5>
+                            <h5>In the Tokens section enter a description and click "+"</h5>
                         </li>
 
                         <li>
-                            <h5>Give it a name</h5>
-                        </li>
-
-                        <li>
-                            <h5>Select the scope</h5>
-                        </li>
-
-                        <li>
-                            <h5>Click "Add"</h5>
-                        </li>
-
-                        <li>
-                            <h5>You should now see the token next to its name. You may use the token to <a href="https://github.com/infrabox/cli#push-a-workflow">push workflows</a> or <a href="https://github.com/infrabox/cli#pull-a-job">pull jobs</a></h5>
+                            <h5>You will see the token in a popup. You will not be able to retrieve the token again, so make sure you copy it to a secure place</h5>
                         </li>
                      </ul>
+                     <p>You may use the token to <a href="https://github.com/infrabox/cli#push-a-workflow">push workflows</a> or <a href="https://github.com/infrabox/cli#pull-a-job">pull jobs</a></p>
                 </section>
             </article>
             <!-- END Main content -->

@@ -2,12 +2,12 @@
 
 InfraBox is a serverless computing platform focusing on efficiently executing build and test workflows for your project. You may execute everything on InfraBox which runs in a docker container. Some of InfraBox features include:
 
-- Static and dynamic workflows
-- Set resource limits (CPU and memory) for each task
-- GitHub integration
-- Gerrit integration
-- LDAP support
-- and many more
+- [Static and dynamic workflows](https://infrabox.ninja/docs/#dynamic-workflows)
+- [Set resource limits (CPU and memory) for each task](https://infrabox.ninja/docs/#workflow-config)
+- [GitHub integration](docs/configure/github.md)
+- [Gerrit integration](docs/configure/gerrit.md)
+- [LDAP support](docs/configure/ldap.md)
+- [and many more](https://infrabox.ninja/docs/)
 
 ## Want to see it in action?
 InfraBox is build on InfraBox. See all the builds [here](https://infrabox.ninja/dashboard/#/project/infrabox).
