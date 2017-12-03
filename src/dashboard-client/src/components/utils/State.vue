@@ -18,7 +18,7 @@
                 <md-tooltip>running</md-tooltip>
             </md-icon>
         </span>
-        <span v-if="state=='finished'">
+        <span v-if="state=='finished' || state=='ok'">
             <md-icon md-theme="finished" class="md-primary">
                 <i class="fa fa-fw fa-check"></i>
                 </md-icon>

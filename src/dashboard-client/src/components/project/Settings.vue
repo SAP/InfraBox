@@ -1,12 +1,10 @@
 <template>
     <div>
-        <md-list md-theme="white">
-            <ib-project-secrets :project="project"></ib-project-secrets>
-            <ib-project-collaborators :project="project"></ib-project-collaborators>
-            <ib-project-tokens :project="project"></ib-project-tokens>
-            <ib-project-info :project="project"></ib-project-info>
-            <ib-project-badges :project="project"></ib-project-badges>
-        </md-list>
+        <ib-project-secrets :project="project"></ib-project-secrets>
+        <ib-project-collaborators :project="project"></ib-project-collaborators>
+        <ib-project-tokens :project="project"></ib-project-tokens>
+        <ib-project-info :project="project"></ib-project-info>
+        <ib-project-badges :project="project"></ib-project-badges>
     </div>
 </template>
 

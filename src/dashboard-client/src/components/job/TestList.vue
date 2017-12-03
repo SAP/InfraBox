@@ -17,7 +17,7 @@
                         <md-table-cell>{{ t.name }}</md-table-cell>
                         <md-table-cell>{{ t.suite }}</md-table-cell>
                         <md-table-cell>{{ t.duration }} ms</md-table-cell>
-                        <md-table-cell>{{ t.state }}</md-table-cell>
+                        <md-table-cell><ib-state :state="t.state"></ib-state></md-table-cell>
                         <md-table-cell>
                         </md-table-cell>
                     </md-table-row>
