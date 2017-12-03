@@ -14,11 +14,18 @@ The default configuration starts its own postgres a minio for storing your data.
     $ git clone https://github.com/InfraBox/infrabox.git infrabox
     $ cd infrabox
 
+## Generate RSA Key
+InfraBox uses a RSA key to sign certain information for security reasons. You need to generate a RSA key and keep it at a secure place
+
+    ssh-keygen -N '' -t rsa -f id_rsa
+
 ## Generate docker-compose.yaml
 InfraBox comes with deploy/install.py which can generate docker-compose.yaml with all the neccessary configuration values.
 
     $ python deploy/install.py \
         -o /tmp/compose \
+        --general-rsa-public-key ./id_rsa.pub \
+        --general-rsa-private-key ./id_rsa \
         --platform docker-compose
 
 You are now ready to startup InfraBox
