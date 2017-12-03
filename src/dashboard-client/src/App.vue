@@ -5,7 +5,15 @@
             <md-button v-if="$store.state.user" class="md-icon-button" @click="toggleLeftSidenav">
                 <md-icon>menu</md-icon>
             </md-button>
-            <div style="width: 110px"><img src="../static/logo_white_on_transparent.png" style="flex: 1"></div>
+            <div style="width: 110px">
+                <a href="http://infrabox.net">
+                    <img src="../static/logo_white_on_transparent.png" style="flex: 1" />
+                </a>
+            </div>
+            <h2 class="md-title" style="flex: 1"></h2>
+            <md-button v-if="!$store.state.user" class="md-button" @click="login" md-right>
+                <i class="fa fa-sign-in"></i> Login
+            </md-button>
         </md-toolbar>
 
         <md-sidenav v-if="$store.state.user" class="md-left" ref="leftSidenav">
@@ -75,6 +83,9 @@ export default {
     methods: {
         toggleLeftSidenav () {
             this.$refs.leftSidenav.toggle()
+        },
+        login () {
+            router.push('/login')
         },
         logout () {
             this.toggleLeftSidenav()
