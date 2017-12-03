@@ -14,6 +14,9 @@ export default class Project {
         this.secrets = null
         this.collaborators = null
         this.tokens = null
+        this.numQueuedJobs = 0
+        this.numScheduledJobs = 0
+        this.numRunningJobs = 0
     }
 
     isGit () {
@@ -138,5 +141,31 @@ export default class Project {
         }
 
         store.commit('addJobs', jobs)
+    }
+
+    _updateStats () {
+        let numQueuedJobs = 0
+        let numScheduledJobs = 0
+        let numRunningJobs = 0
+
+        for (let b of this.builds) {
+            numQueuedJobs += b.numQueuedJobs
+            numScheduledJobs += b.numScheduledJobs
+            numRunningJobs += b.numRunningJobs
+        }
+
+        this.numQueuedJobs = numQueuedJobs
+        this.numScheduledJobs = numScheduledJobs
+        this.numRunningJobs = numRunningJobs
+    }
+
+    _updateState () {
+        this._updateStats()
+
+        if (this.builds) {
+            this.state = this.builds[0].state
+        } else {
+            this.state = 'finished'
+        }
     }
 }

@@ -15,6 +15,9 @@ export default class Build {
         this.endDate = null
         this.pull_request = pr
         this.project = project
+        this.numQueuedJobs = 0
+        this.numScheduledJobs = 0
+        this.numRunningJobs = 0
     }
 
     getJob (jobId) {
@@ -120,9 +123,32 @@ export default class Build {
         }
     }
 
+    _updateStats () {
+        let numQueuedJobs = 0
+        let numScheduledJobs = 0
+        let numRunningJobs = 0
+
+        if (this.state === 'running') {
+            for (let j of this.jobs) {
+                if (j.state === 'queued') {
+                    numQueuedJobs += 1
+                } else if (j.state === 'scheduled') {
+                    numScheduledJobs += 1
+                } else if (j.state === 'running') {
+                    numRunningJobs += 1
+                }
+            }
+        }
+
+        this.numQueuedJobs = numQueuedJobs
+        this.numScheduledJobs = numScheduledJobs
+        this.numRunningJobs = numRunningJobs
+    }
+
     _updateState () {
         this._updateBuildState()
         this._updateStartDate()
         this._updateEndDate()
+        this._updateStats()
     }
 }

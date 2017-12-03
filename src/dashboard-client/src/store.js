@@ -56,14 +56,6 @@ function findJob (build, jobId) {
     return null
 }
 
-function updateProjectState (project) {
-    if (project.builds) {
-        project.state = project.builds[0].state
-    } else {
-        project.state = 'finished'
-    }
-}
-
 function handleJobUpdate (state, event) {
     const project = findProject(state, event.data.project.id)
 
@@ -142,7 +134,7 @@ function handleJobUpdate (state, event) {
     }
 
     build._updateState()
-    updateProjectState(project)
+    project._updateState()
 }
 
 function addProjects (state, projects) {
