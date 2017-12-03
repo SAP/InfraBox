@@ -1,12 +1,3 @@
-{{ define "env_job_api_secret" }}
--
-    name: INFRABOX_JOB_API_SECRET
-    valueFrom:
-        secretKeyRef:
-            name: infrabox-job-api
-            key: api-secret
-{{ end }}
-
 {{ define "env_database" }}
 -
     name: INFRABOX_DATABASE_USER
