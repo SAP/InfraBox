@@ -4,6 +4,6 @@ const prodEnv = require('./prod.env')
 
 module.exports = merge(prodEnv, {
   NODE_ENV: '"development"',
-  DASHBOARD_HOST: '"localhost:3000"',
-  API_PATH: '"http://localhost:3000/api/dashboard/"',
+  DASHBOARD_HOST: '"infrabox.ninja"',
+  API_PATH: '"https://infrabox.ninja/api/dashboard/"',
 })

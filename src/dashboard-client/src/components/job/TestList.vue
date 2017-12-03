@@ -13,7 +13,7 @@
                 </md-table-header>
 
                 <md-table-body>
-                    <md-table-row v-for="t in job.tests" :id="t.name+t.suite">
+                    <md-table-row v-for="t in job.tests" :id="t.name+t.suite" :key="t.name+t.suite">
                         <md-table-cell>{{ t.name }}</md-table-cell>
                         <md-table-cell>{{ t.suite }}</md-table-cell>
                         <md-table-cell>{{ t.duration }} ms</md-table-cell>
