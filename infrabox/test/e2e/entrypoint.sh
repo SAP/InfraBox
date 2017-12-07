@@ -95,20 +95,20 @@ _installPostgres() {
 
     echo "Inserting data"
     export INFRABOX_CLI_TOKEN='d5c80d79-5355-4edb-bc18-7ba878e166bf'
-    export INFRABOX_CLI_PROJECT_ID='2daef5b5-0474-4e63-a47e-df8438a82eba'
+    export PROJECT_ID='2daef5b5-0474-4e63-a47e-df8438a82eba'
     export USER_ID='70c68f11-4d04-46d3-a68e-c0d2a91c00a6'
     # Insert dummy data
     _sql "INSERT INTO \"user\" (id, github_id, username, avatar_url)
           VALUES ('$USER_ID', '1', 'user', 'url')"
     _sql "INSERT INTO project (id, name, type)
-          VALUES('$INFRABOX_CLI_PROJECT_ID', 'test', 'upload')"
+          VALUES('$PROJECT_ID', 'test', 'upload')"
 
     _sql "INSERT INTO collaborator (project_id, user_id, owner)
           VALUES ('2daef5b5-0474-4e63-a47e-df8438a82eba', '70c68f11-4d04-46d3-a68e-c0d2a91c00a6', true)"
     _sql "INSERT INTO auth_token (token, description, project_id, scope_push, scope_pull)
-          VALUES ('$INFRABOX_CLI_TOKEN', 'desc', '$INFRABOX_CLI_PROJECT_ID', true, true)"
+          VALUES ('$INFRABOX_CLI_TOKEN', 'desc', '$PROJECT_ID', true, true)"
     _sql "INSERT INTO secret(project_id, name, value)
-          VALUES ('$INFRABOX_CLI_PROJECT_ID', 'SECRET_ENV', 'hello world')"
+          VALUES ('$PROJECT_ID', 'SECRET_ENV', 'hello world')"
     echo "Finished preparing database"
 }
 
