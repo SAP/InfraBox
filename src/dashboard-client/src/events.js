@@ -40,6 +40,9 @@ export default new Vue({
         connect () {
             this.$socket.emit('auth', getToken())
         },
+        disconnect () {
+            this.$emit('DISCONNECTED')
+        },
         'notify:jobs' (val) {
             this.$emit('NOTIFY_JOBS', val)
         },
