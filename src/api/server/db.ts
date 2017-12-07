@@ -2,7 +2,7 @@ import child_process = require("child_process");
 const eachOf = require("async/eachOf");
 import * as _ from "lodash";
 import { logger } from "./utils/logger";
-import { InternalError } from "./utils/status";
+import { InternalError, BadRequest } from "./utils/status";
 import { config } from "./config/config";
 
 import * as pgPromise from "pg-promise";

@@ -4,6 +4,8 @@ import { db, handleDBError } from "../db";
 import { BadRequest, OK, InternalError } from "../utils/status";
 import { param_validation as pv } from "../utils/validation";
 import { Validator } from 'jsonschema';
+import { token_auth, checkProjectAccess } from "../utils/auth";
+
 import * as request from 'request-promise';
 
 const router = Router({ mergeParams: true });
@@ -56,7 +58,7 @@ function createGerritCommit(tx, project_id: string, repo_id: string, sha: string
                 project: project.name
             },
             json: true
-        }
+        };
 
         return request(options).catch((e) => {
             throw new InternalError(e.error.message);
@@ -95,7 +97,7 @@ function createGithubCommit(tx, project_id: string, repo_id: string, sha: string
                 token: user.github_api_token
             },
             json: true
-        }
+        };
 
         return request(options).catch((e) => {
             throw new InternalError(e.error.message);
@@ -136,8 +138,6 @@ function createJob(branch: string, sha: string, project_id: string) {
             return createCommit(tx, project_id, repo.id, sha, branch);
         }).then((co) => {
             commit = co;
-            console.log(co);
-
             return tx.one(`SELECT count(distinct build_number) + 1 AS build_no
                           FROM build AS b
                           WHERE b.project_id = $1`, [project_id]);
@@ -167,7 +167,7 @@ function createJob(branch: string, sha: string, project_id: string) {
     });
 }
 
-router.post("/:project_id/trigger", pv, (req: Request, res: Response, next) => {
+router.post("/:project_id/trigger", pv, token_auth, checkProjectAccess, (req: Request, res: Response, next) => {
     const project_id = req.params['project_id'];
 
     const v = new Validator();
@@ -177,8 +177,8 @@ router.post("/:project_id/trigger", pv, (req: Request, res: Response, next) => {
         return next(new BadRequest("Invalid values"));
     }
 
-    let branch = req['body']['branch'];
-    let sha = req['body']['sha'];
+    const branch = req['body']['branch'];
+    const sha = req['body']['sha'];
 
     // TODO(ib-steffen): disable push event
     // TODO(ib-steffen): Check scope
@@ -188,5 +188,3 @@ router.post("/:project_id/trigger", pv, (req: Request, res: Response, next) => {
         return OK(res, "Successfully triggered build");
     }).catch(handleDBError(next));
 });
-
-
