@@ -34,7 +34,7 @@
         <md-dialog-content>
             Please save your token at a secure place. We will not show it to you again.<br><br>
 
-            <pre>{{ token }}<pre><br><br>
+            <pre>{{ token }}</pre><br><br>
 
             You may later us it with infraboxcli:<br>
             <pre>$ export INFRABOX_CLI_TOKEN=&lt;YOUR_TOKEN_VALUE&gt;
