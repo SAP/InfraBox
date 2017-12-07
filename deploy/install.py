@@ -465,6 +465,19 @@ class DockerCompose(Install):
     def setup_dashboard(self):
         self.config.append('services.dashboard-api.environment', ['INFRABOX_ROOT_URL=%s' % self.args.root_url])
 
+        self.config.append('services.dashboard-api.volumes', [
+            '%s:/var/run/secrets/infrabox.net/rsa/id_rsa' % os.path.join(self.args.o, 'id_rsa'),
+        ])
+
+    def setup_api(self):
+        self.config.add('services.cli-api.image',
+                        '%s/api:%s' % (self.args.docker_registry, self.args.version))
+
+        self.config.append('services.cli-api.volumes', [
+            '%s:/var/run/secrets/infrabox.net/rsa/id_rsa.pub' % os.path.join(self.args.o, 'id_rsa.pub'),
+        ])
+
+
     def setup_rsa(self):
         self.check_file_exists(self.args.general_rsa_private_key)
         self.check_file_exists(self.args.general_rsa_public_key)
@@ -484,8 +497,6 @@ class DockerCompose(Install):
         self.config.add('services.static.image',
                         '%s/static"%s' % (self.args.docker_registry, self.args.version))
 
-        self.config.add('services.cli-api.image',
-                        '%s/api:%s' % (self.args.docker_registry, self.args.version))
         self.config.add('services.dashboard-api.image',
                         '%s/dashboard-api:%s' % (self.args.docker_registry, self.args.version))
         self.config.add('services.static.image',
@@ -608,6 +619,7 @@ class DockerCompose(Install):
         self.setup_dashboard()
         self.setup_nginx_ingress()
         self.setup_job_api()
+        self.setup_api()
         self.config.dump(compose_path)
 
 
