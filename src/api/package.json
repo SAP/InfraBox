@@ -33,6 +33,7 @@
     "gulp-tslint": "^6.1.1",
     "gulp-typescript": "~3.0.2",
     "jsonschema": "^1.1.1",
+    "jsonwebtoken": "^8.1.0",
     "lodash": "^4.17.4",
     "method-override": "^2.3.9",
     "minio": "^3.1.3",

@@ -102,7 +102,7 @@ if (config.github.login.enabled) {
 
         db.none(`UPDATE "user" SET github_id = null, github_api_token = $1 WHERE id = $2`, [uid, user_id])
         .then(() => {
-            let a = passport.authenticate('github', {
+            const a = passport.authenticate('github', {
                 scope: ['user:email', 'repo', 'read:org'],
                 callbackURL: GITHUB_CALLBACK_URL + "?t=" + uid
             });
@@ -121,5 +121,4 @@ router.get('/callback',
         res.redirect('/dashboard/');
     }
 );
-
 

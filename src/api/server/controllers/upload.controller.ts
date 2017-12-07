@@ -3,6 +3,9 @@ import { db, handleDBError } from "../db";
 import { OK, Unauthorized } from "../utils/status";
 import { uploadProject } from "../utils/gcs";
 import { logger } from "../utils/logger";
+import { token_auth, checkProjectAccess } from "../utils/auth";
+import { param_validation as pv } from "../utils/validation";
+
 import fs = require('fs');
 import uuid = require('uuid');
 
@@ -18,7 +21,7 @@ const router = Router();
 
 module.exports = router;
 
-router.post("/:project_id/upload", upload.single('project.zip'), (req: Request, res: Response, next) => {
+router.post("/:project_id/upload", pv, token_auth, checkProjectAccess, upload.single('project.zip'), (req: Request, res: Response, next) => {
     // TODO(Steffen): check permission
     // TODO(Steffen): validate input
 
@@ -39,24 +42,9 @@ router.post("/:project_id/upload", upload.single('project.zip'), (req: Request, 
     };
 
     db.tx((tx) => {
-        return tx.any(`
-            SELECT token
-            FROM auth_token at
-            INNER JOIN project p
-                ON  at.project_id = p.id
-                AND at.token = $1
-                AND p.id = $2
-                AND p.type = 'upload'
-        `, [req.headers['authorization'], project_id])
-        .then((result: any[]) => {
-            if (result.length !== 1) {
-                logger.debug('project not found for id and token');
-                throw new Unauthorized();
-            }
-
-            const destination = data.build.id + ".zip";
-            return uploadProject(file, destination);
-        }).then(() => {
+        const destination = data.build.id + ".zip";
+        return uploadProject(file, destination)
+        .then(() => {
             return db.one(`
                 SELECT count(distinct build_number) + 1 AS build_number
                 FROM build AS b
