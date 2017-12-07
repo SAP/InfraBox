@@ -63,6 +63,7 @@ spec:
                 - "node"
                 - "/api/dist/server/app.js"
                 volumeMounts:
+                {{ include "mounts_rsa_public" . | indent 16 }}
                 {{ if .Values.storage.gcs.enabled }}
                 -
                     name: gcs-service-account
@@ -103,6 +104,7 @@ spec:
                 {{ end }}
             volumes:
                 {{ include "volumes_database" . | indent 16 }}
+                {{ include "volumes_rsa" . | indent 16 }}
                 {{ if .Values.storage.gcs.enabled }}
                 -
                     name: gcs-service-account

@@ -5,55 +5,72 @@ import { Unauthorized, NotFound } from "./status";
 import { db, handleDBError } from "../db";
 import { logger } from "./logger";
 
+const jwt = require('jsonwebtoken');
+const fs = require('fs');
+
 export class Scopes {
     constructor(public push: boolean, public pull: boolean) {}
 }
 
 export class ProjectToken {
-    constructor(public project_id: string, public scopes: Scopes) {}
+    constructor(public id: string, public project_id: string, public scopes: Scopes) {}
 }
 
 export function token_auth(req: Request, res: Response, next: any) {
     try {
-        const t = req.headers["auth-token"];
+        const t = req.headers["authorization"];
 
-        if (!isUUID(t)) {
-            logger.debug("token_auth: received an invalid uuid as token");
+        if (!t) {
+            logger.warn("token_auth: Authorization header not set");
             return next(new Unauthorized());
         }
 
+        const parts = t.split(' ');
+        if (parts[0] !== 'token') {
+            logger.warn("token_auth: does not start with token");
+            return next(new Unauthorized());
+        }
+
+        const cert = fs.readFileSync('/var/run/secrets/infrabox.net/rsa/id_rsa.pub');
+        const token = jwt.verify(parts[1], cert, { algorithms: ['RS256'] });
+
         db.any(`
-            SELECT project_id, scope_push, scope_pull FROM auth_token at WHERE token = $1
-        `, [t])
-        .then((t: any[]) => {
-            if (t.length !== 1) {
-                logger.debug("token_auth: Did not find the token");
+            SELECT project_id
+            FROM auth_token at
+            WHERE id = $1 AND project_id = $2
+        `, [token.id, token.project.id])
+        .then((result: any[]) => {
+            if (result.length !== 1) {
+                logger.warn("token_auth: Did not find the token");
                 return next(new Unauthorized());
             }
 
-            const pt = t[0];
-            req["token"] = new ProjectToken(pt.project_id, new Scopes(pt.scope_push, pt.scope_pull));
+            req["token"] = new ProjectToken(token.id, token.project.id,
+                                            new Scopes(token.scope.push, token.scope.pull));
             return next();
         })
         .catch(handleDBError(next));
     } catch (e) {
-        logger.debug(e);
+        logger.warn(e);
         return next(new Unauthorized());
     }
 }
 
-export function socket_token_auth(token: string) {
+export function socket_token_auth(t: string) {
+    const cert = fs.readFileSync('/var/run/secrets/infrabox.net/rsa/id_rsa.pub');
+    const token = jwt.verify(t, cert);
+
     return db.any(`
-        SELECT project_id, scope_push, scope_pull FROM auth_token at WHERE token = $1
+        SELECT project_id FROM auth_token at WHERE id = $1 AND project_id = $2
     `, [token])
-    .then((t: any[]) => {
-        if (t.length !== 1) {
-            logger.debug("socket_token_auth: Did not find the token");
+    .then((result: any[]) => {
+        if (result.length !== 1) {
+            logger.warn("socket_token_auth: Did not find the token");
             throw new Unauthorized();
         }
 
-        const pt = t[0];
-        const project_token = new ProjectToken(pt.project_id, new Scopes(pt.scope_push, pt.scope_pull));
+        const project_token = new ProjectToken(token.id, token.project.id,
+                                               new Scopes(token.scope.push, token.scope.pull));
         return project_token;
     });
 }
