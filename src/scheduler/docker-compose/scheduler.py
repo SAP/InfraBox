@@ -1,8 +1,10 @@
+#pylint: disable=superfluous-parens
 import logging
 import time
 import os
 import sys
 import subprocess
+import shutil
 import psycopg2
 import psycopg2.extensions
 
@@ -35,6 +37,18 @@ def execute(command):
     if exitCode != 0:
         raise Exception("")
 
+
+def clear_dir(d):
+    for f in os.listdir(d):
+        p = os.path.join(d, f)
+        try:
+            if os.path.isfile(p):
+                os.unlink(p)
+            elif os.path.isdir(p):
+                shutil.rmtree(p)
+        except Exception as e:
+            print(e)
+
 class Scheduler(object):
     def __init__(self):
         self.conn = connect_db()
@@ -42,33 +56,36 @@ class Scheduler(object):
         self.daemon_json = None
 
     def kube_job(self, job_id, _build_id, _cpu, _memory, _job_type):
-        cmd = 'rm -rf /data/infrabox/*'
-        subprocess.check_output(cmd, shell=True)
+        repo_dir = '/tmp/infrabox-compose/repo'
+        clear_dir(repo_dir)
+
         token = encode_job_token(job_id)
 
-        cmd = ['docker',
-               'run',
-               '--rm',
-               '-e', "INFRABOX_JOB_ID=%s" % job_id,
-               '-e', "INFRABOX_GENERAL_DONT_CHECK_CERTIFICATES=true",
-               '-e', "INFRABOX_JOB_API_URL=http://nginx-ingress/api/job",
-               '-e', "INFRABOX_SERVICE=job",
-               '-e', "INFRABOX_VERSION=latest",
-               '-e', "INFRABOX_DOCKER_REGISTRY_URL=localhost:8090",
-               '-e', "INFRABOX_LOCAL_CACHE_ENABLED=false",
-               '-e', "INFRABOX_JOB_MAX_OUTPUT_SIZE=%s" % os.environ['INFRABOX_JOB_MAX_OUTPUT_SIZE'],
-               '-e', "INFRABOX_DASHBOARD_URL=http://localhost",
-               '-e', "INFRABOX_JOB_MOUNT_DOCKER_SOCKET=false",
-               '-e', "INFRABOX_JOB_TOKEN=%s" % token,
-               '-e', "INFRABOX_JOB_DAEMON_JSON=%s" % self.daemon_json,
-               '--privileged',
-               '--network=compose_infrabox',
-               '-v', '/var/run/docker.sock:/var/run/docker.sock',
-               '-v', '/data:/data',
-               '--name=ib-job-%s' % job_id,
-               '--link=compose_nginx-ingress_1:nginx-ingress',
-               os.environ['INFRABOX_DOCKER_REGISTRY'] + '/job'
-              ]
+        cmd = [
+            'docker',
+            'run',
+            '--rm',
+            '-e', "INFRABOX_JOB_ID=%s" % job_id,
+            '-e', "INFRABOX_GENERAL_DONT_CHECK_CERTIFICATES=true",
+            '-e', "INFRABOX_JOB_API_URL=http://nginx-ingress/api/job",
+            '-e', "INFRABOX_SERVICE=job",
+            '-e', "INFRABOX_VERSION=latest",
+            '-e', "INFRABOX_DOCKER_REGISTRY_URL=localhost:8090",
+            '-e', "INFRABOX_LOCAL_CACHE_ENABLED=false",
+            '-e', "INFRABOX_JOB_MAX_OUTPUT_SIZE=%s" % os.environ['INFRABOX_JOB_MAX_OUTPUT_SIZE'],
+            '-e', "INFRABOX_DASHBOARD_URL=http://localhost",
+            '-e', "INFRABOX_JOB_MOUNT_DOCKER_SOCKET=false",
+            '-e', "INFRABOX_JOB_TOKEN=%s" % token,
+            '-e', "INFRABOX_JOB_DAEMON_JSON=%s" % self.daemon_json,
+            '-e', "INFRABOX_JOB_REPO_MOUNT_PATH=%s" % repo_dir,
+            '--privileged',
+            '--network=compose_infrabox',
+            '-v', '/var/run/docker.sock:/var/run/docker.sock',
+            '-v', '/tmp/infrabox-compose/repo:/tmp/infrabox-compose/repo',
+            '--name=ib-job-%s' % job_id,
+            '--link=compose_nginx-ingress_1:nginx-ingress',
+            os.environ['INFRABOX_DOCKER_REGISTRY'] + '/job'
+        ]
 
         execute(cmd)
 
