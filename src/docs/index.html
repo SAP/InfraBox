@@ -746,7 +746,7 @@ CMD /usr/bin/test.py
     "jobs": [{
         "type": "docker-compose",
         "name": "test",
-        "docker_file": "infrabox/test/docker-compose.yml"
+        "docker_compose_file": "infrabox/test/docker-compose.yml",
         "resources": { "limits": { "cpu": 1, "memory": 1024 } },
         "depends_on": ["other_job_name"],
         "environment": { ... }
