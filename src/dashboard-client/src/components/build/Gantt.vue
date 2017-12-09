@@ -32,7 +32,7 @@ class StateFormat {
             this.stateColor = 'dimgrey'
         } else if (js === 'finished') {
             this.stateIcon = '\uf00c'
-            this.stateColor = '#1ab394'
+            this.stateColor = '#43A047'
         } else if (js === 'killed') {
             this.stateIcon = '\uf05e'
             this.stateColor = 'dimgrey'
