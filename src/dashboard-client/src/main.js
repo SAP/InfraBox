@@ -100,7 +100,7 @@ Vue.material.registerTheme({
     finished: {
         primary: {
             color: 'green',
-            hue: '700',
+            hue: '600',
             textColor: 'white'
         },
         accent: {
