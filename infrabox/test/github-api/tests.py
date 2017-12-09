@@ -11,7 +11,10 @@ class MockResponse(object):
         self.json_result = json_result
 
     def json(self):
-        return self.json_result
+        if not self.json_result:
+            return None
+
+        return self.json_result.pop(0)
 
 class TestIt(unittest.TestCase):
     @mock.patch('api.get_env')
@@ -50,7 +53,7 @@ class TestIt(unittest.TestCase):
     @mock.patch('api.execute_api')
     def test_get_commit_for_branch(self, mocked):
         with boddle(params={'owner': 'myowner', 'token': 'mytoken', 'repo': 'myrepo', 'branch': 'mybranch'}):
-            mocked.return_value = MockResponse(200, json_result={
+            data = {
                 'object': {'sha': 'mysha'},
                 'sha': 'mysha',
                 'author': {
@@ -59,7 +62,9 @@ class TestIt(unittest.TestCase):
                 },
                 'message': 'mymessage',
                 'html_url': 'myurl'
-            })
+            }
+
+            mocked.return_value = MockResponse(200, json_result=[[data], data])
 
             self.assertEqual(get_commit(), {
                 'sha': 'mysha',
@@ -83,7 +88,7 @@ class TestIt(unittest.TestCase):
     @mock.patch('api.execute_api')
     def test_get_commit_for_sha(self, mocked):
         with boddle(params={'owner': 'myowner', 'token': 'mytoken', 'repo': 'myrepo', 'sha': 'mysha'}):
-            mocked.return_value = MockResponse(200, json_result={
+            mocked.return_value = MockResponse(200, json_result=[{
                 'sha': 'mysha',
                 'author': {
                     'name': 'myname',
@@ -91,7 +96,7 @@ class TestIt(unittest.TestCase):
                 },
                 'message': 'mymessage',
                 'html_url': 'myurl'
-            })
+            }])
 
             self.assertEqual(get_commit(), {
                 'sha': 'mysha',
