@@ -1,4 +1,5 @@
 import APIService from '../services/APIService'
+import NewAPIService from '../services/NewAPIService'
 import NotificationService from '../services/NotificationService'
 import Notification from '../models/Notification'
 import store from '../store'
@@ -71,6 +72,14 @@ export default class Project {
             const token = response.data.token
             this._reloadTokens()
             return token
+        })
+    }
+
+    triggerBuild (branch, sha) {
+        const d = { branch: branch, sha: sha }
+        return NewAPIService.post(`project/${this.id}/trigger`, d)
+        .then((response) => {
+            NotificationService.$emit('NOTIFICATION', new Notification(response))
         })
     }
 

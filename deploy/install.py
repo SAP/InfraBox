@@ -467,6 +467,7 @@ class DockerCompose(Install):
 
         self.config.append('services.dashboard-api.volumes', [
             '%s:/var/run/secrets/infrabox.net/rsa/id_rsa' % os.path.join(self.args.o, 'id_rsa'),
+            '%s:/var/run/secrets/infrabox.net/rsa/id_rsa.pub' % os.path.join(self.args.o, 'id_rsa.pub'),
         ])
 
     def setup_api(self):
@@ -476,6 +477,14 @@ class DockerCompose(Install):
         self.config.append('services.cli-api.volumes', [
             '%s:/var/run/secrets/infrabox.net/rsa/id_rsa.pub' % os.path.join(self.args.o, 'id_rsa.pub'),
         ])
+
+        self.config.add('services.api.image',
+                        '%s/api-new:%s' % (self.args.docker_registry, self.args.version))
+
+        self.config.append('services.api.volumes', [
+            '%s:/var/run/secrets/infrabox.net/rsa/id_rsa.pub' % os.path.join(self.args.o, 'id_rsa.pub'),
+        ])
+
 
 
     def setup_rsa(self):
@@ -597,10 +606,12 @@ class DockerCompose(Install):
             self.config.append('services.scheduler.links', ['postgres'])
             self.config.append('services.dashboard-api.links', ['postgres'])
             self.config.append('services.cli-api.links', ['postgres'])
+            self.config.append('services.api.links', ['postgres'])
 
         self.config.append('services.dashboard-api.environment', env)
         self.config.append('services.job-api.environment', env)
         self.config.append('services.cli-api.environment', env)
+        self.config.append('services.api.environment', env)
         self.config.append('services.scheduler.environment', env)
         self.config.append('services.docker-registry-auth.environment', env)
 
