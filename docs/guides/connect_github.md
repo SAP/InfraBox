@@ -1,4 +1,4 @@
-# Quickstart: Connect github repositry
+# Quickstart: Connect github repository
 In this guide we show you how you can connect your github repository to InfraBox and run your first build within 3 minutes. We use the InfraBox playground, but the same works on your own InfraBox installation.
 
 For this guide you need:

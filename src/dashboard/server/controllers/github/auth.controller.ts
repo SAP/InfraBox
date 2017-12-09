@@ -1,6 +1,7 @@
 const passport = require('passport');
 const GitHubStrategy = require('passport-github').Strategy;
 const jwt = require("jsonwebtoken");
+const fs = require('fs');
 
 import { Router } from "express";
 import { db, handleDBError } from "../../db";
@@ -102,7 +103,7 @@ if (config.github.login.enabled) {
 
         db.none(`UPDATE "user" SET github_id = null, github_api_token = $1 WHERE id = $2`, [uid, user_id])
         .then(() => {
-            let a = passport.authenticate('github', {
+            const a = passport.authenticate('github', {
                 scope: ['user:email', 'repo', 'read:org'],
                 callbackURL: GITHUB_CALLBACK_URL + "?t=" + uid
             });
@@ -116,10 +117,10 @@ if (config.github.login.enabled) {
 router.get('/callback',
     passport.authenticate('github', { failureRedirect: '/github/auth', session: false }),
     (req, res, next) => {
-        const token = jwt.sign({ user: req['user'] }, config.dashboard.secret);
+        const cert = fs.readFileSync('/var/run/secrets/infrabox.net/rsa/id_rsa');
+        const token = jwt.sign({ user: req['user'], type: 'user' }, cert, { algorithm: 'RSA256' });
         res.cookie("token", token);
         res.redirect('/dashboard/');
     }
 );
-
 

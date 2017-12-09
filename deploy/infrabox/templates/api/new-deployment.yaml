@@ -2,18 +2,18 @@
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-    name: infrabox-api
+    name: infrabox-api-new
     namespace: {{ default "infrabox-system" .Values.general.system_namespace }}
     annotations:
         infrabox.net/checksum: {{ .Files.Get "values.yaml" | sha256sum }}
     labels:
-        app: infrabox-api
+        app: infrabox-api-new
 spec:
     replicas: {{ default 1 .Values.api.replicas }}
     template:
         metadata:
             labels:
-                app: infrabox-api
+                app: infrabox-api-new
         spec:
             {{- if .Values.api.node_selector }}
             nodeSelector:
@@ -57,11 +57,8 @@ spec:
             {{ end }}
             -
                 name: api
-                image: {{ .Values.general.docker_registry }}/{{ default "api" .Values.api.image }}:{{ .Values.api.tag }}
+                image: {{ .Values.general.docker_registry }}/api-new:{{ .Values.api.tag }}
                 imagePullPolicy: Always
-                command:
-                - "node"
-                - "/api/dist/server/app.js"
                 volumeMounts:
                 {{ include "mounts_rsa_public" . | indent 16 }}
                 {{ if .Values.storage.gcs.enabled }}
@@ -97,11 +94,6 @@ spec:
                 -
                     name: INFRABOX_DOCKER_REGISTRY_URL
                     value: {{ .Values.docker_registry.url }}
-                {{ if .Values.general.dont_check_certificates }}
-                -
-                    name: NODE_TLS_REJECT_UNAUTHORIZED
-                    value: "0"
-                {{ end }}
             volumes:
                 {{ include "volumes_database" . | indent 16 }}
                 {{ include "volumes_rsa" . | indent 16 }}

@@ -32,8 +32,14 @@
         <md-dialog-title>Authentication Token</md-dialog-title>
 
         <md-dialog-content>
-            Please save your token at a secure place. We will not show it to you again.<br>
-            {{ token }}
+            Please save your token at a secure place. We will not show it to you again.<br><br>
+
+            <pre>{{ token }}</pre><br><br>
+
+            You may later us it with infraboxcli:<br>
+            <pre>$ export INFRABOX_CLI_TOKEN=&lt;YOUR_TOKEN_VALUE&gt;
+$ infrabox {push|pull|...}
+            </pre>
         </md-dialog-content>
 
         <md-dialog-actions>

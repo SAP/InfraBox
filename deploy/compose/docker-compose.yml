@@ -66,7 +66,7 @@ services:
         tty: true
         volumes:
             - "/var/run/docker.sock:/var/run/docker.sock"
-            - "/data:/data"
+            - "/tmp/infrabox-compose/repo:/tmp/infrabox-compose/repo"
         environment:
             - INFRABOX_SERVICE=scheduler
             - INFRABOX_VERSION=latest
@@ -111,12 +111,13 @@ services:
            - minio
         networks:
             - infrabox
+        volumes: []
 
 
     job-api:
         image: $INFRABOX_DOCKER_REGISTRY/infrabox/api
         environment:
-            - INFRABOX_SERVICE=cli-api
+            - INFRABOX_SERVICE=job-api
             - INFRABOX_VERSION=latest
             - INFRABOX_STORAGE_GCS_ENABLED=false
             - INFRABOX_STORAGE_S3_ENABLED=true
@@ -165,6 +166,19 @@ services:
         links:
         networks:
             - infrabox
+        volumes: []
+
+    api:
+        image: $INFRABOX_DOCKER_REGISTRY/infrabox/api-new
+        environment:
+            - INFRABOX_SERVICE=api
+            - INFRABOX_VERSION=latest
+        links:
+        networks:
+            - infrabox
+        volumes: []
+
+
 networks:
     infrabox:
         driver: bridge

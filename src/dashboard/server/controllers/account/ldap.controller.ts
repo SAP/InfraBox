@@ -1,6 +1,7 @@
 "use strict";
 
 const jwt = require("jsonwebtoken");
+const fs = require('fs');
 
 import { Request, Response } from "express";
 import { Router } from "express";
@@ -68,7 +69,8 @@ router.post("/login", (req: Request, res: Response, next) => {
         })
         .then((u) => {
             user = u;
-            const token = jwt.sign({ user: { id: user.id } }, config.dashboard.secret);
+            const cert = fs.readFileSync('/var/run/secrets/infrabox.net/rsa/id_rsa');
+            const token = jwt.sign({ user: { id: user.id }, type: 'user' }, cert, { algorithm: 'RS256' });
             res.cookie("token", token);
             return OK(res, "logged in successfully");
         });

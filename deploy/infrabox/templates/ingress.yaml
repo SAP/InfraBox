@@ -37,6 +37,11 @@ spec:
                     serviceName: infrabox-api
                     servicePort: 8080
             -
+                path: /api/v1
+                backend:
+                    serviceName: infrabox-api-new
+                    servicePort: 8080
+            -
                 path: /api/job
                 backend:
                     serviceName: infrabox-job-api
