@@ -25,7 +25,7 @@ export function auth(req: Request, res: Response, next: any) {
         const cookies = parseCookies(req);
         const t = cookies["token"];
         const cert = fs.readFileSync('/var/run/secrets/infrabox.net/rsa/id_rsa.pub');
-        const decoded = jwt.verify(t, cert);
+        const decoded = jwt.verify(t, cert, { algorithm: 'RS256' });
 
         if (!decoded.user) {
             logger.debug("auth: user not set");
@@ -59,7 +59,7 @@ export function auth(req: Request, res: Response, next: any) {
 export function socket_auth(token: string) {
     try {
         const cert = fs.readFileSync('/var/run/secrets/infrabox.net/rsa/id_rsa.pub');
-        const decoded = jwt.verify(token, cert);
+        const decoded = jwt.verify(token, cert, { algorithm: 'RS256' });
 
         if (!decoded.user) {
             return null;
@@ -108,7 +108,7 @@ export function checkProjectAccessPublic(req: Request, res: Response, next: any)
 		const cookies = parseCookies(req);
         const t = cookies["token"];
         const cert = fs.readFileSync('/var/run/secrets/infrabox.net/rsa/id_rsa.pub');
-        const decoded = jwt.verify(t, cert);
+        const decoded = jwt.verify(t, cert, { algorithm: 'RS256' });
 
         if (decoded.user && isUUID(decoded.user.id)) {
             req["user"] = decoded.user;
@@ -149,7 +149,7 @@ export function checkProjectAccessPublicName(req: Request, res: Response, next: 
 		const cookies = parseCookies(req);
         const t = cookies["token"];
         const cert = fs.readFileSync('/var/run/secrets/infrabox.net/rsa/id_rsa.pub');
-        const decoded = jwt.verify(t, cert);
+        const decoded = jwt.verify(t, cert, { algorithm: 'RS256' });
 
         if (decoded.user && isUUID(decoded.user.id)) {
             req["user"] = decoded.user;

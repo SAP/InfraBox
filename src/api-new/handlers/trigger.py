@@ -88,8 +88,9 @@ def create_github_commit(project_id, repo_id, sha, branch):
         'token': github_api_token
     }
 
-    r = requests.post('http://localhost:8081/api/v1/commit', json=data)
+    r = requests.post('http://localhost:8081/api/v1/commit', data=data)
     commit = r.json()
+
     insert_commit(project_id, repo_id, branch, commit)
     return commit
 
