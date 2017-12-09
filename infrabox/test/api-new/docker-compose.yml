@@ -1,0 +1,21 @@
+version: "2"
+
+services:
+    postgres:
+        build:
+            context: ../../../
+            dockerfile: ./src/postgres/Dockerfile
+
+    test:
+        build:
+            context: ../../../
+            dockerfile: ./infrabox/test/api-new/Dockerfile
+        environment:
+            - INFRABOX_DATABASE_HOST=postgres
+            - INFRABOX_DATABASE_USER=postgres
+            - INFRABOX_DATABASE_PASSWORD=postgres
+            - INFRABOX_DATABASE_DB=postgres
+            - INFRABOX_DATABASE_PORT=5432
+        links:
+            - postgres
+

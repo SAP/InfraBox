@@ -5,6 +5,7 @@ import AddProject from '@/components/AddProject'
 import Login from '@/components/account/Login'
 import Signup from '@/components/account/Signup'
 import ProjectDetail from '@/components/project/ProjectDetail'
+import TriggerBuild from '@/components/project/Trigger'
 import BuildDetail from '@/components/build/BuildDetail'
 import JobDetail from '@/components/job/JobDetail'
 
@@ -31,6 +32,11 @@ export default new Router({
         path: '/project/:projectName',
         name: 'ProjectDetail',
         component: ProjectDetail,
+        props: true
+    }, {
+        path: '/project/:projectName/trigger',
+        name: 'TriggerBuild',
+        component: TriggerBuild,
         props: true
     }, {
         path: '/project/:projectName/build/:buildNumber/:buildRestartCounter',
