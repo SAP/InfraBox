@@ -1,6 +1,7 @@
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const validator = require("validator");
+const fs = require('fs');
 
 import { Request, Response } from "express";
 import { Router } from "express";
@@ -34,7 +35,11 @@ router.post("/login", (req: Request, res: Response, next) => {
             throw new ErrorMessage("Invalid email/password combination");
         }
 
-        const token = jwt.sign({ user: { id: user.id } }, config.dashboard.secret);
+        const cert = fs.readFileSync('/var/run/secrets/infrabox.net/rsa/id_rsa');
+        const token = jwt.sign({ user: { id: user.id }, type: 'user' },
+                               cert,
+                               { algorithm: 'RS256' });
+
         res.cookie("token", token);
         return OK(res, "logged in successfully");
     })
@@ -86,7 +91,10 @@ router.post("/register", (req: Request, res: Response, next) => {
                            [email, hash]);
         }).then((u) => {
             user = u;
-            const token = jwt.sign({ user: { id: user.id } }, config.dashboard.secret);
+            const cert = fs.readFileSync('/var/run/secrets/infrabox.net/rsa/id_rsa');
+            const token = jwt.sign({ user: { id: user.id }, type: 'user' },
+                                   cert,
+                                   { algorithm: 'RS256' });
             res.cookie("token", token);
             return OK(res, "logged in successfully");
         });

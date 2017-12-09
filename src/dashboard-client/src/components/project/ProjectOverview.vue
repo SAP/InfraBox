@@ -17,17 +17,13 @@
                 </md-button>
 
                 <md-menu-content>
-                    <md-menu-item v-if="project.builds[0] && project.builds[0].state==='running'" v-on:click="project.builds[0].abort()">
-                        <span>Stop Build</span>
-                        <md-button class="md-icon-button"><md-icon>not_interested</md-icon><md-tooltip md-direction="bottom">Stop latest build</md-tooltip></md-button>
-                    </md-menu-item>
-                    <md-menu-item v-if="project.builds[0]" v-on:click="project.builds[0].restart()">
-                        <span>Restart Build</span>
-                        <md-button class="md-icon-button"><md-icon>replay</md-icon><md-tooltip md-direction="bottom">Restart latest build</md-tooltip></md-button>
-                    </md-menu-item>
                     <md-menu-item v-if="project.builds[0]" v-on:click="project.builds[0].clearCache()">
                         <span>Clear Cache</span>
-                        <md-button class="md-icon-button"><md-icon>delete_sweep</md-icon><md-tooltip md-direction="bottom">Clear cache of latest build</md-tooltip></md-button>
+                        <md-button class="md-icon-button"><md-icon>delete_sweep</md-icon><md-tooltip md-direction="bottom">Clear cache</md-tooltip></md-button>
+                    </md-menu-item>
+                    <md-menu-item @click="triggerBuild()">
+                        <span>Trigger Build</span>
+                        <md-button class="md-icon-button"><md-icon>delete_sweep</md-icon><md-tooltip md-direction="bottom">Trigger a new build</md-tooltip></md-button>
                     </md-menu-item>
                     <md-menu-item @click="openDialog('confirmDeleteProject')">
                         <span>Delete Project</span>
@@ -82,6 +78,7 @@
 <script>
 import BuildTable from '../build/BuildTable'
 import ProjectService from '../../services/ProjectService'
+import router from '../../router'
 
 export default {
     props: ['project'],
@@ -98,6 +95,9 @@ export default {
         deleteProject () {
             this.closeDialog('confirmDeleteProject')
             ProjectService.deleteProject(this.project.id)
+        },
+        triggerBuild () {
+            router.push(`/project/${this.project.name}/trigger`)
         }
     }
 }

@@ -20,6 +20,7 @@ docker push ${docker_registry}infrabox/scheduler-docker-compose:$image_tag
 docker push ${docker_registry}infrabox/docker-compose-ingress:$image_tag
 docker push ${docker_registry}infrabox/docker-compose-minio-init:$image_tag
 docker push ${docker_registry}infrabox/api:$image_tag
+docker push ${docker_registry}infrabox/api-new:$image_tag
 docker push ${docker_registry}infrabox/dashboard-api:$image_tag
 docker push ${docker_registry}infrabox/static:$image_tag
 docker push ${docker_registry}infrabox/docker-registry-auth:$image_tag
