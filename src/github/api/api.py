@@ -55,7 +55,12 @@ def get_commit():
             logger.warning(result.json())
             return error(500, "internal server error")
 
-        result = result.json()
+        result = result.json()[0]
+
+        if not result:
+            logger.warning('no result returned')
+            return error(404, "Not Found")
+
         query['sha'] = result['object']['sha']
 
     url = '/repos/%s/%s/git/commits/%s' % (query['owner'], query['repo'], query['sha'])
