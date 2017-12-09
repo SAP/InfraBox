@@ -18,10 +18,10 @@ def test_no_version():
     run_exception('./test/no_version.yml', 'version not found')
 
 def test_unsupported_version():
-    run_exception('./test/unsupported_version.yml', 'version \'3\' not supported')
+    run_exception('./test/unsupported_version.yml', 'version \'3\' not supported, supported versions are: (\'3.2\',)')
 
 def test_invalid_version():
-    run_exception('./test/invalid_version.yml', 'version \'asd\' not supported')
+    run_exception('./test/invalid_version.yml', 'version \'asd\' not supported, supported versions are: (\'3.2\',)')
 
 def test_unsupported_option():
     run_exception('./test/unsupported_option.yml', '[services][test][expose] not supported')
