@@ -1,0 +1,233 @@
+<template>
+    <div v-if="data">
+        <md-card class="main-card">
+            <md-card-header class="main-card-header" style="padding-bottom: 10px">
+            <md-card-header-text>
+                <h3 class="md-title card-title">
+                <router-link :to="{name: 'ProjectDetail', params: {
+                projectName: data.project.name
+                }}">
+                    <span v-if="data.project.isGit()"><i class="fa fa-github"></i></span>
+                    <span v-if="!data.project.isGit()"><i class="fa fa-home"></i></span>
+                    {{ data.project.name }}
+                </router-link>
+                / <router-link :to="{name: 'BuildDetail', params: {
+                    projectName: data.project.name,
+                    buildNumber: data.build.number,
+                    buildRestartCounter: data.build.restartCounter
+                    }}">
+                    Build {{ data.build.number }}.{{ data.build.restartCounter }}
+                </router-link>
+                / <router-link :to="{name: 'JobDetail', params: {
+                projectName: data.project.name,
+                buildNumber: data.build.number,
+                buildRestartCounter: data.build.restartCounter,
+                jobId: data.job.name
+                }}">
+                {{ data.job.name}}
+                </router-link>
+                / {{ data.test.name }}
+                </h3>
+                <h3 class="md-subhead card-title"><strong>Test suite:</strong> {{ data.test.suite }}</h3>
+            </md-card-header-text>
+            <md-toolbar class="md-transparent">
+                <md-chip class="m-r-sm">{{ data.test.duration }} ms</md-chip>
+                <ib-state-circle-big :state="data.test.state"></ib-state-circle-big>
+            </md-toolbar>
+            </md-card-header>
+            <md-card-content>
+                <md-layout>
+                    <md-layout md-flex-xsmall="100" md-flex-small="100" md-flex-medium="100" md-flex-large="100" md-flex-xlarge="100">
+                        <div v-if="!data.test.stack && !data.test.message" style="width: 100%; margin: 16px">
+                            <md-card class="clean-card">
+                                <md-card-header>
+                                    <h2><i class="fa fa-fw fa-history"></i> Test history</h2>
+                                </md-card-header>
+                                <md-card-content>
+                                    <div id="chart-test-results" class="chart"></div>
+                                </md-card-content>
+                            </md-card>
+                        </div>
+                       <div v-if="!data.test.stack && !data.test.message" style="width: 100%; margin: 16px">
+                            <md-card class="clean-card">
+                                <md-card-header>
+                                    <h2><i class="fa fa-fw fa-check-circle-o"></i> There are no messages for this test at the moment.</h2>
+                                </md-card-header>
+                            </md-card>
+                        </div>
+                        <div style="width: 100%; margin: 16px">
+                            <md-card  v-if="data.test.stack" class="m-b-lg">
+                                <md-card-header class="main-card-header">
+                                    <div class="md-title"><i class="fa fa-fw fa-bug"></i> Stacktrace</div>
+                                </md-card-header>
+                                <md-card-content>
+                                    <pre class="p-t-md">{{ data.test.stack }}</pre>
+                                </md-card-content>
+                            </md-card>
+                            <md-card  v-if="data.test.message" >
+                                <md-card-header class="main-card-header">
+                                    <div class="md-title"><i class="fa fa-fw fa-envelope"></i> Message</div>
+                                </md-card-header>
+                                <md-card-content>
+                                    <pre class="p-t-md">{{ data.test.message }}</pre>
+                                </md-card-content>
+                            </md-card>
+                        </div>
+                    </md-layout>
+                </md-layout>
+            </md-card-content>
+		</md-card>
+    </div>
+</template>
+
+<script>
+import ProjectService from '../../services/ProjectService'
+import StateCircleBig from '../utils/StateCircleBig'
+import Date from '../utils/Date'
+import Duration from '../utils/Duration'
+import store from '../../store'
+import tauCharts from 'taucharts'
+import 'taucharts/build/development/plugins/tauCharts.legend'
+import 'taucharts/build/development/plugins/tauCharts.tooltip'
+
+export default {
+    name: 'JobDetail',
+    store,
+    props: ['jobName', 'projectName', 'buildNumber', 'buildRestartCounter', 'suiteName', 'testName'],
+    components: {
+        'ib-state-circle-big': StateCircleBig,
+        'ib-date': Date,
+        'ib-duration': Duration
+    },
+    asyncComputed: {
+        data: {
+            get () {
+                let job = null
+                let build = null
+                let project = null
+                return ProjectService
+                    .findProjectByName(this.projectName)
+                    .then((p) => {
+                        project = p
+                        return p.getBuild(this.buildNumber, this.buildRestartCounter)
+                    })
+                    .then((b) => {
+                        build = b
+                        return build.getJob(this.jobName)
+                    })
+                    .then((j) => {
+                        job = j
+                        const test = j.getTest(this.testName, this.suiteName)
+                        console.log(test)
+                        return {
+                            project,
+                            build,
+                            job,
+                            test
+                        }
+                    })
+            },
+            watch () {
+                // eslint-disable-next-line no-unused-expressions
+                this.projectName
+                // eslint-disable-next-line no-unused-expressions
+                this.buildNumber
+                // eslint-disable-next-line no-unused-expressions
+                this.buildRestartCounter
+                // eslint-disable-next-line no-unused-expressions
+                this.jobId
+            }
+        }
+    },
+    created () {
+        this.defData = [
+        {'runNo': 1, 'duration': 50, 'result': 'ok'},
+        {'runNo': 2, 'duration': 10, 'result': 'failure'},
+        {'runNo': 3, 'duration': 65, 'result': 'ok'},
+        {'runNo': 4, 'duration': 70, 'result': 'ok'},
+        {'runNo': 5, 'duration': 20, 'result': 'failure'},
+        {'runNo': 6, 'duration': 50, 'result': 'ok'}]
+    },
+    mounted () {
+        let draw = () => {
+         //   if (!this.test.results.length > 1) {
+         //       return
+         //   }
+
+            const config = {
+                plugins: [
+                    tauCharts.api.plugins.get('legend')(),
+                    tauCharts.api.plugins.get('tooltip')(
+                        {
+                            fields: ['runNo', 'duration', 'result'],
+                            formatters: {
+                                mem: {
+                                    label: 'Run Number',
+                                    format: (x) => {
+                                        return (x)
+                                    }
+                                },
+                                cpu: {
+                                    label: 'Duration',
+                                    format: (x) => {
+                                        return (x + ' ms')
+                                    }
+                                },
+                                date: {
+                                    label: 'Test Result',
+                                    format: (x) => {
+                                        return (x)
+                                    }
+                                }
+                            }
+                        })
+                ],
+                data: this.defData,
+                type: 'bar',
+                x: 'runNo',
+                y: 'duration',
+                color: 'result',
+                guide: {
+                    color: {
+                        brewer: {
+                            ok: '#388E3C',
+                            failure: '#cc5965'
+                        }
+                    }
+                }
+
+            }
+
+            const r = document.getElementById('chart-test-results')
+
+            if (!this.chart && r) {
+                this.chart = new tauCharts.Chart(config)
+                this.chart.renderTo('#chart-test-results')
+            }
+
+            if (this.chart) {
+                this.chart.refresh()
+            }
+
+            this.redraw = setTimeout(draw, 1000)
+        }
+
+        this.redraw = setTimeout(draw, 1000)
+    },
+    beforeDestroy () {
+        clearTimeout(this.redraw)
+    }
+
+}
+</script>
+
+<style scoped>
+.chart {
+    width: 100%;
+    height: 500px;
+    margin: 0;
+    padding: 0;
+    float: left;
+}
+</style>
+

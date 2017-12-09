@@ -8,6 +8,7 @@ import ProjectDetail from '@/components/project/ProjectDetail'
 import TriggerBuild from '@/components/project/Trigger'
 import BuildDetail from '@/components/build/BuildDetail'
 import JobDetail from '@/components/job/JobDetail'
+import TestDetail from '@/components/test/TestDetail'
 
 Vue.use(Router)
 
@@ -59,6 +60,20 @@ export default new Router({
                 buildNumber: parseInt(route.params.buildNumber),
                 buildRestartCounter: parseInt(route.params.buildRestartCounter),
                 jobName: route.params.jobName
+            }
+        }
+    }, {
+        path: '/project/:projectName/build/:buildNumber/:buildRestartCounter/job/:jobName/suite/:suiteName/test/:testName',
+        name: 'TestDetail',
+        component: TestDetail,
+        props: function (route) {
+            return {
+                projectName: route.params.projectName,
+                buildNumber: parseInt(route.params.buildNumber),
+                buildRestartCounter: parseInt(route.params.buildRestartCounter),
+                jobName: route.params.jobName,
+                suiteName: route.params.suiteName,
+                testName: route.params.testName
             }
         }
     }]
