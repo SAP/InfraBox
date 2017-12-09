@@ -6,6 +6,7 @@ import { db, handleDBError } from "../db";
 import { logger } from "./logger";
 
 const jwt = require("jsonwebtoken");
+const fs = require('fs');
 
 export function parseCookies(request) {
     var list = {},
@@ -23,7 +24,8 @@ export function auth(req: Request, res: Response, next: any) {
     try {
         const cookies = parseCookies(req);
         const t = cookies["token"];
-        const decoded = jwt.verify(t, config.dashboard.secret);
+        const cert = fs.readFileSync('/var/run/secrets/infrabox.net/rsa/id_rsa.pub');
+        const decoded = jwt.verify(t, cert);
 
         if (!decoded.user) {
             logger.debug("auth: user not set");
@@ -56,7 +58,8 @@ export function auth(req: Request, res: Response, next: any) {
 
 export function socket_auth(token: string) {
     try {
-        const decoded = jwt.verify(token, config.dashboard.secret);
+        const cert = fs.readFileSync('/var/run/secrets/infrabox.net/rsa/id_rsa.pub');
+        const decoded = jwt.verify(token, cert);
 
         if (!decoded.user) {
             return null;
@@ -104,7 +107,8 @@ export function checkProjectAccessPublic(req: Request, res: Response, next: any)
     try {
 		const cookies = parseCookies(req);
         const t = cookies["token"];
-        const decoded = jwt.verify(t, config.dashboard.secret);
+        const cert = fs.readFileSync('/var/run/secrets/infrabox.net/rsa/id_rsa.pub');
+        const decoded = jwt.verify(t, cert);
 
         if (decoded.user && isUUID(decoded.user.id)) {
             req["user"] = decoded.user;
@@ -144,7 +148,8 @@ export function checkProjectAccessPublicName(req: Request, res: Response, next: 
     try {
 		const cookies = parseCookies(req);
         const t = cookies["token"];
-        const decoded = jwt.verify(t, config.dashboard.secret);
+        const cert = fs.readFileSync('/var/run/secrets/infrabox.net/rsa/id_rsa.pub');
+        const decoded = jwt.verify(t, cert);
 
         if (decoded.user && isUUID(decoded.user.id)) {
             req["user"] = decoded.user;
