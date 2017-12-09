@@ -7,10 +7,7 @@ def handle_version(d, r):
     r["version"] = "2"
 
 def handle_service(name, d, r):
-    r['services'][name] = {
-        "dns": "8.8.8.8",
-        "dns_search": ""
-    }
+    r['services'][name] = {}
 
     for key, value in d[name].iteritems():
         if key == "links":
