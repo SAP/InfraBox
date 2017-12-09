@@ -1,0 +1,18 @@
+{{ if .Values.api.enabled }}
+kind: Service
+apiVersion: v1
+metadata:
+    name: infrabox-api-new
+    namespace: {{ default "infrabox-system" .Values.general.system_namespace }}
+    labels:
+        app: infrabox-api-new
+spec:
+    selector:
+        app: infrabox-api-new
+    ports:
+    -
+        name: http-web
+        protocol: TCP
+        port: 8080
+        targetPort: 8080
+{{ end }}

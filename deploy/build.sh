@@ -20,6 +20,7 @@ infrabox run ib/deploy/scheduler-docker-compose -t ${docker_registry}infrabox/sc
 infrabox run ib/deploy/docker-compose-ingress -t ${docker_registry}infrabox/docker-compose-ingress:$image_tag
 infrabox run ib/deploy/docker-compose-minio-init -t ${docker_registry}infrabox/docker-compose-minio-init:$image_tag
 infrabox run ib/deploy/api              -t ${docker_registry}infrabox/api:$image_tag
+infrabox run ib/deploy/api-new          -t ${docker_registry}infrabox/api-new:$image_tag
 infrabox run ib/deploy/dashboard-api    -t ${docker_registry}infrabox/dashboard-api:$image_tag
 infrabox run ib/deploy/build-dashboard-client
 infrabox run ib/deploy/static           -t ${docker_registry}infrabox/static:$image_tag

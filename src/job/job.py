@@ -34,7 +34,6 @@ class RunJob(Job):
     def __init__(self, console):
         Job.__init__(self)
         self.console = console
-        self.data_dir = '/repo/.infrabox'
         self.storage_dir = '/tmp/storage'
 
         if os.path.exists(self.storage_dir):
@@ -42,9 +41,13 @@ class RunJob(Job):
 
         os.makedirs(self.storage_dir)
 
+        self.mount_repo_dir = os.environ.get('INFRABOX_JOB_REPO_MOUNT_PATH', '/repo')
+        self.mount_data_dir = self.mount_repo_dir + '/.infrabox'
+
+
     def create_infrabox_directories(self):
-        if os.path.exists(self.data_dir):
-            shutil.rmtree(self.data_dir)
+        if os.path.exists(self.mount_data_dir):
+            shutil.rmtree(self.mount_data_dir, ignore_errors=True)
 
         #
         # /tmp/infrabox is mounted to the same path on the host
@@ -53,19 +56,19 @@ class RunJob(Job):
         #
 
         # <data_dir>/cache is mounted in the job to /infrabox/cache
-        self.infrabox_cache_dir = os.path.join(self.data_dir, 'cache')
+        self.infrabox_cache_dir = os.path.join(self.mount_data_dir, 'cache')
         makedirs(self.infrabox_cache_dir)
 
         # <data_dir>/inputs is mounted in the job to /infrabox/inputs
-        self.infrabox_inputs_dir = os.path.join(self.data_dir, 'inputs')
+        self.infrabox_inputs_dir = os.path.join(self.mount_data_dir, 'inputs')
         makedirs(self.infrabox_inputs_dir)
 
         # <data_dir>/output is mounted in the job to /infrabox/output
-        self.infrabox_output_dir = os.path.join(self.data_dir, 'output')
+        self.infrabox_output_dir = os.path.join(self.mount_data_dir, 'output')
         makedirs(self.infrabox_output_dir)
 
         # <data_dir>/upload is mounted in the job to /infrabox/upload
-        self.infrabox_upload_dir = os.path.join(self.data_dir, 'upload')
+        self.infrabox_upload_dir = os.path.join(self.mount_data_dir, 'upload')
         makedirs(self.infrabox_upload_dir)
 
         # <data_dir>/upload/testresult is mounted in the job to /infrabox/upload/testresult
@@ -86,7 +89,7 @@ class RunJob(Job):
 
     def create_jobs_json(self):
         # create job.json
-        infrabox_job_json = os.path.join(self.data_dir, 'job.json')
+        infrabox_job_json = os.path.join(self.mount_data_dir, 'job.json')
         with open(infrabox_job_json, 'w') as out:
             o = {
                 "parent_jobs": self.dependencies,
@@ -114,7 +117,7 @@ class RunJob(Job):
             json.dump(o, out)
 
     def create_gosu(self):
-        infrabox_gosu = os.path.join(self.data_dir, 'gosu.sh')
+        infrabox_gosu = os.path.join(self.mount_data_dir, 'gosu.sh')
         with open(infrabox_gosu, 'w') as out:
             out.write('''#!/bin/sh
 exec "$@"
@@ -156,8 +159,8 @@ exec "$@"
         if branch:
             cmd += ['--single-branch', '-b', branch]
 
-        c.collect("## Clone repository", show=True)
-        cmd += [clone_url, '/repo']
+        c.header("Clone repository", show=True)
+        cmd += [clone_url, self.mount_repo_dir]
 
         c.collect(' '.join(cmd), show=True)
         c.execute(cmd, show=True)
@@ -165,17 +168,17 @@ exec "$@"
         if ref:
             cmd = ['git', 'fetch', '--depth=10', clone_url, ref]
             c.collect(' '.join(cmd), show=True)
-            c.execute(cmd, cwd="/repo", show=True)
+            c.execute(cmd, cwd=self.mount_repo_dir, show=True)
 
         c.collect("#Checkout commit", show=True)
         cmd = ['git', 'checkout', '-qf', '-b', 'job', commit]
 
         c.collect(' '.join(cmd), show=True)
-        c.execute(cmd, cwd="/repo", show=True)
+        c.execute(cmd, cwd=self.mount_repo_dir, show=True)
 
-        c.collect("## Init submodules", show=True)
-        c.execute(['git', 'submodule', 'init'], cwd="/repo", show=True)
-        c.execute(['git', 'submodule', 'update'], cwd="/repo", show=True)
+        c.header("Init submodules", show=True)
+        c.execute(['git', 'submodule', 'init'], cwd=self.mount_repo_dir, show=True)
+        c.execute(['git', 'submodule', 'update'], cwd=self.mount_repo_dir, show=True)
 
 
     def get_source(self):
@@ -198,8 +201,11 @@ exec "$@"
             c.header("Downloading Source")
             storage_source_zip = os.path.join(self.storage_dir, 'source.zip')
             self.get_file_from_api_server('/source', storage_source_zip)
-            os.makedirs('/repo')
-            c.execute(['unzip', storage_source_zip, '-d', '/repo'])
+
+            if not os.path.exists(self.mount_repo_dir):
+                os.makedirs(self.mount_repo_dir)
+
+            c.execute(['unzip', storage_source_zip, '-d', self.mount_repo_dir])
         elif self.project['type'] == 'test':
             pass
         else:
@@ -208,15 +214,16 @@ exec "$@"
     def main_create_jobs(self):
         c = self.console
 
-        if not os.path.isfile('/repo/infrabox.json'):
+        ib_json = os.path.join(self.mount_repo_dir, 'infrabox.json')
+        if not os.path.isfile(ib_json):
             raise Failure("infrabox.json not found")
 
         c.header("Parsing infrabox.json", show=True)
-        data = self.parse_infrabox_json('/repo/infrabox.json')
+        data = self.parse_infrabox_json(ib_json)
         self.check_file_exist(data)
 
         c.header("Creating jobs", show=True)
-        jobs = self.get_job_list(data, c, self.job['repo'], infrabox_paths={"/repo/infrabox.json": True})
+        jobs = self.get_job_list(data, c, self.job['repo'], infrabox_paths={ib_json: True})
 
         if jobs:
             self.create_jobs(jobs)
@@ -228,7 +235,7 @@ exec "$@"
         # if the started file exists already this
         # means the container crashed and restarted.
         # then we just mark it as failed.
-        p = os.path.join(self.data_dir, "started")
+        p = os.path.join(self.mount_data_dir, "started")
 
         if os.path.exists(p):
             raise Failure("Container crashed")
@@ -425,15 +432,15 @@ exec "$@"
         else:
             c.collect("Cache is empty\n", show=True)
 
-        shutil.rmtree(self.data_dir, True)
+        shutil.rmtree(self.mount_data_dir, True)
         shutil.rmtree(self.infrabox_cache_dir, True)
 
     def run_docker_compose(self, c):
         c.header("Build containers", show=True)
         f = self.job['dockerfile']
 
-        compose_file = os.path.join('/repo', f)
-        compose_file_new = compose_file + ".infrabox"
+        compose_file = os.path.join(self.mount_repo_dir, f)
+        compose_file_new = compose_file + ".infrabox.json"
 
         # rewrite compose file
         compose_file_content = create_from(compose_file)
@@ -459,7 +466,7 @@ exec "$@"
             makedirs(service_badge_dir)
 
             service_volumes = [
-                "/repo:/infrabox/context",
+                "%s:/infrabox/context" % self.mount_repo_dir,
                 "%s:/infrabox/cache" % service_cache_dir,
                 "%s:/infrabox/inputs" % self.infrabox_inputs_dir,
                 "%s:/infrabox/output" % service_output_dir,
@@ -473,12 +480,32 @@ exec "$@"
                 service_volumes.append("/local-cache:/infrabox/local-cache")
 
             compose_file_content['services'][service]['volumes'] = service_volumes
+
+            image_name = get_registry_name() + '/' \
+                         + self.project['id'] + '/' \
+                         + self.job['name'] + '/' \
+                         + service
+
+            image_name_latest = image_name + ':latest'
+            build = compose_file_content['services'][service].get('build', None)
+
+            if build:
+                compose_file_content['services'][service]['image'] = image_name_latest
+                self.get_cached_image(image_name_latest)
+
         with open(compose_file_new, "w+") as out:
-            yaml.dump(compose_file_content, out, default_flow_style=False)
+            json.dump(compose_file_content, out)
 
         collector = StatsCollector()
 
         try:
+            try:
+                c.execute(['docker-compose', '-f', compose_file_new, 'rm'],
+                          env=self.environment)
+            except Exception as e:
+                logger.exception(e)
+
+
             self.environment['PATH'] = os.environ['PATH']
             c.execute(['docker-compose', '-f', compose_file_new, 'build'],
                       show=True, env=self.environment)
@@ -486,7 +513,7 @@ exec "$@"
 
             cwd = self.job.get('base_path', None)
             if cwd:
-                cwd = os.path.join('/repo', cwd)
+                cwd = os.path.join(self.mount_repo_dir, cwd)
 
 
             c.execute(['docker-compose', '-f', compose_file_new, 'up',
@@ -496,8 +523,27 @@ exec "$@"
         except:
             raise Failure("Failed to build and run container")
         finally:
-            collector.stop()
-            self.post_stats(collector.get_result())
+            try:
+                collector.stop()
+                self.post_stats(collector.get_result())
+                c.execute(['docker-compose', '-f', compose_file_new, 'rm'],
+                          env=self.environment)
+            except Exception as e:
+                logger.exception(e)
+
+        for service in compose_file_content['services']:
+            image_name = get_registry_name() + '/' \
+                         + self.project['id'] + '/' \
+                         + self.job['name'] + '/' \
+                         + service
+
+            image_name_latest = image_name + ':latest'
+
+            build = compose_file_content['services'][service].get('build', None)
+            if build:
+                compose_file_content['services'][service]['image'] = service
+
+            self.cache_docker_image(image_name_latest, image_name_latest)
 
         return True
 
@@ -549,10 +595,13 @@ exec "$@"
         collector = StatsCollector()
 
         container_name = self.job['id']
-        cmd = ['docker', 'run', '-t', '--name', container_name, '-v', self.data_dir + ':/infrabox']
+        cmd = ['docker', 'run', '-t', '--name', container_name]
+
+        # repo mount
+        cmd += ['-v', '%s:/infrabox' % self.mount_data_dir]
 
         # Mount context
-        cmd += ['-v', '/repo:/infrabox/context']
+        cmd += ['-v', '%s:/infrabox/context' % self.mount_repo_dir]
 
         # Mount docker socket
         if os.environ['INFRABOX_JOB_MOUNT_DOCKER_SOCKET'] == 'true':
@@ -597,23 +646,32 @@ exec "$@"
             c.header("Run container", show=True)
             c.execute(cmd, show=True)
             c.execute(("docker", "commit", container_name, image_name))
-        except:
+        except Exception as e:
             try:
                 c.execute(("docker", "commit", container_name, image_name))
                 self.push_container(image_name)
             except:
                 pass
 
+            logger.exception(e)
             raise Failure("Container run exited with error")
+
         finally:
             collector.stop()
             self.post_stats(collector.get_result())
+
+            try:
+                c.execute(("docker", "rm", container_name))
+            except:
+                pass
+
 
     def build_docker_container(self, image_name, cache_image):
         c = self.console
 
         try:
             c.header("Build container", show=True)
+            self.get_cached_image(cache_image)
 
             cmd = ['docker', 'build', '--cache-from', cache_image, '-t', image_name, '.', '-f', self.job['dockerfile']]
 
@@ -621,7 +679,8 @@ exec "$@"
                 for name, value in self.job['build_arguments'].iteritems():
                     cmd += ['--build-arg', '%s=%s' % (name, value)]
 
-            c.execute(cmd, cwd="/repo", show=True)
+            c.execute(cmd, cwd=self.mount_repo_dir, show=True)
+            self.cache_docker_image(image_name, cache_image)
         except:
             raise Failure("Failed to build the container")
 
@@ -651,9 +710,7 @@ exec "$@"
         image_name_build = image_name + ':build_%s' % self.build['build_number']
         image_name_latest = image_name + ':latest'
 
-        self.get_cached_image(image_name_latest)
         self.build_docker_container(image_name_build, image_name_latest)
-        self.cache_docker_image(image_name_build, image_name_latest)
         self.run_docker_container(image_name_build)
         self.deploy_container(image_name_build)
         self.push_container(image_name_build)
@@ -662,12 +719,16 @@ exec "$@"
 
     def get_cached_image(self, image_name_latest):
         c = self.console
+        c.collect("Get cached image %s" % image_name_latest, show=True)
+
         self.login_docker_registry()
         c.execute(['docker', 'pull', image_name_latest], show=True, ignore_error=True)
         self.logout_docker_registry()
 
     def cache_docker_image(self, image_name_build, image_name_latest):
         c = self.console
+        c.collect("Upload cached image %s" % image_name_latest, show=True)
+
         c.execute(['docker', 'tag', image_name_build, image_name_latest], show=True)
 
         self.login_docker_registry()
@@ -685,7 +746,10 @@ exec "$@"
 
             return data
 
-    def check_file_exist(self, data, base_path="/repo"):
+    def check_file_exist(self, data, base_path=None):
+        if not base_path:
+            base_path = self.mount_repo_dir
+
         jobs = data.get('jobs', [])
         for job in jobs:
             job_type = job['type']
@@ -731,8 +795,11 @@ exec "$@"
 
     def get_job_list(self, data, c, repo, parent_name="",
                      base_path=None,
-                     repo_path='/repo', infrabox_paths=None):
+                     repo_path=None, infrabox_paths=None):
         #pylint: disable=too-many-locals
+
+        if not repo_path:
+            repo_path = self.mount_repo_dir
 
         if not infrabox_paths:
             infrabox_paths = {}
@@ -874,14 +941,14 @@ def main():
         j.console.flush()
         j.update_status('finished')
     except Failure as e:
-        j.console.collect('## Failure', show=True)
+        j.console.header('Failure', show=True)
         j.console.collect(e.message, show=True)
         j.console.flush()
         j.update_status('failure')
     except:
         print_stackdriver()
         if j:
-            j.console.collect('## An error occured', show=True)
+            j.console.header('An error occured', show=True)
             msg = traceback.format_exc()
             j.console.collect(msg, show=True)
             j.console.flush()

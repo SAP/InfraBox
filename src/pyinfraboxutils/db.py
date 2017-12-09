@@ -1,6 +1,7 @@
 import time
 import os
 import psycopg2
+import psycopg2.extras
 from pyinfraboxutils import get_logger
 
 logger = get_logger('infrabox')
@@ -35,11 +36,26 @@ class DB(object):
         return r[0]
 
     def execute_many(self, stmt, args=None):
-        c = self.conn.cursor()
+        c = self.conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
         c.execute(stmt, args)
         r = c.fetchall()
         c.close()
         return r
+
+    def execute_one_dict(self, stmt, args=None):
+        r = self.execute_many_dict(stmt, args)
+        if not r:
+            return r
+
+        return r[0]
+
+    def execute_many_dict(self, stmt, args=None):
+        c = self.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        c.execute(stmt, args)
+        r = c.fetchall()
+        c.close()
+        return r
+
 
     def execute(self, stmt, args=None):
         c = self.conn.cursor()

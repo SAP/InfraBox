@@ -1,5 +1,6 @@
 <template>
     <div id='app'>
+        <ib-disconnect></ib-disconnect>
         <ib-notifications></ib-notifications>
         <md-toolbar>
             <md-button v-if="$store.state.user" class="md-icon-button" @click="toggleLeftSidenav">
@@ -77,9 +78,13 @@
 <script>
 import store from './store'
 import router from './router'
+import Disconnect from './components/utils/Disconnect'
 
 export default {
     name: 'app',
+    components: {
+        'ib-disconnect': Disconnect
+    },
     methods: {
         toggleLeftSidenav () {
             this.$refs.leftSidenav.toggle()

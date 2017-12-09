@@ -34,6 +34,13 @@ def main():
 
             j['deployments'] = new_deps
 
+    branch = os.environ.get('INFRABOX_BRANCH', None)
+    if not branch:
+        for j in deployments['jobs']:
+            if 'deployments' in j:
+                del j['deployments']
+
+
     with open('/infrabox/output/deployments.json', 'w') as out:
         print json.dumps(deployments, indent=4)
         json.dump(deployments, out)

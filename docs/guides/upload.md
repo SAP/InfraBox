@@ -26,7 +26,6 @@ We can use [infraboxcli](https://github.com/InfraBox/cli) to intialize a project
 Before we can push the projec to InfraBox we have to configure the environment.
 
     $ export INFRABOX_CLI_TOKEN=<THE_TOKEN_YOU_CREATED_EARLIER>
-    $ export INFRABOX_CLI_PROJECT_ID=<THE_PROJECT_ID>
     $ export INFRABOX_API_URL=https://infrabox.ninja/api/cli
 
 To actually push your project run

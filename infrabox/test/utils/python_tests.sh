@@ -1,7 +1,7 @@
 #!/bin/sh
 
 cd tests
-coverage run --source=.,/auth --branch test.py
+coverage run --source=.,$1 --branch test.py
 rc=$?
 
 set -e

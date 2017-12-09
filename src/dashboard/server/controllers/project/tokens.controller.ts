@@ -6,13 +6,16 @@ import { param_validation as pv } from "../../utils/validation";
 import { Validator } from 'jsonschema';
 import { auth, checkProjectAccess } from "../../utils/auth";
 
+const jwt = require('jsonwebtoken');
+const fs = require('fs');
+
 const router = Router({ mergeParams: true });
 module.exports = router;
 
 router.get("/", pv, auth, checkProjectAccess, (req: Request, res: Response, next) => {
     const project_id = req.params['project_id'];
 
-    db.any(`SELECT token, description, scope_push, scope_pull, id
+    db.any(`SELECT description, scope_push, scope_pull, id
             FROM "auth_token" where project_id = $1`,
         [project_id])
         .then((tokens: any[]) => {
@@ -24,7 +27,7 @@ const AuthTokenSchema = {
     id: "/AuthTokenSchema",
     type: "object",
     properties: {
-        description: { type: "string" },
+        description: { type: "string", minLength: 3, maxLength: 255 },
         scope_pull: { type: "boolean" },
         scope_push: { type: "boolean" },
     },
@@ -46,10 +49,24 @@ router.post("/", pv, auth, checkProjectAccess, (req: Request, res: Response, nex
     const scope_pull = req['body']['scope_pull'];
 
     db.one(`INSERT INTO auth_token (description, scope_push, scope_pull, project_id)
-            VALUES ($1, $2, $3, $4) RETURNING token`,
+            VALUES ($1, $2, $3, $4) RETURNING id`,
         [description, scope_push, scope_pull, project_id])
     .then((r) => {
-        return OK(res, "Successfully added token", { token: r.token });
+        const t = {
+            id: r.id,
+            scope: {
+                pull: scope_pull,
+                push: scope_push
+            },
+            project: {
+                id: project_id
+            },
+            type: 'project-token'
+        };
+
+        const cert = fs.readFileSync('/var/run/secrets/infrabox.net/rsa/id_rsa');
+        const token = jwt.sign(t, cert, { algorithm: 'RS256'});
+        return OK(res, "Successfully added token", { token: token });
     }).catch(handleDBError(next));
 });
 

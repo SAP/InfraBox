@@ -823,7 +823,7 @@ def post_stats():
 
     try:
         g.db.execute("UPDATE job SET stats = %s WHERE id = %s", (json.dumps(stats), job_id))
-        g.conn.commit()
+        g.db.commit()
     except:
         pass
 

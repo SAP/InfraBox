@@ -145,6 +145,19 @@
         }]
     }, {
         "type": "docker",
+        "name": "api-new",
+        "docker_file": "src/api-new/Dockerfile",
+        "build_only": true,
+        "resources": { "limits": { "cpu": 1, "memory": 2048 } },
+        "deployments": [{
+            "type": "docker-registry",
+            "host": "quay.io/infrabox",
+            "repository": "api-new",
+            "username": "infrabox+infrabox_ci",
+            "password": { "$secret": "QUAY_PASSWORD" }
+        }]
+    }, {
+        "type": "docker",
         "name": "job",
         "docker_file": "src/job/Dockerfile",
         "build_only": true,

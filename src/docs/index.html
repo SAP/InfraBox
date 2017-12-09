@@ -412,9 +412,10 @@ Example app listening on port 8080!
                     </p>
 
                     <p>So if you have your project and Authentication Token created you only need to run:</p>
-                    <pre class="line-numbers"><code class="language-bash">export INFRABOX_CLI_PROJECT_ID=&lt;YOUR_PROJECT_ID&gt;
+                    <pre class="line-numbers"><code class="language-bash">export INFRABOX_API_URL=&lt;API_URL&gt;
 export INFRABOX_CLI_TOKEN=&lt;YOUR_AUTH_TOKEN&gt;
 infrabox push</code></pre>
+                    <p>The API_URL of infrabox.ninja playground is https://infrabox.ninja/api/cli.</p>
 
                     <p>That's it, you can now offload your jobs to the InfraBox infrastructure. Go to the Dashboard and see your job running. You may also use <kbd>--show-console</kbd> to print the console output of your jobs. See <a href="#infraboxcli-push-job">here</a> for more details.</p>
                     <!--TODO: Ref missing-->
@@ -627,13 +628,16 @@ services:
                     <h3 id="job-type-docker">docker</h3>
                     <p>The job type docker is one of the most important jobs. You can use it to run any Docker container you like.</p>
                     <pre class="line-numbers"><code  class="language-javascript">{
-    "type": "docker",
-    "name": "build",
-    "docker_file": "infrabox/build-and-test/Dockerfile",
-    "resources": { "limits": { "cpu": 1, "memory": 1024 } },
-    "build_only": false,
-    "depends_on": ["other_job_name"],
-    "environment": { ... }
+    "version": 1,
+    "jobs": [{
+        "type": "docker",
+        "name": "build",
+        "docker_file": "infrabox/build-and-test/Dockerfile",
+        "resources": { "limits": { "cpu": 1, "memory": 1024 } },
+        "build_only": false,
+        "depends_on": ["other_job_name"],
+        "environment": { ... }
+    }]
 }</code></pre>
 
                     <div class="table-responsive">
@@ -738,12 +742,15 @@ CMD /usr/bin/test.py
 
                     <p>An example docker-compose job definition:</p>
                     <pre class="line-numbers"><code class="language-javascript">{
-    "type": "docker-compose",
-    "name": "test",
-    "docker_file": "infrabox/test/docker-compose.yml"
-    "resources": { "limits": { "cpu": 1, "memory": 1024 } },
-    "depends_on": ["other_job_name"],
-    "environment": { ... }
+    "version": 1,
+    "jobs": [{
+        "type": "docker-compose",
+        "name": "test",
+        "docker_compose_file": "infrabox/test/docker-compose.yml",
+        "resources": { "limits": { "cpu": 1, "memory": 1024 } },
+        "depends_on": ["other_job_name"],
+        "environment": { ... }
+    }]
 }</code></pre>
 
                     <div class="table-responsive">
@@ -813,11 +820,14 @@ CMD /usr/bin/test.py
                     <p>It's not necessary to have all your job definitions in your own project. With the git job type you can include job definitions for any accessible git repository.</p>
                     <p>An example git job definition:</p>
                     <pre class="line-numbers"><code class="language-javascript">{
-    "type": "git",
-    "name": "some-external-jobs",
-    "git_url": "https://github.com/InfraBox/examples.git",
-    "commit": "master",
-    "depends_on": ["other_job_name"]
+    "version": 1,
+    "jobs": [{
+        "type": "git",
+        "name": "some-external-jobs",
+        "git_url": "https://github.com/InfraBox/examples.git",
+        "commit": "master",
+        "depends_on": ["other_job_name"]
+    }]
 }</code></pre>
 
                     <div class="table-responsive">
@@ -875,10 +885,13 @@ CMD /usr/bin/test.py
                     <p>If you have many jobs you might want to structure them in different files.</p>
                     <p>An example job definition:</p>
                     <pre class="line-numbers"><code class="language-javascript">{
-    "type": "workflow",
-    "name": "deploy",
-    "infrabox_file": "deployments.json",
-    "depends_on": ["test"]
+    "version": 1,
+    "jobs": [{
+        "type": "workflow",
+        "name": "deploy",
+        "infrabox_file": "deployments.json",
+        "depends_on": ["test"]
+    }]
 }</code></pre>
 
                     <div class="table-responsive">
