@@ -190,7 +190,7 @@ export default {
                 guide: {
                     color: {
                         brewer: {
-                            ok: '#388E3C',
+                            ok: '#43A047',
                             failure: '#cc5965'
                         }
                     }
