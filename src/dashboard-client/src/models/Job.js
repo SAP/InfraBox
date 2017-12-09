@@ -150,6 +150,17 @@ export default class Job {
         this.currentSection.generateHtml()
     }
 
+    getTest (name, suite) {
+        this.loadTests()
+        for (const t of this.tests) {
+            if (t.name === name && t.suite === suite) {
+                return t
+            }
+        }
+
+        return null
+    }
+
     loadBadges () {
         return APIService.get(`project/${this.project.id}/job/${this.id}/badges`)
             .then((badges) => {

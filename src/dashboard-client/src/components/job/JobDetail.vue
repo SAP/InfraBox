@@ -43,7 +43,7 @@
                                 <ib-console :job="data.job"></ib-console>
                             </md-tab>
                             <md-tab id="test-list" md-icon="multiline_chart" md-label="Tests">
-                                <ib-tests :job="data.job"></ib-tests>
+                                <ib-tests :job="data.job" :build="data.build" :project="data.project"></ib-tests>
                             </md-tab>
                             <md-tab id="stats" md-icon="insert_chart" md-label="Stats" style="height:500px">
                                 <ib-stats :job="data.job"></ib-stats>
