@@ -4,6 +4,7 @@
             <md-card-header class="main-card-header">
                 <md-card-header-text>
                     <h3 class="md-title card-title">
+                        Trigger Build for:
                         <span v-if="project.isGit()"><i class="fa fa-github"></i></span>
                         <span v-if="!project.isGit()"><i class="fa fa-home"></i></span>
                         {{ project.name }}
@@ -11,19 +12,47 @@
                 </md-card-header-text>
             </md-card-header>
             <md-card-area>
-                <form novalidate @submit.stop.prevent="submit">
-                    <md-input-container>
-                        <label>Branch</label>
-                        <md-input v-model="branch"></md-input>
-                    </md-input-container>
-                    <md-input-container>
-                        <label>Sha</label>
-                        <md-input v-model="sha"></md-input>
-                    </md-input-container>
+                <form novalidate @submit.stop.prevent="submit" class="m-xl">
+                    <div class="md-body-2 p-t-lg m-b-md"><i class="fa fa-fw fa-rocket"></i> Branch or Sha to trigger:</div>
+                    <div class="m-l-md m-r-xl">
+                        <md-input-container>
+                            <label>Branch</label>
+                            <md-input required v-model="branch"></md-input>
+                        </md-input-container>
+                        <md-input-container class="m-r-xl">
+                            <label>Sha</label>
+                            <md-input required v-model="sha"></md-input>
+                        </md-input-container>
+                    </div>
+                    <md-list md-theme="white" class="m-t-md m-b-md ">
+                        <div class="m-t-md m-b-md"><span class="md-body-2"><i class="fa fa-fw fa-sticky-note-o"></i> Environment Variables </span>(optional):</div>
+                        <md-list-item class="m-r-xl">
+                            <md-input-container class="m-r-sm">
+                                <label>Variable Name</label>
+                                <md-input v-model="name"></md-input>
+                            </md-input-container>
+                            <md-input-container class="m-l-sm">
+                                <label>Variable Value</label>
+                                <md-input v-model="value"></md-input>
+                            </md-input-container>
+                            <md-button class="md-icon-button md-list-action" @click="addEnvVar()">
+                                <md-icon md-theme="running" class="md-primary">add_circle</md-icon>
+                                <md-tooltip>Add new environment variable</md-tooltip>
+                            </md-button>
+                        </md-list-item>
+                        <md-list-item  v-for="envVar in envVars" :key="envVar.name" class="m-r-xl">
+                            <md-input-container class="m-r-sm">{{ envVar.name }}</md-input-container>
+                            <md-input-container class="m-l-sm"><span class="m-l-sm">{{ envVar.value }}</span></md-input-container>
+                            <md-button type="submit" class="md-icon-button md-list-action" @click="deleteEnvVar(envVar.name)">
+                                <md-icon class="md-primary">delete</md-icon>
+                                <md-tooltip>Delete environment variable</md-tooltip>
+                            </md-button>
+                        </md-list-item>
+                    </md-list>
                     <md-button
-                        md-theme="default"
+                        md-theme="running"
                         class="md-raised md-primary"
-                        @click="trigger()">Trigger</md-button>
+                        @click="trigger()"><i class="fa fa-fw fa-rocket"></i> Trigger</md-button>
                 </form>
             </md-card-area>
         </md-card>
@@ -40,12 +69,25 @@ export default {
     props: ['projectName'],
     data: () => ({
         branch: '',
-        sha: ''
+        sha: '',
+        name: '',
+        value: ''
     }),
+    created () {
+        this.envVars = []
+    },
     store,
     methods: {
         trigger () {
             this.project.triggerBuild(this.branch, this.sha)
+        },
+        deleteEnvVar (id) {
+        },
+        addEnvVar () {
+            const currVariable = {name: this.name, value: this.value}
+            this.envVars.push(currVariable)
+            this.name = ''
+            this.value = ''
         }
     },
     asyncComputed: {
