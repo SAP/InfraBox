@@ -14,7 +14,11 @@
 
                 <md-table-body>
                     <md-table-row v-for="t in job.tests" :id="t.name+t.suite" :key="t.name+t.suite">
-                        <md-table-cell>{{ t.name }}</md-table-cell>
+                        <md-table-cell>
+                            <router-link :to="{name: 'TestDetail', params: {projectName: project.name, buildNumber: build.number, buildRestartCounter: build.restartCounter, jobName: job.name, testName: t.name, suiteName: t.suite }}">
+                                {{ t.name }}
+                            </router-link>
+                        </md-table-cell>
                         <md-table-cell>{{ t.suite }}</md-table-cell>
                         <md-table-cell>{{ t.duration }} ms</md-table-cell>
                         <md-table-cell><ib-state :state="t.state"></ib-state></md-table-cell>
@@ -30,7 +34,7 @@
 <script>
 export default {
     name: 'TestList',
-    props: ['job'],
+    props: ['job', 'project', 'build'],
     created () {
         this.job.loadTests()
     }
