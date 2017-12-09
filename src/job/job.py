@@ -491,6 +491,7 @@ exec "$@"
 
             if build:
                 compose_file_content['services'][service]['image'] = image_name_latest
+                compose_file_content['services'][service]['build']['cache_from'] = image_name_latest
                 self.get_cached_image(image_name_latest)
 
         with open(compose_file_new, "w+") as out:

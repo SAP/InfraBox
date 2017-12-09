@@ -1,10 +1,11 @@
 import yaml
 
 def handle_version(d, r):
-    if str(d['version']) != "2":
-        raise Exception("version '%s' not supported" % d['version'])
+    supported_versions = ("3.2",)
+    if str(d['version']) not in supported_versions:
+        raise Exception("version '%s' not supported, supported versions are: %s" % (d['version'], supported_versions))
 
-    r["version"] = "2"
+    r["version"] = str(d['version'])
 
 def handle_service(name, d, r):
     r['services'][name] = {}
