@@ -17,7 +17,7 @@
 }
 
 .bg-success {
-    background-color: #1ab394;
+    background-color: #388E3C;
     color: #ffffff;
 }
 
@@ -53,6 +53,11 @@
 .card-title {
     margin-top: 25px !important;
     margin-left: 25px !important;
+}
+
+.circle-icon {
+    border-radius: 100%;
+    padding: 5px;
 }
 
 .clean-card {

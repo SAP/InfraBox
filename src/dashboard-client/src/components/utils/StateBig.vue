@@ -15,7 +15,7 @@
     <h1 class="m-xs">RUNNING</h1>
 </div>
 
-<div v-if="state=='finished'" class="state-widget bg-success">
+<div v-if="state=='finished' || state=='ok'" class="state-widget bg-success">
     <i class="fa fa-check fa-4x"></i>
     <h1 class="m-xs">OK</h1>
 </div>
