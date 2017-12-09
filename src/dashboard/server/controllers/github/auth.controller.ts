@@ -118,7 +118,7 @@ router.get('/callback',
     passport.authenticate('github', { failureRedirect: '/github/auth', session: false }),
     (req, res, next) => {
         const cert = fs.readFileSync('/var/run/secrets/infrabox.net/rsa/id_rsa');
-        const token = jwt.sign({ user: req['user'], type: 'user' }, cert, { algorithm: 'RSA256' });
+        const token = jwt.sign({ user: req['user'], type: 'user' }, cert, { algorithm: 'RS256' });
         res.cookie("token", token);
         res.redirect('/dashboard/');
     }
