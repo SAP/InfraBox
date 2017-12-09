@@ -2,11 +2,6 @@
     "version": 1,
     "jobs": [{
         "type": "docker-compose",
-        "name": "test-server",
-        "docker_compose_file": "src/dashboard/server/test/test/docker-compose.yml",
-        "resources": { "limits": { "cpu": 1, "memory": 2048} }
-    }, {
-        "type": "docker-compose",
         "name": "api",
         "docker_compose_file": "infrabox/test/api/docker-compose.yml",
         "resources": { "limits": { "cpu": 1, "memory": 2048 } }
