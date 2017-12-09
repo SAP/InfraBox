@@ -6,6 +6,7 @@ InfraBox is a serverless computing platform focusing on efficiently executing bu
 - [Set resource limits (CPU and memory) for each task](https://infrabox.ninja/docs/#workflow-config)
 - [GitHub integration](docs/configure/github.md)
 - [Gerrit integration](docs/configure/gerrit.md)
+- GitLab (comming soon)
 - [LDAP support](docs/configure/ldap.md)
 - [and many more](http://infrabox.net)
 
