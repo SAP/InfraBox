@@ -4,7 +4,7 @@ def handle_version(d, r):
     supported_versions = ("3.2",)
     v = str(d['version'])
     if v not in supported_versions:
-        raise Exception("version '%s' not supported, supported versions are: %s" % (v, supported_versions))
+        raise Exception("version not supported, supported version is 3.2")
 
     r["version"] = v
 

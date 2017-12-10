@@ -91,6 +91,9 @@ def create_github_commit(project_id, repo_id, sha, branch):
     r = requests.post('http://localhost:8081/api/v1/commit', data=data)
     commit = r.json()
 
+    if r.status_code != 200:
+        abort(r.status_code, commit['message'])
+
     insert_commit(project_id, repo_id, branch, commit)
     return commit
 
@@ -113,7 +116,7 @@ def create_gerrit_commit(project_id, repo_id, sha, branch):
     insert_commit(project_id, repo_id, branch, commit)
     return commit
 
-def create_git_job(commit, build_no, project_id, repo):
+def create_git_job(commit, build_no, project_id, repo, project_type, env):
     build = g.db.execute_one('''
         INSERT INTO build (commit_id, build_number, project_id)
         VALUES (%s, %s, %s)
@@ -122,21 +125,28 @@ def create_git_job(commit, build_no, project_id, repo):
 
     git_repo = {
         'commit': commit['sha'],
-        'clone_url': repo['clone_url']
+        'clone_url': commit.get('clone_url', repo['clone_url']),
+        'clone_all': True
     }
 
-    if 'clone_url' in commit:
-        git_repo['clone_url'] = commit['clone_url']
+    if project_type == 'github':
+        git_repo['github_private_repo'] = repo['private']
+
+    env_var = None
+    if env:
+        env_var = {}
+        for e in env:
+            env_var[e['name']] = e['value']
 
     g.db.execute('''
         INSERT INTO job (id, state, build_id, type, name, project_id,
-                         build_only, dockerfile, cpu, memory, repo)
+                         build_only, dockerfile, cpu, memory, repo, env_var)
         VALUES (gen_random_uuid(), 'queued', %s, 'create_job_matrix',
-                'Create Jobs', %s, false, '', 1, 1024, %s)
-    ''', [build['id'], project_id, json.dumps(git_repo)])
+                'Create Jobs', %s, false, '', 1, 1024, %s, %s)
+    ''', [build['id'], project_id, json.dumps(git_repo), json.dumps(env_var)])
 
 
-def create_upload_job(project_id, build_no):
+def create_upload_job(project_id, build_no, env):
     last_build = g.db.execute_one('''
         SELECT source_upload_id
         FROM build
@@ -156,12 +166,18 @@ def create_upload_job(project_id, build_no):
         RETURNING *
     ''', [upload_id, build_no, project_id])
 
+    env_var = None
+    if env:
+        env_var = {}
+        for e in env:
+            env_var[e['name']] = e['value']
+
     g.db.execute('''
         INSERT INTO job (id, state, build_id, type, name, project_id,
-                         build_only, dockerfile, cpu, memory)
+                         build_only, dockerfile, cpu, memory, env_var)
         VALUES (gen_random_uuid(), 'queued', %s, 'create_job_matrix',
-                'Create Jobs', %s, false, '', 1, 1024)
-    ''', [build['id'], project_id])
+                'Create Jobs', %s, false, '', 1, 1024, %s)
+    ''', [build['id'], project_id, json.dumps(env_var)])
 
 
 
@@ -172,14 +188,25 @@ def trigger_build(project_id):
         'id': '/TriggerSchema',
         'type': 'object',
         'properties': {
-            'branch': {'type': 'string'},
-            'sha': {'type': 'string'},
+            'branch': {'type': ['string', 'null']},
+            'sha': {'type': ['string', 'null']},
+            'env': {
+                'type': 'array',
+                'items': {
+                    'type': 'object',
+                    'properties': {
+                        'name': {'type': 'string'},
+                        'value': {'type': 'string'}
+                    }
+                }
+            }
         }
     }
 
     body = validate_body(TriggerSchema)
     branch = body.get('branch', None)
     sha = body.get('sha', None)
+    env = body.get('env', None)
 
     project = g.db.execute_one('''
         SELECT type
@@ -201,7 +228,7 @@ def trigger_build(project_id):
 
     if project_type in ('gerrit', 'github'):
         repo = g.db.execute_one('''
-            SELECT id, name, clone_url
+            SELECT id, name, clone_url, private
             FROM repository
             WHERE project_id = %s
         ''', [project_id])
@@ -213,14 +240,14 @@ def trigger_build(project_id):
 
         if project_type == 'github':
             commit = create_github_commit(project_id, repo_id, sha, branch)
-            create_git_job(commit, build_no, project_id, repo)
+            create_git_job(commit, build_no, project_id, repo, project_type, env)
         elif project_type == 'gerrit':
-            commit = create_gerrit_commit(project_id, repo_id, sha, branch)
-            create_git_job(commit, build_no, project_id, repo)
+            commit = create_gerrit_commit(project_id, repo_id, sha, branch,)
+            create_git_job(commit, build_no, project_id, repo, project_type, env)
     elif project_type == 'upload':
-        create_upload_job(project_id, build_no)
+        create_upload_job(project_id, build_no, env)
     else:
         abort(404)
 
     g.db.commit()
-    return OK('build triggered')
+    return OK('Build triggered')

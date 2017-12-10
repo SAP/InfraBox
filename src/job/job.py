@@ -150,19 +150,22 @@ exec "$@"
 
         return result
 
-    def clone_repo(self, commit, clone_url, branch, ref):
+    def clone_repo(self, commit, clone_url, branch, ref, clone_all):
         c = self.console
         if os.environ['INFRABOX_GENERAL_DONT_CHECK_CERTIFICATES'] == 'true':
             c.execute(('git', 'config', '--global', 'http.sslVerify', 'false'), show=True)
 
-        cmd = ['git', 'clone', '--depth=10']
+        cmd = ['git', 'clone']
+
+        if not clone_all:
+            cmd += ['--depth=10']
+
         if branch:
             cmd += ['--single-branch', '-b', branch]
 
         c.header("Clone repository", show=True)
         cmd += [clone_url, self.mount_repo_dir]
 
-        c.collect(' '.join(cmd), show=True)
         c.execute(cmd, show=True)
 
         if ref:
@@ -189,6 +192,7 @@ exec "$@"
             clone_url = repo['clone_url']
             branch = repo.get('branch', None)
             private = repo.get('github_private_repo', False)
+            clone_all = repo.get('clone_all', False)
             ref = repo.get('ref', None)
             commit = repo['commit']
 
@@ -196,7 +200,7 @@ exec "$@"
                 clone_url = clone_url.replace('github.com',
                                               '%s@github.com' % self.repository['github_api_token'])
 
-            self.clone_repo(commit, clone_url, branch, ref)
+            self.clone_repo(commit, clone_url, branch, ref, clone_all)
         elif self.project['type'] == 'upload':
             c.header("Downloading Source")
             storage_source_zip = os.path.join(self.storage_dir, 'source.zip')

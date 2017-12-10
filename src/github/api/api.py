@@ -25,7 +25,7 @@ def execute_api(url, token):
 
     # TODO(ib-steffen): allow custom ca bundles
     url = get_env('INFRABOX_GITHUB_API_URL') + url
-    return requests.get(url, headers, verify=False)
+    return requests.get(url, headers=headers, verify=False)
 
 def error(status, message):
     response.status = status
@@ -35,52 +35,56 @@ def error(status, message):
 def get_commit():
     query = dict(request.forms)
 
-    if 'owner' not in query:
+    owner = query.get('owner', None)
+    if not owner:
         return error(400, "owner not set")
 
-    if 'token' not in query:
+    token = query.get('token', None)
+    if not token:
         return error(400, "token not set")
 
-    if 'repo' not in query:
+    repo = query.get('repo', None)
+    if not repo:
         return error(400, "repo not set")
 
-    if 'branch' not in query and 'sha' not in query:
+    branch = query.get('branch', None)
+    sha = query.get('sha', None)
+
+    if not branch and not sha:
         return error(400, "either branch or sha must be set")
 
-    if 'branch' in query:
-        url = '/repos/%s/%s/git/refs/heads/%s' % (query['owner'], query['repo'], query['branch'])
-        result = execute_api(url, query['token'])
+    if branch:
+        url = '/repos/%s/%s/branches/%s' % (owner, repo, branch)
+        result = execute_api(url, token)
 
         if result.status_code != 200:
-            logger.warning(result.json())
-            return error(500, "internal server error")
+            return error(404, "Branch Not Found")
 
-        result = result.json()[0]
+        result = result.json()
 
         if not result:
             logger.warning('no result returned')
             return error(404, "Not Found")
 
-        query['sha'] = result['object']['sha']
+        sha = result['commit']['sha']
 
-    url = '/repos/%s/%s/git/commits/%s' % (query['owner'], query['repo'], query['sha'])
-    result = execute_api(url, query['token'])
+    url = '/repos/%s/%s/commits/%s' % (owner, repo, sha)
+    result = execute_api(url, token)
 
     if result.status_code != 200:
-        logger.warning(result.json())
-        return error(500, "internal server error")
+        return error(404, "sha not found")
 
     result = result.json()
 
     return {
         "sha": result['sha'],
-        "branch": query.get('branch', None),
+        "branch": branch,
         "url": result['html_url'],
         "author": {
-            "name": result['author']['name'],
-            "email": result['author']['email']
+            "name": result['commit']['author']['name'],
+            "email": result['commit']['author']['email']
         },
-        "message": result['message']
+        "message": result['commit']['message']
     }
 
 def main(): # pragma: no cover
