@@ -12,11 +12,14 @@
 
 <script>
 import events from '../../events'
+import store from '../../store'
 
 export default {
     created () {
         events.$on('DISCONNECTED', () => {
-            this.$refs['disconnected-dialog'].open()
+            if (store.state.user) {
+                this.$refs['disconnected-dialog'].open()
+            }
         })
     },
     methods: {
