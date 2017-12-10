@@ -116,7 +116,7 @@ class ApiTestCase(unittest.TestCase):
 
         r = self.post('/api/v1/project/%s/trigger' % (self.project_id), d)
         self.assertEqual(r['status'], 200)
-        self.assertEqual(r['message'], 'build triggered')
+        self.assertEqual(r['message'], 'Build triggered')
 
     def get_project_headers(self): # pragma: no cover
         token = encode_user_token(self.user_id)
