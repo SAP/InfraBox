@@ -6,6 +6,7 @@ import _ from 'underscore'
 import Project from './models/Project'
 import Build from './models/Build'
 import Job from './models/Job'
+import Test from './models/Test'
 
 Vue.use(Vuex)
 
@@ -202,8 +203,13 @@ function setBadges (state, data) {
 
 function setTests (state, data) {
     const job = data.job
-    const tests = data.tests
-    job.tests = tests
+    const t = []
+
+    for (const test of data.tests) {
+        t.push(new Test(test, job))
+    }
+
+    job.tests = t
 }
 
 function setStats (state, data) {

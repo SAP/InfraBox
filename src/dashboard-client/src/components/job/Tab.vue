@@ -9,7 +9,6 @@ export default {
     name: 'Tab',
     props: ['tab'],
     created () {
-        console.log(this.tab)
         this.content = this.createHTML(JSON.parse(this.tab.data))
     },
     methods: {

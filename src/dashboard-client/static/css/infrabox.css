@@ -64,6 +64,7 @@
     border-style: none;
     box-shadow: none;
     background-color: transparent !important;
+    overflow: hidden;
 }
 
 .dont-wrap {
