@@ -99,12 +99,18 @@ export default {
         'ib-date': Date,
         'ib-duration': Duration
     },
+    data: () => {
+        return {
+            history: []
+        }
+    },
     asyncComputed: {
         data: {
             get () {
                 let job = null
                 let build = null
                 let project = null
+                let test = null
                 return ProjectService
                     .findProjectByName(this.projectName)
                     .then((p) => {
@@ -117,8 +123,21 @@ export default {
                     })
                     .then((j) => {
                         job = j
-                        const test = j.getTest(this.testName, this.suiteName)
+                        test = j.getTest(this.testName, this.suiteName)
+                        return test.loadHistory()
+                    })
+                    .then((j) => {
                         console.log(test)
+
+                        this.history = []
+                        for (let h of test.history) {
+                            this.history.push({
+                                'build_number': h.build_number,
+                                'duration': h.duration,
+                                'result': h.state
+                            })
+                        }
+
                         return {
                             project,
                             build,
@@ -139,41 +158,28 @@ export default {
             }
         }
     },
-    created () {
-        this.defData = [
-        {'runNo': 1, 'duration': 50, 'result': 'ok'},
-        {'runNo': 2, 'duration': 10, 'result': 'failure'},
-        {'runNo': 3, 'duration': 65, 'result': 'ok'},
-        {'runNo': 4, 'duration': 70, 'result': 'ok'},
-        {'runNo': 5, 'duration': 20, 'result': 'failure'},
-        {'runNo': 6, 'duration': 50, 'result': 'ok'}]
-    },
     mounted () {
         let draw = () => {
-         //   if (!this.test.results.length > 1) {
-         //       return
-         //   }
-
             const config = {
                 plugins: [
                     tauCharts.api.plugins.get('legend')(),
                     tauCharts.api.plugins.get('tooltip')(
                         {
-                            fields: ['runNo', 'duration', 'result'],
+                            fields: ['build_number', 'duration', 'result'],
                             formatters: {
-                                mem: {
-                                    label: 'Run Number',
+                                build_number: {
+                                    label: 'Build Number',
                                     format: (x) => {
                                         return (x)
                                     }
                                 },
-                                cpu: {
+                                duration: {
                                     label: 'Duration',
                                     format: (x) => {
                                         return (x + ' ms')
                                     }
                                 },
-                                date: {
+                                result: {
                                     label: 'Test Result',
                                     format: (x) => {
                                         return (x)
@@ -182,12 +188,15 @@ export default {
                             }
                         })
                 ],
-                data: this.defData,
+                data: this.history,
                 type: 'bar',
-                x: 'runNo',
+                x: 'build_number',
                 y: 'duration',
                 color: 'result',
                 guide: {
+                    x: {
+                        nice: false
+                    },
                     color: {
                         brewer: {
                             ok: '#43A047',

@@ -8,7 +8,7 @@
                         <md-table-head>Job Name</md-table-head>
                         <md-table-head>Started</md-table-head>
                         <md-table-head>Duration</md-table-head>
-                        <md-table-head>Machine</md-table-head>
+                        <md-table-head>Resources</md-table-head>
                     </md-table-row>
                 </md-table-header>
 
