@@ -13,8 +13,6 @@ After logging in you can click on the "+" sign at the bottom right corner of the
 
 Click on the newly created project name and open the Settings tab. In the *Tokens* section create a new token. Tokens are used by [infraboxcli](https://github.com/InfraBox/cli) to authenticate you. They are like passwords so keep them safe. You can delete a token at any point if you lost it or create a new one. Remember the token as we will need it in following steps.
 
-Open the *Project Information* section and copy the project ID. We need this in the following stepts as well.
-
 ## Create a local workflow
 We can use [infraboxcli](https://github.com/InfraBox/cli) to intialize a project.
 
@@ -27,6 +25,10 @@ Before we can push the projec to InfraBox we have to configure the environment.
 
     $ export INFRABOX_CLI_TOKEN=<THE_TOKEN_YOU_CREATED_EARLIER>
     $ export INFRABOX_API_URL=https://infrabox.ninja/api/cli
+
+If You used docker-compose to start InfraBox you have to set instead:
+
+    $ export INFRABOX_API_URL=http://localhost:8090/api/cli
 
 To actually push your project run
 
