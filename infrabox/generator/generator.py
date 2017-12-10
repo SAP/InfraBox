@@ -34,7 +34,7 @@ def main():
 
             j['deployments'] = new_deps
 
-    branch = os.environ.get('INFRABOX_BRANCH', None)
+    branch = os.environ.get('INFRABOX_GIT_BRANCH', None)
     if not branch:
         for j in deployments['jobs']:
             if 'deployments' in j:
