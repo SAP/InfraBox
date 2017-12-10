@@ -22,7 +22,7 @@ class TestIt(unittest.TestCase):
     def test_execute_api(self, request_get, get_env):
         get_env.return_value = ''
         execute_api('url', 'token')
-        request_get.assert_called_with('url', {
+        request_get.assert_called_with('url', headers={
             "Authorization": "token token",
             "User-Agent": "InfraBox"
         }, verify=False)
@@ -48,7 +48,7 @@ class TestIt(unittest.TestCase):
     def test_get_commit_for_branch_failed_execute(self, mocked):
         with boddle(params={'owner': 'myowner', 'token': 'mytoken', 'repo': 'myrepo', 'branch': 'mybranch'}):
             mocked.return_value = MockResponse(404)
-            self.assertEqual(get_commit(), {'message': 'internal server error'})
+            self.assertEqual(get_commit(), {'message': 'Branch Not Found'})
 
     @mock.patch('api.execute_api')
     def test_get_commit_for_branch(self, mocked):
@@ -56,15 +56,18 @@ class TestIt(unittest.TestCase):
             data = {
                 'object': {'sha': 'mysha'},
                 'sha': 'mysha',
-                'author': {
-                    'name': 'myname',
-                    'email': 'myemail'
+                'commit': {
+                    'sha': 'mysha',
+                    'author': {
+                        'name': 'myname',
+                        'email': 'myemail'
+                    },
+                    'message': 'mymessage'
                 },
-                'message': 'mymessage',
                 'html_url': 'myurl'
             }
 
-            mocked.return_value = MockResponse(200, json_result=[[data], data])
+            mocked.return_value = MockResponse(200, json_result=[data, data])
 
             self.assertEqual(get_commit(), {
                 'sha': 'mysha',
@@ -81,7 +84,7 @@ class TestIt(unittest.TestCase):
     def test_get_commit_for_sha_failed(self, mocked):
         with boddle(params={'owner': 'myowner', 'token': 'mytoken', 'repo': 'myrepo', 'sha': 'mysha'}):
             mocked.return_value = MockResponse(404)
-            self.assertEqual(get_commit(), {'message': 'internal server error'})
+            self.assertEqual(get_commit(), {'message': 'sha not found'})
 
         mocked.assert_called_once()
 
@@ -90,11 +93,14 @@ class TestIt(unittest.TestCase):
         with boddle(params={'owner': 'myowner', 'token': 'mytoken', 'repo': 'myrepo', 'sha': 'mysha'}):
             mocked.return_value = MockResponse(200, json_result=[{
                 'sha': 'mysha',
-                'author': {
-                    'name': 'myname',
-                    'email': 'myemail'
+                'commit': {
+                    'sha': 'mysha',
+                    'author': {
+                        'name': 'myname',
+                        'email': 'myemail'
+                    },
+                    'message': 'mymessage'
                 },
-                'message': 'mymessage',
                 'html_url': 'myurl'
             }])
 
