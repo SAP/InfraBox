@@ -68,26 +68,24 @@ export default {
     name: 'TriggerBuild',
     props: ['projectName'],
     data: () => ({
-        branch: '',
-        sha: '',
-        name: '',
-        value: ''
+        branch: null,
+        sha: null,
+        name: null,
+        value: null,
+        envVars: []
     }),
-    created () {
-        this.envVars = []
-    },
     store,
     methods: {
         trigger () {
-            this.project.triggerBuild(this.branch, this.sha)
+            this.project.triggerBuild(this.branch, this.sha, this.envVars)
         },
         deleteEnvVar (id) {
         },
         addEnvVar () {
             const currVariable = {name: this.name, value: this.value}
             this.envVars.push(currVariable)
-            this.name = ''
-            this.value = ''
+            this.name = null
+            this.value = null
         }
     },
     asyncComputed: {
