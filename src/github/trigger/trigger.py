@@ -185,7 +185,7 @@ class Trigger(object):
 
 
     def handle_pull_request(self, event):
-        if event['action'] == 'closed':
+        if event['action'] not in ['opened', 'reopened', 'synchronized']:
             return
 
         result = self.execute('''
