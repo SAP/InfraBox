@@ -20,3 +20,5 @@ certs/
 src/stats/run.sh
 src/dashboard-client/node_modules
 .infrabox*
+*.iml
+.idea
