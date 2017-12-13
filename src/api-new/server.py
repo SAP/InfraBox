@@ -1,16 +1,18 @@
-from flask import jsonify
+from flask_restplus import Resource
 
 from pyinfraboxutils import get_env, print_stackdriver, get_logger
-from pyinfraboxutils.ibflask import app
+from pyinfraboxutils.ibrestplus import api, app
 
 import handlers.trigger
 import handlers.project
 
 logger = get_logger('api')
+ns = api.namespace('ping', description='Health checks')
 
-@app.route('/ping')
-def ping():
-    return jsonify({'status': 200})
+@ns.route('/')
+class Ping(Resource):
+    def get(self):
+        return {'status': 200}
 
 def main(): # pragma: no cover
     get_env('INFRABOX_SERVICE')

@@ -23,7 +23,7 @@
                     </md-menu-item>
                     <md-menu-item @click="triggerBuild()">
                         <span>Trigger Build</span>
-                        <md-button class="md-icon-button"><md-icon>delete_sweep</md-icon><md-tooltip md-direction="bottom">Trigger a new build</md-tooltip></md-button>
+                        <md-button class="md-icon-button"><md-icon>replay</md-icon><md-tooltip md-direction="bottom">Trigger a new build</md-tooltip></md-button>
                     </md-menu-item>
                     <md-menu-item @click="openDialog('confirmDeleteProject')">
                         <span>Delete Project</span>

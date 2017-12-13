@@ -90,8 +90,6 @@ def handle_patchset_created_project(conn, event, project_id, project_name):
         c.close()
         commit = result
 
-    print commit
-
     c = conn.cursor()
     c.execute('''SELECT count(distinct build_number) + 1 AS build_no
               FROM build AS b
@@ -110,25 +108,27 @@ def handle_patchset_created_project(conn, event, project_id, project_name):
     build_id = result[0]
 
     env_vars = {
-        "INFRABOX_GERRIT_PATCHSET_UPLOADER_USERNAME": event['patchSet']['uploader']['username'],
-        "INFRABOX_GERRIT_PATCHSET_UPLOADER_NAME": event['patchSet']['uploader']['name'],
-        "INFRABOX_GERRIT_PATCHSET_UPLOADER_EMAIL": event['patchSet']['uploader']['email'],
-        "INFRABOX_GERRIT_PATCHSET_REF": event['patchSet']['ref'],
-        "INFRABOX_GERRIT_PATCHSET_REVISION": event['patchSet']['revision'],
-        "INFRABOX_GERRIT_CHANGE_STATUS": event['change']['status'],
-        "INFRABOX_GERRIT_CHANGE_URL": event['change']['url'],
-        "INFRABOX_GERRIT_CHANGE_COMMIT_MESSAGE": event['change']['commitMessage'],
-        "INFRABOX_GERRIT_CHANGE_NUMBER": event['change']['number'],
-        "INFRABOX_GERRIT_CHANGE_PROJECT": event['change']['project'],
-        "INFRABOX_GERRIT_CHANGE_BRANCH": event['change']['branch'],
-        "INFRABOX_GERRIT_CHANGE_ID": event['change']['id'],
-        "INFRABOX_GERRIT_CHANGE_SUBJECT": event['change']['subject'],
-        "INFRABOX_GERRIT_CHANGE_OWNER_USERNAME": event['change']['owner']['username'],
-        "INFRABOX_GERRIT_CHANGE_OWNER_NAME": event['change']['owner']['name'],
-        "INFRABOX_GERRIT_CHANGE_OWNER_EMAIL": event['change']['owner']['email'],
-        "INFRABOX_GERRIT_UPLOADER_USERNAME": event['uploader']['username'],
-        "INFRABOX_GERRIT_UPLOADER_NAME": event['uploader']['name'],
-        "INFRABOX_GERRIT_UPLOADER_EMAIL": event['uploader']['email']
+        "GERRIT_PATCHSET_UPLOADER_USERNAME": event['patchSet']['uploader']['username'],
+        "GERRIT_PATCHSET_UPLOADER_NAME": event['patchSet']['uploader']['name'],
+        "GERRIT_PATCHSET_UPLOADER_EMAIL": event['patchSet']['uploader']['email'],
+        "GERRIT_PATCHSET_REF": event['patchSet']['ref'],
+        "GERRIT_REFSPEC": event['patchSet']['ref'],
+        "GERRIT_PATCHSET_REVISION": event['patchSet']['revision'],
+        "GERRIT_CHANGE_STATUS": event['change']['status'],
+        "GERRIT_CHANGE_URL": event['change']['url'],
+        "GERRIT_CHANGE_COMMIT_MESSAGE": event['change']['commitMessage'],
+        "GERRIT_CHANGE_NUMBER": event['change']['number'],
+        "GERRIT_CHANGE_PROJECT": event['change']['project'],
+        "GERRIT_PROJECT": event['change']['project'],
+        "GERRIT_CHANGE_BRANCH": event['change']['branch'],
+        "GERRIT_CHANGE_ID": event['change']['id'],
+        "GERRIT_CHANGE_SUBJECT": event['change']['subject'],
+        "GERRIT_CHANGE_OWNER_USERNAME": event['change']['owner']['username'],
+        "GERRIT_CHANGE_OWNER_NAME": event['change']['owner']['name'],
+        "GERRIT_CHANGE_OWNER_EMAIL": event['change']['owner']['email'],
+        "GERRIT_UPLOADER_USERNAME": event['uploader']['username'],
+        "GERRIT_UPLOADER_NAME": event['uploader']['name'],
+        "GERRIT_UPLOADER_EMAIL": event['uploader']['email']
     }
 
     git_repo = {

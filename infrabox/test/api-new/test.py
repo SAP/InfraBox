@@ -58,7 +58,7 @@ class ApiTestCase(unittest.TestCase):
 
     def test_get_project_does_not_exist(self):
         r = self.get('/api/v1/project/%s' % self.repo_id)
-        self.assertEqual(r['status'], 401)
+        self.assertEqual(r['message'], 'Unauthorized')
 
     def test_get_project(self):
         self.execute('''
@@ -84,7 +84,7 @@ class ApiTestCase(unittest.TestCase):
 
         self.execute('TRUNCATE repository')
         r = self.post('/api/v1/project/%s/trigger' % self.project_id, d)
-        self.assertEqual(r['status'], 404)
+        self.assertEqual(r['message'], 'repo not found')
 
     def test_upload_successfully(self):
         self.execute('''
@@ -101,18 +101,17 @@ class ApiTestCase(unittest.TestCase):
         mocked.return_value = MockResponse(200, {
             'sha': self.sha,
             'message': 'message',
+            'branch': 'branch',
             'author': {
                 'name': 'name',
                 'email': 'email'
             },
-            'url': 'url'
+            'url': 'url',
         })
 
         d = {
-            'branch': 'master',
-            'sha': 'master'
+            'branch_or_sha': 'master'
         }
-
 
         r = self.post('/api/v1/project/%s/trigger' % (self.project_id), d)
         self.assertEqual(r['status'], 200)

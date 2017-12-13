@@ -12,7 +12,7 @@
                             <label>Token Description (e.g. &quot;Token for Jenkins Integration&quot;)</label>
                             <md-input required v-model="description"></md-input>
                         </md-input-container>
-                        <md-button class="md-icon-button md-list-action" @click="addToken">
+                        <md-button :disabled="disableAdd" class="md-icon-button md-list-action" @click="addToken">
                             <md-icon md-theme="running" class="md-primary">add_circle</md-icon>
                             <md-tooltip>Add new token</md-tooltip>
                         </md-button>
@@ -54,10 +54,16 @@ export default {
     props: ['project'],
     data: () => ({
         description: '',
-        token: ''
+        token: '',
+        disableAdd: true
     }),
     created () {
         this.project._loadTokens()
+    },
+    watch: {
+        description () {
+            this.disableAdd = !this.description || this.description.length < 3
+        }
     },
     methods: {
         addToken () {
