@@ -3,6 +3,7 @@ import NewAPIService from '../services/NewAPIService'
 import NotificationService from '../services/NotificationService'
 import Notification from '../models/Notification'
 import store from '../store'
+import router from '../router'
 
 export default class Project {
     constructor (name, id, type) {
@@ -75,11 +76,14 @@ export default class Project {
         })
     }
 
-    triggerBuild (branch, sha, env) {
-        const d = { branch: branch, sha: sha, env: env }
+    triggerBuild (branchOrSha, env) {
+        const d = { branch_or_sha: branchOrSha, env: env }
         return NewAPIService.post(`project/${this.id}/trigger`, d)
-        .then((response) => {
-            NotificationService.$emit('NOTIFICATION', new Notification(response))
+        .then((r) => {
+            console.log(r)
+            NotificationService.$emit('NOTIFICATION', new Notification(r))
+            const d = r.data
+            router.push(`/project/${this.name}/build/${d.build.build_number}/${d.build.restartCounter}/`)
         })
     }
 

@@ -91,8 +91,13 @@ def unauthorized(error):
 def bad_request(error):
     return jsonify({'message': error.description, 'status': 400}), 400
 
-def OK(message):
-    return jsonify({'message': message, 'status': 200})
+def OK(message, data=None):
+    d = {'message': message, 'status': 200}
+
+    if data:
+        d['data'] = data
+
+    return jsonify(d)
 
 def token_required(f):
     @wraps(f)

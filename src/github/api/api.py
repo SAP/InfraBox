@@ -31,6 +31,21 @@ def error(status, message):
     response.status = status
     return {"message": message}
 
+def get_sha_for_branch(owner, repo, branch_or_sha, token):
+    url = '/repos/%s/%s/branches/%s' % (owner, repo, branch_or_sha)
+    result = execute_api(url, token)
+
+    if result.status_code != 200:
+        return None
+
+    result = result.json()
+
+    if not result:
+        return None
+
+    sha = result['commit']['sha']
+    return sha
+
 @post('/api/v1/commit')
 def get_commit():
     query = dict(request.forms)
@@ -47,32 +62,25 @@ def get_commit():
     if not repo:
         return error(400, "repo not set")
 
-    branch = query.get('branch', None)
-    sha = query.get('sha', None)
+    branch_or_sha = query.get('branch_or_sha', None)
 
-    if not branch and not sha:
-        return error(400, "either branch or sha must be set")
+    if not branch_or_sha:
+        return error(400, "branch_or_sha not set")
 
-    if branch:
-        url = '/repos/%s/%s/branches/%s' % (owner, repo, branch)
-        result = execute_api(url, token)
+    # Check if it's a branch
+    sha = get_sha_for_branch(owner, repo, branch_or_sha, token)
 
-        if result.status_code != 200:
-            return error(404, "Branch Not Found")
-
-        result = result.json()
-
-        if not result:
-            logger.warning('no result returned')
-            return error(404, "Not Found")
-
-        sha = result['commit']['sha']
+    branch = None
+    if sha:
+        branch = branch_or_sha
+    else:
+        sha = branch_or_sha
 
     url = '/repos/%s/%s/commits/%s' % (owner, repo, sha)
     result = execute_api(url, token)
 
     if result.status_code != 200:
-        return error(404, "sha not found")
+        return error(404, "sha '%s' not found" % sha)
 
     result = result.json()
 

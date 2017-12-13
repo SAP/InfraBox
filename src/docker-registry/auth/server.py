@@ -40,7 +40,7 @@ def v2():
             logger.warn('job not running anymore')
             abort(401, 'Unauthorized')
     else: # pragma: no cover
-        logger.warn('unsupported token type')
+        logger.warn('unsupported token type: %s' % token['type'])
         abort(401, 'Unauthorized')
 
     return jsonify({'status': 200})
