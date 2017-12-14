@@ -1,23 +1,16 @@
 import json
 import datetime
-import jsonschema
 import requests
 
+from flask_restplus import Resource, fields
 from flask import abort, request, g
+
 from pyinfraboxutils.ibflask import app, auth_token_required, OK
+from pyinfraboxutils.ibrestplus import api
 
-def validate(data, schema):
-    try:
-        jsonschema.validate(data, schema)
-    except Exception as e:
-        abort(400, str(e))
+ns = api.namespace('api/v1/project', description='Project related operations')
 
-def validate_body(schema):
-    body = request.get_json()
-    validate(body, schema)
-    return body
-
-def insert_commit(project_id, repo_id, branch, commit):
+def insert_commit(project_id, repo_id, commit):
     commits = g.db.execute_many('''
         SELECT * FROM "commit"
         WHERE id = %s AND project_id = %s
@@ -52,12 +45,12 @@ def insert_commit(project_id, repo_id, branch, commit):
           commit['author']['email'],
           '', '', '', '',
           commit['url'],
-          branch,
+          commit['branch'],
           project_id,
           None
          ])
 
-def create_github_commit(project_id, repo_id, sha, branch):
+def create_github_commit(project_id, repo_id, branch_or_sha):
     r = g.db.execute_one('''
         SELECT github_owner, name
         FROM repository
@@ -81,8 +74,7 @@ def create_github_commit(project_id, repo_id, sha, branch):
     github_api_token = u[0]
 
     data = {
-        'sha': sha,
-        'branch': branch,
+        'branch_or_sha': branch_or_sha,
         'owner': github_owner,
         'repo': repo_name,
         'token': github_api_token
@@ -94,10 +86,10 @@ def create_github_commit(project_id, repo_id, sha, branch):
     if r.status_code != 200:
         abort(r.status_code, commit['message'])
 
-    insert_commit(project_id, repo_id, branch, commit)
+    insert_commit(project_id, repo_id, commit)
     return commit
 
-def create_gerrit_commit(project_id, repo_id, sha, branch):
+def create_gerrit_commit(project_id, repo_id, branch_or_sha):
     r = g.db.execute_one('''
         SELECT name
         FROM repository
@@ -107,13 +99,16 @@ def create_gerrit_commit(project_id, repo_id, sha, branch):
     repo_name = r[0]
 
     data = {
-        'sha': sha,
-        'branch': branch,
+        'branch_or_sha': branch_or_sha,
         'project': repo_name
     }
-    r = requests.post('http://localhost:8082/api/v1/commit', json=data)
+    r = requests.post('http://localhost:8082/api/v1/commit', data=data)
     commit = r.json()
-    insert_commit(project_id, repo_id, branch, commit)
+
+    if r.status_code != 200:
+        abort(r.status_code, commit['message'])
+
+    insert_commit(project_id, repo_id, commit)
     return commit
 
 def create_git_job(commit, build_no, project_id, repo, project_type, env):
@@ -144,6 +139,8 @@ def create_git_job(commit, build_no, project_id, repo, project_type, env):
         VALUES (gen_random_uuid(), 'queued', %s, 'create_job_matrix',
                 'Create Jobs', %s, false, '', 1, 1024, %s, %s)
     ''', [build['id'], project_id, json.dumps(git_repo), json.dumps(env_var)])
+
+    return (build['id'], build['build_number'])
 
 
 def create_upload_job(project_id, build_no, env):
@@ -179,75 +176,91 @@ def create_upload_job(project_id, build_no, env):
                 'Create Jobs', %s, false, '', 1, 1024, %s)
     ''', [build['id'], project_id, json.dumps(env_var)])
 
+    return (build['id'], build['build_number'])
+
+env_model = api.model('EnvVar', {
+    'name': fields.String(required=True, description='Name'),
+    'value': fields.String(required=True, description='Value')
+})
+
+trigger_model = api.model('Trigger', {
+    'branch_or_sha': fields.String(required=True, description='Branch or sha'),
+    'env': fields.List(fields.Nested(env_model))
+})
 
 
-@app.route('/api/v1/project/<project_id>/trigger', methods=['POST'])
-@auth_token_required(['user', 'project'])
-def trigger_build(project_id):
-    TriggerSchema = {
-        'id': '/TriggerSchema',
-        'type': 'object',
-        'properties': {
-            'branch': {'type': ['string', 'null']},
-            'sha': {'type': ['string', 'null']},
-            'env': {
-                'type': 'array',
-                'items': {
-                    'type': 'object',
-                    'properties': {
-                        'name': {'type': 'string'},
-                        'value': {'type': 'string'}
-                    }
-                }
-            }
-        }
-    }
+@ns.route('/<project_id>/trigger')
+class Trigger(Resource):
 
-    body = validate_body(TriggerSchema)
-    branch = body.get('branch', None)
-    sha = body.get('sha', None)
-    env = body.get('env', None)
+    @auth_token_required(['user', 'project'])
+    @api.expect(trigger_model)
+    def post(self, project_id):
+        body = request.get_json()
+        branch_or_sha = body.get('branch_or_sha', None)
+        env = body.get('env', None)
 
-    project = g.db.execute_one('''
-        SELECT type
-        FROM project
-        WHERE id = %s
-    ''', [project_id])
-
-    if not project:
-        abort(404, 'project not found')
-
-    project_type = project[0]
-
-    r = g.db.execute_one('''
-        SELECT count(distinct build_number) + 1 AS build_no
-        FROM build AS b
-        WHERE b.project_id = %s
-    ''', [project_id])
-    build_no = r[0]
-
-    if project_type in ('gerrit', 'github'):
-        repo = g.db.execute_one('''
-            SELECT id, name, clone_url, private
-            FROM repository
-            WHERE project_id = %s
+        project = g.db.execute_one('''
+            SELECT type
+            FROM project
+            WHERE id = %s
         ''', [project_id])
 
-        if not repo:
-            abort(404, 'repo not found')
+        if not project:
+            abort(404, 'project not found')
 
-        repo_id = repo[0]
+        project_type = project[0]
 
-        if project_type == 'github':
-            commit = create_github_commit(project_id, repo_id, sha, branch)
-            create_git_job(commit, build_no, project_id, repo, project_type, env)
-        elif project_type == 'gerrit':
-            commit = create_gerrit_commit(project_id, repo_id, sha, branch,)
-            create_git_job(commit, build_no, project_id, repo, project_type, env)
-    elif project_type == 'upload':
-        create_upload_job(project_id, build_no, env)
-    else:
-        abort(404)
+        r = g.db.execute_one('''
+            SELECT count(distinct build_number) + 1 AS build_no
+            FROM build AS b
+            WHERE b.project_id = %s
+        ''', [project_id])
+        build_no = r[0]
 
-    g.db.commit()
-    return OK('Build triggered')
+        new_build_id = None
+        new_build_number = None
+
+        if project_type in ('gerrit', 'github'):
+            repo = g.db.execute_one('''
+                SELECT id, name, clone_url, private
+                FROM repository
+                WHERE project_id = %s
+            ''', [project_id])
+
+            if not repo:
+                abort(404, 'repo not found')
+
+            repo_id = repo[0]
+
+            if project_type == 'github':
+                commit = create_github_commit(project_id, repo_id, branch_or_sha)
+                (new_build_id, new_build_number) = create_git_job(commit,
+                                                                  build_no,
+                                                                  project_id,
+                                                                  repo,
+                                                                  project_type,
+                                                                  env)
+            elif project_type == 'gerrit':
+                commit = create_gerrit_commit(project_id, repo_id, branch_or_sha)
+                (new_build_id, new_build_number) = create_git_job(commit,
+                                                                  build_no,
+                                                                  project_id,
+                                                                  repo,
+                                                                  project_type,
+                                                                  env)
+        elif project_type == 'upload':
+            (new_build_id, new_build_number) = create_upload_job(project_id, build_no, env)
+        else:
+            abort(404)
+
+        g.db.commit()
+
+        data = {
+            'build': {
+                'id': new_build_id,
+                'build_number': new_build_number,
+                'restartCounter': 1
+            }
+        }
+
+        return OK('Build triggered', data)

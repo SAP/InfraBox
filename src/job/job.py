@@ -600,7 +600,7 @@ exec "$@"
         collector = StatsCollector()
 
         container_name = self.job['id']
-        cmd = ['docker', 'run', '-t', '--name', container_name]
+        cmd = ['docker', 'run', '--name', container_name]
 
         # repo mount
         cmd += ['-v', '%s:/infrabox' % self.mount_data_dir]

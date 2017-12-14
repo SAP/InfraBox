@@ -1,7 +1,7 @@
 FROM alpine:3.6
 
-RUN apk add --no-cache py2-pip py2-yaml py-nose git && \
-    pip install coverage future && \
+RUN apk add --no-cache py2-yaml py-nose py2-pip py-future git && \
+    pip install coverage && \
     apk del py2-pip
 
 COPY src/pyinfrabox  /pyinfrabox

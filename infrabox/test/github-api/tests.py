@@ -42,17 +42,17 @@ class TestIt(unittest.TestCase):
 
     def test_get_commit_branch_and_sha_not_set(self):
         with boddle(params={'owner': 'myowner', 'token': 'mytoken', 'repo': 'myrepo'}):
-            self.assertEqual(get_commit(), {'message': 'either branch or sha must be set'})
+            self.assertEqual(get_commit(), {'message': 'branch_or_sha not set'})
 
     @mock.patch('api.execute_api')
     def test_get_commit_for_branch_failed_execute(self, mocked):
-        with boddle(params={'owner': 'myowner', 'token': 'mytoken', 'repo': 'myrepo', 'branch': 'mybranch'}):
+        with boddle(params={'owner': 'myowner', 'token': 'mytoken', 'repo': 'myrepo', 'branch_or_sha': 'mybranch'}):
             mocked.return_value = MockResponse(404)
-            self.assertEqual(get_commit(), {'message': 'Branch Not Found'})
+            self.assertEqual(get_commit(), {'message': "sha 'mybranch' not found"})
 
     @mock.patch('api.execute_api')
     def test_get_commit_for_branch(self, mocked):
-        with boddle(params={'owner': 'myowner', 'token': 'mytoken', 'repo': 'myrepo', 'branch': 'mybranch'}):
+        with boddle(params={'owner': 'myowner', 'token': 'mytoken', 'repo': 'myrepo', 'branch_or_sha': 'mybranch'}):
             data = {
                 'object': {'sha': 'mysha'},
                 'sha': 'mysha',
@@ -82,16 +82,14 @@ class TestIt(unittest.TestCase):
 
     @mock.patch('api.execute_api')
     def test_get_commit_for_sha_failed(self, mocked):
-        with boddle(params={'owner': 'myowner', 'token': 'mytoken', 'repo': 'myrepo', 'sha': 'mysha'}):
+        with boddle(params={'owner': 'myowner', 'token': 'mytoken', 'repo': 'myrepo', 'branch_or_sha': 'mysha'}):
             mocked.return_value = MockResponse(404)
-            self.assertEqual(get_commit(), {'message': 'sha not found'})
-
-        mocked.assert_called_once()
+            self.assertEqual(get_commit(), {'message': "sha 'mysha' not found"})
 
     @mock.patch('api.execute_api')
     def test_get_commit_for_sha(self, mocked):
-        with boddle(params={'owner': 'myowner', 'token': 'mytoken', 'repo': 'myrepo', 'sha': 'mysha'}):
-            mocked.return_value = MockResponse(200, json_result=[{
+        with boddle(params={'owner': 'myowner', 'token': 'mytoken', 'repo': 'myrepo', 'branch_or_sha': 'mysha'}):
+            data = {
                 'sha': 'mysha',
                 'commit': {
                     'sha': 'mysha',
@@ -102,11 +100,13 @@ class TestIt(unittest.TestCase):
                     'message': 'mymessage'
                 },
                 'html_url': 'myurl'
-            }])
+            }
+
+            mocked.return_value = MockResponse(200, json_result=[data, data])
 
             self.assertEqual(get_commit(), {
                 'sha': 'mysha',
-                'branch': None,
+                'branch': 'mysha',
                 'author': {
                     'name': 'myname',
                     'email': 'myemail'
@@ -114,8 +114,6 @@ class TestIt(unittest.TestCase):
                 'message': 'mymessage',
                 'url': 'myurl'
             })
-
-        mocked.assert_called_once()
 
 if __name__ == '__main__':
     with open('results.xml', 'wb') as output:

@@ -9,6 +9,11 @@
                         {{ project.name }}
                     </h3>
                 </md-card-header-text>
+                <md-toolbar v-if="$store.state.user" class="md-transparent">
+                    <md-button class="md-icon-button" v-on:click="project.builds[0].clearCache()"><md-icon>delete_sweep</md-icon><md-tooltip md-direction="bottom">Clear Cache</md-tooltip></md-button>
+                    <md-button class="md-icon-button" v-on:click="triggerBuild()"><md-icon>replay</md-icon><md-tooltip md-direction="bottom">Trigger a new Build</md-tooltip></md-button>
+                    <md-button class="md-icon-button" v-on:click="openDialog('confirmDeleteProject')"><md-icon>delete_forever</md-icon><md-tooltip md-direction="bottom">Remove project permanently from InfraBox</md-tooltip></md-button>
+                </md-toolbar>
             </md-card-header>
             <md-card-area>
                 <md-tabs md-fixed class="md-transparent">
@@ -34,6 +39,14 @@
                 </md-tabs>
             </md-card-area>
         </md-card>
+        <md-dialog md-open-from="#custom" md-close-to="#custom" ref="confirmDeleteProject">
+            <md-dialog-title><i class="fa fa-fw fa-exclamation-circle" aria-hidden="true"></i><span> Do you really want to delete this project?</span></md-dialog-title>
+            <md-dialog-content>Your project will be permanently removed from InfraBox. Your builds and metadata cannot be restored.</md-dialog-content>
+                <md-dialog-actions>
+                <md-button md-theme="running" class="md-primary" @click="closeDialog('confirmDeleteProject')">Cancel</md-button>
+                <md-button md-theme="running" class="md-primary" @click="deleteProject()">Yes, delete</md-button>
+            </md-dialog-actions>
+        </md-dialog>
     </div>
 </template>
 
@@ -43,6 +56,7 @@ import store from '../../store'
 import ProjectService from '../../services/ProjectService'
 import BuildTable from '../build/BuildTable'
 import ProjectSettings from './Settings'
+import router from '../../router'
 
 export default {
     name: 'ProjectDetail',
@@ -52,6 +66,21 @@ export default {
         'ib-project-settings': ProjectSettings
     },
     store,
+    methods: {
+        openDialog (ref) {
+            this.$refs[ref].open()
+        },
+        closeDialog (ref) {
+            this.$refs[ref].close()
+        },
+        deleteProject () {
+            this.closeDialog('confirmDeleteProject')
+            ProjectService.deleteProject(this.project.id)
+        },
+        triggerBuild () {
+            router.push(`/project/${this.project.name}/trigger`)
+        }
+    },
     asyncComputed: {
         project: {
             get () {

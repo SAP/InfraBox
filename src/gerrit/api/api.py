@@ -21,19 +21,44 @@ def error(status, message):
     response.status = status
     return {"message": message}
 
+def get_branch(branch_or_sha, client, project):
+    cmd = 'gerrit query --current-patch-set --format=JSON '
+    cmd += 'status:merged project:%s limit:1' % project
+    cmd += ' branch:%s' % branch_or_sha
+    result = execute_ssh_cmd(client, cmd)
+
+    rows = result.split("\n")
+    if len(rows) <= 1:
+        return None
+
+    change = json.loads(rows[0])
+    return change
+
+def get_sha(branch_or_sha, client, project):
+    cmd = 'gerrit query --current-patch-set --format=JSON '
+    cmd += 'status:merged project:%s limit:1' % project
+    cmd += ' %s' % branch_or_sha
+
+    result = execute_ssh_cmd(client, cmd)
+
+    rows = result.split("\n")
+    if len(rows) <= 1:
+        return None
+
+    change = json.loads(rows[0])
+    return change
+
 @post('/api/v1/commit')
 def get_commit():
     query = dict(request.forms)
 
-    if 'project' not in query:
+    project = query.get('project', None)
+    if not project:
         return error(400, "project not set")
 
-    if 'branch' not in query and 'sha' not in query:
-        return error(400, "either branch or sha must be set")
-
-    project = query['project']
-    branch = query.get('branch', None)
-    sha = query.get('sha', None)
+    branch_or_sha = query.get('branch_or_sha', None)
+    if not branch_or_sha:
+        return error(400, "branch_or_sha not set")
 
     gerrit_port = int(get_env('INFRABOX_GERRIT_PORT'))
     gerrit_hostname = get_env('INFRABOX_GERRIT_HOSTNAME')
@@ -48,23 +73,18 @@ def get_commit():
                    port=gerrit_port,
                    key_filename=gerrit_key_filename)
     client.get_transport().set_keepalive(60)
-    cmd = 'gerrit query --current-patch-set --format=JSON '
-    cmd += 'status:merged project:%s limit:1' % project
 
-    if branch:
-        cmd += ' branch:%s' % branch
+    change = get_branch(branch_or_sha, client, project)
+    branch = None
+    if not change:
+        change = get_sha(branch_or_sha, client, project)
+    else:
+        branch = branch_or_sha
 
-    if sha:
-        cmd += ' %s' % sha
+    if not change:
+        error(404, 'change not found')
 
-    result = execute_ssh_cmd(client, cmd)
     client.close()
-
-    rows = result.split("\n")
-    if len(rows) <= 1:
-        return error(400, "change not found")
-
-    change = json.loads(rows[0])
 
     return {
         "sha": change['currentPatchSet']['revision'],
