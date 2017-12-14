@@ -61,7 +61,7 @@ router.post("/", pv, auth, checkProjectAccess, (req: Request, res: Response, nex
             project: {
                 id: project_id
             },
-            type: 'project-token'
+            type: 'project'
         };
 
         const cert = fs.readFileSync('/var/run/secrets/infrabox.net/rsa/id_rsa');

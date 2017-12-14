@@ -4,10 +4,13 @@
             <md-card-header class="main-card-header">
                 <md-card-header-text>
                     <h3 class="md-title card-title">
-                        Trigger Build for:
-                        <span v-if="project.isGit()"><i class="fa fa-github"></i></span>
-                        <span v-if="!project.isGit()"><i class="fa fa-home"></i></span>
-                        {{ project.name }}
+                        <router-link :to="{name: 'ProjectDetail', params: {
+                            projectName: project.name
+                        }}">
+                            <span v-if="project.isGit()"><i class="fa fa-github"></i></span>
+                            <span v-if="!project.isGit()"><i class="fa fa-home"></i></span>
+                            {{ project.name }}
+                        </router-link>: Trigger Build
                     </h3>
                 </md-card-header-text>
             </md-card-header>
@@ -15,13 +18,9 @@
                 <form novalidate @submit.stop.prevent="submit" class="m-xl">
                     <div class="md-body-2 p-t-lg m-b-md"><i class="fa fa-fw fa-rocket"></i> Branch or Sha to trigger:</div>
                     <div class="m-l-md m-r-xl">
-                        <md-input-container>
-                            <label>Branch</label>
-                            <md-input required v-model="branch"></md-input>
-                        </md-input-container>
                         <md-input-container class="m-r-xl">
-                            <label>Sha</label>
-                            <md-input required v-model="sha"></md-input>
+                            <label>Branch or Sha</label>
+                            <md-input required v-model="branch_or_sha"></md-input>
                         </md-input-container>
                     </div>
                     <md-list md-theme="white" class="m-t-md m-b-md ">
@@ -68,8 +67,7 @@ export default {
     name: 'TriggerBuild',
     props: ['projectName'],
     data: () => ({
-        branch: null,
-        sha: null,
+        branch_or_sha: null,
         name: null,
         value: null,
         envVars: []
@@ -77,7 +75,7 @@ export default {
     store,
     methods: {
         trigger () {
-            this.project.triggerBuild(this.branch, this.sha, this.envVars)
+            this.project.triggerBuild(this.branch_or_sha, this.envVars)
         },
         deleteEnvVar (id) {
         },
