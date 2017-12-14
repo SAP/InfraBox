@@ -197,6 +197,13 @@ def validate_user_token(token, check_project_access, project_id):
         logger.warn('user has no access to project')
         abort(401, 'Unauthorized')
 
+def validate_project_token(token, check_project_access, project_id):
+    if not check_project_access:
+        return
+
+    if project_id != token['project']['id']:
+        logger.warn('token not valid for project')
+        abort(401, 'Unauthorized')
 
 def auth_token_required(types, check_project_access=True):
     def actual_decorator(f):
@@ -214,6 +221,9 @@ def auth_token_required(types, check_project_access=True):
             elif token_type == 'user':
                 project_id = kwargs.get('project_id')
                 validate_user_token(token, check_project_access, project_id)
+            elif token_type == 'project':
+                project_id = kwargs.get('project_id')
+                validate_project_token(token, check_project_access, project_id)
             else:
                 logger.warn('unhandled token type')
                 abort(401, 'Unauthorized')
