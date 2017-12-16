@@ -109,6 +109,7 @@
                     </li>
                     <li><a href="#job-dependencies">Job Dependencies</a></li>
                     <li><a href="#environment-vars">Environment Variables</a></li>
+                    <li><a href="#build-arguments">Build Arguments</a></li>
                     <li><a href="#using-image-registries">Using Image Registries</a></li>
                     <li><a href="#caching">Caching on InfraBox</a></li>
                     <li><a href="#create-badges">Create Badges</a></li>
@@ -636,7 +637,9 @@ services:
         "resources": { "limits": { "cpu": 1, "memory": 1024 } },
         "build_only": false,
         "depends_on": ["other_job_name"],
-        "environment": { ... }
+        "environment": { ... },
+        "build_arguments": { ... },
+        "shallow_clone": frue
     }]
 }</code></pre>
 
@@ -685,7 +688,13 @@ services:
                                     <td>timeout</td>
                                     <td>false</td>
                                     <td>integer</td>
-                                    <td>Timeout in seconds after which the job should be killed. Timeout starts when the job is set to running. Default is 3600 (1 hour)</td>
+                                    <td>Timeout in seconds after which the job should be killed. Timeout starts when the job is set to running. Default is 3600 (1 hour).</td>
+                                </tr>
+                                <tr>
+                                    <td>shallow_clone</td>
+                                    <td>false</td>
+                                    <td>boolean</td>
+                                    <td>Usually Infrabox does not clone the full repository, but only the most recent commits. Most of the time this is sufficient, but if you need the full history set this to <kbd>false</kbd>. Default is <kbd>true</kbd>.
                                 </tr>
                                 <tr>
                                     <td>build_only</td>
@@ -704,6 +713,12 @@ services:
                                     <td>false</td>
                                     <td>object</td>
                                     <td>Can be used to set environment variables for the job. See <a href="#environment-vars">Environment Variables</a> for more details.</td>
+                                </tr>
+                                <tr>
+                                    <td>build_arguments</td>
+                                    <td>false</td>
+                                    <td>object</td>
+                                    <td>Can be used to set docker build arguments. See <a href="#build-arguments">Build Arguments</a> for more details.</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -1022,6 +1037,19 @@ CMD /usr/bin/test.py
     }
 }</code></pre>
                     <p>In your job the secret value will then be available as the environment variable <kbd>ENV_VAR_1</kbd>.</p>
+                </section>
+
+                <section>
+                    <h2 id="build-arguments">Build Arguments</h2>
+                    <p>Sometimes you have to set variable for the docker build process. You can set docker build arguments like this:
+<pre class="line-numbers"><code class="language-javascript">{
+    "type": "docker",
+    ...
+    "build_arguments": {
+        "ARG1": "some value",
+        "SOME_OTHER_ATH": "some other value"
+    }
+}</code></pre>
                 </section>
 
                 <section>
