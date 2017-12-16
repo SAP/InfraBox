@@ -150,7 +150,8 @@ class TestCreateJobs(object):
              ['Create Jobs'],
              {
                  "commit": "master",
-                 "clone_url": "/project/infrabox/test/create-jobs/test/test-one-git-job/external_git/"
+                 "clone_url": "/project/infrabox/test/create-jobs/test/test-one-git-job/external_git/",
+                 "clone_all": False
              }),
         )
         self.run(path, expect, with_external_git_id=True)
@@ -167,7 +168,8 @@ class TestCreateJobs(object):
              ['Create Jobs'],
              {
                  "commit": "master",
-                 "clone_url": "/project/infrabox/test/create-jobs/test/test-one-git-job-env/external_git/"
+                 "clone_url": "/project/infrabox/test/create-jobs/test/test-one-git-job-env/external_git/",
+                 "clone_all": False
              },
              {"ENV_VAR": "OUTER_VALUE", "ANOTHER": "VALUE"}, None),
         )
@@ -188,6 +190,7 @@ class TestCreateJobs(object):
              {
                  "commit": "master",
                  "clone_url": "/project/infrabox/test/create-jobs/test/test-git-with-workflow/external_git/",
+                 "clone_all": False
              }),
         )
         self.run(path, expect, with_external_git_id=True)
