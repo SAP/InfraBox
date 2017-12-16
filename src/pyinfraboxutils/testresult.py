@@ -9,7 +9,7 @@ RESULT_MAPPING = {
 def get_ms(val):
     return int(float(val) * 1000)
 
-class TestresultParser(object):
+class Parser(object):
     def __init__(self, i):
         self.input = i
         self.tests = []
