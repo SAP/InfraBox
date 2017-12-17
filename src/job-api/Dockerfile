@@ -9,6 +9,7 @@ RUN apk add --no-cache \
     py2-future \
     py2-psycopg2 \
     py2-flask \
+    py2-gevent \
     py2-pip && \
     pip install minio && \
     apk del py2-pip && \
