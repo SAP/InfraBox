@@ -37,15 +37,14 @@
                 <!-- Toggle buttons and brand -->
                 <div class="navbar-header">
                     <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#navbar" aria-expanded="true" aria-controls="navbar">
-              <span class="glyphicon glyphicon-option-vertical"></span>
-            </button>
+                      <span class="glyphicon glyphicon-option-vertical"></span>
+                    </button>
 
                     <button type="button" class="navbar-toggle for-sidebar" data-toggle="offcanvas">
-              <span class="icon-bar"></span>
-              <span class="icon-bar"></span>
-              <span class="icon-bar"></span>
-            </button>
-
+                      <span class="icon-bar"></span>
+                      <span class="icon-bar"></span>
+                      <span class="icon-bar"></span>
+                    </button>
                     <a class="navbar-brand" href="index.html"><img src="assets/img/infrabox_logo_light.png" alt="logo"></a>
                 </div>
                 <!-- END Toggle buttons and brand -->
@@ -113,6 +112,8 @@
                     <li><a href="#using-image-registries">Using Image Registries</a></li>
                     <li><a href="#caching">Caching on InfraBox</a></li>
                     <li><a href="#create-badges">Create Badges</a></li>
+                    <li><a href="#upload-testresult">Upload Test Result</a></li>
+                    <li><a href="#upload-coverage">Upload Coverage Result</a></li>
                     <li><a href="#dynamic-workflow">Dynamic Workflows</a></li>
                     <li><a href="#create-upload-project">Create an Upload Project</a></li>
                     <li><a href="#connect-github-repo">Connect a Github Repository</a></li>
@@ -1096,8 +1097,30 @@ CMD /usr/bin/test.py
                 </section>
 
                 <section>
+                    <h2 id="upload-testresult">Upload Test Result</h2>
+                    <p>
+                        InfraBox can show your testresult on a tab at the job detail view. This gives you the possibility to quickly check the results and if one of your tests has failed you can even see the error message and stacktrace if available. To use this feature you only have to copy your testresult file to <kbd>/infrabox/upload/testresult</kbd>. We will try to auto detect the format of your file. Currently supported file formats are:
+                    </p>
+                    <ul>
+                        <li>xunit (xml)</li>
+                    </ul>
+                </section>
+
+                <section>
+                    <h2 id="upload-coverage">Upload Coverage Result</h2>
+                    <p>
+                        InfraBox can show your coverage results on a tab at the job detail view. To use this feature you only have to copy your coverage file to <kbd>/infrabox/upload/coverage</kbd>. We will try to auto detect the format of your file. Currently supported file formats are:
+                    </p>
+                    <ul>
+                        <li>cobertura (xml)</li>
+                        <li>clover (xml)</li>
+                    </ul>
+                </section>
+
+
+                <section>
                     <h2 id="dynamic-workflows">Dynamic Workflows</h2>
-                    <p>Often a pre-defined static workflow is not sufficient to handle all use cases. For this InfraBox supports dynamic workflows. Every job in your workflow may produce an <kbd>infrabox.json</kbd> in its output directory <kbd>/infrabox/output/infrabox.json</kbb>. All jobs defined in there will be automatically added as predecessor jobs. This give you the options to extend your workflow at runtime.</p>
+                    <p>Often a pre-defined static workflow is not sufficient to handle all use cases. For this InfraBox supports dynamic workflows. Every job in your workflow may produce an <kbd>infrabox.json</kbd> in its output directory <kbd>/infrabox/output/infrabox.json</kbd>. All jobs defined in there will be automatically added as predecessor jobs. This give you the options to extend your workflow at runtime.</p>
 
                     </p>This feature is extremely useful for bigger projects. Maybe you don't want to run certain tests on a branch or you want to additionaly deploy your containers to an registry if you create a tag.</p>
 
