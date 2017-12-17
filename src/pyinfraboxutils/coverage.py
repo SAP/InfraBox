@@ -1,6 +1,7 @@
 #pylint: disable=too-few-public-methods
 import uuid
 import json
+import os
 import xml.etree.ElementTree
 
 class File(object):
@@ -117,7 +118,7 @@ class Parser(object):
             elif l == "end_of_record":
                 self.files.append(f)
 
-    def __create_markup(self):
+    def __create_markup(self, markup_dir):
         functions_found = 0
         functions_hit = 0
         branches_found = 0
@@ -220,7 +221,7 @@ class Parser(object):
             "elements": elements
         }
 
-        badge_path = "/infrabox/upload/badge/%s.json" % str(uuid.uuid4())
+        badge_path = os.path.join(markup_dir, "%s.json" % str(uuid.uuid4()))
         json.dump({
             "version": 1,
             "subject": "coverage",
@@ -230,6 +231,6 @@ class Parser(object):
 
         return doc
 
-    def parse(self):
+    def parse(self, markup_dir):
         self.__convert_xml()
-        return self.__create_markup()
+        return self.__create_markup(markup_dir)
