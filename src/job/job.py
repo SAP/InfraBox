@@ -267,7 +267,7 @@ exec "$@"
 
     def convert_coverage_result(self, f):
         parser = CoverageParser(f)
-        r = parser.parse(self.infrabox_markup_dir)
+        r = parser.parse(self.infrabox_badge_dir)
         return r
 
     def upload_coverage_results(self):
@@ -288,7 +288,7 @@ exec "$@"
 
     def convert_test_result(self, f):
         parser = TestresultParser(f)
-        r = parser.parse(self.infrabox_markup_dir)
+        r = parser.parse(self.infrabox_badge_dir)
 
         out = f + '.json'
         with open(out, 'w') as testresult:

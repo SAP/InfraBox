@@ -118,7 +118,7 @@ class Parser(object):
             elif l == "end_of_record":
                 self.files.append(f)
 
-    def __create_markup(self, markup_dir):
+    def __create_markup(self, badge_dir):
         functions_found = 0
         functions_hit = 0
         branches_found = 0
@@ -221,7 +221,7 @@ class Parser(object):
             "elements": elements
         }
 
-        badge_path = os.path.join(markup_dir, "%s.json" % str(uuid.uuid4()))
+        badge_path = os.path.join(badge_dir, "%s.json" % str(uuid.uuid4()))
         json.dump({
             "version": 1,
             "subject": "coverage",
@@ -231,6 +231,6 @@ class Parser(object):
 
         return doc
 
-    def parse(self, markup_dir):
+    def parse(self, badge_dir):
         self.__convert_xml()
-        return self.__create_markup(markup_dir)
+        return self.__create_markup(badge_dir)
