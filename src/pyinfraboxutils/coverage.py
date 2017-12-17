@@ -1,4 +1,6 @@
 #pylint: disable=too-few-public-methods
+import uuid
+import json
 import xml.etree.ElementTree
 
 class File(object):
@@ -218,14 +220,13 @@ class Parser(object):
             "elements": elements
         }
 
-
-        #if args.badge:
-        #    json.dump({
-        #        "version": 1,
-        #        "subject": "coverage",
-        #        "status": "%s %%" % cov,
-        #        "color": "green"
-        #    }, open(args.badge, 'w+'), indent=4)
+        badge_path = "/infrabox/upload/badge/%s.json" % str(uuid.uuid4())
+        json.dump({
+            "version": 1,
+            "subject": "coverage",
+            "status": "%s %%" % cov,
+            "color": "green"
+        }, open(badge_path, 'w+'), indent=4)
 
         return doc
 
