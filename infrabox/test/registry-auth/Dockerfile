@@ -2,8 +2,6 @@ FROM alpine:3.6
 
 RUN apk add --no-cache python py2-psycopg2 py2-pip gcc openssl libffi-dev python2-dev musl-dev py2-flask git openssl-dev && \
     pip install bcrypt PyJWT jsonschema coverage xmlrunner cryptography && \
-    git clone https://github.com/InfraBox/testresult.git /tmp/infrabox-testresult && \
-    git clone https://github.com/InfraBox/coverage.git /tmp/infrabox-coverage && \
     apk del gcc python2-dev musl-dev openssl-dev libffi-dev git
 
 ENV PYTHONPATH=/
