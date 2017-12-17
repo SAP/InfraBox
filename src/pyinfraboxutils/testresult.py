@@ -14,7 +14,7 @@ class Parser(object):
         self.input = i
         self.tests = []
 
-    def parse(self):
+    def parse(self, _markup_dir):
         xml = ElementTree.parse(self.input)
         root = xml.getroot()
         return self.parse_root(root)
