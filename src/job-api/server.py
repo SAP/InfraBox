@@ -1194,4 +1194,6 @@ if __name__ == "__main__":
 
     connect_db() # Wait for db to be ready
 
-    app.run(host="0.0.0.0", debug=True, port=8080)
+    from gevent.wsgi import WSGIServer
+    http_server = WSGIServer(('', 8080), app)
+    http_server.serve_forever()
