@@ -15,7 +15,7 @@
                             <span>
                                 <md-input-container>
                                     <label>User Name</label>
-                                    <md-input required v-model="username"></md-input>
+                                    <md-input @keyup.enter.native="addCollaborator" required v-model="username"></md-input>
                                 </md-input-container>
                             </span>
                         </div>

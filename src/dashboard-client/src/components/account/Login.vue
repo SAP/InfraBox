@@ -18,7 +18,7 @@
                         </md-input-container>
                         <md-input-container md-has-password :class="{'md-input-invalid': !pwValid}">
                             <label>Password</label>
-                            <md-input type="password" v-model="password" name="password" @keyup.enter="login" required></md-input>
+                            <md-input type="password" v-model="password" name="password" @keyup.enter.native="login" required></md-input>
                             <span v-if="!pwValid" class="md-error">Invalid Password</span>
                         </md-input-container>
                         <md-button :disabled="!mailValid || !pwValid" class="md-raised md-primary" @click="login"><i class="fa fa-fw fa-sign-in"></i><span> Login</span></md-button>

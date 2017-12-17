@@ -10,7 +10,7 @@
                     <md-list-item class="md-inset m-r-xl">
                         <md-input-container class="m-r-xl">
                             <label>Token Description (e.g. &quot;Token for Jenkins Integration&quot;)</label>
-                            <md-input required v-model="description"></md-input>
+                            <md-input required v-model="description" @keyup.enter.native="addToken"></md-input>
                         </md-input-container>
                         <md-button :disabled="disableAdd" class="md-icon-button md-list-action" @click="addToken">
                             <md-icon md-theme="running" class="md-primary">add_circle</md-icon>
@@ -72,6 +72,7 @@ export default {
                 this.token = token
                 this.$refs['dialog'].open()
             })
+            this.description = ''
         }
     }
 }
