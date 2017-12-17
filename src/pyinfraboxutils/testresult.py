@@ -69,6 +69,3 @@ class Parser(object):
                 tc['stack'] = e.text or None
 
         return tc
-
-    def is_valid(self):
-        return True
