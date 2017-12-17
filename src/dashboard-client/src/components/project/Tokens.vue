@@ -34,7 +34,7 @@
         <md-dialog-content>
             Please save your token at a secure place. We will not show it to you again.<br><br>
 
-            <pre>{{ token }}</pre><br><br>
+            <pre class="token-pre">{{ token }}</pre><br><br>
 
             You may later us it with infraboxcli:<br>
             <pre>$ export INFRABOX_CLI_TOKEN=&lt;YOUR_TOKEN_VALUE&gt;
@@ -76,3 +76,13 @@ export default {
     }
 }
 </script>
+
+<style scoped>
+.token-pre {
+    white-space: pre-wrap;       /* Since CSS 2.1 */
+    white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */
+    white-space: -pre-wrap;      /* Opera 4-6 */
+    white-space: -o-pre-wrap;    /* Opera 7 */
+    word-wrap: break-word;       /* Internet Explorer 5.5+ */
+}
+</style>
