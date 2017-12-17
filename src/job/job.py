@@ -1,4 +1,5 @@
 #!/usr/bin/python
+#pylint: disable=too-many-lines
 import os
 import shutil
 import json
@@ -17,7 +18,8 @@ from infrabox_job.stats import StatsCollector
 from infrabox_job.process import ApiConsole, Failure
 from infrabox_job.job import Job
 
-from pyinfraboxutils.testresult import TestresultParser
+from pyinfraboxutils.testresult import Parser as TestresultParser
+from pyinfraboxutils.coverage import Parser as CoverageParser
 from pyinfraboxutils import get_env, print_stackdriver
 from pyinfraboxutils import get_logger
 logger = get_logger('scheduler')
@@ -75,6 +77,10 @@ class RunJob(Job):
         # <data_dir>/upload/testresult is mounted in the job to /infrabox/upload/testresult
         self.infrabox_testresult_dir = os.path.join(self.infrabox_upload_dir, 'testresult')
         makedirs(self.infrabox_testresult_dir)
+
+        # <data_dir>/upload/coverage is mounted in the job to /infrabox/upload/coverage
+        self.infrabox_coverage_dir = os.path.join(self.infrabox_upload_dir, 'coverage')
+        makedirs(self.infrabox_coverage_dir)
 
         # <data_dir>/upload/markdown is mounted in the job to /infrabox/upload/markdown
         self.infrabox_markdown_dir = os.path.join(self.infrabox_upload_dir, 'markdown')
@@ -259,6 +265,27 @@ exec "$@"
         else:
             self.main_run_job()
 
+    def convert_coverage_result(self, f):
+        parser = CoverageParser(f)
+        r = parser.parse()
+        return r
+
+    def upload_coverage_results(self):
+        c = self.console
+        if not os.path.exists(self.infrabox_coverage_dir):
+            return
+
+        files = self.get_files_in_dir(self.infrabox_coverage_dir, ".xml")
+        for f in files:
+            c.collect("%s\n" % f, show=True)
+            converted_result = self.convert_coverage_result(f)
+            file_name = os.path.basename(f)
+
+            mu_path = os.path.join(self.infrabox_markup_dir, file_name + '.json')
+
+            with open(mu_path, 'w') as out:
+                json.dump(converted_result, out)
+
     def convert_test_result(self, f):
         parser = TestresultParser(f)
         r = parser.parse()
@@ -276,9 +303,8 @@ exec "$@"
 
         files = self.get_files_in_dir(self.infrabox_testresult_dir, ".xml")
         for f in files:
-            tr_path = os.path.join(self.infrabox_testresult_dir, f)
-            c.collect("%s\n" % tr_path, show=True)
-            converted_result = self.convert_test_result(tr_path)
+            c.collect("%s\n" % f, show=True)
+            converted_result = self.convert_test_result(f)
 
             r = requests.post("%s/testresult" % self.api_server,
                               headers=self.get_headers(),
@@ -295,14 +321,13 @@ exec "$@"
 
         files = self.get_files_in_dir(self.infrabox_markdown_dir, ".md")
         for f in files:
-            md_path = os.path.join(self.infrabox_markdown_dir, f)
-            c.collect("%s\n" % md_path, show=True)
+            c.collect("%s\n" % f, show=True)
 
             file_name = os.path.basename(f)
             r = requests.post("%s/markdown" % self.api_server,
                               headers=self.get_headers(),
                               verify=self.verify,
-                              files={file_name: open(md_path)}, timeout=10)
+                              files={file_name: open(f)}, timeout=10)
 
             if r.status_code != 200:
                 c.collect("%s\n" % r.text, show=True)
@@ -314,14 +339,13 @@ exec "$@"
 
         files = self.get_files_in_dir(self.infrabox_markup_dir, ".json")
         for f in files:
-            mu_path = os.path.join(self.infrabox_markup_dir, f)
-            c.collect("%s\n" % mu_path, show=True)
+            c.collect("%s\n" % f, show=True)
 
             file_name = os.path.basename(f)
             r = requests.post("%s/markup" % self.api_server,
                               headers=self.get_headers(),
                               verify=self.verify,
-                              files={file_name: open(mu_path)}, timeout=10)
+                              files={file_name: open(f)}, timeout=10)
 
             if r.status_code != 200:
                 c.collect("%s\n" % r.text, show=True)
@@ -334,14 +358,13 @@ exec "$@"
         files = self.get_files_in_dir(self.infrabox_badge_dir, ".json")
 
         for f in files:
-            b_path = os.path.join(self.infrabox_badge_dir, f)
-            c.collect("%s\n" % b_path, show=True)
+            c.collect("%s\n" % f, show=True)
 
             file_name = os.path.basename(f)
             r = requests.post("%s/badge" % self.api_server,
                               headers=self.get_headers(),
                               verify=self.verify,
-                              files={file_name: open(b_path)}, timeout=10)
+                              files={file_name: open(f)}, timeout=10)
 
             if r.status_code != 200:
                 c.collect("%s\n" % r.text, show=True)
@@ -422,6 +445,7 @@ exec "$@"
             raise
         finally:
             c.header("Uploading files", show=True)
+            self.upload_coverage_results()
             self.upload_test_results()
             self.upload_markdown_files()
             self.upload_markup_files()
@@ -487,6 +511,9 @@ exec "$@"
 
             service_testresult_dir = os.path.join(self.infrabox_testresult_dir, service)
             makedirs(service_testresult_dir)
+
+            service_coverage_dir = os.path.join(self.infrabox_coverage_dir, service)
+            makedirs(service_coverage_dir)
 
             service_markdown_dir = os.path.join(self.infrabox_markdown_dir, service)
             makedirs(service_markdown_dir)
