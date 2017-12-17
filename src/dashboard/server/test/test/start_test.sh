@@ -1,7 +1,4 @@
 #!/bin/sh -e
-echo "## Get infrabox testresult"
-git clone https://github.com/InfraBox/testresult.git /tmp/infrabox-testresult
-
 echo "## Link cache"
 mkdir -p /infrabox/cache/node_modules
 cp -r /infrabox/cache/node_modules /project/src/dashboard
@@ -24,7 +21,6 @@ rc=$?
 
 set -e
 
-echo "## Converting testresult"
-python /tmp/infrabox-testresult/testresult.py -f xunit -i xunit.xml
+cp xunit.xml /infrabox/upload/testresult
 
 exit $rc
