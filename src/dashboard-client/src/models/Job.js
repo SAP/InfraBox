@@ -84,7 +84,6 @@ export default class Job {
         this.sections = []
         this.badges = []
         this.env = []
-        this.downloads = []
         this.tests = []
         this.stats = []
         this.tabs = []

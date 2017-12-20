@@ -189,12 +189,6 @@ function setSettings (state, settings) {
     state.settings = settings
 }
 
-function setDownloads (state, data) {
-    const job = data.job
-    const downloads = data.downloads
-    job.downloads = downloads
-}
-
 function setBadges (state, data) {
     const job = data.job
     const badges = data.badges
@@ -271,7 +265,6 @@ const mutations = {
     setEnvironment,
     setTests,
     setStats,
-    setDownloads,
     setTabs
 }
 
