@@ -36,9 +36,9 @@ class Test(TestCase):
 
         cur.execute('''INSERT INTO job(id, state, start_date, build_id, type, dockerfile, name,
                             cpu, memory, project_id, dependencies, build_only,
-                            keep, repo, base_path, deployment)
+                            repo, base_path, deployment)
                         VALUES(%s, 'scheduled', now(), %s, 'run_project_container', 'Dockerfile',
-                            'test', 1, 1024, %s, null, false, false, null, null,
+                            'test', 1, 1024, %s, null, false, null, null,
                             '[{"type": "docker-registry", "username": "user", "password": {"$secret": "SECRET"}, "host": "host", "repository": "repo"}]')''',
                     (self.job_id, self.build_id, self.project_id))
         cur.execute('''INSERT INTO build(id, build_number, project_id, source_upload_id)
@@ -105,7 +105,6 @@ class Test(TestCase):
                 "dockerfile": "Dockerfile",
                 "repo": None,
                 "id": "1514af82-3c4f-4bb5-b1da-a89a0ced5e6f",
-                "keep": False,
                 "cpu": 1,
                 "memory": 1024,
                 "name": "test",
