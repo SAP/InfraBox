@@ -187,7 +187,6 @@ CREATE TABLE job (
     dependencies jsonb,
     build_only boolean NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    keep boolean DEFAULT false NOT NULL,
     repo jsonb,
     base_path character varying(1024),
     scan_container boolean DEFAULT false NOT NULL,

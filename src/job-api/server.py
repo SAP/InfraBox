@@ -91,7 +91,7 @@ def get_job():
 	    j.build_only,
 	    j.type,
 	    null,
-	    j.keep,
+	    null,
 	    j.repo,
 	    j.base_path,
             j.state,
@@ -124,7 +124,6 @@ def get_job():
         "dockerfile": r[2],
         "build_only": r[12],
         "type": r[13],
-        "keep": r[15],
         "repo": r[16],
         "base_path": r[17],
         "state": r[18],
@@ -694,7 +693,6 @@ def create_jobs():
         job_id = job['id']
 
         build_only = job.get("build_only", True)
-        keep = job.get("keep", False)
         scan_container = False
 
         if 'security' in job:
@@ -767,12 +765,12 @@ def create_jobs():
         g.db.execute("""
             INSERT INTO job (id, state, build_id, type, dockerfile, name,
                 project_id, dependencies, build_only,
-                keep, created_at, repo, base_path, scan_container,
+                created_at, repo, base_path, scan_container,
                 env_var_ref, env_var, build_arg, deployment, cpu, memory, timeout, resources)
-            VALUES (%s, 'queued', %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);""",
+            VALUES (%s, 'queued', %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);""",
                      (job_id, build_id, t, f, name,
                       project_id,
-                      json.dumps(depends_on), build_only, keep, datetime.now(),
+                      json.dumps(depends_on), build_only, datetime.now(),
                       repo, base_path, scan_container, env_var_refs, env_vars,
                       build_arguments, deployments, limits_cpu, limits_memory, timeout,
                       resources))
