@@ -5,10 +5,9 @@ import requests
 from flask_restplus import Resource, fields
 from flask import abort, request, g
 
-from pyinfraboxutils.ibflask import app, auth_token_required, OK
+from pyinfraboxutils.ibflask import auth_token_required, OK
 from pyinfraboxutils.ibrestplus import api
-
-ns = api.namespace('api/v1/project', description='Project related operations')
+from project import ns
 
 def insert_commit(project_id, repo_id, commit):
     commits = g.db.execute_many('''

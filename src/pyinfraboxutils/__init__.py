@@ -5,7 +5,6 @@ import traceback
 
 def get_log_level():
     l = os.environ.get('INFRABOX_LOG_LEVEL', 'info')
-    print("Log level: %s" % l)
 
     if l == 'debug':
         return logging.DEBUG
@@ -13,8 +12,8 @@ def get_log_level():
         return logging.INFO
     elif l == 'warning':
         return logging.WARNING
-    else:
-        return logging.WARNING
+
+    return logging.WARNING
 
 logging.basicConfig(
     format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s',

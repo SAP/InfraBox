@@ -32,14 +32,9 @@ spec:
                     serviceName: infrabox-dashboard-api
                     servicePort: 8080
             -
-                path: /api/cli
-                backend:
-                    serviceName: infrabox-api
-                    servicePort: 8080
-            -
                 path: /api/v1
                 backend:
-                    serviceName: infrabox-api-new
+                    serviceName: infrabox-api
                     servicePort: 8080
             -
                 path: /api/job
