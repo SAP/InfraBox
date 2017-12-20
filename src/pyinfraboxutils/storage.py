@@ -1,5 +1,9 @@
-#pylint: disable=too-few-public-methods,redefined-variable-type
+#pylint: disable=too-few-public-methods
+import os
+
 import boto3
+from google.cloud import storage as gcs
+from flask import after_this_request
 
 from pyinfraboxutils import get_env
 
@@ -38,12 +42,36 @@ class S3(object):
         return client
 
 class GCS(object):
-    def upload_project(self):
-        pass
+    def upload_project(self, stream, key):
+        client = gcs.Client(project=get_env('INFRABOX_STORAGE_GCS_PROJECT_ID'))
+        bucket = client.get_bucket(get_env('INFRABOX_STORAGE_GCS_PROJECT_UPLOAD_BUCKET'))
+        blob = bucket.blob(key)
+        blob.upload_from_file(stream)
+
+    def download_output(self, key):
+        client = gcs.Client(project=get_env('INFRABOX_STORAGE_GCS_PROJECT_ID'))
+        bucket = client.get_bucket(get_env('INFRABOX_STORAGE_GCS_CONTAINER_OUTPUT_BUCKET'))
+        blob = bucket.get_blob(key)
+
+        if not blob:
+            return None
+
+        path = '/tmp/%s' % key
+        with open('/tmp/%s' % key, 'w') as f:
+            blob.download_to_file(f)
+
+        @after_this_request
+        def _remove_file(response):
+            if os.path.exists(path):
+                os.remove(path)
+            return response
+
+        return  path
 
 if USE_S3:
     storage = S3()
 elif USE_GCS:
+    get_env('GOOGLE_APPLICATION_CREDENTIALS')
     storage = GCS()
 else:
     raise Exception('Unhandled storage type')

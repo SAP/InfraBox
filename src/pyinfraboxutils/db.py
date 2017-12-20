@@ -21,12 +21,8 @@ def connect_db():
 
 
 class DB(object):
-    def __init__(self):
-        self.conn = psycopg2.connect(dbname=os.environ['INFRABOX_DATABASE_DB'],
-                                     user=os.environ['INFRABOX_DATABASE_USER'],
-                                     password=os.environ['INFRABOX_DATABASE_PASSWORD'],
-                                     host=os.environ['INFRABOX_DATABASE_HOST'],
-                                     port=os.environ['INFRABOX_DATABASE_PORT'])
+    def __init__(self, conn):
+        self.conn = conn
 
     def execute_one(self, stmt, args=None):
         r = self.execute_many(stmt, args)
@@ -55,7 +51,6 @@ class DB(object):
         r = c.fetchall()
         c.close()
         return r
-
 
     def execute(self, stmt, args=None):
         c = self.conn.cursor()
