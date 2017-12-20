@@ -121,7 +121,7 @@
         "type": "docker",
         "name": "dashboard-api",
         "docker_file": "src/dashboard/Dockerfile",
-        "build_only": false,
+        "build_only": true,
         "resources": { "limits": { "cpu": 1, "memory": 2048 } },
         "deployments": [{
             "type": "docker-registry",
@@ -134,7 +134,7 @@
         "type": "docker",
         "name": "api",
         "docker_file": "src/api-new/Dockerfile",
-        "build_only": false,
+        "build_only": true,
         "resources": { "limits": { "cpu": 1, "memory": 2048 } },
         "deployments": [{
             "type": "docker-registry",
