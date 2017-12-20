@@ -100,7 +100,6 @@ CREATE TABLE abort (
 --
 
 CREATE TABLE auth_token (
-    token uuid DEFAULT gen_random_uuid() NOT NULL,
     description character varying(255) NOT NULL,
     project_id uuid NOT NULL,
     scope_push boolean DEFAULT false NOT NULL,
@@ -375,7 +374,7 @@ CREATE TABLE "user" (
 --
 
 ALTER TABLE ONLY auth_token
-    ADD CONSTRAINT auth_token_pkey PRIMARY KEY (token);
+    ADD CONSTRAINT auth_token_pkey PRIMARY KEY (id);
 
 
 --
