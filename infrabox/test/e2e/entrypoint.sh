@@ -105,7 +105,7 @@ _installPostgres() {
 
     _sql "INSERT INTO collaborator (project_id, user_id, owner)
           VALUES ('2daef5b5-0474-4e63-a47e-df8438a82eba', '70c68f11-4d04-46d3-a68e-c0d2a91c00a6', true)"
-    _sql "INSERT INTO auth_token (token, description, project_id, scope_push, scope_pull)
+    _sql "INSERT INTO auth_token (id, description, project_id, scope_push, scope_pull)
           VALUES ('$INFRABOX_CLI_TOKEN', 'desc', '$PROJECT_ID', true, true)"
     _sql "INSERT INTO secret(project_id, name, value)
           VALUES ('$PROJECT_ID', 'SECRET_ENV', 'hello world')"
