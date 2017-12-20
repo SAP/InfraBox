@@ -124,14 +124,8 @@
 		</md-card>
         <md-dialog ref="cli_dialog" width="100%">
             <md-dialog-title>Run it with infraboxcli</md-dialog-title>
-
             <md-dialog-content class="bg-white">
-                <md-card class="main-card">
-                    <pre>export INFRABOX_CLI_TOKEN=&lt;YOUR_TOKEN&gt;
-infrabox pull</pre>
-                    <pre v-for="e of data.job.env" :key="e.name">  -e {{ e.name }}={{ e.value }}</pre>
-                    <pre>  --job-id {{ data.job.id }}</pre>
-                </md-card>
+                <pre>{{ data.runLocalCommand }}</pre>
             </md-dialog-content>
             <md-dialog-actions>
                 <md-button class="md-icon-button md-primary" @click="closeDialog('cli_dialog')"><md-icon>close</md-icon></md-button>
@@ -188,10 +182,24 @@ export default {
                         job.loadBadges()
                         job.loadEnvironment()
                         job.loadTabs()
+
+                        let runLocalCommand = '$ export INFRABOX_CLI_TOKEN=<YOUR_TOKEN> \\\n$ infrabox pull \\\n'
+                        for (let env of job.env) {
+                            const value = env.value.replace(/\n/g, '\\n')
+                            runLocalCommand += '    -e '
+                            runLocalCommand += env.name
+                            runLocalCommand += '="'
+                            runLocalCommand += value
+                            runLocalCommand += '" \\\n'
+                        }
+
+                        runLocalCommand += '    --job-id ' + job.id
+
                         return {
                             project,
                             build,
-                            job
+                            job,
+                            runLocalCommand
                         }
                     })
             },

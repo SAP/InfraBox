@@ -9,11 +9,11 @@
                     <md-list-item class="md-inset m-r-xl">
                         <md-input-container class="m-r-sm">
                             <label>Secret Name</label>
-                            <md-input v-model="name" required></md-input>
+                            <md-input @keyup.enter.native="addSecret" v-model="name" required></md-input>
                         </md-input-container>
                         <md-input-container class="m-l-sm">
                             <label>Secret Value</label>
-                            <md-input v-model="value" required></md-input>
+                            <md-input @keyup.enter.native="addSecret" v-model="value" required></md-input>
                         </md-input-container>
                         <md-button class="md-icon-button md-list-action" @click="addSecret()">
                             <md-icon md-theme="running" class="md-primary">add_circle</md-icon>
