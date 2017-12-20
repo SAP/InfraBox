@@ -11,11 +11,12 @@ def encode_user_token(user_id):
 
         return jwt.encode(data, key=secret.read(), algorithm='RS256')
 
-def encode_project_token(token):
+def encode_project_token(token, project_id):
     with open('/var/run/secrets/infrabox.net/rsa/id_rsa') as secret:
         data = {
+            'id': token,
             'project': {
-                'token': token
+                'id': project_id
             },
             'type': 'project'
         }

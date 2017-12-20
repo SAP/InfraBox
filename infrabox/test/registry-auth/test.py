@@ -59,7 +59,7 @@ class AccountTestCase(unittest.TestCase):
     def test_v2_valid_token(self):
         cur = self.conn.cursor()
         cur.execute('''
-            INSERT INTO auth_token (token, project_id, description)
+            INSERT INTO auth_token (id, project_id, description)
             VALUES (%s, %s, 'desc')
         ''', [self.project_token, self.project_id])
         cur.close()
@@ -94,7 +94,7 @@ class AccountTestCase(unittest.TestCase):
     def test_path_valid_token(self):
         cur = self.conn.cursor()
         cur.execute('''
-            INSERT INTO auth_token (token, project_id, description)
+            INSERT INTO auth_token (id, project_id, description)
             VALUES (%s, %s, 'desc')
         ''', [self.project_token, self.project_id])
         cur.close()
@@ -107,7 +107,7 @@ class AccountTestCase(unittest.TestCase):
         if not project_token:
             project_token = self.project_token
 
-        token = encode_project_token(project_token)
+        token = encode_project_token(project_token, self.project_id)
         h = {'Authorization': 'Basic %s' % base64.b64encode('infrabox:%s' % token)}
         return h
 
