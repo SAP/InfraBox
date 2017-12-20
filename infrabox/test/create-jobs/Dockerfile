@@ -1,8 +1,9 @@
 FROM alpine:3.6
 
 RUN apk add --no-cache py2-pip py2-psycopg2 py-nose py2-yaml py2-jsonschema py2-crypto \
-    postgresql-client py2-requests git curl py2-jwt py2-cryptography
-RUN pip install future docker
+    postgresql-client py2-requests git curl py2-jwt py2-cryptography && \
+    pip install future docker && \
+    apk del py2-pip
 
 RUN git config --global user.email "you@example.com"
 RUN git config --global user.name "Your Name"

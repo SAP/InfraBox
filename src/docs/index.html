@@ -37,15 +37,14 @@
                 <!-- Toggle buttons and brand -->
                 <div class="navbar-header">
                     <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#navbar" aria-expanded="true" aria-controls="navbar">
-              <span class="glyphicon glyphicon-option-vertical"></span>
-            </button>
+                      <span class="glyphicon glyphicon-option-vertical"></span>
+                    </button>
 
                     <button type="button" class="navbar-toggle for-sidebar" data-toggle="offcanvas">
-              <span class="icon-bar"></span>
-              <span class="icon-bar"></span>
-              <span class="icon-bar"></span>
-            </button>
-
+                      <span class="icon-bar"></span>
+                      <span class="icon-bar"></span>
+                      <span class="icon-bar"></span>
+                    </button>
                     <a class="navbar-brand" href="index.html"><img src="assets/img/infrabox_logo_light.png" alt="logo"></a>
                 </div>
                 <!-- END Toggle buttons and brand -->
@@ -109,9 +108,12 @@
                     </li>
                     <li><a href="#job-dependencies">Job Dependencies</a></li>
                     <li><a href="#environment-vars">Environment Variables</a></li>
+                    <li><a href="#build-arguments">Build Arguments</a></li>
                     <li><a href="#using-image-registries">Using Image Registries</a></li>
                     <li><a href="#caching">Caching on InfraBox</a></li>
                     <li><a href="#create-badges">Create Badges</a></li>
+                    <li><a href="#upload-testresult">Upload Test Result</a></li>
+                    <li><a href="#upload-coverage">Upload Coverage Result</a></li>
                     <li><a href="#dynamic-workflow">Dynamic Workflows</a></li>
                     <li><a href="#create-upload-project">Create an Upload Project</a></li>
                     <li><a href="#connect-github-repo">Connect a Github Repository</a></li>
@@ -636,7 +638,9 @@ services:
         "resources": { "limits": { "cpu": 1, "memory": 1024 } },
         "build_only": false,
         "depends_on": ["other_job_name"],
-        "environment": { ... }
+        "environment": { ... },
+        "build_arguments": { ... },
+        "shallow_clone": frue
     }]
 }</code></pre>
 
@@ -685,7 +689,13 @@ services:
                                     <td>timeout</td>
                                     <td>false</td>
                                     <td>integer</td>
-                                    <td>Timeout in seconds after which the job should be killed. Timeout starts when the job is set to running. Default is 3600 (1 hour)</td>
+                                    <td>Timeout in seconds after which the job should be killed. Timeout starts when the job is set to running. Default is 3600 (1 hour).</td>
+                                </tr>
+                                <tr>
+                                    <td>shallow_clone</td>
+                                    <td>false</td>
+                                    <td>boolean</td>
+                                    <td>Usually Infrabox does not clone the full repository, but only the most recent commits. Most of the time this is sufficient, but if you need the full history set this to <kbd>false</kbd>. Default is <kbd>true</kbd>.
                                 </tr>
                                 <tr>
                                     <td>build_only</td>
@@ -704,6 +714,12 @@ services:
                                     <td>false</td>
                                     <td>object</td>
                                     <td>Can be used to set environment variables for the job. See <a href="#environment-vars">Environment Variables</a> for more details.</td>
+                                </tr>
+                                <tr>
+                                    <td>build_arguments</td>
+                                    <td>false</td>
+                                    <td>object</td>
+                                    <td>Can be used to set docker build arguments. See <a href="#build-arguments">Build Arguments</a> for more details.</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -1025,6 +1041,19 @@ CMD /usr/bin/test.py
                 </section>
 
                 <section>
+                    <h2 id="build-arguments">Build Arguments</h2>
+                    <p>Sometimes you have to set variable for the docker build process. You can set docker build arguments like this:
+<pre class="line-numbers"><code class="language-javascript">{
+    "type": "docker",
+    ...
+    "build_arguments": {
+        "ARG1": "some value",
+        "SOME_OTHER_ATH": "some other value"
+    }
+}</code></pre>
+                </section>
+
+                <section>
                     <h2 id="using-image-registries">Using Image Registries</h2>
                     <p>The docker images which have been build can also be pushed to a docker registry by InfraBox. You would add a deployment to your job: </p>
 
@@ -1068,8 +1097,30 @@ CMD /usr/bin/test.py
                 </section>
 
                 <section>
+                    <h2 id="upload-testresult">Upload Test Result</h2>
+                    <p>
+                        InfraBox can show your testresult on a tab at the job detail view. This gives you the possibility to quickly check the results and if one of your tests has failed you can even see the error message and stacktrace if available. To use this feature you only have to copy your testresult file to <kbd>/infrabox/upload/testresult</kbd>. We will try to auto detect the format of your file. Currently supported file formats are:
+                    </p>
+                    <ul>
+                        <li>xunit (xml)</li>
+                    </ul>
+                </section>
+
+                <section>
+                    <h2 id="upload-coverage">Upload Coverage Result</h2>
+                    <p>
+                        InfraBox can show your coverage results on a tab at the job detail view. To use this feature you only have to copy your coverage file to <kbd>/infrabox/upload/coverage</kbd>. We will try to auto detect the format of your file. Currently supported file formats are:
+                    </p>
+                    <ul>
+                        <li>cobertura (xml)</li>
+                        <li>clover (xml)</li>
+                    </ul>
+                </section>
+
+
+                <section>
                     <h2 id="dynamic-workflows">Dynamic Workflows</h2>
-                    <p>Often a pre-defined static workflow is not sufficient to handle all use cases. For this InfraBox supports dynamic workflows. Every job in your workflow may produce an <kbd>infrabox.json</kbd> in its output directory <kbd>/infrabox/output/infrabox.json</kbb>. All jobs defined in there will be automatically added as predecessor jobs. This give you the options to extend your workflow at runtime.</p>
+                    <p>Often a pre-defined static workflow is not sufficient to handle all use cases. For this InfraBox supports dynamic workflows. Every job in your workflow may produce an <kbd>infrabox.json</kbd> in its output directory <kbd>/infrabox/output/infrabox.json</kbd>. All jobs defined in there will be automatically added as predecessor jobs. This give you the options to extend your workflow at runtime.</p>
 
                     </p>This feature is extremely useful for bigger projects. Maybe you don't want to run certain tests on a branch or you want to additionaly deploy your containers to an registry if you create a tag.</p>
 
