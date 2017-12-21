@@ -2,7 +2,7 @@ import base64
 from functools import wraps
 
 from pyinfraboxutils import get_logger
-from pyinfraboxutils.db import DB
+from pyinfraboxutils.db import DB, connect_db
 from pyinfraboxutils.token import decode
 
 from flask import Flask, g, jsonify, request, abort
@@ -63,16 +63,31 @@ def get_token():
         logger.warn('No auth header')
         abort(401, 'Unauthorized')
 
+try:
+    #pylint: disable=ungrouped-imports
+    from pyinfraboxutils import dbpool
+    logger.info('Using DB Pool')
 
-@app.before_request
-def before_request():
-    g.db = DB()
+    @app.before_request
+    def before_request():
+        g.db = dbpool.get()
 
-@app.teardown_request
-def teardown_request(_):
-    db = getattr(g, 'db', None)
-    if db is not None:
-        db.close()
+    @app.teardown_request
+    def teardown_request(_):
+        db = getattr(g, 'db', None)
+        if db is not None:
+            dbpool.put(db)
+
+except:
+    @app.before_request
+    def before_request():
+        g.db = DB(connect_db())
+
+    @app.teardown_request
+    def teardown_request(_):
+        db = getattr(g, 'db', None)
+        if db is not None:
+            db.close()
 
 @app.errorhandler(404)
 def not_found(error):
@@ -105,6 +120,28 @@ def token_required(f):
         g.token = get_token()
         return f(*args, **kwargs)
 
+    return decorated_function
+
+def check_job_belongs_to_project(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        project_id = kwargs.get('project_id')
+        job_id = kwargs.get('job_id')
+
+        assert project_id
+        assert job_id
+
+        r = g.db.execute_one('''
+            SELECT id
+            FROM job
+            WHERE id = %s AND project_id = %s
+        ''', [job_id, project_id])
+
+        if not r:
+            logger.debug('job does not belong to project')
+            abort(404)
+
+        return f(*args, **kwargs)
     return decorated_function
 
 def job_token_required(f):
@@ -197,6 +234,13 @@ def validate_user_token(token, check_project_access, project_id):
         logger.warn('user has no access to project')
         abort(401, 'Unauthorized')
 
+def validate_project_token(token, check_project_access, project_id):
+    if not check_project_access:
+        return
+
+    if project_id != token['project']['id']:
+        logger.warn('token not valid for project')
+        abort(401, 'Unauthorized')
 
 def auth_token_required(types, check_project_access=True):
     def actual_decorator(f):
@@ -205,8 +249,11 @@ def auth_token_required(types, check_project_access=True):
             token = get_token()
             token_type = token['type']
 
+            if token_type == 'project-token':
+                token_type = 'project'
+
             if token_type not in types:
-                logger.warn('token type not allowed here')
+                logger.warn('token type "%s" not allowed here', token_type)
                 abort(401, 'Unauthorized')
 
             if token_type == 'job':
@@ -214,6 +261,9 @@ def auth_token_required(types, check_project_access=True):
             elif token_type == 'user':
                 project_id = kwargs.get('project_id')
                 validate_user_token(token, check_project_access, project_id)
+            elif token_type == 'project':
+                project_id = kwargs.get('project_id')
+                validate_project_token(token, check_project_access, project_id)
             else:
                 logger.warn('unhandled token type')
                 abort(401, 'Unauthorized')

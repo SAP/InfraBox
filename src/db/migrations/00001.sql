@@ -100,7 +100,6 @@ CREATE TABLE abort (
 --
 
 CREATE TABLE auth_token (
-    token uuid DEFAULT gen_random_uuid() NOT NULL,
     description character varying(255) NOT NULL,
     project_id uuid NOT NULL,
     scope_push boolean DEFAULT false NOT NULL,
@@ -187,7 +186,6 @@ CREATE TABLE job (
     dependencies jsonb,
     build_only boolean NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    keep boolean DEFAULT false NOT NULL,
     repo jsonb,
     base_path character varying(1024),
     scan_container boolean DEFAULT false NOT NULL,
@@ -197,8 +195,7 @@ CREATE TABLE job (
     cpu integer DEFAULT 1 NOT NULL,
     memory integer DEFAULT 1024 NOT NULL,
     build_arg jsonb,
-    deployment jsonb,
-    download jsonb
+    deployment jsonb
 );
 
 
@@ -377,7 +374,7 @@ CREATE TABLE "user" (
 --
 
 ALTER TABLE ONLY auth_token
-    ADD CONSTRAINT auth_token_pkey PRIMARY KEY (token);
+    ADD CONSTRAINT auth_token_pkey PRIMARY KEY (id);
 
 
 --

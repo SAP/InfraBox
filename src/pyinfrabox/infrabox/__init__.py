@@ -174,7 +174,7 @@ def parse_resources(d, path):
 
 def parse_docker(d, path):
     check_allowed_properties(d, path, ("type", "name", "docker_file", "depends_on", "resources",
-                                       "build_only", "keep", "environment",
+                                       "build_only", "environment",
                                        "build_arguments", "deployments", "timeout", "security_context",
                                        "shallow_clone"))
     check_required_properties(d, path, ("type", "name", "docker_file", "resources"))
@@ -184,9 +184,6 @@ def parse_docker(d, path):
 
     if 'build_only' in d:
         check_boolean(d['build_only'], path + ".build_only")
-
-    if 'keep' in d:
-        check_boolean(d['keep'], path + ".keep")
 
     if 'shallow_clone' in d:
         check_boolean(d['shallow_clone'], path + ".shallow_clone")
