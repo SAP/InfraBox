@@ -16,6 +16,13 @@ services:
             - INFRABOX_DATABASE_PASSWORD=postgres
             - INFRABOX_DATABASE_DB=postgres
             - INFRABOX_DATABASE_PORT=5432
+            - INFRABOX_STORAGE_S3_ENABLED=false
+            - INFRABOX_STORAGE_GCS_ENABLED=true
+            - INFRABOX_STORAGE_GCS_PROJECT_UPLOAD_BUCKET=test
+            - INFRABOX_STORAGE_GCS_CONTAINER_OUTPUT_BUCKET=test
+            - INFRABOX_STORAGE_GCS_PROJECT_ID=my-project
+            - GOOGLE_APPLICATION_CREDENTIALS=
+            - INFRABOX_ROOT_URL=localhost
         links:
             - postgres
 

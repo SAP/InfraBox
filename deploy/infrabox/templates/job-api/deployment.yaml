@@ -3,8 +3,6 @@ kind: Deployment
 metadata:
     name: infrabox-job-api
     namespace: {{ default "infrabox-system" .Values.general.system_namespace }}
-    annotations:
-        infrabox.net/checksum: {{ .Files.Get "values.yaml" | sha256sum }}
     labels:
         app: infrabox-job-api
 spec:

@@ -17,8 +17,8 @@ def v2():
     if token['type'] == 'project':
         r = g.db.execute_many('''
             SELECT id FROM auth_token
-            WHERE token = %s
-        ''', (token['project']['token'],))
+            WHERE id = %s AND project_id = %s
+        ''', (token['id'], token['project']['id'],))
 
         if len(r) != 1:
             logger.warn('project not found')
@@ -68,10 +68,14 @@ def v2_path(path):
             logger.warn('%s not allowed with project token', request.method)
             abort(401, 'Unauthorized')
 
+        if project_id != token['project']['id']:
+            logger.warn('token is not valid for project')
+            abort(401, 'Unauthorized')
+
         r = g.db.execute_many('''
             SELECT * FROM auth_token
-            WHERE project_id = %s AND token = %s
-        ''', (project_id, token['project']['token']))
+            WHERE id = %s AND project_id = %s
+        ''', (token['id'], token['project']['id']))
 
         if len(r) != 1:
             logger.warn('project not found')

@@ -638,8 +638,6 @@ exec "$@"
         try:
             if self.job['build_only']:
                 c.collect("Not pushing container, because build_only is set.\n", show=True)
-            elif not self.job['keep']:
-                c.collect("Not pushing container, because keep is not set.\n", show=True)
             else:
                 self.login_docker_registry()
                 c.execute(['docker', 'push', image_name], show=True)

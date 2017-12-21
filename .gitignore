@@ -22,3 +22,4 @@ src/dashboard-client/node_modules
 .infrabox*
 *.iml
 .idea
+src/api-new/run.sh

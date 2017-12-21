@@ -18,7 +18,7 @@ conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
 
 class InputTests(TestCase):
     def get(self, url, password='b514af82-3c4f-4bb5-b1da-a89a0ced5e6f'):
-        auth = base64.b64encode('infrabox:%s' % encode_project_token(password))
+        auth = base64.b64encode('infrabox:%s' % encode_project_token(password, '2514af82-3c4f-4bb5-b1da-a89a0ced5e6f'))
         headers = {'authorization': "Basic " + auth}
         return requests.get(url, headers=headers)
 
@@ -34,7 +34,7 @@ class Test(TestCase):
     image_path = project_id + '/image_name'
 
     def _get_headers(self):
-        auth = base64.b64encode('infrabox:%s' % encode_project_token(self.token))
+        auth = base64.b64encode('infrabox:%s' % encode_project_token(self.token, self.project_id))
         headers = {'authorization': "Basic " + auth}
         return headers
 
@@ -55,7 +55,7 @@ class Test(TestCase):
 
     def setUp(self):
         cur = conn.cursor()
-        cur.execute('''INSERT INTO auth_token (token, description, project_id, scope_push, scope_pull)
+        cur.execute('''INSERT INTO auth_token (id, description, project_id, scope_push, scope_pull)
                         VALUES(%s, 'test token', %s, true, true)''', (self.token, self.project_id,))
         cur.execute('''INSERT INTO project(name, type, id)
                         VALUES('test', 'upload', %s)''', (self.project_id,))
