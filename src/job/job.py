@@ -785,11 +785,15 @@ exec "$@"
         c = self.console
         c.collect("Upload cached image %s" % image_name_latest, show=True)
 
-        c.execute(['docker', 'tag', image_name_build, image_name_latest], show=True)
-
-        self.login_docker_registry()
-        c.execute(['docker', 'push', image_name_latest], show=True)
-        self.logout_docker_registry()
+        try:
+            self.login_docker_registry()
+            c.execute(['docker', 'tag', image_name_build, image_name_latest], show=True)
+            c.execute(['docker', 'push', image_name_latest], show=True)
+        except:
+            c.collect("Failed to upload cache image: %s" % image_name_build, show=True)
+            c.execute(['docker', 'images'], show=True)
+        finally:
+            self.logout_docker_registry()
 
     def parse_infrabox_json(self, path):
         with open(path, 'r') as f:
