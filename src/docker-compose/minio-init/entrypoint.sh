@@ -11,3 +11,8 @@ mc mb compose/infrabox-container-content-cache
 mc mb compose/infrabox-project-upload
 mc mb compose/infrabox-container-output
 mc mb compose/infrabox-docker-registry
+
+while true
+do
+    sleep 1
+done
