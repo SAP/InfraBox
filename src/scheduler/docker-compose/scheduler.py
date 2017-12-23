@@ -61,6 +61,8 @@ class Scheduler(object):
 
         token = encode_job_token(job_id)
 
+        prefix = os.environ.get('INFRABOX_DOCKER_COMPOSE_PROJECT_PREFIX', 'compose')
+
         cmd = [
             'docker',
             'run',
@@ -79,11 +81,11 @@ class Scheduler(object):
             '-e', "INFRABOX_JOB_DAEMON_JSON=%s" % self.daemon_json,
             '-e', "INFRABOX_JOB_REPO_MOUNT_PATH=%s" % repo_dir,
             '--privileged',
-            '--network=compose_infrabox',
+            '--network=%s_infrabox' % prefix,
             '-v', '/var/run/docker.sock:/var/run/docker.sock',
             '-v', '/tmp/infrabox-compose/repo:/tmp/infrabox-compose/repo',
             '--name=ib-job-%s' % job_id,
-            '--link=compose_nginx-ingress_1:nginx-ingress',
+            '--link=%s_nginx-ingress_1:nginx-ingress' % prefix,
             os.environ['INFRABOX_DOCKER_REGISTRY'] + '/job'
         ]
 
