@@ -1,4 +1,4 @@
-version: "2"
+version: "3.2"
 
 services:
     nginx-ingress:
@@ -9,7 +9,7 @@ services:
             - dashboard-api
             - static
             - docker-registry-nginx
-            - cli-api
+            - api
             - job-api
         networks:
             - infrabox
@@ -62,7 +62,6 @@ services:
 
     scheduler:
         image: $INFRABOX_DOCKER_REGISTRY/infrabox/scheduler/docker-compose
-        privileged: true
         tty: true
         volumes:
             - "/var/run/docker.sock:/var/run/docker.sock"
@@ -104,7 +103,7 @@ services:
             - INFRABOX_DASHBOARD_PORT=8080
             - INFRABOX_DASHBOARD_SECRET=secret
             - INFRABOX_DASHBOARD_MONITORING_PORT=8080
-            - INFRABOX_API_URL="localhost/api/cli"
+            - INFRABOX_API_URL="localhost/api"
             - INFRABOX_DOCS_URL="localhost/docs"
             - INFRABOX_DOCKER_REGISTRY_URL="localhost"
         links:
@@ -138,11 +137,10 @@ services:
             - infrabox
         volumes: []
 
-    cli-api:
+    api:
         image: $INFRABOX_DOCKER_REGISTRY/infrabox/api
-        command: node /api/dist/server/app.js
         environment:
-            - INFRABOX_SERVICE=cli-api
+            - INFRABOX_SERVICE=api
             - INFRABOX_VERSION=latest
             - INFRABOX_STORAGE_GCS_ENABLED=false
             - INFRABOX_STORAGE_S3_ENABLED=true
@@ -167,17 +165,6 @@ services:
         networks:
             - infrabox
         volumes: []
-
-    api:
-        image: $INFRABOX_DOCKER_REGISTRY/infrabox/api-new
-        environment:
-            - INFRABOX_SERVICE=api
-            - INFRABOX_VERSION=latest
-        links:
-        networks:
-            - infrabox
-        volumes: []
-
 
 networks:
     infrabox:
