@@ -1,10 +1,8 @@
-import os
 import json
 from unittest import TestCase
 import requests
 import psycopg2
 import psycopg2.extensions
-import jwt
 
 from pyinfraboxutils.db import connect_db
 from pyinfraboxutils.token import encode_job_token
@@ -39,7 +37,8 @@ class Test(TestCase):
                             repo, base_path, deployment)
                         VALUES(%s, 'scheduled', now(), %s, 'run_project_container', 'Dockerfile',
                             'test', 1, 1024, %s, null, false, null, null,
-                            '[{"type": "docker-registry", "username": "user", "password": {"$secret": "SECRET"}, "host": "host", "repository": "repo"}]')''',
+                            '[{"type": "docker-registry", "username": "user", "password":
+                            {"$secret": "SECRET"}, "host": "host", "repository": "repo"}]')''',
                     (self.job_id, self.build_id, self.project_id))
         cur.execute('''INSERT INTO build(id, build_number, project_id, source_upload_id)
                         VALUES(%s, 1, %s, %s)''',

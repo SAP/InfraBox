@@ -5,6 +5,7 @@ import copy
 
 def main():
     shutil.copyfile('/generator/infrabox.json', '/infrabox/output/infrabox.json')
+    shutil.copyfile('/generator/e2e.json', '/infrabox/output/e2e.json')
     shutil.copyfile('/generator/tests.json', '/infrabox/output/tests.json')
 
     deployments = None

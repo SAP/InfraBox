@@ -166,7 +166,7 @@ def main(): # pragma: no cover
     sio.start_background_task(listeners.console.listen, sio, client_manager)
 
     logger.info('Starting Server')
-    sio.run(app, port=8080)
+    sio.run(app, host='0.0.0.0', port=8080)
 
 if __name__ == "__main__": # pragma: no cover
     try:
