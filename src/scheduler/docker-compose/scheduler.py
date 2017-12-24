@@ -89,11 +89,7 @@ class Scheduler(object):
             os.environ['INFRABOX_DOCKER_REGISTRY'] + '/job'
         ]
 
-        try:
-            execute(cmd)
-        except:
-            execute(['docker', 'network', 'ls'])
-            raise
+        execute(cmd)
 
     def schedule_job(self, job_id, cpu, memory):
         cursor = self.conn.cursor()
