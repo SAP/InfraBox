@@ -16,7 +16,7 @@ env = None
 if os.environ.get('INFRABOX_CLI', None):
     env = ['INFRABOX_DOCKER_COMPOSE_PROJECT_PREFIX=infrabox']
 else:
-    env = ['INFRABOX_DOCKER_COMPOSE_PROJECT_PREFIX=repo']
+    env = ['INFRABOX_DOCKER_COMPOSE_PROJECT_PREFIX=compose']
 
 data['services']['scheduler']['environment'] += env
 
