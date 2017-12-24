@@ -1,4 +1,5 @@
 #!/bin/sh -e
+env
 
 ssh-keygen -N '' -t rsa -f id_rsa
 ssh-keygen -f id_rsa.pub -e -m pem > id_rsa.pem
@@ -10,7 +11,7 @@ python /infrabox/context/deploy/install.py \
     -o /infrabox/context/.infrabox/inputs/gen-compose/e2e \
     --general-rsa-public-key ./id_rsa.pem \
     --general-rsa-private-key ./id_rsa \
-    --version build_184
+    --version build_${INFRABOX_BUILD_NUMBER}
 
 cp -r /infrabox/context/.infrabox/inputs/gen-compose/e2e /infrabox/output/
 

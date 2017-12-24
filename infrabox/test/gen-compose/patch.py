@@ -6,17 +6,11 @@ data = None
 with open('/infrabox/output/e2e/compose/docker-compose.yml') as i:
     data = yaml.load(i)
 
-del data['services']['api']['image']
-data['services']['api']['build'] = {
-    'context': '../../../../..',
-    'dockerfile': 'src/api-new/Dockerfile'
-}
-
-del data['services']['nginx-ingress']['image']
-data['services']['nginx-ingress']['build'] = {
-    'context': '../../../../..',
-    'dockerfile': 'src/docker-compose/ingress/Dockerfile'
-}
+#del data['services']['api']['image']
+#data['services']['api']['build'] = {
+#    'context': '../../../../..',
+#    'dockerfile': 'src/api-new/Dockerfile'
+#}
 
 env = None
 if os.environ.get('INFRABOX_CLI', None):

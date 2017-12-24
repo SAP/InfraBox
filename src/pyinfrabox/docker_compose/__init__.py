@@ -12,24 +12,25 @@ def handle_service(name, d, r):
     r['services'][name] = {}
 
     for key, value in d[name].iteritems():
-        if key == "links":
-            r['services'][name]['links'] = value
-        elif key == "environment":
-            r['services'][name]['environment'] = value
-        elif key == "build":
-            r['services'][name]['build'] = value
-        elif key == "command":
-            r['services'][name]['command'] = value
-        elif key == "image":
-            r['services'][name]['image'] = value
-        elif key == "container_name":
-            r['services'][name]['container_name'] = value
-        elif key == "depends_on":
-            r['services'][name]['depends_on'] = value
-        elif key == "entrypoiny":
-            r['services'][name]['entrypoint'] = value
-        elif key == "links":
-            r['services'][name]['links'] = value
+        allowed_fields = [
+            'links',
+            'environment',
+            'networks',
+            'tty',
+            'volumes',
+            'ports',
+            'restart',
+            'build',
+            'command',
+            'image',
+            'container_name',
+            'depends_on',
+            'entrypoint',
+            'links'
+        ]
+
+        if key in allowed_fields:
+            r['services'][name][key] = value
         else:
             raise Exception("[services][%s][%s] not supported" % (name, key))
 
@@ -57,6 +58,8 @@ def parse(d):
             handle_version(d, r)
         elif key == "services":
             handle_services(d, r)
+        elif key == "networks":
+            r[key] = d[key]
         else:
             raise Exception("[%s] not supported" % key)
 
