@@ -65,6 +65,8 @@ class Test(unittest.TestCase):
         process.wait()
 
         exitCode = process.returncode
+        print "Test exited with %s" % exitCode
+
         if exitCode != 0:
             raise Exception(msg)
 
