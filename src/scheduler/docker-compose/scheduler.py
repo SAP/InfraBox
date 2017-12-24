@@ -92,8 +92,7 @@ class Scheduler(object):
         try:
             execute(cmd)
         except:
-            execute(['docker', 'network', 'ls']
-            pass
+            execute(['docker', 'network', 'ls'])
 
     def schedule_job(self, job_id, cpu, memory):
         cursor = self.conn.cursor()
