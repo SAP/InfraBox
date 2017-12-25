@@ -525,6 +525,7 @@ class DockerCompose(Install):
 
         self.config.append('services.scheduler.environment', [
             'INFRABOX_DOCKER_REGISTRY=%s' % self.args.docker_registry,
+            'INFRABOX_JOB_VERSION=%s' % self.args.version
         ])
 
         self.config.append('services.scheduler.volumes', [

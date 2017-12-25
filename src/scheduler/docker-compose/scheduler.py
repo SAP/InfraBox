@@ -86,7 +86,7 @@ class Scheduler(object):
             '-v', '/tmp/infrabox-compose/repo:/tmp/infrabox-compose/repo',
             '--name=ib-job-%s' % job_id,
             '--link=%s_nginx-ingress_1:nginx-ingress' % prefix,
-            os.environ['INFRABOX_DOCKER_REGISTRY'] + '/job'
+            os.environ['INFRABOX_DOCKER_REGISTRY'] + '/job:%s' % os.environ['INFRABOX_JOB_VERSION']
         ]
 
         execute(cmd)
@@ -302,6 +302,7 @@ def main():
     get_env('INFRABOX_DATABASE_HOST')
     get_env('INFRABOX_DATABASE_PORT')
     get_env('INFRABOX_DOCKER_REGISTRY')
+    get_env('INFRABOX_JOB_VERSION')
 
     scheduler = Scheduler()
     scheduler.run()
