@@ -5,4 +5,4 @@ RUN apk add --no-cache py2-psycopg2 py2-pip py2-jwt py2-cryptography py2-request
 
 ENV PYTHONPATH=/infrabox/context/src
 
-CMD git clone https://github.com/InfraBox/cli.git /cli && cd /cli && pip install -e . && python /infrabox/context/infrabox/test/e2e-compose/test.py
+CMD /infrabox/context/infrabox/test/e2e-compose/entrypoint.sh
