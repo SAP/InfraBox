@@ -1,5 +1,10 @@
 <template>
-    <div id="chart-cpu-mem" class="chart"></div>
+    <div>
+        <div v-for="s in job.stats">
+            <h3>{{ s.name }}</h3>
+            <div :id="'chart-cpu-mem-'+ s.name" class="chart"></div>
+        </div>
+    </div>
 </template>
 
 <script>
@@ -13,12 +18,43 @@ export default {
     created () {
         this.job.loadStats()
     },
+    data () {
+        return {
+            charts: {},
+            redraw: {}
+        }
+    },
     mounted () {
         let draw = () => {
             if (!this.job.stats.length) {
                 return
             }
 
+            for (let stat of this.job.stats) {
+                const target = 'chart-cpu-mem-' + stat.name
+                const r = document.getElementById(target)
+
+                const config = this.getConfig(stat.values)
+                if (!this.charts[stat.name] && r) {
+                    this.charts[stat.name] = new tauCharts.Plot(config)
+                    this.charts[stat.name].renderTo('#' + target)
+                } else {
+                    this.redraw[stat.name] = setTimeout(draw, 1000)
+                }
+
+                if (this.charts[stat.name]) {
+                    this.charts[stat.name].refresh()
+                }
+            }
+        }
+
+        this.redraw = setTimeout(draw, 1000)
+    },
+    beforeDestroy () {
+        clearTimeout(this.redraw)
+    },
+    methods: {
+        getConfig (data) {
             const config = {
                 plugins: [
                     tauCharts.api.plugins.get('legend')(),
@@ -74,7 +110,7 @@ export default {
                             cpu: { type: 'measure' },
                             mem: { type: 'measure' }
                         },
-                        data: this.job.stats
+                        data: data
                     }
                 },
 
@@ -283,24 +319,8 @@ export default {
                 }
             }
 
-            const r = document.getElementById('chart-cpu-mem')
-
-            if (!this.chart && r) {
-                this.chart = new tauCharts.Plot(config)
-                this.chart.renderTo('#chart-cpu-mem')
-            }
-
-            if (this.chart) {
-                this.chart.refresh()
-            }
-
-            this.redraw = setTimeout(draw, 1000)
+            return config
         }
-
-        this.redraw = setTimeout(draw, 1000)
-    },
-    beforeDestroy () {
-        clearTimeout(this.redraw)
     }
 
 }
@@ -309,7 +329,7 @@ export default {
 <style scoped>
 .chart {
     width: 100%;
-    height: 500px;
+    height: 400px;
     margin: 0;
     padding: 0;
     float: left;
