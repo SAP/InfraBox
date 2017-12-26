@@ -201,15 +201,22 @@ export default class Job {
     }
 
     loadStats () {
-        return APIService.get(`project/${this.project.id}/job/${this.id}/Stats`)
+        return APIService.get(`project/${this.project.id}/job/${this.id}/stats`)
             .then((values) => {
                 const stats = []
                 for (const n of Object.keys(values)) {
+                    const stat = {
+                        name: n,
+                        values: []
+                    }
+
                     let i = 0
                     for (const o of values[n]) {
-                        stats.push({ cpu: o.cpu, date: i, mem: o.mem })
+                        stat.values.push({ cpu: o.cpu, date: i, mem: o.mem })
                         ++i
                     }
+
+                    stats.push(stat)
                 }
 
                 store.commit('setStats', { job: this, stats: stats })
