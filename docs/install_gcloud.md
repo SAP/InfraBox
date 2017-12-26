@@ -150,7 +150,6 @@ To create a very basic configuration use (don't forget to insert your external I
         --s3-region us-east-1 \
         --docker-registry-admin-username admin \
         --docker-registry-admin-password admin \
-        --dashboard-secret someothersecret \
         --account-signup-enabled
 
 **Set --root-url to your domain name**
