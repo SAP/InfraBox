@@ -102,12 +102,12 @@ After minio has been started create a Job to initalize the minio buckets:
 
 Save it to minio-init.yaml and run:
 
-    kubectl create -f minio-init.yaml
+    $ kubectl create -f minio-init.yaml
 
 ### Install PostgreSQL
 To install a PostgreSQL database in kubernetes simply run:
 
-    helm install -n postgres --namespace infrabox-system --set postgresPassword=qweasdzxc1,postgresUser=infrabox,postgresDatabase=infrabox stable/postgresql
+    $ helm install -n postgres --namespace infrabox-system --set postgresPassword=qweasdzxc1,postgresUser=infrabox,postgresDatabase=infrabox stable/postgresql
 
 **This is also not meant for production**
 
@@ -121,7 +121,8 @@ If you have not already cloned the InfraBox repository do so with:
 ## Generate RSA Key
 InfraBox uses a RSA key to sign certain information for security reasons. You need to generate a RSA key and keep it at a secure place
 
-    ssh-keygen -N '' -t rsa -f id_rsa
+    $ ssh-keygen -N '' -t rsa -f id_rsa
+    $ ssh-keygen -f id_rsa.pub -e -m pem > id_rsa.pem
 
 ## Configure InfraBox
 InfraBox contains a python script to generate all the neccessary configuration files for you. You find it under _deplpy/install.py_.
