@@ -76,6 +76,18 @@ class Test(unittest.TestCase):
     def test_docker_compose_job(self):
         self.run_it('/infrabox/context/infrabox/test/e2e/tests/docker_compose_job')
 
+    def test_failed_job(self):
+        self.run_it('/infrabox/context/infrabox/test/e2e/tests/failed_job')
+
+    def test_input_output(self):
+        self.run_it('/infrabox/context/infrabox/test/e2e/tests/input_output')
+
+    def test_secure_env(self):
+        self.run_it('/infrabox/context/infrabox/test/e2e/tests/secure_env')
+
+    def test_insecure_env(self):
+        self.run_it('/infrabox/context/infrabox/test/e2e/tests/insecure_env')
+
 
 if __name__ == '__main__':
     while True:
