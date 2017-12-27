@@ -68,7 +68,7 @@ If you already have a certificate for your domain you may skip this.
 
 Now create a Kubernetes secret for the certificate:
 
-    $ kubectl create secret tls infrabox-tls-certs --key /tmp/tls.key --cert /tmp/tls.crt
+    $ kubectl create -n infrabox-system secret tls infrabox-tls-certs --key /tmp/tls.key --cert /tmp/tls.crt
 
 ### Install Minio
 [Minio][minio] is S3 compatible storage. We use it as storage for the internal docker registry as well as for storing caches, input/outup
