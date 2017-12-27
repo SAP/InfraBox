@@ -131,7 +131,7 @@ To create a very basic configuration use (don't forget to insert your external I
     $ python deploy/install.py \
         -o /tmp/infrabox-configuration \
         --platform kubernetes \
-        --general-rsa-public-key ./id_rsa.pub \
+        --general-rsa-public-key ./id_rsa.pem \
         --general-rsa-private-key ./id_rsa \
         --root-url https://infrabox.example.com \
         --general-dont-check-certificates \
