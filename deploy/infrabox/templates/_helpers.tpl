@@ -86,6 +86,9 @@
 -
     name: INFRABOX_STORAGE_GCS_CONTAINER_CONTENT_CACHE_BUCKET
     value: {{ .Values.storage.gcs.container_content_cache_bucket }}
+-
+    name: GOOGLE_APPLICATION_CREDENTIALS
+    value: /etc/infrabox/gcs/gcs_service_account.json
 {{ end }}
 {{ end }}
 

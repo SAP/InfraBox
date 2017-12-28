@@ -40,12 +40,13 @@ class State(Resource):
                 SELECT state FROM job j
                 WHERE j.project_id = %s
                 AND j.build_id = (
-                    SELECT id
+                    SELECT b.id
                     FROM build b
                     INNER JOIN "commit" c
-                    ON c.id = b.commit_id
-                    AND c.project_id = b.project_id
+                        ON c.id = b.commit_id
+                        AND c.project_id = b.project_id
                     WHERE b.project_id = %s
+                        AND c.branch = %s
                     ORDER BY build_number DESC, restart_counter DESC
                     LIMIT 1
                 )
