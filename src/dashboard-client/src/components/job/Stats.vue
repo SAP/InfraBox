@@ -179,7 +179,7 @@ export default {
                                         },
                                         y: {
                                             autoScale: true,
-                                            cssClass: 'y axis',
+                                            cssClass: 'yCPU axis',
                                             hide: false,
                                             label: {
                                                 cssClass: 'label',
@@ -264,7 +264,7 @@ export default {
                                         },
                                         y: {
                                             autoScale: true,
-                                            cssClass: 'y axis',
+                                            cssClass: 'yMemory axis',
                                             hide: false,
                                             label: {
                                                 cssClass: 'label',
@@ -333,5 +333,8 @@ export default {
     margin: 0;
     padding: 0;
     float: left;
+    border-color: #E8E8E2;
+    border-style: solid;
+    border-width: thin;
 }
 </style>
