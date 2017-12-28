@@ -9,13 +9,13 @@
                     <md-list-item class="md-inset m-r-xl">
                         <div>
                             <img :src="buildState" />
-                            <pre>[![Build Status]({{ api_host }}/v1/project/{{ project.id }}/build/state.svg)]({{ dashboard_host }}/dashboard/#/project/{{ project.name }})</pre>
+                            <pre>[![Build Status]({{ api_host }}/v1/project/{{ project.id }}/state.svg)]({{ dashboard_host }}/dashboard/#/project/{{ project.name }})</pre>
                         </div>
                     </md-list-item>
                     <md-list-item class="md-inset m-r-xl">
                         <div>
                             <img :src="testState" />
-                            <pre>[![Test Status]({{ api_host }}/v1/project/{{ project.id }}/build/tests.svg)]({{ dashboard_host }}/dashboard/#/project/{{ project.name }})</pre>
+                            <pre>[![Test Status]({{ api_host }}/v1/project/{{ project.id }}/tests.svg)]({{ dashboard_host }}/dashboard/#/project/{{ project.name }})</pre>
                         </div>
                     </md-list-item>
                 </md-list>
