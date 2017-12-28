@@ -369,6 +369,7 @@ class Kubernetes(Install):
         self.set('general.dont_check_certificates', self.args.general_dont_check_certificates)
         self.set('general.worker_namespace', self.args.general_worker_namespace)
         self.set('general.system_namespace', self.args.general_system_namespace)
+        self.set('general.rbac.enabled', not self.args.general_rbac_disabled)
         self.set('root_url', self.args.root_url)
 
         self.check_file_exists(self.args.general_rsa_private_key)
@@ -405,8 +406,10 @@ class Kubernetes(Install):
         host = host.replace('https://', '')
 
         if not self.args.ingress_tls_host:
-            self.args.ingress_tls_host = host
+            self.args.ingress_tls_host = host.split(':')[0]
 
+        self.set('ingress.tls.force_redirect', not self.args.ingress_tls_dont_force_redirect)
+        self.set('ingress.tls.enabled', not self.args.ingress_tls_disabled)
         self.set('ingress.tls.host', self.args.ingress_tls_host)
         self.set('ingress.tls.acme', self.args.ingress_tls_acme)
 
@@ -645,6 +648,7 @@ def main():
     parser.add_argument('--general-system-namespace', default='infrabox-system')
     parser.add_argument('--general-rsa-public-key', required=True)
     parser.add_argument('--general-rsa-private-key', required=True)
+    parser.add_argument('--general-rbac-disabled', action='store_true', default=False)
 
     # Docker configuration
     parser.add_argument('--docker-registry-admin-username')
@@ -717,7 +721,9 @@ def main():
     parser.add_argument('--github-login-url', default='https://github.com/login')
 
     # TLS
+    parser.add_argument('--ingress-tls-disabled', action='store_true', default=False)
     parser.add_argument('--ingress-tls-host')
+    parser.add_argument('--ingress-tls-dont-force-redirect', action='store_true', default=False)
     parser.add_argument('--ingress-tls-acme', action='store_true', default=False)
 
     # Account

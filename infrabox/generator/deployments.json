@@ -5,7 +5,7 @@
         "name": "docker-auth",
         "docker_file": "src/docker-registry/auth/Dockerfile",
         "build_only": true,
-        "resources": { "limits": { "cpu": 1, "memory": 2048 } },
+        "resources": { "limits": { "cpu": 1, "memory": 1024 } },
         "deployments": [{
             "type": "docker-registry",
             "host": "quay.io/infrabox",
@@ -18,7 +18,7 @@
         "name": "db",
         "docker_file": "src/db/Dockerfile",
         "build_only": true,
-        "resources": { "limits": { "cpu": 1, "memory": 2048 } },
+        "resources": { "limits": { "cpu": 1, "memory": 1024 } },
         "deployments": [{
             "type": "docker-registry",
             "host": "quay.io/infrabox",
@@ -31,7 +31,7 @@
         "name": "gerrit-trigger",
         "docker_file": "src/gerrit/trigger/Dockerfile",
         "build_only": true,
-        "resources": { "limits": { "cpu": 1, "memory": 2048 } },
+        "resources": { "limits": { "cpu": 1, "memory": 1024 } },
         "deployments": [{
             "type": "docker-registry",
             "host": "quay.io/infrabox",
@@ -44,7 +44,7 @@
         "name": "gerrit-api",
         "docker_file": "src/gerrit/api/Dockerfile",
         "build_only": true,
-        "resources": { "limits": { "cpu": 1, "memory": 2048 } },
+        "resources": { "limits": { "cpu": 1, "memory": 1024 } },
         "deployments": [{
             "type": "docker-registry",
             "host": "quay.io/infrabox",
@@ -57,7 +57,7 @@
         "name": "github-api",
         "docker_file": "src/github/api/Dockerfile",
         "build_only": true,
-        "resources": { "limits": { "cpu": 1, "memory": 2048 } },
+        "resources": { "limits": { "cpu": 1, "memory": 1024 } },
         "deployments": [{
             "type": "docker-registry",
             "host": "quay.io/infrabox",
@@ -70,7 +70,7 @@
         "name": "github-trigger",
         "docker_file": "src/github/trigger/Dockerfile",
         "build_only": true,
-        "resources": { "limits": { "cpu": 1, "memory": 2048 } },
+        "resources": { "limits": { "cpu": 1, "memory": 1024 } },
         "deployments": [{
             "type": "docker-registry",
             "host": "quay.io/infrabox",
@@ -83,7 +83,7 @@
         "name": "github-review",
         "docker_file": "src/github/review/Dockerfile",
         "build_only": true,
-        "resources": { "limits": { "cpu": 1, "memory": 2048 } },
+        "resources": { "limits": { "cpu": 1, "memory": 1024 } },
         "deployments": [{
             "type": "docker-registry",
             "host": "quay.io/infrabox",
@@ -96,7 +96,7 @@
         "name": "gerrit-review",
         "docker_file": "src/gerrit/review/Dockerfile",
         "build_only": true,
-        "resources": { "limits": { "cpu": 1, "memory": 2048 } },
+        "resources": { "limits": { "cpu": 1, "memory": 1024 } },
         "deployments": [{
             "type": "docker-registry",
             "host": "quay.io/infrabox",
@@ -109,7 +109,7 @@
         "name": "docker-nginx",
         "docker_file": "src/docker-registry/nginx/Dockerfile",
         "build_only": true,
-        "resources": { "limits": { "cpu": 1, "memory": 2048 } },
+        "resources": { "limits": { "cpu": 1, "memory": 1024 } },
         "deployments": [{
             "type": "docker-registry",
             "host": "quay.io/infrabox",
@@ -135,7 +135,7 @@
         "name": "api",
         "docker_file": "src/api-new/Dockerfile",
         "build_only": true,
-        "resources": { "limits": { "cpu": 1, "memory": 2048 } },
+        "resources": { "limits": { "cpu": 1, "memory": 1024 } },
         "deployments": [{
             "type": "docker-registry",
             "host": "quay.io/infrabox",
@@ -148,7 +148,7 @@
         "name": "job",
         "docker_file": "src/job/Dockerfile",
         "build_only": true,
-        "resources": { "limits": { "cpu": 1, "memory": 2048 } },
+        "resources": { "limits": { "cpu": 1, "memory": 1024 } },
         "deployments": [{
             "type": "docker-registry",
             "host": "quay.io/infrabox",
@@ -161,7 +161,7 @@
         "name": "scheduler-kubernetes",
         "docker_file": "src/scheduler/kubernetes/Dockerfile",
         "build_only": true,
-        "resources": { "limits": { "cpu": 1, "memory": 2048 } },
+        "resources": { "limits": { "cpu": 1, "memory": 1024 } },
         "deployments": [{
             "type": "docker-registry",
             "host": "quay.io/infrabox",
@@ -174,7 +174,7 @@
         "name": "scheduler-docker-compose",
         "docker_file": "src/scheduler/docker-compose/Dockerfile",
         "build_only": true,
-        "resources": { "limits": { "cpu": 1, "memory": 2048 } },
+        "resources": { "limits": { "cpu": 1, "memory": 1024 } },
         "deployments": [{
             "type": "docker-registry",
             "host": "quay.io/infrabox",
@@ -187,7 +187,7 @@
         "name": "stats",
         "docker_file": "src/stats/Dockerfile",
         "build_only": true,
-        "resources": { "limits": { "cpu": 1, "memory": 2048 } },
+        "resources": { "limits": { "cpu": 1, "memory": 1024 } },
         "deployments": [{
             "type": "docker-registry",
             "host": "quay.io/infrabox",
@@ -200,7 +200,7 @@
         "name": "job-api",
         "docker_file": "src/job-api/Dockerfile",
         "build_only": true,
-        "resources": { "limits": { "cpu": 1, "memory": 2048 } },
+        "resources": { "limits": { "cpu": 1, "memory": 1024 } },
         "deployments": [{
             "type": "docker-registry",
             "host": "quay.io/infrabox",
@@ -213,7 +213,7 @@
         "name": "postgres",
         "docker_file": "src/postgres/Dockerfile",
         "build_only": true,
-        "resources": { "limits": { "cpu": 1, "memory": 2048 } },
+        "resources": { "limits": { "cpu": 1, "memory": 1024 } },
         "deployments": [{
             "type": "docker-registry",
             "host": "quay.io/infrabox",
@@ -226,7 +226,7 @@
         "name": "docker-gc",
         "docker_file": "src/docker-gc/Dockerfile",
         "build_only": true,
-        "resources": { "limits": { "cpu": 1, "memory": 2048 } }
+        "resources": { "limits": { "cpu": 1, "memory": 1024 } }
     }, {
         "type": "docker",
         "name": "build-dashboard-client",

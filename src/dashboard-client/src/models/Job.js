@@ -112,7 +112,7 @@ export default class Job {
             let idx = line.indexOf('|##')
             let date = null
 
-            if (idx >= 0) {
+            if (idx >= 0 && idx < 10) {
                 header = line.substr(idx + 3)
                 const d = line.substr(0, idx)
                 date = this._getTime(d)
@@ -120,7 +120,7 @@ export default class Job {
             }
 
             idx = line.indexOf('|Step')
-            if (idx >= 0) {
+            if (idx >= 0 && idx < 10) {
                 header = line.substr(idx + 5)
                 const d = line.substr(0, idx)
                 date = this._getTime(d)

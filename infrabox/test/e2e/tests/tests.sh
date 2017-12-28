@@ -1,6 +1,6 @@
 #!/bin/bash -e
 
-infrabox_host=${1:-"http://localhost:8080"}
+infrabox_host=${1:-"http://localhost:8080/api"}
 
 _runSingleTest() {
     pushd "$1"
