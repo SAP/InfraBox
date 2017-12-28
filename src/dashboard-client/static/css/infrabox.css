@@ -498,3 +498,15 @@ thead.custom-box {
 th.custom-box {
     padding-left: 0;
 }
+
+
+.yMemory.axis,label {
+    stroke: #f8ac59;
+    stroke-width: 0.08%;
+}
+
+.yCPU.axis,label {
+    stroke: #23c6c8;
+    stroke-width: 0.08%;
+}
+
