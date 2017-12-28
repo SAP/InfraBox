@@ -1,7 +1,7 @@
 #!/bin/bash -ev
 
 NAMESPACE=$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace)
-IMAGE_TAG=build_135
+IMAGE_TAG=build_203
 
 _prepareKubectl() {
     echo "## Prepare kubectl"
@@ -27,7 +27,11 @@ _portForwardAPI() {
 
 _getDependencies() {
     echo "## install infraboxcli"
-    pip install infraboxcli
+    # pip install infraboxcli
+    git clone https://github.com/InfraBox/cli.git /cli
+    pushd /cli
+    pip install -e .
+    popd
 
     echo "## Get minio client"
     curl https://dl.minio.io/client/mc/release/linux-amd64/mc > /usr/bin/mc
@@ -94,7 +98,7 @@ _installPostgres() {
     sleep 20 # wait until schema has been created
 
     echo "Inserting data"
-    export INFRABOX_CLI_TOKEN='d5c80d79-5355-4edb-bc18-7ba878e166bf'
+    export TOKEN_ID='d5c80d79-5355-4edb-bc18-7ba878e166bf'
     export PROJECT_ID='2daef5b5-0474-4e63-a47e-df8438a82eba'
     export USER_ID='70c68f11-4d04-46d3-a68e-c0d2a91c00a6'
     # Insert dummy data
@@ -106,7 +110,7 @@ _installPostgres() {
     _sql "INSERT INTO collaborator (project_id, user_id, owner)
           VALUES ('2daef5b5-0474-4e63-a47e-df8438a82eba', '70c68f11-4d04-46d3-a68e-c0d2a91c00a6', true)"
     _sql "INSERT INTO auth_token (id, description, project_id, scope_push, scope_pull)
-          VALUES ('$INFRABOX_CLI_TOKEN', 'desc', '$PROJECT_ID', true, true)"
+          VALUES ('$TOKEN_ID', 'desc', '$PROJECT_ID', true, true)"
     _sql "INSERT INTO secret(project_id, name, value)
           VALUES ('$PROJECT_ID', 'SECRET_ENV', 'hello world')"
     echo "Finished preparing database"
@@ -134,11 +138,32 @@ _installMinio() {
     mc config host add minio http://localhost:9000 AKIAIOSFODNN7EXAMPLE wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY S3v4
 
     # Create buckets
-    mc mb minio/infrabox-container-output-bucket
-    mc mb minio/infrabox-project-upload-bucket
-    mc mb minio/infrabox-container-content-cache-bucket
-    mc mb minio/infrabox-docker-registry-bucket
+    mc mb minio/infrabox-container-output
+    mc mb minio/infrabox-project-upload
+    mc mb minio/infrabox-container-cache
+    mc mb minio/infrabox-docker-registry
     mc ls minio
+}
+
+_installNginxIngress() {
+    echo "## Install nginx ingress"
+
+    export ROOT_URL="nic-nginx-ingress-c.$NAMESPACE"
+    echo "Generating certs for: $ROOT_URL"
+    openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /tmp/tls.key -out /tmp/tls.crt -subj "/CN=$ROOT_URL"
+
+    kubectl create -n $NAMESPACE secret tls infrabox-tls-certs --key /tmp/tls.key --cert /tmp/tls.crt
+
+    helm install \
+        --tiller-namespace $NAMESPACE \
+        -n nic \
+        --namespace $NAMESPACE \
+        --set controller.scope.enabled="true" \
+        --set controller.scope.namespace="$NAMESPACE" \
+        --set controller.service.type="ClusterIP" \
+        --set controller.name="c" \
+        --set controller.config.proxy-body-size="0" \
+        stable/nginx-ingress
 }
 
 _deinstallInfrabox() {
@@ -146,8 +171,11 @@ _deinstallInfrabox() {
     helm delete --tiller-namespace $NAMESPACE --purge infrabox || true
 }
 
-_installInfraboxMinio() {
+_installInfrabox() {
     _deinstallInfrabox
+
+    ssh-keygen -N '' -t rsa -f id_rsa
+    ssh-keygen -f id_rsa.pub -e -m pem > id_rsa.pem
 
     echo "## Install infrabox"
     outdir=/tmp/test
@@ -156,12 +184,15 @@ _installInfraboxMinio() {
         -o $outdir \
         --platform kubernetes \
         --version $IMAGE_TAG \
+        --general-dont-check-certificates \
+        --root-url https://$ROOT_URL \
+        --general-rbac-disabled \
         --general-worker-namespace $NAMESPACE \
         --general-system-namespace $NAMESPACE \
-        --docker-registry quay.io/infrabox \
+        --general-rsa-public-key ./id_rsa.pem \
+        --general-rsa-private-key ./id_rsa \
         --docker-registry-admin-username admin \
         --docker-registry-admin-password admin \
-        --docker-registry-url http://infrabox-docker-registry.$NAMESPACE:8080 \
         --database postgres \
         --postgres-host infrabox-postgres.$NAMESPACE \
         --postgres-username postgres \
@@ -174,24 +205,20 @@ _installInfraboxMinio() {
         --s3-access-key AKIAIOSFODNN7EXAMPLE \
         --s3-region us-east-1 \
         --s3-port 9000 \
-        --api-url http://infrabox-api.$NAMESPACE:8080 \
-        --dashboard-url http://infrabox-dashboard.$NAMESPACE:8080 \
-        --dashboard-secret secret \
-        --docs-url http://infrabox-docs.$NAMESPACE:8080 \
-        --job-api-url http://infrabox-job-api.$NAMESPACE:8080 \
-        --job-api-secret kl23424
 
-    pushd $outdir
-    echo "{\"insecure-registries\": [\"infrabox-docker-registry.$NAMESPACE:8080\"]}" > config/docker/daemon.json
-    ./install.sh
+    pushd $outdir/infrabox
+    helm install --tiller-namespace $NAMESPACE --namespace $NAMESPACE .
     popd
+
+    export INFRABOX_CLI_TOKEN=$(python /infrabox/context/infrabox/test/e2e/create_token.py ./id_rsa $PROJECT_ID $TOKEN_ID)
+    export INFRABOX_API_URL=http://localhost:8080/api
 
     _portForwardAPI
 }
 
 _runTests() {
     echo "## Run tests"
-    pushd /infrabox/context/tests
+    pushd /infrabox/context/infrabox/test/e2e/tests
     ./tests.sh
     popd
 }
@@ -202,7 +229,8 @@ main() {
     _initHelm
     _installMinio
     _installPostgres
-    _installInfraboxMinio
+    _installNginxIngress
+    _installInfrabox
     _runTests
 }
 

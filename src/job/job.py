@@ -824,7 +824,7 @@ exec "$@"
                 composefile = job['docker_compose_file']
                 p = os.path.join(base_path, composefile)
                 if not os.path.exists(p):
-                    raise Failure("%s does not exist" % p)
+                    return # might be dynamically generated
 
                 # validate it
                 try:

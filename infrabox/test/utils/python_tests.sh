@@ -1,6 +1,6 @@
 #!/bin/sh -e
 
-cd tests
+cd /tests
 coverage run --source=.,$1 --branch test.py
 
 coverage report -m

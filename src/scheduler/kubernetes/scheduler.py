@@ -250,7 +250,7 @@ class Scheduler(object):
         self.logger.info("Provisioning kubernetes namespace")
         h = {'Authorization': 'Bearer %s' % self.args.token}
 
-        namespace_name = "infrabox-%s" % job_id
+        namespace_name = "ib-%s" % job_id
         ns = {
             "apiVersion": "v1",
             "kind": "Namespace",

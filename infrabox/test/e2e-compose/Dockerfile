@@ -5,7 +5,4 @@ RUN apk add --no-cache py2-psycopg2 py2-pip py2-jwt py2-cryptography py2-request
 
 ENV PYTHONPATH=/infrabox/context/src
 
-COPY infrabox/test/e2e-compose/ /tests
-COPY infrabox/test/utils/python_tests.sh /tests/entrypoint.sh
-
-CMD /tests/entrypoint.sh
+CMD /infrabox/context/infrabox/test/e2e-compose/entrypoint.sh
