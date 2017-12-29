@@ -1,7 +1,12 @@
 import uuid
 import urllib
 
-from flask import g, jsonify, request, abort, redirect
+from datetime import datetime
+from functools import wraps, update_wrapper
+
+import requests
+
+from flask import g, jsonify, request, abort, make_response, Response
 from flask_restplus import Resource
 
 from werkzeug.datastructures import FileStorage
@@ -11,6 +16,30 @@ from pyinfraboxutils.ibrestplus import api
 from pyinfraboxutils.storage import storage
 
 ns = api.namespace('api/v1/project', description='Project related operations')
+
+def nocache(view):
+    @wraps(view)
+    def no_cache(*args, **kwargs):
+        response = make_response(view(*args, **kwargs))
+        response.headers['Surrogate-Control'] = 'no-store'
+        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, proxy-revalidate'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '0'
+        response.last_modified = datetime.now()
+        response.add_etag()
+        return response
+
+    return update_wrapper(no_cache, view)
+
+def get_badge(url):
+    resp = requests.get(url)
+
+    excluded_headers = ['content-encoding', 'content-length', 'transfer-encoding', 'connection']
+    headers = [(name, value) for (name, value) in resp.raw.headers.items()
+               if name.lower() not in excluded_headers]
+
+    response = Response(resp.content, resp.status_code, headers)
+    return response
 
 @ns.route('/<project_id>')
 class Project(Resource):
@@ -27,6 +56,7 @@ class Project(Resource):
 @ns.route('/<project_id>/state.svg')
 class State(Resource):
 
+    @nocache
     def get(self, project_id):
         p = g.db.execute_one_dict('''
             SELECT type FROM project WHERE id = %s
@@ -72,7 +102,6 @@ class State(Resource):
 
         for r in rows:
             state = r['state']
-            print state
             if state in ('running', 'queued', 'scheduled'):
                 status = 'running'
                 color = 'grey'
@@ -82,11 +111,13 @@ class State(Resource):
                 status = state
                 color = 'red'
 
-        return redirect('https://img.shields.io/badge/infrabox-%s-%s.svg' % (status, color), code=307)
+        url = 'https://img.shields.io/badge/infrabox-%s-%s.svg' % (status, color)
+        return get_badge(url)
 
 @ns.route('/<project_id>/tests.svg')
 class Tests(Resource):
 
+    @nocache
     def get(self, project_id):
         r = g.db.execute_one_dict('''
             SELECT
@@ -116,14 +147,15 @@ class Tests(Resource):
         total = int(r['success']) + int(r['failure']) + int(r['error'])
         status = '%s / %s' % (r['success'], total)
 
-        return redirect('https://img.shields.io/badge/infrabox-%s-%s.svg' % (status,
-                                                                             'brightgreen'), code=307)
+        return get_badge('https://img.shields.io/badge/infrabox-%s-%s.svg' % (status,
+                                                                              'brightgreen'))
 
 
 
 @ns.route('/<project_id>/badge.svg')
 class Badge(Resource):
 
+    @nocache
     def get(self, project_id):
         job_name = request.args.get('job_name', None)
         subject = request.args.get('subject', None)
@@ -150,9 +182,9 @@ class Badge(Resource):
         status = urllib.quote(badge['status'])
         subject = urllib.quote(subject)
 
-        return redirect('https://img.shields.io/badge/%s-%s-%s.svg' % (subject,
-                                                                       status,
-                                                                       badge['color']), code=307)
+        return get_badge('https://img.shields.io/badge/%s-%s-%s.svg' % (subject,
+                                                                        status,
+                                                                        badge['color']))
 
 
 upload_parser = api.parser()
