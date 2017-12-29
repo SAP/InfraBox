@@ -19,8 +19,7 @@
 
         <md-sidenav v-if="$store.state.user" class="md-left" ref="leftSidenav">
             <md-toolbar class="infrabox-logo">
-                <img src="../static/logo_image_only.png">
-                <span>InfraBox</span>
+                <img src="../static/logo_text_bottom.png">
             </md-toolbar>
 
             <md-list>
