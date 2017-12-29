@@ -39,6 +39,8 @@ class Test(unittest.TestCase):
                         VALUES(%s, %s, true)''', (self.project_id, self.user_id,))
         cur.execute('''INSERT INTO auth_token(project_id, id, description, scope_push, scope_pull)
                         VALUES(%s, %s, 'asd', true, true)''', (self.project_id, self.token_id,))
+        cur.execute('''INSERT INTO secret(project_id, name, value)
+                        VALUES(%s, 'SECRET_ENV', 'hello world')''', (self.project_id,))
         conn.commit()
 
         os.environ['INFRABOX_CLI_TOKEN'] = encode_project_token(self.token_id, self.project_id)
@@ -72,11 +74,15 @@ class Test(unittest.TestCase):
 
     def test_input_output(self):
         self.run_it('/infrabox/context/infrabox/test/e2e/tests/docker_input_output',
-                    "Job test finished successfully")
+                    "Job consumer finished successfully")
 
     def test_secure_env(self):
         self.run_it('/infrabox/context/infrabox/test/e2e/tests/docker_secure_env',
                     "Job test finished successfully")
+
+    def test_secure_env_not_found(self):
+        self.run_it('/infrabox/context/infrabox/test/e2e/tests/docker_secure_env_not_found',
+                    "Secret 'UNKNOWN_SECRET' not found")
 
     def test_insecure_env(self):
         self.run_it('/infrabox/context/infrabox/test/e2e/tests/docker_insecure_env',

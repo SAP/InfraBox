@@ -645,7 +645,7 @@ def create_jobs():
                                                (env_var_ref_name, project_id))
 
                     if not result:
-                        abort(400, "Environment variable '%s' not found in project" % env_var_ref_name)
+                        abort(400, "Secret '%s' not found" % env_var_ref_name)
 
                     if not job['env_var_refs']:
                         job['env_var_refs'] = {}
