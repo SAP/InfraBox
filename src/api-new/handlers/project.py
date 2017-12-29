@@ -6,7 +6,7 @@ from functools import wraps, update_wrapper
 
 import requests
 
-from flask import g, request, abort, make_response, Response
+from flask import g, jsonify, request, abort, make_response, Response
 from flask_restplus import Resource, fields
 
 from werkzeug.datastructures import FileStorage
@@ -47,6 +47,30 @@ project_model = api.model('ProjectModel', {
     'type': fields.String,
     'public': fields.Boolean
 })
+
+def nocache(view):
+    @wraps(view)
+    def no_cache(*args, **kwargs):
+        response = make_response(view(*args, **kwargs))
+        response.headers['Surrogate-Control'] = 'no-store'
+        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, proxy-revalidate'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '0'
+        response.last_modified = datetime.now()
+        response.add_etag()
+        return response
+
+    return update_wrapper(no_cache, view)
+
+def get_badge(url):
+    resp = requests.get(url)
+
+    excluded_headers = ['content-encoding', 'content-length', 'transfer-encoding', 'connection']
+    headers = [(name, value) for (name, value) in resp.raw.headers.items()
+               if name.lower() not in excluded_headers]
+
+    response = Response(resp.content, resp.status_code, headers)
+    return response
 
 @ns.route('/<project_id>')
 class Project(Resource):
