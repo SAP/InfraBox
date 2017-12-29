@@ -82,10 +82,6 @@ class Test(unittest.TestCase):
         self.run_it('/infrabox/context/infrabox/test/e2e/tests/docker_insecure_env',
                     "Job test finished successfully")
 
-
-if __name__ == '__main__':
-    main()
-
 def main():
     while True:
         time.sleep(1)
@@ -102,3 +98,6 @@ def main():
 
     with open('results.xml', 'wb') as output:
         unittest.main(testRunner=xmlrunner.XMLTestRunner(output=output))
+
+if __name__ == '__main__':
+    main()
