@@ -22,7 +22,7 @@ Quickstart Guides:
 - [Upload a workflow (you don't need a git repository)](docs/guides/upload.md)
 
 ## Install InfraBox
-You have multiple options to install InfraBox.
+You have multiple options to install InfraBox:
 
 - [Docker Compose](docs/install_docker_compose.md)
 - [Kubernetes Engine (Google Cloud)](docs/install_gcloud.md)
