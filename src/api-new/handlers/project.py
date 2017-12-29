@@ -82,7 +82,7 @@ class State(Resource):
                 status = state
                 color = 'red'
 
-        return redirect('https://img.shields.io/badge/infrabox-%s-%s.svg' % (status, color))
+        return redirect('https://img.shields.io/badge/infrabox-%s-%s.svg' % (status, color), code=307)
 
 @ns.route('/<project_id>/tests.svg')
 class Tests(Resource):
@@ -117,7 +117,7 @@ class Tests(Resource):
         status = '%s / %s' % (r['success'], total)
 
         return redirect('https://img.shields.io/badge/infrabox-%s-%s.svg' % (status,
-                                                                             'brightgreen'))
+                                                                             'brightgreen'), code=307)
 
 
 
@@ -152,7 +152,7 @@ class Badge(Resource):
 
         return redirect('https://img.shields.io/badge/%s-%s-%s.svg' % (subject,
                                                                        status,
-                                                                       badge['color']))
+                                                                       badge['color']), code=307)
 
 
 upload_parser = api.parser()
