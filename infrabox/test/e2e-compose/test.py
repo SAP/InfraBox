@@ -44,52 +44,49 @@ class Test(unittest.TestCase):
         os.environ['INFRABOX_CLI_TOKEN'] = encode_project_token(self.token_id, self.project_id)
         os.environ['INFRABOX_API_URL'] = 'http://nginx-ingress/api'
 
-    def run_it(self, cwd):
+    def expect_message(self, output, message):
+        if not message:
+            return
+
+        self.assertIn(message, output)
+
+    def run_it(self, cwd, expect_message):
         command = ['infrabox', 'push', '--show-console']
-        process = subprocess.Popen(command, shell=False,
-                                   stdout=subprocess.PIPE,
-                                   stderr=subprocess.STDOUT,
-                                   cwd=cwd, universal_newlines=True)
-
-        # Poll process for new output until finished
-        msg = ""
-        while True:
-            line = process.stdout.readline()
-            if not line:
-                break
-
-            line = line.rstrip()
-            msg += line
-            print line
-
-        process.wait()
-
-        exitCode = process.returncode
-        print "Test exited with %s" % exitCode
-
-        if exitCode != 0:
-            raise Exception(msg)
+        try:
+            output = subprocess.check_output(command, cwd=cwd)
+            self.expect_message(output, expect_message)
+        except subprocess.CalledProcessError as e:
+            self.expect_message(e.output, expect_message)
 
     def test_docker_job(self):
-        self.run_it('/infrabox/context/infrabox/test/e2e/tests/docker_job')
+        self.run_it('/infrabox/context/infrabox/test/e2e/tests/docker_job',
+                    "Job test finished successfully")
 
     def test_docker_compose_job(self):
-        self.run_it('/infrabox/context/infrabox/test/e2e/tests/docker_compose_job')
+        self.run_it('/infrabox/context/infrabox/test/e2e/tests/docker_compose_job',
+                    "Job test finished successfully")
 
     def test_failed_job(self):
-        self.run_it('/infrabox/context/infrabox/test/e2e/tests/failed_job')
+        self.run_it('/infrabox/context/infrabox/test/e2e/tests/failed_job',
+                    "Job test failed with 'failure'")
 
     def test_input_output(self):
-        self.run_it('/infrabox/context/infrabox/test/e2e/tests/docker_input_output')
+        self.run_it('/infrabox/context/infrabox/test/e2e/tests/docker_input_output',
+                    "Job test finished successfully")
 
     def test_secure_env(self):
-        self.run_it('/infrabox/context/infrabox/test/e2e/tests/docker_secure_env')
+        self.run_it('/infrabox/context/infrabox/test/e2e/tests/docker_secure_env',
+                    "Job test finished successfully")
 
     def test_insecure_env(self):
-        self.run_it('/infrabox/context/infrabox/test/e2e/tests/docker_insecure_env')
+        self.run_it('/infrabox/context/infrabox/test/e2e/tests/docker_insecure_env',
+                    "Job test finished successfully")
 
 
 if __name__ == '__main__':
+    main()
+
+def main():
     while True:
         time.sleep(1)
         try:
