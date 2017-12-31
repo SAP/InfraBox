@@ -56,6 +56,7 @@ class Scheduler(object):
         self.daemon_json = None
 
     def kube_job(self, job_id, _build_id, _cpu, _memory, _job_type):
+        # repo_dir is also  hard coded in docker-compose.yml for job-git
         repo_dir = '/tmp/infrabox-compose/repo'
         clear_dir(repo_dir)
 
@@ -70,6 +71,7 @@ class Scheduler(object):
             '-e', "INFRABOX_JOB_ID=%s" % job_id,
             '-e', "INFRABOX_GENERAL_DONT_CHECK_CERTIFICATES=true",
             '-e', "INFRABOX_JOB_API_URL=http://nginx-ingress/api/job",
+            '-e', "INFRABOX_JOB_GIT_URL=http://job-git:8080",
             '-e', "INFRABOX_SERVICE=job",
             '-e', "INFRABOX_VERSION=latest",
             '-e', "INFRABOX_DOCKER_REGISTRY_URL=localhost:8090",

@@ -82,7 +82,7 @@ def handle_patchset_created_project(conn, event, project_id, project_name):
             RETURNING *
                 ''', (sha, event['change']['commitMessage'],
                       repository_id, datetime.datetime.now(),
-                      event['change']['owner']['name'],
+                      event['change']['owner'].get('name', 'unknown'),
                       '', event['change']['owner']['username'], '', '', '',
                       event['change']['url'],
                       event['change']['branch'], project_id, None))
@@ -109,7 +109,7 @@ def handle_patchset_created_project(conn, event, project_id, project_name):
 
     env_vars = {
         "GERRIT_PATCHSET_UPLOADER_USERNAME": event['patchSet']['uploader']['username'],
-        "GERRIT_PATCHSET_UPLOADER_NAME": event['patchSet']['uploader']['name'],
+        "GERRIT_PATCHSET_UPLOADER_NAME": event['patchSet']['uploader'].get('name', None),
         "GERRIT_PATCHSET_UPLOADER_EMAIL": event['patchSet']['uploader']['email'],
         "GERRIT_PATCHSET_REF": event['patchSet']['ref'],
         "GERRIT_REFSPEC": event['patchSet']['ref'],
@@ -124,10 +124,10 @@ def handle_patchset_created_project(conn, event, project_id, project_name):
         "GERRIT_CHANGE_ID": event['change']['id'],
         "GERRIT_CHANGE_SUBJECT": event['change']['subject'],
         "GERRIT_CHANGE_OWNER_USERNAME": event['change']['owner']['username'],
-        "GERRIT_CHANGE_OWNER_NAME": event['change']['owner']['name'],
+        "GERRIT_CHANGE_OWNER_NAME": event['change']['owner'].get('name', None),
         "GERRIT_CHANGE_OWNER_EMAIL": event['change']['owner']['email'],
         "GERRIT_UPLOADER_USERNAME": event['uploader']['username'],
-        "GERRIT_UPLOADER_NAME": event['uploader']['name'],
+        "GERRIT_UPLOADER_NAME": event['uploader'].get('name', None),
         "GERRIT_UPLOADER_EMAIL": event['uploader']['email']
     }
 

@@ -15,6 +15,7 @@ docker push ${docker_registry}infrabox/github-trigger:$image_tag
 docker push ${docker_registry}infrabox/github-review:$image_tag
 docker push ${docker_registry}infrabox/job:$image_tag
 docker push ${docker_registry}infrabox/job-api:$image_tag
+docker push ${docker_registry}infrabox/job-git:$image_tag
 docker push ${docker_registry}infrabox/scheduler-kubernetes:$image_tag
 docker push ${docker_registry}infrabox/scheduler-docker-compose:$image_tag
 docker push ${docker_registry}infrabox/docker-compose-ingress:$image_tag

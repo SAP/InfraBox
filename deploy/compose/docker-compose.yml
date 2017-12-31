@@ -64,8 +64,8 @@ services:
         image: $INFRABOX_DOCKER_REGISTRY/infrabox/scheduler/docker-compose
         tty: true
         volumes:
-            - "/var/run/docker.sock:/var/run/docker.sock"
-            - "/tmp/infrabox-compose/repo:/tmp/infrabox-compose/repo"
+            - /var/run/docker.sock:/var/run/docker.sock
+            - /tmp/infrabox-compose/repo:/tmp/infrabox-compose/repo
         environment:
             - INFRABOX_SERVICE=scheduler
             - INFRABOX_VERSION=latest
@@ -98,7 +98,6 @@ services:
             - INFRABOX_STORAGE_S3_PROJECT_UPLOAD_BUCKET=infrabox-project-upload
             - INFRABOX_STORAGE_S3_CONTAINER_OUTPUT_BUCKET=infrabox-container-output
             - INFRABOX_GITHUB_ENABLED=false
-            - INFRABOX_GERRIT_ENABLED=false
             - INFRABOX_DASHBOARD_URL="localhost"
             - INFRABOX_DASHBOARD_PORT=8080
             - INFRABOX_DASHBOARD_SECRET=secret
@@ -112,9 +111,20 @@ services:
             - infrabox
         volumes: []
 
+    job-git:
+        image: $INFRABOX_DOCKER_REGISTRY/infrabox/job-git
+        environment:
+            - INFRABOX_SERVICE=job-api
+            - INFRABOX_VERSION=latest
+            - INFRABOX_JOB_REPO_MOUNT_PATH=/tmp/infrabox-compose/repo
+            - INFRABOX_GENERAL_DONT_CHECK_CERTIFICATES=true
+        networks:
+            - infrabox
+        volumes:
+            - /tmp/infrabox-compose/repo:/tmp/infrabox-compose/repo
 
     job-api:
-        image: $INFRABOX_DOCKER_REGISTRY/infrabox/api
+        image: $INFRABOX_DOCKER_REGISTRY/infrabox/job-api
         environment:
             - INFRABOX_SERVICE=job-api
             - INFRABOX_VERSION=latest
@@ -130,7 +140,6 @@ services:
             - INFRABOX_STORAGE_S3_PROJECT_UPLOAD_BUCKET=infrabox-project-upload
             - INFRABOX_STORAGE_S3_CONTAINER_OUTPUT_BUCKET=infrabox-container-output
             - INFRABOX_GITHUB_ENABLED=false
-            - INFRABOX_GERRIT_ENABLED=false
             - INFRABOX_JOB_MAX_OUTPUT_SIZE=104857600
             - INFRABOX_JOB_SECURITY_CONTEXT_CAPABILITIES_ENABLED=false
         networks:
@@ -154,7 +163,6 @@ services:
             - INFRABOX_STORAGE_S3_PROJECT_UPLOAD_BUCKET=infrabox-project-upload
             - INFRABOX_STORAGE_S3_CONTAINER_OUTPUT_BUCKET=infrabox-container-output
             - INFRABOX_GITHUB_ENABLED=false
-            - INFRABOX_GERRIT_ENABLED=false
             - INFRABOX_DASHBOARD_URL="localhost/dashboard"
             - INFRABOX_API_PORT=8080
             - INFRABOX_API_MONITORING_PORT=8080
