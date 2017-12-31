@@ -61,47 +61,43 @@ class Test(unittest.TestCase):
                 self.assertEqual(j['message'], message)
 
 
-    def expect_message(self, output, message):
-        if not message:
-            return
-
-        self.assertIn(message, output)
-
-    def run_it(self, cwd, expect_message):
+    def run_it(self, cwd):
         command = ['infrabox', 'push', '--show-console']
+        output = None
         try:
             output = subprocess.check_output(command, cwd=cwd)
-            self.expect_message(output, expect_message)
         except subprocess.CalledProcessError as e:
-            self.expect_message(e.output, expect_message)
+            output = e.output
+
+        print output
 
     def test_docker_job(self):
-        self.run_it('/infrabox/context/infrabox/test/e2e/tests/docker_job',
-                    "Job test finished successfully")
+        self.run_it('/infrabox/context/infrabox/test/e2e/tests/docker_job')
+        self.expect_job("test")
 
     def test_docker_compose_job(self):
-        self.run_it('/infrabox/context/infrabox/test/e2e/tests/docker_compose_job',
-                    "Job test finished successfully")
+        self.run_it('/infrabox/context/infrabox/test/e2e/tests/docker_compose_job')
+        self.expect_job("test")
 
     def test_failed_job(self):
-        self.run_it('/infrabox/context/infrabox/test/e2e/tests/failed_job',
-                    "Job test failed with 'failure'")
+        self.run_it('/infrabox/context/infrabox/test/e2e/tests/failed_job')
+        self.expect_job("test", state='failure')
 
     def test_input_output(self):
-        self.run_it('/infrabox/context/infrabox/test/e2e/tests/docker_input_output',
-                    "Job consumer finished successfully")
+        self.run_it('/infrabox/context/infrabox/test/e2e/tests/docker_input_output')
+        self.expect_job("consumer")
 
     def test_secure_env(self):
-        self.run_it('/infrabox/context/infrabox/test/e2e/tests/docker_secure_env',
-                    "Job test finished successfully")
+        self.run_it('/infrabox/context/infrabox/test/e2e/tests/docker_secure_env')
+        self.expect_job("test")
 
     def test_secure_env_not_found(self):
-        self.run_it('/infrabox/context/infrabox/test/e2e/tests/docker_secure_env_not_found',
-                    "Secret 'UNKNOWN_SECRET' not found")
+        self.run_it('/infrabox/context/infrabox/test/e2e/tests/docker_secure_env_not_found')
+        self.expect_job('test', state='failure', message="Secret 'UNKNOWN_SECRET' not found")
 
     def test_insecure_env(self):
-        self.run_it('/infrabox/context/infrabox/test/e2e/tests/docker_insecure_env',
-                    "Job test finished successfully")
+        self.run_it('/infrabox/context/infrabox/test/e2e/tests/docker_insecure_env')
+        self.expect_job("test")
 
 def main():
     while True:
