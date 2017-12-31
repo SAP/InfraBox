@@ -87,7 +87,7 @@ class Scheduler(object):
             "name": "data-dir",
             "emptyDir": {}
         }, {
-            "name": "analyzer-tmp",
+            "name": "repo",
             "emptyDir": {}
         }]
 
@@ -95,8 +95,8 @@ class Scheduler(object):
             "mountPath": "/data",
             "name": "data-dir"
         }, {
-            "mountPath": "/tmp",
-            "name": "analyzer-tmp"
+            "mountPath": "/repo",
+            "name": "repo"
         }]
 
         env = [{
@@ -108,6 +108,9 @@ class Scheduler(object):
         }, {
             "name": "INFRABOX_JOB_API_URL",
             "value": os.environ['INFRABOX_JOB_API_URL']
+        }, {
+            "name": "INFRABOX_JOB_GIT_URL",
+            "value": "http://localhost:8080"
         }, {
             "name": "INFRABOX_SERVICE",
             "value": "job"
@@ -167,8 +170,18 @@ class Scheduler(object):
                 "name": "local-cache"
             })
 
+        clone_volume_mounts = [{
+            "mountPath": "/repo",
+            "name": "repo"
+        }]
+
+        clone_env = [{
+            "name": "INFRABOX_GENERAL_DONT_CHECK_CERTIFICATES",
+            "value": os.environ['INFRABOX_GENERAL_DONT_CHECK_CERTIFICATES']
+        }]
+
         if gerrit_enabled():
-            env.extend(({
+            gerrit_env = ({
                 "name": "INFRABOX_GERRIT_HOSTNAME",
                 "value": os.environ['INFRABOX_GERRIT_HOSTNAME']
             }, {
@@ -177,9 +190,12 @@ class Scheduler(object):
             }, {
                 "name": "INFRABOX_GERRIT_PORT",
                 "value": os.environ['INFRABOX_GERRIT_PORT']
-            }))
+            })
 
-            volume_mounts.append({
+            env.extend(gerrit_env)
+            clone_env.extend(gerrit_env)
+
+            clone_volume_mounts.append({
                 "name": "gerrit-ssh",
                 "mountPath": "/tmp/gerrit/"
             })
@@ -228,6 +244,21 @@ class Scheduler(object):
                                 }
                             },
                             "volumeMounts": volume_mounts
+                        }, {
+                            "name": "git-clone",
+                            "image": self.args.docker_registry + "/job-git:%s" % self.args.tag,
+                            "env": clone_env,
+                            "resources": {
+                                "requests": {
+                                    "cpu": 0.1,
+                                    "memory": "64Mi"
+                                },
+                                "limits": {
+                                    "cpu": 0.1,
+                                    "memory": "64Mi"
+                                }
+                            },
+                            "volumeMounts": clone_volume_mounts
                         }],
                         "restartPolicy": "OnFailure",
                         "volumes": volumes

@@ -128,8 +128,8 @@ router.post("/", pv, auth, (req: Request, res: Response, next) => {
                });
             } else if (typ === "gerrit") {
                 return tx.none(`
-                    INSERT INTO repository (name, private, project_id)
-                    VALUES ($1, false, $2);
+                    INSERT INTO repository (name, private, project_id, html_url, clone_url, github_id)
+                    VALUES ($1, false, $2, '', '', 0);
                 `, [name, project_id]);
             }
         });

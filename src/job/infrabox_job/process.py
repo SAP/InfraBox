@@ -96,7 +96,7 @@ class ApiConsole(object):
                 "output": buf
             }
 
-            api_server = os.environ.get("INFRABOX_JOB_API_URL", None)
+            api_server = os.environ["INFRABOX_JOB_API_URL"]
 
             headers = {
                 'Authorization': 'token ' + os.environ['INFRABOX_JOB_TOKEN']

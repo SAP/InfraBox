@@ -9,7 +9,6 @@ import socketio
 
 from flask import request, abort, g
 from flask_restplus import Resource
-from werkzeug.debug import DebuggedApplication
 
 from pyinfraboxutils import get_env, print_stackdriver, get_logger
 from pyinfraboxutils.ibrestplus import api, app

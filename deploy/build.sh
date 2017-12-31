@@ -15,6 +15,7 @@ infrabox run ib/deploy/github-trigger   -t ${docker_registry}infrabox/github-tri
 infrabox run ib/deploy/github-review    -t ${docker_registry}infrabox/github-review:$image_tag
 infrabox run ib/deploy/job              -t ${docker_registry}infrabox/job:$image_tag
 infrabox run ib/deploy/job-api          -t ${docker_registry}infrabox/job-api:$image_tag
+infrabox run ib/deploy/job-git          -t ${docker_registry}infrabox/job-git:$image_tag
 infrabox run ib/deploy/scheduler-kubernetes -t ${docker_registry}infrabox/scheduler-kubernetes:$image_tag
 infrabox run ib/deploy/scheduler-docker-compose -t ${docker_registry}infrabox/scheduler-docker-compose:$image_tag
 infrabox run ib/deploy/docker-compose-ingress -t ${docker_registry}infrabox/docker-compose-ingress:$image_tag
