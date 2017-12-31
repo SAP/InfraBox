@@ -14,6 +14,7 @@ class Test(unittest.TestCase):
     build_id = '3514af82-3c4f-4bb5-b1da-a89a0ced5e6a'
     project_id = '4514af82-3c4f-4bb5-b1da-a89a0ced5e6f'
     token_id = '5514af82-3c4f-4bb5-b1da-a89a0ced5e6f'
+    API_URL = 'http://nginx-ingress/api'
 
     def setUp(self):
         conn = connect_db()
@@ -44,7 +45,21 @@ class Test(unittest.TestCase):
         conn.commit()
 
         os.environ['INFRABOX_CLI_TOKEN'] = encode_project_token(self.token_id, self.project_id)
-        os.environ['INFRABOX_API_URL'] = 'http://nginx-ingress/api'
+        os.environ['INFRABOX_API_URL'] = self.API_URL
+
+    def expect_job(self, job_name, state='finished', message=None):
+        build = requests.get('%s/v1/projects/%s/builds' % (self.API_URL, self.project_id)).json()[0]
+        jobs = requests.get('%s/v1/projects/%s/builds/%s/jobs' % (self.API_URL, self.project_id, build['id'])).json()
+
+        for j in jobs:
+            if j['name'] != job_name:
+                continue
+
+            self.assertEqual(j['state'], state)
+
+            if message:
+                self.assertEqual(j['message'], message)
+
 
     def expect_message(self, output, message):
         if not message:

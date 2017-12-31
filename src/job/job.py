@@ -993,12 +993,12 @@ def main():
         j = RunJob(console)
         j.main()
         j.console.flush()
-        j.update_status('finished')
+        j.update_status('finished', message='Successfully finished')
     except Failure as e:
         j.console.header('Failure', show=True)
         j.console.collect(e.message, show=True)
         j.console.flush()
-        j.update_status('failure')
+        j.update_status('failure', message=e.message)
     except:
         print_stackdriver()
         if j:
@@ -1006,7 +1006,7 @@ def main():
             msg = traceback.format_exc()
             j.console.collect(msg, show=True)
             j.console.flush()
-            j.update_status('error')
+            j.update_status('error', message=msg)
 
 if __name__ == "__main__":
     try:

@@ -1148,6 +1148,8 @@ def set_finished():
     job_id = g.token['job']['id']
 
     state = request.json['state']
+    message = request.json.get('message', None)
+
     # collect console output
     lines = g.db.execute_many("""SELECT output FROM console WHERE job_id = %s
                       ORDER BY date""", (job_id,))
@@ -1161,8 +1163,9 @@ def set_finished():
     UPDATE job SET
         state = %s,
         console = %s,
-        end_date = current_timestamp
-    WHERE id = %s""", (state, output, job_id))
+        end_date = current_timestamp,
+        message = %s
+    WHERE id = %s""", (state, output, job_id, message))
 
     # remove form console table
     g.db.execute("DELETE FROM console WHERE job_id = %s", (job_id,))

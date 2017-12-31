@@ -37,7 +37,7 @@ def get_token():
                 abort(401, 'Unauthorized')
 
             return token
-        elif auth.startswith("token "):
+        elif auth.startswith("token ") or auth.startswith("bearer "):
             token = auth.split(" ")[1]
 
             try:

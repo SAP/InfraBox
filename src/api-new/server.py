@@ -7,7 +7,7 @@ eventlet.monkey_patch()
 import flask_socketio
 import socketio
 
-from flask import request, abort, g
+from flask import request, abort, g, jsonify
 from flask_restplus import Resource
 
 from pyinfraboxutils import get_env, print_stackdriver, get_logger
@@ -18,6 +18,7 @@ from pyinfraboxutils import dbpool
 import handlers.project
 import handlers.trigger
 import handlers.job
+import handlers.build
 
 import listeners.console
 import listeners.job
@@ -26,9 +27,10 @@ logger = get_logger('api')
 ns = api.namespace('ping', description='Health checks')
 
 @ns.route('/')
+@api.doc(security=[])
 class Ping(Resource):
     def get(self):
-        return {'status': 200}
+        return jsonify({'status': 200})
 
 class ClientManager(socketio.base_manager.BaseManager):
     def __init__(self):
