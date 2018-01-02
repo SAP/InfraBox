@@ -7,6 +7,7 @@ from pyinfraboxutils.token import decode
 
 from flask import Flask, g, jsonify, request, abort
 app = Flask(__name__)
+app.url_map.strict_slashes = False
 
 logger = get_logger('ibflask')
 
