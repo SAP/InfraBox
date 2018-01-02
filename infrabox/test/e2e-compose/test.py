@@ -14,7 +14,6 @@ class Test(unittest.TestCase):
     build_id = '3514af82-3c4f-4bb5-b1da-a89a0ced5e6a'
     project_id = '4514af82-3c4f-4bb5-b1da-a89a0ced5e6f'
     token_id = '5514af82-3c4f-4bb5-b1da-a89a0ced5e6f'
-    API_URL = 'http://nginx-ingress/api'
 
     def setUp(self):
         conn = connect_db()
@@ -45,7 +44,7 @@ class Test(unittest.TestCase):
         conn.commit()
 
         os.environ['INFRABOX_CLI_TOKEN'] = encode_project_token(self.token_id, self.project_id)
-        os.environ['INFRABOX_API_URL'] = self.API_URL
+        os.environ['INFRABOX_API_URL'] = 'http://nginx-ingress/api'
 
         ## TODO: docker: testresult
         ## TODO: docker: badge
@@ -60,9 +59,10 @@ class Test(unittest.TestCase):
         ## TODO: compose: markup
 
     def expect_job(self, job_name, state='finished', message=None, parents=None, dockerfile=None):
-        print "API_URL: %s" % self.API_URL
-        build = requests.get('%s/v1/projects/%s/builds' % (self.API_URL, self.project_id)).json()[0]
-        jobs = requests.get('%s/v1/projects/%s/builds/%s/jobs' % (self.API_URL, self.project_id, build['id'])).json()
+        url = 'http://nginx-ingress/api/v1/projects/%s/builds' % self.project_id
+        build = requests.get(url).json()[0]
+        url = 'http://niginx-ingress/api/v1/projects/%s/builds/%s/jobs' % (self.project_id, build['id'])
+        jobs = requests.get(url).json()
 
         for j in jobs:
             if j['name'] != job_name:
@@ -72,6 +72,13 @@ class Test(unittest.TestCase):
 
             if message:
                 self.assertEqual(j['message'], message)
+
+            if dockerfile:
+                self.assertEqual(j['docker_file'], message)
+
+            if parents:
+                pass
+
 
             return
 
@@ -99,7 +106,6 @@ class Test(unittest.TestCase):
         self.expect_job('test-3', parents=['Create Jobs'])
         self.expect_job('test-4', parents=['test-1', 'test-2'])
         self.expect_job('test-5', parents=['test-2', 'test-3'])
-
 
     def test_workflow_nested(self):
         self.run_it('/infrabox/context/infrabox/test/e2e/tests/workflow_nested')
