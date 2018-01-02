@@ -1165,7 +1165,7 @@ def set_finished():
         console = %s,
         end_date = current_timestamp,
         message = %s
-    WHERE id = %s""", (state, output, job_id, message))
+    WHERE id = %s""", (state, output, message, job_id))
 
     # remove form console table
     g.db.execute("DELETE FROM console WHERE job_id = %s", (job_id,))
