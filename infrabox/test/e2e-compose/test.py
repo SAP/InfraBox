@@ -64,7 +64,7 @@ class Test(unittest.TestCase):
         result = requests.get(url, headers=headers).json()
         print result
         build = result[0]
-        url = 'http://niginx-ingress/api/v1/projects/%s/builds/%s/jobs/' % (self.project_id, build['id'])
+        url = 'http://nginx-ingress/api/v1/projects/%s/builds/%s/jobs/' % (self.project_id, build['id'])
         jobs = requests.get(url, headers=headers).json()
 
         for j in jobs:
