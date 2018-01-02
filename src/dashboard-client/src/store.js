@@ -62,7 +62,7 @@ function handleJobUpdate (state, event) {
 
     let commit = null
 
-    if (project.isGit()) {
+    if (project.isGit() && event.data.commit) {
         // Update Commit
         findCommit(project, event.data.commit.id)
         if (event.data.commit) {

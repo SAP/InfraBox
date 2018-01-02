@@ -29,17 +29,23 @@
                             </router-link>
                         </md-table-cell>
                         <md-table-cell v-if="project.isGit()">
-                            {{ b.commit.author_name }}
+                            <span v-if="b.commit">
+                                {{ b.commit.author_name }}
+                            </span>
                         </md-table-cell>
                         <md-table-cell v-if="project.isGit()">
-                            {{ b.commit.branch }}
+                            <span v-if="b.commit">
+                                {{ b.commit.branch }}
+                            </span>
                         </md-table-cell>
                         <md-table-cell><ib-date :date="b.startDate"></ib-date></md-table-cell>
                         <md-table-cell>
                             <ib-duration :start="b.startDate" :end="b.endDate"></ib-duration>
                         </md-table-cell>
                         <md-table-cell v-if="project.isGit()">
-                            <ib-gitjobtype :build="b"></ib-gitjobtype>
+                            <span v-if="b.commit">
+                                <ib-gitjobtype :build="b"></ib-gitjobtype>
+                            </span>
                         </md-table-cell>
                     </md-table-row>
                 </md-table-body>
