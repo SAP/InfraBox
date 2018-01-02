@@ -47,7 +47,20 @@ class Test(unittest.TestCase):
         os.environ['INFRABOX_CLI_TOKEN'] = encode_project_token(self.token_id, self.project_id)
         os.environ['INFRABOX_API_URL'] = self.API_URL
 
-    def expect_job(self, job_name, state='finished', message=None, parents=None):
+        ## TODO: docker: testresult
+        ## TODO: docker: badge
+        ## TODO: docker: markup
+        ## TODO: docker: caching
+        ## TODO: compose: caching
+        ## TODO: compose: insecure environment vars
+        ## TODO: compose: secure environment vars
+        ## TODO: compose: output/input
+        ## TODO: compose: testresult
+        ## TODO: compose: badge
+        ## TODO: compose: markup
+
+    def expect_job(self, job_name, state='finished', message=None, parents=None, dockerfile=None):
+        print "API_URL: %s" % self.API_URL
         build = requests.get('%s/v1/projects/%s/builds' % (self.API_URL, self.project_id)).json()[0]
         jobs = requests.get('%s/v1/projects/%s/builds/%s/jobs' % (self.API_URL, self.project_id, build['id'])).json()
 
@@ -78,6 +91,35 @@ class Test(unittest.TestCase):
     def test_docker_job(self):
         self.run_it('/infrabox/context/infrabox/test/e2e/tests/docker_job')
         self.expect_job('test')
+
+    def test_docker_multiple_jobs(self):
+        self.run_it('/infrabox/context/infrabox/test/e2e/tests/docker_multiple_jobs')
+        self.expect_job('test-1', parents=['Create Jobs'])
+        self.expect_job('test-2', parents=['Create Jobs'])
+        self.expect_job('test-3', parents=['Create Jobs'])
+        self.expect_job('test-4', parents=['test-1', 'test-2'])
+        self.expect_job('test-5', parents=['test-2', 'test-3'])
+
+
+    def test_workflow_nested(self):
+        self.run_it('/infrabox/context/infrabox/test/e2e/tests/workflow_nested')
+        self.expect_job('flow', parents=['flow/sub-2', 'flow/sub-3'])
+        self.expect_job('flow/sub-1', parents=['Create Jobs'], dockerfile='flow/Dockerfile_flow')
+        self.expect_job('flow/sub-2', parents=['flow/sub-2/nested-2', 'flow/sub-2/nested-3'])
+
+        self.expect_job('flow/sub-2/nested-1',
+                        parents=['flow/sub-1'],
+                        dockerfile='flow/nested-flow/Dockerfile_nested')
+        self.expect_job('flow/sub-2/nested-2',
+                        parents=['flow/sub-2/nested-1'],
+                        dockerfile='flow/nested-flow/Dockerfile_nested')
+        self.expect_job('flow/sub-2/nested-3',
+                        parents=['flow/sub-2/nested-1'],
+                        dockerfile='flow/nested-flow/Dockerfile_nested')
+        self.expect_job('flow/sub-3',
+                        parents=['flow/sub-1'],
+                        dockerfile='flow/Dockerfile_flow')
+
 
     def test_docker_compose_job(self):
         self.run_it('/infrabox/context/infrabox/test/e2e/tests/docker_compose_job')
