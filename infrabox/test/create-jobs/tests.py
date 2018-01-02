@@ -33,31 +33,6 @@ class TestCreateJobs(object):
         cur.execute(stmt, args)
         cur.close()
 
-    @raises(Exception)
-    def test_memory_limit_too_high(self):
-        path = '/project/infrabox/test/create-jobs/test/test-memory-limit-too-high'
-        expect = ()
-        self.run(path, expect)
-
-    @raises(Exception)
-    def test_memory_cpu_too_high(self):
-        path = '/project/infrabox/test/create-jobs/test/test-cpu-limit-too-high'
-        expect = ()
-        self.run(path, expect)
-
-    @raises(Exception)
-    def test_one_compose_job(self):
-        path = '/project/infrabox/test/create-jobs/test/test-one-compose-job'
-        expect = ()
-        self.run(path, expect)
-
-    def test_one_docker_job(self):
-        path = '/project/infrabox/test/create-jobs/test/test-one-docker-job'
-        expect = (
-            ('test-server', 'Dockerfile', ['Create Jobs']),
-        )
-        self.run(path, expect)
-
     def test_deployment(self):
         path = '/project/infrabox/test/create-jobs/test/test-deployment'
         expect = (
@@ -76,13 +51,6 @@ class TestCreateJobs(object):
             }]),
         )
         self.run(path, expect, with_deployment=True)
-
-    def test_environment_1(self):
-        path = '/project/infrabox/test/create-jobs/test/test-environment-1'
-        expect = (
-            ('test', 'Dockerfile', ['Create Jobs'], {"NAME":"VALUE", "NAME2": "VALUE"}, None),
-        )
-        self.run(path, expect, with_environment=True)
 
     @raises(Exception)
     def test_environment_2(self):
@@ -230,14 +198,6 @@ class TestCreateJobs(object):
         )
         self.run(path, expect, with_base_path=True)
 
-
-    def test_one_workflow(self):
-        path = '/project/infrabox/test/create-jobs/test/test-one-workflow'
-        expect = (
-            ('flow', None, ['flow/test-sub']),
-            ('flow/test-sub', 'Dockerfile', ['Create Jobs']),
-        )
-        self.run(path, expect)
 
     def test_workflow_with_base_path(self):
         path = '/project/infrabox/test/create-jobs/test/test-workflow-base-path'

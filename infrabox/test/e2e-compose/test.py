@@ -47,7 +47,7 @@ class Test(unittest.TestCase):
         os.environ['INFRABOX_CLI_TOKEN'] = encode_project_token(self.token_id, self.project_id)
         os.environ['INFRABOX_API_URL'] = self.API_URL
 
-    def expect_job(self, job_name, state='finished', message=None):
+    def expect_job(self, job_name, state='finished', message=None, parents=None):
         build = requests.get('%s/v1/projects/%s/builds' % (self.API_URL, self.project_id)).json()[0]
         jobs = requests.get('%s/v1/projects/%s/builds/%s/jobs' % (self.API_URL, self.project_id, build['id'])).json()
 
@@ -59,6 +59,10 @@ class Test(unittest.TestCase):
 
             if message:
                 self.assertEqual(j['message'], message)
+
+            return
+
+        raise Exception('Job "%s" not found' % job_name)
 
 
     def run_it(self, cwd):
@@ -73,27 +77,48 @@ class Test(unittest.TestCase):
 
     def test_docker_job(self):
         self.run_it('/infrabox/context/infrabox/test/e2e/tests/docker_job')
-        self.expect_job("test")
+        self.expect_job('test')
 
     def test_docker_compose_job(self):
         self.run_it('/infrabox/context/infrabox/test/e2e/tests/docker_compose_job')
-        self.expect_job("test")
+        self.expect_job('test')
+
+    def test_docker_compose_invalid_compose_file(self):
+        self.run_it('/infrabox/context/infrabox/test/e2e/tests/docker_compose_invalid_compose_file')
+        self.expect_job('Create Jobs', state='failure', message='quota')
 
     def test_failed_job(self):
         self.run_it('/infrabox/context/infrabox/test/e2e/tests/failed_job')
-        self.expect_job("test", state='failure')
+        self.expect_job('test', state='failure')
+
+    def test_malicious_job(self):
+        self.run_it('/infrabox/context/infrabox/test/e2e/tests/malicious_job')
+        self.expect_job('test')
 
     def test_resources_limit_cpu_too_high(self):
         self.run_it('/infrabox/context/infrabox/test/e2e/tests/resources_limit_cpu_too_high')
-        self.expect_job("test", state='failure', message='quota')
+        self.expect_job('Create Jobs', state='failure', message='quota')
+
+    def test_resources_limit_memory_too_high(self):
+        self.run_it('/infrabox/context/infrabox/test/e2e/tests/resources_limit_memory_too_high')
+        self.expect_job('Create Jobs', state='failure', message='quota')
+
+    def test_workflow_recursive(self):
+        self.run_it('/infrabox/context/infrabox/test/e2e/tests/workflow_recursive')
+        self.expect_job('Create Jobs', state='failure', message='quota')
+
+    def test_workflow_simple_job(self):
+        self.run_it('/infrabox/context/infrabox/test/e2e/tests/workflow_simple_job')
+        self.expect_job('flow', parents=['flow/test-sub'])
+        self.expect_job('flow/test-sub', parents=['Create Jobs'])
 
     def test_input_output(self):
         self.run_it('/infrabox/context/infrabox/test/e2e/tests/docker_input_output')
-        self.expect_job("consumer")
+        self.expect_job('consumer')
 
     def test_secure_env(self):
         self.run_it('/infrabox/context/infrabox/test/e2e/tests/docker_secure_env')
-        self.expect_job("test")
+        self.expect_job('test')
 
     def test_secure_env_not_found(self):
         self.run_it('/infrabox/context/infrabox/test/e2e/tests/docker_secure_env_not_found')
@@ -101,7 +126,7 @@ class Test(unittest.TestCase):
 
     def test_insecure_env(self):
         self.run_it('/infrabox/context/infrabox/test/e2e/tests/docker_insecure_env')
-        self.expect_job("test")
+        self.expect_job('test')
 
 def main():
     while True:
