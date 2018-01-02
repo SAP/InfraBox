@@ -42,7 +42,7 @@ class Jobs(Resource):
     def get(self, project_id, build_id):
         jobs = g.db.execute_many_dict('''
             SELECT id, state, start_date, build_id, end_date, name,
-                cpu, memory, build_arg, env_var, message, docker_file
+                cpu, memory, build_arg, env_var, message, dockerfile as docker_file
             FROM job
             WHERE project_id = %s
             AND build_id = %s
@@ -58,7 +58,7 @@ class Job(Resource):
     def get(self, project_id, build_id, job_id):
         job = g.db.execute_one_dict('''
             SELECT id, state, start_date, build_id, end_date, name,
-                cpu, memory, build_arg, env_var
+                cpu, memory, build_arg, env_var, dockerfile as docker_file
             FROM job
             WHERE project_id = %s
             AND id = %s
