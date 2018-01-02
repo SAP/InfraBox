@@ -60,7 +60,9 @@ class Test(unittest.TestCase):
 
     def expect_job(self, job_name, state='finished', message=None, parents=None, dockerfile=None):
         url = 'http://nginx-ingress/api/v1/projects/%s/builds/' % self.project_id
-        build = requests.get(url).json()[0]
+        result = requests.get(url).json()
+        print result
+        build = result[0]
         url = 'http://niginx-ingress/api/v1/projects/%s/builds/%s/jobs/' % (self.project_id, build['id'])
         jobs = requests.get(url).json()
 
