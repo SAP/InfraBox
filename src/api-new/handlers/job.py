@@ -30,7 +30,8 @@ job_model = api.model('JobModel', {
     'start_date': fields.DateTime,
     'end_date': fields.DateTime,
     'resources': fields.Nested(resource_model),
-    'message': fields.String
+    'message': fields.String,
+    'docker_file': fields.String
 })
 
 @ns.route('/')
@@ -41,7 +42,7 @@ class Jobs(Resource):
     def get(self, project_id, build_id):
         jobs = g.db.execute_many_dict('''
             SELECT id, state, start_date, build_id, end_date, name,
-                cpu, memory, build_arg, env_var, message
+                cpu, memory, build_arg, env_var, message, docker_file
             FROM job
             WHERE project_id = %s
             AND build_id = %s
