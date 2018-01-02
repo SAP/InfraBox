@@ -2,6 +2,7 @@ import unittest
 import os
 import subprocess
 import time
+import json
 import xmlrunner
 import requests
 
@@ -86,7 +87,7 @@ class Test(unittest.TestCase):
 
             return
 
-        raise Exception('Job "%s" not found' % job_name)
+        raise Exception('Job "%s" not found in: %s' % (job_name, json.dumps(jobs, indent=4)))
 
 
     def run_it(self, cwd):
@@ -137,7 +138,9 @@ class Test(unittest.TestCase):
 
     def test_docker_compose_invalid_compose_file(self):
         self.run_it('/infrabox/context/infrabox/test/e2e/tests/docker_compose_invalid_compose_file')
-        self.expect_job('Create Jobs', state='failure', message='quota')
+        self.expect_job('Create Jobs',
+                        state='failure',
+                        message='/tmp/infrabox-compose/repo/docker-compose.yml: version not found')
 
     def test_failed_job(self):
         self.run_it('/infrabox/context/infrabox/test/e2e/tests/failed_job')
@@ -147,11 +150,11 @@ class Test(unittest.TestCase):
         self.run_it('/infrabox/context/infrabox/test/e2e/tests/malicious_job')
         self.expect_job('test')
 
-    def test_resources_limit_cpu_too_high(self):
+    def resources_limit_cpu_too_high(self):
         self.run_it('/infrabox/context/infrabox/test/e2e/tests/resources_limit_cpu_too_high')
         self.expect_job('Create Jobs', state='failure', message='quota')
 
-    def test_resources_limit_memory_too_high(self):
+    def resources_limit_memory_too_high(self):
         self.run_it('/infrabox/context/infrabox/test/e2e/tests/resources_limit_memory_too_high')
         self.expect_job('Create Jobs', state='failure', message='quota')
 
@@ -174,7 +177,7 @@ class Test(unittest.TestCase):
 
     def test_secure_env_not_found(self):
         self.run_it('/infrabox/context/infrabox/test/e2e/tests/docker_secure_env_not_found')
-        self.expect_job('test', state='failure', message="Secret 'UNKNOWN_SECRET' not found")
+        self.expect_job('Create Jobs', state='failure', message="Secret 'UNKNOWN_SECRET' not found")
 
     def test_insecure_env(self):
         self.run_it('/infrabox/context/infrabox/test/e2e/tests/docker_insecure_env')
