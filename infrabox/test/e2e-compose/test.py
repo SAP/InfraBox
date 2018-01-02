@@ -59,10 +59,9 @@ class Test(unittest.TestCase):
         ## TODO: compose: markup
 
     def expect_job(self, job_name, state='finished', message=None, parents=None, dockerfile=None):
-        url = 'http://nginx-ingress:8080/api/v1/projects/%s/builds' % self.project_id
-        print url
+        url = 'http://nginx-ingress/api/v1/projects/%s/builds/' % self.project_id
         build = requests.get(url).json()[0]
-        url = 'http://niginx-ingress:80/api/v1/projects/%s/builds/%s/jobs' % (self.project_id, build['id'])
+        url = 'http://niginx-ingress/api/v1/projects/%s/builds/%s/jobs/' % (self.project_id, build['id'])
         jobs = requests.get(url).json()
 
         for j in jobs:
