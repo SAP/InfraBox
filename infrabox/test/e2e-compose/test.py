@@ -59,12 +59,13 @@ class Test(unittest.TestCase):
         ## TODO: compose: markup
 
     def expect_job(self, job_name, state='finished', message=None, parents=None, dockerfile=None):
+        headers = {'Authorization': 'bearer ' + os.environ['INFRABOX_CLI_TOKEN']}
         url = 'http://nginx-ingress/api/v1/projects/%s/builds/' % self.project_id
-        result = requests.get(url).json()
+        result = requests.get(url, headers=headers).json()
         print result
         build = result[0]
         url = 'http://niginx-ingress/api/v1/projects/%s/builds/%s/jobs/' % (self.project_id, build['id'])
-        jobs = requests.get(url).json()
+        jobs = requests.get(url, headers=headers).json()
 
         for j in jobs:
             if j['name'] != job_name:
