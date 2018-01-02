@@ -83,6 +83,10 @@ class Test(unittest.TestCase):
         self.run_it('/infrabox/context/infrabox/test/e2e/tests/failed_job')
         self.expect_job("test", state='failure')
 
+    def test_resources_limit_cpu_too_high(self):
+        self.run_it('/infrabox/context/infrabox/test/e2e/tests/resources_limit_cpu_too_high')
+        self.expect_job("test", state='failure', message='quota')
+
     def test_input_output(self):
         self.run_it('/infrabox/context/infrabox/test/e2e/tests/docker_input_output')
         self.expect_job("consumer")
