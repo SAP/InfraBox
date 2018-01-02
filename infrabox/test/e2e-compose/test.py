@@ -66,6 +66,7 @@ class Test(unittest.TestCase):
         build = result[0]
         url = 'http://nginx-ingress/api/v1/projects/%s/builds/%s/jobs/' % (self.project_id, build['id'])
         jobs = requests.get(url, headers=headers).json()
+        print jobs
 
         for j in jobs:
             if j['name'] != job_name:
