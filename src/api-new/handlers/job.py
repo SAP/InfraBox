@@ -2,7 +2,7 @@
 from flask import g, jsonify, abort, send_file
 from flask_restplus import Resource, fields
 
-from pyinfraboxutils import get_env, get_logger
+from pyinfraboxutils import get_env
 from pyinfraboxutils.ibflask import auth_token_required, check_job_belongs_to_project
 from pyinfraboxutils.ibrestplus import api
 from pyinfraboxutils.storage import storage
@@ -11,11 +11,15 @@ ns = api.namespace('api/v1/projects/<project_id>/builds/<build_id>/jobs',
                    description='Job related operations',
                    tag="test")
 
-logger = get_logger('asd')
-
 limits_model = api.model('LimitsModel', {
-    'cpu': fields.Integer(min=1),
-    'memory': fields.Integer(min=128)
+    'cpu': fields.Integer(min=1, attribute='cpu'),
+    'memory': fields.Integer(min=128, attribute='memory')
+})
+
+dependency_model = api.model('DependencyModel', {
+    'on': fields.List(fields.String),
+    'job': fields.String,
+    'job-id': fields.String
 })
 
 resource_model = api.model('ResourceModel', {
@@ -31,7 +35,8 @@ job_model = api.model('JobModel', {
     'end_date': fields.DateTime,
     'resources': fields.Nested(resource_model),
     'message': fields.String,
-    'docker_file': fields.String
+    'docker_file': fields.String,
+    'depends_on': fields.Nested(dependency_model),
 })
 
 @ns.route('/')
@@ -41,12 +46,21 @@ class Jobs(Resource):
     @ns.marshal_list_with(job_model)
     def get(self, project_id, build_id):
         jobs = g.db.execute_many_dict('''
-            SELECT id, state, start_date, build_id, end_date, name,
-                cpu, memory, build_arg, env_var, message, dockerfile as docker_file
+            SELECT id, state, start_date, build_id, end_date, name, type,
+                cpu, memory, build_arg, env_var, message, dockerfile as docker_file,
+                dependencies
             FROM job
             WHERE project_id = %s
             AND build_id = %s
         ''', [project_id, build_id])
+
+        for j in jobs:
+            if j['type'] == 'run_docker_compose':
+                j['type'] = 'docker_compose'
+                j['docker_compose_file'] = j['docker_file']
+                del j['docker_file']
+            elif j['type'] == 'run_project_container':
+                j['type'] = 'docker'
 
         return jobs
 
@@ -58,7 +72,8 @@ class Job(Resource):
     def get(self, project_id, build_id, job_id):
         job = g.db.execute_one_dict('''
             SELECT id, state, start_date, build_id, end_date, name,
-                cpu, memory, build_arg, env_var, dockerfile as docker_file
+                cpu, memory, build_arg, env_var, dockerfile as docker_file,
+                dependencies
             FROM job
             WHERE project_id = %s
             AND id = %s
