@@ -227,7 +227,7 @@ exec "$@"
 
         c.header("Parsing infrabox.json", show=True)
         data = self.parse_infrabox_json(ib_json)
-        self.check_file_exist(data)
+        self.check_file_exist(data, self.mount_repo_dir)
 
         c.header("Creating jobs", show=True)
         jobs = self.get_job_list(data, c, self.job['repo'], infrabox_paths={ib_json: True})
@@ -371,7 +371,7 @@ exec "$@"
         if os.path.exists(infrabox_json_path):
             c.header("Creating jobs", show=True)
             data = self.parse_infrabox_json(infrabox_json_path)
-            self.check_file_exist(data)
+            self.check_file_exist(data, self.mount_repo_dir)
             jobs = self.get_job_list(data, c, self.job['repo'], infrabox_paths={infrabox_json_path: True})
             c.collect(json.dumps(jobs, indent=4), show=True)
 
@@ -567,10 +567,7 @@ exec "$@"
                       show=True, env=self.environment)
             c.header("Run docker-compose", show=True)
 
-            cwd = self.job.get('base_path', None)
-            if cwd:
-                cwd = os.path.join(self.mount_repo_dir, cwd)
-
+            cwd = self.mount_repo_dir
 
             c.execute(['docker-compose', '-f', compose_file_new, 'up',
                        '--abort-on-container-exit'], env=self.environment, show=True, cwd=cwd)
@@ -802,10 +799,7 @@ exec "$@"
 
             return data
 
-    def check_file_exist(self, data, base_path=None):
-        if not base_path:
-            base_path = self.mount_repo_dir
-
+    def check_file_exist(self, data, base_path):
         jobs = data.get('jobs', [])
         for job in jobs:
             job_type = job['type']
@@ -850,7 +844,6 @@ exec "$@"
                         break
 
     def get_job_list(self, data, c, repo, parent_name="",
-                     base_path=None,
                      repo_path=None, infrabox_paths=None):
         #pylint: disable=too-many-locals
 
@@ -867,7 +860,6 @@ exec "$@"
             job['id'] = str(uuid.uuid4())
             job['avg_duration'] = 0
             job['repo'] = repo
-            job['base_path'] = base_path
 
             if parent_name != '':
                 job['name'] = parent_name + "/" + job['name']
@@ -915,10 +907,8 @@ exec "$@"
                 del infrabox_paths[p]
             else:
                 c.header("Parsing infrabox.json", show=True)
-                p = os.path.join(repo_path, base_path or "", job['infrabox_file'])
+                p = os.path.join(repo_path, job['infrabox_file'])
                 c.collect("file: %s\n" % p)
-                bp = os.path.join(base_path or "", os.path.dirname(job['infrabox_file']))
-                c.collect("basepath: %s\n" % bp)
 
                 if p in infrabox_paths:
                     raise Failure("Recursive include detected")
@@ -926,11 +916,10 @@ exec "$@"
                 infrabox_paths[p] = True
 
                 yml = self.parse_infrabox_json(p)
-                self.check_file_exist(yml, base_path=repo_path)
+                self.check_file_exist(yml, repo_path)
 
                 sub = self.get_job_list(yml, c, repo,
                                         parent_name=job_name,
-                                        base_path=bp,
                                         repo_path=repo_path)
 
                 del infrabox_paths[p]
