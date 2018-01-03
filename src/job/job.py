@@ -793,6 +793,7 @@ exec "$@"
             data = None
             try:
                 data = json.load(f)
+                self.console.collect(json.dumps(data, indent=4), show=True)
                 validate_json(data)
             except Exception as e:
                 raise Failure(e.__str__())
