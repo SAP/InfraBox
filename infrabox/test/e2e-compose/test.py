@@ -160,7 +160,7 @@ class Test(unittest.TestCase):
 
     def test_workflow_recursive(self):
         self.run_it('/infrabox/context/infrabox/test/e2e/tests/workflow_recursive')
-        self.expect_job('Create Jobs', state='failure', message='quota')
+        self.expect_job('Create Jobs', state='failure', message='Recursive include detected')
 
     def test_workflow_simple_job(self):
         self.run_it('/infrabox/context/infrabox/test/e2e/tests/workflow_simple_job')

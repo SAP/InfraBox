@@ -84,7 +84,13 @@ class Job(object):
                           json=payload, timeout=60, verify=self.verify)
 
         if r.status_code != 200:
-            raise Failure(r.text)
+            msg = r.text
+            try:
+                msg = r.json()['message']
+            except:
+                pass
+
+            raise Failure(msg)
 
     def post_api_server(self, endpoint, data=None):
         while True:
