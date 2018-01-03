@@ -31,6 +31,22 @@ def apply_migration(conn, migration):
 
 def apply_migrations(conn, current_schema_version):
     migrations = get_sql_files(current_schema_version)
+    if not migrations:
+        logger.info("No migration neccessary")
+        return
+
+    logger.info("Killing all open database connections")
+
+    cur = conn.cursor()
+    cur.execute('''
+        SELECT pg_terminate_backend(pg_stat_activity.pid)
+        FROM pg_stat_activity
+        WHERE pg_stat_activity.datname = %s
+          AND pid <> pg_backend_pid();
+    ''', [get_env('INFRABOX_DATABASE_DB')])
+    cur.close()
+    conn.commit()
+
     logger.info("Starting to apply %s migrations", len(migrations))
 
     for m in migrations:

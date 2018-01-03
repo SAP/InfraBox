@@ -63,23 +63,22 @@ class Test(unittest.TestCase):
         headers = {'Authorization': 'bearer ' + os.environ['INFRABOX_CLI_TOKEN']}
         url = 'http://nginx-ingress/api/v1/projects/%s/builds/' % self.project_id
         result = requests.get(url, headers=headers).json()
-        print result
         build = result[0]
         url = 'http://nginx-ingress/api/v1/projects/%s/builds/%s/jobs/' % (self.project_id, build['id'])
         jobs = requests.get(url, headers=headers).json()
-        print jobs
 
         for j in jobs:
+            data = json.dumps(j, indent=4)
             if j['name'] != job_name:
                 continue
 
-            self.assertEqual(j['state'], state)
+            self.assertEqual(j['state'], state, data)
 
             if message:
-                self.assertEqual(j['message'], message)
+                self.assertEqual(j['message'], message, data)
 
             if dockerfile:
-                self.assertEqual(j['docker_file'], message)
+                self.assertEqual(j['docker_file'], message, data)
 
             if parents:
                 pass
@@ -87,7 +86,8 @@ class Test(unittest.TestCase):
 
             return
 
-        raise Exception('Job "%s" not found in: %s' % (job_name, json.dumps(jobs, indent=4)))
+        data = json.dumps(jobs, indent=4)
+        raise Exception('Job "%s" not found in: %s' % (job_name, data))
 
 
     def run_it(self, cwd):
