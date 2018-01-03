@@ -48,7 +48,7 @@ class Jobs(Resource):
         jobs = g.db.execute_many_dict('''
             SELECT id, state, start_date, build_id, end_date, name, type,
                 cpu, memory, build_arg, env_var, message, dockerfile as docker_file,
-                dependencies
+                dependencies as depends_on
             FROM job
             WHERE project_id = %s
             AND build_id = %s
@@ -73,7 +73,7 @@ class Job(Resource):
         job = g.db.execute_one_dict('''
             SELECT id, state, start_date, build_id, end_date, name,
                 cpu, memory, build_arg, env_var, dockerfile as docker_file,
-                dependencies
+                dependencies as depends_on
             FROM job
             WHERE project_id = %s
             AND id = %s
