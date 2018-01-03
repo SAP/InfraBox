@@ -189,7 +189,7 @@ _installInfrabox() {
 
 _runTests() {
     echo "## Run tests"
-    pushd /infrabox/context/infrabox/test/e2e-compose/tests
+    pushd /infrabox/context/infrabox/test/e2e-compose
 
     set +e
     python test.py
