@@ -12,5 +12,16 @@
         "docker_compose_file": ".infrabox/inputs/gen-compose/e2e/compose/docker-compose.yml",
         "resources": { "limits": { "cpu": 1, "memory": 2048 } },
         "depends_on": ["gen-compose"]
+    }, {
+        "type": "docker",
+        "name": "gen-compose",
+        "docker_file": "infrabox/test/e2e/Dockerfile",
+        "build_only": false,
+        "resources": {
+            "limits": { "cpu": 1, "memory": 512 },
+            "kubernetes": {
+                "limits": { "cpu": 1, "memory": 512 }
+            }
+        }
     }]
 }
