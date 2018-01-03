@@ -1,7 +1,7 @@
 #!/bin/bash -ev
 
 NAMESPACE=$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace)
-IMAGE_TAG=build_203
+IMAGE_TAG=build_$INFRABOX_BUILD_NUMBER
 
 _prepareKubectl() {
     echo "## Prepare kubectl"
@@ -81,39 +81,6 @@ _installPostgres() {
     echo "## Install postgres"
     kubectl run postgres --image=quay.io/infrabox/postgres:$IMAGE_TAG -n $NAMESPACE
     kubectl expose -n $NAMESPACE deployment postgres --port 5432 --target-port 5432 --name infrabox-postgres
-
-    echo "## Prepare database"
-    # Port forward postgres
-    postgres_pod=$(_getPodName "postgres")
-    echo "Port forwarding to postgres: '$postgres_pod'"
-    kubectl port-forward -n $NAMESPACE $postgres_pod 5432 &
-
-    # Wait until postgres is ready
-    until psql -U postgres -h localhost -c '\l'; do
-      >&2 echo "Postgres is unavailable - sleeping"
-      sleep 1
-    done
-
-    echo "Postgres is ready"
-    sleep 20 # wait until schema has been created
-
-    echo "Inserting data"
-    export TOKEN_ID='d5c80d79-5355-4edb-bc18-7ba878e166bf'
-    export PROJECT_ID='2daef5b5-0474-4e63-a47e-df8438a82eba'
-    export USER_ID='70c68f11-4d04-46d3-a68e-c0d2a91c00a6'
-    # Insert dummy data
-    _sql "INSERT INTO \"user\" (id, github_id, username, avatar_url)
-          VALUES ('$USER_ID', '1', 'user', 'url')"
-    _sql "INSERT INTO project (id, name, type)
-          VALUES('$PROJECT_ID', 'test', 'upload')"
-
-    _sql "INSERT INTO collaborator (project_id, user_id, owner)
-          VALUES ('2daef5b5-0474-4e63-a47e-df8438a82eba', '70c68f11-4d04-46d3-a68e-c0d2a91c00a6', true)"
-    _sql "INSERT INTO auth_token (id, description, project_id, scope_push, scope_pull)
-          VALUES ('$TOKEN_ID', 'desc', '$PROJECT_ID', true, true)"
-    _sql "INSERT INTO secret(project_id, name, value)
-          VALUES ('$PROJECT_ID', 'SECRET_ENV', 'hello world')"
-    echo "Finished preparing database"
 }
 
 _deinstallMinio() {
@@ -210,7 +177,11 @@ _installInfrabox() {
     helm install --tiller-namespace $NAMESPACE --namespace $NAMESPACE .
     popd
 
-    export INFRABOX_CLI_TOKEN=$(python /infrabox/context/infrabox/test/e2e/create_token.py ./id_rsa $PROJECT_ID $TOKEN_ID)
+    export INFRABOX_DATABASE_HOST=infrabox-postgres.$NAMESPACE
+    export INFRABOX_DATABASE_DB=postgres
+    export INFRABOX_DATABASE_USER=postgres
+    export INFRABOX_DATABASE_PORT=5432
+    export INFRABOX_DATABASE_PASSWORD=postgres
     export INFRABOX_API_URL=http://localhost:8080/api
 
     _portForwardAPI
@@ -218,9 +189,15 @@ _installInfrabox() {
 
 _runTests() {
     echo "## Run tests"
-    pushd /infrabox/context/infrabox/test/e2e/tests
-    ./tests.sh
-    popd
+    pushd /infrabox/context/infrabox/test/e2e-compose/tests
+
+    set +e
+    python test.py
+    rc=$?
+
+    cp results.xml /infrabox/upload/testresult
+
+    exit $rc
 }
 
 main() {

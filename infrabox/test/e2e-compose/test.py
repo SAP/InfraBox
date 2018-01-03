@@ -45,7 +45,6 @@ class Test(unittest.TestCase):
         conn.commit()
 
         os.environ['INFRABOX_CLI_TOKEN'] = encode_project_token(self.token_id, self.project_id)
-        os.environ['INFRABOX_API_URL'] = 'http://nginx-ingress/api'
 
         ## TODO: docker: testresult
         ## TODO: docker: badge
