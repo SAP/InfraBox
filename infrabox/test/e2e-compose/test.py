@@ -78,11 +78,15 @@ class Test(unittest.TestCase):
                 self.assertEqual(j['message'], message, data)
 
             if dockerfile:
-                self.assertEqual(j['docker_file'], message, data)
+                self.assertEqual(j['docker_file'], dockerfile, data)
 
             if parents:
-                pass
+                actual_parents = {}
+                for p in j.get('depends_on', []):
+                    actual_parents[p['job']] = p
 
+                for p in parents:
+                    self.assertTrue(p in actual_parents, data)
 
             return
 
