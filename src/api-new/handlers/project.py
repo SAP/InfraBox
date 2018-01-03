@@ -6,8 +6,8 @@ from functools import wraps, update_wrapper
 
 import requests
 
-from flask import g, jsonify, request, abort, make_response, Response
-from flask_restplus import Resource
+from flask import g, request, abort, make_response, Response
+from flask_restplus import Resource, fields
 
 from werkzeug.datastructures import FileStorage
 
@@ -15,7 +15,7 @@ from pyinfraboxutils.ibflask import auth_token_required, OK
 from pyinfraboxutils.ibrestplus import api
 from pyinfraboxutils.storage import storage
 
-ns = api.namespace('api/v1/project', description='Project related operations')
+ns = api.namespace('api/v1/projects', description='Project related operations')
 
 def nocache(view):
     @wraps(view)
@@ -41,19 +41,28 @@ def get_badge(url):
     response = Response(resp.content, resp.status_code, headers)
     return response
 
+project_model = api.model('ProjectModel', {
+    'id': fields.String,
+    'name': fields.String,
+    'type': fields.String,
+    'public': fields.Boolean
+})
+
 @ns.route('/<project_id>')
 class Project(Resource):
 
     @auth_token_required(['user', 'project'])
+    @api.marshal_with(project_model)
     def get(self, project_id):
         p = g.db.execute_one_dict('''
-            SELECT name, id, type, public, build_on_push
+            SELECT name, id, type, public
             FROM project
             WHERE id = %s
         ''', [project_id])
-        return jsonify(p)
+        return p
 
 @ns.route('/<project_id>/state.svg')
+@api.doc(security=[])
 class State(Resource):
 
     @nocache
@@ -115,6 +124,7 @@ class State(Resource):
         return get_badge(url)
 
 @ns.route('/<project_id>/tests.svg')
+@api.doc(security=[])
 class Tests(Resource):
 
     @nocache
@@ -153,6 +163,7 @@ class Tests(Resource):
 
 
 @ns.route('/<project_id>/badge.svg')
+@api.doc(security=[])
 class Badge(Resource):
 
     @nocache

@@ -289,9 +289,9 @@ CREATE TABLE pull_request (
 CREATE TABLE repository (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name character varying(255) NOT NULL,
-    html_url character varying(255) NOT NULL,
-    clone_url character varying(255) NOT NULL,
-    github_id integer NOT NULL,
+    html_url character varying(255),
+    clone_url character varying(255),
+    github_id integer,
     github_hook_id integer,
     github_owner character varying(255),
     project_id uuid NOT NULL,

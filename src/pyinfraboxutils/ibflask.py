@@ -7,6 +7,7 @@ from pyinfraboxutils.token import decode
 
 from flask import Flask, g, jsonify, request, abort
 app = Flask(__name__)
+app.url_map.strict_slashes = False
 
 logger = get_logger('ibflask')
 
@@ -37,7 +38,7 @@ def get_token():
                 abort(401, 'Unauthorized')
 
             return token
-        elif auth.startswith("token "):
+        elif auth.startswith("token ") or auth.startswith("bearer "):
             token = auth.split(" ")[1]
 
             try:

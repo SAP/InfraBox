@@ -2,6 +2,7 @@
 #pylint: disable=too-many-lines
 import os
 import shutil
+import time
 import json
 import subprocess
 import stat
@@ -135,7 +136,7 @@ exec "$@"
     def flush(self):
         self.console.flush()
 
-    def compress(self, source, output, _):
+    def compress(self, source, output):
         subprocess.check_call("tar cf - --directory %s . | pigz -n > %s" % (source, output), shell=True)
 
     def uncompress(self, source, output, c):
@@ -157,39 +158,34 @@ exec "$@"
 
         return result
 
-    def clone_repo(self, commit, clone_url, branch, ref, clone_all):
-        c = self.console
-        if os.environ['INFRABOX_GENERAL_DONT_CHECK_CERTIFICATES'] == 'true':
-            c.execute(('git', 'config', '--global', 'http.sslVerify', 'false'), show=True)
+    def clone_repo(self, commit, clone_url, branch, ref, clone_all, sub_path=None):
+        git_server = os.environ["INFRABOX_JOB_GIT_URL"]
 
-        cmd = ['git', 'clone']
+        while True:
+            try:
+                r = requests.get('%s/ping' % git_server, timeout=5)
 
-        if not clone_all:
-            cmd += ['--depth=10']
+                if r.status_code == 200:
+                    break
+                else:
+                    self.console.collect(r.text, show=True)
+            except Exception as e:
+                print e
 
-        if branch:
-            cmd += ['--single-branch', '-b', branch]
+            time.sleep(1)
 
-        c.header("Clone repository", show=True)
-        cmd += [clone_url, self.mount_repo_dir]
+        d = {
+            'commit': commit,
+            'clone_url': clone_url,
+            'branch': branch,
+            'ref': ref,
+            'clone_all': clone_all,
+            'sub_path': sub_path
+        }
 
-        c.execute(cmd, show=True)
-
-        if ref:
-            cmd = ['git', 'fetch', '--depth=10', clone_url, ref]
-            c.collect(' '.join(cmd), show=True)
-            c.execute(cmd, cwd=self.mount_repo_dir, show=True)
-
-        c.collect("#Checkout commit", show=True)
-        cmd = ['git', 'checkout', '-qf', '-b', 'job', commit]
-
-        c.collect(' '.join(cmd), show=True)
-        c.execute(cmd, cwd=self.mount_repo_dir, show=True)
-
-        c.header("Init submodules", show=True)
-        c.execute(['git', 'submodule', 'init'], cwd=self.mount_repo_dir, show=True)
-        c.execute(['git', 'submodule', 'update'], cwd=self.mount_repo_dir, show=True)
-
+        r = requests.post('%s/clone_repo' % git_server, json=d, timeout=1800)
+        self.console.collect(r.text, show=True)
+        r.json()
 
     def get_source(self):
         c = self.console
@@ -231,7 +227,7 @@ exec "$@"
 
         c.header("Parsing infrabox.json", show=True)
         data = self.parse_infrabox_json(ib_json)
-        self.check_file_exist(data)
+        self.check_file_exist(data, self.mount_repo_dir)
 
         c.header("Creating jobs", show=True)
         jobs = self.get_job_list(data, c, self.job['repo'], infrabox_paths={ib_json: True})
@@ -375,7 +371,7 @@ exec "$@"
         if os.path.exists(infrabox_json_path):
             c.header("Creating jobs", show=True)
             data = self.parse_infrabox_json(infrabox_json_path)
-            self.check_file_exist(data)
+            self.check_file_exist(data, self.mount_repo_dir)
             jobs = self.get_job_list(data, c, self.job['repo'], infrabox_paths={infrabox_json_path: True})
             c.collect(json.dumps(jobs, indent=4), show=True)
 
@@ -460,7 +456,7 @@ exec "$@"
             os.makedirs(storage_output_dir)
 
             storage_output_tar = os.path.join(storage_output_dir, 'output.tar.gz')
-            self.compress(self.infrabox_output_dir, storage_output_tar, c)
+            self.compress(self.infrabox_output_dir, storage_output_tar)
 
             max_output_size = os.environ['INFRABOX_JOB_MAX_OUTPUT_SIZE']
             if os.stat(storage_output_tar).st_size > max_output_size:
@@ -473,7 +469,7 @@ exec "$@"
 
         # Compressing cache
         if os.path.isdir(self.infrabox_cache_dir) and os.listdir(self.infrabox_cache_dir):
-            self.compress(self.infrabox_cache_dir, storage_cache_tar, c)
+            self.compress(self.infrabox_cache_dir, storage_cache_tar)
             c.execute(['md5sum', storage_cache_tar], show=True)
 
             if os.stat(storage_cache_tar).st_size > (1024 * 1024 * 100):
@@ -571,10 +567,7 @@ exec "$@"
                       show=True, env=self.environment)
             c.header("Run docker-compose", show=True)
 
-            cwd = self.job.get('base_path', None)
-            if cwd:
-                cwd = os.path.join(self.mount_repo_dir, cwd)
-
+            cwd = self.mount_repo_dir
 
             c.execute(['docker-compose', '-f', compose_file_new, 'up',
                        '--abort-on-container-exit'], env=self.environment, show=True, cwd=cwd)
@@ -800,16 +793,14 @@ exec "$@"
             data = None
             try:
                 data = json.load(f)
+                self.console.collect(json.dumps(data, indent=4), show=True)
                 validate_json(data)
             except Exception as e:
                 raise Failure(e.__str__())
 
             return data
 
-    def check_file_exist(self, data, base_path=None):
-        if not base_path:
-            base_path = self.mount_repo_dir
-
+    def check_file_exist(self, data, base_path):
         jobs = data.get('jobs', [])
         for job in jobs:
             job_type = job['type']
@@ -854,7 +845,6 @@ exec "$@"
                         break
 
     def get_job_list(self, data, c, repo, parent_name="",
-                     base_path=None,
                      repo_path=None, infrabox_paths=None):
         #pylint: disable=too-many-locals
 
@@ -871,7 +861,6 @@ exec "$@"
             job['id'] = str(uuid.uuid4())
             job['avg_duration'] = 0
             job['repo'] = repo
-            job['base_path'] = base_path
 
             if parent_name != '':
                 job['name'] = parent_name + "/" + job['name']
@@ -887,16 +876,14 @@ exec "$@"
 
             if job['type'] == "git":
                 c.header("Clone repo %s" % job['clone_url'], show=True)
-                new_repo_path = os.path.join('/tmp', job_name)
+                clone_url = job['clone_url']
+
+                sub_path = os.path.join('.infrabox', 'tmp', job_name)
+                new_repo_path = os.path.join(self.mount_repo_dir, sub_path)
                 c.execute(['rm', '-rf', new_repo_path])
+                os.makedirs(new_repo_path)
 
-                try:
-                    c.execute(('git', 'clone', job['clone_url'],
-                               new_repo_path), show=True)
-
-                    c.execute(('git', 'checkout', '-qf', job['commit']), show=True, cwd=new_repo_path)
-                except Exception as e:
-                    raise Failure(e.__str__())
+                self.clone_repo('master', clone_url, None, None, False, sub_path)
 
                 c.header("Parsing infrabox.json", show=True)
                 p = os.path.join(new_repo_path, 'infrabox.json')
@@ -921,10 +908,8 @@ exec "$@"
                 del infrabox_paths[p]
             else:
                 c.header("Parsing infrabox.json", show=True)
-                p = os.path.join(repo_path, base_path or "", job['infrabox_file'])
+                p = os.path.join(repo_path, job['infrabox_file'])
                 c.collect("file: %s\n" % p)
-                bp = os.path.join(base_path or "", os.path.dirname(job['infrabox_file']))
-                c.collect("basepath: %s\n" % bp)
 
                 if p in infrabox_paths:
                     raise Failure("Recursive include detected")
@@ -932,11 +917,10 @@ exec "$@"
                 infrabox_paths[p] = True
 
                 yml = self.parse_infrabox_json(p)
-                self.check_file_exist(yml, base_path=repo_path)
+                self.check_file_exist(yml, repo_path)
 
                 sub = self.get_job_list(yml, c, repo,
                                         parent_name=job_name,
-                                        base_path=bp,
                                         repo_path=repo_path)
 
                 del infrabox_paths[p]
@@ -990,6 +974,7 @@ def main():
     get_env('INFRABOX_LOCAL_CACHE_ENABLED')
     get_env('INFRABOX_JOB_MAX_OUTPUT_SIZE')
     get_env('INFRABOX_JOB_API_URL')
+    get_env('INFRABOX_JOB_GIT_URL')
     get_env('INFRABOX_JOB_MOUNT_DOCKER_SOCKET')
     console = ApiConsole()
 
@@ -998,12 +983,12 @@ def main():
         j = RunJob(console)
         j.main()
         j.console.flush()
-        j.update_status('finished')
+        j.update_status('finished', message='Successfully finished')
     except Failure as e:
         j.console.header('Failure', show=True)
         j.console.collect(e.message, show=True)
         j.console.flush()
-        j.update_status('failure')
+        j.update_status('failure', message=e.message)
     except:
         print_stackdriver()
         if j:
@@ -1011,7 +996,7 @@ def main():
             msg = traceback.format_exc()
             j.console.collect(msg, show=True)
             j.console.flush()
-            j.update_status('error')
+            j.update_status('error', message=msg)
 
 if __name__ == "__main__":
     try:

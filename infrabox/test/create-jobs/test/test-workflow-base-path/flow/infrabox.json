@@ -1,9 +1,0 @@
-{
-    "version": 1,
-    "jobs": [{
-        "type": "docker",
-        "name": "test-sub",
-        "docker_file": "flow/Dockerfile_flow",
-        "resources": { "limits": { "cpu": 1, "memory": 1024 } }
-    }]
-}

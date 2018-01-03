@@ -473,6 +473,22 @@ class DockerCompose(Install):
             '%s:/var/run/secrets/infrabox.net/rsa/id_rsa.pub' % os.path.join(self.args.o, 'id_rsa.pub'),
         ])
 
+        if self.args.gerrit_enabled:
+            self.config.append('services.dashboard-api.environment', self.get_gerrit_env())
+
+
+    def setup_job_git(self):
+        self.config.add('services.job-git.image',
+                        '%s/job-git:%s' % (self.args.docker_registry, self.args.version))
+
+        if self.args.gerrit_enabled:
+            gerrit_key = os.path.join(self.args.o, 'gerrit_id_rsa')
+            self.config.append('services.job-git.volumes', [
+                '%s:/tmp/gerrit/id_rsa' % gerrit_key,
+            ])
+            self.config.append('services.job-git.environment', self.get_gerrit_env())
+
+
     def setup_api(self):
         self.config.add('services.api.image',
                         '%s/api:%s' % (self.args.docker_registry, self.args.version))
@@ -537,9 +553,50 @@ class DockerCompose(Install):
             '%s:/var/run/secrets/infrabox.net/rsa/id_rsa.pub' % os.path.join(self.args.o, 'id_rsa.pub'),
         ])
 
+        if self.args.gerrit_enabled:
+            self.config.append('services.scheduler.environment', self.get_gerrit_env())
+
     def setup_nginx_ingress(self):
         self.config.add('services.nginx-ingress.image',
                         '%s/docker-compose-ingress:%s' % (self.args.docker_registry, self.args.version))
+
+    def get_gerrit_env(self):
+        return [
+            'INFRABOX_GERRIT_ENABLED=true',
+            'INFRABOX_GERRIT_HOSTNAME=%s' % self.args.gerrit_hostname,
+            'INFRABOX_GERRIT_USERNAME=%s' % self.args.gerrit_username,
+            'INFRABOX_GERRIT_PORT=%s' % self.args.gerrit_port,
+            'INFRABOX_GERRIT_KEY_FILENAME=/root/.ssh/id_rsa',
+        ]
+
+    def setup_gerrit(self):
+        if not self.args.gerrit_enabled:
+            return
+
+        self.required_option('gerrit-hostname')
+        self.required_option('gerrit-port')
+        self.required_option('gerrit-username')
+        self.required_option('gerrit-private-key')
+
+        self.check_file_exists(self.args.gerrit_private_key)
+
+        self.config.add('services.gerrit-trigger.image',
+                        '%s/gerrit-trigger:%s' % (self.args.docker_registry, self.args.version))
+        self.config.append('services.gerrit-trigger.networks', ['infrabox'])
+
+
+        self.config.append('services.gerrit-trigger.environment', [
+            'INFRABOX_SERVICE=gerrit-trigger',
+            'INFRABOX_VERSION=%s' % self.args.version
+        ])
+
+        self.config.append('services.gerrit-trigger.environment', self.get_gerrit_env())
+
+        gerrit_key = os.path.join(self.args.o, 'gerrit_id_rsa')
+        shutil.copyfile(self.args.gerrit_private_key, gerrit_key)
+        self.config.append('services.gerrit-trigger.volumes', [
+            '%s:/tmp/gerrit/id_rsa' % gerrit_key,
+        ])
 
     def setup_ldap(self):
         if self.args.ldap_enabled:
@@ -608,6 +665,9 @@ class DockerCompose(Install):
         self.config.append('services.scheduler.environment', env)
         self.config.append('services.docker-registry-auth.environment', env)
 
+        if self.args.gerrit_enabled:
+            self.config.append('services.gerrit-trigger.environment', env)
+
 
     def main(self):
         copy_files(self.args, 'compose')
@@ -624,6 +684,8 @@ class DockerCompose(Install):
         self.setup_nginx_ingress()
         self.setup_job_api()
         self.setup_api()
+        self.setup_job_git()
+        self.setup_gerrit()
         self.config.dump(compose_path)
 
 
