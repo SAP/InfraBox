@@ -2,6 +2,7 @@ import unittest
 import os
 import subprocess
 import time
+import json
 import xmlrunner
 import requests
 
@@ -46,47 +47,137 @@ class Test(unittest.TestCase):
         os.environ['INFRABOX_CLI_TOKEN'] = encode_project_token(self.token_id, self.project_id)
         os.environ['INFRABOX_API_URL'] = 'http://nginx-ingress/api'
 
-    def expect_message(self, output, message):
-        if not message:
+        ## TODO: docker: testresult
+        ## TODO: docker: badge
+        ## TODO: docker: markup
+        ## TODO: docker: caching
+        ## TODO: compose: caching
+        ## TODO: compose: insecure environment vars
+        ## TODO: compose: secure environment vars
+        ## TODO: compose: output/input
+        ## TODO: compose: testresult
+        ## TODO: compose: badge
+        ## TODO: compose: markup
+
+    def expect_job(self, job_name, state='finished', message=None, parents=None, dockerfile=None):
+        headers = {'Authorization': 'bearer ' + os.environ['INFRABOX_CLI_TOKEN']}
+        url = 'http://nginx-ingress/api/v1/projects/%s/builds/' % self.project_id
+        result = requests.get(url, headers=headers).json()
+        build = result[0]
+        url = 'http://nginx-ingress/api/v1/projects/%s/builds/%s/jobs/' % (self.project_id, build['id'])
+        jobs = requests.get(url, headers=headers).json()
+
+        for j in jobs:
+            data = json.dumps(j, indent=4)
+            if j['name'] != job_name:
+                continue
+
+            self.assertEqual(j['state'], state, data)
+
+            if message:
+                self.assertEqual(j['message'], message, data)
+
+            if dockerfile:
+                self.assertEqual(j['docker_file'], dockerfile, data)
+
+            if parents:
+                actual_parents = {}
+                for p in j.get('depends_on', []):
+                    actual_parents[p['job']] = p
+
+                for p in parents:
+                    self.assertTrue(p in actual_parents, data)
+
             return
 
-        self.assertIn(message, output)
+        data = json.dumps(jobs, indent=4)
+        raise Exception('Job "%s" not found in: %s' % (job_name, data))
 
-    def run_it(self, cwd, expect_message):
+
+    def run_it(self, cwd):
         command = ['infrabox', 'push', '--show-console']
+        output = None
         try:
             output = subprocess.check_output(command, cwd=cwd)
-            self.expect_message(output, expect_message)
         except subprocess.CalledProcessError as e:
-            self.expect_message(e.output, expect_message)
+            output = e.output
+
+        print output
 
     def test_docker_job(self):
-        self.run_it('/infrabox/context/infrabox/test/e2e/tests/docker_job',
-                    "Job test finished successfully")
+        self.run_it('/infrabox/context/infrabox/test/e2e/tests/docker_job')
+        self.expect_job('test')
+
+    def test_docker_multiple_jobs(self):
+        self.run_it('/infrabox/context/infrabox/test/e2e/tests/docker_multiple_jobs')
+        self.expect_job('test-1', parents=['Create Jobs'])
+        self.expect_job('test-2', parents=['Create Jobs'])
+        self.expect_job('test-3', parents=['Create Jobs'])
+        self.expect_job('test-4', parents=['test-1', 'test-2'])
+        self.expect_job('test-5', parents=['test-2', 'test-3'])
+
+    def test_workflow_nested(self):
+        self.run_it('/infrabox/context/infrabox/test/e2e/tests/workflow_nested')
+        self.expect_job('flow', parents=['flow/sub-2', 'flow/sub-3'])
+        self.expect_job('flow/sub-1', parents=['Create Jobs'], dockerfile='flow/Dockerfile_flow')
+        self.expect_job('flow/sub-2', parents=['flow/sub-2/nested-2', 'flow/sub-2/nested-3'])
+
+        self.expect_job('flow/sub-2/nested-1',
+                        parents=['flow/sub-1'],
+                        dockerfile='flow/nested-flow/Dockerfile_nested')
+        self.expect_job('flow/sub-2/nested-2',
+                        parents=['flow/sub-2/nested-1'],
+                        dockerfile='flow/nested-flow/Dockerfile_nested')
+        self.expect_job('flow/sub-2/nested-3',
+                        parents=['flow/sub-2/nested-1'],
+                        dockerfile='flow/nested-flow/Dockerfile_nested')
+        self.expect_job('flow/sub-3',
+                        parents=['flow/sub-1'],
+                        dockerfile='flow/Dockerfile_flow')
+
 
     def test_docker_compose_job(self):
-        self.run_it('/infrabox/context/infrabox/test/e2e/tests/docker_compose_job',
-                    "Job test finished successfully")
+        self.run_it('/infrabox/context/infrabox/test/e2e/tests/docker_compose_job')
+        self.expect_job('test')
+
+    def test_docker_compose_invalid_compose_file(self):
+        self.run_it('/infrabox/context/infrabox/test/e2e/tests/docker_compose_invalid_compose_file')
+        self.expect_job('Create Jobs',
+                        state='failure',
+                        message='/tmp/infrabox-compose/repo/docker-compose.yml: version not found')
 
     def test_failed_job(self):
-        self.run_it('/infrabox/context/infrabox/test/e2e/tests/failed_job',
-                    "Job test failed with 'failure'")
+        self.run_it('/infrabox/context/infrabox/test/e2e/tests/failed_job')
+        self.expect_job('test', state='failure')
+
+    def test_malicious_job(self):
+        self.run_it('/infrabox/context/infrabox/test/e2e/tests/malicious_job')
+        self.expect_job('test')
+
+    def test_workflow_recursive(self):
+        self.run_it('/infrabox/context/infrabox/test/e2e/tests/workflow_recursive')
+        self.expect_job('Create Jobs', state='failure', message='Recursive include detected')
+
+    def test_workflow_simple_job(self):
+        self.run_it('/infrabox/context/infrabox/test/e2e/tests/workflow_simple_job')
+        self.expect_job('flow', parents=['flow/test-sub'])
+        self.expect_job('flow/test-sub', parents=['Create Jobs'])
 
     def test_input_output(self):
-        self.run_it('/infrabox/context/infrabox/test/e2e/tests/docker_input_output',
-                    "Job consumer finished successfully")
+        self.run_it('/infrabox/context/infrabox/test/e2e/tests/docker_input_output')
+        self.expect_job('consumer')
 
     def test_secure_env(self):
-        self.run_it('/infrabox/context/infrabox/test/e2e/tests/docker_secure_env',
-                    "Job test finished successfully")
+        self.run_it('/infrabox/context/infrabox/test/e2e/tests/docker_secure_env')
+        self.expect_job('test')
 
     def test_secure_env_not_found(self):
-        self.run_it('/infrabox/context/infrabox/test/e2e/tests/docker_secure_env_not_found',
-                    "Secret 'UNKNOWN_SECRET' not found")
+        self.run_it('/infrabox/context/infrabox/test/e2e/tests/docker_secure_env_not_found')
+        self.expect_job('Create Jobs', state='failure', message="Secret 'UNKNOWN_SECRET' not found")
 
     def test_insecure_env(self):
-        self.run_it('/infrabox/context/infrabox/test/e2e/tests/docker_insecure_env',
-                    "Job test finished successfully")
+        self.run_it('/infrabox/context/infrabox/test/e2e/tests/docker_insecure_env')
+        self.expect_job('test')
 
 def main():
     while True:

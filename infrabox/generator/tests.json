@@ -27,11 +27,6 @@
         "build_only": false,
         "resources": { "limits": { "cpu": 1, "memory": 1024 } }
     }, {
-        "type": "docker-compose",
-        "name": "create-jobs",
-        "docker_compose_file": "infrabox/test/create-jobs/docker-compose.yml",
-        "resources": { "limits": { "cpu": 1, "memory": 1024 } }
-    }, {
         "type": "docker",
         "name": "github-api",
         "docker_file": "infrabox/test/github-api/Dockerfile",
@@ -43,11 +38,5 @@
         "docker_file": "infrabox/test/github-review/Dockerfile",
         "resources": { "limits": { "cpu": 1, "memory": 1024 } },
         "build_only": false
-    }, {
-        "type": "docker",
-        "name": "malicious-container",
-        "docker_file": "infrabox/test-malicious/Dockerfile",
-        "build_only": false,
-        "resources": { "limits": { "cpu": 1, "memory": 512 } }
     }]
 }

@@ -57,7 +57,7 @@ class ApiTestCase(unittest.TestCase):
         self.conn.commit()
 
     def test_get_project_does_not_exist(self):
-        r = self.get('/api/v1/project/%s' % self.repo_id)
+        r = self.get('/api/v1/projects/%s' % self.repo_id)
         self.assertEqual(r['message'], 'Unauthorized')
 
     def test_get_project(self):
@@ -73,7 +73,7 @@ class ApiTestCase(unittest.TestCase):
             VALUES (%s, %s, 1, %s)
         ''', [self.build_id, self.sha, self.project_id])
 
-        r = self.get('/api/v1/project/%s' % self.project_id)
+        r = self.get('/api/v1/projects/%s' % self.project_id)
         self.assertEqual(r['id'], self.project_id)
 
     def test_repo_does_not_exist(self):
@@ -83,7 +83,7 @@ class ApiTestCase(unittest.TestCase):
         }
 
         self.execute('TRUNCATE repository')
-        r = self.post('/api/v1/project/%s/trigger' % self.project_id, d)
+        r = self.post('/api/v1/projects/%s/trigger' % self.project_id, d)
         self.assertEqual(r['message'], 'repo not found')
 
     def test_upload_successfully(self):
@@ -93,7 +93,7 @@ class ApiTestCase(unittest.TestCase):
             UPDATE project SET type='upload';
         ''', [self.project_id, self.project_id])
 
-        r = self.post('/api/v1/project/%s/trigger' % self.project_id, {})
+        r = self.post('/api/v1/projects/%s/trigger' % self.project_id, {})
         self.assertEqual(r['status'], 200)
 
     @mock.patch('requests.post')
@@ -113,7 +113,7 @@ class ApiTestCase(unittest.TestCase):
             'branch_or_sha': 'master'
         }
 
-        r = self.post('/api/v1/project/%s/trigger' % (self.project_id), d)
+        r = self.post('/api/v1/projects/%s/trigger' % (self.project_id), d)
         self.assertEqual(r['status'], 200)
         self.assertEqual(r['message'], 'Build triggered')
 

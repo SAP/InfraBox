@@ -8,7 +8,6 @@ from distutils.dir_util import copy_tree
 import psycopg2
 import psycopg2.extensions
 
-from nose.tools import raises
 from job import RunJob
 from infrabox_job.process import ApiConsole
 
@@ -33,31 +32,6 @@ class TestCreateJobs(object):
         cur.execute(stmt, args)
         cur.close()
 
-    @raises(Exception)
-    def test_memory_limit_too_high(self):
-        path = '/project/infrabox/test/create-jobs/test/test-memory-limit-too-high'
-        expect = ()
-        self.run(path, expect)
-
-    @raises(Exception)
-    def test_memory_cpu_too_high(self):
-        path = '/project/infrabox/test/create-jobs/test/test-cpu-limit-too-high'
-        expect = ()
-        self.run(path, expect)
-
-    @raises(Exception)
-    def test_one_compose_job(self):
-        path = '/project/infrabox/test/create-jobs/test/test-one-compose-job'
-        expect = ()
-        self.run(path, expect)
-
-    def test_one_docker_job(self):
-        path = '/project/infrabox/test/create-jobs/test/test-one-docker-job'
-        expect = (
-            ('test-server', 'Dockerfile', ['Create Jobs']),
-        )
-        self.run(path, expect)
-
     def test_deployment(self):
         path = '/project/infrabox/test/create-jobs/test/test-deployment'
         expect = (
@@ -76,56 +50,6 @@ class TestCreateJobs(object):
             }]),
         )
         self.run(path, expect, with_deployment=True)
-
-    def test_environment_1(self):
-        path = '/project/infrabox/test/create-jobs/test/test-environment-1'
-        expect = (
-            ('test', 'Dockerfile', ['Create Jobs'], {"NAME":"VALUE", "NAME2": "VALUE"}, None),
-        )
-        self.run(path, expect, with_environment=True)
-
-    @raises(Exception)
-    def test_environment_2(self):
-        path = '/project/infrabox/test/create-jobs/test/test-environment-2'
-        self.run(path, ())
-
-    def test_environment_3(self):
-        path = '/project/infrabox/test/create-jobs/test/test-environment-3'
-        expect = (
-            ('test', 'Dockerfile', ['Create Jobs'], {"NAME":"VALUE", "NAME2": "VALUE"}, {"NAME3": "OTHER"}),
-        )
-        self.run(path, expect, with_environment=True)
-
-
-    @raises(Exception)
-    def test_recursive_workflow(self):
-        path = '/project/infrabox/test/create-jobs/test/test-recursive-workflow'
-        self.run(path, ())
-
-    def git_examples(self):
-        path = '/project/infrabox/test/create-jobs/test/test-git-examples'
-        expect = (
-            ('examples', None, ['examples/slack'], None),
-            ('examples/compose', None, ['examples/compose/test'], None),
-            ('examples/compose/test', 'infrabox/test/docker-compose.yml', ['Create Jobs'],
-             'https://github.com/InfraBox/examples.git'),
-            ('examples/job_dependencies', None, ['examples/job_dependencies/test'], None),
-            ('examples/job_dependencies/build', 'infrabox/build/Dockerfile', ['Create Jobs'],
-             'https://github.com/InfraBox/examples.git'),
-            ('examples/job_dependencies/test', 'infrabox/test/Dockerfile',
-             ['examples/job_dependencies/build'],
-             'https://github.com/InfraBox/examples.git'),
-            ('examples/simple_project', None, ['examples/simple_project/build-and-test'], None),
-            ('examples/simple_project/build-and-test', 'infrabox/build-and-test/Dockerfile',
-             ['Create Jobs'],
-             'https://github.com/InfraBox/examples.git'),
-            ('examples/slack', None, ['examples/slack/slack'], None),
-            ('examples/slack/slack', 'Dockerfile',
-             ['examples/compose', 'examples/job_dependencies', 'examples/simple_project'],
-             'https://github.com/stege/infrabox-slack.git'),
-
-        )
-        self.run(path, expect, with_external_git_id=True)
 
     def test_dependency_conditions(self):
         path = '/project/infrabox/test/create-jobs/test/test-dependency-conditions'
@@ -195,57 +119,6 @@ class TestCreateJobs(object):
         )
         self.run(path, expect, with_external_git_id=True)
 
-
-
-    def test_multiple_jobs_with_wait(self):
-        path = '/project/infrabox/test/create-jobs/test/test-multiple-jobs-with-wait'
-        expect = (
-            ('test-1', 'Dockerfile', ['Create Jobs']),
-            ('test-2', 'Dockerfile2', ['Create Jobs']),
-            ('wait', None, ['test-1', 'test-2']),
-        )
-        self.run(path, expect)
-
-    def test_multiple_docker_jobs(self):
-        path = '/project/infrabox/test/create-jobs/test/test-multiple-docker-jobs'
-        expect = (
-            ('test-1', 'Dockerfile', ['Create Jobs']),
-            ('test-2', 'Dockerfile', ['Create Jobs']),
-            ('test-3', 'Dockerfile', ['Create Jobs']),
-            ('test-4', 'Dockerfile', ['test-1', 'test-2']),
-            ('test-5', 'Dockerfile', ['test-2', 'test-3']),
-        )
-        self.run(path, expect)
-
-    def nested_workflows(self):
-        path = '/project/infrabox/test/create-jobs/test/test-nested-workflows'
-        expect = (
-            ('flow', None, ['flow/sub-2', 'flow/sub-3'], None),
-            ('flow/sub-1', 'flow/Dockerfile_flow', ['Create Jobs'], 'flow'),
-            ('flow/sub-2', None, ['flow/sub-2/nested-2', 'flow/sub-2/nested-3'], None),
-            ('flow/sub-2/nested-1', 'flow/nested-flow/Dockerfile_nested', ['flow/sub-1'], 'flow/nested-flow'),
-            ('flow/sub-2/nested-2', 'flow/nested-flow/Dockerfile_nested', ['flow/sub-2/nested-1'], 'flow/nested-flow'),
-            ('flow/sub-2/nested-3', 'flow/nested-flow/Dockerfile_nested', ['flow/sub-2/nested-1'], 'flow/nested-flow'),
-            ('flow/sub-3', 'flow/Dockerfile_flow', ['flow/sub-1'], 'flow'),
-        )
-        self.run(path, expect, with_base_path=True)
-
-
-    def test_one_workflow(self):
-        path = '/project/infrabox/test/create-jobs/test/test-one-workflow'
-        expect = (
-            ('flow', None, ['flow/test-sub']),
-            ('flow/test-sub', 'Dockerfile', ['Create Jobs']),
-        )
-        self.run(path, expect)
-
-    def test_workflow_with_base_path(self):
-        path = '/project/infrabox/test/create-jobs/test/test-workflow-base-path'
-        expect = (
-            ('flow', None, ['flow/test-sub'], None),
-            ('flow/test-sub', 'flow/Dockerfile_flow', ['Create Jobs'], "flow"),
-        )
-        self.run(path, expect, with_base_path=True)
 
 
     def expect(self, expect, with_external_git_id=False, with_base_path=False, with_environment=False,

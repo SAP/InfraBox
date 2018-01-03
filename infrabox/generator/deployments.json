@@ -210,6 +210,19 @@
         }]
     }, {
         "type": "docker",
+        "name": "job-git",
+        "docker_file": "src/job/git/Dockerfile",
+        "build_only": true,
+        "resources": { "limits": { "cpu": 1, "memory": 1024 } },
+        "deployments": [{
+            "type": "docker-registry",
+            "host": "quay.io/infrabox",
+            "repository": "job-git",
+            "username": "infrabox+infrabox_ci",
+            "password": { "$secret": "QUAY_PASSWORD" }
+        }]
+    }, {
+        "type": "docker",
         "name": "postgres",
         "docker_file": "src/postgres/Dockerfile",
         "build_only": true,

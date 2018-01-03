@@ -56,20 +56,20 @@
                             </md-card>
                         </div>
                         <div style="width: 100%; margin: 16px">
-                            <md-card  v-if="data.test.stack" class="m-b-lg">
-                                <md-card-header class="main-card-header">
-                                    <div class="md-title"><i class="fa fa-fw fa-bug"></i> Stacktrace</div>
-                                </md-card-header>
-                                <md-card-content>
-                                    <pre class="p-t-md">{{ data.test.stack }}</pre>
-                                </md-card-content>
-                            </md-card>
-                            <md-card  v-if="data.test.message" >
+                            <md-card v-if="data.test.message">
                                 <md-card-header class="main-card-header">
                                     <div class="md-title"><i class="fa fa-fw fa-envelope"></i> Message</div>
                                 </md-card-header>
                                 <md-card-content>
                                     <pre class="p-t-md">{{ data.test.message }}</pre>
+                                </md-card-content>
+                            </md-card>
+                            <md-card v-if="data.test.stack" class="m-b-lg">
+                                <md-card-header class="main-card-header">
+                                    <div class="md-title"><i class="fa fa-fw fa-bug"></i> Stacktrace</div>
+                                </md-card-header>
+                                <md-card-content>
+                                    <pre class="p-t-md">{{ data.test.stack }}</pre>
                                 </md-card-content>
                             </md-card>
                         </div>

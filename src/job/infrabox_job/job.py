@@ -84,7 +84,13 @@ class Job(object):
                           json=payload, timeout=60, verify=self.verify)
 
         if r.status_code != 200:
-            raise Failure(r.text)
+            msg = r.text
+            try:
+                msg = r.json()['message']
+            except:
+                pass
+
+            raise Failure(msg)
 
     def post_api_server(self, endpoint, data=None):
         while True:
@@ -104,9 +110,10 @@ class Job(object):
     def set_running(self):
         self.post_api_server('setrunning')
 
-    def set_finished(self, state):
+    def set_finished(self, state, message):
         payload = {
-            "state": state
+            'state': state,
+            'message': message
         }
 
         self.post_api_server('setfinished', data=payload)
@@ -142,8 +149,8 @@ class Job(object):
         if r.status_code != 200:
             raise Failure('Failed to upload file: %s' % r.text)
 
-    def update_status(self, status):
+    def update_status(self, status, message=None):
         if status == "running":
             return self.set_running()
 
-        return self.set_finished(status)
+        return self.set_finished(status, message)
