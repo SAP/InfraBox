@@ -154,14 +154,6 @@ class Test(unittest.TestCase):
         self.run_it('/infrabox/context/infrabox/test/e2e/tests/malicious_job')
         self.expect_job('test')
 
-    def resources_limit_cpu_too_high(self):
-        self.run_it('/infrabox/context/infrabox/test/e2e/tests/resources_limit_cpu_too_high')
-        self.expect_job('Create Jobs', state='failure', message='quota')
-
-    def resources_limit_memory_too_high(self):
-        self.run_it('/infrabox/context/infrabox/test/e2e/tests/resources_limit_memory_too_high')
-        self.expect_job('Create Jobs', state='failure', message='quota')
-
     def test_workflow_recursive(self):
         self.run_it('/infrabox/context/infrabox/test/e2e/tests/workflow_recursive')
         self.expect_job('Create Jobs', state='failure', message='Recursive include detected')
