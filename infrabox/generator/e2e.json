@@ -14,7 +14,7 @@
         "depends_on": ["gen-compose"]
     }, {
         "type": "docker",
-        "name": "gen-compose",
+        "name": "e2e-kubernetes",
         "docker_file": "infrabox/test/e2e/Dockerfile",
         "build_only": false,
         "resources": {
