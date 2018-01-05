@@ -5,7 +5,8 @@ RUN apt-get update -y && apt-get install -y \
     python-pip \
     postgresql-client \
     python-xmlrunner \
-    python-requests
+    python-requests \
+    python-psycopg2
 
 RUN mkdir /project
 WORKDIR /project
