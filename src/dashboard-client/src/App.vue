@@ -109,7 +109,7 @@ export default {
     .infrabox-logo {
         font-size: 24px;
         display: flex;
-        flex-flow: column;
+        flex-flow: column !important;
         padding: 16px;
         width: 100%;
     }
