@@ -5,6 +5,9 @@ pip install -e .
 
 cd /infrabox/context/infrabox/test/e2e-compose/
 
+# wait until everything has started up
+sleep 30
+
 set +e
 python test.py
 rc=$?
