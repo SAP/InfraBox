@@ -369,6 +369,7 @@ output_upload_parser.add_argument('output.tar.gz', location='files',
 class Output(Resource):
 
     @job_token_required
+    @ns.expect(output_upload_parser)
     def post(self):
         job_id = g.token['job']['id']
         key = "%s.tar.gz" % job_id
