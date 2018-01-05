@@ -143,7 +143,7 @@ class Job(object):
     def post_file_to_api_server(self, url, path):
         message = None
         for _ in xrange(0, 5):
-            files = {'data': open(path, 'rb')}
+            files = {os.path.basename(path): open(path)}
             try:
                 r = requests.post("%s%s" % (self.api_server, url),
                                   headers=self.get_headers(),
@@ -156,6 +156,11 @@ class Job(object):
             if r.status_code != 200:
                 time.sleep(5)
                 message = r.text
+
+                try:
+                    message = r.json()['message']
+                except:
+                    pass
             else:
                 return
 

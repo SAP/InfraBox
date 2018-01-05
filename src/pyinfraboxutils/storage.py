@@ -37,13 +37,13 @@ class S3(object):
     def upload_cache(self, stream, key):
         client = self._get_client()
         client.put_object(Body=stream,
-                          Bucket=self.upload_bucket,
+                          Bucket=self.cache_bucket,
                           Key=key)
 
     def upload_output(self, stream, key):
         client = self._get_client()
         client.put_object(Body=stream,
-                          Bucket=self.upload_bucket,
+                          Bucket=self.output_bucket,
                           Key=key)
 
     def download_source(self, key):
@@ -60,7 +60,8 @@ class S3(object):
         try:
             result = client.get_object(Bucket=bucket,
                                        Key=key)
-        except:
+        except Exception as e:
+            print e
             return None
 
         path = '/tmp/%s' % key
