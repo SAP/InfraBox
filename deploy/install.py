@@ -526,14 +526,6 @@ class DockerCompose(Install):
         ])
 
 
-    def setup_job_api(self):
-        self.config.add('services.job-api.image',
-                        '%s/job-api:%s' % (self.args.docker_registry, self.args.version))
-
-        self.config.append('services.job-api.volumes', [
-            '%s:/var/run/secrets/infrabox.net/rsa/id_rsa.pub' % os.path.join(self.args.o, 'id_rsa.pub'),
-        ])
-
     def setup_scheduler(self):
         self.config.add('services.scheduler.image',
                         '%s/scheduler-docker-compose:%s' % (self.args.docker_registry, self.args.version))
@@ -660,7 +652,6 @@ class DockerCompose(Install):
             self.config.append('services.api.links', ['postgres'])
 
         self.config.append('services.dashboard-api.environment', env)
-        self.config.append('services.job-api.environment', env)
         self.config.append('services.api.environment', env)
         self.config.append('services.scheduler.environment', env)
         self.config.append('services.docker-registry-auth.environment', env)
@@ -682,7 +673,6 @@ class DockerCompose(Install):
         self.setup_ldap()
         self.setup_dashboard()
         self.setup_nginx_ingress()
-        self.setup_job_api()
         self.setup_api()
         self.setup_job_git()
         self.setup_gerrit()

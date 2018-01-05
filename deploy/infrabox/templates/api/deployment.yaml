@@ -35,6 +35,7 @@ spec:
                 {{ include "env_database" . | indent 16 }}
                 {{ include "env_gcs" . | indent 16 }}
                 {{ include "env_s3" . | indent 16 }}
+                {{ include "env_job" . | indent 16 }}
                 {{ include "env_general" . | indent 16 }}
                 -
                     name: INFRABOX_SERVICE
@@ -42,9 +43,6 @@ spec:
                 -
                     name: INFRABOX_VERSION
                     value: {{ .Values.api.tag }}
-                -
-                    name: INFRABOX_API_LOG_CONSOLE
-                    value: "true"
                 -
                     name: INFRABOX_API_LOG_LEVEL
                     value: {{ default "info" .Values.api.log.level | quote }}

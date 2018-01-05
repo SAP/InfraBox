@@ -239,15 +239,6 @@ job:
         capabilities:
             enabled: false
 
-    api:
-        # image: job-api
-        tag: latest
-
-        url: <REQUIRED>
-
-        log:
-            level: info
-
 local_cache:
     enabled: false
 

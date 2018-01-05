@@ -9,7 +9,6 @@ echo "  registry: $docker_registry"
 echo "  tag: $image_tag"
 
 $cmd_prefix -- push ${docker_registry}infrabox/job:$image_tag
-$cmd_prefix -- push ${docker_registry}infrabox/job-api:$image_tag
 $cmd_prefix -- push ${docker_registry}infrabox/job-git:$image_tag
 $cmd_prefix -- push ${docker_registry}infrabox/gerrit-trigger:$image_tag
 $cmd_prefix -- push ${docker_registry}infrabox/gerrit-review:$image_tag
