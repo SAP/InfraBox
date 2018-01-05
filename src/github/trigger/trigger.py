@@ -257,7 +257,8 @@ class Trigger(object):
         env = json.dumps({
             "GITHUB_PULL_REQUEST_BASE_LABEL": event['pull_request']['base']['label'],
             "GITHUB_PULL_REQUEST_BASE_REF": event['pull_request']['base']['ref'],
-            "GITHUB_PULL_REQUEST_BASE_SHA": event['pull_request']['base']['sha']
+            "GITHUB_PULL_REQUEST_BASE_SHA": event['pull_request']['base']['sha'],
+            "GITHUB_PULL_REQUEST_BASE_REPO": event['pull_request']['base']['repo']['clone_url']
         })
 
         if not result:
