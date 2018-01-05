@@ -27,11 +27,10 @@ import listeners.job
 logger = get_logger('api')
 ns = api.namespace('ping', description='Health checks')
 
-@ns.route('/')
-@api.doc(security=[])
-class Ping(Resource):
-    def get(self):
-        return jsonify({'status': 200})
+@app.route('/')
+@app.route('/ping')
+def ping():
+    return jsonify({'status': 200})
 
 class ClientManager(socketio.base_manager.BaseManager):
     def __init__(self):
