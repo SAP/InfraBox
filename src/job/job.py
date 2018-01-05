@@ -185,7 +185,9 @@ exec "$@"
 
         r = requests.post('%s/clone_repo' % git_server, json=d, timeout=1800)
         self.console.collect(r.text, show=True)
-        r.json()
+
+        if r.status_code != 200:
+            raise Failure('Failed to clone repository')
 
     def get_source(self):
         c = self.console
