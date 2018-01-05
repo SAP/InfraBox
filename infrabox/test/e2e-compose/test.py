@@ -182,6 +182,7 @@ class Test(unittest.TestCase):
 def main():
     root_url = os.environ['INFRABOX_ROOT_URL']
 
+    print "ROOT_URL: %s" % root_url
     while True:
         time.sleep(1)
         try:
@@ -189,6 +190,8 @@ def main():
 
             if r.status_code == 200:
                 break
+
+            print r.text
         except:
             pass
         print "Server not yet ready"
