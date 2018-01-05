@@ -38,10 +38,6 @@ _getDependencies() {
     chmod +x /usr/bin/mc
 }
 
-_sql() {
-    psql -U postgres -d postgres -h localhost -c "$1" -A -t
-}
-
 _getPodNameImpl() {
     kubectl get pods -n $NAMESPACE | grep $1 | grep Running | awk '{print $1}'
 }
@@ -81,6 +77,17 @@ _installPostgres() {
     echo "## Install postgres"
     kubectl run postgres --image=quay.io/infrabox/postgres:$IMAGE_TAG -n $NAMESPACE
     kubectl expose -n $NAMESPACE deployment postgres --port 5432 --target-port 5432 --name infrabox-postgres
+
+    # Port forward postgres
+    postgres_pod=$(_getPodName "postgres")
+    echo "Port forwarding to postgres: '$postgres_pod'"
+    kubectl port-forward -n $NAMESPACE $postgres_pod 5432 &
+
+    # Wait until postgres is ready
+    until psql -U postgres -h localhost -c '\l'; do
+        >&2 echo "Postgres is unavailable - sleeping"
+        sleep 1
+    done
 }
 
 _deinstallMinio() {
@@ -177,12 +184,13 @@ _installInfrabox() {
     helm install --tiller-namespace $NAMESPACE --namespace $NAMESPACE .
     popd
 
-    export INFRABOX_DATABASE_HOST=infrabox-postgres.$NAMESPACE
+    export INFRABOX_DATABASE_HOST=localhost
     export INFRABOX_DATABASE_DB=postgres
     export INFRABOX_DATABASE_USER=postgres
     export INFRABOX_DATABASE_PORT=5432
     export INFRABOX_DATABASE_PASSWORD=postgres
     export INFRABOX_API_URL=http://localhost:8080/api
+    export INFRABOX_ROOT_URL=http://localhost:8080
 
     _portForwardAPI
 }
