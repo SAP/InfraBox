@@ -1,4 +1,4 @@
-FROM ubuntu
+FROM ubuntu:17.10
 
 RUN apt-get update -y && apt-get install -y \
     curl \
