@@ -151,6 +151,9 @@ _installInfrabox() {
     ssh-keygen -N '' -t rsa -f id_rsa
     ssh-keygen -f id_rsa.pub -e -m pem > id_rsa.pem
 
+    mkdir -p /var/run/secrets/infrabox.net/rsa/
+    cp id_rsa* /var/run/secrets/infrabox.net/rsa/
+
     echo "## Install infrabox"
     outdir=/tmp/test
     rm -rf $outdir
