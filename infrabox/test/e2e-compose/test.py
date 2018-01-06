@@ -188,7 +188,7 @@ def main():
         try:
             r = requests.get(root_url)
 
-            if r.status_code == 200:
+            if r.status_code in (200, 404):
                 break
 
             print r.text
