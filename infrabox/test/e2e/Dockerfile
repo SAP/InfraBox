@@ -6,8 +6,9 @@ RUN apt-get update -y && apt-get install -y \
     postgresql-client \
     python-xmlrunner \
     python-requests \
-    python-psycopg2 && \
-    pip install cryptography
+    python-psycopg2 \
+    python-jwt \
+    python-cryptograhpy
 
 RUN mkdir /project
 WORKDIR /project
