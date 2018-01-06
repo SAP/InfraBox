@@ -25,9 +25,7 @@ import listeners.console
 import listeners.job
 
 logger = get_logger('api')
-ns = api.namespace('ping', description='Health checks')
 
-@app.route('/')
 @app.route('/ping')
 def ping():
     return jsonify({'status': 200})
