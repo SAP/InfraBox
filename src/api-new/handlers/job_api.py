@@ -315,6 +315,7 @@ class Source(Resource):
         ''', (job_id, project_id, project_id))
 
         filename = r[0]
+        filename = filename.replace('/', '_')
 
         f = storage.download_source(filename)
 
@@ -336,8 +337,9 @@ class Cache(Resource):
         project_id = g.token['project']['id']
         job_name = g.token['job']['name']
 
-        template = 'project_%s__job_%s.tar.gz'
+        template = 'project_%s_job_%s.tar.gz'
         key = template % (project_id, job_name)
+        key = key.replace('/', '_')
 
         f = storage.download_cache(key)
 
@@ -352,8 +354,9 @@ class Cache(Resource):
         project_id = g.token['project']['id']
         job_name = g.token['job']['name']
 
-        template = 'project_%s__job_%s.tar.gz'
+        template = 'project_%s_job_%s.tar.gz'
         key = template % (project_id, job_name)
+        key = key.replace('/', '_')
 
         storage.upload_cache(request.files['cache.tar.gz'].stream, key)
         return jsonify({})
@@ -375,6 +378,8 @@ class Output(Resource):
     def post(self):
         job_id = g.token['job']['id']
         key = "%s.tar.gz" % job_id
+        key = key.replace('/', '_')
+
         storage.upload_output(request.files['output.tar.gz'].stream, key)
         return jsonify({})
 
@@ -404,6 +409,7 @@ class OutputParent(Resource):
             abort(404, "Job not found")
 
         key = "%s.tar.gz" % parent_job_id
+        key = key.replace('/', '_')
 
         f = storage.download_output(key)
 
