@@ -5,8 +5,8 @@
                 <md-table-header class="text-right">
                     <md-table-row>
                         <md-table-head class="console-table"><span class="p-xxl">Console Output</span></md-table-head>
-                        <md-table-head class="console-table text-right"><span class="text-right">Lines</span></md-table-head>
-                        <md-table-head class="console-table text-right"><span class="text-right">Duration</span></md-table-head>
+                        <md-table-head class="console-table" style="text-align: right">Lines</md-table-head>
+                        <md-table-head class="console-table" style="text-align: right">Duration</md-table-head>
                     </md-table-row>
                 </md-table-header>
                 <md-table-body>
@@ -49,6 +49,7 @@ export default {
     .console-table {
         background-color: #273439 !important;
         color: white !important;
+        font-family: monospace;
         box-shadow: none;
     }
 </style>

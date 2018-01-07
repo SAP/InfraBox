@@ -36,7 +36,7 @@
             <md-table>
                 <md-table-body v-if="project.builds.length != 0">
                     <md-table-row>
-                        <md-table-cell class="md-body-2"><i class="fa fa-fw fa-circle-thin"></i><span class="p-l-md">Jobs</span></md-table-cell>
+                        <md-table-cell class="md-body-2"><i class="fa fa-fw fa-cube"></i><span class="p-l-md">Jobs</span></md-table-cell>
                         <md-table-cell>{{ project.numQueuedJobs }} / {{ project.numScheduledJobs }} / {{ project.numRunningJobs }}
                             <md-tooltip>{{ project.numQueuedJobs }} queued / {{ project.numScheduledJobs }} scheduled / {{ project.numRunningJobs }} running </md-tooltip></md-table-cell>
                     </md-table-row>
@@ -46,7 +46,7 @@
                         <md-table-cell><ib-state :state="project.builds[0].state"></ib-state></md-table-cell>
                     </md-table-row>
                     <md-table-row>
-                        <md-table-cell class="md-body-2"><i class="fa fa-fw fa-cube"></i><span class="p-l-md">Build</span></md-table-cell>
+                        <md-table-cell class="md-body-2"><i class="fa fa-fw fa-cubes"></i><span class="p-l-md">Build</span></md-table-cell>
                         <md-table-cell>
                             {{ project.builds[0].number }}.{{ project.builds[0].restartCounter }}
                         </md-table-cell>
