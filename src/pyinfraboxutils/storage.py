@@ -1,5 +1,6 @@
 #pylint: disable=too-few-public-methods
 import os
+import uuid
 
 import boto3
 from google.cloud import storage as gcs
@@ -64,8 +65,8 @@ class S3(object):
             print e
             return None
 
-        path = '/tmp/%s' % key
-        with open('/tmp/%s' % key, 'w') as f:
+        path = '/tmp/%s_%s' % (uuid.uuid4(), key)
+        with open(path, 'w') as f:
             f.write(result['Body'].read())
 
         @after_this_request
@@ -113,7 +114,7 @@ class GCS(object):
 
     def _upload(self, stream, bucket, key):
         client = gcs.Client(project=get_env('INFRABOX_STORAGE_GCS_PROJECT_ID'))
-        bucket = client.get_bucket()
+        bucket = client.get_bucket(bucket)
         blob = bucket.blob(key)
         blob.upload_from_file(stream)
 
@@ -125,8 +126,8 @@ class GCS(object):
         if not blob:
             return None
 
-        path = '/tmp/%s' % key
-        with open('/tmp/%s' % key, 'w') as f:
+        path = '/tmp/%s_%s' % (uuid.uuid4(), key)
+        with open(path, 'w+') as f:
             blob.download_to_file(f)
 
         @after_this_request
