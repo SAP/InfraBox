@@ -19,18 +19,16 @@ import handlers.project
 import handlers.trigger
 import handlers.job
 import handlers.build
+import handlers.job_api
 
 import listeners.console
 import listeners.job
 
 logger = get_logger('api')
-ns = api.namespace('ping', description='Health checks')
 
-@ns.route('/')
-@api.doc(security=[])
-class Ping(Resource):
-    def get(self):
-        return jsonify({'status': 200})
+@app.route('/ping')
+def ping():
+    return jsonify({'status': 200})
 
 class ClientManager(socketio.base_manager.BaseManager):
     def __init__(self):
@@ -70,6 +68,21 @@ def main(): # pragma: no cover
     get_env('INFRABOX_DATABASE_PASSWORD')
     get_env('INFRABOX_DATABASE_PORT')
     get_env('INFRABOX_DATABASE_DB')
+
+    get_env('INFRABOX_JOB_MAX_OUTPUT_SIZE')
+    get_env('INFRABOX_JOB_SECURITY_CONTEXT_CAPABILITIES_ENABLED')
+
+    if get_env('INFRABOX_STORAGE_GCS_ENABLED') == 'true':
+        get_env('GOOGLE_APPLICATION_CREDENTIALS')
+        get_env('INFRABOX_STORAGE_GCS_CONTAINER_CONTENT_CACHE_BUCKET')
+        get_env('INFRABOX_STORAGE_GCS_CONTAINER_OUTPUT_BUCKET')
+        get_env('INFRABOX_STORAGE_GCS_PROJECT_UPLOAD_BUCKET')
+
+    if get_env('INFRABOX_STORAGE_S3_ENABLED') == 'true':
+        get_env('INFRABOX_STORAGE_S3_CONTAINER_CONTENT_CACHE_BUCKET')
+        get_env('INFRABOX_STORAGE_S3_CONTAINER_OUTPUT_BUCKET')
+        get_env('INFRABOX_STORAGE_S3_PROJECT_UPLOAD_BUCKET')
+        get_env('INFRABOX_STORAGE_S3_REGION')
 
     app.config['MAX_CONTENT_LENGTH'] = 128 * 1024 * 1024
     client_manager = ClientManager()

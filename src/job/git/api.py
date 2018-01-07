@@ -1,6 +1,7 @@
 #pylint: disable=wrong-import-position
 import subprocess
 import os
+import traceback
 
 from gevent.wsgi import WSGIServer
 
@@ -32,56 +33,65 @@ clone_model = api.model('Clone', {
 @ns.route('/clone_repo')
 class Clone(Resource):
     def execute(self, args, cwd=None):
-        subprocess.check_call(args, cwd=cwd)
+        output = '\n'
+        output += ' '.join(args)
+        output += '\n'
+        output += subprocess.check_output(args, cwd=cwd)
+        return output
 
     @api.expect(clone_model)
     def post(self):
-        mount_repo_dir = os.environ.get('INFRABOX_JOB_REPO_MOUNT_PATH', '/repo')
+        try:
+            output = ""
+            mount_repo_dir = os.environ.get('INFRABOX_JOB_REPO_MOUNT_PATH', '/repo')
 
-        body = request.get_json()
-        commit = body['commit']
-        clone_url = body['clone_url']
-        branch = body.get('branch', None)
-        ref = body.get('ref', None)
-        clone_all = body.get('clone_all', False)
-        sub_path = body.get('sub_path', None)
+            body = request.get_json()
+            commit = body['commit']
+            clone_url = body['clone_url']
+            branch = body.get('branch', None)
+            ref = body.get('ref', None)
+            clone_all = body.get('clone_all', False)
+            sub_path = body.get('sub_path', None)
 
-        if sub_path:
-            mount_repo_dir = os.path.join(mount_repo_dir, sub_path)
-            os.makedirs(mount_repo_dir)
+            if sub_path:
+                mount_repo_dir = os.path.join(mount_repo_dir, sub_path)
 
-        if os.environ['INFRABOX_GENERAL_DONT_CHECK_CERTIFICATES'] == 'true':
-            self.execute(('git', 'config', '--global', 'http.sslVerify', 'false'))
+            if os.environ['INFRABOX_GENERAL_DONT_CHECK_CERTIFICATES'] == 'true':
+                output += self.execute(('git', 'config', '--global', 'http.sslVerify', 'false'))
 
-        cmd = ['git', 'clone']
+            cmd = ['git', 'clone']
 
-        if not clone_all:
-            cmd += ['--depth=10']
+            if not clone_all:
+                cmd += ['--depth=10']
 
-        if branch:
-            cmd += ['--single-branch', '-b', branch]
+                if branch:
+                    cmd += ['--single-branch', '-b', branch]
 
-        # c.header("Clone repository", show=True)
-        cmd += [clone_url, mount_repo_dir]
+            # c.header("Clone repository", show=True)
+            cmd += [clone_url, mount_repo_dir]
 
-        self.execute(cmd)
+            output += self.execute(cmd)
 
-        if ref:
-            cmd = ['git', 'fetch', '--depth=10', clone_url, ref]
+            if ref:
+                cmd = ['git', 'fetch', '--depth=10', clone_url, ref]
+                # c.collect(' '.join(cmd), show=True)
+                output += self.execute(cmd, cwd=mount_repo_dir)
+
+            # c.collect("#Checkout commit", show=True)
+            cmd = ['git', 'checkout', '-qf', '-b', 'job', commit]
+
             # c.collect(' '.join(cmd), show=True)
-            self.execute(cmd, cwd=mount_repo_dir)
+            output += self.execute(cmd, cwd=mount_repo_dir)
 
-        # c.collect("#Checkout commit", show=True)
-        cmd = ['git', 'checkout', '-qf', '-b', 'job', commit]
+            # c.header("Init submodules", show=True)
+            output += self.execute(['git', 'submodule', 'init'], cwd=mount_repo_dir)
+            output += self.execute(['git', 'submodule', 'update'], cwd=mount_repo_dir)
 
-        # c.collect(' '.join(cmd), show=True)
-        self.execute(cmd, cwd=mount_repo_dir)
-
-        # c.header("Init submodules", show=True)
-        self.execute(['git', 'submodule', 'init'], cwd=mount_repo_dir)
-        self.execute(['git', 'submodule', 'update'], cwd=mount_repo_dir)
-
-        return {'status': 200}
+            return output
+        except subprocess.CalledProcessError as e:
+            return output + "\n" + e.output, 500
+        except Exception as e:
+            return traceback.format_exc(), 500
 
 
 def main(): # pragma: no cover

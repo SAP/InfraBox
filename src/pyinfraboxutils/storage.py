@@ -25,14 +25,58 @@ class S3(object):
         self.url = url
 
         self.upload_bucket = get_env('INFRABOX_STORAGE_S3_PROJECT_UPLOAD_BUCKET')
+        self.cache_bucket = get_env('INFRABOX_STORAGE_S3_CONTAINER_CONTENT_CACHE_BUCKET')
+        self.output_bucket = get_env('INFRABOX_STORAGE_S3_CONTAINER_OUTPUT_BUCKET')
 
     def upload_project(self, stream, key):
-        client = self.get_client()
+        client = self._get_client()
         client.put_object(Body=stream,
                           Bucket=self.upload_bucket,
                           Key=key)
 
-    def get_client(self):
+    def upload_cache(self, stream, key):
+        client = self._get_client()
+        client.put_object(Body=stream,
+                          Bucket=self.cache_bucket,
+                          Key=key)
+
+    def upload_output(self, stream, key):
+        client = self._get_client()
+        client.put_object(Body=stream,
+                          Bucket=self.output_bucket,
+                          Key=key)
+
+    def download_source(self, key):
+        return self._download(self.upload_bucket, key)
+
+    def download_output(self, key):
+        return self._download(self.output_bucket, key)
+
+    def download_cache(self, key):
+        return self._download(self.cache_bucket, key)
+
+    def _download(self, bucket, key):
+        client = self._get_client()
+        try:
+            result = client.get_object(Bucket=bucket,
+                                       Key=key)
+        except Exception as e:
+            print e
+            return None
+
+        path = '/tmp/%s' % key
+        with open('/tmp/%s' % key, 'w') as f:
+            f.write(result['Body'].read())
+
+        @after_this_request
+        def _remove_file(response):
+            if os.path.exists(path):
+                os.remove(path)
+            return response
+
+        return path
+
+    def _get_client(self):
         client = boto3.client('s3',
                               endpoint_url=self.url,
                               config=boto3.session.Config(signature_version='s3v4'),
@@ -43,14 +87,39 @@ class S3(object):
 
 class GCS(object):
     def upload_project(self, stream, key):
+        bucket = get_env('INFRABOX_STORAGE_GCS_PROJECT_UPLOAD_BUCKET')
+        self._upload(stream, bucket, key)
+
+    def upload_cache(self, stream, key):
+        bucket = get_env('INFRABOX_STORAGE_GCS_CONTAINER_CONTENT_CACHE_BUCKET')
+        self._upload(stream, bucket, key)
+
+    def upload_output(self, stream, key):
+        bucket = get_env('INFRABOX_STORAGE_GCS_CONTAINER_OUTPUT_BUCKET')
+        self._upload(stream, bucket, key)
+
+
+    def download_source(self, key):
+        bucket = get_env('INFRABOX_STORAGE_GCS_PROJECT_UPLOAD_BUCKET')
+        return self._download(bucket, key)
+
+    def download_output(self, key):
+        bucket = get_env('INFRABOX_STORAGE_GCS_CONTAINER_OUTPUT_BUCKET')
+        return self._download(bucket, key)
+
+    def download_cache(self, key):
+        bucket = get_env('INFRABOX_STORAGE_GCS_CONTAINER_CONTENT_CACHE_BUCKET')
+        return self._download(bucket, key)
+
+    def _upload(self, stream, bucket, key):
         client = gcs.Client(project=get_env('INFRABOX_STORAGE_GCS_PROJECT_ID'))
-        bucket = client.get_bucket(get_env('INFRABOX_STORAGE_GCS_PROJECT_UPLOAD_BUCKET'))
+        bucket = client.get_bucket()
         blob = bucket.blob(key)
         blob.upload_from_file(stream)
 
-    def download_output(self, key):
+    def _download(self, bucket, key):
         client = gcs.Client(project=get_env('INFRABOX_STORAGE_GCS_PROJECT_ID'))
-        bucket = client.get_bucket(get_env('INFRABOX_STORAGE_GCS_CONTAINER_OUTPUT_BUCKET'))
+        bucket = client.get_bucket(bucket)
         blob = bucket.get_blob(key)
 
         if not blob:
@@ -66,7 +135,7 @@ class GCS(object):
                 os.remove(path)
             return response
 
-        return  path
+        return path
 
 if USE_S3:
     storage = S3()
