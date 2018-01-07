@@ -14,11 +14,5 @@
         "name": "e2e",
         "infrabox_file": ".infrabox/output/e2e.json",
         "depends_on": ["deploy"]
-	}, {
-        "type": "git",
-        "name": "external",
-        "clone_url": "https://github.com/InfraBox/slack.git",
-        "commit": "master",
-        "depends_on": [{"job": "test", "on": ["*"]}]
     }]
 }
