@@ -1,6 +1,7 @@
 #pylint: disable=wrong-import-position
 import subprocess
 import os
+import traceback
 
 from gevent.wsgi import WSGIServer
 
@@ -54,7 +55,6 @@ class Clone(Resource):
 
             if sub_path:
                 mount_repo_dir = os.path.join(mount_repo_dir, sub_path)
-                os.makedirs(mount_repo_dir)
 
             if os.environ['INFRABOX_GENERAL_DONT_CHECK_CERTIFICATES'] == 'true':
                 output += self.execute(('git', 'config', '--global', 'http.sslVerify', 'false'))
@@ -89,7 +89,9 @@ class Clone(Resource):
 
             return output
         except subprocess.CalledProcessError as e:
-            return e.output, 500
+            return output + "\n" + e.output, 500
+        except Exception as e:
+            return traceback.format_exc(), 500
 
 
 def main(): # pragma: no cover
