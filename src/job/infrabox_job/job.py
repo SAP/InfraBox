@@ -141,13 +141,30 @@ class Job(object):
                     f.write(chunk)
 
     def post_file_to_api_server(self, url, path):
-        files = {'data': open(path, 'rb')}
-        r = requests.post("%s%s" % (self.api_server, url),
-                          headers=self.get_headers(),
-                          files=files, timeout=600, verify=self.verify)
+        message = None
+        for _ in xrange(0, 5):
+            files = {os.path.basename(path): open(path)}
+            try:
+                r = requests.post("%s%s" % (self.api_server, url),
+                                  headers=self.get_headers(),
+                                  files=files, timeout=600, verify=self.verify)
+            except Exception as e:
+                message = str(e)
+                time.sleep(5)
+                continue
 
-        if r.status_code != 200:
-            raise Failure('Failed to upload file: %s' % r.text)
+            if r.status_code != 200:
+                time.sleep(5)
+                message = r.text
+
+                try:
+                    message = r.json()['message']
+                except:
+                    pass
+            else:
+                return
+
+        raise Failure('Failed to upload file: %s' % message)
 
     def update_status(self, status, message=None):
         if status == "running":

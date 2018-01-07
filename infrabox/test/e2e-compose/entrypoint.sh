@@ -5,16 +5,15 @@ pip install -e .
 
 cd /infrabox/context/infrabox/test/e2e-compose/
 
+# wait until everything has started up
+sleep 30
+
 set +e
-coverage run --source=.,$1 --branch test.py
+python test.py
 rc=$?
 
-set +e
-
-coverage report -m
-coverage xml
+set -e
 
 cp results.xml /infrabox/upload/testresult
-cp coverage.xml /infrabox/upload/coverage
 
 exit $rc

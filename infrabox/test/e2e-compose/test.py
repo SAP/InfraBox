@@ -45,7 +45,6 @@ class Test(unittest.TestCase):
         conn.commit()
 
         os.environ['INFRABOX_CLI_TOKEN'] = encode_project_token(self.token_id, self.project_id)
-        os.environ['INFRABOX_API_URL'] = 'http://nginx-ingress/api'
 
         ## TODO: docker: testresult
         ## TODO: docker: badge
@@ -60,11 +59,12 @@ class Test(unittest.TestCase):
         ## TODO: compose: markup
 
     def expect_job(self, job_name, state='finished', message=None, parents=None, dockerfile=None):
+        root_url = os.environ['INFRABOX_ROOT_URL']
         headers = {'Authorization': 'bearer ' + os.environ['INFRABOX_CLI_TOKEN']}
-        url = 'http://nginx-ingress/api/v1/projects/%s/builds/' % self.project_id
+        url = '%s/api/v1/projects/%s/builds/' % (root_url, self.project_id)
         result = requests.get(url, headers=headers).json()
         build = result[0]
-        url = 'http://nginx-ingress/api/v1/projects/%s/builds/%s/jobs/' % (self.project_id, build['id'])
+        url = '%s/api/v1/projects/%s/builds/%s/jobs/' % (root_url, self.project_id, build['id'])
         jobs = requests.get(url, headers=headers).json()
 
         for j in jobs:
@@ -180,13 +180,18 @@ class Test(unittest.TestCase):
         self.expect_job('test')
 
 def main():
+    root_url = os.environ['INFRABOX_ROOT_URL']
+
+    print "ROOT_URL: %s" % root_url
     while True:
         time.sleep(1)
         try:
-            r = requests.get('http://nginx-ingress')
+            r = requests.get(root_url)
 
-            if r.status_code == 200:
+            if r.status_code in (200, 404):
                 break
+
+            print r.text
         except:
             pass
         print "Server not yet ready"
