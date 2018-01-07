@@ -46,7 +46,7 @@ class Scheduler(object):
 
     def kube_delete_namespace(self, job_id):
         h = {'Authorization': 'Bearer %s' % self.args.token}
-        namespace_name = "infrabox-%s" % job_id
+        namespace_name = "ib-%s" % job_id
 
         # delete the namespace
         p = {"gracePeriodSeconds": 0}
@@ -624,7 +624,7 @@ class Scheduler(object):
                 if state in ('queued', 'scheduled', 'running'):
                     continue
 
-                self.logger.info('Deleting orphaned namespace %s', job_id)
+                self.logger.info('Deleting orphaned namespace ib-%s', job_id)
                 ORPHANED_NAMESPACES.inc()
                 self.kube_delete_namespace(job_id)
 
