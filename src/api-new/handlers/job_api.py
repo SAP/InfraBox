@@ -80,7 +80,8 @@ class Job(Resource):
                 u.id,
                 j.build_arg,
                 j.deployment,
-                j.security_context
+                j.security_context,
+                b.restart_counter
             FROM job j
             INNER JOIN build b
                 ON j.build_id = b.id
@@ -129,7 +130,8 @@ class Job(Resource):
             "id": r[6],
             "commit_id": r[7],
             "source_upload_id": r[8],
-            "build_number": r[9]
+            "build_number": r[9],
+            "restart_counter": r[28]
         }
 
         data['repository'] = {
