@@ -147,7 +147,10 @@ exec "$@"
 
     def get_files_in_dir(self, d, ending):
         result = []
-        for root, _, files in os.walk(d):
+        for root, dirs, files in os.walk(d):
+            for di in dirs:
+                result += self.get_files_in_dir(os.path.join(root, di), ending)
+
             for f in files:
                 if not f.endswith(ending):
                     continue
@@ -532,6 +535,7 @@ exec "$@"
                 "%s:/infrabox/upload/markdown" % service_markdown_dir,
                 "%s:/infrabox/upload/markup" % service_markup_dir,
                 "%s:/infrabox/upload/badge" % service_badge_dir,
+                "%s:/infrabox/upload/coverage" % service_coverage_dir,
             ]
 
             if os.environ['INFRABOX_LOCAL_CACHE_ENABLED'] == 'true':
