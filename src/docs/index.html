@@ -639,8 +639,7 @@ services:
         "build_only": false,
         "depends_on": ["other_job_name"],
         "environment": { ... },
-        "build_arguments": { ... },
-        "shallow_clone": true
+        "build_arguments": { ... }
     }]
 }</code></pre>
 
@@ -690,12 +689,6 @@ services:
                                     <td>false</td>
                                     <td>integer</td>
                                     <td>Timeout in seconds after which the job should be killed. Timeout starts when the job is set to running. Default is 3600 (1 hour).</td>
-                                </tr>
-                                <tr>
-                                    <td>shallow_clone</td>
-                                    <td>false</td>
-                                    <td>boolean</td>
-                                    <td>Usually Infrabox does not clone the full repository, but only the most recent commits. Most of the time this is sufficient, but if you need the full history set this to <kbd>false</kbd>. Default is <kbd>true</kbd>.
                                 </tr>
                                 <tr>
                                     <td>build_only</td>
