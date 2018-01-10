@@ -125,15 +125,6 @@ class RunJob(Job):
 
             json.dump(o, out)
 
-    def create_gosu(self):
-        infrabox_gosu = os.path.join(self.mount_data_dir, 'gosu.sh')
-        with open(infrabox_gosu, 'w') as out:
-            out.write('''#!/bin/sh
-exec "$@"
-''')
-            st = os.stat(infrabox_gosu)
-            os.chmod(infrabox_gosu, st.st_mode | stat.S_IEXEC)
-
     def flush(self):
         self.console.flush()
 
@@ -390,7 +381,6 @@ exec "$@"
     def main_run_job(self):
         c = self.console
         self.create_jobs_json()
-        self.create_gosu()
 
         # base dir for inputs
         storage_inputs_dir = os.path.join(self.storage_dir, 'inputs')
