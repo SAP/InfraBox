@@ -89,7 +89,7 @@ class Clone(Resource):
 
             return output
         except subprocess.CalledProcessError as e:
-            return output + "\n" + e.output, 500
+            return str(e), 500
         except Exception as e:
             return traceback.format_exc(), 500
 

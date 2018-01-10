@@ -279,7 +279,7 @@ class Trigger(object):
                   hc['commit']['author']['email'], hc['author']['login'],
                   hc['commit']['committer']['name'],
                   hc['commit']['committer']['email'],
-                  committer_login, hc['commit']['url'], project_id, branch, pr_id,
+                  committer_login, hc['html_url'], project_id, branch, pr_id,
                   event['pull_request']['statuses_url']])
             commit_id = result[0][0]
 
