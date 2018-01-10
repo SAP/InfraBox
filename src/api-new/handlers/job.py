@@ -7,7 +7,7 @@ from pyinfraboxutils.ibflask import auth_token_required, check_job_belongs_to_pr
 from pyinfraboxutils.ibrestplus import api
 from pyinfraboxutils.storage import storage
 
-ns = api.namespace('api/v1/projects/<project_id>/builds/<build_id>/jobs',
+ns = api.namespace('api/v1/projects/<project_id>/jobs',
                    description='Job related operations',
                    tag="test")
 
@@ -39,37 +39,12 @@ job_model = api.model('JobModel', {
     'depends_on': fields.Nested(dependency_model),
 })
 
-@ns.route('/')
-class Jobs(Resource):
-
-    @auth_token_required(['project'])
-    @ns.marshal_list_with(job_model)
-    def get(self, project_id, build_id):
-        jobs = g.db.execute_many_dict('''
-            SELECT id, state, start_date, build_id, end_date, name, type,
-                cpu, memory, build_arg, env_var, message, dockerfile as docker_file,
-                dependencies as depends_on
-            FROM job
-            WHERE project_id = %s
-            AND build_id = %s
-        ''', [project_id, build_id])
-
-        for j in jobs:
-            if j['type'] == 'run_docker_compose':
-                j['type'] = 'docker_compose'
-                j['docker_compose_file'] = j['docker_file']
-                del j['docker_file']
-            elif j['type'] == 'run_project_container':
-                j['type'] = 'docker'
-
-        return jobs
-
 @ns.route('/<job_id>')
 class Job(Resource):
 
     @auth_token_required(['project'])
     @ns.marshal_with(job_model)
-    def get(self, project_id, build_id, job_id):
+    def get(self, project_id, job_id):
         job = g.db.execute_one_dict('''
             SELECT id, state, start_date, build_id, end_date, name,
                 cpu, memory, build_arg, env_var, dockerfile as docker_file,
@@ -87,7 +62,7 @@ class Output(Resource):
 
     @auth_token_required(['project'])
     @check_job_belongs_to_project
-    def get(self, project_id, build_id, job_id):
+    def get(self, project_id, job_id):
         key = '%s.tar.gz' % job_id
         f = storage.download_output(key)
 
@@ -101,7 +76,7 @@ class Project(Resource):
 
     @auth_token_required(['project'])
     @check_job_belongs_to_project
-    def get(self, project_id, build_id, job_id):
+    def get(self, project_id, job_id):
         m = g.db.execute_one_dict('''
             SELECT j.name, j.start_date, j.end_date, j.cpu, memory, j.state, j.id, b.build_number
             FROM job j
@@ -109,9 +84,8 @@ class Project(Resource):
                 ON b.id = j.build_id
                 AND b.project_id = j.project_id
             WHERE j.id = %s
-            AND b.id = %s
             AND j.project_id = %s
-        ''', [job_id, build_id, project_id])
+        ''', [job_id, project_id])
         m = dict(m)
 
         image = get_env('INFRABOX_DOCKER_REGISTRY_URL') + '/' + \
