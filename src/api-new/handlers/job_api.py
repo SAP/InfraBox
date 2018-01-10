@@ -613,7 +613,7 @@ class CreateJobs(Resource):
             # Create external git repo if necessary
             repo = job.get('repo', None)
             if repo:
-                repo['clone_all'] = not job.get('shallow_clone', True)
+                repo['clone_all'] = False
                 repo = json.dumps(repo)
 
             base_path = job.get('base_path', None)
