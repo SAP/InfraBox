@@ -248,16 +248,6 @@ class Scheduler(object):
                             "name": "git-clone",
                             "image": self.args.docker_registry + "/job-git:%s" % self.args.tag,
                             "env": clone_env,
-                            "resources": {
-                                "requests": {
-                                    "cpu": 0.1,
-                                    "memory": "64Mi"
-                                },
-                                "limits": {
-                                    "cpu": 0.1,
-                                    "memory": "64Mi"
-                                }
-                            },
                             "volumeMounts": clone_volume_mounts
                         }],
                         "restartPolicy": "OnFailure",
