@@ -84,7 +84,7 @@ def main(): # pragma: no cover
         get_env('INFRABOX_STORAGE_S3_PROJECT_UPLOAD_BUCKET')
         get_env('INFRABOX_STORAGE_S3_REGION')
 
-    app.config['MAX_CONTENT_LENGTH'] = 128 * 1024 * 1024
+    app.config['MAX_CONTENT_LENGTH'] = 1024 * 1024 * 1024
     client_manager = ClientManager()
     sio = flask_socketio.SocketIO(app,
                                   path='/api/v1/socket.io',

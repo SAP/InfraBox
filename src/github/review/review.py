@@ -105,7 +105,7 @@ def handle_job_update(conn, update):
                         project_name,
                         build_number,
                         build_restartCounter,
-                        urllib.quote(job_name)),
+                        urllib.quote_plus(job_name)),
         "description": "InfraBox",
         "context": "Job: %s" % job_name
     }
@@ -116,16 +116,21 @@ def handle_job_update(conn, update):
     }
 
     # TODO(ib-steffen): support ca bundles
-    r = requests.post(github_status_url,
-                      data=json.dumps(payload),
-                      headers=headers,
-                      timeout=5,
-                      verify=False)
+    try:
+        r = requests.post(github_status_url,
+                          data=json.dumps(payload),
+                          headers=headers,
+                          timeout=10,
+                          verify=False)
 
-    if r.status_code != 201:
-        logger.warn("Failed to update github status: %s", r.text)
-    else:
-        logger.info("Successfully updated github status")
+        if r.status_code != 201:
+            logger.warn("Failed to update github status: %s", r.text)
+        else:
+            logger.info("Successfully updated github status")
+    except Exception as e:
+        logger.warn("Failed to update github status: %s", e)
+        return
+
 
 if __name__ == "__main__": # pragma: no cover
     try:

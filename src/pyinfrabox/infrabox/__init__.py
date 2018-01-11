@@ -175,8 +175,7 @@ def parse_resources(d, path):
 def parse_docker(d, path):
     check_allowed_properties(d, path, ("type", "name", "docker_file", "depends_on", "resources",
                                        "build_only", "environment",
-                                       "build_arguments", "deployments", "timeout", "security_context",
-                                       "shallow_clone"))
+                                       "build_arguments", "deployments", "timeout", "security_context"))
     check_required_properties(d, path, ("type", "name", "docker_file", "resources"))
     check_name(d['name'], path + ".name")
     check_text(d['docker_file'], path + ".docker_file")
@@ -184,9 +183,6 @@ def parse_docker(d, path):
 
     if 'build_only' in d:
         check_boolean(d['build_only'], path + ".build_only")
-
-    if 'shallow_clone' in d:
-        check_boolean(d['shallow_clone'], path + ".shallow_clone")
 
     if 'depends_on' in d:
         parse_depends_on(d['depends_on'], path + ".depends_on")
@@ -208,14 +204,11 @@ def parse_docker(d, path):
 
 def parse_docker_compose(d, path):
     check_allowed_properties(d, path, ("type", "name", "docker_compose_file", "depends_on",
-                                       "environment", "resources", "shallow_clone"))
+                                       "environment", "resources"))
     check_required_properties(d, path, ("type", "name", "docker_compose_file", "resources"))
     check_name(d['name'], path + ".name")
     check_text(d['docker_compose_file'], path + ".docker_compose_file")
     parse_resources(d['resources'], path + ".resources")
-
-    if 'shallow_clone' in d:
-        check_boolean(d['shallow_clone'], path + ".shallow_clone")
 
     if 'depends_on' in d:
         parse_depends_on(d['depends_on'], path + ".depends_on")
