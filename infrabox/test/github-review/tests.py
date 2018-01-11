@@ -72,7 +72,10 @@ class TestIt(unittest.TestCase):
 
         requests_post.assert_called_with(
             'status_url',
-            data='{"state": "pending", "target_url": "GITHUB_URL/dashboard/#/project/projectname/build/123/123/job/jobname", "description": "InfraBox", "context": "Job: jobname"}', headers={'Authorization': 'token token', 'User-Agent': 'InfraBox'}, timeout=5, verify=False)
+            data='{"state": "pending", "target_url": "GITHUB_URL/dashboard/#/project/projectname/build/123/123/job/jobname", "description": "InfraBox", "context": "Job: jobname"}',
+            headers={'Authorization': 'token token', 'User-Agent': 'InfraBox'},
+            timeout=10,
+            verify=False)
 
     @mock.patch('requests.post')
     @mock.patch('review.get_env')
@@ -95,7 +98,7 @@ class TestIt(unittest.TestCase):
             data=data,
             headers={'Authorization': 'token token',
                      'User-Agent': 'InfraBox'},
-            timeout=5,
+            timeout=10,
             verify=False)
 
     def test_status_error(self):
