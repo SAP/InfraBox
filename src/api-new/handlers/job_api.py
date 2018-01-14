@@ -81,7 +81,8 @@ class Job(Resource):
                 j.build_arg,
                 j.deployment,
                 j.security_context,
-                b.restart_counter
+                b.restart_counter,
+                j.definition
             FROM job j
             INNER JOIN build b
                 ON j.build_id = b.id
@@ -109,7 +110,8 @@ class Job(Resource):
             "cpu": r[22],
             "memory": r[23],
             "build_arguments": r[25],
-            "security_context": r[27]
+            "security_context": r[27],
+            "definition": r[29]
         }
 
         state = data['job']['state']
@@ -650,14 +652,15 @@ class CreateJobs(Resource):
                 INSERT INTO job (id, state, build_id, type, dockerfile, name,
                     project_id, dependencies, build_only,
                     created_at, repo, base_path, scan_container,
-                    env_var_ref, env_var, build_arg, deployment, cpu, memory, timeout, resources)
-                VALUES (%s, 'queued', %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);""",
+                    env_var_ref, env_var, build_arg, deployment, cpu, memory, timeout, resources, definition)
+                VALUES (%s, 'queued', %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                        %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);""",
                          (job_id, build_id, t, f, name,
                           project_id,
                           json.dumps(depends_on), build_only, datetime.now(),
                           repo, base_path, scan_container, env_var_refs, env_vars,
                           build_arguments, deployments, limits_cpu, limits_memory, timeout,
-                          resources))
+                          resources, json.dumps(job)))
 
             # to make sure the get picked up in the right order by the scheduler
             time.sleep(0.1)
