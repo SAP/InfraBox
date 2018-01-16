@@ -20,7 +20,6 @@ class Parser(object):
         return self.parse_root(root)
 
     def parse_root(self, root):
-
         if root.tag == 'testsuites':
             for subroot in root:
                 self.parse_testsuite(subroot)
@@ -38,11 +37,18 @@ class Parser(object):
         ts_name = root.attrib.get('name')
 
         for el in root:
-            if el.tag == 'testcase':
-                tc = self.parse_testcase(el, ts_name)
-                self.tests.append(tc)
+            if el.tag != 'testcase':
+                continue
 
-    def parse_testcase(self, el, ts_name):
+            error = root.find('error')
+
+            if error is not None:
+                error = error.text
+
+            tc = self.parse_testcase(el, ts_name, error=error)
+            self.tests.append(tc)
+
+    def parse_testcase(self, el, ts_name, error=None):
         time = el.attrib.get('time')
         duration = 0
         if time:
@@ -62,10 +68,22 @@ class Parser(object):
             "duration": duration
         }
 
+        message = el.attrib.get('message', '')
+        if message is None:
+            message = error
+
+        stack = ''
+        if error:
+            stack += error
+
         for e in el:
             if e.tag in ('failure', 'error', 'skipped'):
+                if e.text:
+                    stack += '\n'
+                    stack += e.text
+
                 tc['status'] = RESULT_MAPPING[e.tag]
-                tc['message'] = e.attrib.get('message')
-                tc['stack'] = e.text or None
+                tc['message'] = message
+                tc['stack'] = stack
 
         return tc
