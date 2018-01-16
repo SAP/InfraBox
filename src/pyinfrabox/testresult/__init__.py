@@ -54,8 +54,8 @@ def parse_ts(e, path):
 
     for i in range(0, len(e)):
         elem = e[i]
-        path = "%s[%s]" % (path, i)
-        parse_t(elem, path)
+        p = "%s[%s]" % (path, i)
+        parse_t(elem, p)
 
 def parse_document(d):
     check_allowed_properties(d, "#", ("version", "tests"))
