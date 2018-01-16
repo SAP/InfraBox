@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "jobs": [
+    {
+      "type": "docker",
+      "name": "root",
+      "docker_file": "Dockerfile",
+      "build_only": false,
+      "resources": { "limits": { "cpu": 1, "memory": 1024 } }
+    },
+    {
+      "type": "workflow",
+      "name": "sub1",
+      "infrabox_file": "sub1/infrabox.json"
+    }
+  ]
+}

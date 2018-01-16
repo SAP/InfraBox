@@ -524,7 +524,7 @@ class RunJob(Job):
             makedirs(service_badge_dir)
 
             service_volumes = [
-                "%s:/infrabox/context" % self.mount_repo_dir,
+                "%s:/infrabox/context" % self._get_infrabox_context(),
                 "%s:/infrabox/cache" % service_cache_dir,
                 "%s:/infrabox/inputs" % self.infrabox_inputs_dir,
                 "%s:/infrabox/output" % service_output_dir,
@@ -572,7 +572,7 @@ class RunJob(Job):
             c.header("Run docker-compose", show=True)
 
 
-            cwd = self._get_cwd()
+            cwd = self._get_infrabox_context()
 
             c.execute(['docker-compose', '-f', compose_file_new, 'up',
                        '--abort-on-container-exit'], env=self.environment, show=True, cwd=cwd)
@@ -605,7 +605,7 @@ class RunJob(Job):
 
         return True
 
-    def _get_cwd(self):
+    def _get_infrabox_context(self):
         infrabox_context = self.job['definition'].get('infrabox_context', None)
         if infrabox_context:
             return os.path.join(self.mount_repo_dir, infrabox_context)
@@ -664,7 +664,7 @@ class RunJob(Job):
         cmd += ['-v', '%s:/infrabox' % self.mount_data_dir]
 
         # Mount context
-        cmd += ['-v', '%s:/infrabox/context' % self.mount_repo_dir]
+        cmd += ['-v', '%s:/infrabox/context' % self._get_infrabox_context()]
 
         # Mount docker socket
         if os.environ['INFRABOX_JOB_MOUNT_DOCKER_SOCKET'] == 'true':
@@ -742,7 +742,7 @@ class RunJob(Job):
                 for name, value in self.job['build_arguments'].iteritems():
                     cmd += ['--build-arg', '%s=%s' % (name, value)]
 
-            cwd = self._get_cwd()
+            cwd = self._get_infrabox_context()
             c.collect(json.dumps(self.job, indent=4), show=True)
             c.execute(cmd, cwd=cwd, show=True)
             self.cache_docker_image(image_name, cache_image)
