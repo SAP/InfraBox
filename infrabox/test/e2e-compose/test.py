@@ -167,6 +167,11 @@ class Test(unittest.TestCase):
         self.run_it('/infrabox/context/infrabox/test/e2e/tests/docker_input_output')
         self.expect_job('consumer')
 
+    def test_infrabox_context(self):
+        self.run_it('/infrabox/context/infrabox/test/e2e/tests/infrabox_context')
+        self.expect_job('root')
+        self.expect_job('sub/sub1')
+
     def test_secure_env(self):
         self.run_it('/infrabox/context/infrabox/test/e2e/tests/docker_secure_env')
         self.expect_job('test')
