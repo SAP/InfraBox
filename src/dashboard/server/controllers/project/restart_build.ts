@@ -52,10 +52,10 @@ export function restart_build(req: Request, res: Response, next)  {
         .then((job: any) => {
             return tx.none(`
                 INSERT INTO job (id, state, build_id, type,
-                           name, cpu, memory, project_id, build_only, dockerfile, repo, env_var)
+                           name, cpu, memory, project_id, build_only, dockerfile, repo, env_var, definition)
                 VALUES (gen_random_uuid(), 'queued', $1, 'create_job_matrix',
-                           'Create Jobs', 1, 1024, $2, false, '', $3, $4);
-            `, [new_build_id, build.project_id, job.repo, job.env_var]);
+                           'Create Jobs', 1, 1024, $2, false, '', $3, $4, $5);
+            `, [new_build_id, build.project_id, job.repo, job.env_var, job.definition]);
         });
     })
     .then(() => {

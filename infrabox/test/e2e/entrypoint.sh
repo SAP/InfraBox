@@ -192,7 +192,7 @@ _installInfrabox() {
     export INFRABOX_DATABASE_USER=postgres
     export INFRABOX_DATABASE_PORT=5432
     export INFRABOX_DATABASE_PASSWORD=postgres
-    export INFRABOX_API_URL=http://localhost:8080/api
+    export INFRABOX_URL_URL=http://localhost:8080
     export INFRABOX_ROOT_URL=http://localhost:8080
 
     _portForwardAPI

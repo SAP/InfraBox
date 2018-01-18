@@ -119,21 +119,21 @@ class Test(unittest.TestCase):
     def test_workflow_nested(self):
         self.run_it('/infrabox/context/infrabox/test/e2e/tests/workflow_nested')
         self.expect_job('flow', parents=['flow/sub-2', 'flow/sub-3'])
-        self.expect_job('flow/sub-1', parents=['Create Jobs'], dockerfile='flow/Dockerfile_flow')
+        self.expect_job('flow/sub-1', parents=['Create Jobs'], dockerfile='Dockerfile_flow')
         self.expect_job('flow/sub-2', parents=['flow/sub-2/nested-2', 'flow/sub-2/nested-3'])
 
         self.expect_job('flow/sub-2/nested-1',
                         parents=['flow/sub-1'],
-                        dockerfile='flow/nested-flow/Dockerfile_nested')
+                        dockerfile='Dockerfile_nested')
         self.expect_job('flow/sub-2/nested-2',
                         parents=['flow/sub-2/nested-1'],
-                        dockerfile='flow/nested-flow/Dockerfile_nested')
+                        dockerfile='Dockerfile_nested')
         self.expect_job('flow/sub-2/nested-3',
                         parents=['flow/sub-2/nested-1'],
-                        dockerfile='flow/nested-flow/Dockerfile_nested')
+                        dockerfile='Dockerfile_nested')
         self.expect_job('flow/sub-3',
                         parents=['flow/sub-1'],
-                        dockerfile='flow/Dockerfile_flow')
+                        dockerfile='Dockerfile_flow')
 
 
     def test_docker_compose_job(self):
@@ -166,6 +166,12 @@ class Test(unittest.TestCase):
     def test_input_output(self):
         self.run_it('/infrabox/context/infrabox/test/e2e/tests/docker_input_output')
         self.expect_job('consumer')
+
+    def test_infrabox_context(self):
+        self.run_it('/infrabox/context/infrabox/test/e2e/tests/infrabox_context')
+        self.expect_job('root')
+        self.expect_job('sub1')
+        self.expect_job('sub1/sub1')
 
     def test_secure_env(self):
         self.run_it('/infrabox/context/infrabox/test/e2e/tests/docker_secure_env')

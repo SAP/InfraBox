@@ -41,7 +41,7 @@ export function getEmail(token: string) {
 
 export function getRepos(token: string) {
     const options = {
-        uri: api_url + '/user/repos?visibility=all',
+        uri: api_url + '/user/repos?visibility=all&per_page=100',
         method: 'GET',
         headers: {
             "Authorization": "token " + token,
