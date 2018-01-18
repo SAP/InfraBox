@@ -249,7 +249,7 @@
         "type": "docker",
         "build_context": "../..",
         "name": "build-dashboard-client",
-        "docker_file": "infrabox/deploy/build-dashboard-client/Dockerfile",
+        "docker_file": "../../infrabox/deploy/build-dashboard-client/Dockerfile",
         "resources": { "limits": { "cpu": 1, "memory": 2048 } },
         "build_only": false
     }, {
