@@ -41,8 +41,7 @@ class ApiConsole(object):
         self.flush()
 
     def execute(self, command, cwd=None, show=False, env=None, background=False, ignore_error=False):
-        self.collect('cwd: %s' % cwd, show=True)
-        self.collect(' '.join(command) + '\n', show=True)
+        self.collect(' '.join(command) + '\n', show=show)
 
         process = subprocess.Popen(command, shell=False,
                                    stdout=subprocess.PIPE,

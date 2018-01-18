@@ -364,11 +364,15 @@ class RunJob(Job):
     def create_dynamic_jobs(self):
         c = self.console
         infrabox_json_path = os.path.join(self.infrabox_output_dir, 'infrabox.json')
+        infrabox_context = os.path.dirname(infrabox_json_path)
+
         if os.path.exists(infrabox_json_path):
             c.header("Creating jobs", show=True)
             data = self.parse_infrabox_json(infrabox_json_path)
-            self.check_file_exist(data, self.mount_repo_dir)
-            jobs = self.get_job_list(data, c, self.job['repo'], infrabox_paths={infrabox_json_path: True})
+            self.check_file_exist(data, infrabox_context)
+            jobs = self.get_job_list(data, c, self.job['repo'],
+                                     infrabox_paths={infrabox_json_path: True},
+                                     infrabox_context=infrabox_context)
             c.collect(json.dumps(jobs, indent=4), show=True)
 
             if jobs:
@@ -486,7 +490,7 @@ class RunJob(Job):
         c.header("Build containers", show=True)
         f = self.job['dockerfile']
 
-        compose_file = os.path.join(self.mount_repo_dir, f)
+        compose_file = os.path.normpath(os.path.join(self.job['definition']['infrabox_context'], f))
         compose_file_new = compose_file + ".infrabox.json"
 
         # rewrite compose file
@@ -619,7 +623,7 @@ class RunJob(Job):
         if not build_context.startswith(self.mount_repo_dir):
             raise Failure('Invalid build_context')
 
-        return build_context
+        return os.path.normpath(build_context)
 
     def deploy_container(self, image_name):
         c = self.console
@@ -744,15 +748,20 @@ class RunJob(Job):
         try:
             c.header("Build image", show=True)
             self.get_cached_image(cache_image)
+            docker_file = os.path.normpath(os.path.join(self.job['definition']['infrabox_context'],
+                                                        self.job['dockerfile']))
 
-            cmd = ['docker', 'build', '--cache-from', cache_image, '-t', image_name, '.', '-f', self.job['dockerfile']]
+            cmd = ['docker', 'build',
+                   '--cache-from', cache_image,
+                   '-t', image_name,
+                   '-f', docker_file,
+                   '.']
 
             if 'build_arguments' in self.job and self.job['build_arguments']:
                 for name, value in self.job['build_arguments'].iteritems():
                     cmd += ['--build-arg', '%s=%s' % (name, value)]
 
             cwd = self._get_build_context()
-            c.collect(json.dumps(self.job, indent=4), show=True)
             c.execute(cmd, cwd=cwd, show=True)
             self.cache_docker_image(image_name, cache_image)
         except Exception as e:
@@ -928,7 +937,7 @@ class RunJob(Job):
 
                 new_infrabox_context = os.path.dirname(ib_path)
 
-                self.check_file_exist(yml, infrabox_context)
+                self.check_file_exist(yml, new_infrabox_context)
                 sub = self.get_job_list(yml, c, git_repo,
                                         parent_name=job_name,
                                         infrabox_context=new_infrabox_context,
