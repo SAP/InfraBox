@@ -252,14 +252,6 @@ class RunJob(Job):
         self.get_source()
         self.create_infrabox_directories()
 
-        if 'build_context' in self.job:
-            self.job['build_context'] = os.path.normpath(os.path.join(self.mount_repo_dir, self.job['build_context']))
-        else:
-            self.job['build_context'] = self.mount_repo_dir
-
-        if not self.job['build_context'].startswith(self.mount_repo_dir):
-            raise Failure('Invalid build_context')
-
         if self.job['type'] == 'create_job_matrix':
             self.main_create_jobs()
         else:
@@ -524,7 +516,6 @@ class RunJob(Job):
             makedirs(service_badge_dir)
 
             service_volumes = [
-                "%s:/infrabox/context" % self._get_infrabox_context(),
                 "%s:/infrabox/cache" % service_cache_dir,
                 "%s:/infrabox/inputs" % self.infrabox_inputs_dir,
                 "%s:/infrabox/output" % service_output_dir,
@@ -579,7 +570,7 @@ class RunJob(Job):
             c.header("Run docker-compose", show=True)
 
 
-            cwd = self._get_infrabox_context()
+            cwd = self._get_build_context()
 
             c.execute(['docker-compose', '-f', compose_file_new, 'up',
                        '--abort-on-container-exit'], env=self.environment, show=True, cwd=cwd)
@@ -612,12 +603,23 @@ class RunJob(Job):
 
         return True
 
-    def _get_infrabox_context(self):
-        infrabox_context = self.job['definition'].get('infrabox_context', None)
-        if infrabox_context:
-            return os.path.join(self.mount_repo_dir, infrabox_context)
+    def _get_build_context(self):
+        job_build_context = self.job['definition'].get('build_context', None)
+        job_infrabox_context = self.job['definition']['infrabox_context']
 
-        return self.mount_repo_dir
+        # Default build context is the infrabox context
+        build_context = job_infrabox_context
+
+        if job_build_context:
+            # job specified build context is alway relative to the infrabox context
+            build_context = os.path.join(job_infrabox_context, job_build_context)
+
+        build_context = os.path.join(self.mount_repo_dir, build_context)
+
+        if not build_context.startswith(self.mount_repo_dir):
+            raise Failure('Invalid build_context')
+
+        return build_context
 
     def deploy_container(self, image_name):
         c = self.console
@@ -671,7 +673,7 @@ class RunJob(Job):
         cmd += ['-v', '%s:/infrabox' % self.mount_data_dir]
 
         # Mount context
-        cmd += ['-v', '%s:/infrabox/context' % self._get_infrabox_context()]
+        cmd += ['-v', '%s:/infrabox/context' % self._get_build_context()]
 
         # Mount docker socket
         if os.environ['INFRABOX_JOB_MOUNT_DOCKER_SOCKET'] == 'true':
@@ -749,7 +751,7 @@ class RunJob(Job):
                 for name, value in self.job['build_arguments'].iteritems():
                     cmd += ['--build-arg', '%s=%s' % (name, value)]
 
-            cwd = self._get_infrabox_context()
+            cwd = self._get_build_context()
             c.collect(json.dumps(self.job, indent=4), show=True)
             c.execute(cmd, cwd=cwd, show=True)
             self.cache_docker_image(image_name, cache_image)
@@ -882,6 +884,7 @@ class RunJob(Job):
             job['id'] = str(uuid.uuid4())
             job['avg_duration'] = 0
             job['repo'] = repo
+            job['infrabox_context'] = infrabox_context
 
             if parent_name != '':
                 job['name'] = parent_name + "/" + job['name']
@@ -923,12 +926,12 @@ class RunJob(Job):
                     "infrabox_file": ib_file
                 }
 
-                infrabox_context = os.path.dirname(ib_path)
+                new_infrabox_context = os.path.dirname(ib_path)
 
                 self.check_file_exist(yml, infrabox_context)
                 sub = self.get_job_list(yml, c, git_repo,
                                         parent_name=job_name,
-                                        infrabox_context=infrabox_context,
+                                        infrabox_context=new_infrabox_context,
                                         infrabox_paths=infrabox_paths)
 
                 del infrabox_paths[ib_path]
@@ -944,21 +947,14 @@ class RunJob(Job):
                 infrabox_paths[p] = True
 
                 yml = self.parse_infrabox_json(p)
-                self.check_file_exist(yml, infrabox_context)
+                new_infrabox_context = os.path.dirname(p)
+                self.check_file_exist(yml, new_infrabox_context)
 
                 sub = self.get_job_list(yml, c, repo,
                                         parent_name=job_name,
-                                        infrabox_context=infrabox_context)
+                                        infrabox_context=new_infrabox_context)
 
                 del infrabox_paths[p]
-
-            # Update build context to contain infrabox_file path
-            infrabox_file = job.get('infrabox_file', None)
-            if infrabox_file:
-                infrabox_context = os.path.dirname(infrabox_file)
-                for s in sub:
-                    if 'infrabox_context' not in s:
-                        s['infrabox_context'] = infrabox_context
 
             # every sub job which does not have a parent
             # should be a child of the current job

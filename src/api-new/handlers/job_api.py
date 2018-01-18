@@ -70,9 +70,9 @@ class Job(Resource):
                 null,
                 null,
                 j.repo,
-                j.base_path,
+                null,
                 j.state,
-                j.scan_container,
+                null,
                 j.env_var,
                 j.env_var_ref,
                 j.cpu,
@@ -104,9 +104,7 @@ class Job(Resource):
             "build_only": r[12],
             "type": r[13],
             "repo": r[16],
-            "base_path": r[17],
             "state": r[18],
-            "scan_container": r[19],
             "cpu": r[22],
             "memory": r[23],
             "build_arguments": r[25],
@@ -579,11 +577,6 @@ class CreateJobs(Resource):
             job_id = job['id']
 
             build_only = job.get("build_only", True)
-            scan_container = False
-
-            if 'security' in job:
-                scan_container = job['security']['scan_container']
-
             depends_on = job.get("depends_on", [])
 
             if depends_on:
@@ -618,10 +611,6 @@ class CreateJobs(Resource):
                 repo['clone_all'] = False
                 repo = json.dumps(repo)
 
-            base_path = job.get('base_path', None)
-            if base_path == '':
-                base_path = None
-
             # Handle build arguments
             build_arguments = None
             if 'build_arguments' in job:
@@ -651,14 +640,14 @@ class CreateJobs(Resource):
             g.db.execute("""
                 INSERT INTO job (id, state, build_id, type, dockerfile, name,
                     project_id, dependencies, build_only,
-                    created_at, repo, base_path, scan_container,
+                    created_at, repo,
                     env_var_ref, env_var, build_arg, deployment, cpu, memory, timeout, resources, definition)
-                VALUES (%s, 'queued', %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-                        %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);""",
+                VALUES (%s, 'queued', %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                        %s, %s, %s, %s, %s, %s, %s, %s, %s);""",
                          (job_id, build_id, t, f, name,
                           project_id,
                           json.dumps(depends_on), build_only, datetime.now(),
-                          repo, base_path, scan_container, env_var_refs, env_vars,
+                          repo, env_var_refs, env_vars,
                           build_arguments, deployments, limits_cpu, limits_memory, timeout,
                           resources, json.dumps(job)))
 
