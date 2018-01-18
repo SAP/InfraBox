@@ -3,16 +3,16 @@
     "jobs": [{
         "type": "workflow",
         "name": "test",
-        "infrabox_file": ".infrabox/output/tests.json"
+        "infrabox_file": "../../.infrabox/output/tests.json"
     }, {
         "type": "workflow",
         "name": "deploy",
-        "infrabox_file": ".infrabox/output/deployments.json",
+        "infrabox_file": "../../.infrabox/output/deployments.json",
         "depends_on": ["test"]
     }, {
         "type": "workflow",
         "name": "e2e",
-        "infrabox_file": ".infrabox/output/e2e.json",
+        "infrabox_file": "../../.infrabox/output/e2e.json",
         "depends_on": ["deploy"]
 	}, {
         "type": "git",
