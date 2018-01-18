@@ -2,6 +2,7 @@
     "version": 1,
     "jobs": [{
         "type": "docker",
+        "build_context": "../..",
         "name": "docker-auth",
         "docker_file": "src/docker-registry/auth/Dockerfile",
         "build_only": true,
@@ -15,6 +16,7 @@
         }]
     }, {
         "type": "docker",
+        "build_context": "../..",
         "name": "db",
         "docker_file": "src/db/Dockerfile",
         "build_only": true,
@@ -28,6 +30,7 @@
         }]
     }, {
         "type": "docker",
+        "build_context": "../..",
         "name": "gerrit-trigger",
         "docker_file": "src/gerrit/trigger/Dockerfile",
         "build_only": true,
@@ -41,6 +44,7 @@
         }]
    }, {
         "type": "docker",
+        "build_context": "../..",
         "name": "gerrit-api",
         "docker_file": "src/gerrit/api/Dockerfile",
         "build_only": true,
@@ -54,6 +58,7 @@
         }]
     }, {
         "type": "docker",
+        "build_context": "../..",
         "name": "github-api",
         "docker_file": "src/github/api/Dockerfile",
         "build_only": true,
@@ -67,6 +72,7 @@
         }]
     }, {
         "type": "docker",
+        "build_context": "../..",
         "name": "github-trigger",
         "docker_file": "src/github/trigger/Dockerfile",
         "build_only": true,
@@ -80,6 +86,7 @@
         }]
     }, {
         "type": "docker",
+        "build_context": "../..",
         "name": "github-review",
         "docker_file": "src/github/review/Dockerfile",
         "build_only": true,
@@ -93,6 +100,7 @@
         }]
     }, {
         "type": "docker",
+        "build_context": "../..",
         "name": "gerrit-review",
         "docker_file": "src/gerrit/review/Dockerfile",
         "build_only": true,
@@ -106,6 +114,7 @@
         }]
     }, {
         "type": "docker",
+        "build_context": "../..",
         "name": "docker-nginx",
         "docker_file": "src/docker-registry/nginx/Dockerfile",
         "build_only": true,
@@ -119,6 +128,7 @@
         }]
     }, {
         "type": "docker",
+        "build_context": "../..",
         "name": "dashboard-api",
         "docker_file": "src/dashboard/Dockerfile",
         "build_only": false,
@@ -132,6 +142,7 @@
         }]
     }, {
         "type": "docker",
+        "build_context": "../..",
         "name": "api",
         "docker_file": "src/api-new/Dockerfile",
         "build_only": true,
@@ -145,6 +156,7 @@
         }]
     }, {
         "type": "docker",
+        "build_context": "../..",
         "name": "job",
         "docker_file": "src/job/Dockerfile",
         "build_only": true,
@@ -158,6 +170,7 @@
         }]
     }, {
         "type": "docker",
+        "build_context": "../..",
         "name": "scheduler-kubernetes",
         "docker_file": "src/scheduler/kubernetes/Dockerfile",
         "build_only": true,
@@ -171,6 +184,7 @@
         }]
     }, {
         "type": "docker",
+        "build_context": "../..",
         "name": "scheduler-docker-compose",
         "docker_file": "src/scheduler/docker-compose/Dockerfile",
         "build_only": true,
@@ -184,6 +198,7 @@
         }]
     }, {
         "type": "docker",
+        "build_context": "../..",
         "name": "stats",
         "docker_file": "src/stats/Dockerfile",
         "build_only": true,
@@ -197,6 +212,7 @@
         }]
     }, {
         "type": "docker",
+        "build_context": "../..",
         "name": "job-git",
         "docker_file": "src/job/git/Dockerfile",
         "build_only": true,
@@ -210,6 +226,7 @@
         }]
     }, {
         "type": "docker",
+        "build_context": "../..",
         "name": "postgres",
         "docker_file": "src/postgres/Dockerfile",
         "build_only": true,
@@ -223,18 +240,21 @@
         }]
     }, {
         "type": "docker",
+        "build_context": "../..",
         "name": "docker-gc",
         "docker_file": "src/docker-gc/Dockerfile",
         "build_only": true,
         "resources": { "limits": { "cpu": 1, "memory": 1024 } }
     }, {
         "type": "docker",
+        "build_context": "../..",
         "name": "build-dashboard-client",
         "docker_file": "infrabox/deploy/build-dashboard-client/Dockerfile",
         "resources": { "limits": { "cpu": 1, "memory": 2048 } },
         "build_only": false
     }, {
         "type": "docker",
+        "build_context": "../..",
         "name": "docker-compose-ingress",
         "docker_file": "src/docker-compose/ingress/Dockerfile",
         "resources": { "limits": { "cpu": 1, "memory": 512 } },
@@ -247,6 +267,7 @@
         }]
     }, {
         "type": "docker",
+        "build_context": "../..",
         "name": "docker-compose-minio-init",
         "docker_file": "src/docker-compose/minio-init/Dockerfile",
         "resources": { "limits": { "cpu": 1, "memory": 512 } },
@@ -259,6 +280,7 @@
         }]
     }, {
         "type": "docker",
+        "build_context": "../..",
         "name": "static",
         "docker_file": "infrabox/deploy/static/Dockerfile",
         "resources": { "limits": { "cpu": 1, "memory": 512 } },
