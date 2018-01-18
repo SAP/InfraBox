@@ -3,25 +3,21 @@
     "jobs": [{
         "type": "docker-compose",
         "name": "api",
-        "build_context": "../..",
         "docker_compose_file": "../../infrabox/test/api/docker-compose.yml",
         "resources": { "limits": { "cpu": 1, "memory": 1024 } }
     }, {
         "type": "docker-compose",
         "name": "docker-registry",
-        "build_context": "../..",
         "docker_compose_file": "../../infrabox/test-registry/docker-compose.yml",
         "resources": { "limits": { "cpu": 1, "memory": 1024 } }
     }, {
         "type": "docker-compose",
         "name": "api-new",
-        "build_context": "../..",
         "docker_compose_file": "../../infrabox/test/api-new/docker-compose.yml",
         "resources": { "limits": { "cpu": 1, "memory": 1024 } }
     }, {
         "type": "docker-compose",
         "name": "registry-auth",
-        "build_context": "../..",
         "docker_compose_file": "../../infrabox/test/registry-auth/docker-compose.yml",
         "resources": { "limits": { "cpu": 1, "memory": 1024 } }
     }, {
