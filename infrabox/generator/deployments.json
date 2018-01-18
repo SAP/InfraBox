@@ -282,7 +282,7 @@
         "type": "docker",
         "build_context": "../..",
         "name": "static",
-        "docker_file": "infrabox/deploy/static/Dockerfile",
+        "docker_file": "../../infrabox/deploy/static/Dockerfile",
         "resources": { "limits": { "cpu": 1, "memory": 512 } },
         "depends_on": ["build-dashboard-client"],
         "deployments": [{
