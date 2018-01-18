@@ -900,7 +900,7 @@ class Testresult(Resource):
         project_id = rows[0]
         build_number = rows[1]
 
-        existing_tests = g.db.execute_many("""SELECT name, suite, id FROM test WHERE project_id = %s""", (project_id,))
+        existing_tests = g.db.execute_many("""SELECT suite, name, id FROM test WHERE project_id = %s""", (project_id,))
 
         test_index = {}
         for t in existing_tests:
@@ -937,6 +937,7 @@ class Testresult(Resource):
                     test_id,
                     build_number
                 ))
+                stats['tests_added'] += 1
 
             # Track stats
             if t['status'] == 'fail' or t['status'] == 'failure':
