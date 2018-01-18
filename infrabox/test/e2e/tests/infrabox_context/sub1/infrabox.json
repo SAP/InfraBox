@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "jobs": [
+    {
+      "type": "docker",
+      "name": "sub1",
+      "docker_file": "Dockerfile",
+      "build_only": false,
+      "resources": { "limits": { "cpu": 1, "memory": 1024 } }
+    }
+  ]
+}

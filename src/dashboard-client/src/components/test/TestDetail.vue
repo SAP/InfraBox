@@ -127,8 +127,6 @@ export default {
                         return test.loadHistory()
                     })
                     .then((j) => {
-                        console.log(test)
-
                         this.history = []
                         for (let h of test.history) {
                             this.history.push({

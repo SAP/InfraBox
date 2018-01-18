@@ -70,9 +70,9 @@ class Job(Resource):
                 null,
                 null,
                 j.repo,
-                j.base_path,
+                null,
                 j.state,
-                j.scan_container,
+                null,
                 j.env_var,
                 j.env_var_ref,
                 j.cpu,
@@ -81,7 +81,8 @@ class Job(Resource):
                 j.build_arg,
                 j.deployment,
                 j.security_context,
-                b.restart_counter
+                b.restart_counter,
+                j.definition
             FROM job j
             INNER JOIN build b
                 ON j.build_id = b.id
@@ -103,13 +104,12 @@ class Job(Resource):
             "build_only": r[12],
             "type": r[13],
             "repo": r[16],
-            "base_path": r[17],
             "state": r[18],
-            "scan_container": r[19],
             "cpu": r[22],
             "memory": r[23],
             "build_arguments": r[25],
-            "security_context": r[27]
+            "security_context": r[27],
+            "definition": r[29]
         }
 
         state = data['job']['state']
@@ -577,11 +577,6 @@ class CreateJobs(Resource):
             job_id = job['id']
 
             build_only = job.get("build_only", True)
-            scan_container = False
-
-            if 'security' in job:
-                scan_container = job['security']['scan_container']
-
             depends_on = job.get("depends_on", [])
 
             if depends_on:
@@ -616,10 +611,6 @@ class CreateJobs(Resource):
                 repo['clone_all'] = False
                 repo = json.dumps(repo)
 
-            base_path = job.get('base_path', None)
-            if base_path == '':
-                base_path = None
-
             # Handle build arguments
             build_arguments = None
             if 'build_arguments' in job:
@@ -649,15 +640,16 @@ class CreateJobs(Resource):
             g.db.execute("""
                 INSERT INTO job (id, state, build_id, type, dockerfile, name,
                     project_id, dependencies, build_only,
-                    created_at, repo, base_path, scan_container,
-                    env_var_ref, env_var, build_arg, deployment, cpu, memory, timeout, resources)
-                VALUES (%s, 'queued', %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);""",
+                    created_at, repo,
+                    env_var_ref, env_var, build_arg, deployment, cpu, memory, timeout, resources, definition)
+                VALUES (%s, 'queued', %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                        %s, %s, %s, %s, %s, %s, %s, %s, %s);""",
                          (job_id, build_id, t, f, name,
                           project_id,
                           json.dumps(depends_on), build_only, datetime.now(),
-                          repo, base_path, scan_container, env_var_refs, env_vars,
+                          repo, env_var_refs, env_vars,
                           build_arguments, deployments, limits_cpu, limits_memory, timeout,
-                          resources))
+                          resources, json.dumps(job)))
 
             # to make sure the get picked up in the right order by the scheduler
             time.sleep(0.1)
@@ -897,7 +889,7 @@ class Testresult(Resource):
         project_id = rows[0]
         build_number = rows[1]
 
-        existing_tests = g.db.execute_many("""SELECT name, suite, id FROM test WHERE project_id = %s""", (project_id,))
+        existing_tests = g.db.execute_many("""SELECT suite, name, id FROM test WHERE project_id = %s""", (project_id,))
 
         test_index = {}
         for t in existing_tests:
@@ -934,6 +926,7 @@ class Testresult(Resource):
                     test_id,
                     build_number
                 ))
+                stats['tests_added'] += 1
 
             # Track stats
             if t['status'] == 'fail' or t['status'] == 'failure':

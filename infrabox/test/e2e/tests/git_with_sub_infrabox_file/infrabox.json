@@ -1,0 +1,10 @@
+{
+    "version": 1,
+    "jobs": [{
+        "type": "git",
+        "name": "examples-cpp",
+        "commit": "master",
+        "clone_url": "https://github.com/InfraBox/examples.git",
+        "infrabox_file": "cpp_example/infrabox.json"
+    }]
+}

@@ -187,8 +187,6 @@ CREATE TABLE job (
     build_only boolean NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     repo jsonb,
-    base_path character varying(1024),
-    scan_container boolean DEFAULT false NOT NULL,
     stats text,
     env_var jsonb,
     env_var_ref jsonb,

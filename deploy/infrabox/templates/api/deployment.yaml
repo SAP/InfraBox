@@ -19,6 +19,40 @@ spec:
             {{- end }}
             containers:
             {{ include "containers_database" . | indent 12 }}
+            {{ if .Values.gerrit.enabled }}
+            -
+                image: {{ .Values.general.docker_registry }}/{{ default "gerrit-api" .Values.gerrit.api.image }}:{{ .Values.gerrit.api.tag }}
+                imagePullPolicy: Always
+                name: gerrit-api
+                env:
+                {{ include "env_general" . | indent 16 }}
+                {{ include "env_gerrit" . | indent 16 }}
+                -
+                    name: INFRABOX_SERVICE
+                    value: {{ default "gerrit-api" .Values.gerrit.api.image }}
+                -
+                    name: INFRABOX_VERSION
+                    value: {{ .Values.gerrit.api.tag }}
+                volumeMounts:
+                - name: gerrit-ssh
+                  mountPath: /tmp/gerrit
+                  readOnly: true
+            {{ end }}
+            {{ if .Values.github.enabled }}
+            -
+                image: {{ .Values.general.docker_registry }}/{{ default "github-api" .Values.github.api.image }}:{{ .Values.github.api.tag }}
+                imagePullPolicy: Always
+                name: github-api
+                env:
+                {{ include "env_general" . | indent 16 }}
+                {{ include "env_github" . | indent 16 }}
+                -
+                    name: INFRABOX_SERVICE
+                    value: {{ default "github-api" .Values.github.api.image }}
+                -
+                    name: INFRABOX_VERSION
+                    value: {{ .Values.github.api.tag }}
+            {{ end }}
             -
                 name: api
                 image: {{ .Values.general.docker_registry }}/{{ default "api" .Values.api.image }}:{{ .Values.api.tag }}
@@ -63,5 +97,11 @@ spec:
                     name: gcs-service-account
                     secret:
                         secretName: infrabox-gcs
+                {{ end }}
+                {{ if .Values.gerrit.enabled }}
+                -
+                    name: gerrit-ssh
+                    secret:
+                        secretName: infrabox-gerrit-ssh
                 {{ end }}
 {{ end }}
