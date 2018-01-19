@@ -72,6 +72,9 @@ class Parser(object):
         if message is None:
             message = error
 
+        if message is None:
+            message = ''
+
         stack = ''
         if error:
             stack += error

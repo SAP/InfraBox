@@ -610,7 +610,9 @@ class RunJob(Job):
     def _get_build_context(self):
         job_build_context = self.job['definition'].get('build_context', None)
         job_infrabox_context = self.job['definition']['infrabox_context']
+        return self._get_build_context_impl(job_build_context, job_infrabox_context)
 
+    def _get_build_context_impl(self, job_build_context, job_infrabox_context):
         # Default build context is the infrabox context
         build_context = job_infrabox_context
 
@@ -748,7 +750,7 @@ class RunJob(Job):
         try:
             c.header("Build image", show=True)
             self.get_cached_image(cache_image)
-            docker_file = os.path.normpath(os.path.join(self.job['definition']['infrabox_context'],
+            docker_file = os.path.normpath(os.path.join(self._get_build_context(),
                                                         self.job['dockerfile']))
 
             cmd = ['docker', 'build',
@@ -838,7 +840,10 @@ class RunJob(Job):
             job_type = job['type']
 
             if job_type == "docker":
-                dockerfile = job['docker_file']
+                build_context = self._get_build_context_impl(job.get('build_context', None), infrabox_context)
+                dockerfile = os.path.normpath(os.path.join(build_context,
+                                                           self.job['dockerfile']))
+
                 p = os.path.join(infrabox_context, dockerfile)
                 if not os.path.exists(p):
                     raise Failure("%s does not exist" % p)
