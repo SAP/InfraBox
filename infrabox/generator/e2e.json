@@ -3,7 +3,8 @@
     "jobs": [{
         "type": "docker",
         "name": "gen-compose",
-        "docker_file": "../../infrabox/test/gen-compose/Dockerfile",
+        "build_context": "../..",
+        "docker_file": "infrabox/test/gen-compose/Dockerfile",
         "build_only": false,
         "resources": { "limits": { "cpu": 1, "memory": 512 } }
     }, {

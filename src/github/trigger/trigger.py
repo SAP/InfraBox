@@ -26,7 +26,7 @@ def get_commits(url, token):
     },
 
     # TODO(ib-steffen): allow custom ca bundles
-    return requests.get(url, headers, verify=False).json()
+    return requests.get(url + '?per_page=999', headers, verify=False).json()
 
 
 class Trigger(object):
@@ -127,10 +127,20 @@ class Trigger(object):
                     %s, %s, %s,
                     %s, %s, %s)
                 RETURNING id
-            ''', [c['id'], c['message'], repo_id, c['timestamp'], c['author']['name'],
-                  c['author']['email'], c['author']['username'], c['committer']['name'],
+            ''', [c['id'],
+                  c['message'],
+                  repo_id,
+                  c['timestamp'],
+                  c['author']['name'],
+                  c['author']['email'],
+                  c['author'].get('username', None),
+                  c['committer']['name'],
                   c['committer']['email'],
-                  c['committer'].get('username', None), c['url'], branch, project_id, tag,
+                  c['committer'].get('username', None),
+                  c['url'],
+                  branch,
+                  project_id,
+                  tag,
                   status_url])
 
         if tag:
@@ -223,6 +233,8 @@ class Trigger(object):
                 break
 
         if not hc:
+            logger.error('Head commit not found: %s', event['pull_request']['head']['sha'])
+            logger.error(json.dumps(commits, indent=4))
             return res(500, 'Internal Server Error')
 
         result = self.execute('''
