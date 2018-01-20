@@ -399,10 +399,10 @@ class RunJob(Job):
 
             if os.path.isfile(storage_input_file_tar):
                 c.collect("output found for %s\n" % dep['name'], show=True)
-                c.execute(['ls', '-alh', storage_input_file_tar], show=True)
                 infrabox_input_dir = os.path.join(self.infrabox_inputs_dir, dep['name'].split('/')[-1])
                 os.makedirs(infrabox_input_dir)
                 self.uncompress(storage_input_file_tar, infrabox_input_dir, c)
+                c.execute(['ls', '-alh', infrabox_input_dir], show=True)
                 os.remove(storage_input_file_tar)
             else:
                 c.collect("no output found for %s\n" % dep['name'], show=True)
@@ -530,6 +530,12 @@ class RunJob(Job):
                 "%s:/infrabox/upload/coverage" % service_coverage_dir,
             ]
 
+            for v in compose_file_content['services'][service].get('volumes', []):
+                v = v.replace('/infrabox/context', self.mount_repo_dir)
+                service_volumes.append(v)
+
+            # Mount /infrabox/context to the build context of the service if build.context
+            # is set in the compose file for the service
             service_build = compose_file_content['services'][service].get('build', None)
             if service_build:
                 service_build_context = service_build.get('context', None)

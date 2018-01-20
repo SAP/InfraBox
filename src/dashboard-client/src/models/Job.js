@@ -87,6 +87,8 @@ export default class Job {
         this.tests = []
         this.stats = []
         this.tabs = []
+        this.currentSection = null
+        this.linesProcessed = 0
     }
 
     _getTime (d) {
@@ -254,6 +256,12 @@ export default class Job {
         return APIService.get(`project/${this.project.id}/job/${this.id}/restart`)
             .then((message) => {
                 NotificationService.$emit('NOTIFICATION', new Notification(message, 'done'))
+
+                this.sections = []
+                this.currentSection = null
+                this.linesProcessed = 0
+                this.endDate = null
+                this.startDate = null
             })
             .catch((err) => {
                 NotificationService.$emit('NOTIFICATION', new Notification(err))
