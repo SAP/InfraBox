@@ -574,7 +574,7 @@ class RunJob(Job):
             c.header("Run docker-compose", show=True)
 
 
-            cwd = self._get_build_context()
+            cwd = self._get_build_context_current_job()
 
             c.execute(['docker-compose', '-f', compose_file_new, 'up',
                        '--abort-on-container-exit'], env=self.environment, show=True, cwd=cwd)
@@ -607,7 +607,7 @@ class RunJob(Job):
 
         return True
 
-    def _get_build_context(self):
+    def _get_build_context_current_job(self):
         job_build_context = self.job['definition'].get('build_context', None)
         job_infrabox_context = self.job['definition']['infrabox_context']
         return self._get_build_context_impl(job_build_context, job_infrabox_context)
@@ -679,7 +679,7 @@ class RunJob(Job):
         cmd += ['-v', '%s:/infrabox' % self.mount_data_dir]
 
         # Mount context
-        cmd += ['-v', '%s:/infrabox/context' % self._get_build_context()]
+        cmd += ['-v', '%s:/infrabox/context' % self._get_build_context_current_job()]
 
         # Mount docker socket
         if os.environ['INFRABOX_JOB_MOUNT_DOCKER_SOCKET'] == 'true':
@@ -750,7 +750,7 @@ class RunJob(Job):
         try:
             c.header("Build image", show=True)
             self.get_cached_image(cache_image)
-            docker_file = os.path.normpath(os.path.join(self._get_build_context(),
+            docker_file = os.path.normpath(os.path.join(self._get_build_context_current_job(),
                                                         self.job['dockerfile']))
 
             cmd = ['docker', 'build',
@@ -763,7 +763,7 @@ class RunJob(Job):
                 for name, value in self.job['build_arguments'].iteritems():
                     cmd += ['--build-arg', '%s=%s' % (name, value)]
 
-            cwd = self._get_build_context()
+            cwd = self._get_build_context_current_job()
             c.execute(cmd, cwd=cwd, show=True)
             self.cache_docker_image(image_name, cache_image)
         except Exception as e:
@@ -840,9 +840,10 @@ class RunJob(Job):
             job_type = job['type']
 
             if job_type == "docker":
-                build_context = self._get_build_context_impl(job.get('build_context', None), infrabox_context)
+                job_build_context = job.get('build_context', None)
+                build_context = self._get_build_context_impl(job_build_context, infrabox_context)
                 dockerfile = os.path.normpath(os.path.join(build_context,
-                                                           self.job['dockerfile']))
+                                                           job['docker_file']))
 
                 p = os.path.join(infrabox_context, dockerfile)
                 if not os.path.exists(p):
