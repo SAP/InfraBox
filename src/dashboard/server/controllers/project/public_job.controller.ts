@@ -66,6 +66,7 @@ router.get("/:job_id/output", pv, (req: Request, res: Response, next) => {
         if (!stream) {
             throw new NotFound();
         } else {
+            res.set({"Content-Disposition": `attachment; filename="${file_id}"`});
             stream.pipe(res);
         }
     }).catch(handleDBError(next));

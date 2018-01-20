@@ -26,7 +26,7 @@ router.get("/:job_id/restart", pv, auth, checkProjectAccess, (req: Request, res:
             const state = jobs[0].state;
             const typ = jobs[0].type;
 
-            if (typ !== 'run_project_container') {
+            if (typ !== 'run_project_container' && typ !== 'run_docker_compose') {
                 throw new BadRequest('Job type cannot be restarted');
             }
 
