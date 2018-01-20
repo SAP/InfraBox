@@ -201,7 +201,7 @@ class RunJob(Job):
 
             self.clone_repo(commit, clone_url, branch, ref, clone_all)
         elif self.project['type'] == 'upload':
-            c.header("Downloading Source")
+            c.collect("Downloading Source")
             storage_source_zip = os.path.join(self.storage_dir, 'source.zip')
             self.get_file_from_api_server('/source', storage_source_zip)
 
@@ -389,7 +389,7 @@ class RunJob(Job):
         storage_inputs_dir = os.path.join(self.storage_dir, 'inputs')
 
         # Sync deps
-        c.header("Syncing inputs", show=True)
+        c.collect("Syncing inputs", show=True)
         for dep in self.parents:
             storage_input_file_dir = os.path.join(storage_inputs_dir, dep['id'])
             os.makedirs(storage_input_file_dir)
@@ -414,7 +414,7 @@ class RunJob(Job):
 
         storage_cache_tar = os.path.join(storage_cache_dir, 'cache.tar.gz')
 
-        c.header("Syncing cache", show=True)
+        c.collect("Syncing cache", show=True)
         self.get_file_from_api_server("/cache", storage_cache_tar)
 
         c.collect("Unpacking cache", show=True)
@@ -439,7 +439,6 @@ class RunJob(Job):
         except:
             raise
         finally:
-            c.header("Uploading files", show=True)
             self.upload_coverage_results()
             self.upload_test_results()
             self.upload_markdown_files()
@@ -449,7 +448,7 @@ class RunJob(Job):
         self.create_dynamic_jobs()
 
         # Compressing output
-        c.header("Updating Cache", show=True)
+        c.collect("Updating Cache", show=True)
         if os.path.isdir(self.infrabox_output_dir) and os.listdir(self.infrabox_output_dir):
             storage_output_dir = os.path.join(self.storage_dir, self.job['id'])
             os.makedirs(storage_output_dir)
@@ -467,6 +466,7 @@ class RunJob(Job):
             c.collect("Output is empty\n", show=True)
 
         # Compressing cache
+        c.collect("Updating Cache", show=True)
         if os.path.isdir(self.infrabox_cache_dir) and os.listdir(self.infrabox_cache_dir):
             self.compress(self.infrabox_cache_dir, storage_cache_tar)
             c.execute(['md5sum', storage_cache_tar], show=True)
@@ -589,6 +589,8 @@ class RunJob(Job):
         except:
             raise Failure("Failed to build and run container")
         finally:
+            c.header("Finalize", show=True)
+
             try:
                 collector.stop()
                 self.post_stats(collector.get_result())
@@ -659,7 +661,7 @@ class RunJob(Job):
 
     def push_container(self, image_name):
         c = self.console
-        c.header("Uploading to docker registry", show=True)
+        c.collect("Uploading to docker registry", show=True)
 
         try:
             if self.job['build_only']:
@@ -733,6 +735,7 @@ class RunJob(Job):
         except Exception as e:
             try:
                 c.execute(("docker", "commit", container_name, image_name))
+                c.header("Finalize", show=True)
                 self.push_container(image_name)
             except:
                 pass
@@ -804,6 +807,8 @@ class RunJob(Job):
         self.build_docker_container(image_name_build, image_name_latest)
         self.run_docker_container(image_name_build)
         self.deploy_container(image_name_build)
+
+        c.header("Finalize", show=True)
         self.push_container(image_name_build)
 
     def get_cached_image(self, image_name_latest):
@@ -905,7 +910,7 @@ class RunJob(Job):
             job['id'] = str(uuid.uuid4())
             job['avg_duration'] = 0
             job['repo'] = repo
-            job['infrabox_context'] = infrabox_context
+            job['infrabox_context'] = os.path.normpath(infrabox_context)
 
             if parent_name != '':
                 job['name'] = parent_name + "/" + job['name']
@@ -954,6 +959,9 @@ class RunJob(Job):
                                         parent_name=job_name,
                                         infrabox_context=new_infrabox_context,
                                         infrabox_paths=infrabox_paths)
+
+                for s in sub:
+                    s['infrabox_context'] = s['infrabox_context'].replace(new_repo_path, self.mount_repo_dir)
 
                 del infrabox_paths[ib_path]
 

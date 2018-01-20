@@ -139,7 +139,7 @@ export default class Job {
                 this.sections.push(this.currentSection)
             } else {
                 if (!this.currentSection) {
-                    this.currentSection = new Section(this.linesProcessed, 'Console Output', date)
+                    this.currentSection = new Section(this.linesProcessed, 'Prepare Job', date)
                     this.sections.push(this.currentSection)
                 }
 
@@ -262,6 +262,7 @@ export default class Job {
                 this.linesProcessed = 0
                 this.endDate = null
                 this.startDate = null
+                this.listenConsole()
             })
             .catch((err) => {
                 NotificationService.$emit('NOTIFICATION', new Notification(err))
