@@ -169,7 +169,7 @@ class Trigger(object):
 
         branch = None
         tag = None
-        commits = []
+        commit = None
 
         if event.get('base_ref', None):
             branch = remove_ref(event['base_ref'])
@@ -177,17 +177,18 @@ class Trigger(object):
         ref = event['ref']
         if ref.startswith('refs/tags'):
             tag = remove_ref(ref)
-            commits = [event['head_commit']]
+            commit = event['head_commit']
         else:
             branch = remove_ref(ref)
-            commits = event['commits']
+            if event['commits']:
+                commit = event['commits'][-1]
 
         token = self.get_owner_token(event['repository']['id'])
 
         if not token:
             return res(200, 'no token')
 
-        for commit in commits:
+        if commit:
             self.create_push(commit, event['repository'], branch, tag)
 
         self.conn.commit()
