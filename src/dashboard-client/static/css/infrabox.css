@@ -50,6 +50,10 @@
     background-color: #293846;
 }
 
+.b-r {
+    border-right-style: solid;
+}
+
 .text-blue {
     color: #23c6c8;
 }
@@ -62,6 +66,8 @@
 .circle-icon {
     border-radius: 100%;
     padding: 5px;
+    max-height: 42px;
+    max-width: 42px;
 }
 
 .clean-card {
@@ -81,6 +87,14 @@
     color: inherit;
 }
 
+.full-height {
+    height: 100%;
+}
+
+.full-width {
+    width: 100%;
+}
+
 .main-card {
     margin: 16px;
     background-color: white !important;
@@ -92,8 +106,29 @@
     border-bottom-color: #dddddd;
 }
 
+
+.m-b-no {
+    margin-bottom: 0;
+}
+
+.m-l-no {
+    margin-left: 0;
+}
+
+.m-r-no {
+    margin-right: 0;
+}
+
+.m-t-no {
+    margin-top: 0;
+}
+
 .m-xs {
     margin: 5px;
+}
+
+.m-b-xs {
+    margin-bottom: 5px;
 }
 
 .m-l-xs {
@@ -192,6 +227,10 @@
     margin-top: 60px;
 }
 
+.m-r-xxl {
+    margin-right: 60px;
+}
+
 .min-medium {
     min-width: 960px;
 }
@@ -210,6 +249,23 @@
 
 .no-shadow {
     box-shadow: none;
+}
+
+
+.p-b-no {
+    padding-bottom: 0;
+}
+
+.p-l-no {
+    padding-left: 0;
+}
+
+.p-r-no {
+    padding-right: 0;
+}
+
+.p-t-no {
+    padding-top: 0;
 }
 
 .p-xs {
@@ -333,15 +389,18 @@
 }
 
 .setting-list {
-    background-color: white;
+    /* background-color: white; */
     border-bottom-style: solid;
     border-bottom-width: thin;
     border-color: #eaeaea;
+    color: #263238;
+    font-weight: 500;
+    font-size: 17px;
+    padding-bottom: 16px;
 }
 
 .thin-border {
     background-color: white;
-    border-style: solid;
     border-width: thin;
     border-color: #eaeaea;
 }
@@ -504,13 +563,14 @@ th.custom-box {
 }
 
 
-.yMemory.axis,label {
+.yMemory.axis,
+label {
     stroke: #f8ac59;
     stroke-width: 0.08%;
 }
 
-.yCPU.axis,label {
+.yCPU.axis,
+label {
     stroke: #23c6c8;
     stroke-width: 0.08%;
 }
-

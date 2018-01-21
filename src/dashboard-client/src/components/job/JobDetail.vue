@@ -1,125 +1,148 @@
 <template>
     <div v-if="data">
         <md-card class="main-card">
-            <md-card-header class="main-card-header" style="padding-bottom: 10px">
-            <md-card-header-text>
-                <h3 class="md-title card-title">
-                <router-link :to="{name: 'ProjectDetail', params: {
-                projectName: data.project.name
-                }}">
-                    <span v-if="data.project.isGit()"><i class="fa fa-github"></i></span>
-                    <span v-if="!data.project.isGit()"><i class="fa fa-home"></i></span>
-                    {{ data.project.name }}
-                </router-link>
-                / <router-link :to="{name: 'BuildDetail', params: {
-                    projectName: data.project.name,
-                    buildNumber: data.build.number,
-                    buildRestartCounter: data.build.restartCounter
-                    }}">
-                    Build {{ data.build.number }}.{{ data.build.restartCounter }}
-                </router-link>
-                / <!--<router-link :to="{name: 'JobDetail', params: {
-                projectName: data.project.name,
-                buildNumber: data.build.number,
-                buildRestartCounter: data.build.restartCounter,
-                jobId: data.job.name
-                }}">
-                Job
-                </router-link>-->
-                {{ data.job.name}}
-                </h3>
-            </md-card-header-text>
-            <md-toolbar v-if="$store.state.user" class="md-transparent">
-                <md-button class="md-icon-button" v-on:click="data.job.abort()"><md-icon>not_interested</md-icon><md-tooltip md-direction="bottom">Stop Job</md-tooltip></md-button>
-                <md-button class="md-icon-button" v-on:click="data.job.restart()"><md-icon>replay</md-icon><md-tooltip md-direction="bottom">Restart Job</md-tooltip></md-button>
-                <md-button class="md-icon-button" v-on:click="data.job.clearCache()"><md-icon>delete_sweep</md-icon><md-tooltip md-direction="bottom">Clear Cache</md-tooltip></md-button>
-            </md-toolbar>
+            <md-card-header class="main-card-header no-padding">
+                <md-card-header-text>
+                    <h3 class="md-title left-margin">
+                        <md-layout>
+                            <md-layout md-hide-medium-and-up md-vertical-align="center" v-if="$store.state.user">
+                                <ib-state :state="data.build.state"></ib-state>
+                            </md-layout>
+                            <md-layout md-vertical-align="center">
+                                <router-link :to="{name: 'ProjectDetailList', params: {projectName: data.project.name}}">
+                                    <span v-if="data.project.isGit()"><i class="fa fa-github"></i></span>
+                                    <span v-if="!data.project.isGit()"><i class="fa fa-home"></i></span>
+                                    {{ data.project.name }}
+                                </router-link>
+                                / <router-link :to="{name: 'BuildDetailGraph', params: {
+                                    projectName: data.project.name,
+                                    buildNumber: data.build.number,
+                                    buildRestartCounter: data.build.restartCounter
+                                    }}">
+                                    Build {{ data.build.number }}.{{ data.build.restartCounter }}
+                                </router-link>
+                                / {{ data.job.name}}
+                            </md-layout>
+                            <md-layout md-hide-large-and-up>
+                                <md-menu md-size="3" class="bg-white">
+                                    <md-button md-theme="default" class="md-icon-button md-primary" md-menu-trigger>
+                                        <md-icon>info</md-icon>
+                                    </md-button>
+                                    <md-menu-content class="bg-white">
+                                        <md-menu-item class="bg-white">
+                                            <span><i class="fa fa-calendar fa-fw" aria-hidden="true"></i><strong> Started</strong>
+                                            <ib-date :date="data.job.startDate"></ib-date></span>
+                                        </md-menu-item>
+                                        <md-menu-item class="bg-white">
+                                            <span><i class="fa fa-clock-o fa-fw" aria-hidden="true"></i><strong> Duration</strong>
+                                            <ib-duration :start="data.job.startDate" :end="data.job.endDate"></ib-duration></span>
+                                        </md-menu-item>
+                                        <md-menu-item class="bg-white" v-if="data.build.commit">
+                                            <span><i class="fa fa-list-ol fa-fw" aria-hidden="true"></i><strong> Change</strong>
+                                            <ib-gitjobtype :build="data.build"></ib-gitjobtype></span>
+                                        </md-menu-item>
+                                        <md-menu-item class="bg-white" v-if="data.build.commit">
+                                            <span><i class="fa fa-user fa-fw" aria-hidden="true"></i><strong> Author</strong><br/>
+                                            {{ data.build.commit.author_name }}</span>
+                                        </md-menu-item>
+                                        <md-menu-item class="bg-white" v-if="data.build.commit">
+                                            <span><i class="fa fa-code-fork fa-fw" aria-hidden="true"></i><strong> Branch</strong><br/>
+                                            {{ data.build.commit.branch }}</span>
+                                        </md-menu-item>
+                                    </md-menu-content>
+                                </md-menu>
+                            </md-layout>
+                            <md-layout md-hide-medium md-flex="60" md-align="end" md-vertical-align="start">
+                                <md-table-card class="clean-card">
+                                    <md-table v-once class="p-xs m-t-sm m-r-xxl m-b-sm">
+                                        <md-table-body>
+                                            <md-table-row style="border-top: none">
+                                                <md-table-cell v-if="$store.state.user">
+                                                    <ib-state :state="data.build.state"></ib-state>
+                                                </md-table-cell>
+                                                <md-table-cell style="text-align: left !important">
+                                                    <span><i class="fa fa-calendar fa-fw" aria-hidden="true"></i><strong> Started</strong>
+                                                    <ib-date :date="data.build.startDate"></ib-date></span>
+                                                </md-table-cell>
+                                                <md-table-cell>
+                                                    <span><i class="fa fa-clock-o fa-fw" aria-hidden="true"></i><strong> Duration</strong>
+                                                    <ib-duration :start="data.job.startDate" :end="data.job.endDate"></ib-duration></span>
+                                                </md-table-cell>
+                                                <md-table-cell v-if="data.build.commit">
+                                                    <span><i class="fa fa-list-ol fa-fw" aria-hidden="true"></i><strong> Change</strong>
+                                                    <ib-gitjobtype :build="data.build" :showTitle="true"></ib-gitjobtype></span>
+                                                </md-table-cell>
+                                                <md-table-cell v-if="data.build.commit">
+                                                    <span><i class="fa fa-user fa-fw" aria-hidden="true"></i><strong> Author</strong><br/>
+                                                    {{ data.build.commit.author_name }}</span>
+                                                </md-table-cell>
+                                                <md-table-cell v-if="data.build.commit">
+                                                    <span><i class="fa fa-code-fork fa-fw" aria-hidden="true"></i><strong> Branch</strong><br/>
+                                                    {{ data.build.commit.branch }}</span>
+                                                </md-table-cell>
+                                            </md-table-row>
+                                        </md-table-body>
+                                    </md-table>
+                                </md-table-card>
+                            </md-layout>
+                            <md-layout md-flex="100" md-align="start" md-vertical-align="start">
+                                <div class="clean-card">
+                                    <ib-badge v-for="b of data.job.badges" :key="b.subject"
+                                    :job="data.job"
+                                    :subject="b.subject"
+                                    :status="b.status"
+                                    :color="b.color"></ib-badge>
+                                </div>
+                            </md-layout>
+                        </md-layout>
+                    </h3>
+                </md-card-header-text>
             </md-card-header>
+            <md-speed-dial md-open="hover" md-direction="bottom" class="md-fab-top-right" md-theme="default">
+                <md-button class="md-icon-button md-primary" md-fab-trigger>
+                    <md-icon md-icon-morph>more_vert</md-icon>
+                    <md-icon>more_vert</md-icon>
+                </md-button>
+                <md-button class="md-fab md-primary md-mini md-clean" md-fab-trigger v-on:click="data.job.abort()">
+                    <md-icon style="color: white">not_interested</md-icon>
+                    <md-tooltip md-direction="bottom">Stop Job</md-tooltip>
+                </md-button>
+                <md-button class="md-fab md-primary md-mini md-clean" md-fab-trigger v-on:click="data.job.restart()">
+                    <md-icon style="color: white">replay</md-icon>
+                    <md-tooltip md-direction="bottom">Restart Job</md-tooltip>
+                </md-button>
+                <md-button class="md-fab md-primary md-mini md-clean" v-on:click="data.job.clearCache()">
+                    <md-icon style="color: white">delete_sweep</md-icon>
+                    <md-tooltip md-direction="bottom">Clear Job</md-tooltip>
+                </md-button>
+                <md-button class="md-fab md-primary md-mini md-clean" v-on:click="openDialog('cli_dialog')">
+                    <md-icon style="color: white">file_download</md-icon>
+                    <md-tooltip md-direction="bottom">Run Local</md-tooltip>
+                </md-button>
+                <md-button class="md-fab md-primary md-mini md-clean" v-on:click="downloadOutput()" :disabled="data.job.state=='running'||data.job.state=='queued'||data.job.state=='scheduled'">
+                    <md-icon style="color: white">subtitles</md-icon>
+                    <md-tooltip md-direction="bottom">Console Output</md-tooltip>
+                </md-button>
+                <md-button class="md-fab md-primary md-mini md-clean" v-on:click="downloadDataOutput()" :disabled="data.job.state=='running'||data.job.state=='queued'||data.job.state=='scheduled'">
+                    <md-icon style="color: white">insert_drive_file</md-icon>
+                    <md-tooltip md-direction="bottom">Data Output</md-tooltip>
+                </md-button>
+            </md-speed-dial>
             <md-card-content>
-                <md-layout>
-                    <md-layout md-flex-xsmall="100" md-flex-small="100" md-flex-medium="100" md-flex-large="75" md-flex-xlarge="75">
-                        <md-tabs md-fixed class="md-transparent">
-                            <md-tab id="console" md-label="Console" md-icon="subtitles" class="widget-container">
-                                <ib-console :job="data.job"></ib-console>
-                            </md-tab>
-                            <md-tab id="test-list" md-icon="multiline_chart" md-label="Tests">
-                                <ib-tests :job="data.job" :build="data.build" :project="data.project"></ib-tests>
-                            </md-tab>
-                            <md-tab id="stats" md-icon="insert_chart" md-label="Stats">
-                                <ib-stats :job="data.job"></ib-stats>
-                            </md-tab>
-                            <md-tab v-for="t in data.job.tabs" :key="t.name" :id="'tab_' + t.name" md-icon="insert_chart" :md-label="t.name">
-                                <ib-tab :tab="t"></ib-tab>
-                            </md-tab>
-                        </md-tabs>
-                    </md-layout>
-                    <md-layout md-flex-xsmall="100" md-flex-small="100" md-flex-medium="100" md-flex-large="25" md-flex-xlarge="25">
-                        <md-list class="md-dense widget-container" style="margin: 16px">
-                            <ib-state-big :state="data.job.state"></ib-state-big>
-                            <md-list-item class="p-l-md p-r-md p-t-md">
-                                <span class="md-body-2"><i class="fa fa-calendar fa-fw p-r-xl" aria-hidden="true"></i>
-                                Started</span>
-                                <span class="md-list-action">
-                                    <ib-date :date="data.job.startDate"></ib-date>
-                                </span>
-                            </md-list-item>
-                            <md-list-item class="p-l-md p-r-md">
-                                <span class="md-body-2"><i class="fa fa-clock-o fa-fw p-r-xl" aria-hidden="true"></i>
-                                Duration</span>
-                                <span class="md-list-action">
-                                    <ib-duration :start="data.job.startDate" :end="data.job.endDate">
-                                  </ib-duration>
-                                </span>
-                            </md-list-item>
-                            <md-list-item v-if="data.build.commit" class="p-l-md p-r-md">
-                                <span class="md-body-2"><i class="fa fa-list-ol fa-fw p-r-xl" aria-hidden="true"></i>Change</span>
-                                <ib-gitjobtype :build="data.build"></ib-gitjobtype>
-
-                            </md-list-item>
-                            <md-list-item v-if="data.build.commit" class="p-l-md p-r-md">
-                                <span class="md-body-2"><i class="fa fa-user fa-fw p-r-xl" aria-hidden="true"></i>
-                                Author</span>
-                                <span class="md-list-action">
-                                    {{ data.build.commit.author_name }}
-                                </span>
-                            </md-list-item>
-                            <md-list-item v-if="data.build.commit" class="p-l-md p-r-md">
-                                <span class="md-body-2"><i class="fa fa-code-fork fa-fw p-r-xl" aria-hidden="true"></i>
-                                Branch</span>
-                                <span class="md-list-action">
-                                    {{ data.build.commit.branch }}
-                                </span>
-                            </md-list-item>
-                            <md-list-item class="p-l-md p-r-xs">
-                                <span class="md-body-2"><i class="fa fa-download fa-fw p-r-xl" aria-hidden="true"></i>
-                                Run Local</span>
-                                <span class="md-list-action">
-                                    <md-button class="md-raised md-dense" @click="openDialog('cli_dialog')">CLI Command</md-button>
-                                </span>
-                            </md-list-item>
-                            <md-list-item class="p-l-md p-r-xs">
-                                <span class="md-body-2"><i class="fa fa-file-archive-o fa-fw p-r-xl" aria-hidden="true"></i>
-                                Console Output</span>
-                                <span class="md-list-action">
-                                    <md-button class="md-raised md-dense" @click="downloadOutput()" :disabled="data.job.state=='running'||data.job.state=='queued'||data.job.state=='scheduled'">Download</md-button>
-                                </span>
-                            </md-list-item>
-                            <md-list-item class="p-l-md p-r-xs">
-                                <span class="md-body-2"><i class="fa fa-file-archive-o fa-fw p-r-xl" aria-hidden="true"></i>
-                                Data Output</span>
-                                <span class="md-list-action">
-                                    <md-button class="md-raised md-dense" @click="downloadDataOutput()" :disabled="data.job.state=='running'||data.job.state=='queued'||data.job.state=='scheduled'">Download</md-button>
-                                </span>
-                            </md-list-item>
-                            <ib-badge v-for="b of data.job.badges" :key="b.subject"
-                                :job="data.job"
-                                :subject="b.subject"
-                                :status="b.status"
-                                :color="b.color">
-                            </ib-badge>
-                        </md-list>
-                    </md-layout>
-                </md-layout>
+                <md-tabs md-fixed class="md-transparent">
+                    <md-tab id="console" md-label="Console" md-icon="subtitles" class="widget-container">
+                        <ib-console :job="data.job"></ib-console>
+                    </md-tab>
+                    <md-tab id="test-list" md-icon="multiline_chart" md-label="Tests">
+                        <ib-tests :job="data.job" :build="data.build" :project="data.project"></ib-tests>
+                    </md-tab>
+                    <md-tab id="stats" md-icon="insert_chart" md-label="Stats">
+                        <ib-stats :job="data.job"></ib-stats>
+                    </md-tab>
+                    <md-tab v-for="t in data.job.tabs" :key="t.name" :id="'tab_' + t.name" md-icon="insert_chart" :md-label="t.name">
+                        <ib-tab :tab="t"></ib-tab>
+                    </md-tab>
+                </md-tabs>
             </md-card-content>
 		</md-card>
         <md-dialog ref="cli_dialog" width="100%">
@@ -236,5 +259,8 @@ export default {
     .widget-container {
         width: 98%;
     }
+.left-margin {
+    margin-left: 25px !important;
+}
 </style>
 
