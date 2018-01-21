@@ -23,7 +23,7 @@
                     <md-icon style="color: white">delete_sweep</md-icon>
                     <md-tooltip md-direction="left">Clear Cache</md-tooltip>
                 </md-button>
-                <md-button class="md-fab md-primary md-mini md-clean" md-fab-trigger v-on:click="data.build.restart()">
+                <md-button class="md-fab md-primary md-mini md-clean" md-fab-trigger v-on:click="triggerBuild()">
                     <md-icon style="color: white">replay</md-icon>
                     <md-tooltip md-direction="left">Trigger a new Build</md-tooltip>
                 </md-button>
@@ -73,7 +73,7 @@ import ProjectService from '../../services/ProjectService'
 import router from '../../router'
 
 export default {
-    name: 'ProjectDetail',
+    name: 'ProjectDetailHeader',
     props: ['projectName', 'tabIndex'],
     store,
     data () {
@@ -101,10 +101,8 @@ export default {
                 return
             }
 
-            console.log('i am alive')
-            console.log(index)
             if (index === 0) {
-                router.push(`/project/${this.projectName}/builds`)
+                router.push(`/project/${this.projectName}`)
             } else {
                 router.push(`/project/${this.projectName}/settings`)
             }

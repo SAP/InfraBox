@@ -9,7 +9,7 @@
                                 <ib-state :state="data.build.state"></ib-state>
                             </md-layout>
                             <md-layout md-vertical-align="center">
-                                <router-link :to="{name: 'ProjectDetailList', params: {
+                                <router-link :to="{name: 'ProjectDetailBuilds', params: {
                                     projectName: data.project.name
                                 }}">
                                     <span v-if="data.project.isGit()"><i class="fa fa-fw fa-github"></i></span>
@@ -176,9 +176,8 @@ export default {
                 return
             }
 
-            console.log(index)
             if (index === 0) {
-                router.push(`/project/${this.projectName}/build/${this.buildNumber}/${this.buildRestartCounter}/graph`)
+                router.push(`/project/${this.projectName}/build/${this.buildNumber}/${this.buildRestartCounter}`)
             } else {
                 router.push(`/project/${this.projectName}/build/${this.buildNumber}/${this.buildRestartCounter}/jobs`)
             }

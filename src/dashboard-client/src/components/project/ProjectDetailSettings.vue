@@ -14,7 +14,7 @@ import ProjectSettings from './Settings'
 import ProjectDetailHeader from './ProjectDetailHeader'
 
 export default {
-    name: 'ProjectDetail',
+    name: 'ProjectDetailSettings',
     props: ['projectName'],
     components: {
         'ib-project-detail-header': ProjectDetailHeader,

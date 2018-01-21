@@ -16,7 +16,7 @@ import BuildTable from '../build/BuildTable'
 import ProjectDetailHeader from './ProjectDetailHeader'
 
 export default {
-    name: 'ProjectDetail',
+    name: 'ProjectDetailBuilds',
     props: ['projectName'],
     components: {
         'ib-build-table': BuildTable,
