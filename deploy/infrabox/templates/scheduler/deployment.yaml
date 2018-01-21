@@ -34,6 +34,8 @@ spec:
     replicas: 1
     template:
         metadata:
+            annotations:
+                checksum/config: {{ (.Files.Glob "config/docker/*").AsConfig | sha256sum }}
             labels:
                 app: infrabox-scheduler
         spec:
