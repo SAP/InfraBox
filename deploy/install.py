@@ -490,6 +490,7 @@ class DockerCompose(Install):
 
 
     def setup_api(self):
+        self.config.append('services.api.environment', ['INFRABOX_ROOT_URL=%s' % self.args.root_url])
         self.config.add('services.api.image',
                         '%s/api:%s' % (self.args.docker_registry, self.args.version))
 
