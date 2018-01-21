@@ -4,9 +4,11 @@ import Overview from '@/components/Overview'
 import AddProject from '@/components/AddProject'
 import Login from '@/components/account/Login'
 import Signup from '@/components/account/Signup'
-import ProjectDetail from '@/components/project/ProjectDetail'
+import ProjectDetailList from '@/components/project/ProjectDetailList'
+import ProjectDetailSettings from '@/components/project/ProjectDetailSettings'
 import TriggerBuild from '@/components/project/Trigger'
-import BuildDetail from '@/components/build/BuildDetail'
+import BuildDetailGraph from '@/components/build/BuildDetailGraph'
+import BuildDetailJobs from '@/components/build/BuildDetailJobs'
 import JobDetail from '@/components/job/JobDetail'
 import TestDetail from '@/components/test/TestDetail'
 
@@ -30,9 +32,14 @@ export default new Router({
         name: 'signup',
         component: Signup
     }, {
-        path: '/project/:projectName',
-        name: 'ProjectDetail',
-        component: ProjectDetail,
+        path: '/project/:projectName/builds',
+        name: 'ProjectDetailList',
+        component: ProjectDetailList,
+        props: true
+    }, {
+        path: '/project/:projectName/settings',
+        name: 'ProjectDetailSettings',
+        component: ProjectDetailSettings,
         props: true
     }, {
         path: '/project/:projectName/trigger',
@@ -40,9 +47,20 @@ export default new Router({
         component: TriggerBuild,
         props: true
     }, {
-        path: '/project/:projectName/build/:buildNumber/:buildRestartCounter',
-        name: 'BuildDetail',
-        component: BuildDetail,
+        path: '/project/:projectName/build/:buildNumber/:buildRestartCounter/graph',
+        name: 'BuildDetailGraph',
+        component: BuildDetailGraph,
+        props: function (route) {
+            return {
+                projectName: route.params.projectName,
+                buildNumber: parseInt(route.params.buildNumber),
+                buildRestartCounter: parseInt(route.params.buildRestartCounter)
+            }
+        }
+    }, {
+        path: '/project/:projectName/build/:buildNumber/:buildRestartCounter/jobs',
+        name: 'BuildDetailJobs',
+        component: BuildDetailJobs,
         props: function (route) {
             return {
                 projectName: route.params.projectName,

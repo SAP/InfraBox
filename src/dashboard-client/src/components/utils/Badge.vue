@@ -1,15 +1,11 @@
 <template>
-    <div>
-        <md-list-item class="m-l-md m-r-md m-b-sm main-card-header">
-            <div class="md-list-text-container">
-                <span><img :src="badgeUrl" height="20px" /></span>
-            </div>
-            <md-button class="md-icon-button md-list-action" @click="openDialog(dialog_id)">
-                <md-icon>
-                    <i class="fa fa-fw fa-file-code-o"></i>
-                </md-icon>
-            </md-button>
-        </md-list-item>
+    <span>
+            <span>
+                <img :src="badgeUrl" height="20px" />
+                <md-button class="md-icon-button" @click="openDialog(dialog_id)" style="padding-left:-16px; margin-left: -16px">
+                    <i class="fa fa-fw fa-file-code-o" style="font-size: 19px; color: #757575"></i>
+                </md-button>
+            </span>
         <md-dialog md-open-from="#fab" md-close-to="#fab" :ref="dialog_id" width="100%">
             <md-dialog-title>Embed your badge</md-dialog-title>
 
@@ -39,7 +35,7 @@
                 <md-button class="md-icon-button md-primary" @click="closeDialog(dialog_id)"><md-icon>close</md-icon></md-button>
             </md-dialog-actions>
         </md-dialog>
-    </div>
+    </span>
 </template>
 
 <script>

@@ -1,33 +1,36 @@
 <template>
-<div>
-    <md-list md-theme="white">
-        <md-list-item class="setting-list">
-            <md-icon>bookmark</md-icon>
-            <span>Tokens</span>
-
-            <md-list-expand>
-                <md-list class="m-t-md m-b-md">
-                    <md-list-item class="md-inset m-r-xl">
-                        <md-input-container class="m-r-xl">
-                            <label>Token Description (e.g. &quot;Token for Jenkins Integration&quot;)</label>
-                            <md-input required v-model="description" @keyup.enter.native="addToken"></md-input>
-                        </md-input-container>
-                        <md-button :disabled="disableAdd" class="md-icon-button md-list-action" @click="addToken">
-                            <md-icon md-theme="running" class="md-primary">add_circle</md-icon>
-                            <md-tooltip>Add new token</md-tooltip>
-                        </md-button>
-                    </md-list-item>
-                    <md-list-item  v-for="token in project.tokens" :key="token.id" class="md-inset">
+<div class="m-sm full-height">
+    <md-card md-theme="white" class="full-height clean-card">
+        <md-card-header>
+            <md-card-header-text class="setting-list">
+                <md-icon>bookmark</md-icon>
+                <span>Tokens</span>
+            </md-card-header-text>
+        </md-card-header>
+        <md-card-area>
+            <md-list class="m-t-md m-b-md">
+                <md-list-item>
+                    <md-input-container class="m-r-xl">
+                        <label>Token Description (e.g. &quot;Jenkins Integration&quot;)</label>
+                        <md-input required v-model="description" @keyup.enter.native="addToken"></md-input>
+                    </md-input-container>
+                    <md-button :disabled="disableAdd" class="md-icon-button md-list-action" @click="addToken">
+                        <md-icon md-theme="running" class="md-primary">add_circle</md-icon>
+                        <md-tooltip>Add new token</md-tooltip>
+                    </md-button>
+                </md-list-item>
+                <md-list-item  v-for="token in project.tokens" :key="token.id">
+                    <div class="md-list-text-container">
                         {{ token.description }}
-                        <md-button type="submit" class="md-icon-button md-list-action" @click="project.deleteToken(token.id)">
-                            <md-icon class="md-primary">delete</md-icon>
-                            <md-tooltip>Delete token permanently</md-tooltip>
-                        </md-button>
-                    </md-list-item>
-                </md-list>
-            </md-list-expand>
-        </md-list-item>
-    </md-list>
+                    </div>
+                    <md-button type="submit" class="md-icon-button md-list-action" @click="project.deleteToken(token.id)">
+                        <md-icon class="md-primary">delete</md-icon>
+                        <md-tooltip>Delete token permanently</md-tooltip>
+                    </md-button>
+                </md-list-item>
+            </md-list>
+        </md-card-area>
+    </md-card>
     <md-dialog ref="dialog">
         <md-dialog-title>Authentication Token</md-dialog-title>
 

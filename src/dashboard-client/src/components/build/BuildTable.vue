@@ -20,7 +20,7 @@
                             <ib-state :state="b.state"></ib-state>
                         </md-table-cell>
                         <md-table-cell>
-                            <router-link :to="{name: 'BuildDetail', params: {
+                            <router-link :to="{name: 'BuildDetailGraph', params: {
                                 projectName: project.name,
                                 buildNumber: b.number,
                                 buildRestartCounter: b.restartCounter
