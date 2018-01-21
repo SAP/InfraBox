@@ -1,5 +1,6 @@
 import uuid
 import urllib
+import os
 
 from datetime import datetime
 from functools import wraps, update_wrapper
@@ -235,11 +236,20 @@ class Upload(Resource):
                     'Create Jobs', %s, '', false, 1, 1024);
         ''', [build_id, project_id])
 
+        project_name = g.db.execute_one('''
+            SELECT name FROM project WHERE id = %s
+        ''', [project_id])[0]
+
+        url = '%s/dashboard/#/project/%s/build/%s/1' % (os.environ['INFRABOX_ROOT_URL'],
+                                                        project_name,
+                                                        build_number)
+
         data = {
             'build': {
                 'id': build_id,
                 'number': build_number
-            }
+            },
+            'url': url
         }
 
         g.db.commit()
