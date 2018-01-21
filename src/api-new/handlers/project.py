@@ -244,4 +244,4 @@ class Upload(Resource):
 
         g.db.commit()
 
-        return OK('successfully stasrted build', data=data)
+        return OK('successfully started build', data=data)
