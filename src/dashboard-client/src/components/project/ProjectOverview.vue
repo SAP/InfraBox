@@ -5,7 +5,7 @@
                 <div class="md-title">
                     <span v-if="project.isGit()"><i class="fa fa-github"></i></span>
                     <span v-if="!project.isGit()"><i class="fa fa-home"></i></span>
-                    <router-link :to="{name: 'ProjectDetailList', params: {projectName: project.name}}" class="m-l-xs">{{ project.name }}</router-link>
+                    <router-link :to="{name: 'ProjectDetailBuilds', params: {projectName: project.name}}" class="m-l-xs">{{ project.name }}</router-link>
                 </div>
                 <md-subheader v-if="project.getActiveBuilds().length===1" style="padding-left=-10px;">Currently one running build.</md-subheader>
                 <md-subheader v-if="project.getActiveBuilds().length===0">Currently no running builds.</md-subheader>

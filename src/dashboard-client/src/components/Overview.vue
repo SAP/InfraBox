@@ -35,7 +35,7 @@
 import store from '../store'
 
 export default {
-    name: 'ProjectDetail',
+    name: 'InfraBoxOverview',
     store
 }
 </script>

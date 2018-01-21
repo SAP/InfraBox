@@ -81,7 +81,6 @@ export default {
             window.location.href = '/github/auth/'
         },
         signup () {
-            console.log('signup')
             router.push('signup')
         },
         login () {

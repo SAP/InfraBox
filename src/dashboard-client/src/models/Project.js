@@ -80,7 +80,6 @@ export default class Project {
         const d = { branch_or_sha: branchOrSha, env: env }
         return NewAPIService.post(`projects/${this.id}/trigger`, d)
         .then((r) => {
-            console.log(r)
             NotificationService.$emit('NOTIFICATION', new Notification(r))
             const d = r.data
             router.push(`/project/${this.name}/build/${d.build.build_number}/${d.build.restartCounter}/`)

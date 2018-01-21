@@ -4,7 +4,7 @@
             <md-card-header class="main-card-header" style="padding-bottom: 10px">
                 <md-card-header-text>
                     <h3 class="md-title card-title">
-                        <router-link :to="{name: 'ProjectDetail', params: {
+                        <router-link :to="{name: 'ProjectDetailBuilds', params: {
                             projectName: data.project.name
                         }}">
                             <span v-if="data.project.isGit()"><i class="fa fa-github"></i></span>

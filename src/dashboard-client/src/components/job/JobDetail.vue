@@ -9,7 +9,7 @@
                                 <ib-state :state="data.build.state"></ib-state>
                             </md-layout>
                             <md-layout md-vertical-align="center">
-                                <router-link :to="{name: 'ProjectDetailList', params: {projectName: data.project.name}}">
+                                <router-link :to="{name: 'ProjectDetailBuilds', params: {projectName: data.project.name}}">
                                     <span v-if="data.project.isGit()"><i class="fa fa-github"></i></span>
                                     <span v-if="!data.project.isGit()"><i class="fa fa-home"></i></span>
                                     {{ data.project.name }}

@@ -18,7 +18,6 @@ import 'taucharts/build/production/tauCharts.default.min.css'
 import NotificationComponent from '@/components/Notification'
 import StateComponent from '@/components/utils/State'
 import DateComponent from '@/components/utils/Date'
-import ProjectDetailComponent from '@/components/project/ProjectDetail'
 import ProjectOverviewComponent from '@/components/project/ProjectOverview'
 import DurationComponent from '@/components/utils/Duration'
 import GitJobTypeComponent from '@/components/utils/GitJobType'
@@ -47,7 +46,6 @@ Vue.component('ib-state', StateComponent)
 Vue.component('ib-date', DateComponent)
 Vue.component('ib-duration', DurationComponent)
 Vue.component('ib-gitjobtype', GitJobTypeComponent)
-Vue.component('ib-project', ProjectDetailComponent)
 Vue.component('ib-overview', ProjectOverviewComponent)
 
 Vue.material.registerTheme({

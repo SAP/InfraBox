@@ -4,7 +4,7 @@ import Overview from '@/components/Overview'
 import AddProject from '@/components/AddProject'
 import Login from '@/components/account/Login'
 import Signup from '@/components/account/Signup'
-import ProjectDetailList from '@/components/project/ProjectDetailList'
+import ProjectDetailBuilds from '@/components/project/ProjectDetailBuilds'
 import ProjectDetailSettings from '@/components/project/ProjectDetailSettings'
 import TriggerBuild from '@/components/project/Trigger'
 import BuildDetailGraph from '@/components/build/BuildDetailGraph'
@@ -32,9 +32,9 @@ export default new Router({
         name: 'signup',
         component: Signup
     }, {
-        path: '/project/:projectName/builds',
-        name: 'ProjectDetailList',
-        component: ProjectDetailList,
+        path: '/project/:projectName',
+        name: 'ProjectDetailBuilds',
+        component: ProjectDetailBuilds,
         props: true
     }, {
         path: '/project/:projectName/settings',
@@ -47,7 +47,7 @@ export default new Router({
         component: TriggerBuild,
         props: true
     }, {
-        path: '/project/:projectName/build/:buildNumber/:buildRestartCounter/graph',
+        path: '/project/:projectName/build/:buildNumber/:buildRestartCounter',
         name: 'BuildDetailGraph',
         component: BuildDetailGraph,
         props: function (route) {
