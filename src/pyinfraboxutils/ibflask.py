@@ -1,11 +1,12 @@
 import base64
 from functools import wraps
 
+from flask import Flask, g, jsonify, request, abort
+
 from pyinfraboxutils import get_logger
 from pyinfraboxutils.db import DB, connect_db
 from pyinfraboxutils.token import decode
 
-from flask import Flask, g, jsonify, request, abort
 app = Flask(__name__)
 app.url_map.strict_slashes = False
 
@@ -223,7 +224,7 @@ def validate_job_token(token):
     g.token = token
 
 
-def validate_user_token(token, check_project_access, project_id):
+def validate_user_token(token, check_project_access, project_id, check_project_owner):
     g.token = token
 
     u = g.db.execute_one('''
@@ -234,25 +235,39 @@ def validate_user_token(token, check_project_access, project_id):
         logger.warn('user not found')
         abort(401, 'Unauthorized')
 
-    if not check_project_access:
-        return
-
     if not project_id:
         logger.warn('no project id')
         abort(401, 'Unauthorized')
 
-    u = g.db.execute_many('''
-        SELECT co.*
-        FROM collaborator co
-        INNER JOIN "user" u
-            ON u.id = co.user_id
-            AND u.id = %s
-            AND co.project_id = %s
-    ''', [token['user']['id'], project_id])
 
-    if not u:
-        logger.warn('user has no access to project')
-        abort(401, 'Unauthorized')
+    if check_project_access:
+        u = g.db.execute_many('''
+            SELECT co.*
+            FROM collaborator co
+            INNER JOIN "user" u
+                ON u.id = co.user_id
+                AND u.id = %s
+                AND co.project_id = %s
+        ''', [token['user']['id'], project_id])
+
+        if not u:
+            logger.warn('user has no access to project')
+            abort(401, 'Unauthorized')
+
+    if check_project_owner:
+        u = g.db.execute_many('''
+            SELECT co.*
+            FROM collaborator co
+            INNER JOIN "user" u
+                ON u.id = co.user_id
+                AND u.id = %s
+                AND co.project_id = %s
+                AND co.owner = true
+        ''', [token['user']['id'], project_id])
+
+        if not u:
+            logger.warn('user has no access to project')
+            abort(401, 'Unauthorized')
 
 def validate_project_token(token, check_project_access, project_id):
     if not check_project_access:
@@ -262,7 +277,7 @@ def validate_project_token(token, check_project_access, project_id):
         logger.warn('token not valid for project')
         abort(401, 'Unauthorized')
 
-def auth_token_required(types, check_project_access=True):
+def auth_token_required(types, check_project_access=True, check_project_owner=False):
     def actual_decorator(f):
         @wraps(f)
         def decorated_function(*args, **kwargs):
@@ -277,12 +292,21 @@ def auth_token_required(types, check_project_access=True):
                 abort(401, 'Unauthorized')
 
             if token_type == 'job':
+                if check_project_owner:
+                    logger.warn('Project owner validation not possible with job token')
+                    abort(401, 'Unauthorized')
+
                 validate_job_token(token)
             elif token_type == 'user':
                 project_id = kwargs.get('project_id')
-                validate_user_token(token, check_project_access, project_id)
+                validate_user_token(token, check_project_access, project_id, check_project_owner)
             elif token_type == 'project':
                 project_id = kwargs.get('project_id')
+
+                if check_project_owner:
+                    logger.warn('Project owner validation not possible with project token')
+                    abort(401, 'Unauthorized')
+
                 validate_project_token(token, check_project_access, project_id)
             else:
                 logger.warn('unhandled token type')
