@@ -42,53 +42,37 @@
                         <md-button @click="connectGithubAccount()">Connect GitHub Account</md-button>
                     </div>
                     <div v-if="$store.state.user && $store.state.user.hasGithubAccount() && type=='github'" class="md-layout md-gutter">
-                        <md-button-toggle md-single class="m-xl md-layout">
-                            <md-card class="md-button no-shadow" v-for="r of $store.state.user.githubRepos" :key="r.id">
-                                <md-card-header>
-                                    <md-card-header-text>
-                                        <div class="md-title">{{ r.name }}</div>
-                                        <div class="md-subhead">{{ r.owner.login }}</div>
-                                    </md-card-header-text>
-
-                                    <md-card-media>
-                                        <div class="m-t-md">
-                                            <md-icon>
-                                                <i v-if="r.private" class="fa fa-fw fa-home fa-3x"></i>
-                                                <i v-if="!r.private" class="fa fa-fw fa-globe fa-3x"></i>
-                                            </md-icon>
-                                        </div>
-                                    </md-card-media>
-                                </md-card-header>
-                                <md-card-content>
-                                    <md-list>
-                                        <md-list-item>
-                                            <md-icon class="md-primary"><i class="fa fa-calendar fa-fw"></i></md-icon>
-                                            <div class="md-list-text-container">
-                                            <span>Created:</span>
-                                            <span><ib-date :date="r.created_at"></ib-date></span>
-                                            </div>
-                                        </md-list-item>
-                                        <md-list-item>
-                                            <md-icon class="md-primary"><i class="fa fa-tasks fa-fw"></i></md-icon>
-                                            <div class="md-list-text-container">
-                                            <span>Open issues:</span>
-                                            <span>{{ r.open_issues_count }}</span>
-                                            </div>
-                                        </md-list-item>
-                                        <md-list-item>
-                                            <md-icon class="md-primary"><i class="fa fa-code-fork fa-fw"></i></md-icon>
-                                            <div class="md-list-text-container">
-                                            <span>Forks:</span>
-                                            <span>{{ r.forks_count }}</span>
-                                            </div>
-                                        </md-list-item>
-                                    </md-list>
-                                </md-card-content>
-                                <md-card-actions>
-                                    <md-button md-theme="default" class="md-raised md-primary" @click="selectGithubRepo(r)">Select</md-button>
-                                </md-card-actions>
-                            </md-card>
-                        </md-button-toggle>
+                        <md-table-card class="clean-card full-width m-b-xl m-t-lg">
+                            <md-table md-sort="repos">
+                                <md-table-header>
+                                    <md-table-row>
+                                    <md-table-head md-sort-by="repository">Repository</md-table-head>
+                                    <md-table-head md-sort-by="owner">Owner</md-table-head>
+                                    <md-table-head md-sort-by="privacy">Visibility</md-table-head>
+                                    <md-table-head md-sort-by="created">Created</md-table-head>
+                                    <md-table-head md-sort-by="issues">Open Issues</md-table-head>
+                                    <md-table-head md-sort-by="forks">Forks</md-table-head>
+                                    <md-table-head>Select</md-table-head>
+                                    </md-table-row>
+                                </md-table-header>
+                                <md-table-body>
+                                    <md-table-row v-for="(r, index) of $store.state.user.githubRepos" :key="r.id">
+                                        <md-table-cell class="md-body-2">{{ r.name }}</md-table-cell>
+                                        <md-table-cell>{{ r.owner.login }}</md-table-cell>
+                                        <md-table-cell>
+                                            <i v-if="r.private" class="fa fa-fw fa-home fa-2x"></i>
+                                            <i v-if="!r.private" class="fa fa-fw fa-globe fa-2x"></i>
+                                        </md-table-cell>
+                                        <md-table-cell><ib-date :date="r.created_at"></ib-date></md-table-cell>
+                                        <md-table-cell>{{ r.open_issues_count }}</md-table-cell>
+                                        <md-table-cell>{{ r.forks_count }}</md-table-cell>
+                                        <md-table-cell>
+                                            <md-radio md-theme="default" v-model="selectRepo" :md-value="index" @change="selectGithubRepo(r)"></md-radio>
+                                        </md-table-cell>
+                                    </md-table-row>
+                                </md-table-body>
+                            </md-table>
+                        </md-table-card>
                     </div>
                 </md-step>
                 <md-step>
@@ -124,7 +108,8 @@ export default {
         type: 'upload',
         priv: true,
         githubRepo: null,
-        invalidMessage: 'Name required'
+        invalidMessage: 'Name required',
+        selectRepo: false
     }),
     watch: {
         projName () {
