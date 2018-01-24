@@ -11,7 +11,7 @@ InfraBox is a serverless computing platform focusing on efficiently executing bu
 - [and many more](http://infrabox.net)
 
 ## Want to see it in action?
-InfraBox is build on InfraBox. See all the builds [here](https://infrabox.ninja/dashboard/#/project/infrabox).
+InfraBox is built on InfraBox. See all the builds [here](https://infrabox.ninja/dashboard/#/project/infrabox).
 
 ## You want to try it for free?
 Have a look at the InfraBox playground [https://infrabox.ninja/](https://infrabox.ninja/dashboard/#/login).
