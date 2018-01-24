@@ -122,8 +122,8 @@ export default {
                     'x_date': { type: 'linear', source: '/', dim: 'date', autoScale: true, dimType: 'measure' },
                     'y_cpu': { type: 'linear', source: '/', dim: 'cpu', autoScale: true, dimType: 'measure' },
                     'y_mem': { type: 'linear', source: '/', dim: 'mem', autoScale: true, dimType: 'measure' },
-                    'color_undefined': { type: 'color', source: '/', brewer: ['#f8ac59'] },
-                    'color_undefined2': { type: 'color', source: '/', brewer: ['#23c6c8'] },
+                    'color_undefined': { type: 'color', source: '/', brewer: ['#23c6c8'] },
+                    'color_undefined2': { type: 'color', source: '/', brewer: ['#f8ac59'] },
                     'size_undefined': { type: 'size', source: '/', min: 2, max: 10, mid: 5 },
 
                     'text:default': { type: 'value', source: '?' },
