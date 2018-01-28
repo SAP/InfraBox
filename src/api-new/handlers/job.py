@@ -63,6 +63,8 @@ class Output(Resource):
     @auth_token_required(['project'])
     @check_job_belongs_to_project
     def get(self, project_id, job_id):
+        g.release_db()
+
         key = '%s.tar.gz' % job_id
         f = storage.download_output(key)
 

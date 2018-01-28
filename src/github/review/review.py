@@ -105,7 +105,7 @@ def handle_job_update(conn, update):
                         project_name,
                         build_number,
                         build_restartCounter,
-                        urllib.quote_plus(job_name)),
+                        urllib.quote_plus(job_name).replace('+', '%20')),
         "description": "InfraBox",
         "context": "Job: %s" % job_name
     }

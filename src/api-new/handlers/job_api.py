@@ -317,6 +317,8 @@ class Source(Resource):
         filename = r[0]
         filename = filename.replace('/', '_')
 
+        g.release_db()
+
         f = storage.download_source(filename)
 
         if not f:
@@ -341,6 +343,8 @@ class Cache(Resource):
         key = template % (project_id, job_name)
         key = key.replace('/', '_')
 
+        g.release_db()
+
         f = storage.download_cache(key)
 
         if not f:
@@ -357,6 +361,8 @@ class Cache(Resource):
         template = 'project_%s_job_%s.tar.gz'
         key = template % (project_id, job_name)
         key = key.replace('/', '_')
+
+        g.release_db()
 
         storage.upload_cache(request.files['cache.tar.gz'].stream, key)
         return jsonify({})
@@ -380,6 +386,7 @@ class Output(Resource):
         key = "%s.tar.gz" % job_id
         key = key.replace('/', '_')
 
+        g.release_db()
         storage.upload_output(request.files['output.tar.gz'].stream, key)
         return jsonify({})
 
@@ -411,6 +418,7 @@ class OutputParent(Resource):
         key = "%s.tar.gz" % parent_job_id
         key = key.replace('/', '_')
 
+        g.db.release_db()
         f = storage.download_output(key)
 
         if not f:

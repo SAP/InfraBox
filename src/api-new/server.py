@@ -13,6 +13,7 @@ from flask_restplus import Resource
 from pyinfraboxutils import get_env, print_stackdriver, get_logger
 from pyinfraboxutils.ibrestplus import api, app
 from pyinfraboxutils.ibflask import get_token
+from pyinfraboxutils.prometheus import monitor
 from pyinfraboxutils import dbpool
 
 import handlers.project
@@ -178,6 +179,9 @@ def main(): # pragma: no cover
     logger.info('Starting DB listeners')
     sio.start_background_task(listeners.job.listen, sio)
     sio.start_background_task(listeners.console.listen, sio, client_manager)
+
+    logger.info('Starting prometheus server')
+    monitor(9000)
 
     logger.info('Starting Server')
     sio.run(app, host='0.0.0.0', port=8080)
