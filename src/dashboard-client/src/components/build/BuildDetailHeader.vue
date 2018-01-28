@@ -18,7 +18,7 @@
                                 </router-link>
                                 / Build {{ data.build.number }}.{{ data.build.restartCounter }}
                             </md-layout>
-                            <md-layout md-hide-medium-and-up>
+                            <md-layout md-hide-medium-and-up class="min-header-height" md-vertical-align="center">
                                 <md-menu md-size="3" class="bg-white" md-hide-small-and-up>
                                     <md-button md-theme="default" class="md-icon-button md-primary" md-menu-trigger>
                                         <md-icon>info</md-icon>
@@ -91,15 +91,15 @@
                 </md-button>
                 <md-button class="md-fab md-primary md-mini md-clean" md-fab-trigger v-on:click="data.build.abort()">
                     <md-icon style="color: white">not_interested</md-icon>
-                    <md-tooltip md-direction="bottom">Stop Build</md-tooltip>
+                    <md-tooltip md-direction="left">Stop Build</md-tooltip>
                 </md-button>
                 <md-button class="md-fab md-primary md-mini md-clean" md-fab-trigger v-on:click="data.build.restart()">
                     <md-icon style="color: white">replay</md-icon>
-                    <md-tooltip md-direction="bottom">Restart Build</md-tooltip>
+                    <md-tooltip md-direction="left">Restart Build</md-tooltip>
                 </md-button>
                 <md-button class="md-fab md-primary md-mini md-clean" v-on:click="data.build.clearCache()">
                     <md-icon style="color: white">delete_sweep</md-icon>
-                    <md-tooltip md-direction="bottom">Clear Cache</md-tooltip>
+                    <md-tooltip md-direction="left">Clear Cache</md-tooltip>
                 </md-button>
             </md-speed-dial>
             <md-card-content>
