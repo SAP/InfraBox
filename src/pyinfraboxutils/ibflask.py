@@ -73,22 +73,32 @@ try:
     def before_request():
         g.db = dbpool.get()
 
-    @app.teardown_request
-    def teardown_request(_):
-        db = getattr(g, 'db', None)
-        if db is not None:
-            dbpool.put(db)
+        def release_db():
+            if not g.db:
+                return
+
+            dbpool.put(g.db)
+            g.db = None
+
+        g.relase_db = release_db
 
 except:
     @app.before_request
     def before_request():
         g.db = DB(connect_db())
 
-    @app.teardown_request
-    def teardown_request(_):
-        db = getattr(g, 'db', None)
-        if db is not None:
-            db.close()
+        def release_db():
+            if not g.db:
+                return
+
+            g.db.close()
+            g.db = None
+
+        g.relase_db = release_db
+
+@app.teardown_request
+def teardown_request(_):
+    g.release_db()
 
 @app.errorhandler(404)
 def not_found(error):

@@ -139,7 +139,7 @@
                     <md-tab id="stats" md-icon="insert_chart" md-label="Stats">
                         <ib-stats :job="data.job"></ib-stats>
                     </md-tab>
-                    <md-tab v-for="t in data.job.tabs" :key="t.name" :id="'tab_' + t.name" md-icon="insert_chart" :md-label="t.name">
+                    <md-tab v-for="t in data.job.tabs" :key="t.name" :id="'tab_' + t.name" md-icon="insert_chart" :md-label="t.name.replace('.json', '').replace('.xml', '')">
                         <ib-tab :tab="t"></ib-tab>
                     </md-tab>
                 </md-tabs>
