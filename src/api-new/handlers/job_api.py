@@ -418,7 +418,7 @@ class OutputParent(Resource):
         key = "%s.tar.gz" % parent_job_id
         key = key.replace('/', '_')
 
-        g.db.release_db()
+        g.release_db()
         f = storage.download_output(key)
 
         if not f:
