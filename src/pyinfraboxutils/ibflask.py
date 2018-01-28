@@ -74,13 +74,14 @@ try:
         g.db = dbpool.get()
 
         def release_db():
-            if not g.db:
+            db = getattr(g, 'db', None)
+            if not db:
                 return
 
-            dbpool.put(g.db)
+            dbpool.put(db)
             g.db = None
 
-        g.relase_db = release_db
+        g.release_db = release_db
 
 except:
     @app.before_request
@@ -88,17 +89,25 @@ except:
         g.db = DB(connect_db())
 
         def release_db():
-            if not g.db:
+            db = getattr(g, 'db', None)
+            if not db:
                 return
 
-            g.db.close()
+            db.close()
             g.db = None
 
-        g.relase_db = release_db
+        g.release_db = release_db
 
 @app.teardown_request
 def teardown_request(_):
-    g.release_db()
+    try:
+        release_db = getattr(g, 'release_db', None)
+        if release_db:
+            release_db()
+    except Exception as e:
+        logger.error(_)
+        logger.exception(e)
+
 
 @app.errorhandler(404)
 def not_found(error):
