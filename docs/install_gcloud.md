@@ -21,7 +21,7 @@ Configure your DNS to point to the external IP address.
 
 ### Create a Kubernetes cluster
 InfraBox runs on Kubernetes. So we have to create a cluster first. In the GCP Console go to "Kubernetes Engine" and create a cluster.
-Give it a name (i.e. InfraBox), select a Zone and use a Kubernetes version 1.7.x. You should choose a machine type with at least 2 vCPU.
+Give it a name (i.e. InfraBox), select a Zone and use a Kubernetes version 1.8.x. You should choose a machine type with at least 2 vCPU.
 A cluster size of 2 nodes is sufficient for a test, but you may have to increase it later if you want to run more jobs in parallel.
 
 **Important: Set "Legacy Authorization" to disabled**
@@ -126,7 +126,7 @@ InfraBox uses a RSA key to sign certain information for security reasons. You ne
 
 ## Configure InfraBox
 InfraBox contains a python script to generate all the neccessary configuration files for you. You find it under _deplpy/install.py_.
-To create a very basic configuration use (don't forget to insert your external IP address!):
+To create a very basic configuration use:
 
     $ python deploy/install.py \
         -o /tmp/infrabox-configuration \
