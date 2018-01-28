@@ -11,26 +11,24 @@
                 <md-subheader v-if="project.getActiveBuilds().length===0">Currently no running builds.</md-subheader>
                 <md-subheader v-if="project.getActiveBuilds().length>1">Currently {{ project.getActiveBuilds().length }} running builds.</md-subheader>
             </md-card-header-text>
-            <md-menu md-size="4" md-direction="bottom left">
-                <md-button class="md-icon-button md-accent" md-menu-trigger>
+            <md-speed-dial md-open="hover" md-direction="bottom" class="md-fab-top-right" md-theme="default">
+                <md-button class="md-icon-button md-primary" md-fab-trigger>
+                    <md-icon md-icon-morph>more_vert</md-icon>
                     <md-icon>more_vert</md-icon>
                 </md-button>
-
-                <md-menu-content>
-                    <md-menu-item v-if="project.builds[0]" v-on:click="project.builds[0].clearCache()">
-                        <span>Clear Cache</span>
-                        <md-button class="md-icon-button"><md-icon>delete_sweep</md-icon><md-tooltip md-direction="bottom">Clear cache</md-tooltip></md-button>
-                    </md-menu-item>
-                    <md-menu-item @click="triggerBuild()">
-                        <span>Trigger Build</span>
-                        <md-button class="md-icon-button"><md-icon>replay</md-icon><md-tooltip md-direction="bottom">Trigger a new build</md-tooltip></md-button>
-                    </md-menu-item>
-                    <md-menu-item @click="openDialog('confirmDeleteProject')">
-                        <span>Delete Project</span>
-                        <md-button class="md-icon-button" id="custom"><md-icon>delete_forever</md-icon><md-tooltip md-direction="bottom">Remove project permanently from InfraBox</md-tooltip></md-button>
-                    </md-menu-item>
-                </md-menu-content>
-            </md-menu>
+                <md-button v-if="project.builds[0]" class="md-fab md-primary md-mini md-clean" md-fab-trigger v-on:click="project.builds[0].clearCache()">
+                    <md-icon style="color: white">delete_sweep</md-icon>
+                    <md-tooltip md-direction="left">Clear Cache</md-tooltip>
+                </md-button>
+                <md-button class="md-fab md-primary md-mini md-clean" md-fab-trigger v-on:click="triggerBuild()">
+                    <md-icon style="color: white">replay</md-icon>
+                    <md-tooltip md-direction="left">Trigger a new build</md-tooltip>
+                </md-button>
+                <md-button class="md-fab md-primary md-mini md-clean" v-on:click="openDialog('confirmDeleteProject')">
+                    <md-icon style="color: white">delete_forever</md-icon>
+                    <md-tooltip md-direction="left">Remove project permanently from InfraBox</md-tooltip>
+                </md-button>
+            </md-speed-dial>
         </md-card-header>
         <md-card-content>
             <md-table>

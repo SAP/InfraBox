@@ -98,6 +98,7 @@
 .main-card {
     margin: 16px;
     background-color: white !important;
+    min-height: 800px;
 }
 
 .main-card-header {
@@ -106,6 +107,9 @@
     border-bottom-color: #dddddd;
 }
 
+.min-header-height {
+    min-height: 80px;
+}
 
 .m-b-no {
     margin-bottom: 0;

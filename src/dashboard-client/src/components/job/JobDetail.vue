@@ -23,7 +23,7 @@
                                 </router-link>
                                 / {{ data.job.name}}
                             </md-layout>
-                            <md-layout md-hide-large-and-up>
+                            <md-layout md-hide-large-and-up class="min-header-height" md-vertical-align="center">
                                 <md-menu md-size="3" class="bg-white">
                                     <md-button md-theme="default" class="md-icon-button md-primary" md-menu-trigger>
                                         <md-icon>info</md-icon>
@@ -58,11 +58,11 @@
                                         <md-table-body>
                                             <md-table-row style="border-top: none">
                                                 <md-table-cell v-if="$store.state.user">
-                                                    <ib-state :state="data.build.state"></ib-state>
+                                                    <ib-state :state="data.job.state"></ib-state>
                                                 </md-table-cell>
                                                 <md-table-cell style="text-align: left !important">
                                                     <span><i class="fa fa-calendar fa-fw" aria-hidden="true"></i><strong> Started</strong>
-                                                    <ib-date :date="data.build.startDate"></ib-date></span>
+                                                    <ib-date :date="data.job.startDate"></ib-date></span>
                                                 </md-table-cell>
                                                 <md-table-cell>
                                                     <span><i class="fa fa-clock-o fa-fw" aria-hidden="true"></i><strong> Duration</strong>
@@ -105,27 +105,27 @@
                 </md-button>
                 <md-button class="md-fab md-primary md-mini md-clean" md-fab-trigger v-on:click="data.job.abort()">
                     <md-icon style="color: white">not_interested</md-icon>
-                    <md-tooltip md-direction="bottom">Stop Job</md-tooltip>
+                    <md-tooltip md-direction="left">Stop Job</md-tooltip>
                 </md-button>
                 <md-button class="md-fab md-primary md-mini md-clean" md-fab-trigger v-on:click="data.job.restart()">
                     <md-icon style="color: white">replay</md-icon>
-                    <md-tooltip md-direction="bottom">Restart Job</md-tooltip>
+                    <md-tooltip md-direction="left">Restart Job</md-tooltip>
                 </md-button>
                 <md-button class="md-fab md-primary md-mini md-clean" v-on:click="data.job.clearCache()">
                     <md-icon style="color: white">delete_sweep</md-icon>
-                    <md-tooltip md-direction="bottom">Clear Job</md-tooltip>
+                    <md-tooltip md-direction="left">Clear Job</md-tooltip>
                 </md-button>
                 <md-button class="md-fab md-primary md-mini md-clean" v-on:click="openDialog('cli_dialog')">
                     <md-icon style="color: white">file_download</md-icon>
-                    <md-tooltip md-direction="bottom">Run Local</md-tooltip>
+                    <md-tooltip md-direction="left">Run Local</md-tooltip>
                 </md-button>
                 <md-button class="md-fab md-primary md-mini md-clean" v-on:click="downloadOutput()" :disabled="data.job.state=='running'||data.job.state=='queued'||data.job.state=='scheduled'">
                     <md-icon style="color: white">subtitles</md-icon>
-                    <md-tooltip md-direction="bottom">Console Output</md-tooltip>
+                    <md-tooltip md-direction="left">Console Output</md-tooltip>
                 </md-button>
                 <md-button class="md-fab md-primary md-mini md-clean" v-on:click="downloadDataOutput()" :disabled="data.job.state=='running'||data.job.state=='queued'||data.job.state=='scheduled'">
                     <md-icon style="color: white">insert_drive_file</md-icon>
-                    <md-tooltip md-direction="bottom">Data Output</md-tooltip>
+                    <md-tooltip md-direction="left">Data Output</md-tooltip>
                 </md-button>
             </md-speed-dial>
             <md-card-content>
