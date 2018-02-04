@@ -690,7 +690,7 @@ class Scheduler(object):
             self.handle_orphaned_jobs()
             self.handle_orphaned_namespaces()
         except Exception as e:
-            self.logger.warn(e)
+            self.logger.exception(e)
 
         self.schedule()
 
