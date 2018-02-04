@@ -608,6 +608,10 @@ class Scheduler(object):
         r = requests.get(self.args.api_server + '/api/v1/namespaces', headers=h, timeout=10)
         data = r.json()
 
+        if 'items' not in data:
+            self.logger.warn('No data returned')
+            return
+
         for j in data['items']:
             metadata = j.get('metadata', None)
             if not metadata:
