@@ -8,7 +8,8 @@ RUN apt-get update -y && apt-get install -y \
     python-requests \
     python-psycopg2 \
     python-jwt \
-    python-cryptograhpy
+    python-cryptography \
+    git
 
 RUN mkdir /project
 WORKDIR /project
@@ -22,8 +23,6 @@ RUN curl -LO https://storage.googleapis.com/kubernetes-helm/helm-v2.7.0-linux-am
     rm -rf linux-amd64 && \
     rm helm-v2.7.0-linux-amd64.tar.gz && \
     ls -al /project
-
-RUN apt-get install -y git
 
 ENV PATH=$PATH:/project
 ENV PYTHONPATH=/infrabox/context/src

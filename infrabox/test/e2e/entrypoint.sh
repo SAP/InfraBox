@@ -7,7 +7,7 @@ _prepareKubectl() {
     echo "## Prepare kubectl"
     kubectl config set-cluster default-cluster --server=${INFRABOX_RESOURCES_KUBERNETES_MASTER_URL} --certificate-authority=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt
     kubectl config set-credentials default-admin --certificate-authority=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt --token=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
-    kubectl config set-context default-system --cluster=default-cluster --user=default-admin --namespace=$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace)
+    kubectl config set-context default-system --cluster=default-cluster --user=default-admin --namespace=$NAMESPACE
     kubectl config use-context default-system
 
     kubectl get pods
@@ -160,8 +160,8 @@ _installInfrabox() {
     python /infrabox/context/deploy/install.py \
         -o $outdir \
         --platform kubernetes \
-        --version $IMAGE_TAG \
         --general-dont-check-certificates \
+        --version $IMAGE_TAG \
         --root-url https://$ROOT_URL \
         --general-rbac-disabled \
         --general-worker-namespace $NAMESPACE \
@@ -192,7 +192,7 @@ _installInfrabox() {
     export INFRABOX_DATABASE_USER=postgres
     export INFRABOX_DATABASE_PORT=5432
     export INFRABOX_DATABASE_PASSWORD=postgres
-    export INFRABOX_URL_URL=http://localhost:8080
+    export INFRABOX_URL=http://localhost:8080
     export INFRABOX_ROOT_URL=http://localhost:8080
 
     _portForwardAPI
