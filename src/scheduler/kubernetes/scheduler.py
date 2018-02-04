@@ -313,9 +313,31 @@ class Scheduler(object):
 #            self.logger.warn("Failed to create ResourceQuota: %s" % r.text)
 #            return False
 
+        role = {
+            'kind': 'Role',
+            'apiVersion': 'rbac.authorization.k8s.io/v1',
+            'metadata': {
+                'name': 'infrabox',
+                'namespace': namespace_name
+            },
+            'rules': [{
+                'apiGroups': ['', 'extensions', 'apps'],
+                'resources': ['*'],
+                'verbs': ['*']
+            }]
+        }
+
+        r = requests.post(self.args.api_server +
+                          '/apis/rbac.authorization.k8s.io/v1/namespaces/%s/roles' % namespace_name,
+                          headers=h, json=role, timeout=10)
+
+        if r.status_code != 201:
+            self.logger.warn("Failed to create Role: %s", r.text)
+            return False
+
         rb = {
-            "kind": "ClusterRoleBinding",
-            "apiVersion": "rbac.authorization.k8s.io/v1beta1",
+            "kind": "RoleBinding",
+            "apiVersion": "rbac.authorization.k8s.io/v1",
             "metadata": {
                 "name": namespace_name
             },
@@ -325,14 +347,14 @@ class Scheduler(object):
                 "namespace": namespace_name
             }],
             "roleRef": {
-                "kind": "ClusterRole",
-                "name": "cluster-admin",
+                "kind": "Role",
+                "name": "infrabox",
                 "apiGroup": "rbac.authorization.k8s.io"
             }
         }
 
         r = requests.post(self.args.api_server +
-                          '/apis/rbac.authorization.k8s.io/v1beta1/clusterrolebindings',
+                          '/apis/rbac.authorization.k8s.io/v1/namespaces/%s/rolebindings' % namespace_name,
                           headers=h, json=rb, timeout=10)
 
         if r.status_code != 201:
