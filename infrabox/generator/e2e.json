@@ -18,6 +18,7 @@
         "name": "e2e-k8s",
         "docker_file": "infrabox/test/e2e/Dockerfile",
         "build_context": "../..",
+        "build_only": false,
         "resources": {
             "limits": { "cpu": 1, "memory": 2048 },
             "kubernetes": { "limits": { "cpu": 1, "memory": 2048 } }
