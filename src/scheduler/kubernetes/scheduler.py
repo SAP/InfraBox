@@ -321,7 +321,7 @@ class Scheduler(object):
                 'namespace': namespace_name
             },
             'rules': [{
-                'apiGroups': ['', 'extensions', 'apps'],
+                'apiGroups': ['', 'extensions', 'apps', 'batch'],
                 'resources': ['*'],
                 'verbs': ['*']
             }]
