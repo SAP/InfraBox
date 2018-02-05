@@ -182,6 +182,7 @@ _installInfrabox() {
         --s3-access-key AKIAIOSFODNN7EXAMPLE \
         --s3-region us-east-1 \
         --s3-port 9000 \
+        --ingress-tls-dont-force-redirect
 
     pushd $outdir/infrabox
     helm install --tiller-namespace $NAMESPACE --namespace $NAMESPACE .
