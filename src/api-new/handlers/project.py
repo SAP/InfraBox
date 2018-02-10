@@ -12,7 +12,7 @@ from flask_restplus import Resource, fields
 
 from werkzeug.datastructures import FileStorage
 
-from pyinfraboxutils.ibflask import auth_token_required, OK
+from pyinfraboxutils.ibflask import auth_required, OK
 from pyinfraboxutils.ibrestplus import api
 from pyinfraboxutils.storage import storage
 
@@ -52,7 +52,7 @@ project_model = api.model('ProjectModel', {
 @ns.route('/<project_id>')
 class Project(Resource):
 
-    @auth_token_required(['user', 'project'])
+    @auth_required(['user', 'project'])
     @api.marshal_with(project_model)
     def get(self, project_id):
         p = g.db.execute_one_dict('''
@@ -207,7 +207,7 @@ upload_parser.add_argument('project.zip', location='files',
 @ns.expect(upload_parser)
 class Upload(Resource):
 
-    @auth_token_required(['project'])
+    @auth_required(['project'])
     def post(self, project_id):
         build_id = str(uuid.uuid4())
         key = '%s.zip' % build_id

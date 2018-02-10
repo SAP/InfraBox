@@ -1,10 +1,10 @@
 from flask import request, g, abort
 from flask_restplus import Resource, fields
 
-from pyinfraboxutils.ibflask import auth_token_required, OK
+from pyinfraboxutils.ibflask import auth_required, OK
 from pyinfraboxutils.ibrestplus import api
 
-from dashboard_api import project_ns as ns
+from dashboard_api.namespaces import project as ns
 
 secret_model = api.model('Secret', {
     'name': fields.String(required=True),
@@ -19,7 +19,7 @@ add_secret_model = api.model('AddSecret', {
 @ns.route('/<project_id>/secrets')
 class Secrets(Resource):
 
-    @auth_token_required(['user'])
+    @auth_required(['user'])
     @api.marshal_list_with(secret_model)
     def get(self, project_id):
         p = g.db.execute_many_dict('''
@@ -28,7 +28,7 @@ class Secrets(Resource):
         ''', [project_id])
         return p
 
-    @auth_token_required(['user'])
+    @auth_required(['user'])
     @api.expect(add_secret_model)
     def post(self, project_id):
         b = request.get_json()
@@ -51,7 +51,7 @@ class Secrets(Resource):
 @ns.route('/<project_id>/secrets/<secret_id>')
 class Secret(Resource):
 
-    @auth_token_required(['user'])
+    @auth_required(['user'])
     def delete(self, project_id, secret_id):
         g.db.execute('''
             DELETE FROM secret WHERE project_id = %s and id = %s

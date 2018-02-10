@@ -1,7 +1,7 @@
 from flask import g
 from flask_restplus import Resource, fields
 
-from pyinfraboxutils.ibflask import auth_token_required
+from pyinfraboxutils.ibflask import auth_required
 from pyinfraboxutils.ibrestplus import api
 
 from job import job_model
@@ -16,7 +16,7 @@ build_model = api.model('BuildModel', {
 
 @ns.route('/')
 class Builds(Resource):
-    @auth_token_required(['user', 'project'])
+    @auth_required(['user', 'project'])
     @api.marshal_list_with(build_model)
     def get(self, project_id):
         p = g.db.execute_many_dict('''
@@ -30,7 +30,7 @@ class Builds(Resource):
 
 @ns.route('/<build_id>')
 class Build(Resource):
-    @auth_token_required(['user', 'project'])
+    @auth_required(['user', 'project'])
     @api.marshal_with(build_model)
     def get(self, project_id, build_id):
         p = g.db.execute_many_dict('''
@@ -46,7 +46,7 @@ class Build(Resource):
 @ns.route('/<build_id>/jobs')
 class Jobs(Resource):
 
-    @auth_token_required(['project'])
+    @auth_required(['project'])
     @ns.marshal_list_with(job_model)
     def get(self, project_id, build_id):
         jobs = g.db.execute_many_dict('''

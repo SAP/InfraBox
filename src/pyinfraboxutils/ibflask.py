@@ -66,7 +66,7 @@ def get_token():
         abort(401, 'Unauthorized')
 
 try:
-    #pylint: disable=ungrouped-imports
+    #pylint: disable=ungrouped-imports,wrong-import-position
     from pyinfraboxutils import dbpool
     logger.info('Using DB Pool')
 
@@ -223,8 +223,20 @@ def validate_job_token(token):
     token['project']['id'] = r[1]
     g.token = token
 
+def is_collaborator(user_id, project_id):
+    u = g.db.execute_many('''
+        SELECT co.*
+        FROM collaborator co
+        INNER JOIN "user" u
+            ON u.id = co.user_id
+            AND u.id = %s
+            AND co.project_id = %s
+    ''', [user_id, project_id])
 
-def validate_user_token(token, check_project_access, project_id, check_project_owner):
+    return u
+
+
+def validate_user_token(token, check_project_access, project_id, check_project_owner, allow_if_public):
     g.token = token
 
     u = g.db.execute_one('''
@@ -235,26 +247,36 @@ def validate_user_token(token, check_project_access, project_id, check_project_o
         logger.warn('user not found')
         abort(401, 'Unauthorized')
 
-    if not project_id:
-        logger.warn('no project id')
-        abort(401, 'Unauthorized')
+    if allow_if_public:
+        if not project_id:
+            logger.warn('no project id')
+            abort(401, 'Unauthorized')
 
+        p = g.db.execute_one_dict('''
+            SELECT public
+            FROM project
+            WHERE id = %s
+        ''', [project_id])
+
+        if p['public']:
+            return
 
     if check_project_access:
-        u = g.db.execute_many('''
-            SELECT co.*
-            FROM collaborator co
-            INNER JOIN "user" u
-                ON u.id = co.user_id
-                AND u.id = %s
-                AND co.project_id = %s
-        ''', [token['user']['id'], project_id])
+        if not project_id:
+            logger.warn('no project id')
+            abort(401, 'Unauthorized')
+
+        u = is_collaborator(token['user']['id'], project_id)
 
         if not u:
             logger.warn('user has no access to project')
             abort(401, 'Unauthorized')
 
     if check_project_owner:
+        if not project_id:
+            logger.warn('no project id')
+            abort(401, 'Unauthorized')
+
         u = g.db.execute_many('''
             SELECT co.*
             FROM collaborator co
@@ -277,7 +299,10 @@ def validate_project_token(token, check_project_access, project_id):
         logger.warn('token not valid for project')
         abort(401, 'Unauthorized')
 
-def auth_token_required(types, check_project_access=True, check_project_owner=False):
+def auth_required(types,
+                  check_project_access=True,
+                  check_project_owner=False,
+                  allow_if_public=False):
     def actual_decorator(f):
         @wraps(f)
         def decorated_function(*args, **kwargs):
@@ -299,7 +324,11 @@ def auth_token_required(types, check_project_access=True, check_project_owner=Fa
                 validate_job_token(token)
             elif token_type == 'user':
                 project_id = kwargs.get('project_id')
-                validate_user_token(token, check_project_access, project_id, check_project_owner)
+                validate_user_token(token,
+                                    check_project_access,
+                                    project_id,
+                                    check_project_owner,
+                                    allow_if_public)
             elif token_type == 'project':
                 project_id = kwargs.get('project_id')
 
