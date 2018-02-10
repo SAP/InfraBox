@@ -58,6 +58,7 @@ function findJob (build, jobId) {
 }
 
 function handleJobUpdate (state, event) {
+    console.log(event)
     const project = findProject(state, event.data.project.id)
 
     let commit = null

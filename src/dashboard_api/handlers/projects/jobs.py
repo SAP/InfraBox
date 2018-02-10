@@ -1,15 +1,17 @@
+import json
+
 from flask import g, abort
 from flask_restplus import Resource
 
-from pyinfraboxutils.ibflask import auth_token_required, OK
+from pyinfraboxutils.ibflask import auth_required, OK
 from pyinfraboxutils.storage import storage
 
-from dashboard_api import project_ns as ns
+from dashboard_api.namespaces import project as ns
 
 @ns.route('/<project_id>/jobs/<job_id>/restart')
 class JobRestart(Resource):
 
-    @auth_token_required(['user'])
+    @auth_required(['user'])
     def get(self, project_id, job_id):
 
         job = g.db.execute_many_dict('''
@@ -41,7 +43,8 @@ class JobRestart(Resource):
 @ns.route('/<project_id>/jobs/<job_id>/abort')
 class JobAbort(Resource):
 
-    @auth_token_required(['user'])
+    @auth_required(['user'])
+    #pylint: disable=unused-argument
     def get(self, project_id, job_id):
         g.db.execute('''
             INSERT INTO abort(job_id) VALUES(%s)
@@ -50,10 +53,104 @@ class JobAbort(Resource):
 
         return OK('Successfully aborted job')
 
+@ns.route('/<project_id>/jobs/<job_id>/testresults')
+class Testresults(Resource):
+
+    @auth_required(['user'], allow_if_public=True)
+    def get(self, project_id, job_id):
+        result = g.db.execute_many_dict('''
+            SELECT tr.state, t.name, t.suite, tr.duration, t.build_number, tr.message, tr.stack
+            FROM test t
+            INNER JOIN test_run tr
+                ON t.id = tr.test_id
+                AND t.project_id = tr.project_id
+            WHERE   tr.project_id = %s
+                AND tr.job_id = %s
+        ''', [project_id, job_id])
+
+        return result
+
+@ns.route('/<project_id>/jobs/<job_id>/tabs')
+class Tabs(Resource):
+
+    @auth_required(['user'], allow_if_public=True)
+    def get(self, project_id, job_id):
+        result = g.db.execute_many_dict('''
+            SELECT name, data, type
+            FROM job_markup
+            WHERE   job_id = %s
+                AND project_id = %s
+        ''', [job_id, project_id])
+
+        return result
+
+@ns.route('/<project_id>/jobs/<job_id>/console')
+class Console(Resource):
+
+    @auth_required(['user'], allow_if_public=True)
+    def get(self, project_id, job_id):
+        result = g.db.execute_one_dict('''
+            SELECT console
+            FROM job
+            WHERE   id = %s
+                AND project_id = %s
+        ''', [job_id, project_id])
+
+        if not result:
+            abort(404)
+
+        if not result['console']:
+            abort(404)
+
+        return result['console']
+
+@ns.route('/<project_id>/jobs/<job_id>/console')
+class Output(Resource):
+
+    @auth_required(['user'], allow_if_public=True)
+    def get(self, project_id, job_id):
+        # TODO
+        assert False
+
+
+@ns.route('/<project_id>/jobs/<job_id>/badges')
+class Badges(Resource):
+
+    @auth_required(['user'], allow_if_public=True)
+    def get(self, project_id, job_id):
+        result = g.db.execute_many_dict('''
+            SELECT subject, status, color
+            FROM job_badge
+            WHERE   job_id = %s
+                AND project_id = %s
+        ''', [job_id, project_id])
+
+        return result
+
+@ns.route('/<project_id>/jobs/<job_id>/stats')
+class Stats(Resource):
+
+    @auth_required(['user'], allow_if_public=True)
+    def get(self, project_id, job_id):
+        result = g.db.execute_one_dict('''
+            SELECT stats
+            FROM job
+            WHERE   id = %s
+                AND project_id = %s
+        ''', [job_id, project_id])
+
+        if not result:
+            abort(404)
+
+        if not result['stats']:
+            return {}
+        else:
+            return json.loads(result['stats'])
+
 @ns.route('/<project_id>/jobs/<job_id>/cache/clear')
 class JobCacheClear(Resource):
 
-    @auth_token_required(['user'])
+    @auth_required(['user'])
     def get(self, project_id, job_id):
         job = g.db.execute_one_dict('''
             SELECT j.name, branch from job j

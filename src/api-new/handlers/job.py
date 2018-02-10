@@ -3,7 +3,7 @@ from flask import g, jsonify, abort, send_file
 from flask_restplus import Resource, fields
 
 from pyinfraboxutils import get_env
-from pyinfraboxutils.ibflask import auth_token_required, check_job_belongs_to_project
+from pyinfraboxutils.ibflask import auth_required, check_job_belongs_to_project
 from pyinfraboxutils.ibrestplus import api
 from pyinfraboxutils.storage import storage
 
@@ -42,7 +42,7 @@ job_model = api.model('JobModel', {
 @ns.route('/<job_id>')
 class Job(Resource):
 
-    @auth_token_required(['project'])
+    @auth_required(['project'])
     @ns.marshal_with(job_model)
     def get(self, project_id, job_id):
         job = g.db.execute_one_dict('''
@@ -60,7 +60,7 @@ class Job(Resource):
 @ns.route('/<job_id>/output')
 class Output(Resource):
 
-    @auth_token_required(['project'])
+    @auth_required(['project'])
     @check_job_belongs_to_project
     def get(self, project_id, job_id):
         g.release_db()
@@ -76,7 +76,7 @@ class Output(Resource):
 @ns.route('/<job_id>/manifest')
 class Project(Resource):
 
-    @auth_token_required(['project'])
+    @auth_required(['project'])
     @check_job_belongs_to_project
     def get(self, project_id, job_id):
         m = g.db.execute_one_dict('''

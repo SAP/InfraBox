@@ -15,7 +15,7 @@ class UserService {
     }
 
     _loadSettings () {
-        return APIService.get(`settings`)
+        return APIService.get(`settings/`)
             .then((s) => {
                 console.log(s)
                 store.commit('setSettings', s)
@@ -23,7 +23,7 @@ class UserService {
     }
 
     _loadUser () {
-        return APIService.get(`user`)
+        return APIService.get(`user/`)
             .then((d) => {
                 const u = new User(d.username,
                                    d.avatar_url,
@@ -33,7 +33,7 @@ class UserService {
                 store.commit('setUser', u)
 
                 if (u.hasGithubAccount() && store.state.settings.INFRABOX_GITHUB_ENABLED) {
-                    return APIService.get('github/repos')
+                    return APIService.get('github/repos/')
                 }
             })
             .then((d) => {

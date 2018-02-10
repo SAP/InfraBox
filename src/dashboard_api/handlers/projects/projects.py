@@ -1,14 +1,49 @@
 from flask import g, abort
-from flask_restplus import Resource
+from flask_restplus import Resource, fields
 
-from pyinfraboxutils.ibflask import auth_token_required, OK
+from pyinfraboxutils.ibrestplus import api
+from pyinfraboxutils.ibflask import auth_required, OK
 
-from dashboard_api import project_ns as ns
+from dashboard_api.namespaces import project as ns
+
+project_model = api.model('Project', {
+    'id': fields.String(required=True),
+    'name': fields.String(required=True),
+    'type': fields.String(required=True)
+})
+
+@ns.route('/')
+class Projects(Resource):
+
+    @auth_required(['user'], check_project_access=False)
+    @api.marshal_list_with(project_model)
+    def get(self):
+        projects = g.db.execute_many_dict('''
+            SELECT p.id, p.name, p.type FROM project p
+            INNER JOIN collaborator co
+            ON co.project_id = p.id
+            AND %s = co.user_id
+            ORDER BY p.name
+        ''', [g.token['user']['id']])
+
+        return projects
+
 
 @ns.route('/<project_id>/')
 class Project(Resource):
 
-    @auth_token_required(['user'], check_project_owner=True)
+    @auth_required(['user'], allow_if_public=True)
+    @api.marshal_list_with(project_model)
+    def get(self, project_id):
+        projects = g.db.execute_many_dict('''
+            SELECT p.id, p.name, p.type
+            FROM project p
+            WHERE id = %s
+        ''', [project_id])
+
+        return projects
+
+    @auth_required(['user'], check_project_owner=True)
     def delete(self, project_id):
 
         project = g.db.execute_one_dict('''

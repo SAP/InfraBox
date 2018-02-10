@@ -1,10 +1,10 @@
 from flask import request, g, abort
 from flask_restplus import Resource, fields
 
-from pyinfraboxutils.ibflask import auth_token_required, OK
+from pyinfraboxutils.ibflask import auth_required, OK
 from pyinfraboxutils.ibrestplus import api
 
-from dashboard_api import project_ns as ns
+from dashboard_api.namespaces import project as ns
 
 collaborator_model = api.model('Collaborator', {
     'name': fields.String(required=True),
@@ -21,7 +21,7 @@ add_collaborator_model = api.model('AddCollaborator', {
 @ns.route('/<project_id>/collaborators')
 class Collaborators(Resource):
 
-    @auth_token_required(['user'])
+    @auth_required(['user'])
     @api.marshal_list_with(collaborator_model)
     def get(self, project_id):
         p = g.db.execute_many_dict('''
@@ -32,7 +32,7 @@ class Collaborators(Resource):
         ''', [project_id])
         return p
 
-    @auth_token_required(['user'], check_project_owner=True)
+    @auth_required(['user'], check_project_owner=True)
     @api.expect(add_collaborator_model)
     def post(self, project_id):
         b = request.get_json()
@@ -57,7 +57,7 @@ class Collaborators(Resource):
 @ns.route('/<project_id>/collaborators/<user_id>')
 class Collaborator(Resource):
 
-    @auth_token_required(['user'], check_project_owner=True)
+    @auth_required(['user'], check_project_owner=True)
     def delete(self, project_id, user_id):
         owner_id = g.token['user']['id']
 
