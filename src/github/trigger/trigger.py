@@ -19,14 +19,45 @@ def res(status, message):
 def remove_ref(ref):
     return "/".join(ref.split("/")[2:])
 
+def get_next_page(r):
+    link = r.headers.get('Link', None)
+
+    if not link:
+        return None
+
+    n1 = link.find('rel=\"next\"')
+
+    if not n1:
+        return None
+
+    n2 = link.rfind('<', 0, n1)
+
+    if not n2:
+        return None
+
+    n2 += 1
+    n3 = link.find('>;', n2)
+    return link[n2:n3]
+
+
 def get_commits(url, token):
     headers = {
         "Authorization": "token " + token,
         "User-Agent": "InfraBox"
-    },
+    }
 
     # TODO(ib-steffen): allow custom ca bundles
-    return requests.get(url + '?per_page=999', headers, verify=False).json()
+    r = requests.get(url + '?per_page=100', headers, verify=False)
+    result = []
+    result.extend(r.json())
+
+    p = get_next_page(r)
+    while p:
+        r = requests.get(p, headers, verify=False)
+        p = get_next_page(r)
+        result.extend(r.json())
+
+    return result
 
 
 class Trigger(object):
