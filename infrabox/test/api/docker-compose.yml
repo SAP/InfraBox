@@ -3,30 +3,26 @@ version: "3.2"
 services:
     postgres:
         build:
-            context: ../../..
-            dockerfile: src/postgres/Dockerfile
-
-    github-trigger:
-        build:
-            context: ../../..
-            dockerfile: src/github/trigger/Dockerfile
-        environment:
-            - INFRABOX_VERSION=test
-            - INFRABOX_SERVICE=github-trigger
-            - INFRABOX_DATABASE_USER=postgres
-            - INFRABOX_DATABASE_PASSWORD=postgres
-            - INFRABOX_DATABASE_HOST=postgres
-            - INFRABOX_DATABASE_PORT=5432
-            - INFRABOX_DATABASE_DB=postgres
-            - INFRABOX_GITHUB_CLIENT_ID=myid
-            - INFRABOX_GITHUB_CLIENT_SECRET=myscret
-            - INFRABOX_GITHUB_WEBHOOK_SECRET=webhooksecret
+            context: ../../../
+            dockerfile: ./src/postgres/Dockerfile
 
     test:
         build:
-            context: ../../..
-            dockerfile: infrabox/test/api/Dockerfile
-        command: /utils/wait-for-webserver.sh github-trigger:8080 python /test/tests.py
+            context: ../../../
+            dockerfile: ./infrabox/test/api/Dockerfile
+        environment:
+            - INFRABOX_DATABASE_HOST=postgres
+            - INFRABOX_DATABASE_USER=postgres
+            - INFRABOX_DATABASE_PASSWORD=postgres
+            - INFRABOX_DATABASE_DB=postgres
+            - INFRABOX_DATABASE_PORT=5432
+            - INFRABOX_STORAGE_S3_ENABLED=false
+            - INFRABOX_STORAGE_GCS_ENABLED=true
+            - INFRABOX_STORAGE_GCS_PROJECT_UPLOAD_BUCKET=test
+            - INFRABOX_STORAGE_GCS_CONTAINER_OUTPUT_BUCKET=test
+            - INFRABOX_STORAGE_GCS_PROJECT_ID=my-project
+            - GOOGLE_APPLICATION_CREDENTIALS=
+            - INFRABOX_ROOT_URL=localhost
         links:
             - postgres
-            - github-trigger
+

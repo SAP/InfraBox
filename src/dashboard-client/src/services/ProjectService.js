@@ -11,7 +11,7 @@ class ProjectService {
     }
 
     deleteProject (id) {
-        APIService.delete(`project/${id}`)
+        APIService.delete(`projects/${id}`)
         .then((response) => {
             NotificationService.$emit('NOTIFICATION', new Notification(response))
             store.commit('deleteProject', id)
@@ -20,7 +20,7 @@ class ProjectService {
 
     addProject (name, priv, type, githubRepoName) {
         const d = { name: name, type: type, private: priv, github_repo_name: githubRepoName }
-        return APIService.post('project', d)
+        return APIService.post('projects', d)
         .then((response) => {
             NotificationService.$emit('NOTIFICATION', new Notification(response))
             this._loadProjects()
@@ -35,7 +35,7 @@ class ProjectService {
             }
         }
 
-        return APIService.get(`project/name/${name}`)
+        return APIService.get(`projects/name/${name}`)
             .then((project) => {
                 store.commit('addProjects', [project])
                 return project
@@ -43,7 +43,7 @@ class ProjectService {
     }
 
     _loadProjects () {
-        return APIService.get('project')
+        return APIService.get('projects/')
         .then((response) => {
             store.commit('addProjects', response)
         })

@@ -81,7 +81,6 @@ services:
 
     dashboard-api:
         image: $INFRABOX_DOCKER_REGISTRY/infrabox/dashboard
-        command: node /dashboard/dist/server/app.js
         environment:
             - INFRABOX_SERVICE=dashboard
             - INFRABOX_VERSION=latest
@@ -97,12 +96,11 @@ services:
             - INFRABOX_STORAGE_S3_PROJECT_UPLOAD_BUCKET=infrabox-project-upload
             - INFRABOX_STORAGE_S3_CONTAINER_OUTPUT_BUCKET=infrabox-container-output
             - INFRABOX_GITHUB_ENABLED=false
-            - INFRABOX_DASHBOARD_URL="localhost"
+            - INFRABOX_GERRIT_ENABLED=false
+            - INFRABOX_ACCOUNT_LDAP_ENABLED=false
             - INFRABOX_DASHBOARD_PORT=8080
             - INFRABOX_DASHBOARD_SECRET=secret
             - INFRABOX_DASHBOARD_MONITORING_PORT=8080
-            - INFRABOX_API_URL="localhost/api"
-            - INFRABOX_DOCS_URL="localhost/docs"
             - INFRABOX_DOCKER_REGISTRY_URL="localhost"
         links:
            - minio
@@ -139,11 +137,9 @@ services:
             - INFRABOX_STORAGE_S3_PROJECT_UPLOAD_BUCKET=infrabox-project-upload
             - INFRABOX_STORAGE_S3_CONTAINER_OUTPUT_BUCKET=infrabox-container-output
             - INFRABOX_GITHUB_ENABLED=false
-            - INFRABOX_DASHBOARD_URL="localhost/dashboard"
             - INFRABOX_API_PORT=8080
             - INFRABOX_API_MONITORING_PORT=8080
-            - INFRABOX_API_URL="localhost/api/"
-            - INFRABOX_DOCS_URL="localhost/docs/"
+            - INFRABOX_ROOT_URL="localhost"
             - INFRABOX_DOCKER_REGISTRY_URL="localhost"
             - INFRABOX_JOB_MAX_OUTPUT_SIZE=104857600
             - INFRABOX_JOB_SECURITY_CONTEXT_CAPABILITIES_ENABLED=false

@@ -1,0 +1,13 @@
+FROM alpine:3.6
+
+RUN apk add --no-cache python py2-psycopg2 py2-pip gcc openssl libffi-dev python2-dev musl-dev py2-flask openssl-dev py2-requests && \
+    pip install PyJWT jsonschema cryptography flask_restplus eventlet flask_socketio boto3 google-cloud-storage future prometheus_client && \
+    apk del gcc python2-dev musl-dev openssl-dev libffi-dev
+
+ENV PYTHONPATH=/code
+
+COPY src/dashboard_api /code/dashboard_api
+COPY src/pyinfraboxutils /code/pyinfraboxutils
+COPY src/pyinfrabox /code/pyinfrabox
+
+CMD python /code/dashboard_api/__init__.py

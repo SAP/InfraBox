@@ -9,7 +9,7 @@ with open('/infrabox/output/e2e/compose/docker-compose.yml') as i:
 #del data['services']['api']['image']
 #data['services']['api']['build'] = {
 #    'context': '../../../../..',
-#    'dockerfile': 'src/api-new/Dockerfile'
+#    'dockerfile': 'src/api/Dockerfile'
 #}
 
 env = None
@@ -31,9 +31,8 @@ data['services']['test'] = {
         'INFRABOX_DATABASE_USER=postgres',
         'INFRABOX_DATABASE_PORT=5432',
         'INFRABOX_DATABASE_PASSWORD=postgres',
-        'INFRABOX_API_URL=http://nginx-ingress/api',
-        'INFRABOX_URL=http://nginx-ingress',
-        'INFRABOX_ROOT_URL=http://nginx-ingress'
+        'INFRABOX_ROOT_URL=http://nginx-ingress',
+        'INFRABOX_URL=http://nginx-ingress'
     ],
     'links': ['postgres', 'nginx-ingress'],
     'networks': ['infrabox'],
