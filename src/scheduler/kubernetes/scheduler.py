@@ -133,8 +133,8 @@ class Scheduler(object):
             "name": "INFRABOX_JOB_DAEMON_JSON",
             "value": self.daemon_json
         }, {
-            "name": "INFRABOX_DASHBOARD_URL",
-            "value": os.environ['INFRABOX_DASHBOARD_URL']
+            "name": "INFRABOX_ROOT_URL",
+            "value": os.environ['INFRABOX_ROOT_URL']
         }, {
             "name": "INFRABOX_JOB_TOKEN",
             "value": encode_job_token(job_id).decode()
@@ -731,7 +731,7 @@ def main():
     get_env('INFRABOX_DATABASE_PASSWORD')
     get_env('INFRABOX_DATABASE_HOST')
     get_env('INFRABOX_DATABASE_PORT')
-    get_env('INFRABOX_DASHBOARD_URL')
+    get_env('INFRABOX_ROOT_URL')
     get_env('INFRABOX_DOCKER_REGISTRY_URL')
     get_env('INFRABOX_GENERAL_DONT_CHECK_CERTIFICATES')
     get_env('INFRABOX_GENERAL_WORKER_NAMESPACE')

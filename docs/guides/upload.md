@@ -24,11 +24,11 @@ We can use [infraboxcli](https://github.com/InfraBox/cli) to intialize a project
 Before we can push the projec to InfraBox we have to configure the environment.
 
     $ export INFRABOX_CLI_TOKEN=<THE_TOKEN_YOU_CREATED_EARLIER>
-    $ export INFRABOX_API_URL=https://infrabox.ninja/api/cli
+    $ export INFRABOX_URL=https://infrabox.ninja
 
 If You used docker-compose to start InfraBox you have to set instead:
 
-    $ export INFRABOX_API_URL=http://localhost:8090/api/cli
+    $ export INFRABOX_URL=http://localhost:8090
 
 To actually push your project run
 

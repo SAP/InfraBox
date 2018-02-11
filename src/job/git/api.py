@@ -2,6 +2,7 @@
 import subprocess
 import os
 import traceback
+import shutil
 
 from gevent.wsgi import WSGIServer
 

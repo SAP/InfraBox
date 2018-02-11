@@ -65,8 +65,8 @@ spec:
                 {{ include "env_general" . | indent 16 }}
                 {{ include "env_kubernetes" . | indent 16 }}
                 -
-                    name: INFRABOX_DASHBOARD_URL
-                    value: {{ required "dashboard.url is required" .Values.dashboard.url }}
+                    name: INFRABOX_ROOT_URL
+                    value: {{ required "root_url is required" .Values.root_url }}
                 -
                     name: INFRABOX_DOCKER_REGISTRY_URL
                     value: {{ required "docker_registry.url is required" .Values.docker_registry.url }}

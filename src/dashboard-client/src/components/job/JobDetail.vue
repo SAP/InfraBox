@@ -6,7 +6,7 @@
                     <h3 class="md-title left-margin">
                         <md-layout>
                             <md-layout md-hide-medium-and-up md-vertical-align="center" v-if="$store.state.user">
-                                <ib-state :state="data.build.state"></ib-state>
+                                <ib-state :state="data.job.state"></ib-state>
                             </md-layout>
                             <md-layout md-vertical-align="center">
                                 <router-link :to="{name: 'ProjectDetailBuilds', params: {projectName: data.project.name}}">
@@ -98,7 +98,7 @@
                     </h3>
                 </md-card-header-text>
             </md-card-header>
-            <md-speed-dial md-open="hover" md-direction="bottom" class="md-fab-top-right" md-theme="default">
+            <md-speed-dial v-if="$store.state.user" md-open="hover" md-direction="bottom" class="md-fab-top-right" md-theme="default">
                 <md-button class="md-icon-button md-primary" md-fab-trigger>
                     <md-icon md-icon-morph>more_vert</md-icon>
                     <md-icon>more_vert</md-icon>
@@ -234,7 +234,7 @@ export default {
                 // eslint-disable-next-line no-unused-expressions
                 this.buildRestartCounter
                 // eslint-disable-next-line no-unused-expressions
-                this.jobId
+                this.jobName
             }
         }
     },

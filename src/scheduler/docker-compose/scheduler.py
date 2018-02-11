@@ -77,7 +77,7 @@ class Scheduler(object):
             '-e', "INFRABOX_DOCKER_REGISTRY_URL=localhost:8090",
             '-e', "INFRABOX_LOCAL_CACHE_ENABLED=false",
             '-e', "INFRABOX_JOB_MAX_OUTPUT_SIZE=%s" % os.environ['INFRABOX_JOB_MAX_OUTPUT_SIZE'],
-            '-e', "INFRABOX_DASHBOARD_URL=http://localhost",
+            '-e', "INFRABOX_ROOT_URL=http://localhost",
             '-e', "INFRABOX_JOB_MOUNT_DOCKER_SOCKET=false",
             '-e', "INFRABOX_JOB_TOKEN=%s" % token,
             '-e', "INFRABOX_JOB_DAEMON_JSON=%s" % self.daemon_json,
