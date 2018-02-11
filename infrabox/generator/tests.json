@@ -12,8 +12,8 @@
         "resources": { "limits": { "cpu": 1, "memory": 1024 } }
     }, {
         "type": "docker-compose",
-        "name": "api-new",
-        "docker_compose_file": "../../infrabox/test/api-new/docker-compose.yml",
+        "name": "api",
+        "docker_compose_file": "../../infrabox/test/api/docker-compose.yml",
         "resources": { "limits": { "cpu": 1, "memory": 1024 } }
     }, {
         "type": "docker-compose",

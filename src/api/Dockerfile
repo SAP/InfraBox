@@ -6,7 +6,7 @@ RUN apk add --no-cache python py2-psycopg2 py2-pip gcc openssl libffi-dev python
 
 ENV PYTHONPATH=/
 
-COPY src/api-new /api
+COPY src/api /api
 COPY src/pyinfraboxutils /pyinfraboxutils
 COPY src/pyinfrabox /pyinfrabox
 
