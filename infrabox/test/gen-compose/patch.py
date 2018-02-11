@@ -9,7 +9,7 @@ with open('/infrabox/output/e2e/compose/docker-compose.yml') as i:
 #del data['services']['api']['image']
 #data['services']['api']['build'] = {
 #    'context': '../../../../..',
-#    'dockerfile': 'src/api-new/Dockerfile'
+#    'dockerfile': 'src/api/Dockerfile'
 #}
 
 env = None
