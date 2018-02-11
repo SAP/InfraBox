@@ -31,7 +31,8 @@ data['services']['test'] = {
         'INFRABOX_DATABASE_USER=postgres',
         'INFRABOX_DATABASE_PORT=5432',
         'INFRABOX_DATABASE_PASSWORD=postgres',
-        'INFRABOX_ROOT_URL=http://nginx-ingress'
+        'INFRABOX_ROOT_URL=http://nginx-ingress',
+        'INFRABOX_URL=http://nginx-ingress'
     ],
     'links': ['postgres', 'nginx-ingress'],
     'networks': ['infrabox'],
