@@ -22,7 +22,7 @@ def main():
     get_env('INFRABOX_GERRIT_HOSTNAME')
     get_env('INFRABOX_GERRIT_USERNAME')
     get_env('INFRABOX_GERRIT_KEY_FILENAME')
-    get_env('INFRABOX_DASHBOARD_URL')
+    get_env('INFRABOX_ROOT_URL')
 
     conn = connect_db()
     conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
@@ -73,7 +73,7 @@ def handle_job_update(conn, update):
     gerrit_hostname = get_env('INFRABOX_GERRIT_HOSTNAME')
     gerrit_username = get_env('INFRABOX_GERRIT_USERNAME')
     gerrit_key_filename = get_env('INFRABOX_GERRIT_KEY_FILENAME')
-    dashboard_url = get_env('INFRABOX_DASHBOARD_URL')
+    dashboard_url = get_env('INFRABOX_ROOT_URL')
 
     client = paramiko.SSHClient()
     client.load_system_host_keys()

@@ -10,7 +10,12 @@ if (window.location.protocol === 'https:') {
 const host = protocol + '//' + process.env.DASHBOARD_HOST
 
 const socket = Socket(host, {
-    path: '/live/dashboard/'
+    path: '/api/dashboard/socket.io'
+})
+
+socket.on('connect_error', (error) => {
+    console.log(error)
+    socket.close()
 })
 
 Vue.use(VueSocketio, socket)
@@ -43,7 +48,7 @@ export default new Vue({
         disconnect () {
             this.$emit('DISCONNECTED')
         },
-        'notify:jobs' (val) {
+        'notify:job' (val) {
             this.$emit('NOTIFY_JOBS', val)
         },
         'notify:console' (val) {

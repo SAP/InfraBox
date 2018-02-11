@@ -58,11 +58,6 @@ spec:
                     servicePort: 8080
             {{ end }}
             -
-                path: /live/dashboard
-                backend:
-                    serviceName: infrabox-dashboard-api
-                    servicePort: 8080
-            -
                 path: /v2
                 backend:
                     serviceName: infrabox-docker-registry

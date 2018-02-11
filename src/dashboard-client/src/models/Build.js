@@ -41,7 +41,7 @@ export default class Build {
     }
 
     abort () {
-        return APIService.get(`project/${this.project.id}/build/${this.id}/kill`)
+        return APIService.get(`projects/${this.project.id}/builds/${this.id}/abort`)
             .then((message) => {
                 NotificationService.$emit('NOTIFICATION', new Notification(message, 'done'))
             })
@@ -51,7 +51,7 @@ export default class Build {
     }
 
     restart () {
-        return APIService.get(`project/${this.project.id}/build/${this.id}/restart`)
+        return APIService.get(`projects/${this.project.id}/builds/${this.id}/restart`)
             .then((message) => {
                 NotificationService.$emit('NOTIFICATION', new Notification(message, 'done'))
                 router.push(`/project/${this.project.name}/build/${this.number}/${message.data.build.restartCounter}/`)
@@ -62,7 +62,7 @@ export default class Build {
     }
 
     clearCache () {
-        return APIService.get(`project/${this.project.id}/build/${this.id}/cache/clear`)
+        return APIService.get(`projects/${this.project.id}/builds/${this.id}/cache/clear`)
             .then((message) => {
                 NotificationService.$emit('NOTIFICATION', new Notification(message, 'done'))
             })

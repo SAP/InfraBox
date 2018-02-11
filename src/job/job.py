@@ -1,16 +1,14 @@
 #!/usr/bin/python
-#pylint: disable=too-many-lines
+#pylint: disable=too-many-lines,attribute-defined-outside-init,too-many-public-methods,too-many-locals
 import os
 import shutil
 import time
 import json
 import subprocess
-import stat
 import uuid
 import base64
 import traceback
 import requests
-import yaml
 
 from pyinfrabox.infrabox import validate_json
 from pyinfrabox.docker_compose import create_from
@@ -110,7 +108,7 @@ class RunJob(Job):
                 "build": {
                     "id": self.build['id'],
                     "number": self.build['build_number'],
-                    "url": os.environ['INFRABOX_DASHBOARD_URL'] \
+                    "url": os.environ['INFRABOX_ROOT_URL'] \
                            + '/dashboard/#/project/' + self.project['name'] \
                            + '/build/' + str(self.build['build_number']) \
                            + '/' + str(self.build['restart_counter'])
@@ -207,6 +205,9 @@ class RunJob(Job):
 
             if not os.path.exists(self.mount_repo_dir):
                 os.makedirs(self.mount_repo_dir)
+            else:
+                c.collect('Source already exists, deleting it')
+                c.execute(['rm', '-rf', self.mount_repo_dir + '/*'], show=True)
 
             c.execute(['unzip', storage_source_zip, '-d', self.mount_repo_dir])
         elif self.project['type'] == 'test':
@@ -381,6 +382,14 @@ class RunJob(Job):
             else:
                 c.collect("No jobs\n")
 
+    def _get_size(self, start_path):
+        total_size = 0
+        for dirpath, _, filenames in os.walk(start_path):
+            for f in filenames:
+                fp = os.path.join(dirpath, f)
+                total_size += os.path.getsize(fp)
+        return total_size
+
     def main_run_job(self):
         c = self.console
         self.create_jobs_json()
@@ -448,7 +457,7 @@ class RunJob(Job):
         self.create_dynamic_jobs()
 
         # Compressing output
-        c.collect("Updating Cache", show=True)
+        c.collect("Handling output", show=True)
         if os.path.isdir(self.infrabox_output_dir) and os.listdir(self.infrabox_output_dir):
             storage_output_dir = os.path.join(self.storage_dir, self.job['id'])
             os.makedirs(storage_output_dir)
@@ -1029,7 +1038,7 @@ def main():
     get_env('INFRABOX_SERVICE')
     get_env('INFRABOX_VERSION')
     get_env('INFRABOX_DOCKER_REGISTRY_URL')
-    get_env('INFRABOX_DASHBOARD_URL')
+    get_env('INFRABOX_ROOT_URL')
     get_env('INFRABOX_GENERAL_DONT_CHECK_CERTIFICATES')
     get_env('INFRABOX_LOCAL_CACHE_ENABLED')
     get_env('INFRABOX_JOB_MAX_OUTPUT_SIZE')

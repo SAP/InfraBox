@@ -41,7 +41,10 @@
 <script>
 export default {
     name: 'Console',
-    props: ['job']
+    props: ['job'],
+    created: function () {
+        this.job.loadConsole()
+    }
 }
 </script>
 
