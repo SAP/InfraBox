@@ -81,7 +81,6 @@ services:
 
     dashboard-api:
         image: $INFRABOX_DOCKER_REGISTRY/infrabox/dashboard
-        command: node /dashboard/dist/server/app.js
         environment:
             - INFRABOX_SERVICE=dashboard
             - INFRABOX_VERSION=latest
