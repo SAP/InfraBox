@@ -1,3 +1,5 @@
+import json
+
 from flask import g, abort
 from flask_restplus import Resource
 
@@ -25,10 +27,12 @@ def restart_build(project_id, build_id):
 
     result = g.db.execute_one_dict('''
         SELECT max(restart_counter) as restart_counter
-        FROM build WHERE build_number = $1 and project_id = $2
+        FROM build
+        WHERE build_number = %s
+          AND project_id = %s
     ''', [build['build_number'], project_id])
 
-    restart_counter = result.restart_counter + 1
+    restart_counter = result['restart_counter'] + 1
 
     result = g.db.execute_one_dict('''
         INSERT INTO build (commit_id, build_number,
@@ -43,19 +47,33 @@ def restart_build(project_id, build_id):
     new_build_id = result['id']
 
     job = g.db.execute_one_dict('''
-           SELECT repo, env_var FROM job
+           SELECT repo, env_var, definition FROM job
            WHERE project_id = %s
            AND name = 'Create Jobs'
            AND build_id = %s
     ''', [project_id, build_id])
+
+    env_var = job['env_var']
+    if env_var:
+        env_var = json.dumps(env_var)
+
+    repo = job['repo']
+    if repo:
+        repo = json.dumps(repo)
+
+    definition = job['definition']
+    if definition:
+        definition = json.dumps(definition)
 
     g.db.execute('''
         INSERT INTO job (id, state, build_id, type,
             name, cpu, memory, project_id, build_only, dockerfile, repo, env_var, definition)
         VALUES (gen_random_uuid(), 'queued', %s, 'create_job_matrix',
                 'Create Jobs', 1, 1024, %s, false, '', %s, %s, %s);
-    ''', [new_build_id, project_id, job['repo'], job['env_var'], job['definition']])
+    ''', [new_build_id, project_id, repo, env_var, definition])
     g.db.commit()
+
+    return OK('Restarted', {'build': {'id': new_build_id, 'restartCounter': restart_counter}})
 
 
 @ns.route('/<project_id>/builds/<build_id>/restart')
@@ -63,8 +81,7 @@ class BuildRestart(Resource):
 
     @auth_required(['user'])
     def get(self, project_id, build_id):
-        restart_build(project_id, build_id)
-        return OK('Aborted all jobs')
+        return restart_build(project_id, build_id)
 
 
 @ns.route('/<project_id>/builds/<build_id>/abort')
@@ -76,7 +93,7 @@ class BuildAbort(Resource):
             SELECT id
             FROM job
             WHERE build_id = %s
-                AND project_id = %s
+              AND project_id = %s
         ''', [build_id, project_id])
 
 
@@ -127,7 +144,7 @@ class Build(Resource):
             -- project
             p.id as project_id,
             p.name as project_name,
-            p.type as project,
+            p.type as project_type,
             -- commit
             c.id as commit_id,
             c.message as commit_message,
@@ -194,13 +211,13 @@ class Build(Resource):
                 'job': {
                     'id': j['job_id'],
                     'state': j['job_state'],
-                    'start_date': j['job_start_date'],
-                    'end_date': j['job_end_date'],
+                    'start_date': str(j['job_start_date']),
+                    'end_date': str(j['job_end_date']),
                     'name': j['job_name'],
                     'memory': j['job_memory'],
                     'cpu': j['job_cpu'],
                     'dependencies': j['job_dependencies'],
-                    'created_at': j['job_created_at']
+                    'created_at': str(j['job_created_at'])
                 }
             }
 

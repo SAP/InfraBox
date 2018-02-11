@@ -19,7 +19,7 @@
                                 / Build {{ data.build.number }}.{{ data.build.restartCounter }}
                             </md-layout>
                             <md-layout md-hide-medium-and-up class="min-header-height" md-vertical-align="center">
-                                <md-menu md-size="3" class="bg-white" md-hide-small-and-up>
+                                <md-menu v-if="$store.state.user" md-size="3" class="bg-white" md-hide-small-and-up>
                                     <md-button md-theme="default" class="md-icon-button md-primary" md-menu-trigger>
                                         <md-icon>info</md-icon>
                                     </md-button>
@@ -84,7 +84,7 @@
                     </h3>
                 </md-card-header-text>
             </md-card-header>
-            <md-speed-dial md-open="hover" md-direction="bottom" class="md-fab-top-right" md-theme="default">
+            <md-speed-dial v-if="$store.state.user" md-open="hover" md-direction="bottom" class="md-fab-top-right" md-theme="default">
                 <md-button class="md-icon-button md-primary" md-fab-trigger>
                     <md-icon md-icon-morph>more_vert</md-icon>
                     <md-icon>more_vert</md-icon>

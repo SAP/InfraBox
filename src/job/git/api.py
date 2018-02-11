@@ -57,9 +57,6 @@ class Clone(Resource):
             if sub_path:
                 mount_repo_dir = os.path.join(mount_repo_dir, sub_path)
 
-            if os.path.exists(mount_repo_dir):
-                shutil.rmtree(mount_repo_dir)
-
             if os.environ['INFRABOX_GENERAL_DONT_CHECK_CERTIFICATES'] == 'true':
                 output += self.execute(('git', 'config', '--global', 'http.sslVerify', 'false'))
 

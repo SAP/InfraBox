@@ -68,14 +68,15 @@ def main(): # pragma: no cover
     get_env('INFRABOX_GERRIT_ENABLED')
     get_env('INFRABOX_ACCOUNT_SIGNUP_ENABLED')
     get_env('INFRABOX_ACCOUNT_LDAP_ENABLED')
-    get_env('INFRABOX_API_URL')
-    get_env('INFRABOX_DASHBOARD_URL')
+    get_env('INFRABOX_ROOT_URL')
 
     app.config['MAX_CONTENT_LENGTH'] = 1024 * 1024 * 1024
 
+    client_manager = ClientManager()
     sio = flask_socketio.SocketIO(app,
-                                  path='/dashboard/socket.io',
-                                  async_mode='eventlet')
+                                  path='/api/dashboard/socket.io',
+                                  async_mode='eventlet',
+                                  client_manager=client_manager)
 
     @sio.on('connect')
     def __connect():
@@ -90,7 +91,6 @@ def main(): # pragma: no cover
     @sio.on('listen:jobs')
     def __listen_build(project_id):
         logger.debug('listen:jobs for %s', project_id)
-        token = get_token()
 
         if not project_id:
             logger.debug('project_id not set')
@@ -111,6 +111,7 @@ def main(): # pragma: no cover
             ''', [project_id])
 
             if not p['public']:
+                token = get_token()
                 if token['type'] == 'user':
                     user_id = token['user']['id']
                     collaborator = is_collaborator(user_id, project_id)
@@ -130,7 +131,6 @@ def main(): # pragma: no cover
     @sio.on('listen:console')
     def __listen_console(job_id):
         logger.debug('listen:console for %s', job_id)
-        token = get_token()
 
         if not job_id:
             logger.debug('job_id not set')
@@ -157,6 +157,7 @@ def main(): # pragma: no cover
                 return flask_socketio.disconnect()
 
             if not u['public']:
+                token = get_token()
                 if token['type'] == 'user':
                     user_id = token['user']['id']
                     collaborator = is_collaborator(user_id, u['project_id'])
@@ -173,7 +174,6 @@ def main(): # pragma: no cover
         flask_socketio.join_room(job_id)
 
     logger.info('Starting DB listeners')
-    client_manager = ClientManager()
     sio.start_background_task(dashboard_api.listeners.job.listen, sio)
     sio.start_background_task(dashboard_api.listeners.console.listen, sio, client_manager)
 

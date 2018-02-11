@@ -13,13 +13,13 @@
                     <md-list-item class="m-r-xl">
                         <div>
                             <img :src="buildState" />
-                            <pre>[![Build Status]({{ api_host }}/../v1/projects/{{ project.id }}/state.svg)]({{ dashboard_host }}/dashboard/#/project/{{ project.name }})</pre>
+                            <pre>[![Build Status]({{ root_url }}/api/v1/projects/{{ project.id }}/state.svg)]({{ dashboard_host }}/dashboard/#/project/{{ project.name }})</pre>
                         </div>
                     </md-list-item>
                     <md-list-item class="m-r-xl">
                         <div>
                             <img :src="testState" />
-                            <pre>[![Test Status]({{ api_host }}/../v1/projects/{{ project.id }}/tests.svg)]({{ dashboard_host }}/dashboard/#/project/{{ project.name }})</pre>
+                            <pre>[![Test Status]({{ root_url }}/api/v1/projects/{{ project.id }}/tests.svg)]({{ dashboard_host }}/dashboard/#/project/{{ project.name }})</pre>
                         </div>
                     </md-list-item>
                 </md-list>
@@ -34,10 +34,9 @@ import store from '../../store'
 export default {
     props: ['project'],
     created () {
-        this.api_host = store.state.settings.INFRABOX_API_URL
-        this.dashboard_host = store.state.settings.INFRABOX_DASHBOARD_URL
-        this.buildState = `${this.api_host}/../v1/projects/${this.project.id}/state.svg`
-        this.testState = `${this.api_host}/../v1/projects/${this.project.id}/tests.svg`
+        this.root_url = store.state.settings.INFRABOX_ROOT_URL
+        this.buildState = `${this.root_url}/api/v1/projects/${this.project.id}/state.svg`
+        this.testState = `${this.root_url}/api/v1/projects/${this.project.id}/tests.svg`
     }
 }
 </script>

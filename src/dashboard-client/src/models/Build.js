@@ -41,7 +41,7 @@ export default class Build {
     }
 
     abort () {
-        return APIService.get(`projects/${this.project.id}/builds/${this.id}/kill`)
+        return APIService.get(`projects/${this.project.id}/builds/${this.id}/abort`)
             .then((message) => {
                 NotificationService.$emit('NOTIFICATION', new Notification(message, 'done'))
             })

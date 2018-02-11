@@ -23,7 +23,7 @@ class UserService {
     }
 
     _loadUser () {
-        return APIService.get(`user/`)
+        return APIService.get(`user/`, true)
             .then((d) => {
                 const u = new User(d.username,
                                    d.avatar_url,

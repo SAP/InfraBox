@@ -148,7 +148,9 @@ export default class Job {
             }
         }
 
-        this.currentSection.generateHtml()
+        if (this.currentSection) {
+            this.currentSection.generateHtml()
+        }
     }
 
     getTest (name, suite) {
@@ -166,6 +168,21 @@ export default class Job {
         return APIService.get(`projects/${this.project.id}/jobs/${this.id}/badges`)
             .then((badges) => {
                 store.commit('setBadges', { job: this, badges: badges })
+            })
+            .catch((err) => {
+                NotificationService.$emit('NOTIFICATION', new Notification(err))
+            })
+    }
+
+    loadConsole () {
+        if (this.sections.length) {
+            return
+        }
+
+        return APIService.get(`projects/${this.project.id}/jobs/${this.id}/console`)
+            .then((console) => {
+                store.commit('setConsole', { job: this, console: console })
+                events.listenConsole(this.id)
             })
             .catch((err) => {
                 NotificationService.$emit('NOTIFICATION', new Notification(err))
@@ -243,7 +260,7 @@ export default class Job {
     }
 
     abort () {
-        return APIService.get(`projects/${this.project.id}/jobs/${this.id}/kill`)
+        return APIService.get(`projects/${this.project.id}/jobs/${this.id}/abort`)
             .then((message) => {
                 NotificationService.$emit('NOTIFICATION', new Notification(message, 'done'))
             })
@@ -255,6 +272,7 @@ export default class Job {
     restart () {
         return APIService.get(`projects/${this.project.id}/jobs/${this.id}/restart`)
             .then((message) => {
+                console.log(message)
                 NotificationService.$emit('NOTIFICATION', new Notification(message, 'done'))
 
                 this.sections = []
