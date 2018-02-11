@@ -97,6 +97,8 @@ services:
             - INFRABOX_STORAGE_S3_CONTAINER_OUTPUT_BUCKET=infrabox-container-output
             - INFRABOX_GITHUB_ENABLED=false
             - INFRABOX_GERRIT_ENABLED=false
+            - INFRABOX_ACCOUNT_SIGNUP_ENABLED=true
+            - INFRABOX_ACCOUNT_LDAP_ENABLED=false
             - INFRABOX_DASHBOARD_PORT=8080
             - INFRABOX_DASHBOARD_SECRET=secret
             - INFRABOX_DASHBOARD_MONITORING_PORT=8080
