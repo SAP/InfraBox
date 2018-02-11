@@ -1,14 +1,18 @@
 # <a href="http://infrabox.net"><img src="src\dashboard-client\static\logo_compact_transparent.png" width="200"></a> [![Build Status](https://infrabox.ninja/api/v1/projects/0c8204bb-7ce5-48a3-aa08-0fc38d7255d0/state.svg?branch=master)](https://infrabox.ninja/dashboard/#/project/infrabox)
 
-InfraBox is a serverless computing platform focusing on efficiently executing build and test workflows for your project. You may execute everything on InfraBox which runs in a docker container. Some of InfraBox features include:
+InfraBox is a continuous integration system. It's well suited for cloud native applications and has [native support for kubernetes](https://github.com/InfraBox/examples/tree/master/kubernetes). Watch our short introduction video:
 
-- [Static and dynamic workflows](https://infrabox.ninja/docs/#dynamic-workflows)
-- [Set resource limits (CPU and memory) for each task](https://infrabox.ninja/docs/#workflow-config)
+[![Introduction to InfraBox](https://img.youtube.com/vi/O8N2U7d404I/0.jpg)](https://www.youtube.com/watch?v=O8N2U7d404I)
+
+Some of InfraBox' features are:
+
+- [Static and dynamic workflows](https://github.com/InfraBox/examples)
+- [Set resource limits (CPU and memory) for each task](https://github.com/InfraBox/examples)
 - [GitHub integration](docs/configure/github.md)
 - [Gerrit integration](docs/configure/gerrit.md)
 - GitLab (comming soon)
 - [LDAP support](docs/configure/ldap.md)
-- [and many more](http://infrabox.net)
+- [and many more, see our examples](https://github.com/InfraBox/examples)
 
 ## Want to see it in action?
 InfraBox is built on InfraBox. See all the builds [here](https://infrabox.ninja/dashboard/#/project/infrabox).

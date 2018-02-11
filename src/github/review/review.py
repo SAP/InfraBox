@@ -26,7 +26,7 @@ def main(): # pragma: no cover
     get_env('INFRABOX_DATABASE_PASSWORD')
     get_env('INFRABOX_DATABASE_HOST')
     get_env('INFRABOX_DATABASE_PORT')
-    get_env('INFRABOX_DASHBOARD_URL')
+    get_env('INFRABOX_ROOT_URL')
 
     conn = connect_db()
     conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
@@ -60,7 +60,7 @@ def handle_job_update(conn, update):
     commit_sha = update['data']['commit']['id']
     build_number = update['data']['build']['build_number']
     build_restartCounter = update['data']['build']['restart_counter']
-    dashboard_url = get_env('INFRABOX_DASHBOARD_URL')
+    dashboard_url = get_env('INFRABOX_ROOT_URL')
 
     # determine github commit state
     state = 'success'

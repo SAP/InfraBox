@@ -56,13 +56,25 @@ class S3(object):
     def download_cache(self, key):
         return self._download(self.cache_bucket, key)
 
+    def delete_cache(self, key):
+        return self._delete(self.cache_bucket, key)
+
+    def _delete(self, bucket, key):
+        client = self._get_client()
+        try:
+            client.delete_object(Bucket=bucket,
+                                 Key=key)
+        except Exception as e:
+            print e
+            return None
+
+
     def _download(self, bucket, key):
         client = self._get_client()
         try:
             result = client.get_object(Bucket=bucket,
                                        Key=key)
-        except Exception as e:
-            print e
+        except:
             return None
 
         path = '/tmp/%s_%s' % (uuid.uuid4(), key)
@@ -111,6 +123,16 @@ class GCS(object):
     def download_cache(self, key):
         bucket = get_env('INFRABOX_STORAGE_GCS_CONTAINER_CONTENT_CACHE_BUCKET')
         return self._download(bucket, key)
+
+    def delete_cache(self, key):
+        bucket = get_env('INFRABOX_STORAGE_GCS_CONTAINER_CONTENT_CACHE_BUCKET')
+        return self._delete(bucket, key)
+
+    def _delete(self, bucket, key):
+        client = gcs.Client(project=get_env('INFRABOX_STORAGE_GCS_PROJECT_ID'))
+        bucket = client.get_bucket(bucket)
+        blob = bucket.blob(key)
+        blob.delete()
 
     def _upload(self, stream, bucket, key):
         client = gcs.Client(project=get_env('INFRABOX_STORAGE_GCS_PROJECT_ID'))

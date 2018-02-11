@@ -140,13 +140,15 @@ function handleJobUpdate (state, event) {
 
 function addProjects (state, projects) {
     for (const project of projects) {
-        const p = findProject(state, project.id)
+        let p = findProject(state, project.id)
         if (p) {
             continue
         }
 
-        state.projects.push(new Project(project.name, project.id, project.type))
-        events.listenJobs(project)
+        p = new Project(project.name, project.id, project.type)
+        state.projects.push(p)
+
+        p._loadJobs()
     }
 }
 
@@ -238,6 +240,13 @@ function handleConsoleUpdate (state, update) {
     job._addLines(lines)
 }
 
+function setConsole (state, data) {
+    const job = data.job
+    const console = data.console
+    const lines = console.split('\n')
+    job._addLines(lines)
+}
+
 function deleteProject (state, projectId) {
     let i = 0
     for (; i < state.projects.length; ++i) {
@@ -262,6 +271,7 @@ const mutations = {
     deleteProject,
     setSettings,
     setBadges,
+    setConsole,
     setEnvironment,
     setTests,
     setStats,
