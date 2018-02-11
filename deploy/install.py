@@ -361,8 +361,6 @@ class Kubernetes(Install):
         self.set('api.tag', self.args.version)
 
     def setup_static(self):
-        docs_url = self.args.root_url + '/docs/'
-        self.set('docs.url', docs_url)
         self.set('static.tag', self.args.version)
 
     def setup_general(self):

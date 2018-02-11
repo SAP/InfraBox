@@ -1,5 +1,9 @@
 class Notification {
     constructor (n, icon) {
+        if (!n) {
+            console.log(new Error().stack)
+        }
+
         this.icon = icon || n.icon || 'error'
 
         let message = 'Internal Error occured'

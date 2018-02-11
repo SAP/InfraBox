@@ -54,7 +54,7 @@ export default {
     },
     methods: {
         deleteSecret (id) {
-            APIService.delete(`project/${this.project.id}/secrets/${id}`)
+            APIService.delete(`projects/${this.project.id}/secrets/${id}`)
             .then((response) => {
                 NotificationService.$emit('NOTIFICATION', new Notification(response))
                 this.project._reloadSecrets()
@@ -62,7 +62,7 @@ export default {
         },
         addSecret () {
             const d = { name: this.name, value: this.value }
-            APIService.post(`project/${this.project.id}/secrets`, d)
+            APIService.post(`projects/${this.project.id}/secrets`, d)
             .then((response) => {
                 NotificationService.$emit('NOTIFICATION', new Notification(response))
                 this.project._reloadSecrets()

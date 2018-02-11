@@ -10,7 +10,12 @@ if (window.location.protocol === 'https:') {
 const host = protocol + '//' + process.env.DASHBOARD_HOST
 
 const socket = Socket(host, {
-    path: '/dashboard/socket.io'
+    path: '/api/dashboard/socket.io'
+})
+
+socket.on('connect_error', (error) => {
+    console.log(error)
+    socket.close()
 })
 
 Vue.use(VueSocketio, socket)

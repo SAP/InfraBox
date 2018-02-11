@@ -53,8 +53,8 @@ spec:
                     name: INFRABOX_VERSION
                     value: {{ required "gerrit.tag is required" .Values.gerrit.review.tag }}
                 -
-                    name: INFRABOX_DASHBOARD_URL
-                    value: {{ .Values.dashboard.url }}
+                    name: INFRABOX_ROOT_URL
+                    value: {{ .Values.root_url }}
                 volumeMounts:
                 - name: gerrit-ssh
                   mountPath: /tmp/gerrit

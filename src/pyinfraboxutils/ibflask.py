@@ -235,8 +235,33 @@ def is_collaborator(user_id, project_id):
 
     return u
 
+def is_public(project_id, project_name):
+    if project_id:
+        p = g.db.execute_one_dict('''
+            SELECT public
+            FROM project
+            WHERE id = %s
+        ''', [project_id])
 
-def validate_user_token(token, check_project_access, project_id, check_project_owner, allow_if_public):
+        if p['public']:
+            return True
+    elif project_name:
+        p = g.db.execute_one_dict('''
+            SELECT public
+            FROM project
+            WHERE name = %s
+        ''', [project_name])
+
+        if p['public']:
+            return True
+    else:
+        logger.warn('no project_id or project_name')
+        abort(401, 'Unauthorized')
+
+    return False
+
+
+def validate_user_token(token, check_project_access, project_id, check_project_owner):
     g.token = token
 
     u = g.db.execute_one('''
@@ -246,20 +271,6 @@ def validate_user_token(token, check_project_access, project_id, check_project_o
     if not u:
         logger.warn('user not found')
         abort(401, 'Unauthorized')
-
-    if allow_if_public:
-        if not project_id:
-            logger.warn('no project id')
-            abort(401, 'Unauthorized')
-
-        p = g.db.execute_one_dict('''
-            SELECT public
-            FROM project
-            WHERE id = %s
-        ''', [project_id])
-
-        if p['public']:
-            return
 
     if check_project_access:
         if not project_id:
@@ -306,6 +317,13 @@ def auth_required(types,
     def actual_decorator(f):
         @wraps(f)
         def decorated_function(*args, **kwargs):
+            project_id = kwargs.get('project_id', None)
+            project_name = kwargs.get('project_name', None)
+
+            if allow_if_public:
+                if is_public(project_id, project_name):
+                    return f(*args, **kwargs)
+
             token = get_token()
             token_type = token['type']
 
@@ -323,12 +341,10 @@ def auth_required(types,
 
                 validate_job_token(token)
             elif token_type == 'user':
-                project_id = kwargs.get('project_id')
                 validate_user_token(token,
                                     check_project_access,
                                     project_id,
-                                    check_project_owner,
-                                    allow_if_public)
+                                    check_project_owner)
             elif token_type == 'project':
                 project_id = kwargs.get('project_id')
 

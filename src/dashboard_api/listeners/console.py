@@ -13,7 +13,9 @@ def __handle_event(event, socketio, client_manager):
     job_id = event['job_id']
     console_id = event['id']
 
+    logger.debug('received console update for %s', job_id)
     if not client_manager.has_clients(job_id):
+        logger.debug('no client waiting for console update of %s', job_id)
         return
 
     logger.info('start console %s', console_id)

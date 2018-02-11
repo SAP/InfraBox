@@ -108,7 +108,7 @@ class RunJob(Job):
                 "build": {
                     "id": self.build['id'],
                     "number": self.build['build_number'],
-                    "url": os.environ['INFRABOX_DASHBOARD_URL'] \
+                    "url": os.environ['INFRABOX_ROOT_URL'] \
                            + '/dashboard/#/project/' + self.project['name'] \
                            + '/build/' + str(self.build['build_number']) \
                            + '/' + str(self.build['restart_counter'])
@@ -1038,7 +1038,7 @@ def main():
     get_env('INFRABOX_SERVICE')
     get_env('INFRABOX_VERSION')
     get_env('INFRABOX_DOCKER_REGISTRY_URL')
-    get_env('INFRABOX_DASHBOARD_URL')
+    get_env('INFRABOX_ROOT_URL')
     get_env('INFRABOX_GENERAL_DONT_CHECK_CERTIFICATES')
     get_env('INFRABOX_LOCAL_CACHE_ENABLED')
     get_env('INFRABOX_JOB_MAX_OUTPUT_SIZE')
