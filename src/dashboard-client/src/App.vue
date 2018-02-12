@@ -93,7 +93,7 @@ export default {
         },
         logout () {
             this.toggleLeftSidenav()
-            document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:01 GMT;'
+            document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/; Max-Age=0'
             router.push('/login')
         }
     },

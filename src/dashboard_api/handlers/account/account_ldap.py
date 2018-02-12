@@ -1,5 +1,3 @@
-import json
-
 from flask import g, request, abort
 
 from flask_restplus import Resource, fields
@@ -7,7 +5,8 @@ from flask_restplus import Resource, fields
 import ldap
 
 from pyinfraboxutils import get_logger
-from pyinfraboxutils.ibflask import auth_required
+from pyinfraboxutils.ibflask import OK
+from pyinfraboxutils.token import encode_user_token
 from pyinfraboxutils.ibrestplus import api
 
 from dashboard_api.namespaces import account as ns
@@ -90,12 +89,16 @@ class Login(Resource):
             WHERE email = %s
         ''', [email])
 
-        #if not user:
-        #    user = g.db.execute_one_dict('''
-        #        INSERT INTO "user" (email, username, name)
-        #        VALUES (%s, %s, %s) RETURNING id
-        #    ''', [email, ldap_user.cn, ldap_user.displayName])
+        if not user:
+            user = g.db.execute_one_dict('''
+                INSERT INTO "user" (email, username, name)
+                VALUES (%s, %s, %s) RETURNING id
+            ''', [email, ldap_user['cn'], ldap_user['displayName']])
 
-        abort(400)
-        return {}
+        token = encode_user_token(user['id'])
 
+        g.db.commit()
+
+        res = OK('Logged in')
+        res.set_cookie('token', token)
+        return res
