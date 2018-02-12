@@ -17,18 +17,20 @@ user = api.namespace('api/dashboard/user/',
 account = api.namespace('api/dashboard/account/',
                         description='Account')
 
+github = api.namespace('github/',
+                       description='GitHub')
+
 
 @settings.route('/')
 class Settings(Resource):
 
     def get(self):
         o = {
-            'INFRABOX_GITHUB_ENABLED': os.environ['INFRABOX_GITHUB_ENABLED'],
-            'INFRABOX_GERRIT_ENABLED': os.environ['INFRABOX_GERRIT_ENABLED'],
-            'INFRABOX_ACCOUNT_SIGNUP_ENABLED': os.environ['INFRABOX_ACCOUNT_SIGNUP_ENABLED'],
-            'INFRABOX_ACCOUNT_LDAP_ENABLED': os.environ['INFRABOX_ACCOUNT_LDAP_ENABLED'],
+            'INFRABOX_GITHUB_ENABLED': os.environ['INFRABOX_GITHUB_ENABLED'] == 'true',
+            'INFRABOX_GERRIT_ENABLED': os.environ['INFRABOX_GERRIT_ENABLED'] == 'true',
+            'INFRABOX_ACCOUNT_SIGNUP_ENABLED': os.environ['INFRABOX_ACCOUNT_SIGNUP_ENABLED'] == 'true',
+            'INFRABOX_ACCOUNT_LDAP_ENABLED': os.environ['INFRABOX_ACCOUNT_LDAP_ENABLED'] == 'true',
             'INFRABOX_ROOT_URL': os.environ['INFRABOX_ROOT_URL']
         }
 
         return jsonify(o)
-

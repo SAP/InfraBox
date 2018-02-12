@@ -44,6 +44,8 @@
 import store from '../../store'
 import router from '../../router'
 import APIService from '../../services/APIService'
+import NotificationService from '../../services/NotificationService'
+import Notification from '../../models/Notification'
 
 export default {
     name: 'Signup',
@@ -87,6 +89,9 @@ export default {
                 password2: this.password2
             }).then((message) => {
                 router.push('/')
+                location.reload()
+            }).catch((err) => {
+                NotificationService.$emit('NOTIFICATION', new Notification(err))
             })
         }
     }
