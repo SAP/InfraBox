@@ -12,20 +12,26 @@ class ProjectService {
 
     deleteProject (id) {
         APIService.delete(`projects/${id}`)
-        .then((response) => {
-            NotificationService.$emit('NOTIFICATION', new Notification(response))
-            store.commit('deleteProject', id)
-        })
+            .then((response) => {
+                NotificationService.$emit('NOTIFICATION', new Notification(response))
+                store.commit('deleteProject', id)
+            })
+            .catch((err) => {
+                NotificationService.$emit('NOTIFICATION', new Notification(err))
+            })
     }
 
     addProject (name, priv, type, githubRepoName) {
         const d = { name: name, type: type, private: priv, github_repo_name: githubRepoName }
         return APIService.post('projects', d)
-        .then((response) => {
-            NotificationService.$emit('NOTIFICATION', new Notification(response))
-            this._loadProjects()
-            router.push('/')
-        })
+            .then((response) => {
+                NotificationService.$emit('NOTIFICATION', new Notification(response))
+                this._loadProjects()
+                router.push('/')
+            })
+            .catch((err) => {
+                NotificationService.$emit('NOTIFICATION', new Notification(err))
+            })
     }
 
     findProjectByName (name) {
@@ -40,13 +46,19 @@ class ProjectService {
                 store.commit('addProjects', [project])
                 return project
             })
+            .catch((err) => {
+                NotificationService.$emit('NOTIFICATION', new Notification(err))
+            })
     }
 
     _loadProjects () {
         return APIService.get('projects/')
-        .then((response) => {
-            store.commit('addProjects', response)
-        })
+            .then((response) => {
+                store.commit('addProjects', response)
+            })
+            .catch((err) => {
+                NotificationService.$emit('NOTIFICATION', new Notification(err))
+            })
     }
 }
 
