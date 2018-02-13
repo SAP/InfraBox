@@ -279,39 +279,6 @@ class Output(Resource):
 
         return send_file(f, attachment_filename=key)
 
-@ns.route('/<project_id>/jobs/<job_id>/env')
-class Env(Resource):
-
-    @auth_required(['user'], allow_if_public=True)
-    def get(self, project_id, job_id):
-        result = g.db.execute_one_dict('''
-            SELECT env_var, env_var_ref
-            FROM job
-            WHERE id = %s AND project_id = %s
-        ''', [job_id, project_id])
-
-        if not result:
-            return []
-
-        env = []
-        if result['env_var']:
-            for name, value in result['env_var'].items():
-                env.append({
-                    'name': name,
-                    'value': value,
-                    'ref': False
-                })
-
-        if result['env_var_ref']:
-            for name, in result['env_var_ref'].items():
-                env.append({
-                    'name': name,
-                    'value': '<SECRET>',
-                    'ref': True
-                })
-
-        return env
-
 @ns.route('/<project_id>/jobs/<job_id>/testruns')
 class Testruns(Resource):
 

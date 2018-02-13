@@ -203,20 +203,9 @@ export default {
                         job = j
                         job.listenConsole()
                         job.loadBadges()
-                        job.loadEnvironment()
                         job.loadTabs()
 
-                        let runLocalCommand = '$ export INFRABOX_CLI_TOKEN=<YOUR_TOKEN> \\\n$ infrabox pull \\\n'
-                        for (let env of job.env) {
-                            const value = env.value.replace(/\n/g, '\\n')
-                            runLocalCommand += '    -e '
-                            runLocalCommand += env.name
-                            runLocalCommand += '="'
-                            runLocalCommand += value
-                            runLocalCommand += '" \\\n'
-                        }
-
-                        runLocalCommand += '    --job-id ' + job.id
+                        let runLocalCommand = '$ export INFRABOX_CLI_TOKEN=<YOUR_TOKEN> \n$ infrabox pull --job-id ' + job.id
 
                         return {
                             project,
