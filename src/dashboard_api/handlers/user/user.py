@@ -1,4 +1,4 @@
-from flask import g
+from flask import g, abort
 from flask_restplus import Resource
 
 from pyinfraboxutils.ibflask import auth_required
@@ -10,10 +10,13 @@ class User(Resource):
 
     @auth_required(['user'], check_project_access=False)
     def get(self):
-        jobs = g.db.execute_many_dict('''
+        user = g.db.execute_one_dict('''
             SELECT github_id, username, avatar_url, name, email
             FROM "user"
             WHERE id = %s
         ''', [g.token['user']['id']])
 
-        return jobs
+        if not user:
+            abort(404)
+
+        return user
