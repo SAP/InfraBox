@@ -220,12 +220,6 @@ function setTabs (state, data) {
     job.tabs = tabs
 }
 
-function setEnvironment (state, data) {
-    const job = data.job
-    const env = data.env
-    job.env = env
-}
-
 function handleConsoleUpdate (state, update) {
     const job = state.jobs[update.job_id]
     if (!job) {
@@ -272,7 +266,6 @@ const mutations = {
     setSettings,
     setBadges,
     setConsole,
-    setEnvironment,
     setTests,
     setStats,
     setTabs

@@ -83,7 +83,6 @@ export default class Job {
         this.dependencies = dependencies || []
         this.sections = []
         this.badges = []
-        this.env = []
         this.tests = []
         this.stats = []
         this.tabs = []
@@ -193,16 +192,6 @@ export default class Job {
         return APIService.get(`projects/${this.project.id}/jobs/${this.id}/tabs`)
             .then((tabs) => {
                 store.commit('setTabs', { job: this, tabs: tabs })
-            })
-            .catch((err) => {
-                NotificationService.$emit('NOTIFICATION', new Notification(err))
-            })
-    }
-
-    loadEnvironment () {
-        return APIService.get(`projects/${this.project.id}/jobs/${this.id}/env`)
-            .then((env) => {
-                store.commit('setEnvironment', { job: this, env: env })
             })
             .catch((err) => {
                 NotificationService.$emit('NOTIFICATION', new Notification(err))
