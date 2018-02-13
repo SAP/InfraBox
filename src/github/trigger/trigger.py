@@ -47,13 +47,13 @@ def get_commits(url, token):
     }
 
     # TODO(ib-steffen): allow custom ca bundles
-    r = requests.get(url + '?per_page=100', headers, verify=False)
+    r = requests.get(url + '?per_page=100', headers=headers, verify=False)
     result = []
     result.extend(r.json())
 
     p = get_next_page(r)
     while p:
-        r = requests.get(p, headers, verify=False)
+        r = requests.get(p, headers=headers, verify=False)
         p = get_next_page(r)
         result.extend(r.json())
 

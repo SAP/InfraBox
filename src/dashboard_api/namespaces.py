@@ -17,8 +17,11 @@ user = api.namespace('api/dashboard/user/',
 account = api.namespace('api/dashboard/account/',
                         description='Account')
 
-github = api.namespace('github/',
+github = api.namespace('api/dashboard/github/',
                        description='GitHub')
+
+github_auth = api.namespace('github/',
+                            description='GitHub Auth')
 
 
 @settings.route('/')

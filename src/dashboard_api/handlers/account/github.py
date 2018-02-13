@@ -1,14 +1,19 @@
 import uuid
 import os
+import json
 import requests
 
 from flask import g, request, abort, redirect
 
 from flask_restplus import Resource
 
+from pyinfraboxutils import get_logger
 from pyinfraboxutils.token import encode_user_token
+from pyinfraboxutils.ibflask import auth_required
 
-from dashboard_api.namespaces import github as ns
+from dashboard_api.namespaces import github, github_auth
+
+logger = get_logger('github')
 
 GITHUB_CLIENT_ID = os.environ['INFRABOX_GITHUB_CLIENT_ID']
 GITHUB_CLIENT_SECRET = os.environ['INFRABOX_GITHUB_CLIENT_SECRET']
@@ -19,7 +24,85 @@ GITHUB_USER_PROFILE_URL = os.environ['INFRABOX_GITHUB_API_URL'] + "/user"
 
 states = {}
 
-@ns.route('/auth')
+def get_next_page(r):
+    link = r.headers.get('Link', None)
+
+    if not link:
+        return None
+
+    n1 = link.find('rel=\"next\"')
+
+    if not n1:
+        return None
+
+    n2 = link.rfind('<', 0, n1)
+
+    if not n2:
+        return None
+
+    n2 += 1
+    n3 = link.find('>;', n2)
+    return link[n2:n3]
+
+
+def get_github_api(url, token):
+    headers = {
+        "Authorization": "token " + token,
+        "User-Agent": "InfraBox"
+    }
+    url = os.environ['INFRABOX_GITHUB_API_URL'] + url
+
+    # TODO(ib-steffen): allow custom ca bundles
+    r = requests.get(url, headers=headers, verify=False)
+    result = []
+    result.extend(r.json())
+
+    p = get_next_page(r)
+    while p:
+        r = requests.get(p, headers=headers, verify=False)
+        p = get_next_page(r)
+        result.extend(r.json())
+
+    return result
+
+@github.route('/repos')
+class Repos(Resource):
+
+    @auth_required(['user'], check_project_access=False)
+    def get(self):
+        user_id = g.token['user']['id']
+
+        user = g.db.execute_one_dict('''
+            SELECT github_api_token
+            FROM "user"
+            WHERE id = %s
+        ''', [user_id])
+
+        if not user:
+            abort(404)
+
+        token = user['github_api_token']
+        github_repos = get_github_api('/user/repos?visibility=all', token)
+
+        repos = g.db.execute_many_dict('''
+            select github_id from collaborator co
+            INNER JOIN repository r
+            ON co.project_id = r.project_id
+            WHERE user_id = %s
+            AND github_id is not null
+        ''', [user_id])
+
+        for gr in github_repos:
+            gr['connected'] = False
+
+            for r in repos:
+                if r['github_id'] == gr['id']:
+                    gr['connected'] = True
+                    break
+
+        return github_repos
+
+@github_auth.route('/auth')
 class Auth(Resource):
 
     def get(self):
@@ -32,7 +115,7 @@ class Auth(Resource):
         states[str(state)] = True
         return redirect(url)
 
-@ns.route('/auth/callback')
+@github_auth.route('/auth/callback')
 class Login(Resource):
 
     def get(self):
