@@ -78,23 +78,13 @@ class ApiTestCase(unittest.TestCase):
 
     def test_repo_does_not_exist(self):
         d = {
-            'branch': 'master',
+            'branch_or_sha': 'master',
             'sha': 'master'
         }
 
         self.execute('TRUNCATE repository')
         r = self.post('/api/v1/projects/%s/trigger' % self.project_id, d)
         self.assertEqual(r['message'], 'repo not found')
-
-    def test_upload_successfully(self):
-        self.execute('''
-            INSERT INTO build (source_upload_id, build_number, project_id)
-            VALUES (%s, 1, %s);
-            UPDATE project SET type='upload';
-        ''', [self.project_id, self.project_id])
-
-        r = self.post('/api/v1/projects/%s/trigger' % self.project_id, {})
-        self.assertEqual(r['status'], 200)
 
     @mock.patch('requests.post')
     def test_trigger_successfully(self, mocked):
