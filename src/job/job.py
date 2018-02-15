@@ -692,6 +692,10 @@ class RunJob(Job):
         container_name = self.job['id']
         cmd = ['docker', 'run', '--name', container_name]
 
+        # Memory limit
+        memory_limit = os.environ['INFRABOX_JOB_RESOURCES_LIMITS_MEMORY']
+        cmd += ['-m', '%sm' % memory_limit]
+
         # repo mount
         cmd += ['-v', '%s:/infrabox' % self.mount_data_dir]
 
@@ -743,20 +747,38 @@ class RunJob(Job):
             c.execute(("docker", "commit", container_name, image_name))
         except Exception as e:
             try:
+                # Find out if container was killed due to oom
+                out = subprocess.check_output(['docker', 'inspect', container_name,
+                                               '-f', '{{.State.OOMKilled}}']).strip()
+            except Exception as ex:
+                logger.exception(ex)
+                raise Failure("Could not get OOMKilled state of container")
+
+            if out == 'true':
+                raise Failure('Container was killed, because it ran out of memory')
+
+            try:
+                exit_code = subprocess.check_output(['docker', 'inspect', container_name,
+                                                     '-f', '{{.State.ExitCode}}']).strip()
+            except Exception as ex:
+                logger.exception(ex)
+                raise Failure("Could not get exit code of container")
+
+            try:
                 c.execute(("docker", "commit", container_name, image_name))
                 c.header("Finalize", show=True)
                 self.push_container(image_name)
-            except:
-                pass
+            except Exception as ex:
+                logger.exception(ex)
+                raise Failure("Could not commit and push container")
 
             logger.exception(e)
-            raise Failure("Container run exited with error")
+            raise Failure("Container run exited with error (exit code=%s)" % exit_code)
 
         finally:
-            collector.stop()
-            self.post_stats(collector.get_result())
-
             try:
+                collector.stop()
+                self.post_stats(collector.get_result())
                 c.execute(("docker", "rm", container_name))
             except:
                 pass
