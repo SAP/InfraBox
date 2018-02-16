@@ -70,7 +70,7 @@ class Section {
 export default class Job {
     constructor (id, name, cpu, memory, state,
             startDate, endDate, build, project,
-            dependencies) {
+            dependencies, message) {
         this.id = id
         this.name = name
         this.cpu = cpu
@@ -88,6 +88,7 @@ export default class Job {
         this.tabs = []
         this.currentSection = null
         this.linesProcessed = 0
+        this.message = message
     }
 
     _getTime (d) {
@@ -269,6 +270,7 @@ export default class Job {
                 this.linesProcessed = 0
                 this.endDate = null
                 this.startDate = null
+                this.message = null
                 this.listenConsole()
             })
             .catch((err) => {
