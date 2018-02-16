@@ -138,6 +138,12 @@ class Scheduler(object):
         }, {
             "name": "INFRABOX_JOB_TOKEN",
             "value": encode_job_token(job_id).decode()
+        }, {
+            "name": "INFRABOX_JOB_RESOURCES_LIMITS_MEMORY",
+            "value": str(mem)
+        }, {
+            "name": "INFRABOX_JOB_RESOURCES_LIMITS_CPU",
+            "value": str(cpu)
         }]
 
         if additional_env:
@@ -236,11 +242,10 @@ class Scheduler(object):
                             "resources": {
                                 "requests": {
                                     "cpu": cpu,
-                                    "memory": "%sMi" % mem
+                                    "memory": "%sMi" % (mem + 256) # Some more memory for docker itself
                                 },
                                 "limits": {
                                     "cpu": cpu,
-                                    "memory": "%sMi" % mem
                                 }
                             },
                             "volumeMounts": volume_mounts

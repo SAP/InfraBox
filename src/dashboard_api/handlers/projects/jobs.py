@@ -80,6 +80,7 @@ class Jobs(Resource):
                 j.memory as job_memory,
                 j.dependencies as job_dependencies,
                 j.created_at as job_created_at,
+                j.message as job_message,
                 -- pull_request
                 pr.title as pull_request_title,
                 pr.url as pull_request_url
@@ -124,7 +125,8 @@ class Jobs(Resource):
                     'cpu': j['job_cpu'],
                     'memory': j['job_memory'],
                     'dependencies': j['job_dependencies'],
-                    'created_at': str(j['job_created_at'])
+                    'created_at': str(j['job_created_at']),
+                    'message': j['job_message']
                 }
             }
 
