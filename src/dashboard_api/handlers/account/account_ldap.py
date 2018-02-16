@@ -1,3 +1,5 @@
+import os
+
 from flask import g, request, abort
 
 from flask_restplus import Resource, fields
@@ -19,20 +21,19 @@ login_model = api.model('Login', {
 logger = get_logger('ldap')
 
 def authenticate(email, password):
-    print "auth"
-    ldap_server = "ldap://global.corp.sap"
-    ldap_user = "CN=ASA1_HANAVORA_P7,OU=ASA,OU=SRO,OU=Resources,DC=global,DC=corp,DC=sap"
-    ldap_password = "x'99(2*#9_ri!!^%LVMN"
-    ldap_base_dn = "DC=global,DC=corp,DC=sap"
+    ldap_server = os.environ['INFRABOX_ACCOUNT_LDAP_URL']
+    ldap_user = os.environ['INFRABOX_ACCOUNT_LDAP_DN']
+    ldap_password = os.environ['INFRABOX_ACCOUNT_LDAP_PASSWORD']
+    ldap_base_dn = os.environ['INFRABOX_ACCOUNT_LDAP_BASE']
 
     search_filter = "(mail=%s)" % str(email)
     user_dn = None
 
+    print ldap
+    connect = ldap.initialize(ldap_server)
     try:
-        connect = ldap.initialize(ldap_server)
         connect.bind_s(ldap_user, ldap_password)
         result = connect.search_s(ldap_base_dn, ldap.SCOPE_SUBTREE, search_filter, attrlist=['dn'])
-        print result
 
         for r in result:
             if r[0]:
@@ -41,8 +42,6 @@ def authenticate(email, password):
 
         if not user_dn:
             abort(400, 'user/password invalid')
-
-        print user_dn
     except Exception as e:
         logger.warning("authentication error: %s", e)
         abort(400, 'user/password invalid')
