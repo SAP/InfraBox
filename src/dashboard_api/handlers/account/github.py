@@ -1,6 +1,5 @@
 import uuid
 import os
-import json
 import requests
 
 from flask import g, request, abort, redirect
@@ -22,6 +21,7 @@ GITHUB_AUTHORIZATION_URL = os.environ['INFRABOX_GITHUB_LOGIN_URL'] + "/oauth/aut
 GITHUB_TOKEN_URL = os.environ['INFRABOX_GITHUB_LOGIN_URL'] + "/oauth/access_token"
 GITHUB_USER_PROFILE_URL = os.environ['INFRABOX_GITHUB_API_URL'] + "/user"
 
+# TODO(ib-steffen): move into DB
 states = {}
 
 def get_next_page(r):
