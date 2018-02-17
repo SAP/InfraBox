@@ -16,4 +16,3 @@ class Copmmit(Resource):
             AND c.project_id = %s
         ''', [commit_id, project_id])
         return p
-

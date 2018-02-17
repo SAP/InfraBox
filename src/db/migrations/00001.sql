@@ -681,9 +681,9 @@ BEGIN
 		'cpu', NEW.cpu,
 		'memory', NEW.memory,
 		'dependencies', NEW.dependencies,
-		'created_at', NEW.created_at
+		'created_at', NEW.created_at,
+        'message', NEW.message
 	);
-
 
 	SELECT * INTO project FROM project WHERE id = NEW.project_id;
 	IF project.type in ('github', 'gerrit') THEN
