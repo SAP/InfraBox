@@ -1,6 +1,5 @@
 #!/bin/sh
 
-cd /tests
 coverage run --source=.,$1 --branch test.py
 
 rc=$?
@@ -12,5 +11,7 @@ coverage xml
 
 cp results.xml /infrabox/upload/testresult
 cp coverage.xml /infrabox/upload/coverage
+
+codecov -t $CODECOV_TOKEN --root /infrabox/context -f coverage.xml
 
 exit $rc
