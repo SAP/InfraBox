@@ -131,7 +131,6 @@
             <md-card-content>
                 <md-tabs md-fixed class="md-transparent">
                     <md-tab id="console" md-label="Console" md-icon="subtitles" class="widget-container">
-                        {{ data.job.message }}
                         <ib-console :job="data.job"></ib-console>
                     </md-tab>
                     <md-tab id="test-list" md-icon="multiline_chart" md-label="Tests">
