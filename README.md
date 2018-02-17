@@ -31,6 +31,9 @@ You have multiple options to install InfraBox:
 - [Docker Compose](docs/install_docker_compose.md)
 - [Kubernetes Engine (Google Cloud)](docs/install_gcloud.md)
 
+## Contribute
+Any contribute is highly appreciated. See our [developer's documentation](doc/dev.md) for details.
+
 ## Contact
 Follow us on Twitter: [@Infra_Box](https://twitter.com/Infra_Box) or have look at our Slack channel [infrabox.slack.com](https://infrabox.slack.com/).
 
