@@ -41,6 +41,9 @@
         "build_context": "../..",
         "docker_file": "infrabox/test/github-review/Dockerfile",
         "resources": { "limits": { "cpu": 1, "memory": 1024 } },
-        "build_only": false
+        "build_only": false,
+        "environment": {
+            "CODECOV_TOKEN": { "$secret": "CODECOV_TOKEN" }
+        }
     }]
 }
