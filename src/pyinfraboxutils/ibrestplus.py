@@ -11,7 +11,8 @@ authorizations = {
 api = Api(app,
           authorizations=authorizations,
           security=['TokenAuth'],
-          doc='/doc/')
+          doc='/doc/',
+          validate=True)
 
 def abort(code, message, data=None):
     restplus_abort(code, message, data=data)

@@ -54,6 +54,8 @@ import store from '../../store'
 import router from '../../router'
 import APIService from '../../services/APIService'
 import UserService from '../../services/UserService'
+import NotificationService from '../../services/NotificationService'
+import Notification from '../../models/Notification'
 
 export default {
     name: 'Login',
@@ -91,6 +93,8 @@ export default {
                 UserService.login()
                 router.push('/')
                 location.reload()
+            }).catch((err) => {
+                NotificationService.$emit('NOTIFICATION', new Notification(err))
             })
         }
     }

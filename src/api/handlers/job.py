@@ -79,8 +79,8 @@ class Project(Resource):
     @auth_required(['project'])
     @check_job_belongs_to_project
     def get(self, project_id, job_id):
-        m = g.db.execute_one_dict('''
-            SELECT j.name, j.start_date, j.end_date, j.cpu, memory, j.state, j.id, b.build_number
+        result = g.db.execute_one_dict('''
+            SELECT j.name, j.start_date, j.end_date, j.cpu, memory, j.state, j.id, b.build_number, j.env_var, j.env_var_ref
             FROM job j
             JOIN build b
                 ON b.id = j.build_id
@@ -88,24 +88,41 @@ class Project(Resource):
             WHERE j.id = %s
             AND j.project_id = %s
         ''', [job_id, project_id])
-        m = dict(m)
 
+        m = {
+            'name': result['name'],
+            'start_date': result['start_date'],
+            'end_date': result['end_date'],
+            'cpu': result['cpu'],
+            'memory': result['memory'],
+            'state': result['state'],
+            'id': result['id'],
+            'build_number': result['build_number'],
+            'environment': result['env_var'],
+            'image': None,
+            'output': None,
+            'dependencies': []
+        }
+
+        # Image
         image = get_env('INFRABOX_DOCKER_REGISTRY_URL') + '/' + \
                 project_id + '/' + \
-                m['name'] + ':build_' + \
-                str(m['build_number'])
+                result['name'] + ':build_' + \
+                str(result['build_number'])
         image = image.replace("https://", "")
         image = image.replace("http://", "")
         image = image.replace("//", "/")
         m['image'] = image
 
+        # Output
         m['output'] = {
             'url': get_env('INFRABOX_ROOT_URL') + \
-                   '/api/v1/project/' + project_id + \
-                   '/job/' + job_id + '/output',
+                   '/api/v1/projects/' + project_id + \
+                   '/jobs/' + job_id + '/output',
             'format': 'tar.gz'
         }
 
+        # Dependencies
         deps = g.db.execute_many_dict('''
              SELECT name, state, id FROM job
              WHERE id IN (SELECT (p->>'job-id')::uuid
@@ -116,11 +133,11 @@ class Project(Resource):
         for d in deps:
             d['output'] = {
                 'url': get_env('INFRABOX_ROOT_URL') + \
-                       '/api/v1/project/' + project_id + \
-                       '/job/' + d['id'] + '/output',
+                       '/api/v1/projects/' + project_id + \
+                       '/jobs/' + d['id'] + '/output',
                 'format': 'tar.gz'
             }
 
-            m['dependencies'] = deps
+            m['dependencies'].append(d)
 
         return jsonify(m)

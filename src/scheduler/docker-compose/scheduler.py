@@ -55,7 +55,7 @@ class Scheduler(object):
         self.conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
         self.daemon_json = None
 
-    def kube_job(self, job_id, _build_id, _cpu, _memory, _job_type):
+    def kube_job(self, job_id, _build_id, cpu, memory, _job_type):
         # repo_dir is also  hard coded in docker-compose.yml for job-git
         repo_dir = '/tmp/infrabox-compose/repo'
         clear_dir(repo_dir)
@@ -82,6 +82,8 @@ class Scheduler(object):
             '-e', "INFRABOX_JOB_TOKEN=%s" % token,
             '-e', "INFRABOX_JOB_DAEMON_JSON=%s" % self.daemon_json,
             '-e', "INFRABOX_JOB_REPO_MOUNT_PATH=%s" % repo_dir,
+            '-e', "INFRABOX_JOB_RESOURCES_LIMITS_MEMORY=%s" % memory,
+            '-e', "INFRABOX_JOB_RESOURCES_LIMITS_CPU=%s" % cpu,
             '--privileged',
             '--network=%s_infrabox' % prefix,
             '-v', '/var/run/docker.sock:/var/run/docker.sock',

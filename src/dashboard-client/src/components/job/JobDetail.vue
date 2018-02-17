@@ -131,6 +131,7 @@
             <md-card-content>
                 <md-tabs md-fixed class="md-transparent">
                     <md-tab id="console" md-label="Console" md-icon="subtitles" class="widget-container">
+                        {{ data.job.message }}
                         <ib-console :job="data.job"></ib-console>
                     </md-tab>
                     <md-tab id="test-list" md-icon="multiline_chart" md-label="Tests">
@@ -203,20 +204,9 @@ export default {
                         job = j
                         job.listenConsole()
                         job.loadBadges()
-                        job.loadEnvironment()
                         job.loadTabs()
 
-                        let runLocalCommand = '$ export INFRABOX_CLI_TOKEN=<YOUR_TOKEN> \\\n$ infrabox pull \\\n'
-                        for (let env of job.env) {
-                            const value = env.value.replace(/\n/g, '\\n')
-                            runLocalCommand += '    -e '
-                            runLocalCommand += env.name
-                            runLocalCommand += '="'
-                            runLocalCommand += value
-                            runLocalCommand += '" \\\n'
-                        }
-
-                        runLocalCommand += '    --job-id ' + job.id
+                        let runLocalCommand = '$ export INFRABOX_CLI_TOKEN=<YOUR_TOKEN> \n$ infrabox pull --job-id ' + job.id
 
                         return {
                             project,

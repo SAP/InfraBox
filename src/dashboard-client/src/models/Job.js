@@ -70,7 +70,7 @@ class Section {
 export default class Job {
     constructor (id, name, cpu, memory, state,
             startDate, endDate, build, project,
-            dependencies) {
+            dependencies, message) {
         this.id = id
         this.name = name
         this.cpu = cpu
@@ -83,12 +83,12 @@ export default class Job {
         this.dependencies = dependencies || []
         this.sections = []
         this.badges = []
-        this.env = []
         this.tests = []
         this.stats = []
         this.tabs = []
         this.currentSection = null
         this.linesProcessed = 0
+        this.message = message
     }
 
     _getTime (d) {
@@ -199,16 +199,6 @@ export default class Job {
             })
     }
 
-    loadEnvironment () {
-        return APIService.get(`projects/${this.project.id}/jobs/${this.id}/env`)
-            .then((env) => {
-                store.commit('setEnvironment', { job: this, env: env })
-            })
-            .catch((err) => {
-                NotificationService.$emit('NOTIFICATION', new Notification(err))
-            })
-    }
-
     loadTests () {
         return APIService.get(`projects/${this.project.id}/jobs/${this.id}/testruns`)
             .then((tests) => {
@@ -280,6 +270,7 @@ export default class Job {
                 this.linesProcessed = 0
                 this.endDate = null
                 this.startDate = null
+                this.message = null
                 this.listenConsole()
             })
             .catch((err) => {
