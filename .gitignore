@@ -24,3 +24,9 @@ src/dashboard-client/node_modules
 .idea
 src/api/run.sh
 src/dashboard_api/run.sh
+infrabox/test/api/.coverage
+infrabox/test/api/coverage.xml
+infrabox/test/api/results.xml
+infrabox/test/registry-auth/.coverage
+infrabox/test/registry-auth/coverage.xml
+infrabox/test/registry-auth/results.xml
