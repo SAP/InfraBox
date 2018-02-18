@@ -33,3 +33,6 @@ infrabox/test/registry-auth/results.xml
 infrabox/test/github-review/.coverage
 infrabox/test/github-review/coverage.xml
 infrabox/test/github-review/results.xml
+src/pyinfrabox/.coverage
+src/pyinfrabox/coverage.xml
+src/pyinfrabox/results.xml

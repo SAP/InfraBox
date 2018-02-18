@@ -25,9 +25,12 @@
         "type": "docker",
         "name": "pyinfrabox",
         "build_context": "../..",
-        "docker_file": "infrabox/test-pyinfrabox/Dockerfile",
+        "docker_file": "infrabox/test/pyinfrabox/Dockerfile",
         "build_only": false,
-        "resources": { "limits": { "cpu": 1, "memory": 1024 } }
+        "resources": { "limits": { "cpu": 1, "memory": 1024 } },
+        "environment": {
+            "CODECOV_TOKEN": { "$secret": "CODECOV_TOKEN" }
+        }
     }, {
         "type": "docker",
         "name": "github-api",
