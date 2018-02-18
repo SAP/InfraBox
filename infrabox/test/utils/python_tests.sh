@@ -9,7 +9,7 @@ set -e
 coverage report -m
 coverage xml
 
-if [ -e results.xml ]
+if [ -e results.xml ]; then
     cp results.xml /infrabox/upload/testresult
 fi
 
