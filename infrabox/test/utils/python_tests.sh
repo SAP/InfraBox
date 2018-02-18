@@ -9,7 +9,10 @@ set -e
 coverage report -m
 coverage xml
 
-cp results.xml /infrabox/upload/testresult
+if [ -e results.xml ]
+    cp results.xml /infrabox/upload/testresult
+fi
+
 cp coverage.xml /infrabox/upload/coverage
 
 if [[ ! -z "$CODECOV_TOKEN" ]]; then
