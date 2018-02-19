@@ -5,7 +5,7 @@ The API Component implements the API for *infraboxcli* and the running *jobs*.
 
 ## Run tests
 ```
-    $ infraboxcli run ib/test/api
+    $ infrabox run ib/test/api
 ```
 
 ## Start with dummy data
