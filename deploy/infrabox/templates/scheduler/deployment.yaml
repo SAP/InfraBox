@@ -79,9 +79,6 @@ spec:
                 -
                     name: INFRABOX_SCHEDULER_LOG_LEVEL
                     value: {{ default "info" .Values.scheduler.log.level }}
-                -
-                    name: INFRABOX_JOB_API_URL
-                    value: {{ default .Values.job.api.url }}
                 ports:
                 - containerPort: 8000
                   name: prometheus

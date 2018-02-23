@@ -115,6 +115,23 @@ class Auth(Resource):
         states[str(state)] = True
         return redirect(url)
 
+def check_org(access_token):
+    allowed_orgs = os.environ.get('INFRABOX_GITHUB_LIMIT_ORG', None)
+
+    if not allowed_orgs:
+        return
+
+    allowed_orgs = allowed_orgs.split(',')
+
+    orgs = get_github_api('/user/orgs', access_token)
+
+    for o in orgs:
+        for ao in allowed_orgs:
+            if o['login'] == ao:
+                return
+
+    abort(401, "Not allowed to signup")
+
 @github_auth.route('/auth/callback')
 class Login(Resource):
 
@@ -136,6 +153,8 @@ class Login(Resource):
         result = r.json()
 
         access_token = result['access_token']
+        check_org(access_token)
+
         r = requests.get(GITHUB_USER_PROFILE_URL, headers={
             'Accept': 'application/json',
             'Authorization': 'token %s' % access_token
