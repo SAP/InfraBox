@@ -1,0 +1,14 @@
+imports:
+- path: infrabox.jinja
+
+resources:
+- name: my-cluster
+  type: infrabox.jinja
+  properties:
+    gkeClusterName: infrabox-dm-3
+    zone: us-central1-a
+    initialNodeCount: 3
+    instanceType: n1-standard-2
+    domainName: infrabox.example.com
+    externalLBIP: 0.0.0.0
+    dockerRegistryPassword: mypw

@@ -1,11 +1,15 @@
 metadataVersion: v1test
 
 description:
-  title: InfraBox on GKE
+  title: Istio on GKE
   version: 0.0.1
-  url: 'https://infrabox.net/'
-  tagline: Running InfraBox on GKE
-  descriptionHtml: 'GKE with InfraBox'
+  url: 'https://istio.io/'
+  tagline: Running Istio on GKE
+  descriptionHtml: 'GKE with Istio'
+  logo: 'https://avatars3.githubusercontent.com/u/23534644?s=100&v=4'
+  icon: 'https://avatars3.githubusercontent.com/u/23534644?s=100&v=4'
+  architectureDiagram: 'https://avatars3.githubusercontent.com/u/23534644?s=100&v=4'
+  architectureDescription: 'Istio is an open platform that provides a uniform way to connect, manage, and secure microservices. Istio supports managing traffic flows between microservices, enforcing access policies, and aggregating telemetry data, all without requiring changes to the microservice code. <li><b>Note: You must set your compute service account with "Container Engine Admin" IAM Role.</b></li> <li>For more information, see <a href="https://istio.io/docs/setup/kubernetes/quick-start-gke-dm.html">Quick Start with Google Kubernetes Engine</a></li>'
   author:
     title: Google Click to Deploy
   documentations:
@@ -16,13 +20,17 @@ description:
         - DESTINATION_SOLUTION_DETAILS
         - DESTINATION_CONFIGURATION
         - DESTINATION_POST_DEPLOY
-    - title: InfraBox Documentation
-      url: 'https://infrabox.net'
+    - title: Istio Documentation
+      url: 'https://istio.io'
+      description: Istio provides an easy way to create a network of deployed services.
       destinations:
         - DESTINATION_SOLUTION_DETAILS
         - DESTINATION_CONFIGURATION
         - DESTINATION_POST_DEPLOY
   support:
+    - title: Support
+      descriptionHtml: 'Google does not offer support for this solution. However, community support is available on <a href="http://stackoverflow.com/questions/tagged/mongodb/">Stack Overflow</a>.<p><p><a href="http://stackoverflow.com/questions/tagged/mongodb/">Go to Stack Overflow</a>'
+  softwareGroups:
     - type: SOFTWARE_GROUP_OS
       software:
         - title: Container Optimized OS (COS)
@@ -31,8 +39,11 @@ description:
         - title: Google Container Engine
           url: 'https://cloud.google.com/container-engine/'
     - software:
-        - title: InfraBox.net
-          url: 'https://infrabox.net'
+        - title: Istio.io
+          url: 'https://istio.io'
+          licenseTitle: AGPL v3
+          licenseUrl: 'https://github.com/istio/istio/blob/master/LICENSE'
+
 input:
   properties:
     - name: gkeClusterName
