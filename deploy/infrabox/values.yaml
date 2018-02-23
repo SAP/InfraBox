@@ -268,5 +268,8 @@ github:
         # Github Login URL
         # url: https://github.com/login
 
+        # Comma separated list of github organizations
+        # allowed_organizations:
+
     # Github API URL
     # api_url: https://api.github.com
