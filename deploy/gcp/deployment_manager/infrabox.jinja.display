@@ -1,0 +1,83 @@
+metadataVersion: v1test
+
+description:
+  title: InfraBox on GKE
+  version: 0.0.1
+  url: 'https://infrabox.net/'
+  tagline: Running InfraBox on GKE
+  descriptionHtml: 'GKE with InfraBox'
+  author:
+    title: Google Click to Deploy
+  documentations:
+    - title: GKE Documentation
+      url: 'https://cloud.google.com/container-engine/'
+      description: Google Container Engine is a managed Kubernetes environment.
+      destinations:
+        - DESTINATION_SOLUTION_DETAILS
+        - DESTINATION_CONFIGURATION
+        - DESTINATION_POST_DEPLOY
+    - title: InfraBox Documentation
+      url: 'https://infrabox.net'
+      destinations:
+        - DESTINATION_SOLUTION_DETAILS
+        - DESTINATION_CONFIGURATION
+        - DESTINATION_POST_DEPLOY
+  support:
+    - type: SOFTWARE_GROUP_OS
+      software:
+        - title: Container Optimized OS (COS)
+          url: 'https://cloud.google.com/container-optimized-os/docs/'
+    - software:
+        - title: Google Container Engine
+          url: 'https://cloud.google.com/container-engine/'
+    - software:
+        - title: InfraBox.net
+          url: 'https://infrabox.net'
+input:
+  properties:
+    - name: gkeClusterName
+      title: GKE Cluster Name
+      tooltip: Name of the GKE Cluster
+      section: server
+
+    - name: zone
+      title: Zone
+      tooltip: The zone determines what computing resources are available and where your data is stored and used.
+      section: server
+
+    - name: initialNodeCount
+      title: Number of GKE nodes to run on
+      tooltip: GKE node count
+      section: server
+
+    - name: instanceType
+      title: Node Machine Type
+      tooltip: GKE MachineType
+      section: server
+
+    - name: externalLBIP
+      title: IP to be used with the load balancer
+      tooltip: IP to be used with the load balancer
+      section: CONFIG
+
+    - name: dockerRegistryPassword
+      title: Docker Registry password
+      tooltip: Docker Registry password
+      section: CONFIG
+
+    - name: domainName
+      title: Domain name under which InfraBox will be accessible (i.e. infrabox.example.com)
+      tooltip: Domain name under which InfraBox will be accessible (i.e. infrabox.example.com)
+      section: CONFIG
+
+  sections:
+    - name: server
+      title: Baseline GKE Cluster config
+      tooltip: This section contains input properties related to basic GKE cluster
+    - name: CONFIG
+      title: InfraBox Configuration
+      tooltip: InfraBox Configuration
+
+runtime:
+  deployingMessage: 'Deployment can take 3-10 minutes to complete, depending on the size of your cluster.'
+
