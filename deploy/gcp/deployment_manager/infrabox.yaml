@@ -5,10 +5,15 @@ resources:
 - name: my-cluster
   type: infrabox.jinja
   properties:
-    gkeClusterName: infrabox-dm-3
+    gkeClusterName: infrabox-dm-2
     zone: us-central1-a
     initialNodeCount: 3
     instanceType: n1-standard-2
-    domainName: infrabox.example.com
-    externalLBIP: 0.0.0.0
+    domainName: dm.infrabox.info
+    externalLBIP: 35.202.227.67
     dockerRegistryPassword: mypw
+    githubEnabled: true
+    githubClientID: 3de3ce7a9ab2e63c00fe
+    githubClientSecret: c71228120bec399df47a54081900a024566fe321
+    githubLoginAllowedOrganizationsEnabled: true
+    githubLoginAllowedOrganizations: InfraBox
