@@ -336,8 +336,8 @@ class Kubernetes(Install):
         self.set('github.api.tag', self.args.version)
         self.set('github.review.tag', self.args.version)
 
-        if self.args.gitub_login_allowed_organizations:
-            self.set('github.login.allowed_organizations', self.args.gitub_login_allowed_organizations)
+        if self.args.github_login_allowed_organizations:
+            self.set('github.login.allowed_organizations', self.args.github_login_allowed_organizations)
 
         secret = {
             "client_id": self.args.github_client_id,
