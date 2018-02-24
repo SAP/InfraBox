@@ -51,3 +51,20 @@ properties:
   dockerRegistryPassword:
     type: string
     description: Admin Password for the internal Docker Registry
+  githubEnabled:
+    type: boolean
+    description: Enable github
+    default: true
+  githubClientID:
+    type: string
+    description: Client ID of your github oAuth application
+  githubClientSecret:
+    type: string
+    description: Client Secret of your github oAuth application
+  githubLoginAllowedOrganizationsEnabled:
+    type: boolean
+    description: Limit access to InfraBox to some specific GitHub Organizations
+    default: false
+  githubLoginAllowedOrganizations:
+    type: string
+    description: Comma separated list of GitHub Organizations

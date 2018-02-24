@@ -151,29 +151,47 @@ resources:
           ssh-keygen -N '' -t rsa -f id_rsa
           ssh-keygen -f id_rsa.pub -e -m pem > id_rsa.pem
 
-          python /tmp/infrabox/deploy/install.py \
-            --version build_387 \
-            -o /tmp/infrabox-configuration \
-            --platform kubernetes \
-            --general-rsa-public-key ./id_rsa.pem \
-            --general-rsa-private-key ./id_rsa \
-            --root-url https://{{ properties['domainName'] }} \
-            --database postgres \
-            --postgres-host postgres-postgresql.infrabox-system \
-            --postgres-username infrabox \
-            --postgres-database infrabox \
-            --postgres-port 5432 \
-            --postgres-password qweasdzxc1 \
-            --storage s3 \
-            --s3-access-key AKIAIOSFODNN7EXAMPLE \
-            --s3-secret-key wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY \
-            --s3-secure false \
-            --s3-endpoint minio-minio-svc.infrabox-system \
-            --s3-port 9000 \
-            --s3-region us-east-1 \
-            --docker-registry-admin-username admin \
-            --docker-registry-admin-password {{ properties['dockerRegistryPassword'] }}\
-            --account-signup-enabled
+          cat >install.sh <<EOL
+          python /tmp/infrabox/deploy/install.py \\
+            --version build_393 \\
+            -o /tmp/infrabox-configuration \\
+            --platform kubernetes \\
+            --general-rsa-public-key ./id_rsa.pem \\
+            --general-rsa-private-key ./id_rsa \\
+            --root-url https://{{ properties['domainName'] }} \\
+            --database postgres \\
+            --postgres-host postgres-postgresql.infrabox-system \\
+            --postgres-username infrabox \\
+            --postgres-database infrabox \\
+            --postgres-port 5432 \\
+            --postgres-password qweasdzxc1 \\
+            --storage s3 \\
+            --s3-access-key AKIAIOSFODNN7EXAMPLE \\
+            --s3-secret-key wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY \\
+            --s3-secure false \\
+            --s3-endpoint minio-minio-svc.infrabox-system \\
+            --s3-port 9000 \\
+            --s3-region us-east-1 \\
+            {% if properties['githubEnabled'] %}
+            --github-enabled \\
+            --github-client-id {{ properties['githubClientID'] }} \\
+            --github-client-secret {{ properties['githubClientSecret'] }} \\
+            --github-webhook-secret asdfj340rcdf09347caefaasfd897 \\
+            --github-login-enabled \\
+            {% if properties['githubLoginAllowedOrganizationsEnabled'] %}
+            --github-login-allowed-organizations {{ properties['githubLoginAllowedOrganizations'] }} \\
+            {% endif %}
+            {% else %}
+            --account-signup-enabled \\
+            {% endif %}
+            --docker-registry-admin-username admin \\
+            --docker-registry-admin-password {{ properties['dockerRegistryPassword'] }}
+          EOL
+          chmod +x install.sh
+          sed -i '/^\s*$/d' install.sh
+          cat install.sh
+
+          ./install.sh
 
           cd /tmp/infrabox-configuration/infrabox
           helm install -n infrabox .
