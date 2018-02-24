@@ -52,3 +52,30 @@ githubClientSecret|required if githubEnabled=true|Your GitHub oAuth Client Secre
 githubLoginAllowedOrganizationsEnabled|required if githubEnabled=true|Set it to true if you want to limit the login to useres which belong to a particular list of GitHub Organizations. If set to false everybody with a GitHub account may login.
 githubLoginAllowedOrganizations|required if githubLoginAllowedOrganizationsEnabled=true|Comma separated list of GitHub Organizations. Only user being in one of the Organizations may login
 
+After you have modified the _infrabox.yaml_  you can create the deployment
+
+```
+    $ gcloud deployment-manager deployments create my-infrabox --config=infrabox.yaml
+```
+
+After 5-10 minutes you should have a running InfraBox installation accessible at _https://<your\_domain>_.
+
+_IMPORTANT_: After the installation you should replace the self signed certificate with a real one. If you don't do this then the GitHub webhooks won't work. If you don't want to replace the certificates you have to manually "Disable SSL Verification" for each webhook, after you connected your repository to InfraBox.
+
+## TLS Certificates
+The installation creates a self signed certificate. You should replace it with a real certificate.
+
+### Replace with already existing certificate
+If you have already a certificate you can replace it with yours.
+
+```
+    $ kubectl delete secret -n infrabox-system infrabox-tls-certs
+    $ kubectl create -n infrabox-system secret tls infrabox-tls-certs --key /path/to/tls.key --cert /path/to/tls.crt
+```
+
+And restart the nginx-ingress-controller pod in the kube-system namespace.
+
+### Let's Encrypt
+You can also use let's encrypt to get a certificate for you domain.
+
+TODO
