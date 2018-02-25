@@ -67,7 +67,7 @@ gsutil cp -r gs://<PROJECT_ID>-<DEPLOYMENT_NAME>-config/ .
 ```
 
 ## TLS Certificates
-IMPORTANT_: After the installation you should replace the self signed certificate with a real one. If you don't do this then the GitHub webhooks won't work. If you don't want to replace the certificates you have to manually "Disable SSL Verification" for each webhook, after you connected your repository to InfraBox.
+_IMPORTANT_: After the installation you should replace the self signed certificate with a real one. If you don't do this then the GitHub webhooks won't work. If you don't want to replace the certificates you have to manually "Disable SSL Verification" for each webhook, after you connected your repository to InfraBox.
 
 ### Replace with already existing certificate
 If you have already a certificate you can replace it with yours.
