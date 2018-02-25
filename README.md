@@ -28,8 +28,9 @@ Quickstart Guides:
 ## Install InfraBox
 You have multiple options to install InfraBox:
 
-- [Docker Compose](docs/install_docker_compose.md)
-- [Kubernetes Engine (Google Cloud)](docs/install_gcloud.md)
+- [Docker Compose (For local testing)](docs/install_docker_compose.md)
+- [Kubernetes Engine (GCP, Deployment Manager)](deploy/gcp/deployment_manager/)
+- [Kubernetes Engine (GCP, manual configuration)](docs/install_gcloud.md)
 
 ## Contribute
 Any contribute is highly appreciated. See our [developer's documentation](docs/dev.md) for details.
