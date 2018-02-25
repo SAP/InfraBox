@@ -1,13 +1,17 @@
-{% set CLUSTER_NAME = env['deployment'] + '-' + env['name'] %}
+{% set CLUSTER_NAME = env['deployment'] %}
+{% set SA_NAME = env['deployment'] + '-sa' %}
+{% set ZONE = properties['zone'] %}
+{% set PROJECT = env['project'] %}
+{% set BUCKET = env['project'] + '-' + env['deployment'] + '-config' %}
 
 resources:
 
-- name: {{ properties['gkeClusterName'] }}
+- name: {{ CLUSTER_NAME }}
   type: container.v1.cluster
   properties:
-    zone: {{ properties['zone'] }}
+    zone: {{ ZONE }}
     cluster:
-      name: {{ properties['gkeClusterName'] }}
+      name: {{ CLUSTER_NAME }}
       initialClusterVersion: 1.9.2-gke.1
       legacyAbac:
         enabled: false
@@ -22,6 +26,32 @@ resources:
   name: {{ CLUSTER_NAME }}-config
   properties:
     config: {{ CLUSTER_NAME }}-config
+
+- type: storage.v1.bucket
+  name: {{ BUCKET }}
+  properties:
+
+- type: storage.v1.bucket
+  name: {{ PROJECT }}-{{ CLUSTER_NAME }}-container-output
+  properties:
+
+- type: storage.v1.bucket
+  name: {{ PROJECT }}-{{ CLUSTER_NAME }}-project-upload
+  properties:
+
+- type: storage.v1.bucket
+  name: {{ PROJECT }}-{{ CLUSTER_NAME }}-content-cache
+  properties:
+
+- type: storage.v1.bucket
+  name: {{ PROJECT }}-{{ CLUSTER_NAME }}-docker-registry
+  properties:
+
+- name: {{ SA_NAME }}
+  type: iam.v1.serviceAccount
+  properties:
+    accountId: {{ SA_NAME }}
+    displayName: {{ SA_NAME }}
 
 - type: runtimeconfig.v1beta1.waiter
   name: {{ CLUSTER_NAME }}-waiter
@@ -45,10 +75,10 @@ resources:
   type: compute.v1.instance
   metadata:
     dependsOn:
-    - {{ properties['gkeClusterName'] }}
+    - {{ CLUSTER_NAME }}
   properties:
-    zone: {{ properties['zone'] }}
-    machineType: https://www.googleapis.com/compute/v1/projects/{{ env["project"] }}/zones/{{ properties["zone"] }}/machineTypes/{{ properties["instanceType"] }}
+    zone: {{ ZONE }}
+    machineType: https://www.googleapis.com/compute/v1/projects/{{ PROJECT }}/zones/{{ ZONE }}/machineTypes/{{ properties["instanceType"] }}
     tags:
       items:
       -  infrabox-init
@@ -62,9 +92,10 @@ resources:
         - https://www.googleapis.com/auth/servicecontrol
         - https://www.googleapis.com/auth/service.management.readonly
         - https://www.googleapis.com/auth/userinfo.email
+        - https://www.googleapis.com/auth/devstorage.read_write
 
     networkInterfaces:
-    - network: https://www.googleapis.com/compute/v1/projects/{{ env["project"] }}/global/networks/default
+    - network: https://www.googleapis.com/compute/v1/projects/{{ PROJECT }}/global/networks/default
       accessConfigs:
       - name: External NAT
         type: ONE_TO_ONE_NAT
@@ -85,7 +116,7 @@ resources:
           export HOME=/root
           gcloud components update -q
           gcloud components install beta -q
-          gcloud container clusters get-credentials {{ properties['gkeClusterName'] }} --zone {{ properties['zone'] }}
+          gcloud container clusters get-credentials {{ CLUSTER_NAME }} --zone {{ ZONE }}
 
           # Install helm
           curl -LO https://storage.googleapis.com/kubernetes-helm/helm-v2.7.0-linux-amd64.tar.gz
@@ -95,7 +126,7 @@ resources:
           rm helm-v2.7.0-linux-amd64.tar.gz
 
           # Init helm
-          export PW=$(gcloud container clusters describe {{ properties['gkeClusterName'] }} --zone {{ properties['zone'] }} | grep password | awk '{ print $2 }')
+          export PW=$(gcloud container clusters describe {{ CLUSTER_NAME }} --zone {{ ZONE }} | grep password | awk '{ print $2 }')
           kubectl -n kube-system create sa tiller
           kubectl --username=admin --password=$PW create clusterrolebinding tiller --clusterrole cluster-admin --serviceaccount=kube-system:tiller
           helm init --service-account tiller
@@ -110,7 +141,6 @@ resources:
             -n nginx-ingress-controller \
             --namespace kube-system \
             --set rbac.create=true \
-            --set controller.service.loadBalancerIP={{ properties['externalLBIP'] }} \
             --set controller.config.proxy-body-size="0" \
             stable/nginx-ingress
 
@@ -121,35 +151,19 @@ resources:
           # Postgres
           helm install -n postgres --namespace infrabox-system --set postgresPassword=qweasdzxc1,postgresUser=infrabox,postgresDatabase=infrabox stable/postgresql
 
-          # Minio
-          helm install stable/minio --set serviceType=ClusterIP --namespace infrabox-system -n minio
-
-          cat >/tmp/minio-init.yaml <<EOL
-          apiVersion: batch/v1
-          kind: Job
-          metadata:
-              name: init-minio
-              namespace: infrabox-system
-          spec:
-              template:
-                  metadata:
-                      name: init-minio
-                  spec:
-                      containers:
-                      -
-                          name: init-minio
-                          image: minio/mc
-                          command: ["/bin/sh", "-c"]
-                          args: ["mc config host add infrabox http://minio-minio-svc.infrabox-system:9000 AKIAIOSFODNN7EXAMPLE wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY S3v4 && mc mb infrabox/infrabox-container-output && mc mb infrabox/infrabox-project-upload && mc mb infrabox/infrabox-container-content-cache && mc mb infrabox/infrabox-docker-registry && mc ls infrabox"]
-                      restartPolicy: Never
-          EOL
-
-          kubectl create -f /tmp/minio-init.yaml
+          # Create service account key
+          gcloud iam service-accounts keys create gcs_sa.json --iam-account {{ SA_NAME }}@{{ PROJECT }}.iam.gserviceaccount.com
 
           # InfraBox
           git clone https://github.com/infrabox/infrabox /tmp/infrabox
           ssh-keygen -N '' -t rsa -f id_rsa
           ssh-keygen -f id_rsa.pub -e -m pem > id_rsa.pem
+
+          admin_pw=$(python -c 'import uuid; print uuid.uuid4()')
+          echo $admin_pw > admin_password.txt
+
+          webhook_secret=$(python -c 'import uuid; print uuid.uuid4()')
+          echo $webhook_secret > webhook_secret.txt
 
           cat >install.sh <<EOL
           python /tmp/infrabox/deploy/install.py \\
@@ -158,6 +172,7 @@ resources:
             --platform kubernetes \\
             --general-rsa-public-key ./id_rsa.pem \\
             --general-rsa-private-key ./id_rsa \\
+            --general-dont-check-certificates \\
             --root-url https://{{ properties['domainName'] }} \\
             --database postgres \\
             --postgres-host postgres-postgresql.infrabox-system \\
@@ -165,18 +180,18 @@ resources:
             --postgres-database infrabox \\
             --postgres-port 5432 \\
             --postgres-password qweasdzxc1 \\
-            --storage s3 \\
-            --s3-access-key AKIAIOSFODNN7EXAMPLE \\
-            --s3-secret-key wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY \\
-            --s3-secure false \\
-            --s3-endpoint minio-minio-svc.infrabox-system \\
-            --s3-port 9000 \\
-            --s3-region us-east-1 \\
+            --storage gcs \\
+            --gcs-project-id {{ PROJECT }} \\
+            --gcs-service-account-key-file gcs_sa.json \\
+            --gcs-container-output-bucket {{ PROJECT }}-{{ CLUSTER_NAME }}-container-output \\
+            --gcs-project-upload-bucket {{ PROJECT }}-{{ CLUSTER_NAME }}-project-upload \\
+            --gcs-container-content-cache-bucket {{ PROJECT }}-{{ CLUSTER_NAME }}-content-cache \\
+            --gcs-docker-registry {{ PROJECT }}-{{ CLUSTER_NAME }}-docker-registry \\
             {% if properties['githubEnabled'] %}
             --github-enabled \\
             --github-client-id {{ properties['githubClientID'] }} \\
             --github-client-secret {{ properties['githubClientSecret'] }} \\
-            --github-webhook-secret asdfj340rcdf09347caefaasfd897 \\
+            --github-webhook-secret \$(cat webhook_secret.txt) \\
             --github-login-enabled \\
             {% if properties['githubLoginAllowedOrganizationsEnabled'] %}
             --github-login-allowed-organizations {{ properties['githubLoginAllowedOrganizations'] }} \\
@@ -185,17 +200,27 @@ resources:
             --account-signup-enabled \\
             {% endif %}
             --docker-registry-admin-username admin \\
-            --docker-registry-admin-password {{ properties['dockerRegistryPassword'] }}
+            --docker-registry-admin-password \$(cat admin_password.txt)
           EOL
           chmod +x install.sh
           sed -i '/^\s*$/d' install.sh
           cat install.sh
 
+          # Generate helm charts
           ./install.sh
 
+          # Upload configuration
+          gsutil cp install.sh gs://{{ BUCKET }}/install.sh
+          gsutil cp id_rsa gs://{{ BUCKET }}/id_rsa
+          gsutil cp id_rsa.pem gs://{{ BUCKET }}/id_rsa.pem
+          gsutil cp webhook_secret.txt gs://{{ BUCKET }}/webhook_secret.txt
+          gsutil cp admin_password.txt gs://{{ BUCKET }}/admin_password.txt
+          gsutil cp gcs_sa.json gs://{{ BUCKET }}/gcs_sa.json
+
+          # Deploy InfraBox
           cd /tmp/infrabox-configuration/infrabox
           helm install -n infrabox .
 
           # Done
           gcloud beta runtime-config configs variables set success/{{ CLUSTER_NAME }}-waiter success --config-name $(ref.{{ CLUSTER_NAME }}-config.name)
-          # gcloud -q compute instances delete {{ CLUSTER_NAME }}-vm --zone {{ properties['zone'] }}
+          # gcloud -q compute instances delete {{ CLUSTER_NAME }}-vm --zone {{ ZONE }}

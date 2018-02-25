@@ -8,21 +8,7 @@ This guide shows you how to install InfraBox on GKE using Google Cloud Deploymen
 - You must install and configure the gcloud command line tool and include the kubectl component (gcloud components install kubectl).
 - You need a domain like _infrabox.example.com_ with access to the DNS configuration
 
-## Configure DNS
-First we have to create a static external IP. InfraBox will use this IP for its load balancer.
-
-```
-    $ gcloud compute addresses create infrabox-lb --region us-central1
-```
-
-You may choose a different region. The region must match the region you want to run you InfraBox installation in.
-To get the actul IP run:
-
-```
-    $ gcloud compute addresses describe infrabox-lb --region us-central1 | grep address:
-```
-
-Remeber the IP, you will later need. Now update your DNS for you domain (i.e. _infrabox.example.com_) to point the IP you just created.
+          gcloud projects add-iam-policy-binding {{ PROJECT }} --member=serviceAccount:{{ SA_NAME }}@{{ PROJECT }}.iam.gserviceaccount.com --role=roles/storage.admin
 
 ## Create Github App
 This step is optional, but if you want to run builds for projects hosted on github.com you should create a GitHub application.
@@ -39,13 +25,10 @@ Edit the infrabox.yaml and set the properties.
 
 Property | Required | Description
 ---------|----------|------------
-gkeClusterName|true|Name of the GKE Cluster which will be created
 zone|true|Zone in which the Cluster will be created. It must be the same zone as your static external IP!
 initialNodeCount|true|Number of Nodes in the GKE cluster
 instanceType|true|Instance types of the nodes in the GKE cluster
 domainName|true|Your domain under which your InfraBox installation will be accessible (i.e. _infrabox.example.com_)
-externalLBIP|true|External static IP you created earlier. Your domain has to resolve to this IP.
-dockerRegistryPassword|true|Choose a password for the internal Docker Registry
 githubEnabled|false|Set to true to allow login with github.com accounts. If set to false use have to manual register with email/password and you cannot connect GitHub Repositories.
 githubClientID|required if githubEnabled=true|Your GitHub oAuth Client ID you created earlier
 githubClientSecret|required if githubEnabled=true|Your GitHub oAuth Client Secret you created earlier
@@ -58,12 +41,35 @@ After you have modified the _infrabox.yaml_  you can create the deployment
     $ gcloud deployment-manager deployments create my-infrabox --config=infrabox.yaml
 ```
 
-After 5-10 minutes you should have a running InfraBox installation accessible at _https://<your\_domain>_.
+In the following command we will refer to <DEPLOYMENT_NAME>, in this case we are using _my-infrabox_ as name for our deployment.
 
-_IMPORTANT_: After the installation you should replace the self signed certificate with a real one. If you don't do this then the GitHub webhooks won't work. If you don't want to replace the certificates you have to manually "Disable SSL Verification" for each webhook, after you connected your repository to InfraBox.
+After 5-10 minutes you should have a running InfraBox installation, but you still have to configure your DNS so your domain resolves to the LoadBalancer's IP.
+Get the IP:
+
+```
+    $ gcloud container clusters get-credentials <DEPLOYMENT_NAME> --zone <ZONE> --project <PROJECT_ID>
+    $ kubectl get svc -n kube-system | grep nginx-ingress-controller-controller | awk '{ print $4 }'
+```
+
+Now update your DNS for your domain to point to the external IP of the nginx-ingress-controller service.
+_Please continue reading on how to update the TLS certificates._
+
+After a few minutes you should be able to access your InfraBox installation at https://<YOUR_DOMAIN>/.
+A new Service Account has been created for accessing Google Cloud Storage. You have to give him proper permission, otherwhise InfraBox will not work:
+
+```
+    gcloud projects add-iam-policy-binding <PROJECT_NAME> --member="serviceAccount:<DEPLOYMENT_NAME>-sa@<PROJECT_NAME>.iam.gserviceaccount.com" --role='roles/storage.admin'
+```
+
+## Download configuration
+The installation creates a GCS bucket with all the configuration. You may use it to update/reconfigure your InfraBox installation. To download the configuration:
+
+```
+    $ gsutil cp -r gs://<PROJECT_ID>-<DEPLOYMENT_NAME>-config/ .
+```
 
 ## TLS Certificates
-The installation creates a self signed certificate. You should replace it with a real certificate.
+IMPORTANT_: After the installation you should replace the self signed certificate with a real one. If you don't do this then the GitHub webhooks won't work. If you don't want to replace the certificates you have to manually "Disable SSL Verification" for each webhook, after you connected your repository to InfraBox.
 
 ### Replace with already existing certificate
 If you have already a certificate you can replace it with yours.
@@ -74,8 +80,3 @@ If you have already a certificate you can replace it with yours.
 ```
 
 And restart the nginx-ingress-controller pod in the kube-system namespace.
-
-### Let's Encrypt
-You can also use let's encrypt to get a certificate for you domain.
-
-TODO
