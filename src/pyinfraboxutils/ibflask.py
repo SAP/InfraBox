@@ -223,8 +223,11 @@ def validate_job_token(token):
     token['project']['id'] = r[1]
     g.token = token
 
-def is_collaborator(user_id, project_id):
-    u = g.db.execute_many('''
+def is_collaborator(user_id, project_id, db=None):
+    if not db:
+        db = g.db
+
+    u = db.execute_many('''
         SELECT co.*
         FROM collaborator co
         INNER JOIN "user" u
