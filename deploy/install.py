@@ -336,6 +336,9 @@ class Kubernetes(Install):
         self.set('github.api.tag', self.args.version)
         self.set('github.review.tag', self.args.version)
 
+        if self.args.github_login_allowed_organizations:
+            self.set('github.login.allowed_organizations', self.args.github_login_allowed_organizations)
+
         secret = {
             "client_id": self.args.github_client_id,
             "client_secret": self.args.github_client_secret,
@@ -770,6 +773,7 @@ def main():
     parser.add_argument('--github-api-url', default='https://api.github.com')
     parser.add_argument('--github-login-enabled', action='store_true', default=False)
     parser.add_argument('--github-login-url', default='https://github.com/login')
+    parser.add_argument('--github-login-allowed-organizations', default=None)
 
     # TLS
     parser.add_argument('--ingress-tls-disabled', action='store_true', default=False)

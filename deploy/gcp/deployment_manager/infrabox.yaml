@@ -1,0 +1,19 @@
+imports:
+- path: infrabox.jinja
+
+resources:
+- name: infrabox-cluster
+  type: infrabox.jinja
+  properties:
+    gkeClusterName: infrabox-cluster
+    zone: us-central1-a
+    initialNodeCount: 3
+    instanceType: n1-standard-2
+    domainName: # REQUIRED: infrabox.example.com
+    externalLBIP: # REQUIRED: 1.2.3.4
+    dockerRegistryPassword: # REQUIRED: asecretpassword
+    githubEnabled: true
+    githubClientID: # REQUIRED: a client ID
+    githubClientSecret: # REQUIRED: a secret ID
+    githubLoginAllowedOrganizationsEnabled: false
+    # githubLoginAllowedOrganizations: Org1,Org2

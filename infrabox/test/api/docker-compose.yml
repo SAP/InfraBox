@@ -23,6 +23,7 @@ services:
             - INFRABOX_STORAGE_GCS_PROJECT_ID=my-project
             - GOOGLE_APPLICATION_CREDENTIALS=
             - INFRABOX_ROOT_URL=localhost
+            - CODECOV_TOKEN=$CODECOV_TOKEN
         links:
             - postgres
 

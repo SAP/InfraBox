@@ -1,3 +1,6 @@
+import os
+import requests
+
 from flask import g, abort, request
 from flask_restplus import Resource, fields
 
@@ -271,7 +274,6 @@ class Project(Resource):
             DELETE FROM collaborator
             WHERE project_id = %s
         ''', [project_id])
-
 
         g.db.commit()
 

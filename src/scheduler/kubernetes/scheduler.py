@@ -107,7 +107,7 @@ class Scheduler(object):
             "value": os.environ['INFRABOX_GENERAL_DONT_CHECK_CERTIFICATES']
         }, {
             "name": "INFRABOX_JOB_API_URL",
-            "value": os.environ['INFRABOX_JOB_API_URL']
+            "value": os.environ['INFRABOX_ROOT_URL'] + '/api/job'
         }, {
             "name": "INFRABOX_JOB_GIT_URL",
             "value": "http://localhost:8080"
@@ -740,7 +740,6 @@ def main():
     get_env('INFRABOX_DOCKER_REGISTRY_URL')
     get_env('INFRABOX_GENERAL_DONT_CHECK_CERTIFICATES')
     get_env('INFRABOX_GENERAL_WORKER_NAMESPACE')
-    get_env('INFRABOX_JOB_API_URL')
     get_env('INFRABOX_JOB_MAX_OUTPUT_SIZE')
     get_env('INFRABOX_JOB_MOUNT_DOCKER_SOCKET')
     get_env('INFRABOX_JOB_SECURITY_CONTEXT_CAPABILITIES_ENABLED')

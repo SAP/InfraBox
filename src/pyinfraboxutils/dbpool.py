@@ -18,12 +18,10 @@ POOL = ConnectionPool(psycopg2,
                       max_size=10)
 
 def get():
-    logger.debug('get connection')
     conn = POOL.get()
     return DB(conn)
 
 def put(db):
-    logger.debug('put connection')
     try:
         db.rollback()
     except Exception as e:

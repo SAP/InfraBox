@@ -114,7 +114,7 @@ def main(): # pragma: no cover
                 token = get_token()
                 if token['type'] == 'user':
                     user_id = token['user']['id']
-                    collaborator = is_collaborator(user_id, project_id)
+                    collaborator = is_collaborator(user_id, project_id, db=conn)
 
                     if not collaborator:
                         logger.warn('not a collaborator')
@@ -160,7 +160,7 @@ def main(): # pragma: no cover
                 token = get_token()
                 if token['type'] == 'user':
                     user_id = token['user']['id']
-                    collaborator = is_collaborator(user_id, u['project_id'])
+                    collaborator = is_collaborator(user_id, u['project_id'], db=conn)
 
                     if not collaborator:
                         logger.warn('not a collaborator')

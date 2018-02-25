@@ -16,6 +16,7 @@ services:
             - INFRABOX_DATABASE_PASSWORD=postgres
             - INFRABOX_DATABASE_DB=postgres
             - INFRABOX_DATABASE_PORT=5432
+            - CODECOV_TOKEN=$CODECOV_TOKEN
         links:
             - postgres
 
