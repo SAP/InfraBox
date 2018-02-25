@@ -5,19 +5,12 @@ info:
     Creates a GKE cluster with a VM initializing InfraBox
 
 required:
-- gkeClusterName
 - zone
 - initialNodeCount
 - instanceType
 - domainName
-- dockerRegistryPassword
-- externalLBIP
 
 properties:
-  gkeClusterName:
-    type: string
-    description: GKE Cluster Name
-    default: infrabox-cluster
   zone:
     type: string
     description: Zone in which the cluster should run.
@@ -27,7 +20,7 @@ properties:
   initialNodeCount:
     type: integer
     description: Initial number of nodes desired in the cluster.
-    default: 4
+    default: 3
     enum:
       - 1
       - 2
@@ -44,13 +37,7 @@ properties:
       zoneProperty: zone
   domainName:
     type: string
-    description: The domain under which infrabox should be available (i.e. infrabox.example.com)
-  externalLBIP:
-    type: string
-    description: Name of a global static IP to be used for the load balancer. The DNS of your domain should point to it
-  dockerRegistryPassword:
-    type: string
-    description: Admin Password for the internal Docker Registry
+    description: The domain under which InfraBox will be available (i.e. infrabox.example.com)
   githubEnabled:
     type: boolean
     description: Enable github
