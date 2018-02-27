@@ -59,6 +59,15 @@ class S3(object):
     def delete_cache(self, key):
         return self._delete(self.cache_bucket, key)
 
+    def create_buckets(self):
+        client = self._get_client()
+        try:
+            client.create_bucket(Bucket=self.upload_bucket)
+            client.create_bucket(Bucket=self.cache_bucket)
+            client.create_bucket(Bucket=self.output_bucket)
+        except:
+            pass
+
     def _delete(self, bucket, key):
         client = self._get_client()
         try:
