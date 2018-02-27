@@ -173,7 +173,8 @@ class Build(Resource):
             j.dependencies as job_dependencies,
             j.created_at as job_created_at,
             -- pull_request
-            pr.title as pull_request_title
+            pr.title as pull_request_title,
+            pr.url as pull_request_url
         FROM build b
         INNER JOIN job j
         ON b.id = j.build_id
