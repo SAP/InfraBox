@@ -5,8 +5,10 @@ from api import server
 import xmlrunner
 
 from pyinfraboxutils.db import connect_db
-from pyinfraboxutils.token import encode_user_token
+from pyinfraboxutils.token import encode_user_token, encode_job_token
 from pyinfraboxutils.ibmock import MockResponse
+
+from pyinfraboxutils.storage import storage
 
 class ApiTestCase(unittest.TestCase):
     def setUp(self):
@@ -26,6 +28,8 @@ class ApiTestCase(unittest.TestCase):
         self.user_id = '2514af82-3c4f-4bb5-b1da-a89a0ced5e6f'
         self.repo_id = '3514af82-3c4f-4bb5-b1da-a89a0ced5e6f'
         self.build_id = '4514af82-3c4f-4bb5-b1da-a89a0ced5e6f'
+        self.job_id1 = '5514af82-3c4f-4bb5-b1da-a89a0ced5e6f'
+        self.job_id2 = '6514af82-3c4f-4bb5-b1da-a89a0ced5e6f'
         self.sha = 'd670460b4b4aece5915caf5c68d12f560a9fe3e4'
 
         self.execute("""
@@ -48,6 +52,16 @@ class ApiTestCase(unittest.TestCase):
             INSERT INTO repository(id, name, html_url, clone_url, github_id, project_id, private)
             VALUES (%s, 'testrepo', 'url', 'clone_url', 0, %s, true);
         """, (self.repo_id, self.project_id))
+
+        self.execute("""
+            INSERT INTO job(id, state, build_id, type, name, project_id, build_only, cpu, memory)
+            VALUES (%s, 'finished', %s, 'run_project_container', 'job1', %s, true, 1, 1024);
+        """, (self.job_id1, self.build_id, self.project_id))
+
+        self.execute("""
+            INSERT INTO job(id, state, build_id, type, name, project_id, build_only, cpu, memory, dependencies)
+            VALUES (%s, 'running', %s, 'run_project_container', 'job2', %s, true, 1, 1024, %s);
+        """, (self.job_id2, self.build_id, self.project_id, json.dumps([{'job': 'job1', 'job-id': self.job_id1}])))
 
 
     def execute(self, stmt, args=None):
@@ -107,12 +121,20 @@ class ApiTestCase(unittest.TestCase):
         self.assertEqual(r['status'], 200)
         self.assertEqual(r['message'], 'Build triggered')
 
+    def test_get_output(self):
+        r = self.get('/api/job/output/%s' % (self.job_id1), headers=self.get_job_headers(self.job_id2), status=404)
+
     def get_project_headers(self): # pragma: no cover
         token = encode_user_token(self.user_id)
         h = {'Authorization': 'token %s' % token}
         return h
 
-    def get(self, url, headers=None): # pragma: no cover
+    def get_job_headers(self, job_id): # pragma: no cover
+        token = encode_job_token(job_id)
+        h = {'Authorization': 'token %s' % token}
+        return h
+
+    def get(self, url, headers=None, status=None): # pragma: no cover
         if not headers:
             headers = self.get_project_headers()
 
@@ -121,6 +143,9 @@ class ApiTestCase(unittest.TestCase):
         if r.mimetype == 'application/json':
             j = json.loads(r.data)
             return j
+
+        if status:
+            self.assertEqual(status, r.status_code)
 
         return r
 
@@ -141,5 +166,7 @@ class ApiTestCase(unittest.TestCase):
         return r
 
 if __name__ == '__main__':
+    storage.create_buckets()
+
     with open('results.xml', 'wb') as output:
         unittest.main(testRunner=xmlrunner.XMLTestRunner(output=output))
