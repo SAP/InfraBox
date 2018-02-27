@@ -199,20 +199,6 @@
     }, {
         "type": "docker",
         "build_context": "../..",
-        "name": "stats",
-        "docker_file": "src/stats/Dockerfile",
-        "build_only": true,
-        "resources": { "limits": { "cpu": 1, "memory": 1024 } },
-        "deployments": [{
-            "type": "docker-registry",
-            "host": "quay.io/infrabox",
-            "repository": "stats",
-            "username": "infrabox+infrabox_ci",
-            "password": { "$secret": "QUAY_PASSWORD" }
-        }]
-    }, {
-        "type": "docker",
-        "build_context": "../..",
         "name": "job-git",
         "docker_file": "src/job/git/Dockerfile",
         "build_only": true,
