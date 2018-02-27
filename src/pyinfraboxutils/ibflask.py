@@ -112,6 +112,7 @@ def teardown_request(_):
 
 @app.errorhandler(404)
 def not_found(error):
+    assert False
     msg = error.description
 
     if not msg:
@@ -121,10 +122,12 @@ def not_found(error):
 
 @app.errorhandler(401)
 def unauthorized(error):
+    assert False
     return jsonify({'message': error.description, 'status': 401}), 401
 
 @app.errorhandler(400)
 def bad_request(error):
+    assert False
     return jsonify({'message': error.description, 'status': 400}), 400
 
 def OK(message, data=None):

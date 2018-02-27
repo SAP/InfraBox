@@ -849,6 +849,8 @@ class Testresult(Resource):
         job_id = g.token['job']['id']
         project_id = g.token['project']['id']
 
+        print '^^^^^\nn\n\n\n\n\n\n', request.json
+
         if 'data' not in request.files:
             abort(400, 'data not set')
 
