@@ -1,7 +1,7 @@
 <template>
-    <div v-if="data">
-        <ib-build-detail-header :projectName="projectName" :buildNumber="buildNumber" :buildRestartCounter="buildRestartCounter" tabIndex="0">
-            <ib-job-gantt :jobs="data.build.jobs"></ib-job-gantt>
+    <div v-if="build">
+        <ib-build-detail-header :project="project" :build="build" tabIndex="0">
+            <ib-job-gantt :jobs="build.jobs"></ib-job-gantt>
         </ib-build-detail-header>
     </div>
 </template>
@@ -20,22 +20,24 @@ export default {
         'ib-job-gantt': GanttChart,
         'ib-build-detail-header': BuildDetailHeader
     },
+    data () {
+        return {
+            project: null,
+            build: null
+        }
+    },
     asyncComputed: {
-        data: {
+        load: {
             get () {
-                let project = null
                 return ProjectService
                     .findProjectByName(this.projectName)
                     .then((p) => {
-                        project = p
+                        this.project = p
                         return p.getBuild(this.buildNumber, this.buildRestartCounter)
                     })
                     .then((build) => {
                         build._updateState()
-                        return {
-                            project,
-                            build
-                        }
+                        this.build = build
                     })
             },
             watch () {
