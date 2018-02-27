@@ -399,9 +399,6 @@ class Kubernetes(Install):
         self.set('scheduler.tag', self.args.version)
         self.set('scheduler.enabled', not self.args.scheduler_disabled)
 
-    def setup_stats(self):
-        self.set('stats.tag', self.args.version)
-
     def setup_ingress(self):
         host = self.args.root_url.replace('http://', '')
         host = host.replace('https://', '')
@@ -437,7 +434,6 @@ class Kubernetes(Install):
         self.setup_account()
         self.setup_job()
         self.setup_db()
-        self.setup_stats()
         self.setup_scheduler()
         self.setup_gerrit()
         self.setup_github()

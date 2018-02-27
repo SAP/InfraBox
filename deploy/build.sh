@@ -25,7 +25,6 @@ infrabox run ib/deploy/build-dashboard-client
 infrabox run ib/deploy/static           -t ${docker_registry}infrabox/static:$image_tag
 infrabox run ib/deploy/docker-auth      -t ${docker_registry}infrabox/docker-registry-auth:$image_tag
 infrabox run ib/deploy/docker-nginx     -t ${docker_registry}infrabox/docker-registry-nginx:$image_tag
-infrabox run ib/deploy/stats            -t ${docker_registry}infrabox/stats:$image_tag
 infrabox run ib/deploy/db               -t ${docker_registry}infrabox/db:$image_tag
 infrabox run ib/deploy/docker-gc        -t ${docker_registry}infrabox/docker-gc:$image_tag
 infrabox run ib/deploy/postgres         -t ${docker_registry}infrabox/postgres:$image_tag
