@@ -180,7 +180,7 @@ def parse_docker(d, path):
     check_allowed_properties(d, path, ("type", "name", "docker_file", "depends_on", "resources",
                                        "build_only", "environment",
                                        "build_arguments", "deployments", "timeout", "security_context",
-                                       "build_context"))
+                                       "build_context", "no_cache"))
     check_required_properties(d, path, ("type", "name", "docker_file", "resources"))
     check_name(d['name'], path + ".name")
     check_text(d['docker_file'], path + ".docker_file")
@@ -188,6 +188,9 @@ def parse_docker(d, path):
 
     if 'build_only' in d:
         check_boolean(d['build_only'], path + ".build_only")
+
+    if 'no_cache' in d:
+        check_boolean(d['no_cache'], path + ".no_cache")
 
     if 'depends_on' in d:
         parse_depends_on(d['depends_on'], path + ".depends_on")
@@ -212,11 +215,14 @@ def parse_docker(d, path):
 
 def parse_docker_compose(d, path):
     check_allowed_properties(d, path, ("type", "name", "docker_compose_file", "depends_on",
-                                       "environment", "resources"))
+                                       "environment", "resources", "no_cache"))
     check_required_properties(d, path, ("type", "name", "docker_compose_file", "resources"))
     check_name(d['name'], path + ".name")
     check_text(d['docker_compose_file'], path + ".docker_compose_file")
     parse_resources(d['resources'], path + ".resources")
+
+    if 'no_cache' in d:
+        check_boolean(d['no_cache'], path + ".no_cache")
 
     if 'depends_on' in d:
         parse_depends_on(d['depends_on'], path + ".depends_on")
