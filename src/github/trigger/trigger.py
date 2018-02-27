@@ -104,12 +104,13 @@ class Trigger(object):
         build_id = result[0][0]
         return build_id
 
-    def create_job(self, commit_id, clone_url, build_id, project_id, github_private_repo, branch, env=None):
+    def create_job(self, commit_id, clone_url, build_id, project_id, github_private_repo, branch, env=None, fork=False):
         git_repo = {
             "commit": commit_id,
             "clone_url": clone_url,
             "github_private_repo": github_private_repo,
-            "branch": branch
+            "branch": branch,
+            "fork": fork
         }
 
         self.execute('''
@@ -269,6 +270,8 @@ class Trigger(object):
             logger.error(json.dumps(commits, indent=4))
             return res(500, 'Internal Server Error')
 
+        is_fork = event['pull_request']['head']['repo']['fork']
+
         result = self.execute('''
             SELECT id FROM pull_request WHERE project_id = %s and github_pull_request_id = %s
         ''', [repo_id, event['pull_request']['id']])
@@ -330,7 +333,7 @@ class Trigger(object):
             build_id = self.create_build(commit_id, project_id)
             self.create_job(event['pull_request']['head']['sha'],
                             event['pull_request']['head']['repo']['clone_url'],
-                            build_id, project_id, github_repo_private, branch, env)
+                            build_id, project_id, github_repo_private, branch, env=env, fork=is_fork)
 
             self.conn.commit()
 
