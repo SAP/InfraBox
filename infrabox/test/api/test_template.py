@@ -19,6 +19,7 @@ class ApiTestTemplate(unittest.TestCase):
         self.repo_id = '3514af82-3c4f-4bb5-b1da-a89a0ced5e6f'
         self.build_id = '4514af82-3c4f-4bb5-b1da-a89a0ced5e6f'
         self.job_id = '1454af82-4c4f-4bb5-b1da-a54a0ced5e6f'
+        self.job_name = ''
         self.sha = 'd670460b4b4aece5915caf5c68d12f560a9fe3e4'
         self.author_name = 'author_name1'
         self.author_email = 'author@email.1'
@@ -51,8 +52,8 @@ class ApiTestTemplate(unittest.TestCase):
                        INSERT INTO job (id, state, build_id, type, name, project_id,
                                  build_only, dockerfile, cpu, memory)
                 VALUES (%s, 'queued', %s, 'run_docker_compose',
-                        'job_name1', %s, false, '', 1, 512)
-                   """, (self.job_id, self.build_id, self.project_id))
+                        %s, %s, false, '', 1, 512)
+                   """, (self.job_id, self.build_id, self.job_name, self.project_id))
 
         # TestClient.execute("""
         #                   INSERT INTO job (id, state, build_id, type, name, project_id,

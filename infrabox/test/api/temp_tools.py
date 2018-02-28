@@ -67,14 +67,18 @@ class TestClient:
         return r
 
     @staticmethod
-    def post(url, data, headers): # pragma: no cover
+    def post(url, data, headers, content_type='application/json'): # pragma: no cover
         if not headers:
             return
 
+        if content_type == 'application/json':
+            data = json.dumps(data)
+
+
         r = TestClient.app.post(url,
-                          data=json.dumps(data),
+                          data=data,
                           headers=headers,
-                          content_type='application/json')
+                          content_type=content_type)
 
         print r.status_code
 
