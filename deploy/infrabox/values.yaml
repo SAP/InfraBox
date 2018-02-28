@@ -162,15 +162,6 @@ dashboard:
         log:
             level: info
 
-stats:
-    enabled: true
-
-    # name of the stats image in your general.docker_registry
-    # image: stats
-
-    # Tag
-    tag: latest
-
 api:
     enabled: true
 

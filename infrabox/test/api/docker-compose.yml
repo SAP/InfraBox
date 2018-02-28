@@ -6,6 +6,13 @@ services:
             context: ../../../
             dockerfile: ./src/postgres/Dockerfile
 
+    minio:
+        image: minio/minio
+        command: server /data
+        environment:
+            - MINIO_ACCESS_KEY=AKIAIOSFODNN7EXAMPLE
+            - MINIO_SECRET_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+
     test:
         build:
             context: ../../../
@@ -16,17 +23,19 @@ services:
             - INFRABOX_DATABASE_PASSWORD=postgres
             - INFRABOX_DATABASE_DB=postgres
             - INFRABOX_DATABASE_PORT=5432
-            - INFRABOX_STORAGE_S3_ENABLED=false
-            - INFRABOX_STORAGE_GCS_ENABLED=true
-            - INFRABOX_STORAGE_GCS_PROJECT_UPLOAD_BUCKET=test
-            - INFRABOX_STORAGE_GCS_CONTAINER_CONTENT_CACHE_BUCKET=test
-            - INFRABOX_STORAGE_GCS_CONTAINER_OUTPUT_BUCKET=test
-            - INFRABOX_STORAGE_GCS_PROJECT_ID=my-project
-            - INFRABOX_JOB_SECURITY_CONTEXT_CAPABILITIES_ENABLED=false
-            - INFRABOX_DOCKER_REGISTRY_URL=.
-            - GOOGLE_APPLICATION_CREDENTIALS=
+            - INFRABOX_STORAGE_GCS_ENABLED=false
+            - INFRABOX_STORAGE_S3_ENABLED=true
+            - INFRABOX_STORAGE_S3_PROJECT_UPLOAD_BUCKET=project-upload
+            - INFRABOX_STORAGE_S3_CONTAINER_OUTPUT_BUCKET=container-output
+            - INFRABOX_STORAGE_S3_CONTAINER_CONTENT_CACHE_BUCKET=content-cache
+            - INFRABOX_STORAGE_S3_SECURE=false
+            - INFRABOX_STORAGE_S3_ACCESS_KEY=AKIAIOSFODNN7EXAMPLE
+            - INFRABOX_STORAGE_S3_SECRET_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+            - INFRABOX_STORAGE_S3_ENDPOINT=minio
+            - INFRABOX_STORAGE_S3_PORT=9000
             - INFRABOX_ROOT_URL=localhost
             - CODECOV_TOKEN=$CODECOV_TOKEN
         links:
             - postgres
+            - minio
 

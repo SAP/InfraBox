@@ -235,7 +235,11 @@ class Job(Resource):
              WHERE project_id = %s
         ''', (data['project']['id'], ))
 
+        is_fork = data['job'].get('fork', False)
         def get_secret(name):
+            if is_fork:
+                abort(400, 'Access to secret %s is not allowed from a fork' % name)
+
             for ev in secrets:
                 if ev[0] == name:
                     return ev[1]
