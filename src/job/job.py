@@ -423,20 +423,23 @@ class RunJob(Job):
 
         storage_cache_tar = os.path.join(storage_cache_dir, 'cache.tar.gz')
 
-        c.collect("Syncing cache", show=True)
-        self.get_file_from_api_server("/cache", storage_cache_tar)
-
-        c.collect("Unpacking cache", show=True)
-
-        if os.path.isfile(storage_cache_tar):
-            try:
-                c.execute(['time', 'tar', '-zxf', storage_cache_tar, '-C', self.infrabox_cache_dir], show=True)
-                c.collect("cache found\n", show=True)
-            except:
-                c.collect("Failed to unpack cache\n", show=True)
-            os.remove(storage_cache_tar)
+        if self.job['definition'].get('no_cache', False):
+            c.collect("Not downloading cache, because no_cache has been set", show=True)
         else:
-            c.collect("no cache found\n", show=True)
+            c.collect("Syncing cache", show=True)
+            self.get_file_from_api_server("/cache", storage_cache_tar)
+
+            c.collect("Unpacking cache", show=True)
+
+            if os.path.isfile(storage_cache_tar):
+                try:
+                    c.execute(['time', 'tar', '-zxf', storage_cache_tar, '-C', self.infrabox_cache_dir], show=True)
+                    c.collect("cache found\n", show=True)
+                except:
+                    c.collect("Failed to unpack cache\n", show=True)
+                os.remove(storage_cache_tar)
+            else:
+                c.collect("no cache found\n", show=True)
 
         try:
             if self.job['type'] == 'run_project_container':
@@ -475,22 +478,25 @@ class RunJob(Job):
             c.collect("Output is empty\n", show=True)
 
         # Compressing cache
-        c.collect("Updating Cache", show=True)
-        if os.path.isdir(self.infrabox_cache_dir) and os.listdir(self.infrabox_cache_dir):
-            self.compress(self.infrabox_cache_dir, storage_cache_tar)
-            c.execute(['md5sum', storage_cache_tar], show=True)
-
-            if os.stat(storage_cache_tar).st_size > (1024 * 1024 * 100):
-                # cache too big
-                c.collect("Cache is too big, not uploading it\n", show=True)
-            else:
-                c.collect("Syncing cache", show=True)
-                try:
-                    self.post_file_to_api_server('/cache', storage_cache_tar)
-                except:
-                    logger.exception("message")
+        if self.job['definition'].get('no_cache', False):
+            c.collect("Not updating cache, because no_cache has been set", show=True)
         else:
-            c.collect("Cache is empty\n", show=True)
+            c.collect("Updating Cache", show=True)
+            if os.path.isdir(self.infrabox_cache_dir) and os.listdir(self.infrabox_cache_dir):
+                self.compress(self.infrabox_cache_dir, storage_cache_tar)
+                c.execute(['md5sum', storage_cache_tar], show=True)
+
+                if os.stat(storage_cache_tar).st_size > (1024 * 1024 * 100):
+                    # cache too big
+                    c.collect("Cache is too big, not uploading it\n", show=True)
+                else:
+                    c.collect("Syncing cache", show=True)
+                    try:
+                        self.post_file_to_api_server('/cache', storage_cache_tar)
+                    except:
+                        logger.exception("message")
+            else:
+                c.collect("Cache is empty\n", show=True)
 
         shutil.rmtree(self.mount_data_dir, True)
         shutil.rmtree(self.infrabox_cache_dir, True)
@@ -844,6 +850,10 @@ class RunJob(Job):
 
     def get_cached_image(self, image_name_latest):
         c = self.console
+
+        if self.job['definition'].get('no_cache', False):
+            c.collect("Not pulling cached image, because no_cache has been set", show=True)
+
         c.collect("Get cached image %s" % image_name_latest, show=True)
 
         self.login_docker_registry()
@@ -852,6 +862,10 @@ class RunJob(Job):
 
     def cache_docker_image(self, image_name_build, image_name_latest):
         c = self.console
+
+        if self.job['definition'].get('no_cache', False):
+            c.collect("Not pushed cached image, because no_cache has been set", show=True)
+
         c.collect("Upload cached image %s" % image_name_latest, show=True)
 
         try:

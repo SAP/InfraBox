@@ -156,6 +156,8 @@ resources:
 
           # InfraBox
           git clone https://github.com/infrabox/infrabox /tmp/infrabox
+          cd /tmp/infrabox
+          git checkout {{ properties['infraboxVersion'] }}
           ssh-keygen -N '' -t rsa -f id_rsa
           ssh-keygen -f id_rsa.pub -e -m pem > id_rsa.pem
 

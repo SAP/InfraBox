@@ -17,7 +17,6 @@ src/infraboxcli/infraboxcli.egg-info/
 *.yaml.infrabox
 run_server.sh
 certs/
-src/stats/run.sh
 src/dashboard-client/node_modules
 .infrabox*
 *.iml

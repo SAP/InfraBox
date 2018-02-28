@@ -24,7 +24,6 @@ docker push ${docker_registry}infrabox/dashboard-api:$image_tag
 docker push ${docker_registry}infrabox/static:$image_tag
 docker push ${docker_registry}infrabox/docker-registry-auth:$image_tag
 docker push ${docker_registry}infrabox/docker-registry-nginx:$image_tag
-docker push ${docker_registry}infrabox/stats:$image_tag
 docker push ${docker_registry}infrabox/db:$image_tag
 docker push ${docker_registry}infrabox/docker-gc:$image_tag
 docker push ${docker_registry}infrabox/postgres:$image_tag

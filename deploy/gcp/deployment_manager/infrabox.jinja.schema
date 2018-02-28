@@ -9,6 +9,7 @@ required:
 - initialNodeCount
 - instanceType
 - domainName
+- infraboxVersion
 
 properties:
   zone:
@@ -42,6 +43,9 @@ properties:
     type: boolean
     description: Enable github
     default: true
+  infraboxVersion:
+    type: string
+    description: InfraBox version to install
   githubClientID:
     type: string
     description: Client ID of your github oAuth application

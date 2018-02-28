@@ -12,10 +12,9 @@ from job_api_test import JobApiTest
 from build_test import BuildTest
 from job_test import JobTest
 
+from pyinfraboxutils.storage import storage
 
 class ApiTestCase(ApiTestTemplate):
-
-
 
     def test_get_project_does_not_exist(self):
         r = TestClient.get('/api/v1/projects/%s' % self.repo_id, TestClient.get_user_authorization(self.user_id))
@@ -68,6 +67,8 @@ class ApiTestCase(ApiTestTemplate):
 
 
 if __name__ == '__main__':
+    storage.create_buckets()
+
     with open('results.xml', 'wb') as output:
         #unittest.main(testRunner=xmlrunner.XMLTestRunner(output=output))
         suite1 = unittest.TestLoader().loadTestsFromTestCase(ApiTestCase)
