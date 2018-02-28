@@ -71,13 +71,13 @@ if __name__ == '__main__':
 
     with open('results.xml', 'wb') as output:
         #unittest.main(testRunner=xmlrunner.XMLTestRunner(output=output))
-        suite1 = unittest.TestLoader().loadTestsFromTestCase(ApiTestCase)
-        #suite2 = unittest.TestLoader().loadTestsFromTestCase(JobApiTest)
+        #suite1 = unittest.TestLoader().loadTestsFromTestCase(ApiTestCase)
+        suite2 = unittest.TestLoader().loadTestsFromTestCase(JobApiTest)
         #suite3 = unittest.TestLoader().loadTestsFromTestCase(BuildTest)
         #suite4 = unittest.TestLoader().loadTestsFromTestCase(JobTest)
         runner = XMLTestRunner(output=output)
-        runner.run(suite1)
-        #runner.run(suite2)
+        #runner.run(suite1)
+        runner.run(suite2)
         #runner.run(suite3)
         #runner.run(suite4)
 #
