@@ -10,16 +10,16 @@ class JobApiTest(ApiTestTemplate):
 
     url_ns = 'api/job'
 
-    #ef test_uuid_validation(self):
+    #def test_uuid_validation(self):
     #   pass
     #   #TODO
 
-    #ef test_job(self):
+    #def test_job(self):
     #   result = TestClient.get(self.url_ns + '/job', self.job_headers)
     #   self.assertEqual(result['project']['id'], self.project_id)
     #   self.assertEqual(result['job']['id'], self.job_id)
 
-    #ef test_source(self):
+    #def test_source(self):
     #   result = TestClient.get(self.url_ns + '/source', self.job_headers)
     #   print result
 
