@@ -63,7 +63,7 @@ class ApiTestTemplate(unittest.TestCase):
         #               """, (self.job_id2, self.build_id, self.project_id))
         #
         TestClient.execute("""INSERT INTO build (id, project_id, build_number, commit_id, source_upload_id)
-                                  VALUES (%s, %s, 1, %s, %s)""",
+                                          VALUES (%s, %s, 1, %s, %s)""",
                            (self.build_id, self.project_id, self.sha, self.source_upload_id))
 
         TestClient.execute("""INSERT INTO commit (id, repository_id, "timestamp", project_id, author_name,

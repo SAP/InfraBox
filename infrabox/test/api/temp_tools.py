@@ -74,11 +74,12 @@ class TestClient:
         if content_type == 'application/json':
             data = json.dumps(data)
 
-
         r = TestClient.app.post(url,
                           data=data,
                           headers=headers,
                           content_type=content_type)
+
+        TestClient.app.post()
 
         print r.status_code
 
