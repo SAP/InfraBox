@@ -58,8 +58,6 @@ class Jobs(Resource):
             AND build_id = %s
         ''', [project_id, build_id])
 
-        print '$$$$$$$$$\n\n\n\n\nn\n\n', jobs
-
         for j in jobs:
             if j['type'] == 'run_docker_compose':
                 j['type'] = 'docker_compose'
