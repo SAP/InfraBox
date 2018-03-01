@@ -72,8 +72,5 @@ class ApiTestTemplate(unittest.TestCase):
                            (self.sha, self.repo_id, self.project_id,
                             self.author_name, self.author_email, self.author_name, self.author_email))
 
-        #TestClient.execute("""
-        #                       INSERT INTO source_upload (id, project_id, filename, filesize)
-        #                       VALUES (%s, %s, %s, %s);
-        #                   """, (self.source_upload_id, self.project_id, self.filename, self.filesize))
+
 #
