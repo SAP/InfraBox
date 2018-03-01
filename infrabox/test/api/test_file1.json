@@ -1,3 +1,6 @@
 {
-    "name1": "value1"
+    "version": 1,
+    "subject": "subject_val",
+    "status": "status_val1",
+    "color": "green"
 }
