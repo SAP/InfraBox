@@ -1,10 +1,13 @@
 
 from os import getcwd, stat
 
+from werkzeug.datastructures import FileStorage
+
 from pyinfraboxutils.token import encode_job_token
 from temp_tools import TestClient
 from test_template import ApiTestTemplate
 
+from pyinfraboxutils.storage import storage
 
 class JobApiTest(ApiTestTemplate):
 
@@ -24,25 +27,41 @@ class JobApiTest(ApiTestTemplate):
     #   print result
 
     def test_cache(self):
+        filename = 'cache.tar.gz'
 
-        template = 'project_%s_job_%s.tar.gz'
-        key = template % (self.project_id, self.job_name)
-        key = key.replace('/', '_')
+        file_path = getcwd() + '/' + filename
 
-        test_data = open(getcwd() + '/cache.tar.gz', 'rb')
+        test_data = open(file_path, 'rb')
+        files = {'cache.tar.gz': test_data}
 
-        result = TestClient.post(self.url_ns + '/cache', test_data, self.job_headers, content_type='application/files')
+        result = TestClient.post(self.url_ns + '/cache', data=files, headers=self.job_headers,
+                                 content_type='multipart/form-data')
 
-        print '\n\n\n\n\n\n\n\n\ncache post result', result
+        self.assertEqual(result, {})
 
         result = TestClient.get(self.url_ns + '/cache', self.job_headers)
 
-        print 'Cache result', result
+        actual_cache_size = stat(file_path).st_size
 
-    #def test_output(self):
-    #    test_data = {"test_name1": 'test_vav1'}
-    #    result = TestClient.post(self.url_ns + '/output', test_data, self.job_headers)
-    #    print 'Output result', result
+        with open('received_cache', 'wb') as rec_cache:
+            rec_cache.write(result.data)
+            received_cache_size = rec_cache.tell()
+
+
+        self.assertEqual(received_cache_size, actual_cache_size)
+
+    def test_output(self):
+        filename = 'output.tar.gz'
+
+        file_path = getcwd() + '/' + filename
+
+        test_data = open(file_path, 'rb')
+        files = {'output.tar.gz': test_data}
+
+        result = TestClient.post(self.url_ns + '/output', data=files, headers=self.job_headers,
+                                 content_type='multipart/form-data')
+
+        self.assertEqual(result, {})
 #
     #def test_setrunning(self):
     #    result = TestClient.post(self.url_ns + '/setrunning', {}, self.job_headers)
