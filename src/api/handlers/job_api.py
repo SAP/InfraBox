@@ -155,6 +155,8 @@ class Job(Resource):
                 WHERE r.project_id = %s
             ''', (data['project']['id'],))
 
+            print 'RES', r
+
             data['repository']['clone_url'] = r[0]
             data['repository']['name'] = r[1]
             data['repository']['private'] = r[2]
@@ -317,6 +319,7 @@ class Source(Resource):
                 b.project_id = %s AND
                 j.project_id = %s
         ''', (job_id, project_id, project_id))
+
 
         filename = r[0]
         filename = filename.replace('/', '_')
@@ -852,8 +855,6 @@ class Testresult(Resource):
     def post(self):
         job_id = g.token['job']['id']
         project_id = g.token['project']['id']
-
-        print '^^^^^\nn\n\n\n\n\n\n', request.json
 
         if 'data' not in request.files:
             abort(400, 'data not set')

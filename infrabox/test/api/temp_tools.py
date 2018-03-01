@@ -11,26 +11,22 @@ class TestClient:
 
     app = server.app.test_client()
     server.app.testing = True
-
+    conn = connect_db()
 
     @staticmethod
     def execute(stmt, args=None):
-        conn = connect_db()
-        cur = conn.cursor()
+        cur = TestClient.conn.cursor()
         cur.execute(stmt, args)
         cur.close()
-        conn.commit()
-        conn.close()
+        TestClient.conn.commit()
 
     @staticmethod
     def execute_many(stmt, args=None):
-        conn = connect_db()
-        cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        cur = TestClient.conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
         cur.execute(stmt, args)
         d = cur.fetchall()
         cur.close()
-        conn.commit()
-        conn.close()
+        TestClient.conn.commit()
         return d
 
     @staticmethod
@@ -78,10 +74,6 @@ class TestClient:
                           data=data,
                           headers=headers,
                           content_type=content_type)
-
-        TestClient.app.post()
-
-        print r.status_code
 
         if r.mimetype == 'application/json':
             j = json.loads(r.data)
