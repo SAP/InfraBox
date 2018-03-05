@@ -257,13 +257,25 @@ class Console(Resource):
                 AND project_id = %s
         ''', [job_id, project_id])
 
+        if result and result['console']:
+            return Response(result['console'], mimetype='text/plain')
+
+        result = g.db.execute_many_dict('''
+            SELECT output
+            FROM console
+            WHERE job_id = %s
+            ORDER BY date
+        ''', [job_id])
+
         if not result:
             return ''
 
-        if not result['console']:
-            return ''
+        output = ''
+        for r in result:
+            output += r['output']
 
-        return Response(result['console'], mimetype='text/plain')
+        return Response(output, mimetype='text/plain')
+
 
 @ns.route('/<project_id>/jobs/<job_id>/output')
 class Output(Resource):

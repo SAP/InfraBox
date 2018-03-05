@@ -130,38 +130,73 @@ class Tests(Resource):
 
     @nocache
     def get(self, project_id):
-        r = g.db.execute_one_dict('''
-            SELECT
-                count(CASE WHEN tr.state = 'ok' THEN 1 END) success,
-                count(CASE WHEN tr.state = 'failure' THEN 1 END) failure,
-                count(CASE WHEN tr.state = 'error' THEN 1 END) error,
-                count(CASE WHEN tr.state = 'skipped' THEN 1 END) skipped
-            FROM test_run tr
-            WHERE  tr.project_id = %s
-                AND tr.job_id IN (
-                    SELECT j.id
-                    FROM job j
-                    WHERE j.project_id = %s
-                        AND j.build_id = (
-                            SELECT b.id
-                            FROM build b
-                            INNER JOIN job j
-                            ON b.id = j.build_id
-                                AND b.project_id = %s
-                                AND j.project_id = %s
-                            ORDER BY j.created_at DESC
-                            LIMIT 1
-                        )
-                )
-        ''', [project_id, project_id, project_id, project_id])
+        branch = request.args.get('branch', None)
+        p = g.db.execute_one_dict('''
+            SELECT type FROM project WHERE id = %s
+        ''', [project_id])
+
+        project_type = p['type']
+
+        if branch and project_type in ('github', 'gerrit'):
+            r = g.db.execute_one_dict('''
+                SELECT
+                    count(CASE WHEN tr.state = 'ok' THEN 1 END) success,
+                    count(CASE WHEN tr.state = 'failure' THEN 1 END) failure,
+                    count(CASE WHEN tr.state = 'error' THEN 1 END) error,
+                    count(CASE WHEN tr.state = 'skipped' THEN 1 END) skipped
+                FROM test_run tr
+                WHERE  tr.project_id = %s
+                    AND tr.job_id IN (
+                        SELECT j.id
+                        FROM job j
+                        WHERE j.project_id = %s
+                            AND j.build_id = (
+                                SELECT b.id
+                                FROM build b
+                                INNER JOIN job j
+                                ON b.id = j.build_id
+                                    AND b.project_id = %s
+                                    AND j.project_id = %s
+                                INNER JOIN "commit" c
+                                    ON c.id = b.commit_id
+                                    AND c.project_id = b.project_id
+                                    AND c.branch = %s
+                                ORDER BY j.created_at DESC
+                                LIMIT 1
+                            )
+                    )
+            ''', [project_id, project_id, project_id, project_id, branch])
+        else:
+            r = g.db.execute_one_dict('''
+                SELECT
+                    count(CASE WHEN tr.state = 'ok' THEN 1 END) success,
+                    count(CASE WHEN tr.state = 'failure' THEN 1 END) failure,
+                    count(CASE WHEN tr.state = 'error' THEN 1 END) error,
+                    count(CASE WHEN tr.state = 'skipped' THEN 1 END) skipped
+                FROM test_run tr
+                WHERE  tr.project_id = %s
+                    AND tr.job_id IN (
+                        SELECT j.id
+                        FROM job j
+                        WHERE j.project_id = %s
+                            AND j.build_id = (
+                                SELECT b.id
+                                FROM build b
+                                INNER JOIN job j
+                                ON b.id = j.build_id
+                                    AND b.project_id = %s
+                                    AND j.project_id = %s
+                                ORDER BY j.created_at DESC
+                                LIMIT 1
+                            )
+                    )
+            ''', [project_id, project_id, project_id, project_id])
 
         total = int(r['success']) + int(r['failure']) + int(r['error'])
         status = '%s / %s' % (r['success'], total)
 
         return get_badge('https://img.shields.io/badge/infrabox-%s-%s.svg' % (status,
                                                                               'brightgreen'))
-
-
 
 @ns.route('/<project_id>/badge.svg')
 @api.doc(security=[])
@@ -171,22 +206,49 @@ class Badge(Resource):
     def get(self, project_id):
         job_name = request.args.get('job_name', None)
         subject = request.args.get('subject', None)
+        branch = request.args.get('branch', None)
+        p = g.db.execute_one_dict('''
+            SELECT type FROM project WHERE id = %s
+        ''', [project_id])
 
-        badge = g.db.execute_one_dict('''
-            SELECT status, color
-            FROM job_badge jb
-            JOIN job j
-                ON j.id = jb.job_id
-                AND j.project_id = %s
-                AND j.state = 'finished'
-                AND j.name = %s
-                AND jb.subject = %s
-            JOIN build b
-                ON j.build_id = b.id
-                AND b.project_id = %s
-            ORDER BY j.end_date desc
-            LIMIT 1
-        ''', [project_id, job_name, subject, project_id])
+        project_type = p['type']
+
+        if branch and project_type in ('github', 'gerrit'):
+            badge = g.db.execute_one_dict('''
+                SELECT status, color
+                FROM job_badge jb
+                JOIN job j
+                    ON j.id = jb.job_id
+                    AND j.project_id = %s
+                    AND j.state = 'finished'
+                    AND j.name = %s
+                    AND jb.subject = %s
+                JOIN build b
+                    ON j.build_id = b.id
+                    AND b.project_id = %s
+                INNER JOIN "commit" c
+                    ON c.id = b.commit_id
+                    AND c.project_id = b.project_id
+                    AND c.branch = %s
+                ORDER BY j.end_date desc
+                LIMIT 1
+            ''', [project_id, job_name, subject, project_id, branch])
+        else:
+            badge = g.db.execute_one_dict('''
+                SELECT status, color
+                FROM job_badge jb
+                JOIN job j
+                    ON j.id = jb.job_id
+                    AND j.project_id = %s
+                    AND j.state = 'finished'
+                    AND j.name = %s
+                    AND jb.subject = %s
+                JOIN build b
+                    ON j.build_id = b.id
+                    AND b.project_id = %s
+                ORDER BY j.end_date desc
+                LIMIT 1
+            ''', [project_id, job_name, subject, project_id])
 
         if not badge:
             abort(404)
