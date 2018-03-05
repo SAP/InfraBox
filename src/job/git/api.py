@@ -2,7 +2,6 @@
 import subprocess
 import os
 import traceback
-import shutil
 
 from gevent.wsgi import WSGIServer
 
@@ -68,23 +67,21 @@ class Clone(Resource):
                 if branch:
                     cmd += ['--single-branch', '-b', branch]
 
-            # c.header("Clone repository", show=True)
             cmd += [clone_url, mount_repo_dir]
 
             output += self.execute(cmd)
 
             if ref:
                 cmd = ['git', 'fetch', '--depth=10', clone_url, ref]
-                # c.collect(' '.join(cmd), show=True)
                 output += self.execute(cmd, cwd=mount_repo_dir)
 
-            # c.collect("#Checkout commit", show=True)
-            cmd = ['git', 'checkout', '-qf', '-b', 'job', commit]
+            if not branch:
+                branch = 'job'
 
-            # c.collect(' '.join(cmd), show=True)
+            cmd = ['git', 'checkout', '-qf', '-b', branch, commit]
+
             output += self.execute(cmd, cwd=mount_repo_dir)
 
-            # c.header("Init submodules", show=True)
             output += self.execute(['git', 'submodule', 'init'], cwd=mount_repo_dir)
             output += self.execute(['git', 'submodule', 'update'], cwd=mount_repo_dir)
 
