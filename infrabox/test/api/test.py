@@ -17,15 +17,15 @@ if __name__ == '__main__':
 
     with open('results.xml', 'wb') as output:
         #unittest.main(testRunner=xmlrunner.XMLTestRunner(output=output))
-        #project_test_suite = unittest.TestLoader().loadTestsFromTestCase(ProjectTest)
-        #trigger_test_suite = unittest.TestLoader().loadTestsFromTestCase(TriggerTest)
+        project_test_suite = unittest.TestLoader().loadTestsFromTestCase(ProjectTest)
+        trigger_test_suite = unittest.TestLoader().loadTestsFromTestCase(TriggerTest)
         job_api_test_suite = unittest.TestLoader().loadTestsFromTestCase(JobApiTest)
-        #build_test_suite = unittest.TestLoader().loadTestsFromTestCase(BuildTest)
-        #job_test_suite = unittest.TestLoader().loadTestsFromTestCase(JobTest)
+        build_test_suite = unittest.TestLoader().loadTestsFromTestCase(BuildTest)
+        job_test_suite = unittest.TestLoader().loadTestsFromTestCase(JobTest)
 
         runner = XMLTestRunner(output=output)
-        #runner.run(project_test_suite)
-        #runner.run(trigger_test_suite)
+        runner.run(project_test_suite)
+        runner.run(trigger_test_suite)
         runner.run(job_api_test_suite)
-        #runner.run(build_test_suite)
-        #runner.run(job_test_suite)
+        runner.run(build_test_suite)
+        runner.run(job_test_suite)
