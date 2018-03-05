@@ -37,7 +37,7 @@ class Clone(Resource):
         output = '\n'
         output += ' '.join(args)
         output += '\n'
-        output += subprocess.check_output(args, cwd=cwd)
+        output += subprocess.check_output(args, cwd=cwd, stderr=subprocess.STDOUT)
         return output
 
     @api.expect(clone_model)
@@ -90,7 +90,7 @@ class Clone(Resource):
 
             return output
         except subprocess.CalledProcessError as e:
-            return str(e), 500
+            return output + e.output + "\n" + str(e), 500
         except Exception as e:
             return traceback.format_exc(), 500
 

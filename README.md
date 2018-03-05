@@ -40,7 +40,6 @@ Follow us on Twitter: [@Infra_Box](https://twitter.com/Infra_Box) or have look a
 
 |Component|Coverage|
 |---------|--------|
-|github-api|[![coverage](https://infrabox.ninja/api/v1/projects/0c8204bb-7ce5-48a3-aa08-0fc38d7255d0/badge.svg?subject=coverage&job_name=ib/test/github-api)](https://infrabox.ninja/dashboard/#/project/infrabox)|
 |github-review|[![coverage](https://infrabox.ninja/api/v1/projects/0c8204bb-7ce5-48a3-aa08-0fc38d7255d0/badge.svg?subject=coverage&job_name=ib/test/github-review)](https://infrabox.ninja/dashboard/#/project/infrabox)|
 |pyinfrabox|[![coverage](https://infrabox.ninja/api/v1/projects/0c8204bb-7ce5-48a3-aa08-0fc38d7255d0/badge.svg?subject=coverage&job_name=ib/test/pyinfrabox)](https://infrabox.ninja/dashboard/#/project/infrabox)|
 |registry-auth|[![coverage](https://infrabox.ninja/api/v1/projects/0c8204bb-7ce5-48a3-aa08-0fc38d7255d0/badge.svg?subject=coverage&job_name=ib/test/registry-auth)](https://infrabox.ninja/dashboard/#/project/infrabox)|
