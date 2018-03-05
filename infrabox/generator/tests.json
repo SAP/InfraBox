@@ -33,13 +33,6 @@
         }
     }, {
         "type": "docker",
-        "name": "github-api",
-        "build_context": "../..",
-        "docker_file": "infrabox/test/github-api/Dockerfile",
-        "resources": { "limits": { "cpu": 1, "memory": 1024 } },
-        "build_only": false
-    }, {
-        "type": "docker",
         "name": "github-review",
         "build_context": "../..",
         "docker_file": "infrabox/test/github-review/Dockerfile",

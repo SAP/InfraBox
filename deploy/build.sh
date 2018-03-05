@@ -10,7 +10,6 @@ echo "  tag: $image_tag"
 infrabox run ib/deploy/gerrit-api       -t ${docker_registry}infrabox/gerrit-api:$image_tag
 infrabox run ib/deploy/gerrit-trigger   -t ${docker_registry}infrabox/gerrit-trigger:$image_tag
 infrabox run ib/deploy/gerrit-review    -t ${docker_registry}infrabox/gerrit-review:$image_tag
-infrabox run ib/deploy/github-api       -t ${docker_registry}infrabox/github-api:$image_tag
 infrabox run ib/deploy/github-trigger   -t ${docker_registry}infrabox/github-trigger:$image_tag
 infrabox run ib/deploy/github-review    -t ${docker_registry}infrabox/github-review:$image_tag
 infrabox run ib/deploy/job              -t ${docker_registry}infrabox/job:$image_tag

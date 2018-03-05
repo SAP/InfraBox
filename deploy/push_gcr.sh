@@ -15,7 +15,6 @@ $cmd_prefix -- push ${docker_registry}infrabox/gerrit-review:$image_tag
 $cmd_prefix -- push ${docker_registry}infrabox/gerrit-api:$image_tag
 $cmd_prefix -- push ${docker_registry}infrabox/github-trigger:$image_tag
 $cmd_prefix -- push ${docker_registry}infrabox/github-review:$image_tag
-$cmd_prefix -- push ${docker_registry}infrabox/github-api:$image_tag
 $cmd_prefix -- push ${docker_registry}infrabox/api:$image_tag
 $cmd_prefix -- push ${docker_registry}infrabox/dashboard-api:$image_tag
 $cmd_prefix -- push ${docker_registry}infrabox/scheduler-kubernetes:$image_tag
