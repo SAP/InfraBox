@@ -1,6 +1,7 @@
 from os import getcwd, stat, remove
 
 from pyinfraboxutils.token import encode_job_token
+from pyinfraboxutils.storage import storage
 from temp_tools import TestClient
 from test_template import ApiTestTemplate
 
