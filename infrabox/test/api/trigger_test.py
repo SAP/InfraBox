@@ -16,7 +16,6 @@ class TriggerTest(ApiTestTemplate):
                             headers=TestClient.get_user_authorization(self.user_id))
         self.assertEqual(r['message'], 'Build triggered')
         result = TestClient.execute_many('SELECT * FROM build WHERE id != %s', [self.build_id])
-        print result
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0]['build_number'], 2)
 
@@ -27,6 +26,5 @@ class TriggerTest(ApiTestTemplate):
         }
 
         r = TestClient.post('/api/v1/projects/%s/trigger' % (self.project_id), headers=TestClient.get_user_authorization(self.user_id), data=d)
-        print r
         self.assertEqual(r['status'], 200)
         self.assertEqual(r['message'], 'Build triggered')
