@@ -1,3 +1,4 @@
+import os
 import json
 import datetime
 import requests
@@ -8,6 +9,61 @@ from flask import abort, request, g
 from pyinfraboxutils.ibflask import auth_required, OK
 from pyinfraboxutils.ibrestplus import api
 from project import ns
+
+def execute_github_api(url, token):
+    headers = {
+        "Authorization": "token " + token,
+        "User-Agent": "InfraBox"
+    }
+
+    # TODO(ib-steffen): allow custom ca bundles
+    url = os.environ['INFRABOX_GITHUB_API_URL'] + url
+    return requests.get(url, headers=headers, verify=False)
+
+def get_sha_for_branch(owner, repo, branch_or_sha, token):
+    url = '/repos/%s/%s/branches/%s' % (owner, repo, branch_or_sha)
+    result = execute_github_api(url, token)
+
+    if result.status_code != 200:
+        return None
+
+    result = result.json()
+
+    if not result:
+        return None
+
+    sha = result['commit']['sha']
+    return sha
+
+def get_github_commit(owner, token, repo, branch_or_sha):
+    # Check if it's a branch
+    sha = get_sha_for_branch(owner, repo, branch_or_sha, token)
+
+    branch = None
+    if sha:
+        branch = branch_or_sha
+    else:
+        sha = branch_or_sha
+
+    url = '/repos/%s/%s/commits/%s' % (owner, repo, sha)
+    result = execute_github_api(url, token)
+
+    if result.status_code != 200:
+        return abort(404, "sha '%s' not found" % sha)
+
+    result = result.json()
+
+    return {
+        "sha": result['sha'],
+        "branch": branch,
+        "url": result['html_url'],
+        "author": {
+            "name": result['commit']['author']['name'],
+            "email": result['commit']['author']['email']
+        },
+        "message": result['commit']['message']
+    }
+
 
 def insert_commit(project_id, repo_id, commit):
     commits = g.db.execute_many('''
@@ -72,15 +128,7 @@ def create_github_commit(project_id, repo_id, branch_or_sha):
     ''', [repo_id])
     github_api_token = u[0]
 
-    data = {
-        'branch_or_sha': branch_or_sha,
-        'owner': github_owner,
-        'repo': repo_name,
-        'token': github_api_token
-    }
-
-    r = requests.post('http://localhost:8081/api/v1/commit', data=data)
-    commit = r.json()
+    commit = get_github_commit(github_owner, github_api_token, repo_name, branch_or_sha)
 
     if r.status_code != 200:
         abort(r.status_code, commit['message'])

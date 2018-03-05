@@ -176,7 +176,9 @@ class RunJob(Job):
         }
 
         r = requests.post('%s/clone_repo' % git_server, json=d, timeout=1800)
-        self.console.collect(r.text, show=True)
+
+        for l in r.text.split('\\n'):
+            self.console.collect(l, show=True)
 
         if r.status_code != 200:
             raise Failure('Failed to clone repository')

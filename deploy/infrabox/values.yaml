@@ -243,11 +243,6 @@ github:
 
         tag: latest
 
-    api:
-        # image: github-api
-
-        tag: latest
-
     review:
         # image: review-api
 
