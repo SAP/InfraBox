@@ -71,11 +71,7 @@ class Output(Resource):
         if not f:
             abort(404)
 
-        res = send_file(f, attachment_filename=key)
-
-        res.direct_passthrough = False
-
-        return res
+        return send_file(f, attachment_filename=key)
 
 @ns.route('/<job_id>/manifest')
 class Project(Resource):

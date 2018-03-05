@@ -155,8 +155,6 @@ class Job(Resource):
                 WHERE r.project_id = %s
             ''', (data['project']['id'],))
 
-            print 'RES', r
-
             data['repository']['clone_url'] = r[0]
             data['repository']['name'] = r[1]
             data['repository']['private'] = r[2]
