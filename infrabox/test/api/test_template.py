@@ -2,7 +2,9 @@ import unittest
 
 from temp_tools import TestClient
 
+
 class ApiTestTemplate(unittest.TestCase):
+    # TODO optimize setup for each test
 
     def setUp(self):
         TestClient.execute('TRUNCATE "user"')
@@ -12,6 +14,7 @@ class ApiTestTemplate(unittest.TestCase):
         TestClient.execute('TRUNCATE commit')
         TestClient.execute('TRUNCATE build')
         TestClient.execute('TRUNCATE job')
+        TestClient.execute('TRUNCATE job_stat')
         TestClient.execute('TRUNCATE source_upload')
 
         self.project_id = '1514af82-3c4f-4bb5-b1da-a89a0ced5e6f'
@@ -71,6 +74,5 @@ class ApiTestTemplate(unittest.TestCase):
                                           VALUES (%s, %s, now(), %s, %s, %s, %s, %s, 'url1', 'branch1')""",
                            (self.sha, self.repo_id, self.project_id,
                             self.author_name, self.author_email, self.author_name, self.author_email))
-
 
 #
