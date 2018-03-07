@@ -73,11 +73,6 @@ spec:
                 -
                     name: INFRABOX_ACCOUNT_SIGNUP_ENABLED
                     value: {{ .Values.account.signup.enabled | quote }}
-                {{ if .Values.general.dont_check_certificates }}
-                -
-                    name: NODE_TLS_REJECT_UNAUTHORIZED
-                    value: "0"
-                {{ end }}
             volumes:
                 {{ include "volumes_database" . | indent 16 }}
                 {{ include "volumes_rsa" . | indent 16 }}
