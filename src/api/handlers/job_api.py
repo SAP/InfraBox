@@ -95,7 +95,7 @@ class Job(Resource):
             INNER JOIN project p
                 ON co.project_id = p.id
             WHERE j.id = %s
-        ''', (job_id, ))
+        ''', [job_id])
 
         data['job'] = {
             "id": job_id,
@@ -153,7 +153,7 @@ class Job(Resource):
                     r.clone_url, r.name, r.private
                 FROM repository r
                 WHERE r.project_id = %s
-            ''', (data['project']['id'],))
+            ''', [data['project']['id']])
 
             data['repository']['clone_url'] = r[0]
             data['repository']['name'] = r[1]
@@ -166,7 +166,7 @@ class Job(Resource):
                 FROM commit c
                 WHERE c.id = %s
                     AND c.project_id = %s
-            ''', (data['build']['commit_id'], data['project']['id']))
+            ''', [data['build']['commit_id'], data['project']['id']])
 
             data['commit'] = {
                 "id": data['build']['commit_id'],
@@ -180,7 +180,7 @@ class Job(Resource):
             r = g.db.execute_one('''
                 SELECT filename FROM source_upload
                 WHERE id = %s
-            ''', (data['build']['source_upload_id'], ))
+            ''', [data['build']['source_upload_id']])
 
             data['source_upload'] = {
                 "filename": r[0]
@@ -200,7 +200,7 @@ class Job(Resource):
               )
               SELECT id, name, state, start_date, end_date, dependencies
               FROM job WHERE id IN (SELECT distinct id FROM next_job WHERE id != %s)
-        ''', (data['job']['id'], data['job']['id']))
+        ''', [data['job']['id'], data['job']['id']])
 
         data['dependencies'] = []
 
@@ -218,7 +218,7 @@ class Job(Resource):
         r = g.db.execute_many('''
           SELECT id, name FROM job where id
               IN (SELECT (deps->>'job-id')::uuid FROM job, jsonb_array_elements(job.dependencies) as deps WHERE id = %s)
-        ''', (data['job']['id'], ))
+        ''', [data['job']['id']])
 
         data['parents'] = []
 
@@ -233,7 +233,7 @@ class Job(Resource):
              SELECT name, value
              FROM secret
              WHERE project_id = %s
-        ''', (data['project']['id'], ))
+        ''', [data['project']['id']])
 
         is_fork = data['job'].get('fork', False)
         def get_secret(name):
@@ -316,7 +316,7 @@ class Source(Resource):
                 j.id = %s AND
                 b.project_id = %s AND
                 j.project_id = %s
-        ''', (job_id, project_id, project_id))
+        ''', [job_id, project_id, project_id])
 
 
         filename = r[0]
@@ -392,6 +392,7 @@ class Output(Resource):
         key = key.replace('/', '_')
 
         g.release_db()
+        #print(request.files)
         storage.upload_output(request.files['output.tar.gz'].stream, key)
         return jsonify({})
 
@@ -409,7 +410,7 @@ class OutputParent(Resource):
             SELECT dependencies
             FROM job
             WHERE id = %s
-        ''', (job_id,))[0]
+        ''', [job_id])[0]
 
         is_valid_dependency = False
         for dep in dependencies:
@@ -441,7 +442,7 @@ class SetRunning(Resource):
         g.db.execute("DELETE FROM console WHERE job_id = %s", (job_id,))
         g.db.execute("""
             UPDATE job SET state = 'running', start_date = current_timestamp
-            WHERE id = %s""", (job_id,))
+            WHERE id = %s""", [job_id])
         g.db.commit()
 
         return jsonify({})
@@ -484,7 +485,7 @@ class CreateJobs(Resource):
                 if sc.get('capabilities', None):
                     abort(404, 'Capabilities are disabled')
 
-        result = g.db.execute_one("SELECT env_var, build_id FROM job WHERE id = %s", (parent_job_id,))
+        result = g.db.execute_one("SELECT env_var, build_id FROM job WHERE id = %s", [parent_job_id])
         base_env_var = result[0]
         build_id = result[1]
 
@@ -497,7 +498,7 @@ class CreateJobs(Resource):
                 AND j.id = %s
             INNER JOIN build b
                 ON b.id = j.build_id
-        """, (parent_job_id,))
+        """, [parent_job_id])
 
         build_number = result[1]
         project_id = result[2]
@@ -526,7 +527,7 @@ class CreateJobs(Resource):
                     AND b.build_number between %s and %s
                     AND j.name = %s
                     AND j.state = 'finished'
-            """, (project_id, project_id, build_number - 10, build_number, job['name'],))[0]
+            """, [project_id, project_id, build_number - 10, build_number, job['name']])[0]
 
             job['avg_duration'] = avg_duration
 
@@ -538,8 +539,8 @@ class CreateJobs(Resource):
                     if isinstance(value, dict):
                         env_var_ref_name = value['$secret']
                         result = g.db.execute_many("""
-                                SELECT value FROM secret WHERE name = %s and project_id = %s""",
-                                                   (env_var_ref_name, project_id))
+                                    SELECT value FROM secret WHERE name = %s and project_id = %s
+                                    """, [env_var_ref_name, project_id])
 
                         if not result:
                             abort(400, "Secret '%s' not found" % env_var_ref_name)
@@ -578,10 +579,10 @@ class CreateJobs(Resource):
                         SELECT id parent_id
                         FROM job, jsonb_array_elements(job.dependencies) as deps
                         WHERE (deps->>'job-id')::uuid = %s
-                        AND build_id = %s
-                        AND project_id = %s
+                            AND build_id = %s 
+                            AND project_id = %s
                     )
-                ''', (json.dumps(wait_job), job_id, build_id, project_id))
+                ''', [json.dumps(wait_job), job_id, build_id, project_id])
 
         for job in jobs:
             name = job["name"]
@@ -651,18 +652,18 @@ class CreateJobs(Resource):
 
             # Create job
             g.db.execute("""
-                INSERT INTO job (id, state, build_id, type, dockerfile, name,
-                    project_id, dependencies, build_only,
-                    created_at, repo,
-                    env_var_ref, env_var, build_arg, deployment, cpu, memory, timeout, resources, definition)
-                VALUES (%s, 'queued', %s, %s, %s, %s, %s, %s, %s, %s, %s,
-                        %s, %s, %s, %s, %s, %s, %s, %s, %s);""",
-                         (job_id, build_id, t, f, name,
-                          project_id,
-                          json.dumps(depends_on), build_only, datetime.now(),
-                          repo, env_var_refs, env_vars,
-                          build_arguments, deployments, limits_cpu, limits_memory, timeout,
-                          resources, json.dumps(job)))
+                         INSERT INTO job (id, state, build_id, type, dockerfile, name,
+                             project_id, dependencies, build_only,
+                             created_at, repo,
+                             env_var_ref, env_var, build_arg, deployment, cpu, memory, timeout, resources, definition)
+                         VALUES (%s, 'queued', %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                                 %s, %s, %s, %s, %s, %s, %s, %s, %s);
+                         """, [job_id, build_id, t, f, name,
+                               project_id,
+                               json.dumps(depends_on), build_only, datetime.now(),
+                               repo, env_var_refs, env_vars,
+                               build_arguments, deployments, limits_cpu, limits_memory, timeout,
+                               resources, json.dumps(job)])
 
             # to make sure the get picked up in the right order by the scheduler
             time.sleep(0.1)
@@ -681,7 +682,7 @@ class ConsoleUpdate(Resource):
 
         r = g.db.execute_one("""
             SELECT sum(char_length(output)), count(*) FROM console WHERE job_id = %s
-        """, (job_id,))
+        """, [job_id])
 
         if not r:
             abort(404, "Not found")
@@ -696,7 +697,7 @@ class ConsoleUpdate(Resource):
             abort(400, "Too many console updates")
 
         try:
-            g.db.execute("INSERT INTO console (job_id, output) VALUES (%s, %s)", (job_id, output))
+            g.db.execute("INSERT INTO console (job_id, output) VALUES (%s, %s)", [job_id, output])
             g.db.commit()
         except:
             pass
@@ -713,7 +714,7 @@ class Stats(Resource):
         stats = request.json['stats']
 
         try:
-            g.db.execute("UPDATE job SET stats = %s WHERE id = %s", (json.dumps(stats), job_id))
+            g.db.execute("UPDATE job SET stats = %s WHERE id = %s", [json.dumps(stats), job_id])
             g.db.commit()
         except:
             pass
@@ -746,7 +747,7 @@ class Markup(Resource):
 
         r = g.db.execute_one("""
             SELECT count(*) FROM job_markup WHERE job_id = %s
-        """, (job_id,))
+        """, [job_id])
 
         if r[0] > 0:
             abort(403, "Forbidden")
@@ -779,8 +780,8 @@ class Markup(Resource):
                     validate_markup(data)
 
                 g.db.execute("""INSERT INTO job_markup (job_id, name, data, project_id, type)
-                                  VALUES (%s, %s, %s, %s, 'markup')""",
-                             (job_id, name, content, project_id))
+                                VALUES (%s, %s, %s, %s, 'markup')
+                             """, [job_id, name, content, project_id])
                 g.db.commit()
             except ValidationError as e:
                 abort(400, e.message)
@@ -798,9 +799,8 @@ class Badge(Resource):
         job_id = g.token['job']['id']
         project_id = g.token['project']['id']
 
-        r = g.db.execute_one("""
-            SELECT count(*) FROM job_badge WHERE job_id = %s
-        """, (job_id,))
+        r = g.db.execute_one(""" SELECT count(*) FROM job_badge WHERE job_id = %s
+                             """, [job_id])
 
         if r[0] > 0:
             abort(403, "Forbidden")
@@ -816,7 +816,7 @@ class Badge(Resource):
             return response
 
         for _, f in request.files.iteritems():
-            if not allowed_file(f.filename, ("json",)):
+            if not allowed_file(f.filename, ("json")):
                 abort(400, "Filetype not allowed")
 
             f.save(path)
@@ -840,8 +840,8 @@ class Badge(Resource):
             color = data['color']
 
             g.db.execute("""INSERT INTO job_badge (job_id, subject, status, color, project_id)
-                              VALUES (%s, %s, %s, %s, %s)""",
-                         (job_id, subject, status, color, project_id))
+                            VALUES (%s, %s, %s, %s, %s)
+                         """, [job_id, subject, status, color, project_id])
             g.db.commit()
 
         return jsonify({})
@@ -859,7 +859,7 @@ class Testresult(Resource):
 
         f = request.files['data']
 
-        if not allowed_file(f.filename, ("json"),):
+        if not allowed_file(f.filename, ("json")):
             abort(400, 'file ending not allowed')
 
         path = '/tmp/%s.json' % uuid.uuid4()
@@ -888,21 +888,22 @@ class Testresult(Resource):
         except ValidationError as e:
             abort(400, e.message)
 
-        testruns = g.db.execute_one("SELECT COUNT(*) as cnt FROM test_run WHERE job_id=%s", (job_id,))
+        testruns = g.db.execute_one("SELECT COUNT(*) as cnt FROM test_run WHERE job_id = %s", [job_id])
 
         if testruns[0] > 0:
             abort(404, "testrun already created")
 
-        rows = g.db.execute_one("""SELECT j.project_id, b.build_number
+        rows = g.db.execute_one("""
+                SELECT j.project_id, b.build_number
                 FROM job  j
                 INNER JOIN build b
                     ON j.id = %s
                     AND b.id = j.build_id
-        """, (job_id,))
+            """, [job_id])
         project_id = rows[0]
         build_number = rows[1]
 
-        existing_tests = g.db.execute_many("""SELECT suite, name, id FROM test WHERE project_id = %s""", (project_id,))
+        existing_tests = g.db.execute_many("""SELECT suite, name, id FROM test WHERE project_id = %s""", [project_id])
 
         test_index = {}
         for t in existing_tests:
@@ -1007,7 +1008,7 @@ class SetFinished(Resource):
 
         # collect console output
         lines = g.db.execute_many("""SELECT output FROM console WHERE job_id = %s
-                          ORDER BY date""", (job_id,))
+                                     ORDER BY date""", [job_id])
 
         output = ""
         for l in lines:
@@ -1020,10 +1021,10 @@ class SetFinished(Resource):
             console = %s,
             end_date = current_timestamp,
             message = %s
-        WHERE id = %s""", (state, output, message, job_id))
+        WHERE id = %s""", [state, output, message, job_id])
 
         # remove form console table
-        g.db.execute("DELETE FROM console WHERE job_id = %s", (job_id,))
+        g.db.execute("DELETE FROM console WHERE job_id = %s", [job_id])
 
         g.db.commit()
         return jsonify({})
