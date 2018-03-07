@@ -23,6 +23,7 @@ if __name__ == '__main__':
         suite.addTest(unittest.TestLoader().loadTestsFromTestCase(BuildTest))
         suite.addTest(unittest.TestLoader().loadTestsFromTestCase(JobTest))
 
-        unittest.main(testRunner = XMLTestRunner(output=output),
-                      failfast=False, buffer=False, catchbreak=False)
+        testRunner = XMLTestRunner(output=output)
+        #unittest.main(testRunner = XMLTestRunner(output=output),
+        #              failfast=False, buffer=False, catchbreak=False)
         testRunner.run(suite)

@@ -1,3 +1,5 @@
+from os import remove
+
 import json
 
 import psycopg2
@@ -5,6 +7,25 @@ import psycopg2
 from api import server
 from pyinfraboxutils.db import connect_db
 from pyinfraboxutils.token import encode_user_token, encode_project_token, encode_job_token
+
+
+class TestUtils:
+
+    current_test_counter = 0
+
+    @staticmethod
+    def get_stream_file_size(result_stream):
+        file_size = 0
+
+        TestUtils.current_test_counter += 1
+        file_name = "%s.tmp_test_file" % TestUtils.current_test_counter
+
+        with open(file_name, "wb") as receive_cache:
+            receive_cache.write(result_stream)
+            file_size = receive_cache.tell()
+        remove(file_name)
+
+        return file_size
 
 
 class TestClient:
