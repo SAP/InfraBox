@@ -13,6 +13,7 @@ results/
 *.json_change
 *.swp
 .*.swp
+*.tmp_test_file.*
 src/infraboxcli/infraboxcli.egg-info/
 *.yml.infrabox
 *.yaml.infrabox
