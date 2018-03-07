@@ -1,3 +1,4 @@
+tags
 node_modules/
 public/components
 src/dashboard/run_server.sh
@@ -12,6 +13,7 @@ results/
 *.json_change
 *.swp
 .*.swp
+*.tmp_test_file.*
 src/infraboxcli/infraboxcli.egg-info/
 *.yml.infrabox
 *.yaml.infrabox
