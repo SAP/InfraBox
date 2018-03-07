@@ -32,18 +32,17 @@ def get_next_page(r):
 
     n1 = link.find('rel=\"next\"')
 
-    if not n1:
+    if n1 < 0:
         return None
 
     n2 = link.rfind('<', 0, n1)
 
-    if not n2:
+    if n2 < 0:
         return None
 
     n2 += 1
     n3 = link.find('>;', n2)
     return link[n2:n3]
-
 
 def get_github_api(url, token):
     headers = {
@@ -64,6 +63,35 @@ def get_github_api(url, token):
         result.extend(r.json())
 
     return result
+
+@github_auth.route('/auth/connect')
+class Connect(Resource):
+
+    @auth_required(['user'], check_project_access=False)
+    def get(self):
+        if os.environ['INFRABOX_GITHUB_LOGIN_ENABLED'] == 'true':
+            abort(404)
+
+        user_id = g.token['user']['id']
+        uid = str(uuid.uuid4())
+
+        g.db.execute('''
+            UPDATE "user" SET github_id = null, github_api_token = %s
+            WHERE id = %s
+        ''', [uid, user_id])
+
+        g.db.commit()
+
+        state = str(uuid.uuid4())
+        url = GITHUB_AUTHORIZATION_URL
+        url += '?client_id=%s&scope=%s&state=%s&redirect_uri=%s' % (GITHUB_CLIENT_ID,
+                                                                    '%20'.join(['user:email', 'repo', 'read:org']),
+                                                                    state,
+                                                                    '%s%%3Ft=%s' % (GITHUB_CALLBACK_URL, uid))
+
+        states[str(state)] = True
+        return redirect(url)
+
 
 @github.route('/repos')
 class Repos(Resource):
@@ -106,6 +134,9 @@ class Repos(Resource):
 class Auth(Resource):
 
     def get(self):
+        if os.environ['INFRABOX_GITHUB_LOGIN_ENABLED'] != 'true':
+            abort(404)
+
         state = uuid.uuid4()
         url = GITHUB_AUTHORIZATION_URL
         url += '?client_id=%s&scope=%s&state=%s' % (GITHUB_CLIENT_ID,
@@ -138,52 +169,78 @@ class Login(Resource):
     def get(self):
         state = request.args.get('state')
         code = request.args.get('code')
+        t = request.args.get('t', None)
 
         if not states.get(state, None):
             abort(401)
 
         del states[state]
 
+        # TODO(ib-steffen): allow custom ca bundles
         r = requests.post(GITHUB_TOKEN_URL, data={
             'client_id': GITHUB_CLIENT_ID,
             'client_secret': GITHUB_CLIENT_SECRET,
             'code': code,
             'state': state
-        }, headers={'Accept': 'application/json'})
+        }, headers={'Accept': 'application/json'}, verify=False)
+
+        if r.status_code != 200:
+            logger.error(r.text)
+            abort(500)
+
         result = r.json()
 
         access_token = result['access_token']
         check_org(access_token)
 
+        # TODO(ib-steffen): allow custom ca bundles
         r = requests.get(GITHUB_USER_PROFILE_URL, headers={
             'Accept': 'application/json',
             'Authorization': 'token %s' % access_token
-        })
+        }, verify=False)
         gu = r.json()
 
         github_id = gu['id']
-        user = g.db.execute_one_dict('''
-            SELECT id FROM "user"
-            WHERE github_id = %s
-        ''', [github_id])
 
-        if not user:
+        if os.environ['INFRABOX_GITHUB_LOGIN_ENABLED'] == 'true':
             user = g.db.execute_one_dict('''
-                INSERT INTO "user" (github_id, username, avatar_url, name)
-                VALUES (%s, %s, %s, %s) RETURNING id
-            ''', [github_id, gu['login'], gu['avatar_url'], gu['name']])
+                SELECT id FROM "user"
+                WHERE github_id = %s
+            ''', [github_id])
 
-        user_id = user['id']
+            if not user:
+                user = g.db.execute_one_dict('''
+                    INSERT INTO "user" (github_id, username, avatar_url, name)
+                    VALUES (%s, %s, %s, %s) RETURNING id
+                ''', [github_id, gu['login'], gu['avatar_url'], gu['name']])
+
+            user_id = user['id']
+        else:
+            if not t:
+                abort(404)
+
+            user = g.db.execute_one_dict('''
+                SELECT id
+                FROM "user"
+                WHERE github_api_token = %s
+            ''', [t])
+
+            if not user:
+                abort(404)
+
+            user_id = user['id']
 
         g.db.execute('''
-            UPDATE "user" SET github_api_token = %s
+            UPDATE "user" SET github_api_token = %s, github_id = %s
             WHERE id = %s
-        ''', [access_token, user_id])
+        ''', [access_token, github_id, user_id])
 
         g.db.commit()
 
         token = encode_user_token(user_id)
-
-        res = redirect('/dashboard')
+        url = os.environ['INFRABOX_ROOT_URL'] + '/dashboard/'
+        logger.error(url)
+        res = redirect(url)
         res.set_cookie('token', token)
         return res
+
