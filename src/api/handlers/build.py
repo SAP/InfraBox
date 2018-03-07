@@ -65,5 +65,4 @@ class Jobs(Resource):
                 del j['docker_file']
             elif j['type'] == 'run_project_container':
                 j['type'] = 'docker'
-
         return jobs
