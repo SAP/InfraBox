@@ -34,11 +34,9 @@ class CollaboratorsTest(ApiTestTemplate):
 
         self.assertGreater(len(r), 0)
 
-        self.assertEqual(r[0]['username'], self.author_name)
-        self.assertEqual(r[0]['id'], self.user_id)
+        self.assertTrue(any(d['username'] == self.test_collaborator_data['name'] for d in r))
+        self.assertTrue(any(d['id'] == self.collaborator_id for d in r))
 
-        self.assertEqual(r[1]['username'], self.test_collaborator_data['name'])
-        self.assertEqual(r[1]['id'], self.collaborator_id)
 
     def test_collaborators_delete(self):
         TestClient.execute('''
