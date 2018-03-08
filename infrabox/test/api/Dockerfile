@@ -1,7 +1,7 @@
 FROM alpine:3.6
 
 RUN apk add --no-cache python py2-psycopg2 py2-pip gcc openssl libffi-dev python2-dev musl-dev py2-flask git openssl-dev py2-requests && \
-    pip install bcrypt PyJWT jsonschema coverage xmlrunner cryptography mock flask-restplus eventlet flask_socketio boto3 google-cloud-storage future prometheus_client codecov && \
+    pip install bcrypt PyJWT jsonschema coverage unittest-xml-reporting urllib3 cryptography mock flask-restplus eventlet flask_socketio boto3 google-cloud-storage future prometheus_client codecov && \
     apk del gcc python2-dev musl-dev openssl-dev libffi-dev
 
 ENV PYTHONPATH=/infrabox/context/src

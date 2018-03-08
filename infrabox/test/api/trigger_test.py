@@ -1,7 +1,6 @@
 from temp_tools import TestClient
 from test_template import ApiTestTemplate
-from pyinfraboxutils.storage import storage
-from os import getcwd, stat
+
 
 class TriggerTest(ApiTestTemplate):
 
@@ -29,3 +28,13 @@ class TriggerTest(ApiTestTemplate):
         r = TestClient.post('/api/v1/projects/%s/trigger' % (self.project_id), headers=TestClient.get_user_authorization(self.user_id), data=d)
         self.assertEqual(r['status'], 200)
         self.assertEqual(r['message'], 'Build triggered')
+
+        r = TestClient.execute_many("""SELECT count(distinct build_number) AS build_no
+                                       FROM build AS b
+                                       WHERE b.project_id = %s
+                                    """, [self.project_id])
+        build_number = r[0][0]
+
+        r = TestClient.execute_many("""SELECT * FROM build WHERE project_id = %s AND build_number = %s
+                                    """, [self.project_id, build_number])
+        self.assertEqual(len(r), 1)

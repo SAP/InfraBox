@@ -38,21 +38,6 @@ spec:
                   mountPath: /tmp/gerrit
                   readOnly: true
             {{ end }}
-            {{ if .Values.github.enabled }}
-            -
-                image: {{ .Values.general.docker_registry }}/{{ default "github-api" .Values.github.api.image }}:{{ .Values.github.api.tag }}
-                imagePullPolicy: Always
-                name: github-api
-                env:
-                {{ include "env_general" . | indent 16 }}
-                {{ include "env_github" . | indent 16 }}
-                -
-                    name: INFRABOX_SERVICE
-                    value: {{ default "github-api" .Values.github.api.image }}
-                -
-                    name: INFRABOX_VERSION
-                    value: {{ .Values.github.api.tag }}
-            {{ end }}
             -
                 name: api
                 image: {{ .Values.general.docker_registry }}/{{ default "api" .Values.api.image }}:{{ .Values.api.tag }}
