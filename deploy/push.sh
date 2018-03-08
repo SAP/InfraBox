@@ -10,7 +10,6 @@ echo "  tag: $image_tag"
 docker push ${docker_registry}infrabox/gerrit-api:$image_tag
 docker push ${docker_registry}infrabox/gerrit-trigger:$image_tag
 docker push ${docker_registry}infrabox/gerrit-review:$image_tag
-docker push ${docker_registry}infrabox/github-api:$image_tag
 docker push ${docker_registry}infrabox/github-trigger:$image_tag
 docker push ${docker_registry}infrabox/github-review:$image_tag
 docker push ${docker_registry}infrabox/job:$image_tag

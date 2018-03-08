@@ -14,27 +14,22 @@ from collaborators_test import CollaboratorsTest
 from pyinfraboxutils.storage import storage
 
 
-
 if __name__ == '__main__':
     storage.create_buckets()
 
     with open('results.xml', 'wb') as output:
+        suite = unittest.TestSuite()
         #unittest.main(testRunner=xmlrunner.XMLTestRunner(output=output))
-        project_test_suite = unittest.TestLoader().loadTestsFromTestCase(ProjectTest)
-        trigger_test_suite = unittest.TestLoader().loadTestsFromTestCase(TriggerTest)
-        job_api_test_suite = unittest.TestLoader().loadTestsFromTestCase(JobApiTest)
-        build_test_suite = unittest.TestLoader().loadTestsFromTestCase(BuildTest)
-        job_test_suite = unittest.TestLoader().loadTestsFromTestCase(JobTest)
-        tokens_test_suite = unittest.TestLoader().loadTestsFromTestCase(TokensTest)
-        collaborators_test_suite = unittest.TestLoader().loadTestsFromTestCase(CollaboratorsTest)
-        secrets_test_suite = unittest.TestLoader().loadTestsFromTestCase(SekretsTest)
+        suite.addTest(unittest.TestLoader().loadTestsFromTestCase(ProjectTest))
+        suite.addTest(unittest.TestLoader().loadTestsFromTestCase(TriggerTest))
+        suite.addTest(unittest.TestLoader().loadTestsFromTestCase(JobApiTest))
+        suite.addTest(unittest.TestLoader().loadTestsFromTestCase(BuildTest))
+        suite.addTest(unittest.TestLoader().loadTestsFromTestCase(JobTest))
+        suite.addTest(unittest.TestLoader().loadTestsFromTestCase(CollaboratorsTest))
+        suite.addTest(unittest.TestLoader().loadTestsFromTestCase(TokensTest))
+        suite.addTest(unittest.TestLoader().loadTestsFromTestCase(SekretsTest))
 
-        runner = XMLTestRunner(output=output)
-        runner.run(project_test_suite)
-        runner.run(trigger_test_suite)
-        runner.run(job_api_test_suite)
-        runner.run(build_test_suite)
-        runner.run(job_test_suite)
-        runner.run(tokens_test_suite)
-        runner.run(collaborators_test_suite)
-        runner.run(secrets_test_suite)
+        testRunner = XMLTestRunner(output=output)
+        #unittest.main(testRunner = XMLTestRunner(output=output),
+        #              failfast=False, buffer=False, catchbreak=False)
+        testRunner.run(suite)

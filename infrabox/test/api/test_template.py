@@ -13,8 +13,11 @@ class ApiTestTemplate(unittest.TestCase):
         TestClient.execute('TRUNCATE repository')
         TestClient.execute('TRUNCATE commit')
         TestClient.execute('TRUNCATE build')
+        TestClient.execute('TRUNCATE console')
         TestClient.execute('TRUNCATE job')
         TestClient.execute('TRUNCATE job_stat')
+        TestClient.execute('TRUNCATE job_markup')
+        TestClient.execute('TRUNCATE job_badge')
         TestClient.execute('TRUNCATE source_upload')
         TestClient.execute('TRUNCATE secret')
 
@@ -34,39 +37,38 @@ class ApiTestTemplate(unittest.TestCase):
         TestClient.execute("""
                 INSERT INTO collaborator (user_id, project_id, owner)
                 VALUES (%s, %s, true);
-            """, (self.user_id, self.project_id))
+            """, [self.user_id, self.project_id])
 
         TestClient.execute("""
-                INSERT INTO "user" (id, github_id, username,
-                    avatar_url)
+                INSERT INTO "user" (id, github_id, username, avatar_url)
                 VALUES (%s, 1, %s, 'url');
             """, [self.user_id, self.author_name])
 
         TestClient.execute("""
                 INSERT INTO project(id, name, type)
                 VALUES (%s, 'testproject', 'upload');
-            """, (self.project_id,))
+            """, [self.project_id])
 
         TestClient.execute("""
                 INSERT INTO repository(id, name, html_url, clone_url, github_id, project_id, private)
                 VALUES (%s, 'testrepo', 'url', 'clone_url', 0, %s, true);
-            """, (self.repo_id, self.project_id))
+            """, [self.repo_id, self.project_id])
 
         TestClient.execute("""
-                       INSERT INTO job (id, state, build_id, type, name, project_id,
-                                 build_only, dockerfile, cpu, memory)
+                INSERT INTO job (id, state, build_id, type, name, project_id,
+                                build_only, dockerfile, cpu, memory)
                 VALUES (%s, 'queued', %s, 'run_docker_compose',
-                        %s, %s, false, '', 1, 512)
-                   """, (self.job_id, self.build_id, self.job_name, self.project_id))
+                        %s, %s, false, '', 1, 512);
+            """, [self.job_id, self.build_id, self.job_name, self.project_id])
 
-        TestClient.execute("""INSERT INTO build (id, project_id, build_number, commit_id, source_upload_id)
-                                          VALUES (%s, %s, 1, %s, %s)""",
-                           (self.build_id, self.project_id, self.sha, self.source_upload_id))
+        TestClient.execute("""
+                INSERT INTO build (id, project_id, build_number, commit_id, source_upload_id)
+                VALUES (%s, %s, 1, %s, %s);
+            """, [self.build_id, self.project_id, self.sha, self.source_upload_id])
 
-        TestClient.execute("""INSERT INTO commit (id, repository_id, "timestamp", project_id, author_name,
-                                  author_email, committer_name, committer_email, url, branch)
-                                          VALUES (%s, %s, now(), %s, %s, %s, %s, %s, 'url1', 'branch1')""",
-                           (self.sha, self.repo_id, self.project_id,
-                            self.author_name, self.author_email, self.author_name, self.author_email))
-
-#
+        TestClient.execute("""
+                INSERT INTO commit (id, repository_id, "timestamp", project_id, author_name,
+                                    author_email, committer_name, committer_email, url, branch)
+                VALUES (%s, %s, now(), %s, %s, %s, %s, %s, 'url1', 'branch1');
+            """, [self.sha, self.repo_id, self.project_id,
+                  self.author_name, self.author_email, self.author_name, self.author_email])
