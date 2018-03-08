@@ -90,11 +90,12 @@ class S3(object):
         with open(path, 'w') as f:
             f.write(result['Body'].read())
 
-        @after_this_request
-        def _remove_file(response):
-            if os.path.exists(path):
-                os.remove(path)
-            return response
+        if 'g' in globals():
+            @after_this_request
+            def _remove_file(response):
+                if os.path.exists(path):
+                    os.remove(path)
+                return response
 
         return path
 
