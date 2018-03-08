@@ -16,13 +16,14 @@ class ApiTestTemplate(unittest.TestCase):
         TestClient.execute('TRUNCATE job')
         TestClient.execute('TRUNCATE job_stat')
         TestClient.execute('TRUNCATE source_upload')
+        TestClient.execute('TRUNCATE secret')
 
         self.project_id = '1514af82-3c4f-4bb5-b1da-a89a0ced5e6f'
         self.user_id = '2514af82-3c4f-4bb5-b1da-a89a0ced5e6f'
         self.repo_id = '3514af82-3c4f-4bb5-b1da-a89a0ced5e6f'
         self.build_id = '4514af82-3c4f-4bb5-b1da-a89a0ced5e6f'
         self.job_id = '1454af82-4c4f-4bb5-b1da-a54a0ced5e6f'
-        self.job_name = ''
+        self.job_name = 'test_job_name1'
         self.sha = 'd670460b4b4aece5915caf5c68d12f560a9fe3e4'
         self.author_name = 'author_name1'
         self.author_email = 'author@email.1'
@@ -38,8 +39,8 @@ class ApiTestTemplate(unittest.TestCase):
         TestClient.execute("""
                 INSERT INTO "user" (id, github_id, username,
                     avatar_url)
-                VALUES (%s, 1, 'testuser', 'url');
-            """, (self.user_id,))
+                VALUES (%s, 1, %s, 'url');
+            """, [self.user_id, self.author_name])
 
         TestClient.execute("""
                 INSERT INTO project(id, name, type)
@@ -58,13 +59,6 @@ class ApiTestTemplate(unittest.TestCase):
                         %s, %s, false, '', 1, 512)
                    """, (self.job_id, self.build_id, self.job_name, self.project_id))
 
-        # TestClient.execute("""
-        #                   INSERT INTO job (id, state, build_id, type, name, project_id,
-        #                             build_only, dockerfile, cpu, memory)
-        #            VALUES (%s, 'queued', %s, 'run_docker_compose',
-        #                    'job_name1', %s, false, '', 1, 512)
-        #               """, (self.job_id2, self.build_id, self.project_id))
-        #
         TestClient.execute("""INSERT INTO build (id, project_id, build_number, commit_id, source_upload_id)
                                           VALUES (%s, %s, 1, %s, %s)""",
                            (self.build_id, self.project_id, self.sha, self.source_upload_id))

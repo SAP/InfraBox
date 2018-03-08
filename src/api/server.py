@@ -16,7 +16,9 @@ from pyinfraboxutils.ibflask import get_token
 from pyinfraboxutils.prometheus import monitor
 from pyinfraboxutils import dbpool
 
-import handlers.project
+import handlers.projects.tokens
+import handlers.projects.secrets
+import handlers.projects.collaborators
 import handlers.trigger
 import handlers.job
 import handlers.build

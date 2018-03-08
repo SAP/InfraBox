@@ -7,6 +7,9 @@ from build_test import BuildTest
 from job_test import JobTest
 from project_test import ProjectTest
 from trigger_test import TriggerTest
+from tokens_test import TokensTest
+from secrets_test import SekretsTest
+from collaborators_test import CollaboratorsTest
 
 from pyinfraboxutils.storage import storage
 
@@ -22,6 +25,9 @@ if __name__ == '__main__':
         job_api_test_suite = unittest.TestLoader().loadTestsFromTestCase(JobApiTest)
         build_test_suite = unittest.TestLoader().loadTestsFromTestCase(BuildTest)
         job_test_suite = unittest.TestLoader().loadTestsFromTestCase(JobTest)
+        tokens_test_suite = unittest.TestLoader().loadTestsFromTestCase(TokensTest)
+        collaborators_test_suite = unittest.TestLoader().loadTestsFromTestCase(CollaboratorsTest)
+        secrets_test_suite = unittest.TestLoader().loadTestsFromTestCase(SekretsTest)
 
         runner = XMLTestRunner(output=output)
         runner.run(project_test_suite)
@@ -29,3 +35,6 @@ if __name__ == '__main__':
         runner.run(job_api_test_suite)
         runner.run(build_test_suite)
         runner.run(job_test_suite)
+        runner.run(tokens_test_suite)
+        runner.run(collaborators_test_suite)
+        runner.run(secrets_test_suite)
