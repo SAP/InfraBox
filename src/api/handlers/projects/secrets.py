@@ -4,8 +4,6 @@ from flask_restplus import Resource, fields
 from pyinfraboxutils.ibflask import auth_required, OK
 from pyinfraboxutils.ibrestplus import api
 
-from dashboard_api.namespaces import project as ns
-
 secret_model = api.model('Secret', {
     'name': fields.String(required=True),
     'id': fields.String(required=True),
@@ -16,7 +14,10 @@ add_secret_model = api.model('AddSecret', {
     'value': fields.String(required=True),
 })
 
-@ns.route('/<project_id>/secrets')
+ns = api.namespace('api/v1/projects/<project_id>/secrets',
+                   description="Project's secrets managing")
+
+@ns.route('/')
 class Secrets(Resource):
 
     @auth_required(['user'])
@@ -48,7 +49,7 @@ class Secrets(Resource):
 
         return OK('Successfully added secret')
 
-@ns.route('/<project_id>/secrets/<secret_id>')
+@ns.route('/<secret_id>')
 class Secret(Resource):
 
     @auth_required(['user'])

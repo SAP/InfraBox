@@ -52,7 +52,7 @@ export default class Project {
     }
 
     removeCollaborator (co) {
-        return APIService.delete(`projects/${this.id}/collaborators/${co.id}`)
+        return NewAPIService.delete(`projects/${this.id}/collaborators/${co.id}`)
             .then((response) => {
                 NotificationService.$emit('NOTIFICATION', new Notification(response, 'done'))
                 this._reloadCollaborators()
@@ -60,7 +60,7 @@ export default class Project {
     }
 
     deleteToken (id) {
-        delete APIService.delete(`projects/${this.id}/tokens/${id}`)
+        delete NewAPIService.delete(`projects/${this.id}/tokens/${id}`)
         .then((response) => {
             NotificationService.$emit('NOTIFICATION', new Notification(response, 'done'))
             this._reloadTokens()
@@ -69,7 +69,7 @@ export default class Project {
 
     addToken (description) {
         const d = { description: description, scope_pull: true, scope_push: true }
-        return APIService.post(`projects/${this.id}/tokens`, d)
+        return NewAPIService.post(`projects/${this.id}/tokens`, d)
         .then((response) => {
             const token = response.data.token
             this._reloadTokens()
@@ -89,7 +89,7 @@ export default class Project {
 
     addCollaborator (username) {
         const d = { username: username }
-        return APIService.post(`projects/${this.id}/collaborators`, d)
+        return NewAPIService.post(`projects/${this.id}/collaborators`, d)
         .then((response) => {
             NotificationService.$emit('NOTIFICATION', new Notification(response))
             this._reloadCollaborators()
@@ -113,7 +113,7 @@ export default class Project {
     }
 
     _reloadCollaborators () {
-        return APIService.get(`projects/${this.id}/collaborators`)
+        return NewAPIService.get(`projects/${this.id}/collaborators`)
             .then((collaborators) => {
                 store.commit('setCollaborators', { project: this, collaborators: collaborators })
             })
@@ -128,7 +128,7 @@ export default class Project {
     }
 
     _reloadSecrets () {
-        return APIService.get(`projects/${this.id}/secrets`)
+        return NewAPIService.get(`projects/${this.id}/secrets`)
             .then((secrets) => {
                 store.commit('setSecrets', { project: this, secrets: secrets })
             })
@@ -143,7 +143,7 @@ export default class Project {
     }
 
     _reloadTokens () {
-        return APIService.get(`projects/${this.id}/tokens`)
+        return NewAPIService.get(`projects/${this.id}/tokens`)
             .then((tokens) => {
                 store.commit('setTokens', { project: this, tokens: tokens })
             })

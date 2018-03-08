@@ -30,6 +30,10 @@ class TestClient:
         return d
 
     @staticmethod
+    def execute_one(stmt, args=None):
+        return TestClient.execute_many(stmt, args)[0]
+
+    @staticmethod
     def get_user_authorization(user_id): # pragma: no cover
         token = encode_user_token(user_id)
         h = {'Authorization': 'token %s' % token}
@@ -55,6 +59,20 @@ class TestClient:
             return
 
         r = TestClient.app.get(url, headers=headers)
+
+        if r.mimetype == 'application/json':
+            j = json.loads(r.data)
+            return j
+
+        return r
+
+    @staticmethod
+    def delete(url, headers):  # pragma: no cover
+
+        if not headers:
+            return
+
+        r = TestClient.app.delete(url, headers=headers)
 
         if r.mimetype == 'application/json':
             j = json.loads(r.data)

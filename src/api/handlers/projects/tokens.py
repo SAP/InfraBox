@@ -5,8 +5,6 @@ from pyinfraboxutils.ibflask import auth_required, OK
 from pyinfraboxutils.ibrestplus import api
 from pyinfraboxutils.token import encode_project_token
 
-from dashboard_api.namespaces import project as ns
-
 project_token_model = api.model('ProjectToken', {
     'description': fields.String(required=True),
     'scope_push': fields.Boolean(required=True),
@@ -14,7 +12,10 @@ project_token_model = api.model('ProjectToken', {
     'id': fields.String(required=False)
 })
 
-@ns.route('/<project_id>/tokens')
+ns = api.namespace('api/v1/projects/<project_id>/tokens',
+                   description="Project's tokens managing")
+
+@ns.route('/')
 class Tokens(Resource):
 
     @auth_required(['user'])
@@ -45,7 +46,7 @@ class Tokens(Resource):
 
         return OK('Successfully added token', {'token': token})
 
-@ns.route('/<project_id>/tokens/<token_id>')
+@ns.route('/<token_id>')
 class Token(Resource):
 
     @auth_required(['user'])
