@@ -18,6 +18,7 @@ add_secret_model = api.model('AddSecret', {
 ns = api.namespace('api/v1/projects/<project_id>/secrets',
                    description="Project's secrets managing")
 
+
 @ns.route('/')
 class Secrets(Resource):
 
@@ -55,9 +56,9 @@ class Secrets(Resource):
 
         return OK('Successfully added secret')
 
+
 @ns.route('/<secret_id>')
 class Secret(Resource):
-
     @auth_required(['user'])
     def delete(self, project_id, secret_id):
         g.db.execute('''
