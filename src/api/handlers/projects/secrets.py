@@ -1,16 +1,17 @@
 from flask import request, g, abort
 from flask_restplus import Resource, fields
+import re
 
 from pyinfraboxutils.ibflask import auth_required, OK
 from pyinfraboxutils.ibrestplus import api
 
 secret_model = api.model('Secret', {
-    'name': fields.String(required=True),
+    'name': fields.String(required=True),# pattern='^[a-zA-Z0-9_]*$'),
     'id': fields.String(required=True),
 })
 
 add_secret_model = api.model('AddSecret', {
-    'name': fields.String(required=True),
+    'name': fields.String(required=True),# pattern='^[a-zA-Z0-9_]*$'),
     'value': fields.String(required=True),
 })
 
@@ -19,6 +20,8 @@ ns = api.namespace('api/v1/projects/<project_id>/secrets',
 
 @ns.route('/')
 class Secrets(Resource):
+
+    name_pattern = re.compile('^[a-zA-Z0-9_]+$')
 
     @auth_required(['user'])
     @api.marshal_list_with(secret_model)
@@ -33,6 +36,9 @@ class Secrets(Resource):
     @api.expect(add_secret_model)
     def post(self, project_id):
         b = request.get_json()
+
+        if not Secrets.name_pattern.match(b['name']):
+            abort(400, 'Secret name must be not empty alphanumeric string')
 
         result = g.db.execute_one_dict('''
             SELECT COUNT(*) as cnt FROM secret WHERE project_id = %s
