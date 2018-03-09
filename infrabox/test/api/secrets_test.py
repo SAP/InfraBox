@@ -7,23 +7,39 @@ class SekretsTest(ApiTestTemplate):
 
     def setUp(self):
         super(SekretsTest, self).setUp()
-        self.test_secret_data = {'name': 'Test secret 1',
+        self.test_secret_data = {'name': 'Test_secret_1',
                                  'value': 'JFPOIEHEBLJSFUGFSUYDWGFSDBUWFGDSLKFGWYFGSDJ'}
+        self.invalid_test_secret_data = [{
+                                            'name': 'Test secret 1',
+                                            'value': 'JFPOIEHEBLJSFUGFSUYDWGFSDBUWFGDSLKFGWYFGSDJ'
+                                         }, {
+                                            'name': 'Test_secret_#1',
+                                            'value': 'JFPOIEHEBLJSFUGFSUYDWGFSDBUWFGDSLKFGWYFGSDJ'
+                                         }, {
+                                             'name': '/Test_secret+1',
+                                             'value': 'JFPOIEHEBLJSFUGFSUYDWGFSDBUWFGDSLKFGWYFGSDJ'}]
 
     def test_secrets_root(self):
 
         # test unauthorized
         r = TestClient.post('api/v1/projects/%s/secrets' % self.project_id, data=self.test_secret_data,
-                            headers=TestClient.get_job_authorization(self.job_id))
+                                headers=TestClient.get_job_authorization(self.job_id))
         self.assertEqual(r['message'], 'Unauthorized')
-
-        # test token creation
+#
+        # test secret creation
         r = TestClient.post('api/v1/projects/%s/secrets/' % self.project_id, data=self.test_secret_data,
                             headers=TestClient.get_user_authorization(self.user_id))
         self.assertEqual(r['message'], 'Successfully added secret')
         self.assertEqual(r['status'], 200)
 
-        # test token receiving
+        # test invalid secret data handling
+        for invalid_secret_data in self.invalid_test_secret_data:
+            r = TestClient.post('api/v1/projects/%s/secrets/' % self.project_id, data=invalid_secret_data,
+                                headers=TestClient.get_user_authorization(self.user_id))
+            self.assertEqual(r['message'], 'Secret name must be not empty alphanumeric string')
+            #self.assertEqual(r['status'], 400)
+
+        # test secret receiving
         r = TestClient.get('api/v1/projects/%s/secrets' % self.project_id,
                             headers=TestClient.get_user_authorization(self.user_id))
 
