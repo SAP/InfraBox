@@ -1,12 +1,10 @@
 from temp_tools import TestClient
 from test_template import ApiTestTemplate
 
-class SekretsTest(ApiTestTemplate):
 
-
-
+class SecretsTest(ApiTestTemplate):
     def setUp(self):
-        super(SekretsTest, self).setUp()
+        super(SecretsTest, self).setUp()
         self.test_secret_data = {'name': 'Test_secret_1',
                                  'value': 'JFPOIEHEBLJSFUGFSUYDWGFSDBUWFGDSLKFGWYFGSDJ'}
         self.invalid_test_secret_data = [{
@@ -17,15 +15,15 @@ class SekretsTest(ApiTestTemplate):
                                             'value': 'JFPOIEHEBLJSFUGFSUYDWGFSDBUWFGDSLKFGWYFGSDJ'
                                          }, {
                                              'name': '/Test_secret+1',
-                                             'value': 'JFPOIEHEBLJSFUGFSUYDWGFSDBUWFGDSLKFGWYFGSDJ'}]
+                                             'value': 'JFPOIEHEBLJSFUGFSUYDWGFSDBUWFGDSLKFGWYFGSDJ'
+                                         }]
 
     def test_secrets_root(self):
-
         # test unauthorized
         r = TestClient.post('api/v1/projects/%s/secrets' % self.project_id, data=self.test_secret_data,
-                                headers=TestClient.get_job_authorization(self.job_id))
+                            headers=TestClient.get_job_authorization(self.job_id))
         self.assertEqual(r['message'], 'Unauthorized')
-#
+
         # test secret creation
         r = TestClient.post('api/v1/projects/%s/secrets/' % self.project_id, data=self.test_secret_data,
                             headers=TestClient.get_user_authorization(self.user_id))
@@ -41,13 +39,12 @@ class SekretsTest(ApiTestTemplate):
 
         # test secret receiving
         r = TestClient.get('api/v1/projects/%s/secrets' % self.project_id,
-                            headers=TestClient.get_user_authorization(self.user_id))
+                           headers=TestClient.get_user_authorization(self.user_id))
 
         self.assertGreater(len(r), 0)
         self.assertEqual(r[0]['name'], self.test_secret_data['name'])
 
     def test_secret_delete(self):
-
         r = TestClient.execute_one('''
             INSERT INTO secret (project_id, name, value)
             VALUES (%s, %s, %s) RETURNING id
