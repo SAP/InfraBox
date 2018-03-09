@@ -37,7 +37,6 @@ class SekretsTest(ApiTestTemplate):
             r = TestClient.post('api/v1/projects/%s/secrets/' % self.project_id, data=invalid_secret_data,
                                 headers=TestClient.get_user_authorization(self.user_id))
             self.assertEqual(r['message'], 'Secret name must be not empty alphanumeric string')
-            #self.assertEqual(r['status'], 400)
 
         # test secret receiving
         r = TestClient.get('api/v1/projects/%s/secrets' % self.project_id,

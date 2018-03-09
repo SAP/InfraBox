@@ -6,12 +6,12 @@ from pyinfraboxutils.ibflask import auth_required, OK
 from pyinfraboxutils.ibrestplus import api
 
 secret_model = api.model('Secret', {
-    'name': fields.String(required=True),# pattern='^[a-zA-Z0-9_]*$'),
+    'name': fields.String(required=True),
     'id': fields.String(required=True),
 })
 
 add_secret_model = api.model('AddSecret', {
-    'name': fields.String(required=True),# pattern='^[a-zA-Z0-9_]*$'),
+    'name': fields.String(required=True),
     'value': fields.String(required=True),
 })
 
