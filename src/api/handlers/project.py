@@ -271,6 +271,18 @@ class Upload(Resource):
 
     @auth_required(['project'])
     def post(self, project_id):
+        project = g.db.execute_one_dict('''
+            SELECT type
+            FROM project
+            WHERE id = %s
+        ''', [project_id])
+
+        if not project:
+            abort(404, 'Project not found')
+
+        if project['type'] != 'upload':
+            abort(400, 'Project is not of type "upload"')
+
         build_id = str(uuid.uuid4())
         key = '%s.zip' % build_id
 

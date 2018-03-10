@@ -685,6 +685,18 @@ services:
                                     <td>Specify the number of MiB of RAM to be used for the job. Value must be an integer and at least 128.</td>
                                 </tr>
                                 <tr>
+                                    <td>cache.data</td>
+                                    <td>false</td>
+                                    <td>boolean</td>
+                                    <td>If set to false the content of <kbd>/infrabox/cache</kbd> will not be restored. Default <kbd>true<kbd>.</td>
+                                </tr>
+                                <tr>
+                                    <td>cache.image</td>
+                                    <td>false</td>
+                                    <td>boolean</td>
+                                    <td>If set to false the image will not be cached in InfraBox' internal image registry. Default <kbd>true<kbd>.</td>
+                                </tr>
+                                <tr>
                                     <td>timeout</td>
                                     <td>false</td>
                                     <td>integer</td>
@@ -802,6 +814,18 @@ CMD /usr/bin/test.py
                                     <td>true</td>
                                     <td>integer</td>
                                     <td>Specify the number of MiB of RAM to be used for the job. Value must be an integer and at least 128</td>
+                                </tr>
+                                <tr>
+                                    <td>cache.data</td>
+                                    <td>false</td>
+                                    <td>boolean</td>
+                                    <td>If set to false the content of <kbd>/infrabox/cache</kbd> will not be restored. Default <kbd>true<kbd>.</td>
+                                </tr>
+                                <tr>
+                                    <td>cache.image</td>
+                                    <td>false</td>
+                                    <td>boolean</td>
+                                    <td>If set to false the image will not be cached in InfraBox' internal image registry. Default <kbd>true<kbd>.</td>
                                 </tr>
                                 <tr>
                                     <td>timeout</td>

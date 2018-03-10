@@ -206,7 +206,6 @@ export default {
                     })
                     .then((j) => {
                         this.job = j
-                        j.loadConsole()
                         j.loadBadges()
                         j.loadTabs()
 
