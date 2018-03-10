@@ -1103,7 +1103,7 @@ def main():
             msg = traceback.format_exc()
             j.console.collect(msg, show=True)
             j.console.flush()
-            j.update_status('error', message=msg)
+            j.update_status('error', message='An error occured')
 
 if __name__ == "__main__":
     try:
