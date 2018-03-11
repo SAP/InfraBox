@@ -834,7 +834,7 @@ class RunJob(Job):
 
                     host = dep['host']
                     if not host.startswith('docker.io') and not host.startswith('index.docker.io'):
-                        cmd += host
+                        cmd += [host]
 
                     c.execute(cmd, show=False)
             except Exception as e:
