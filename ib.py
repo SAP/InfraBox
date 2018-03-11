@@ -4,6 +4,7 @@ import os
 import re
 import subprocess
 import logging
+import sys
 
 from Crypto.PublicKey import RSA
 
@@ -148,8 +149,8 @@ def services_start(args):
         p = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'src', 'dashboard_api')
         run = os.path.join(p, 'run_with_dummy.sh')
         execute(['bash', run], cwd=p)
-    elif args.service_name == 'dashboard':
-        p = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'src', 'dashboard')
+    elif args.service_name == 'dashboard-client':
+        p = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'src', 'dashboard-client')
         execute(['npm', 'run', 'dev'], cwd=p)
     else:
         print "Unknown service"

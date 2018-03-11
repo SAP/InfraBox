@@ -50,14 +50,14 @@ After building the images you may want to push them to a registry.
 It also takes the `--registry`, `--tag` and `--filter` options like `images build` does.
 
 ## Starting Service
-During development you may want to start several services separately to test your changes. You may use to start each service with:
+During development you may want to start several services separately to test your changes. You can start services like this:
 
 ```bash
 ./ib.py service start <service_name>
 ```
 
 See the service's READMEs for details:
-- [Storage](/infrabox/test/utils/storage/)
+- [Storage](/infrabox/utils/storage/)
 - [API](/src/api/)
 - [Dashboard API](/src/dashboard_api/)
 - [Dashboard UI](/src/dashboard-client)
