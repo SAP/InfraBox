@@ -28,7 +28,7 @@
                     <h3 class="md-subheading">Don't have an InfraBox account?</h3>
                     <div class=" m-b-md"></div>
                     <md-button @click="loginGithub()"
-                        v-if="$store.state.settings.INFRABOX_GITHUB_ENABLED"
+                        v-if="$store.state.settings.INFRABOX_GITHUB_LOGIN_ENABLED"
                         md-theme="default"
                         class="md-raised md-primary">
                         <i class="fa fa-fw fa-github"></i>

@@ -75,10 +75,10 @@ class Clone(Resource):
                 cmd = ['git', 'fetch', '--depth=10', clone_url, ref]
                 output += self.execute(cmd, cwd=mount_repo_dir)
 
-            if not branch:
-                branch = 'job'
+            cmd = ['git', 'checkout', '-qf', commit]
 
-            cmd = ['git', 'checkout', '-qf', '-b', branch, commit]
+            if not branch:
+                cmd += ['-b', 'infrabox']
 
             output += self.execute(cmd, cwd=mount_repo_dir)
 

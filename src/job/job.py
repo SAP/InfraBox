@@ -425,8 +425,8 @@ class RunJob(Job):
 
         storage_cache_tar = os.path.join(storage_cache_dir, 'cache.tar.gz')
 
-        if self.job['definition'].get('no_cache', False):
-            c.collect("Not downloading cache, because no_cache has been set", show=True)
+        if not self.job['definition'].get('cache', {}).get('data', True):
+            c.collect("Not downloading cache, because cache.data has been set to false", show=True)
         else:
             c.collect("Syncing cache", show=True)
             self.get_file_from_api_server("/cache", storage_cache_tar)
@@ -480,8 +480,8 @@ class RunJob(Job):
             c.collect("Output is empty\n", show=True)
 
         # Compressing cache
-        if self.job['definition'].get('no_cache', False):
-            c.collect("Not updating cache, because no_cache has been set", show=True)
+        if not self.job['definition'].get('cache', {}).get('data', True):
+            c.collect("Not updating cache, because cache.data has been set to false", show=True)
         else:
             c.collect("Updating Cache", show=True)
             if os.path.isdir(self.infrabox_cache_dir) and os.listdir(self.infrabox_cache_dir):
@@ -830,9 +830,13 @@ class RunJob(Job):
 
                     c.execute(['/usr/local/bin/ecr_login.sh'], show=True, env=login_env)
                 elif dep['type'] == 'docker-registry' and 'username' in dep:
+                    cmd = ['docker', 'login', '-u', dep['username'], '-p', dep['password']]
+
                     host = dep['host']
-                    c.execute(['docker', 'login', '-u', dep['username'],
-                               '-p', dep['password'], host], show=False)
+                    if not host.startswith('docker.io') and not host.startswith('index.docker.io'):
+                        cmd += [host]
+
+                    c.execute(cmd, show=False)
             except Exception as e:
                 raise Failure("Failed to login to registry: " + e.message)
 
@@ -853,8 +857,8 @@ class RunJob(Job):
     def get_cached_image(self, image_name_latest):
         c = self.console
 
-        if self.job['definition'].get('no_cache', False):
-            c.collect("Not pulling cached image, because no_cache has been set", show=True)
+        if not self.job['definition'].get('cache', {}).get('image', True):
+            c.collect("Not pulling cached image, because cache.image has been set to false", show=True)
 
         c.collect("Get cached image %s" % image_name_latest, show=True)
 
@@ -865,8 +869,8 @@ class RunJob(Job):
     def cache_docker_image(self, image_name_build, image_name_latest):
         c = self.console
 
-        if self.job['definition'].get('no_cache', False):
-            c.collect("Not pushed cached image, because no_cache has been set", show=True)
+        if not self.job['definition'].get('cache', {}).get('image', True):
+            c.collect("Not pushed cached image, because cache.image has been set to false", show=True)
 
         c.collect("Upload cached image %s" % image_name_latest, show=True)
 
@@ -1103,7 +1107,7 @@ def main():
             msg = traceback.format_exc()
             j.console.collect(msg, show=True)
             j.console.flush()
-            j.update_status('error', message=msg)
+            j.update_status('error', message='An error occured')
 
 if __name__ == "__main__":
     try:

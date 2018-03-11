@@ -2,6 +2,16 @@ import shutil
 import json
 import os
 import copy
+import re
+
+def push_latest(tag):
+    r = r'^[0-9]\.[0-9]\.[0-9]$'
+    match = re.match(r, tag)
+
+    if match:
+        return True
+
+    return False
 
 def main():
     shutil.copyfile('/generator/infrabox.json', '/infrabox/output/infrabox.json')
@@ -31,7 +41,9 @@ def main():
 
                 new_deps.append(d)
                 new_deps.append(new_dep_tag)
-                new_deps.append(new_dep_latest)
+
+                if push_latest(tag):
+                    new_deps.append(new_dep_latest)
 
             j['deployments'] = new_deps
 
