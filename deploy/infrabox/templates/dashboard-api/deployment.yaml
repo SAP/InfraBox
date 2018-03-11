@@ -44,26 +44,11 @@ spec:
                     name: INFRABOX_GERRIT_ENABLED
                     value: {{ .Values.gerrit.enabled | quote }}
                 -
-                    name: INFRABOX_DASHBOARD_SECRET
-                    valueFrom:
-                        secretKeyRef:
-                            name: infrabox-dashboard
-                            key: secret
-                -
                     name: INFRABOX_SERVICE
                     value: {{ default "dashboard" .Values.dashboard.api.image }}
                 -
                     name: INFRABOX_VERSION
                     value: {{ .Values.dashboard.api.tag }}
-                -
-                    name: INFRABOX_DASHBOARD_LOG_CONSOLE
-                    value: "true"
-                -
-                    name: INFRABOX_DASHBOARD_LOG_LEVEL
-                    value: {{ default "info" .Values.dashboard.api.log.level }}
-                -
-                    name: INFRABOX_DASHBOARD_PORT
-                    value: "8080"
                 -
                     name: INFRABOX_DOCKER_REGISTRY_URL
                     value: {{ .Values.docker_registry.url }}
