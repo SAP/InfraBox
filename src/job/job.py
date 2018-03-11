@@ -830,9 +830,13 @@ class RunJob(Job):
 
                     c.execute(['/usr/local/bin/ecr_login.sh'], show=True, env=login_env)
                 elif dep['type'] == 'docker-registry' and 'username' in dep:
+                    cmd = ['docker', 'login', '-u', dep['username'], '-p', dep['password']]
+
                     host = dep['host']
-                    c.execute(['docker', 'login', '-u', dep['username'],
-                               '-p', dep['password'], host], show=False)
+                    if not host.startswith('docker.io') and not host.startswith('index.docker.io'):
+                        cmd += host
+
+                    c.execute(cmd, show=False)
             except Exception as e:
                 raise Failure("Failed to login to registry: " + e.message)
 
