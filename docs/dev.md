@@ -1,25 +1,63 @@
 # Developer Guide
-
-## Build Images
-To build the containers you need to have installed:
+You need these requirementes to be installed on your machine:
 
 - [infraboxcli](https://github.com/infrabox/cli)
 - [docker](https://www.docker.com/)
+- python 2.7
 
-InfraBox uses _infraboxcli_ to build its images. To build all images run from the root directory of the project:
+## Setup development environment
 
-```
-    $ ./deploy/build.sh <YOUR_DOCKER_REGISTRY: i.e. localhost:5000>
-```
+Install all the python packages you need for development.
 
-After the images have been build successfully you can either push them to regular registry
-
-```
-    $ ./deploy/push.sh <YOUR_DOCKER_REGISTRY>
+```bash
+pip install pipenv
+pipenv install
 ```
 
-or to google's container registry:
+To activate the environment every time you open a new shell:
 
+```bash
+pipenv shell
 ```
-    $ ./deploy/push_gcr.sh <YOUR_DOCKER_REGISTRY>
+
+## Build Images
+To build all images run:
+
+``` bash
+./ib.py images build
 ```
+
+If you want to build them for another registry (default is `localhost:5000`) use the `--registry` and the `--tag` option:
+
+``` bash
+./ib.py images build --registry myregistry --tag mytag
+```
+
+You may also filter which images to build with the `--filter` option. It takes a regular expression and every image name matchin the regex will be build.
+
+``` bash
+./ib.py images build --filter api # builds only api
+./ib.py images build --filter '.*' # builds all, default
+```
+
+## Push Image
+After building the images you may want to push them to a registry.
+
+``` bash
+./ib.py images push
+```
+
+It also takes the `--registry`, `--tag` and `--filter` options like `images build` does.
+
+## Starting Service
+During development you may want to start several services separately to test your changes. You may use to start each service with:
+
+```bash
+./ib.py service start <service_name>
+```
+
+See the service's READMEs for details:
+- [Storage](/infrabox/test/utils/storage/)
+- [API](/src/api/)
+- [Dashboard API](/src/dashboard_api/)
+- [Dashboard UI](/src/dashboard-client)

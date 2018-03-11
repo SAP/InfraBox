@@ -1,12 +1,10 @@
 # API
-[![coverage](https://infrabox.ninja/api/v1/projects/0c8204bb-7ce5-48a3-aa08-0fc38d7255d0/badge.svg?subject=coverage&job_name=ib/test/api)](https://infrabox.ninja/dashboard/#/project/infrabox)
-
-The API Component implements the API for *infraboxcli* and the running *jobs*.
+The Dashboard API Component implements the API for *UI*
 
 ## Run tests
 ```bash
 infrabox run ib # Only required once
-infrabox run ib/test/api
+infrabox run ib/test/dashboard-api
 ```
 
 ## Start with dummy data
@@ -21,10 +19,10 @@ First start `postgres` and `minio` with some [dummy data](/infrabox/test/utils/s
 Now start the API:
 
 ```bash
-./ib.py services start api
+./ib.py services start dashboard-api
 ```
 
-The API Server starts up on port 8080.
+The API Server starts up on port 8082.
 
 ## API Docs
-After you have started the API you can access the docs at http://localhost:8080
+After you have started the API you can access the docs at http://localhost:8082

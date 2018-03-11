@@ -69,6 +69,7 @@ def main(): # pragma: no cover
     get_env('INFRABOX_ACCOUNT_SIGNUP_ENABLED')
     get_env('INFRABOX_ACCOUNT_LDAP_ENABLED')
     get_env('INFRABOX_ROOT_URL')
+    get_env('INFRABOX_GITHUB_LOGIN_ENABLED')
 
     app.config['MAX_CONTENT_LENGTH'] = 1024 * 1024 * 1024
 
@@ -177,8 +178,9 @@ def main(): # pragma: no cover
     sio.start_background_task(dashboard_api.listeners.job.listen, sio)
     sio.start_background_task(dashboard_api.listeners.console.listen, sio, client_manager)
 
-    logger.info('Starting Server')
-    sio.run(app, host='0.0.0.0', port=8080)
+    port = int(os.environ.get('INFRABOX_PORT', 8080))
+    logger.info('Starting Server on port %s' % port)
+    sio.run(app, host='0.0.0.0', port=port)
 
 if __name__ == "__main__": # pragma: no cover
     try:

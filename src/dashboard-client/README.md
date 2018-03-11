@@ -1,30 +1,26 @@
-# dashboard
+# Dashbard
 
-> A Vue.js project
+## Start with dummy data
+For development purposes you may want to start the API with some dummy data. Make sure you have setup  your development environment like described in [our developer guide](/docs/dev.md).
 
-## Build Setup
+First start `postgres` and `minio` with some [dummy data](/infrabox/test/utils/storage) as well as `api` and `dashboard-api`. Run each command in its own shell:
 
-``` bash
-# install dependencies
-npm install
-
-# serve with hot reload at localhost:8080
-npm run dev
-
-# build for production with minification
-npm run build
-
-# build for production and view the bundle analyzer report
-npm run build --report
-
-# run unit tests
-npm run unit
-
-# run e2e tests
-npm run e2e
-
-# run all tests
-npm test
+```bash
+./ib.py services start storage
+./ib.py services start api
+./ib.py services start dashboard-api
 ```
 
-For a detailed explanation on how things work, check out the [guide](http://vuejs-templates.github.io/webpack/) and [docs for vue-loader](http://vuejs.github.io/vue-loader).
+To run the UI you have to allow cross origin requests. For chrome first close all instances of it and run it as:
+
+```bash
+chromium-browser --disable-web-security --user-data-dir
+```
+
+Now start the UI:
+
+```bash
+./ib.py services start dashboard
+```
+
+The dashboard starts up on port 8081.

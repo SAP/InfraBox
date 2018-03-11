@@ -1,0 +1,30 @@
+[[source]]
+
+url = "https://pypi.python.org/simple"
+verify_ssl = true
+name = "pypi"
+
+
+[dev-packages]
+
+
+
+[packages]
+
+requests = "*"
+eventlet = "*"
+flask-socketio = "*"
+flask-restplus = "*"
+prometheus-client = "*"
+"psycopg2-binary" = "*"
+pyjwt = "*"
+"boto3" = "*"
+google-cloud = "*"
+bcrypt = "*"
+cryptography = "*"
+pycrypto = "*"
+
+
+[requires]
+
+python_version = "2.7"
