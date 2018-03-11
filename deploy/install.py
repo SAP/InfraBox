@@ -348,14 +348,6 @@ class Kubernetes(Install):
         self.create_secret("infrabox-github", self.args.general_system_namespace, secret)
 
     def setup_dashboard(self):
-        secret = hashlib.sha256(open(self.args.general_rsa_private_key, 'rb').read()).hexdigest()
-
-        secret = {
-            "secret": secret
-        }
-
-        self.create_secret("infrabox-dashboard", self.args.general_system_namespace, secret)
-
         self.set('dashboard.api.tag', self.args.version)
         self.set('dashboard.url', self.args.root_url)
 
