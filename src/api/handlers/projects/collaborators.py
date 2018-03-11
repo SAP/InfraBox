@@ -16,7 +16,7 @@ collaborator_model = api.model('Collaborator', {
 })
 
 add_collaborator_model = api.model('AddCollaborator', {
-    'name': fields.String(required=True)
+    'username': fields.String(required=True)
 })
 
 

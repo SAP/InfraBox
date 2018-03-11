@@ -30,6 +30,7 @@ class Settings(Resource):
     def get(self):
         o = {
             'INFRABOX_GITHUB_ENABLED': os.environ['INFRABOX_GITHUB_ENABLED'] == 'true',
+            'INFRABOX_GITHUB_LOGIN_ENABLED': os.environ['INFRABOX_GITHUB_LOGIN_ENABLED'] == 'true',
             'INFRABOX_GERRIT_ENABLED': os.environ['INFRABOX_GERRIT_ENABLED'] == 'true',
             'INFRABOX_ACCOUNT_SIGNUP_ENABLED': os.environ['INFRABOX_ACCOUNT_SIGNUP_ENABLED'] == 'true',
             'INFRABOX_ACCOUNT_LDAP_ENABLED': os.environ['INFRABOX_ACCOUNT_LDAP_ENABLED'] == 'true',

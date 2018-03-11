@@ -59,6 +59,9 @@ export default {
                 NotificationService.$emit('NOTIFICATION', new Notification(response))
                 this.project._reloadSecrets()
             })
+            .catch((err) => {
+                NotificationService.$emit('NOTIFICATION', new Notification(err))
+            })
         },
         addSecret () {
             const d = { name: this.name, value: this.value }
@@ -66,6 +69,9 @@ export default {
             .then((response) => {
                 NotificationService.$emit('NOTIFICATION', new Notification(response))
                 this.project._reloadSecrets()
+            })
+            .catch((err) => {
+                NotificationService.$emit('NOTIFICATION', new Notification(err))
             })
         }
     }

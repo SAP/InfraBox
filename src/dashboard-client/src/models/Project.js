@@ -49,6 +49,9 @@ export default class Project {
                 this._addJobs(jobs)
                 return this._getBuild(number, restartCounter)
             })
+            .catch((err) => {
+                NotificationService.$emit('NOTIFICATION', new Notification(err))
+            })
     }
 
     removeCollaborator (co) {
@@ -57,13 +60,19 @@ export default class Project {
                 NotificationService.$emit('NOTIFICATION', new Notification(response, 'done'))
                 this._reloadCollaborators()
             })
+            .catch((err) => {
+                NotificationService.$emit('NOTIFICATION', new Notification(err))
+            })
     }
 
     deleteToken (id) {
-        delete NewAPIService.delete(`projects/${this.id}/tokens/${id}`)
+        return NewAPIService.delete(`projects/${this.id}/tokens/${id}`)
         .then((response) => {
             NotificationService.$emit('NOTIFICATION', new Notification(response, 'done'))
             this._reloadTokens()
+        })
+        .catch((err) => {
+            NotificationService.$emit('NOTIFICATION', new Notification(err))
         })
     }
 
@@ -75,6 +84,9 @@ export default class Project {
             this._reloadTokens()
             return token
         })
+        .catch((err) => {
+            NotificationService.$emit('NOTIFICATION', new Notification(err))
+        })
     }
 
     triggerBuild (branchOrSha, env) {
@@ -85,6 +97,9 @@ export default class Project {
             const d = r.data
             router.push(`/project/${this.name}/build/${d.build.build_number}/${d.build.restartCounter}/`)
         })
+        .catch((err) => {
+            NotificationService.$emit('NOTIFICATION', new Notification(err))
+        })
     }
 
     addCollaborator (username) {
@@ -93,6 +108,9 @@ export default class Project {
         .then((response) => {
             NotificationService.$emit('NOTIFICATION', new Notification(response))
             this._reloadCollaborators()
+        })
+        .catch((err) => {
+            NotificationService.$emit('NOTIFICATION', new Notification(err))
         })
     }
 
@@ -117,6 +135,9 @@ export default class Project {
             .then((collaborators) => {
                 store.commit('setCollaborators', { project: this, collaborators: collaborators })
             })
+            .catch((err) => {
+                NotificationService.$emit('NOTIFICATION', new Notification(err))
+            })
     }
 
     _loadSecrets () {
@@ -132,6 +153,9 @@ export default class Project {
             .then((secrets) => {
                 store.commit('setSecrets', { project: this, secrets: secrets })
             })
+            .catch((err) => {
+                NotificationService.$emit('NOTIFICATION', new Notification(err))
+            })
     }
 
     _loadTokens () {
@@ -146,6 +170,9 @@ export default class Project {
         return NewAPIService.get(`projects/${this.id}/tokens`)
             .then((tokens) => {
                 store.commit('setTokens', { project: this, tokens: tokens })
+            })
+            .catch((err) => {
+                NotificationService.$emit('NOTIFICATION', new Notification(err))
             })
     }
 

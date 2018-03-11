@@ -29,7 +29,6 @@ def authenticate(email, password):
     search_filter = "(mail=%s)" % str(email)
     user_dn = None
 
-    print ldap
     connect = ldap.initialize(ldap_server)
     try:
         connect.bind_s(ldap_user, ldap_password)
@@ -40,13 +39,14 @@ def authenticate(email, password):
                 user_dn = r[0]
                 break
 
-        if not user_dn:
-            abort(400, 'user/password invalid')
     except Exception as e:
         logger.warning("authentication error: %s", e)
         abort(400, 'user/password invalid')
     finally:
         connect.unbind_s()
+
+    if not user_dn:
+        abort(400, 'user/password invalid')
 
     try:
         connect = ldap.initialize(ldap_server)
@@ -60,10 +60,10 @@ def authenticate(email, password):
         if not user or not user[0]:
             abort(400, 'user/password invalid')
 
-            return {
-                'cn': user[1]['cn'][0],
-                'displayName': user[1]['displayName'][0]
-            }
+        return {
+            'cn': user[1]['cn'][0],
+            'displayName': user[1]['displayName'][0]
+        }
 
     except Exception as e:
         logger.exception(e)
