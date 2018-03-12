@@ -36,6 +36,11 @@ class SecretsTest(ApiTestTemplate):
                                 headers=TestClient.get_user_authorization(self.user_id))
             self.assertEqual(r['message'], 'Secret name must be not empty alphanumeric string')
 
+        # test name already exist
+        r = TestClient.post('api/v1/projects/%s/secrets/' % self.project_id, data=self.test_secret_data,
+                            headers=TestClient.get_user_authorization(self.user_id))
+        self.assertEqual(r['message'], 'Secret with this name already exist')
+
         # test secret receiving
         r = TestClient.get('api/v1/projects/%s/secrets' % self.project_id,
                            headers=TestClient.get_user_authorization(self.user_id))

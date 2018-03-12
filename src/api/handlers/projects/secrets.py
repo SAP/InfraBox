@@ -46,7 +46,15 @@ class Secrets(Resource):
         ''', [project_id])
 
         if result['cnt'] > 50:
-            abort(400, 'too many secrets')
+            abort(400, 'Too many secrets')
+
+        r = g.db.execute_one('''
+                    SELECT count(*) FROM secret
+                    WHERE project_id = %s AND name = %s
+                ''', [project_id, b['name']])
+
+        if r[0] > 0:
+            abort(400, 'Secret with this name already exist')
 
         g.db.execute('''
             INSERT INTO secret (project_id, name, value) VALUES(%s, %s, %s)
