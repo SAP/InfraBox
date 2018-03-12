@@ -6,6 +6,9 @@
 
 **Fixed bugs:**
 
+- Job end message should not contain full strack trace for an exception [\#254](https://github.com/InfraBox/infrabox/issues/254)
+- job creates branch which already exists [\#252](https://github.com/InfraBox/infrabox/issues/252)
+- fails to push to docker hub [\#251](https://github.com/InfraBox/infrabox/issues/251)
 - Incorrect output of API tests [\#238](https://github.com/InfraBox/infrabox/issues/238)
 - Dates sometimes show 'Invalid Date' in dashboard [\#234](https://github.com/InfraBox/infrabox/issues/234)
 - don't allow access to secrets in PR [\#223](https://github.com/InfraBox/infrabox/issues/223)
@@ -14,6 +17,9 @@
 
 **Closed issues:**
 
+- create ib.py scripts [\#257](https://github.com/InfraBox/infrabox/issues/257)
+- add entrypoint option [\#247](https://github.com/InfraBox/infrabox/issues/247)
+- update generator to not push to latest if it's a alpha/beta/rc [\#243](https://github.com/InfraBox/infrabox/issues/243)
 - remove stats container [\#233](https://github.com/InfraBox/infrabox/issues/233)
 - add support for no-cache option [\#230](https://github.com/InfraBox/infrabox/issues/230)
 - create deployment manager template [\#224](https://github.com/InfraBox/infrabox/issues/224)
@@ -22,6 +28,8 @@
 
 **Merged pull requests:**
 
+- Ib py [\#258](https://github.com/InfraBox/infrabox/pull/258) ([ib-steffen](https://github.com/ib-steffen))
+- Fixes [\#255](https://github.com/InfraBox/infrabox/pull/255) ([ib-steffen](https://github.com/ib-steffen))
 - Fixes [\#241](https://github.com/InfraBox/infrabox/pull/241) ([ib-steffen](https://github.com/ib-steffen))
 - Testing [\#239](https://github.com/InfraBox/infrabox/pull/239) ([ib-steffen](https://github.com/ib-steffen))
 - Fixes [\#232](https://github.com/InfraBox/infrabox/pull/232) ([ib-steffen](https://github.com/ib-steffen))
