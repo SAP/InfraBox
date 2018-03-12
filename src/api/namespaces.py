@@ -1,15 +1,18 @@
 from pyinfraboxutils.ibrestplus import api
 
-project = api.namespace('api/dashboard/projects/',
+project = api.namespace('api/v1/projects/',
                         description='Project related operations')
 
-settings = api.namespace('api/dashboard/settings/',
+settings = api.namespace('api/v1/settings/',
                          description='Settings')
 
-account = api.namespace('api/dashboard/account/',
+user = api.namespace('api/v1/user/',
+                     description='User')
+
+account = api.namespace('api/v1/account/',
                         description='Account')
 
-github = api.namespace('api/dashboard/github/',
+github = api.namespace('api/v1/github/',
                        description='GitHub')
 
 github_auth = api.namespace('github/',

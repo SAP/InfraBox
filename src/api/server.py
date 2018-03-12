@@ -20,11 +20,12 @@ import handlers.projects.tokens
 import handlers.projects.secrets
 import handlers.projects.collaborators
 import handlers.user
-#import handlers.account
+import handlers.account
 import handlers.trigger
 import handlers.job
 import handlers.build
 import handlers.job_api
+import settings
 
 import listeners.console
 import listeners.job
