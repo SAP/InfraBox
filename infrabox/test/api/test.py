@@ -10,6 +10,7 @@ from trigger_test import TriggerTest
 from tokens_test import TokensTest
 from secrets_test import SecretsTest
 from collaborators_test import CollaboratorsTest
+from user_test import UserTest
 
 from pyinfraboxutils.storage import storage
 
@@ -28,6 +29,7 @@ if __name__ == '__main__':
         suite.addTest(unittest.TestLoader().loadTestsFromTestCase(CollaboratorsTest))
         suite.addTest(unittest.TestLoader().loadTestsFromTestCase(TokensTest))
         suite.addTest(unittest.TestLoader().loadTestsFromTestCase(SecretsTest))
+        suite.addTest(unittest.TestLoader().loadTestsFromTestCase(UserTest))
 
         testRunner = XMLTestRunner(output=output)
         #unittest.main(testRunner = XMLTestRunner(output=output),

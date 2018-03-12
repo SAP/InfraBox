@@ -31,6 +31,7 @@ class ApiTestTemplate(unittest.TestCase):
         self.author_name = 'author_name1'
         self.author_email = 'author@email.1'
         self.source_upload_id = '1423af82-3c4f-5bb5-b1da-a23a0ced5e6f'
+        self.user_github_id = 24122
 
         self.job_headers = TestClient.get_job_authorization(self.job_id)
 
@@ -41,8 +42,8 @@ class ApiTestTemplate(unittest.TestCase):
 
         TestClient.execute("""
                 INSERT INTO "user" (id, github_id, username, avatar_url)
-                VALUES (%s, 1, %s, 'url');
-            """, [self.user_id, self.author_name])
+                VALUES (%s, %s, %s, 'url');
+            """, [self.user_id, self.user_github_id, self.author_name])
 
         TestClient.execute("""
                 INSERT INTO project(id, name, type)
