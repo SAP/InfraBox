@@ -1,7 +1,7 @@
 import Vue from 'vue'
 
 import NotificationService from '../services/NotificationService'
-import Notification from '../models/Notification'
+// import Notification from '../models/Notification'
 import router from '../router'
 
 class NewAPIService {
@@ -18,7 +18,7 @@ class NewAPIService {
             })
             .catch((err) => {
                 if (err.status !== 401) {
-                    NotificationService.$emit('NOTIFICATION', new Notification(err))
+                    NotificationService.$emit(err)
                 }
 
                 throw err
@@ -41,7 +41,7 @@ class NewAPIService {
                 if (err.status === 401) {
                     router.push('/login')
                 } else {
-                    NotificationService.$emit('NOTIFICATION', new Notification(err))
+                    NotificationService.$emit(err)
                 }
 
                 throw err
@@ -59,7 +59,7 @@ class NewAPIService {
                 if (err.status === 401) {
                     router.push('/login')
                 } else {
-                    NotificationService.$emit('NOTIFICATION', new Notification(err))
+                    NotificationService.$emit(err)
                 }
 
                 throw err

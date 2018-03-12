@@ -10,7 +10,7 @@ from pyinfraboxutils import get_logger
 from pyinfraboxutils.token import encode_user_token
 from pyinfraboxutils.ibflask import auth_required
 
-from dashboard_api.namespaces import github, github_auth
+from api.namespaces import github, github_auth
 
 logger = get_logger('github')
 

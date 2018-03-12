@@ -43,7 +43,7 @@
 <script>
 import store from '../../store'
 import router from '../../router'
-import APIService from '../../services/APIService'
+import NewAPIService from '../../services/NewAPIService'
 import NotificationService from '../../services/NotificationService'
 import Notification from '../../models/Notification'
 
@@ -82,7 +82,7 @@ export default {
     },
     methods: {
         signup () {
-            APIService.post('account/register', {
+            NewAPIService.post('account/register', {
                 email: this.mail,
                 username: this.username,
                 password1: this.password1,
