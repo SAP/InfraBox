@@ -2,8 +2,10 @@ from flask import g, abort
 from flask_restplus import Resource
 
 from pyinfraboxutils.ibflask import auth_required
+from pyinfraboxutils.ibrestplus import api
 
-from dashboard_api.namespaces import user as ns
+ns = api.namespace('api/v1/user',
+                   description="Users related operations")
 
 @ns.route('/')
 class User(Resource):
