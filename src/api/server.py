@@ -1,5 +1,6 @@
 #pylint: disable=unused-import,relative-import,wrong-import-position
 import uuid
+import os
 
 import eventlet
 eventlet.monkey_patch()
@@ -13,7 +14,6 @@ from flask_restplus import Resource
 from pyinfraboxutils import get_env, print_stackdriver, get_logger
 from pyinfraboxutils.ibrestplus import api, app
 from pyinfraboxutils.ibflask import get_token
-from pyinfraboxutils.prometheus import monitor
 from pyinfraboxutils import dbpool
 
 import handlers.projects.tokens
@@ -182,11 +182,9 @@ def main(): # pragma: no cover
     sio.start_background_task(listeners.job.listen, sio)
     sio.start_background_task(listeners.console.listen, sio, client_manager)
 
-    logger.info('Starting prometheus server')
-    monitor(9000)
-
-    logger.info('Starting Server')
-    sio.run(app, host='0.0.0.0', port=8080)
+    port = int(os.environ.get('INFRABOX_PORT', 8080))
+    logger.info('Starting Server on port %s', port)
+    sio.run(app, host='0.0.0.0', port=port)
 
 if __name__ == "__main__": # pragma: no cover
     try:

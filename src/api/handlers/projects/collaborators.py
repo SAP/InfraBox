@@ -16,7 +16,7 @@ collaborator_model = api.model('Collaborator', {
 })
 
 add_collaborator_model = api.model('AddCollaborator', {
-    'name': fields.String(required=True)
+    'username': fields.String(required=True)
 })
 
 
@@ -26,19 +26,20 @@ class Collaborators(Resource):
     @auth_required(['user'])
     @api.marshal_list_with(collaborator_model)
     def get(self, project_id):
-        p = g.db.execute_many_dict('''
+        p = g.db.execute_many_dict(
+            """
             SELECT u.name, u.id, u.email, u.avatar_url, u.username FROM "user" u
             INNER JOIN collaborator co
                 ON co.user_id = u.id
                 AND co.project_id = %s
-        ''', [project_id])
+            """, [project_id])
         return p
 
     @auth_required(['user'], check_project_owner=True)
     @api.expect(add_collaborator_model)
     def post(self, project_id):
         b = request.get_json()
-        username = b['name']
+        username = b['username']
 
         user = g.db.execute_one_dict('''
             SELECT * FROM "user" WHERE username = %s
@@ -47,10 +48,11 @@ class Collaborators(Resource):
         if not user:
             abort(400, "User not found")
 
-        g.db.execute('''
+        g.db.execute(
+            """
             INSERT INTO collaborator (project_id, user_id)
             VALUES(%s, %s) ON CONFLICT DO NOTHING
-        ''', [project_id, user['id']])
+            """, [project_id, user['id']])
 
         g.db.commit()
 
@@ -67,11 +69,12 @@ class Collaborator(Resource):
         if user_id == owner_id:
             abort(404)
 
-        g.db.execute('''
+        g.db.execute(
+            """
             DELETE FROM collaborator
             WHERE user_id = %s
             AND project_id = %s
-        ''', [user_id, project_id])
+            """, [user_id, project_id])
 
         g.db.commit()
 

@@ -16,8 +16,9 @@
                 </md-table-header>
                 <md-table-body>
                     <md-table-row v-for="section of job.sections" :key="section.text">
-                        <md-table-cell class="console-table"><md-card-expand>
-                            <md-card-actions class="console-table text-left text-top">
+                        <md-table-cell class="console-table">
+                            <md-card-expand>
+                                <md-card-actions class="console-table text-left text-top">
                                 <md-button md-theme="skipped" class="md-icon-button md-primary md-raised md-dense" md-expand-trigger>
                                     <md-icon>expand_less</md-icon>
                                 </md-button>

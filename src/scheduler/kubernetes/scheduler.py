@@ -320,7 +320,7 @@ class Scheduler(object):
 
         role = {
             'kind': 'Role',
-            'apiVersion': 'rbac.authorization.k8s.io/v1',
+            'apiVersion': 'rbac.authorization.k8s.io/v1beta1',
             'metadata': {
                 'name': 'infrabox',
                 'namespace': namespace_name
@@ -329,11 +329,15 @@ class Scheduler(object):
                 'apiGroups': ['', 'extensions', 'apps', 'batch'],
                 'resources': ['*'],
                 'verbs': ['*']
+            }, {
+                'apiGroups': ['rbac.authorization.k8s.io'],
+                'resources': ['roles', 'rolebindings'],
+                'verbs': ['*']
             }]
         }
 
         r = requests.post(self.args.api_server +
-                          '/apis/rbac.authorization.k8s.io/v1/namespaces/%s/roles' % namespace_name,
+                          '/apis/rbac.authorization.k8s.io/v1beta1/namespaces/%s/roles' % namespace_name,
                           headers=h, json=role, timeout=10)
 
         if r.status_code != 201:
@@ -342,7 +346,7 @@ class Scheduler(object):
 
         rb = {
             "kind": "RoleBinding",
-            "apiVersion": "rbac.authorization.k8s.io/v1",
+            "apiVersion": "rbac.authorization.k8s.io/v1beta1",
             "metadata": {
                 "name": namespace_name
             },
@@ -359,7 +363,7 @@ class Scheduler(object):
         }
 
         r = requests.post(self.args.api_server +
-                          '/apis/rbac.authorization.k8s.io/v1/namespaces/%s/rolebindings' % namespace_name,
+                          '/apis/rbac.authorization.k8s.io/v1beta1/namespaces/%s/rolebindings' % namespace_name,
                           headers=h, json=rb, timeout=10)
 
         if r.status_code != 201:

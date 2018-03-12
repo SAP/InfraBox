@@ -195,7 +195,7 @@ class JobRestart(Resource):
             abort(400, 'Job in state %s cannot be restarted' % job_state)
 
         g.db.execute('''
-            UPDATE job SET state = 'queued', console = null WHERE id = %s
+            UPDATE job SET state = 'queued', console = null, message = null WHERE id = %s
         ''', [job_id])
         g.db.commit()
 
