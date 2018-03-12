@@ -124,8 +124,8 @@ def _setup_rsa_keys():
         if not os.path.exists(os.path.dirname(private_key_path)):
             os.makedirs(os.path.dirname(private_key_path))
 
-	with open(private_key_path, 'w+') as s:
-	    s.write(str(key.exportKey()))
+        with open(private_key_path, 'w+') as s:
+            s.write(str(key.exportKey()))
 
     if not os.path.exists(public_key_path):
         logger.warn('Public key does not exist: %s', public_key_path)
@@ -134,8 +134,8 @@ def _setup_rsa_keys():
         if not os.path.exists(os.path.dirname(public_key_path)):
             os.makedirs(os.path.dirname(public_key_path))
 
-	with open(public_key_path, 'w+') as s:
-	    s.write(str(key.publickey().exportKey()))
+        with open(public_key_path, 'w+') as s:
+            s.write(str(key.publickey().exportKey()))
 
 def services_start(args):
     if args.service_name == 'storage':
@@ -169,6 +169,17 @@ def services_kill(args):
     else:
         print "Unknown service"
         sys.exit(1)
+
+def changelog_create(args):
+    repo_name = 'infrabox/infrabox'
+    command = ['github_changelog_generator']
+    if args.token:
+        command.append('--token')
+        command.append(args.token)
+
+    command.append(repo_name)
+    execute(command, cwd=os.getcwd())
+
 
 def main():
     parser = argparse.ArgumentParser(prog="ib")
@@ -206,6 +217,14 @@ def main():
     services_kill_parser = sub_services.add_parser('kill')
     services_kill_parser.set_defaults(func=services_kill)
     services_kill_parser.add_argument("service_name", nargs="?", type=str, help="Service name")
+
+    # Github changelog
+    changelog = cmd_parser.add_parser('changelog')
+    sub_changelog = changelog.add_subparsers()
+
+    create_changelog_parser = sub_changelog.add_parser('create')
+    create_changelog_parser.set_defaults(func=changelog_create)
+    create_changelog_parser.add_argument("--token", default='')
 
 
     args = parser.parse_args()

@@ -56,6 +56,18 @@ During development you may want to start several services separately to test you
 ./ib.py service start <service_name>
 ```
 
+## Generate Changelog
+If you want to create a new changelog file, run:
+```bash
+./ib.py changelog create
+```
+
+Please, not that you should have your **CHANGELOG_GITHUB_TOKEN** path variable specified.
+Otherwise, you may want to explicitly specify your token within a command:
+```bash
+./ib.py changelog create --token=YOUR_TOKEN_HERE
+```
+
 See the service's READMEs for details:
 - [Storage](/infrabox/utils/storage/)
 - [API](/src/api/)
