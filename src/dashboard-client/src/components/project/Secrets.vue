@@ -60,7 +60,7 @@ export default {
                 this.project._reloadSecrets()
             })
             .catch((err) => {
-                NotificationService.$emit(err)
+                NotificationService.$emit('NOTIFICATION', new Notification(err))
             })
         },
         addSecret () {
@@ -71,7 +71,7 @@ export default {
                 this.project._reloadSecrets()
             })
             .catch((err) => {
-                NotificationService.$emit(err)
+                NotificationService.$emit('NOTIFICATION', new Notification(err))
             })
         }
     }

@@ -1,7 +1,5 @@
 import Vue from 'vue'
 
-import NotificationService from '../services/NotificationService'
-// import Notification from '../models/Notification'
 import router from '../router'
 
 class NewAPIService {
@@ -9,20 +7,24 @@ class NewAPIService {
         this.api = process.env.NEW_API_PATH
     }
 
-    get (url) {
+    _handleError (ignoreUnauthorized) {
+        return (err) => {
+            if (err.status === 401 && !ignoreUnauthorized) {
+                router.push('/login')
+            }
+
+            throw err
+        }
+    }
+
+    get (url, ignoreUnauthorized) {
         const u = this.api + url
         console.log(`GET API: ${url}`)
         return Vue.http.get(u)
             .then((response) => {
                 return response.body
             })
-            .catch((err) => {
-                if (err.status !== 401) {
-                    NotificationService.$emit(err)
-                }
-
-                throw err
-            })
+            .catch(this._handleError(ignoreUnauthorized))
     }
 
     openAPIUrl (u) {
@@ -37,15 +39,7 @@ class NewAPIService {
             .then((response) => {
                 return response.body
             })
-            .catch((err) => {
-                if (err.status === 401) {
-                    router.push('/login')
-                } else {
-                    NotificationService.$emit(err)
-                }
-
-                throw err
-            })
+            .catch(this._handleError(false))
     }
 
     post (url, payload) {
@@ -55,15 +49,7 @@ class NewAPIService {
             .then((response) => {
                 return response.body
             })
-            .catch((err) => {
-                if (err.status === 401) {
-                    router.push('/login')
-                } else {
-                    NotificationService.$emit(err)
-                }
-
-                throw err
-            })
+            .catch(this._handleError(false))
     }
 }
 
