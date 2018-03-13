@@ -739,13 +739,19 @@ class RunJob(Job):
                     os.environ['INFRABOX_RESOURCES_KUBERNETES_MASTER_URL']]
 
         # Add capabilities
-        security_context = self.job.get('security_context', {})
+        security_context = self.job['definition'].get('security_context', {})
 
         if security_context:
             capabilities = security_context.get('capabilities', {})
             add_capabilities = capabilities.get('add', [])
             if add_capabilities:
                 cmd += ['--cap-add=%s' % ','.join(add_capabilities)]
+
+        # Privileged
+        privileged = security_context.get('privileged', False)
+        if privileged:
+            cmd += ['--privileged']
+            cmd += ['-v', '/data/inner/docker:/var/lib/docker']
 
         cmd += [image_name]
 

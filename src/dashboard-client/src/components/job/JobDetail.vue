@@ -9,13 +9,13 @@
                                 <ib-state :state="job.state"></ib-state>
                             </md-layout>
                             <md-layout md-vertical-align="center">
-                                <router-link :to="{name: 'ProjectDetailBuilds', params: {projectName: project.name}}">
+                                <router-link :to="{name: 'ProjectDetailBuilds', params: {projectName: encodeURIComponent(project.name)}}">
                                     <span v-if="project.isGit()"><i class="fa fa-github"></i></span>
                                     <span v-if="!project.isGit()"><i class="fa fa-home"></i></span>
                                     {{ project.name }}
                                 </router-link>
                                 / <router-link :to="{name: 'BuildDetailGraph', params: {
-                                    projectName: project.name,
+                                    projectName: encodeURIComponent(project.name),
                                     buildNumber: build.number,
                                     buildRestartCounter: build.restartCounter
                                     }}">

@@ -12,8 +12,8 @@
                                 <router-link :to="{name: 'ProjectDetailBuilds', params: {
                                     projectName: project.name
                                 }}">
-                                    <span v-if="project.isGit && project.isGit()"><i class="fa fa-fw fa-github"></i></span>
-                                    <span v-if="project.isGit && !project.isGit()"><i class="fa fa-fw fa-home"></i></span>
+                                    <span v-if="project.isGit()"><i class="fa fa-fw fa-github"></i></span>
+                                    <span v-if="!project.isGit()"><i class="fa fa-fw fa-home"></i></span>
                                     {{ project.name }}
                                 </router-link>
                                 / Build {{ build.number }}.{{ build.restartCounter }}
@@ -147,10 +147,12 @@ export default {
                 return
             }
 
+            const projectName = encodeURIComponent(this.project.name)
+
             if (index === 0) {
-                router.push(`/project/${this.project.name}/build/${this.build.number}/${this.build.restartCounter}`)
+                router.push(`/project/${projectName}/build/${this.build.number}/${this.build.restartCounter}`)
             } else {
-                router.push(`/project/${this.project.name}/build/${this.build.number}/${this.build.restartCounter}/jobs`)
+                router.push(`/project/${projectName}/build/${this.build.number}/${this.build.restartCounter}/jobs`)
             }
         }
     }
