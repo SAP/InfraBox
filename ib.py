@@ -171,12 +171,18 @@ def services_kill(args):
         sys.exit(1)
 
 def changelog_create(args):
-    repo_name = 'infrabox/infrabox'
-    command = ['github_changelog_generator']
+    # Build docker container
+    container_name = 'infrabox_changelog_container'
+    command = ['docker', 'build', '-t', container_name, 'src/utils/changelog_generator']
+    execute(command, cwd=os.getcwd())
+
+    command = ['docker', 'run', '-it', '-v', os.getcwd() + ':/infrabox_changelog', container_name]
     if args.token:
         command.append('--token')
         command.append(args.token)
 
+    command.append('--no-verbose')
+    repo_name = 'infrabox/infrabox'
     command.append(repo_name)
     execute(command, cwd=os.getcwd())
 
