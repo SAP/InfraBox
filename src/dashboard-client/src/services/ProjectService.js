@@ -35,16 +35,24 @@ class ProjectService {
     }
 
     findProjectByName (name) {
+        const encodedName = encodeURIComponent(name)
+        const decodedName = decodeURIComponent(name)
+
         for (let p of store.state.projects) {
-            if (p.name === name) {
+            if (p.name === decodedName) {
                 return new Promise((resolve) => { resolve(p) })
             }
         }
 
-        return NewAPIService.get(`projects/name/${name}`)
+        return NewAPIService.get(`projects/name/${encodedName}`)
             .then((project) => {
                 store.commit('addProjects', [project])
-                return project
+
+                for (let p of store.state.projects) {
+                    if (p.name === decodedName) {
+                        return p
+                    }
+                }
             })
             .catch((err) => {
                 NotificationService.$emit('NOTIFICATION', new Notification(err))

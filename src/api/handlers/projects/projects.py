@@ -22,7 +22,7 @@ project_model = api.model('Project', {
 add_project_schema = {
     'type': "object",
     'properties': {
-        'name': {'type': "string", 'pattern': "^[0-9a-zA-Z_-]+$", "minLength": 3, "maxLength": 20},
+        'name': {'type': "string", 'pattern': "^[0-9a-zA-Z_-/]+$", "minLength": 3, "maxLength": 20},
         'private': {'type': "boolean"},
         'type': {'type': "string", 'enum': ["upload", "gerrit", "github"]},
         'github_repo_name': {'type': "string"}

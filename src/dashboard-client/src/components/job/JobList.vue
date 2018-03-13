@@ -17,7 +17,7 @@
                         <md-table-cell><ib-state :state="j.state"></ib-state></md-table-cell>
                         <md-table-cell>
                             <router-link :to="{name: 'JobDetail', params: {
-                                        projectName: project.name,
+                                        projectName: encodeURIComponent(project.name),
                                         buildNumber: build.number,
                                         buildRestartCounter: build.restartCounter,
                                         jobName: j.name

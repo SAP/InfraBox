@@ -397,7 +397,7 @@ export class GanttChart {
             })
 
             jobLabel.click(() => {
-                router.push('/project/' + job.projectName +
+                router.push('/project/' + encodeURIComponent(job.projectName) +
                             '/build/' + job.buildNumber +
                             '/' + job.buildRestartCounter +
                             '/job/' + encodeURIComponent(job.name))
@@ -410,7 +410,7 @@ export class GanttChart {
         this.setNodeAttributes(job)
 
         s.click(() => {
-            router.push('/project/' + job.projectName +
+            router.push('/project/' + encodeURIComponent(job.projectName) +
                         '/build/' + job.buildNumber +
                         '/' + job.buildRestartCounter +
                         '/job/' + encodeURIComponent(job.name))

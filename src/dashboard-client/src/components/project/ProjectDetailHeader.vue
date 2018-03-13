@@ -74,7 +74,7 @@ import router from '../../router'
 
 export default {
     name: 'ProjectDetailHeader',
-    props: ['projectName', 'tabIndex'],
+    props: ['project', 'tabIndex'],
     store,
     data () {
         return {
@@ -101,22 +101,12 @@ export default {
                 return
             }
 
+            const projectName = encodeURIComponent(this.project.name)
+
             if (index === 0) {
-                router.push(`/project/${this.projectName}`)
+                router.push(`/project/${projectName}`)
             } else {
-                router.push(`/project/${this.projectName}/settings`)
-            }
-        }
-    },
-    asyncComputed: {
-        project: {
-            get () {
-                return ProjectService
-                    .findProjectByName(this.projectName)
-            },
-            watch () {
-                // eslint-disable-next-line no-unused-expressions
-                this.projectName
+                router.push(`/project/${projectName}/settings`)
             }
         }
     }
