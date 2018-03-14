@@ -1,4 +1,3 @@
-import APIService from '../services/APIService'
 import NewAPIService from '../services/NewAPIService'
 import NotificationService from '../services/NotificationService'
 import Notification from '../models/Notification'
@@ -44,7 +43,7 @@ export default class Project {
             return new Promise((resolve) => { resolve(b) })
         }
 
-        return APIService.get(`projects/${this.id}/builds/${number}/${restartCounter}`)
+        return NewAPIService.get(`projects/${this.id}/builds/${number}/${restartCounter}`)
             .then((jobs) => {
                 this._addJobs(jobs)
                 return this._getBuild(number, restartCounter)
@@ -115,7 +114,7 @@ export default class Project {
     }
 
     _loadJobs () {
-        return APIService.get(`projects/${this.id}/jobs/`)
+        return NewAPIService.get(`projects/${this.id}/jobs/`)
         .then((response) => {
             store.commit('addJobs', response)
             events.listenJobs(this)
