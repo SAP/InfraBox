@@ -1,6 +1,6 @@
 import Notification from '../models/Notification'
 import NotificationService from '../services/NotificationService'
-import APIService from '../services/APIService'
+import NewAPIService from '../services/NewAPIService'
 
 export default class Test {
     constructor (opts, job) {
@@ -24,7 +24,7 @@ export default class Test {
                     '&test=' +
                     encodeURIComponent(this.name)
 
-        return APIService.get(url)
+        return NewAPIService.get(url)
             .then((history) => {
                 this.history = history
             })
