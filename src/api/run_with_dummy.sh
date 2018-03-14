@@ -44,8 +44,8 @@ export INFRABOX_GITHUB_LOGIN_ENABLED=false
 export INFRABOX_GERRIT_ENABLED=false
 
 # RSA
-export INFRABOX_RSA_PRIVATE_KEY_PATH=/tmp/ib/run/rsa/id_rsa
-export INFRABOX_RSA_PUBLIC_KEY_PATH=/tmp/ib/run/rsa/id_rsa.pub
+export INFRABOX_RSA_PRIVATE_KEY_PATH=../../infrabox/test/utils/id_rsa
+export INFRABOX_RSA_PUBLIC_KEY_PATH=../../infrabox/test/utils/id_rsa.pub
 
 
 python server.py
