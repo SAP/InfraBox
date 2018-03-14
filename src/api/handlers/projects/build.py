@@ -5,8 +5,7 @@ from flask_restplus import Resource
 
 from pyinfraboxutils.ibflask import auth_required, OK
 from pyinfraboxutils.storage import storage
-
-from dashboard_api.namespaces import project as ns
+from api.namespaces import project as ns
 
 def restart_build(project_id, build_id):
     user_id = g.token['user']['id']

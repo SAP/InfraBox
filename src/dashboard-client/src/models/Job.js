@@ -1,7 +1,7 @@
 import events from '../events'
 import Notification from '../models/Notification'
 import NotificationService from '../services/NotificationService'
-import APIService from '../services/APIService'
+import NewAPIService from '../services/NewAPIService'
 import store from '../store'
 const Convert = require('ansi-to-html')
 
@@ -165,7 +165,7 @@ export default class Job {
     }
 
     loadBadges () {
-        return APIService.get(`projects/${this.project.id}/jobs/${this.id}/badges`)
+        return NewAPIService.get(`projects/${this.project.id}/jobs/${this.id}/badges`)
             .then((badges) => {
                 store.commit('setBadges', { job: this, badges: badges })
             })
@@ -179,7 +179,7 @@ export default class Job {
             return
         }
 
-        return APIService.get(`projects/${this.project.id}/jobs/${this.id}/console`)
+        return NewAPIService.get(`projects/${this.project.id}/jobs/${this.id}/console`)
             .then((console) => {
                 store.commit('setConsole', { job: this, console: console })
                 events.listenConsole(this.id)
@@ -190,7 +190,7 @@ export default class Job {
     }
 
     loadTabs () {
-        return APIService.get(`projects/${this.project.id}/jobs/${this.id}/tabs`)
+        return NewAPIService.get(`projects/${this.project.id}/jobs/${this.id}/tabs`)
             .then((tabs) => {
                 store.commit('setTabs', { job: this, tabs: tabs })
             })
@@ -200,7 +200,7 @@ export default class Job {
     }
 
     loadTests () {
-        return APIService.get(`projects/${this.project.id}/jobs/${this.id}/testruns`)
+        return NewAPIService.get(`projects/${this.project.id}/jobs/${this.id}/testruns`)
             .then((tests) => {
                 store.commit('setTests', { job: this, tests: tests })
             })
@@ -210,7 +210,7 @@ export default class Job {
     }
 
     loadStats () {
-        return APIService.get(`projects/${this.project.id}/jobs/${this.id}/stats`)
+        return NewAPIService.get(`projects/${this.project.id}/jobs/${this.id}/stats`)
             .then((values) => {
                 const stats = []
                 for (const n of Object.keys(values)) {
@@ -237,7 +237,7 @@ export default class Job {
 
     downloadDataOutput () {
         const url = `projects/${this.project.id}/jobs/${this.id}/output`
-        APIService.openAPIUrl(url)
+        NewAPIService.openAPIUrl(url)
     }
 
     listenConsole () {
@@ -246,11 +246,11 @@ export default class Job {
 
     downloadOutput () {
         const url = `projects/${this.project.id}/jobs/${this.id}/console`
-        APIService.openAPIUrl(url)
+        NewAPIService.openAPIUrl(url)
     }
 
     abort () {
-        return APIService.get(`projects/${this.project.id}/jobs/${this.id}/abort`)
+        return NewAPIService.get(`projects/${this.project.id}/jobs/${this.id}/abort`)
             .then((message) => {
                 NotificationService.$emit('NOTIFICATION', new Notification(message, 'done'))
             })
@@ -260,7 +260,7 @@ export default class Job {
     }
 
     restart () {
-        return APIService.get(`projects/${this.project.id}/jobs/${this.id}/restart`)
+        return NewAPIService.get(`projects/${this.project.id}/jobs/${this.id}/restart`)
             .then((message) => {
                 console.log(message)
                 NotificationService.$emit('NOTIFICATION', new Notification(message, 'done'))
@@ -279,7 +279,7 @@ export default class Job {
     }
 
     clearCache () {
-        return APIService.get(`projects/${this.project.id}/jobs/${this.id}/cache/clear`)
+        return NewAPIService.get(`projects/${this.project.id}/jobs/${this.id}/cache/clear`)
             .then((message) => {
                 NotificationService.$emit('NOTIFICATION', new Notification(message, 'done'))
             })

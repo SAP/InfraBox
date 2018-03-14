@@ -4,8 +4,7 @@ from flask_restplus import Resource, fields
 from pyinfraboxutils.ibflask import auth_required, OK
 from pyinfraboxutils.ibrestplus import api
 
-ns = api.namespace('api/v1/projects/<project_id>/collaborators',
-                   description="Project's collaborators managing")
+from api.namespaces import project as ns
 
 collaborator_model = api.model('Collaborator', {
     'name': fields.String(required=True),
@@ -20,7 +19,7 @@ add_collaborator_model = api.model('AddCollaborator', {
 })
 
 
-@ns.route('/')
+@ns.route('/<project_id>/collaborators/')
 class Collaborators(Resource):
 
     @auth_required(['user'])
@@ -59,7 +58,7 @@ class Collaborators(Resource):
         return OK('Successfully added user')
 
 
-@ns.route('/<user_id>')
+@ns.route('/<project_id>/collaborators/<user_id>')
 class Collaborator(Resource):
 
     @auth_required(['user'], check_project_owner=True)

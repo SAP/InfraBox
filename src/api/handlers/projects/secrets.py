@@ -4,6 +4,7 @@ import re
 
 from pyinfraboxutils.ibflask import auth_required, OK
 from pyinfraboxutils.ibrestplus import api
+from api.namespaces import project as ns
 
 secret_model = api.model('Secret', {
     'name': fields.String(required=True),
@@ -15,11 +16,8 @@ add_secret_model = api.model('AddSecret', {
     'value': fields.String(required=True),
 })
 
-ns = api.namespace('api/v1/projects/<project_id>/secrets',
-                   description="Project's secrets managing")
 
-
-@ns.route('/')
+@ns.route('/<project_id>/secrets/')
 class Secrets(Resource):
 
     name_pattern = re.compile('^[a-zA-Z0-9_]+$')
@@ -65,7 +63,7 @@ class Secrets(Resource):
         return OK('Successfully added secret')
 
 
-@ns.route('/<secret_id>')
+@ns.route('/<project_id>/secrets/<secret_id>')
 class Secret(Resource):
     @auth_required(['user'])
     def delete(self, project_id, secret_id):

@@ -16,15 +16,7 @@ from pyinfraboxutils.ibrestplus import api, app
 from pyinfraboxutils.ibflask import get_token
 from pyinfraboxutils import dbpool
 
-import handlers.projects.tokens
-import handlers.projects.secrets
-import handlers.projects.collaborators
-import handlers.user
-import handlers.account
-import handlers.trigger
-import handlers.job
-import handlers.build
-import handlers.job_api
+import handlers
 import settings
 
 import listeners.console

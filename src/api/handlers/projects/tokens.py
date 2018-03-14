@@ -4,6 +4,7 @@ from flask_restplus import Resource, fields
 from pyinfraboxutils.ibflask import auth_required, OK
 from pyinfraboxutils.ibrestplus import api
 from pyinfraboxutils.token import encode_project_token
+from api.namespaces import project as ns
 
 project_token_model = api.model('ProjectToken', {
     'description': fields.String(required=True),
@@ -12,10 +13,7 @@ project_token_model = api.model('ProjectToken', {
     'id': fields.String(required=False)
 })
 
-ns = api.namespace('api/v1/projects/<project_id>/tokens',
-                   description="Project's tokens managing")
-
-@ns.route('/')
+@ns.route('/<project_id>/tokens')
 class Tokens(Resource):
 
     @auth_required(['user'])
@@ -46,7 +44,7 @@ class Tokens(Resource):
 
         return OK('Successfully added token', {'token': token})
 
-@ns.route('/<token_id>')
+@ns.route('/<project_id>/tokens/<token_id>')
 class Token(Resource):
 
     @auth_required(['user'])
