@@ -91,11 +91,20 @@ class Register(Resource):
         if user:
             abort(400, 'An account with this email already exists')
 
+        user = g.db.execute_one_dict('''
+                    SELECT id, password
+                    FROM "user"
+                    WHERE username = %s
+                ''', [username])
+
+        if user:
+            abort(400, 'An account with this username already exists')
+
         hashed_password = bcrypt.hashpw(password1.encode('utf8'), bcrypt.gensalt())
         user = g.db.execute_one_dict('''
-            INSERT into "user" (email, password)
-            VALUES (%s, %s) RETURNING ID
-        ''', [email, hashed_password])
+            INSERT into "user" (username, email, password)
+            VALUES (%s, %s, %s) RETURNING ID
+        ''', [username, email, hashed_password])
 
         token = encode_user_token(user['id'])
 
