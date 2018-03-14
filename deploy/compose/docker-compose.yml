@@ -6,7 +6,6 @@ services:
         ports:
             - "8090:80"
         links:
-            - dashboard-api
             - static
             - docker-registry-nginx
             - api
@@ -77,33 +76,6 @@ services:
         image: $INFRABOX_DOCKER_REGISTRY/infrabox/static
         networks:
             - infrabox
-
-
-    dashboard-api:
-        image: $INFRABOX_DOCKER_REGISTRY/infrabox/dashboard
-        environment:
-            - INFRABOX_SERVICE=dashboard
-            - INFRABOX_VERSION=latest
-            - INFRABOX_STORAGE_GCS_ENABLED=false
-            - INFRABOX_STORAGE_S3_ENABLED=true
-            - INFRABOX_STORAGE_S3_ACCESS_KEY=AKIAIOSFODNN7EXAMPLE
-            - INFRABOX_STORAGE_S3_SECRET_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
-            - INFRABOX_STORAGE_S3_PORT=9000
-            - INFRABOX_STORAGE_S3_ENDPOINT=minio
-            - INFRABOX_STORAGE_S3_SECURE=false
-            - INFRABOX_STORAGE_S3_REGION=us-east-1
-            - INFRABOX_STORAGE_S3_CONTAINER_CONTENT_CACHE_BUCKET=infrabox-container-content-cache
-            - INFRABOX_STORAGE_S3_PROJECT_UPLOAD_BUCKET=infrabox-project-upload
-            - INFRABOX_STORAGE_S3_CONTAINER_OUTPUT_BUCKET=infrabox-container-output
-            - INFRABOX_GITHUB_ENABLED=false
-            - INFRABOX_GERRIT_ENABLED=false
-            - INFRABOX_ACCOUNT_LDAP_ENABLED=false
-            - INFRABOX_DOCKER_REGISTRY_URL="localhost"
-        links:
-           - minio
-        networks:
-            - infrabox
-        volumes: []
 
     job-git:
         image: $INFRABOX_DOCKER_REGISTRY/infrabox/job-git
