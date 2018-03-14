@@ -30,11 +30,11 @@ spec:
                 backend:
                     serviceName: infrabox-static
                     servicePort: 80
-            #-
-            #    path: /api/dashboard
-            #    backend:
-            #        serviceName: infrabox-dashboard-api
-            #        servicePort: 8080
+            -
+                path: /api/dashboard
+                backend:
+                    serviceName: infrabox-dashboard-api
+                    servicePort: 8080
             -
                 path: /api/v1
                 backend:
@@ -51,11 +51,11 @@ spec:
                 backend:
                     serviceName: infrabox-github-trigger
                     servicePort: 8080
-            #-
-            #    path: /github/auth
-            #    backend:
-            #        serviceName: infrabox-dashboard-api
-            #        servicePort: 8080
+            -
+                path: /github/auth
+                backend:
+                    serviceName: infrabox-api
+                    servicePort: 8080
             {{ end }}
             -
                 path: /v2
