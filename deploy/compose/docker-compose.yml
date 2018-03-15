@@ -108,6 +108,7 @@ services:
             - INFRABOX_GITHUB_ENABLED=false
             - INFRABOX_GERRIT_ENABLED=false
             - INFRABOX_ACCOUNT_LDAP_ENABLED=false
+            - INFRABOX_ACCOUNT_SIGNUP_ENABLED=true
             - INFRABOX_API_PORT=8080
             - INFRABOX_API_MONITORING_PORT=8080
             - INFRABOX_ROOT_URL="localhost"
