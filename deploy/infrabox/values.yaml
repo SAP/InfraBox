@@ -146,22 +146,6 @@ static:
     # Tag
     tag: latest
 
-#dashboard:
-#    enabled: true
-#
-#    # URL on which the dashboard will be reachable by your users
-#    url: <REQUIRED>
-#
-#    api:
-#        # name of the dashboard-api image in your general.docker_registry
-#        # image: dashboard-api
-#
-#        # Tag
-#        tag: latest
-#
-#        log:
-#            level: info
-
 api:
     enabled: true
 
