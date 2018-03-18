@@ -347,10 +347,6 @@ class Kubernetes(Install):
 
         self.create_secret("infrabox-github", self.args.general_system_namespace, secret)
 
-    #def setup_dashboard(self):
-    #    self.set('dashboard.api.tag', self.args.version)
-    #    self.set('dashboard.url', self.args.root_url)
-
     def setup_api(self):
         self.set('api.url', self.args.root_url + '/api/cli')
         self.set('api.tag', self.args.version)
@@ -429,7 +425,6 @@ class Kubernetes(Install):
         self.setup_scheduler()
         self.setup_gerrit()
         self.setup_github()
-        #self.setup_dashboard()
         self.setup_api()
         self.setup_static()
         self.setup_ldap()
@@ -454,18 +449,6 @@ class DockerCompose(Install):
         super(DockerCompose, self).__init__(args)
         self.config = Configuration()
 
-    #def setup_dashboard(self):
-    #    self.config.append('services.dashboard-api.environment', ['INFRABOX_ROOT_URL=%s' % self.args.root_url])
-#
-    #    self.config.append('services.dashboard-api.volumes', [
-    #        '%s:/var/run/secrets/infrabox.net/rsa/id_rsa' % os.path.join(self.args.o, 'id_rsa'),
-    #        '%s:/var/run/secrets/infrabox.net/rsa/id_rsa.pub' % os.path.join(self.args.o, 'id_rsa.pub'),
-    #    ])
-#
-    #    if self.args.gerrit_enabled:
-    #        self.config.append('services.dashboard-api.environment', self.get_gerrit_env())
-
-
     def setup_job_git(self):
         self.config.add('services.job-git.image',
                         '%s/job-git:%s' % (self.args.docker_registry, self.args.version))
@@ -476,7 +459,6 @@ class DockerCompose(Install):
                 '%s:/tmp/gerrit/id_rsa' % gerrit_key,
             ])
             self.config.append('services.job-git.environment', self.get_gerrit_env())
-
 
     def setup_api(self):
         self.config.append('services.api.environment', ['INFRABOX_ROOT_URL=%s' % self.args.root_url])
@@ -601,8 +583,6 @@ class DockerCompose(Install):
                 "INFRABOX_ACCOUNT_SIGNUP_ENABLED=true"
             ]
 
-        #self.config.append('services.dashboard-api.environment', env)
-
     def setup_database(self):
         if self.args.database == 'postgres':
             self.required_option('postgres-host')
@@ -638,10 +618,8 @@ class DockerCompose(Install):
 
             self.config.append('services.docker-registry-auth.links', ['postgres'])
             self.config.append('services.scheduler.links', ['postgres'])
-            #self.config.append('services.dashboard-api.links', ['postgres'])
             self.config.append('services.api.links', ['postgres'])
 
-        #self.config.append('services.dashboard-api.environment', env)
         self.config.append('services.api.environment', env)
         self.config.append('services.scheduler.environment', env)
         self.config.append('services.docker-registry-auth.environment', env)
@@ -661,7 +639,6 @@ class DockerCompose(Install):
         self.setup_database()
         self.setup_docker_registry()
         self.setup_ldap()
-        #self.setup_dashboard()
         self.setup_nginx_ingress()
         self.setup_api()
         self.setup_job_git()
