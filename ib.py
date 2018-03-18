@@ -230,7 +230,7 @@ def main():
 
     create_changelog_parser = sub_changelog.add_parser('create')
     create_changelog_parser.set_defaults(func=changelog_create)
-    create_changelog_parser.add_argument("--token", default='')
+    create_changelog_parser.add_argument("--token", required=False)
 
 
     args = parser.parse_args()
