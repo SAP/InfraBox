@@ -177,9 +177,13 @@ def changelog_create(args):
     execute(command, cwd=os.getcwd())
 
     command = ['docker', 'run', '-it', '-v', os.getcwd() + ':/infrabox_changelog', container_name]
-    if args.token:
+    changelog_token = os.environ.get('GITHUB_CHANGELOG_TOKEN')
+    if args.token is not None or changelog_token is not None:
+        # Token provided via arg has higher priority
+        if args.token is not None:
+            changelog_token = args.token
         command.append('--token')
-        command.append(args.token)
+        command.append(changelog_token)
 
     command.append('--no-verbose')
     repo_name = 'infrabox/infrabox'
