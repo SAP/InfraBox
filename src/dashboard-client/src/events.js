@@ -10,7 +10,7 @@ if (window.location.protocol === 'https:') {
 const host = protocol + '//' + process.env.DASHBOARD_HOST
 
 const socket = Socket(host, {
-    path: '/api/dashboard/socket.io'
+    path: '/api/v1/socket.io'
 })
 
 socket.on('connect_error', (error) => {

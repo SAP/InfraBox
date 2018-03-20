@@ -12,6 +12,8 @@ from flask import request, abort, g, jsonify
 from flask_restplus import Resource
 
 from pyinfraboxutils import get_env, print_stackdriver, get_logger
+
+from pyinfraboxutils.ibflask import get_token, is_collaborator
 from pyinfraboxutils.ibrestplus import api, app
 from pyinfraboxutils.ibflask import get_token
 from pyinfraboxutils import dbpool
@@ -98,6 +100,46 @@ def main(): # pragma: no cover
             return False
 
         return True
+
+    @sio.on('listen:jobs')
+    def __listen_build(project_id):
+        logger.debug('listen:jobs for %s', project_id)
+
+        if not project_id:
+            logger.debug('project_id not set')
+            return flask_socketio.disconnect()
+
+        try:
+            uuid.UUID(project_id)
+        except:
+            logger.debug('project_id not a uuid')
+            return flask_socketio.disconnect()
+
+        conn = dbpool.get()
+        try:
+            p = conn.execute_one_dict('''
+                    SELECT public
+                    FROM project
+                    WHERE id = %s
+                ''', [project_id])
+
+            if not p['public']:
+                token = get_token()
+                if token['type'] == 'user':
+                    user_id = token['user']['id']
+                    collaborator = is_collaborator(user_id, project_id, db=conn)
+
+                    if not collaborator:
+                        logger.warn('not a collaborator')
+                        return flask_socketio.disconnect()
+                else:
+                    logger.debug('only user token allowed')
+                    return flask_socketio.disconnect()
+
+        finally:
+            dbpool.put(conn)
+
+        flask_socketio.join_room(project_id)
 
     @sio.on('listen:build')
     def __listen_build(build_id):
