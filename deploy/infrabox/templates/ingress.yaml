@@ -21,11 +21,6 @@ spec:
         http:
             paths:
             -
-                path: /docs
-                backend:
-                    serviceName: infrabox-static
-                    servicePort: 80
-            -
                 path: /dashboard
                 backend:
                     serviceName: infrabox-static
