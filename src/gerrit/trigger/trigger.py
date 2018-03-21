@@ -3,8 +3,9 @@ import datetime
 
 import paramiko
 
+import psycopg2
+
 from pyinfraboxutils import get_logger, get_env, print_stackdriver
-from pyinfraboxutils.leader import elect_leader, is_leader
 from pyinfraboxutils.db import connect_db
 
 logger = get_logger("gerrit")
@@ -25,8 +26,6 @@ def main():
     conn = connect_db()
     logger.info("Connected to db")
 
-    elect_leader(conn, "gerrit-trigger")
-
     client = paramiko.SSHClient()
     client.load_system_host_keys()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -41,12 +40,22 @@ def main():
 
     logger.info("Waiting for stream-events")
     for line in stdout:
-        event = json.loads(line)
-        is_leader(conn, "gerrit-trigger")
+        for _ in range(0, 2):
+            try:
+                event = json.loads(line)
 
-        if event['type'] == "patchset-created":
-            logger.info(json.dumps(event, indent=4))
-            handle_patchset_created(conn, event)
+                if event['type'] == "patchset-created":
+                    logger.info(json.dumps(event, indent=4))
+                    handle_patchset_created(conn, event)
+            except psycopg2.OperationalError:
+                try:
+                    conn.close()
+                except:
+                    pass
+
+                conn = connect_db()
+                logger.info("reconnected to db")
+
 
 def handle_patchset_created_project(conn, event, project_id, project_name):
     if event['patchSet']['isDraft']:

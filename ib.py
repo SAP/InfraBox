@@ -94,6 +94,9 @@ def images_build(args):
 
         _build_image(i, args)
 
+    if args.push:
+        images_push(args)
+
 
 def images_push(args):
     for image in IMAGES:
@@ -138,7 +141,8 @@ def _setup_rsa_keys():
 
 def services_start(args):
     if args.service_name == 'storage':
-        execute(['docker-compose', 'up'], cwd=os.path.join(os.path.dirname(os.path.realpath(__file__)), 'infrabox', 'utils', 'storage'))
+        execute(['docker-compose', 'up'],
+                cwd=os.path.join(os.path.dirname(os.path.realpath(__file__)), 'infrabox', 'utils', 'storage'))
     elif args.service_name == 'api':
         p = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'src', 'api')
         run = os.path.join(p, 'run_with_dummy.sh')
@@ -152,14 +156,16 @@ def services_start(args):
 
 def services_rm(args):
     if args.service_name == 'storage':
-        execute(['docker-compose', 'rm', '-f'], cwd=os.path.join(os.path.dirname(os.path.realpath(__file__)), 'infrabox', 'utils', 'storage'))
+        execute(['docker-compose', 'rm', '-f'],
+                cwd=os.path.join(os.path.dirname(os.path.realpath(__file__)), 'infrabox', 'utils', 'storage'))
     else:
         print "Unknown service"
         sys.exit(1)
 
 def services_kill(args):
     if args.service_name == 'storage':
-        execute(['docker-compose', 'kill'], cwd=os.path.join(os.path.dirname(os.path.realpath(__file__)), 'infrabox', 'utils', 'storage'))
+        execute(['docker-compose', 'kill'],
+                cwd=os.path.join(os.path.dirname(os.path.realpath(__file__)), 'infrabox', 'utils', 'storage'))
     else:
         print "Unknown service"
         sys.exit(1)
@@ -198,6 +204,8 @@ def main():
     images_build_parser.add_argument("--registry", default='localhost:5000')
     images_build_parser.add_argument("--tag", default='latest')
     images_build_parser.add_argument("--filter", default='.*')
+    images_build_parser.add_argument("--push", action='store_true', default=False)
+    images_build_parser.add_argument("--type", default='registry')
 
     images_push_parser = sub_images.add_parser('push')
     images_push_parser.set_defaults(func=images_push)

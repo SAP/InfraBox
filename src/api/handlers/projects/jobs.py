@@ -1,6 +1,6 @@
 import json
 
-from flask import g, abort, Response, send_file
+from flask import g, abort, Response, send_file, request
 from flask_restplus import Resource
 
 from pyinfraboxutils.ibflask import auth_required, OK
@@ -308,6 +308,76 @@ class Testruns(Resource):
         ''', [project_id, project_id, job_id])
 
         return result
+
+@ns.route('/<project_id>/jobs/<job_id>/tests/history')
+class TestHistory(Resource):
+
+    @auth_required(['user'], allow_if_public=True)
+    def get(self, project_id, job_id):
+
+        test = request.args.get('test', None)
+        suite = request.args.get('suite', None)
+
+        if not test or not suite:
+            abort(404)
+
+        results = g.db.execute_many_dict('''
+	    SELECT
+		b.build_number,
+		tr.duration duration,
+		tr.state state,
+		m.name measurement_name,
+		m.value measurement_value,
+		m.unit measurement_unit
+	    FROM test t
+	    INNER JOIN test_run tr
+		ON t.id = tr.test_id
+		AND tr.project_id = t.project_id
+	    INNER JOIN job j
+		ON j.id = tr.job_id
+		AND j.name = (SELECT name FROM job WHERE id = %s)
+		AND j.project_id = t.project_id
+	    INNER JOIN build b
+		ON b.id = j.build_id
+		AND b.project_id = j.project_id
+	    LEFT OUTER JOIN measurement m
+		ON tr.id = m.test_run_id
+		AND m.project_id = b.project_id
+	    WHERE   t.name = %s
+		AND t.suite = %s
+		AND t.project_id = %s
+	    ORDER BY b.build_number, b.restart_counter
+	    LIMIT 30
+        ''', [job_id, test, suite, project_id])
+
+        current_build = None
+        result = []
+
+        for r in results:
+            if current_build and current_build['build_number'] != r['build_number']:
+                result.append(current_build)
+                current_build = None
+
+            if not current_build:
+                current_build = {
+                    'build_number': r['build_number'],
+                    'duration': r['duration'],
+                    'state': r['state'],
+                    'measurements': []
+                }
+
+            if r['measurement_name']:
+                current_build['measurements'].append({
+                    'name': r['measurement_name'],
+                    'unit': r['measurement_unit'],
+                    'value': r['measurement_value']
+                })
+
+        if current_build:
+            result.append(current_build)
+
+        return result
+
 
 @ns.route('/<project_id>/jobs/<job_id>/badges')
 class Badges(Resource):

@@ -370,6 +370,32 @@ class Scheduler(object):
             self.logger.warn("Failed to create RoleBinding: %s", r.text)
             return False
 
+        rb = {
+            "kind": "RoleBinding",
+            "apiVersion": "rbac.authorization.k8s.io/v1beta1",
+            "metadata": {
+                "name": namespace_name + '-discovery'
+            },
+            "subjects": [{
+                "kind": "ServiceAccount",
+                "name": "default",
+                "namespace": namespace_name
+            }],
+            "roleRef": {
+                "kind": "ClusterRole",
+                "name": "system:discover",
+                "apiGroup": "rbac.authorization.k8s.io"
+            }
+        }
+
+        r = requests.post(self.args.api_server +
+                          '/apis/rbac.authorization.k8s.io/v1beta1/namespaces/%s/rolebindings' % namespace_name,
+                          headers=h, json=rb, timeout=10)
+
+        if r.status_code != 201:
+            self.logger.warn("Failed to create RoleBinding for discovery: %s", r.text)
+            return False
+
         # find secret
         r = requests.get(self.args.api_server + '/api/v1/namespaces/%s/secrets' % namespace_name,
                          headers=h, timeout=5)

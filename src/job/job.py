@@ -150,7 +150,7 @@ class RunJob(Job):
 
         return result
 
-    def clone_repo(self, commit, clone_url, branch, ref, clone_all, sub_path=None):
+    def clone_repo(self, commit, clone_url, branch, ref, clone_all, sub_path=None, submodules=True):
         git_server = os.environ["INFRABOX_JOB_GIT_URL"]
 
         while True:
@@ -172,7 +172,8 @@ class RunJob(Job):
             'branch': branch,
             'ref': ref,
             'clone_all': clone_all,
-            'sub_path': sub_path
+            'sub_path': sub_path,
+            'submodules': submodules
         }
 
         r = requests.post('%s/clone_repo' % git_server, json=d, timeout=1800)
@@ -193,13 +194,29 @@ class RunJob(Job):
             private = repo.get('github_private_repo', False)
             clone_all = repo.get('clone_all', False)
             ref = repo.get('ref', None)
+
+            definition = self.job['definition']
+
+            if not definition:
+                definition = {}
+
+            def_repo = definition.get('repository', {})
+            repo_clone = def_repo.get('clone', True)
+            repo_submodules = def_repo.get('submodules', True)
+
             commit = repo['commit']
+
+            if self.job['type'] == 'create_job_matrix':
+                repo_submodules = False
+
+            if not repo_clone:
+                return
 
             if private:
                 clone_url = clone_url.replace('github.com',
                                               '%s@github.com' % self.repository['github_api_token'])
 
-            self.clone_repo(commit, clone_url, branch, ref, clone_all)
+            self.clone_repo(commit, clone_url, branch, ref, clone_all, submodules=repo_submodules)
         elif self.project['type'] == 'upload':
             c.collect("Downloading Source")
             storage_source_zip = os.path.join(self.storage_dir, 'source.zip')
@@ -906,16 +923,6 @@ class RunJob(Job):
         jobs = data.get('jobs', [])
         for job in jobs:
             job_type = job['type']
-
-            if job_type == "docker":
-                job_build_context = job.get('build_context', None)
-                build_context = self._get_build_context_impl(job_build_context, infrabox_context)
-                dockerfile = os.path.normpath(os.path.join(build_context,
-                                                           job['docker_file']))
-
-                p = os.path.join(infrabox_context, dockerfile)
-                if not os.path.exists(p):
-                    raise Failure("%s does not exist" % p)
 
             if job_type == "docker-compose":
                 composefile = job['docker_compose_file']

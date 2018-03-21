@@ -27,7 +27,8 @@ clone_model = api.model('Clone', {
     'branch': fields.String(required=False, description='Branch'),
     'ref': fields.String(required=False, description='Ref'),
     'clone_all': fields.Boolean(required=False, description='Clone all'),
-    'sub_path': fields.String(required=False, description='Sub path')
+    'sub_path': fields.String(required=False, description='Sub path'),
+    'submodules': fields.String(required=False, description='Init submodules')
 })
 
 @ns.route('/clone_repo')
@@ -52,6 +53,7 @@ class Clone(Resource):
             ref = body.get('ref', None)
             clone_all = body.get('clone_all', False)
             sub_path = body.get('sub_path', None)
+            submodules = body.get('submodules', True)
 
             if sub_path:
                 mount_repo_dir = os.path.join(mount_repo_dir, sub_path)
@@ -82,8 +84,9 @@ class Clone(Resource):
 
             output += self.execute(cmd, cwd=mount_repo_dir)
 
-            output += self.execute(['git', 'submodule', 'init'], cwd=mount_repo_dir)
-            output += self.execute(['git', 'submodule', 'update'], cwd=mount_repo_dir)
+            if submodules:
+                output += self.execute(['git', 'submodule', 'init'], cwd=mount_repo_dir)
+                output += self.execute(['git', 'submodule', 'update'], cwd=mount_repo_dir)
 
             return output
         except subprocess.CalledProcessError as e:
