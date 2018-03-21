@@ -1,6 +1,5 @@
 import os
 import uuid
-import sys
 
 import eventlet
 eventlet.monkey_patch()
@@ -188,4 +187,3 @@ if __name__ == "__main__": # pragma: no cover
         main()
     except:
         print_stackdriver()
-        sys.exit(1)
