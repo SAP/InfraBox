@@ -91,16 +91,6 @@ def main(): # pragma: no cover
                                   async_mode='eventlet',
                                   client_manager=client_manager)
 
-    @sio.on('connect')
-    def __connect():
-        try:
-            get_token()
-        except:
-            logger.debug('disconnecting connection')
-            return False
-
-        return True
-
     @sio.on('listen:jobs')
     def __listen_jobs(project_id):
         logger.debug('listen:jobs for %s', project_id)

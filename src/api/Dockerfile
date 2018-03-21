@@ -1,8 +1,8 @@
-FROM alpine:3.6
+FROM debian:9.3
 
-RUN apk add --no-cache python py2-psycopg2 py2-pip gcc openssl libffi-dev python2-dev musl-dev py2-flask openssl-dev py2-requests py2-pyldap&& \
+RUN apt-get update -y && apt-get install -y python python-psycopg2 python-requests python-pip python-flask python-ldap && \
     pip install PyJWT jsonschema cryptography flask_restplus eventlet flask_socketio boto3 google-cloud-storage future prometheus_client bcrypt && \
-    apk del gcc python2-dev musl-dev openssl-dev libffi-dev
+    apt-get remove -y python-pip
 
 ENV PYTHONPATH=/
 
