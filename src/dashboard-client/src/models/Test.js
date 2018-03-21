@@ -15,11 +15,11 @@ export default class Test {
     }
 
     loadHistory () {
-        const url = 'project/' +
+        const url = 'projects/' +
                     this.job.project.id +
-                    '/job/' +
+                    '/jobs/' +
                     this.job.id +
-                    '/test/history?suite=' +
+                    '/tests/history?suite=' +
                     encodeURIComponent(this.suite) +
                     '&test=' +
                     encodeURIComponent(this.name)

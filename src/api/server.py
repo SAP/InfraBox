@@ -84,22 +84,12 @@ def main(): # pragma: no cover
         get_env('INFRABOX_STORAGE_S3_PROJECT_UPLOAD_BUCKET')
         get_env('INFRABOX_STORAGE_S3_REGION')
 
-    app.config['MAX_CONTENT_LENGTH'] = 1024 * 1024 * 1024
+    app.config['MAX_CONTENT_LENGTH'] = 1024 * 1024 * 1024 * 4
     client_manager = ClientManager()
     sio = flask_socketio.SocketIO(app,
                                   path='/api/v1/socket.io',
                                   async_mode='eventlet',
                                   client_manager=client_manager)
-
-    @sio.on('connect')
-    def __connect():
-        try:
-            get_token()
-        except:
-            logger.debug('disconnecting connection')
-            return False
-
-        return True
 
     @sio.on('listen:jobs')
     def __listen_jobs(project_id):

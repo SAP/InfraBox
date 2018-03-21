@@ -33,7 +33,7 @@
                     <md-list-expand>
                         <md-list>
                             <md-list-item v-for="project of $store.state.projects" class="md-inset" :key="project.id">
-                                <router-link :to="{name: 'ProjectDetailBuilds', params: {projectName: project.name}}">
+                                <router-link :to="{name: 'ProjectDetailBuilds', params: {projectName: encodeURIComponent(project.name)}}">
                                     <span @click="toggleLeftSidenav()">
                                         <i v-if="project.isGit()" class="fa fa-github"></i>
                                         <i v-if="!project.isGit()" class="fa fa-home"></i>{{ project.name }}

@@ -1,6 +1,6 @@
 <template>
     <div v-if="project">
-        <ib-project-detail-header :projectName="projectName" tabIndex="1">
+        <ib-project-detail-header :project="project" tabIndex="1">
             <ib-project-settings :project="project"/>
         </ib-project-detail-header>
     </div>
@@ -25,7 +25,7 @@ export default {
         project: {
             get () {
                 return ProjectService
-                    .findProjectByName(this.projectName)
+                    .findProjectByName(decodeURIComponent(this.projectName))
             },
             watch () {
                 // eslint-disable-next-line no-unused-expressions
