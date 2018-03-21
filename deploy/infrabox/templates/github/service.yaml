@@ -8,7 +8,7 @@ metadata:
         app: infrabox-github-trigger
 spec:
     selector:
-        app: infrabox-github-trigger
+        app: infrabox-github
     ports:
     -
         name: http-web
