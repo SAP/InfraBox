@@ -1,6 +1,7 @@
 #pylint: disable=unused-import,relative-import,wrong-import-position
 import uuid
 import os
+import sys
 
 import eventlet
 eventlet.monkey_patch()
@@ -272,3 +273,4 @@ if __name__ == "__main__": # pragma: no cover
         main()
     except:
         print_stackdriver()
+        sys.exit(1)
