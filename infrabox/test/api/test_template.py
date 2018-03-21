@@ -19,17 +19,19 @@ class ApiTestTemplate(unittest.TestCase):
         TestClient.execute('TRUNCATE job_markup')
         TestClient.execute('TRUNCATE job_badge')
         TestClient.execute('TRUNCATE source_upload')
+        TestClient.execute('TRUNCATE secret')
 
         self.project_id = '1514af82-3c4f-4bb5-b1da-a89a0ced5e6f'
         self.user_id = '2514af82-3c4f-4bb5-b1da-a89a0ced5e6f'
         self.repo_id = '3514af82-3c4f-4bb5-b1da-a89a0ced5e6f'
         self.build_id = '4514af82-3c4f-4bb5-b1da-a89a0ced5e6f'
         self.job_id = '1454af82-4c4f-4bb5-b1da-a54a0ced5e6f'
-        self.job_name = ''
+        self.job_name = 'test_job_name1'
         self.sha = 'd670460b4b4aece5915caf5c68d12f560a9fe3e4'
         self.author_name = 'author_name1'
         self.author_email = 'author@email.1'
         self.source_upload_id = '1423af82-3c4f-5bb5-b1da-a23a0ced5e6f'
+        self.user_github_id = 24122
 
         self.job_headers = TestClient.get_job_authorization(self.job_id)
 
@@ -39,10 +41,9 @@ class ApiTestTemplate(unittest.TestCase):
             """, [self.user_id, self.project_id])
 
         TestClient.execute("""
-                INSERT INTO "user" (id, github_id, username,
-                    avatar_url)
-                VALUES (%s, 1, 'testuser', 'url');
-            """, [self.user_id])
+                INSERT INTO "user" (id, github_id, username, avatar_url)
+                VALUES (%s, %s, %s, 'url');
+            """, [self.user_id, self.user_github_id, self.author_name])
 
         TestClient.execute("""
                 INSERT INTO project(id, name, type)

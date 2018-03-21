@@ -5,26 +5,10 @@ from flask_restplus import Resource
 
 from pyinfraboxutils.ibrestplus import api
 
-project = api.namespace('api/dashboard/projects/',
-                        description='Project related operations')
+settings_ns = api.namespace('api/v1/settings',
+                   description="Api settings")
 
-settings = api.namespace('api/dashboard/settings/',
-                         description='Settings')
-
-user = api.namespace('api/dashboard/user/',
-                     description='User')
-
-account = api.namespace('api/dashboard/account/',
-                        description='Account')
-
-github = api.namespace('api/dashboard/github/',
-                       description='GitHub')
-
-github_auth = api.namespace('github/',
-                            description='GitHub Auth')
-
-
-@settings.route('/')
+@settings_ns.route('/')
 class Settings(Resource):
 
     def get(self):

@@ -38,6 +38,12 @@ services:
             - GOOGLE_APPLICATION_CREDENTIALS=
             - INFRABOX_ROOT_URL=localhost
             - CODECOV_TOKEN=$CODECOV_TOKEN
+            # Account
+            - INFRABOX_ACCOUNT_SIGNUP_ENABLED=true
+            - INFRABOX_ACCOUNT_LDAP_ENABLED=false
+            # Github
+            - INFRABOX_GITHUB_ENABLED=false
+            - INFRABOX_GITHUB_LOGIN_ENABLED=false
         links:
             - postgres
             - minio

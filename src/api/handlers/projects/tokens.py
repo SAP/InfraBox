@@ -4,8 +4,7 @@ from flask_restplus import Resource, fields
 from pyinfraboxutils.ibflask import auth_required, OK
 from pyinfraboxutils.ibrestplus import api
 from pyinfraboxutils.token import encode_project_token
-
-from dashboard_api.namespaces import project as ns
+from api.namespaces import project as ns
 
 project_token_model = api.model('ProjectToken', {
     'description': fields.String(required=True),
