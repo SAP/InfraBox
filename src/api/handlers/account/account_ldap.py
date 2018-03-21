@@ -11,7 +11,7 @@ from pyinfraboxutils.ibflask import OK
 from pyinfraboxutils.token import encode_user_token
 from pyinfraboxutils.ibrestplus import api
 
-from dashboard_api.namespaces import account as ns
+from api.namespaces import account as ns
 
 login_model = api.model('Login', {
     'email': fields.String(required=True),

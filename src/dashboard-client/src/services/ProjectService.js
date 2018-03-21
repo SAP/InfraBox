@@ -1,6 +1,6 @@
 import store from '../store'
 
-import APIService from '../services/APIService'
+import NewAPIService from '../services/NewAPIService'
 import NotificationService from './NotificationService'
 import Notification from '../models/Notification'
 import router from '../router'
@@ -11,7 +11,7 @@ class ProjectService {
     }
 
     deleteProject (id) {
-        APIService.delete(`projects/${id}`)
+        NewAPIService.delete(`projects/${id}`)
             .then((response) => {
                 NotificationService.$emit('NOTIFICATION', new Notification(response))
                 store.commit('deleteProject', id)
@@ -23,7 +23,7 @@ class ProjectService {
 
     addProject (name, priv, type, githubRepoName) {
         const d = { name: name, type: type, private: priv, github_repo_name: githubRepoName }
-        return APIService.post('projects', d)
+        return NewAPIService.post('projects', d)
             .then((response) => {
                 NotificationService.$emit('NOTIFICATION', new Notification(response))
                 this._loadProjects()
@@ -41,7 +41,7 @@ class ProjectService {
             }
         }
 
-        return APIService.get(`projects/name/${name}`)
+        return NewAPIService.get(`projects/name/${name}`)
             .then((project) => {
                 store.commit('addProjects', [project])
                 return project
@@ -52,7 +52,7 @@ class ProjectService {
     }
 
     _loadProjects () {
-        return APIService.get('projects/')
+        return NewAPIService.get('projects/')
             .then((response) => {
                 store.commit('addProjects', response)
             })

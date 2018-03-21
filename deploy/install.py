@@ -5,9 +5,10 @@ import sys
 import stat
 import shutil
 import base64
-import hashlib
 import logging
 import yaml
+
+from Crypto.PublicKey import RSA
 
 logging.basicConfig(
     format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s',
@@ -359,6 +360,9 @@ class Kubernetes(Install):
         self.set('static.tag', self.args.version)
 
     def setup_general(self):
+        self.required_option('general-rsa-private-key')
+        self.required_option('general-rsa-public-key')
+
         self.set('general.dont_check_certificates', self.args.general_dont_check_certificates)
         self.set('general.worker_namespace', self.args.general_worker_namespace)
         self.set('general.system_namespace', self.args.general_system_namespace)
@@ -454,17 +458,6 @@ class DockerCompose(Install):
         super(DockerCompose, self).__init__(args)
         self.config = Configuration()
 
-    def setup_dashboard(self):
-        self.config.append('services.dashboard-api.environment', ['INFRABOX_ROOT_URL=%s' % self.args.root_url])
-
-        self.config.append('services.dashboard-api.volumes', [
-            '%s:/var/run/secrets/infrabox.net/rsa/id_rsa' % os.path.join(self.args.o, 'id_rsa'),
-            '%s:/var/run/secrets/infrabox.net/rsa/id_rsa.pub' % os.path.join(self.args.o, 'id_rsa.pub'),
-        ])
-
-        if self.args.gerrit_enabled:
-            self.config.append('services.dashboard-api.environment', self.get_gerrit_env())
-
 
     def setup_job_git(self):
         self.config.add('services.job-git.image',
@@ -484,16 +477,23 @@ class DockerCompose(Install):
                         '%s/api:%s' % (self.args.docker_registry, self.args.version))
 
         self.config.append('services.api.volumes', [
+            '%s:/var/run/secrets/infrabox.net/rsa/id_rsa' % os.path.join(self.args.o, 'id_rsa'),
             '%s:/var/run/secrets/infrabox.net/rsa/id_rsa.pub' % os.path.join(self.args.o, 'id_rsa.pub'),
         ])
 
+        if self.args.gerrit_enabled:
+            self.config.append('services.api.environment', self.get_gerrit_env())
+
     def setup_rsa(self):
-        self.check_file_exists(self.args.general_rsa_private_key)
-        self.check_file_exists(self.args.general_rsa_public_key)
+        new_key = RSA.generate(bits=2048)
+        public_key = new_key.publickey().exportKey()
+        private_key = new_key.exportKey()
 
-        shutil.copy(self.args.general_rsa_private_key, os.path.join(self.args.o, 'id_rsa'))
-        shutil.copy(self.args.general_rsa_public_key, os.path.join(self.args.o, 'id_rsa.pub'))
+        with open(os.path.join(self.args.o, 'id_rsa'), 'w+') as out:
+            out.write(private_key)
 
+        with open(os.path.join(self.args.o, 'id_rsa.pub'), 'w+') as out:
+            out.write(public_key)
 
     def setup_docker_registry(self):
         self.required_option('docker-registry')
@@ -506,8 +506,6 @@ class DockerCompose(Install):
         self.config.add('services.static.image',
                         '%s/static"%s' % (self.args.docker_registry, self.args.version))
 
-        self.config.add('services.dashboard-api.image',
-                        '%s/dashboard-api:%s' % (self.args.docker_registry, self.args.version))
         self.config.add('services.static.image',
                         '%s/static:%s' % (self.args.docker_registry, self.args.version))
 
@@ -601,8 +599,6 @@ class DockerCompose(Install):
                 "INFRABOX_ACCOUNT_SIGNUP_ENABLED=true"
             ]
 
-        self.config.append('services.dashboard-api.environment', env)
-
     def setup_database(self):
         if self.args.database == 'postgres':
             self.required_option('postgres-host')
@@ -638,10 +634,8 @@ class DockerCompose(Install):
 
             self.config.append('services.docker-registry-auth.links', ['postgres'])
             self.config.append('services.scheduler.links', ['postgres'])
-            self.config.append('services.dashboard-api.links', ['postgres'])
             self.config.append('services.api.links', ['postgres'])
 
-        self.config.append('services.dashboard-api.environment', env)
         self.config.append('services.api.environment', env)
         self.config.append('services.scheduler.environment', env)
         self.config.append('services.docker-registry-auth.environment', env)
@@ -661,7 +655,6 @@ class DockerCompose(Install):
         self.setup_database()
         self.setup_docker_registry()
         self.setup_ldap()
-        self.setup_dashboard()
         self.setup_nginx_ingress()
         self.setup_api()
         self.setup_job_git()
@@ -688,8 +681,8 @@ def main():
     parser.add_argument('--general-dont-check-certificates', action='store_true', default=False)
     parser.add_argument('--general-worker-namespace', default='infrabox-worker')
     parser.add_argument('--general-system-namespace', default='infrabox-system')
-    parser.add_argument('--general-rsa-public-key', required=True)
-    parser.add_argument('--general-rsa-private-key', required=True)
+    parser.add_argument('--general-rsa-public-key')
+    parser.add_argument('--general-rsa-private-key')
     parser.add_argument('--general-rbac-disabled', action='store_true', default=False)
 
     # Docker configuration

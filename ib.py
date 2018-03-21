@@ -29,11 +29,10 @@ IMAGES = [
     {'name': 'docker-compose-ingress'},
     {'name': 'docker-compose-minio-init'},
     {'name': 'api'},
-    {'name': 'dashboard-api'},
     {'name': 'build-dashboard-client'},
     {'name': 'static', 'depends_on': ['build-dashboard-client']},
-    {'name': 'docker-auth'},
-    {'name': 'docker-nginx'},
+    {'name': 'docker-registry-auth'},
+    {'name': 'docker-registry-nginx'},
     {'name': 'db'},
     {'name': 'docker-gc'},
     {'name': 'postgres'},
@@ -124,8 +123,8 @@ def _setup_rsa_keys():
         if not os.path.exists(os.path.dirname(private_key_path)):
             os.makedirs(os.path.dirname(private_key_path))
 
-	with open(private_key_path, 'w+') as s:
-	    s.write(str(key.exportKey()))
+        with open(private_key_path, 'w+') as s:
+            s.write(str(key.exportKey()))
 
     if not os.path.exists(public_key_path):
         logger.warn('Public key does not exist: %s', public_key_path)
@@ -134,19 +133,14 @@ def _setup_rsa_keys():
         if not os.path.exists(os.path.dirname(public_key_path)):
             os.makedirs(os.path.dirname(public_key_path))
 
-	with open(public_key_path, 'w+') as s:
-	    s.write(str(key.publickey().exportKey()))
+        with open(public_key_path, 'w+') as s:
+            s.write(str(key.publickey().exportKey()))
 
 def services_start(args):
     if args.service_name == 'storage':
         execute(['docker-compose', 'up'], cwd=os.path.join(os.path.dirname(os.path.realpath(__file__)), 'infrabox', 'utils', 'storage'))
     elif args.service_name == 'api':
         p = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'src', 'api')
-        run = os.path.join(p, 'run_with_dummy.sh')
-        execute(['bash', run], cwd=p)
-    elif args.service_name == 'dashboard_api':
-        _setup_rsa_keys()
-        p = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'src', 'dashboard_api')
         run = os.path.join(p, 'run_with_dummy.sh')
         execute(['bash', run], cwd=p)
     elif args.service_name == 'dashboard-client':
@@ -169,6 +163,27 @@ def services_kill(args):
     else:
         print "Unknown service"
         sys.exit(1)
+
+def changelog_create(args):
+    # Build docker container
+    container_name = 'infrabox_changelog_container'
+    command = ['docker', 'build', '-t', container_name, 'src/utils/changelog_generator']
+    execute(command, cwd=os.getcwd())
+
+    command = ['docker', 'run', '-it', '-v', os.getcwd() + ':/infrabox_changelog', container_name]
+    changelog_token = os.environ.get('GITHUB_CHANGELOG_TOKEN')
+    if args.token is not None or changelog_token is not None:
+        # Token provided via arg has higher priority
+        if args.token is not None:
+            changelog_token = args.token
+        command.append('--token')
+        command.append(changelog_token)
+
+    command.append('--no-verbose')
+    repo_name = 'infrabox/infrabox'
+    command.append(repo_name)
+    execute(command, cwd=os.getcwd())
+
 
 def main():
     parser = argparse.ArgumentParser(prog="ib")
@@ -206,6 +221,14 @@ def main():
     services_kill_parser = sub_services.add_parser('kill')
     services_kill_parser.set_defaults(func=services_kill)
     services_kill_parser.add_argument("service_name", nargs="?", type=str, help="Service name")
+
+    # Github changelog
+    changelog = cmd_parser.add_parser('changelog')
+    sub_changelog = changelog.add_subparsers()
+
+    create_changelog_parser = sub_changelog.add_parser('create')
+    create_changelog_parser.set_defaults(func=changelog_create)
+    create_changelog_parser.add_argument("--token", required=False)
 
 
     args = parser.parse_args()

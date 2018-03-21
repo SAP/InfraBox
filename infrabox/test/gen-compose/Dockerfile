@@ -1,6 +1,6 @@
 FROM alpine:3.6
 
-RUN apk add --no-cache python openssh py2-yaml py2-yaml
+RUN apk add --no-cache python openssh py2-yaml py2-yaml py2-crypto
 
 RUN mkdir /generate
 WORKDIR /generate

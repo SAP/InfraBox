@@ -8,7 +8,7 @@ from pyinfraboxutils import get_logger
 from pyinfraboxutils.ibrestplus import api
 from pyinfraboxutils.ibflask import auth_required, OK
 
-from dashboard_api.namespaces import project as ns
+from api.namespaces import project as ns
 
 
 logger = get_logger('project')

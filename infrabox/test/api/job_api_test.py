@@ -94,9 +94,9 @@ class JobApiTest(ApiTestTemplate):
         r = TestClient.post(self.url_ns + '/setrunning', {}, self.job_headers)
         self.assertEqual(r, {})
 
-        r = TestClient.execute_many("""SELECT state FROM job
+        r = TestClient.execute_one("""SELECT state FROM job
                                        WHERE id = %s""", [self.job_id])
-        job_state = r[0]["state"]
+        job_state = r["state"]
         self.assertEqual(job_state, 'running')
 
     def test_create_jobs(self):
@@ -115,7 +115,7 @@ class JobApiTest(ApiTestTemplate):
         jobs = TestClient.execute_many("""SELECT id, name, type FROM job
                                           WHERE id = %s""", [job_id])
         self.assertEqual(jobs[0][0], data["jobs"][0]["id"])
-        self.assertEqual(jobs[0][1], "/" + data["jobs"][0]["name"])
+        self.assertEqual(jobs[0][1], self.job_name + "/" + data["jobs"][0]["name"])
         # If type was equal to "docker" then it should replace it with "run_project_container" type
         self.assertEqual(jobs[0][2], "run_project_container")
 
@@ -127,18 +127,18 @@ class JobApiTest(ApiTestTemplate):
         r = TestClient.post(self.url_ns + '/consoleupdate', data=data, headers=self.job_headers)
         self.assertEqual(r, {})
 
-        r = TestClient.execute_many("""SELECT output FROM console
+        r = TestClient.execute_one("""SELECT output FROM console
                                        WHERE job_id = %s""", [self.job_id])
-        self.assertEqual(r[0]["output"], data["output"])
+        self.assertEqual(r["output"], data["output"])
 
     def test_stats(self):
         data = { "stats": "finished" }
         r = TestClient.post(self.url_ns + '/stats', data=data, headers=self.job_headers)
         self.assertEqual(r, {})
 
-        r = TestClient.execute_many("""SELECT stats FROM job
+        r = TestClient.execute_one("""SELECT stats FROM job
                                        WHERE id = %s""", [self.job_id])
-        self.assertEqual(r[0]["stats"], "\"%s\"" % data["stats"])
+        self.assertEqual(r["stats"], "\"%s\"" % data["stats"])
 
     def test_markup(self):
         markup_data = {
@@ -163,16 +163,16 @@ class JobApiTest(ApiTestTemplate):
         remove(file_name)
         self.assertEqual(r, {})
 
-        r = TestClient.execute_many("""SELECT job_id, project_id, name, data FROM job_markup
+        r = TestClient.execute_one("""SELECT job_id, project_id, name, data FROM job_markup
                                        WHERE job_id = %s""", [self.job_id])
         print(r)
         # check job_id
-        self.assertEqual(r[0][0], self.job_id)
+        self.assertEqual(r[0], self.job_id)
         # check project_id
-        self.assertEqual(r[0][1], self.project_id)
+        self.assertEqual(r[1], self.project_id)
         # check name
-        self.assertEqual(r[0][2], "file1")
-        received_data = json.loads(r[0][3])
+        self.assertEqual(r[2], "file1")
+        received_data = json.loads(r[3])
         # check data (title)
         self.assertEqual(received_data["title"], markup_data["title"])
         # check data (elements)
@@ -198,15 +198,15 @@ class JobApiTest(ApiTestTemplate):
         remove(file_name)
         self.assertEqual(result, {})
 
-        r = TestClient.execute_many("""SELECT * from job_badge
+        r = TestClient.execute_one("""SELECT * from job_badge
                                        WHERE job_id = %s""", [self.job_id])
-        self.assertEqual(r[0]["job_id"], self.job_id)
-        self.assertEqual(r[0]["project_id"], self.project_id)
+        self.assertEqual(r["job_id"], self.job_id)
+        self.assertEqual(r["project_id"], self.project_id)
         #TODO(Steffen) consider adding version field into job_badge table and then check it here also
-        #self.assertEqual(r[0]["version"], self.project_id)
-        self.assertEqual(r[0]["subject"], job_data["subject"])
-        self.assertEqual(r[0]["status"], job_data["status"])
-        self.assertEqual(r[0]["color"], job_data["color"])
+        #self.assertEqual(r]["version"], self.project_id)
+        self.assertEqual(r["subject"], job_data["subject"])
+        self.assertEqual(r["status"], job_data["status"])
+        self.assertEqual(r["color"], job_data["color"])
 
     def test_testresult(self):
         #test empty data
@@ -288,8 +288,8 @@ class JobApiTest(ApiTestTemplate):
         r = TestClient.post(self.url_ns + '/setfinished', data, self.job_headers)
         self.assertEqual(r, {})
 
-        r = TestClient.execute_many("""SELECT state, message, console FROM job
+        r = TestClient.execute_one("""SELECT state, message, console FROM job
                                        WHERE id = %s""", [self.job_id])
-        self.assertEqual(r[0]["state"], data["state"])
-        self.assertEqual(r[0]["message"], data["message"])
-        self.assertEqual(r[0]["console"], "")
+        self.assertEqual(r["state"], data["state"])
+        self.assertEqual(r["message"], data["message"])
+        self.assertEqual(r["console"], "")
