@@ -5,7 +5,7 @@ For development purposes you may want to start the API with some dummy data. Mak
 
 Go to the root folder of the infrabox project.
 
-First start `postgres` and `minio` with some [dummy data](/infrabox/test/utils/storage) as well as `api` and `dashboard-api`. Run each command in its own shell:
+First start `postgres` and `minio` with some [dummy data](/infrabox/test/utils/storage) as well as `api`. Run each command in its own shell:
 
 ```bash
 ./ib.py services start storage

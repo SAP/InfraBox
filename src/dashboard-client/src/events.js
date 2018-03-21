@@ -60,7 +60,7 @@ export default new Vue({
             this.$socket.emit('listen:jobs', project.id)
         },
         listenConsole (id) {
-            this.$socket.emit('listen:console', id)
+            this.$socket.emit('listen:dashboard-console', id)
         }
     }
 })

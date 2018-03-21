@@ -29,11 +29,10 @@ IMAGES = [
     {'name': 'docker-compose-ingress'},
     {'name': 'docker-compose-minio-init'},
     {'name': 'api'},
-    {'name': 'dashboard-api'},
     {'name': 'build-dashboard-client'},
     {'name': 'static', 'depends_on': ['build-dashboard-client']},
-    {'name': 'docker-auth'},
-    {'name': 'docker-nginx'},
+    {'name': 'docker-registry-auth'},
+    {'name': 'docker-registry-nginx'},
     {'name': 'db'},
     {'name': 'docker-gc'},
     {'name': 'postgres'},
@@ -142,11 +141,6 @@ def services_start(args):
         execute(['docker-compose', 'up'], cwd=os.path.join(os.path.dirname(os.path.realpath(__file__)), 'infrabox', 'utils', 'storage'))
     elif args.service_name == 'api':
         p = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'src', 'api')
-        run = os.path.join(p, 'run_with_dummy.sh')
-        execute(['bash', run], cwd=p)
-    elif args.service_name == 'dashboard_api':
-        _setup_rsa_keys()
-        p = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'src', 'dashboard_api')
         run = os.path.join(p, 'run_with_dummy.sh')
         execute(['bash', run], cwd=p)
     elif args.service_name == 'dashboard-client':

@@ -31,11 +31,6 @@ spec:
                     serviceName: infrabox-static
                     servicePort: 80
             -
-                path: /api/dashboard
-                backend:
-                    serviceName: infrabox-dashboard-api
-                    servicePort: 8080
-            -
                 path: /api/v1
                 backend:
                     serviceName: infrabox-api
