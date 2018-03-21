@@ -3,7 +3,7 @@
     "jobs": [{
         "type": "docker",
         "build_context": "../..",
-        "name": "docker-auth",
+        "name": "docker-registry-auth",
         "docker_file": "src/docker-registry/auth/Dockerfile",
         "build_only": true,
         "resources": { "limits": { "cpu": 1, "memory": 1024 } },
@@ -101,7 +101,7 @@
     }, {
         "type": "docker",
         "build_context": "../..",
-        "name": "docker-nginx",
+        "name": "docker-registry-nginx",
         "docker_file": "src/docker-registry/nginx/Dockerfile",
         "build_only": true,
         "resources": { "limits": { "cpu": 1, "memory": 1024 } },

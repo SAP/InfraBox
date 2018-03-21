@@ -106,6 +106,7 @@ services:
             - INFRABOX_STORAGE_S3_PROJECT_UPLOAD_BUCKET=infrabox-project-upload
             - INFRABOX_STORAGE_S3_CONTAINER_OUTPUT_BUCKET=infrabox-container-output
             - INFRABOX_GITHUB_ENABLED=false
+            - INFRABOX_GITHUB_LOGIN_ENABLED=false
             - INFRABOX_GERRIT_ENABLED=false
             - INFRABOX_ACCOUNT_LDAP_ENABLED=false
             - INFRABOX_ACCOUNT_SIGNUP_ENABLED=true
