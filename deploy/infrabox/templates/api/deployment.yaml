@@ -44,6 +44,7 @@ spec:
                 imagePullPolicy: Always
                 volumeMounts:
                 {{ include "mounts_rsa_public" . | indent 16 }}
+                {{ include "mounts_rsa_private" . | indent 16 }}
                 {{ if .Values.storage.gcs.enabled }}
                 -
                     name: gcs-service-account
@@ -56,6 +57,12 @@ spec:
                 {{ include "env_s3" . | indent 16 }}
                 {{ include "env_job" . | indent 16 }}
                 {{ include "env_general" . | indent 16 }}
+                {{ include "env_github" . | indent 16 }}
+                {{ include "env_github_secrets" . | indent 16 }}
+                {{ include "env_ldap" . | indent 16 }}
+                -
+                    name: INFRABOX_GERRIT_ENABLED
+                    value: {{ .Values.gerrit.enabled | quote }}
                 -
                     name: INFRABOX_SERVICE
                     value: {{ default "api" .Values.api.image }}
@@ -74,6 +81,9 @@ spec:
                 -
                     name: INFRABOX_DOCKER_REGISTRY_URL
                     value: {{ .Values.docker_registry.url }}
+                -
+                    name: INFRABOX_ACCOUNT_SIGNUP_ENABLED
+                    value: {{ .Values.account.signup.enabled | quote }}
             volumes:
                 {{ include "volumes_database" . | indent 16 }}
                 {{ include "volumes_rsa" . | indent 16 }}
