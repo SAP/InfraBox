@@ -8,12 +8,14 @@ const Convert = require('ansi-to-html')
 class Section {
     linesInSection = 0
     duration = 0
+    id = 0
 
-    constructor (line, text, startTime) {
+    constructor (line, text, startTime, id) {
         this.line = line
         this.text = text
         this.startTime = startTime
         this.lines_raw = []
+        this.id = id
     }
 
     setEndTime (end) {
@@ -134,12 +136,12 @@ export default class Job {
                     this.currentSection.setEndTime(date)
                     this.currentSection.generateHtml()
                 }
-                this.currentSection = new Section(this.linesProcessed, header, date)
+                this.currentSection = new Section(this.linesProcessed, header, date, this.sections.length)
                 this.linesProcessed++
                 this.sections.push(this.currentSection)
             } else {
                 if (!this.currentSection) {
-                    this.currentSection = new Section(this.linesProcessed, 'Prepare Job', date)
+                    this.currentSection = new Section(this.linesProcessed, 'Prepare Job', date, 0)
                     this.sections.push(this.currentSection)
                 }
 

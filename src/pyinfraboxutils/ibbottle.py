@@ -1,6 +1,8 @@
 # pylint: disable=too-few-public-methods
 import inspect
 import os
+import psycopg2
+
 from psycopg2.pool import SimpleConnectionPool
 from bottle import HTTPResponse, HTTPError
 
@@ -23,29 +25,32 @@ class InfraBoxPostgresPlugin(object):
             return callback
 
         def wrapper(*args, **kwargs):
-            # Connect to the database
-            conn = None
-            try:
-                conn = self.pool.getconn()
-            except HTTPResponse, e:
-                raise HTTPError(500, "Database Error", e)
-
-            # Add the connection handle as a keyword argument.
-            kwargs['conn'] = conn
-
-            try:
-                rv = callback(*args, **kwargs)
-            except HTTPError, e:
-                raise
-            except HTTPResponse, e:
-                raise
-            finally:
+            for _ in range(0, 2):
+                # Connect to the database
+                conn = None
                 try:
-                    conn.rollback()
-                except:
-                    pass
-                self.pool.putconn(conn)
-            return rv
+                    conn = self.pool.getconn()
+                except HTTPResponse, e:
+                    raise HTTPError(500, "Database Error", e)
+
+                # Add the connection handle as a keyword argument.
+                kwargs['conn'] = conn
+
+                try:
+                    rv = callback(*args, **kwargs)
+                except HTTPError, e:
+                    raise
+                except HTTPResponse, e:
+                    raise
+                except psycopg2.OperationalError:
+                    continue
+                finally:
+                    try:
+                        conn.rollback()
+                    except:
+                        pass
+                    self.pool.putconn(conn)
+                return rv
 
         # Replace the route callback with the wrapped one.
         return wrapper

@@ -149,7 +149,7 @@
     value: {{ default "https://github.com/login" .Values.github.login.url }}
 -
     name: INFRABOX_GITHUB_LOGIN_ALLOWED_ORGANIZATIONS
-    value: {{ default "false" .Values.github.login.allowed_organizations }}
+    value: {{ default "false" .Values.github.login.allowed_organizations | quote }}
 {{ end }}
 {{ end }}
 
