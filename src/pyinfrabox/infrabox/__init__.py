@@ -12,6 +12,11 @@ def check_name(n, path):
     if not special_match(n):
         raise ValidationError(path, "'%s' not a valid value" % n)
 
+def parse_repository(d, path):
+    check_allowed_properties(d, path, ('clone', 'submodules'))
+
+    check_boolean(d['clone'], path + ".clone")
+    check_boolean(d['submodules'], path + ".submodules")
 
 def parse_depends_on_condition(d, path):
     check_allowed_properties(d, path, ("job", "on"))
@@ -191,11 +196,14 @@ def parse_docker(d, path):
     check_allowed_properties(d, path, ("type", "name", "docker_file", "depends_on", "resources",
                                        "build_only", "environment",
                                        "build_arguments", "deployments", "timeout", "security_context",
-                                       "build_context", "cache"))
+                                       "build_context", "cache", "repository"))
     check_required_properties(d, path, ("type", "name", "docker_file", "resources"))
     check_name(d['name'], path + ".name")
     check_text(d['docker_file'], path + ".docker_file")
     parse_resources(d['resources'], path + ".resources")
+
+    if 'repository' in d:
+        parse_repository(d['repository'], path + ".repository")
 
     if 'build_only' in d:
         check_boolean(d['build_only'], path + ".build_only")
