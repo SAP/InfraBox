@@ -4,8 +4,7 @@ import json
 
 from pyinfraboxutils.token import encode_job_token
 from pyinfraboxutils.storage import storage
-from temp_tools import TestClient
-from temp_tools import TestUtils
+from temp_tools import TestClient, TestUtils
 from test_template import ApiTestTemplate
 
 
@@ -78,17 +77,6 @@ class JobApiTest(ApiTestTemplate):
         r = TestClient.post(self.url_ns + '/output', data=files, headers=self.job_headers,
                             content_type='multipart/form-data')
         self.assertEqual(r, {})
-
-        # Check if output was uploaded successfully
-        result_key = "%s.tar.gz" % self.job_id
-        print("Key:!!!!! %s" % result_key)
-        r = storage.download_output(result_key)
-
-        #TODO(Steffen) decide what to do with @after_this_request
-        #uploaded_file_size = stat(file_path).st_size
-        #downloaded_file_size = TestUtils.get_stream_file_size(r.data)
-        # Ensure downloaded and uploaded file sizes are equal
-        #self.assertEqual(uploaded_file_size, downloaded_file_size)
 
     def test_setrunning(self):
         r = TestClient.post(self.url_ns + '/setrunning', {}, self.job_headers)
@@ -202,8 +190,6 @@ class JobApiTest(ApiTestTemplate):
                                        WHERE job_id = %s""", [self.job_id])
         self.assertEqual(r["job_id"], self.job_id)
         self.assertEqual(r["project_id"], self.project_id)
-        #TODO(Steffen) consider adding version field into job_badge table and then check it here also
-        #self.assertEqual(r]["version"], self.project_id)
         self.assertEqual(r["subject"], job_data["subject"])
         self.assertEqual(r["status"], job_data["status"])
         self.assertEqual(r["color"], job_data["color"])
@@ -213,8 +199,6 @@ class JobApiTest(ApiTestTemplate):
         data = {"data": {}}
         result = TestClient.post(self.url_ns + '/testresult', data=data, headers=self.job_headers)
         self.assertEqual(result['message'], 'data not set')
-        #TODO(Kirill Abramov): check for status
-        #self.assertEqual(result['status'], 400)
 
         # test wrong file format
         test_filename = 'dummy_results.xml'
@@ -227,8 +211,6 @@ class JobApiTest(ApiTestTemplate):
             r = TestClient.post(self.url_ns + '/testresult', data=data, headers=self.job_headers,
                                 content_type='multipart/form-data')
         self.assertEqual(r['message'], 'file ending not allowed')
-        #TODO(Kirill Abramov): check for status
-        #self.assertEqual(result['status'], 400)
         remove(test_filename)
 
         # test data

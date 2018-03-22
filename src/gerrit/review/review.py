@@ -1,5 +1,6 @@
 import json
 import select
+import urllib
 
 import psycopg2
 import paramiko
@@ -87,6 +88,7 @@ def handle_job_update(conn, update):
                    key_filename=gerrit_key_filename)
     client.get_transport().set_keepalive(60)
 
+    project_name = urllib.quote_plus(project_name).replace('+', '%20')
     build_url = "%s/dashboard/#/project/%s/build/%s/%s" % (dashboard_url,
                                                            project_name,
                                                            build_number,

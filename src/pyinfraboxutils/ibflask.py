@@ -246,6 +246,9 @@ def is_public(project_id, project_name):
             WHERE id = %s
         ''', [project_id])
 
+        if not p:
+            abort(404, 'Project not found')
+
         if p['public']:
             return True
     elif project_name:
@@ -254,6 +257,9 @@ def is_public(project_id, project_name):
             FROM project
             WHERE name = %s
         ''', [project_name])
+
+        if not p:
+            abort(404, 'Project not found')
 
         if p['public']:
             return True

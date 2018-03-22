@@ -25,6 +25,8 @@ class Job(object):
         self.dependencies = None
         self.parents = None
         self.environment = None
+        self.env_vars = None
+        self.secrets = None
         self.source_upload = None
         self.deployments = None
 
@@ -59,7 +61,10 @@ class Job(object):
         self.commit = data['commit']
         self.dependencies = data['dependencies']
         self.parents = data['parents']
-        self.environment = data['environment']
+        self.environment = data['env_vars']
+        self.environment.update(data['secrets'])
+        self.secrets = data['secrets']
+        self.env_vars = data['env_vars']
 
         if 'source_upload' in data:
             self.source_upload = data['source_upload']
