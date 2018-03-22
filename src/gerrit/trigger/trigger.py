@@ -47,6 +47,7 @@ def main():
                 if event['type'] == "patchset-created":
                     logger.info(json.dumps(event, indent=4))
                     handle_patchset_created(conn, event)
+                    break
             except psycopg2.OperationalError:
                 try:
                     conn.close()

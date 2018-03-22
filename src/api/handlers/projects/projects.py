@@ -197,7 +197,7 @@ class Projects(Resource):
 class ProjectName(Resource):
 
     @auth_required(['user'], check_project_access=False, allow_if_public=True)
-    @api.marshal_list_with(project_model)
+    @api.marshal_with(project_model)
     def get(self, project_name):
         project = g.db.execute_one_dict('''
             SELECT id, name, type
@@ -215,15 +215,15 @@ class ProjectName(Resource):
 class Project(Resource):
 
     @auth_required(['user'], allow_if_public=True)
-    @api.marshal_list_with(project_model)
+    @api.marshal_with(project_model)
     def get(self, project_id):
-        projects = g.db.execute_many_dict('''
+        project = g.db.execute_one_dict('''
             SELECT p.id, p.name, p.type
             FROM project p
             WHERE id = %s
         ''', [project_id])
 
-        return projects
+        return project
 
     @auth_required(['user'], check_project_owner=True)
     def delete(self, project_id):

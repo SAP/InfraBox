@@ -137,6 +137,16 @@ function handleJobUpdate (state, event) {
         if (d.message) {
             job.message = d.message
         }
+
+        if (job.state === 'failed' ||
+            job.state === 'finished' ||
+            job.state === 'error' ||
+            job.state === 'aborted' ||
+            job.state === 'skipped') {
+            if (job.currentSection) {
+                job.currentSection.setEndDate(new Date())
+            }
+        }
     }
 
     build._updateState()

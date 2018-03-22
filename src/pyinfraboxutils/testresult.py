@@ -34,7 +34,10 @@ class Parser(object):
 
     def parse_testsuite(self, root):
         assert root.tag == 'testsuite'
-        ts_name = root.attrib.get('name')
+        ts_name = root.attrib.get('name', 'None')
+
+        if not ts_name:
+            ts_name = 'None'
 
         for el in root:
             if el.tag != 'testcase':

