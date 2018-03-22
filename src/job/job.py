@@ -269,6 +269,20 @@ class RunJob(Job):
     def main(self):
         self.update_status('running')
         self.load_data()
+
+        # Show environment
+        self.console.collect("Environment:\n", show=True)
+        for name, value in self.env_vars.iteritems():
+            self.console.collect("%s=%s:\n" % (name, value), show=True)
+
+        self.console.collect("\n", show=True)
+
+        self.console.collect("Secrets:\n", show=True)
+        for name, _ in self.secrets.iteritems():
+            self.console.collect("%s=*****:\n" % name, show=True)
+
+        self.console.collect("\n", show=True)
+
         self.get_source()
         self.create_infrabox_directories()
 
@@ -880,8 +894,9 @@ class RunJob(Job):
     def get_cached_image(self, image_name_latest):
         c = self.console
 
-        if not self.job['definition'].get('cache', {}).get('image', True):
+        if not self.job['definition'].get('cache', {}).get('image', False):
             c.collect("Not pulling cached image, because cache.image has been set to false", show=True)
+            return
 
         c.collect("Get cached image %s" % image_name_latest, show=True)
 
@@ -892,8 +907,9 @@ class RunJob(Job):
     def cache_docker_image(self, image_name_build, image_name_latest):
         c = self.console
 
-        if not self.job['definition'].get('cache', {}).get('image', True):
+        if not self.job['definition'].get('cache', {}).get('image', False):
             c.collect("Not pushed cached image, because cache.image has been set to false", show=True)
+            return
 
         c.collect("Upload cached image %s" % image_name_latest, show=True)
 

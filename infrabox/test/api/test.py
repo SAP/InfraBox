@@ -1,4 +1,5 @@
 import unittest
+import sys
 
 from xmlrunner import XMLTestRunner
 
@@ -34,4 +35,5 @@ if __name__ == '__main__':
         testRunner = XMLTestRunner(output=output)
         #unittest.main(testRunner = XMLTestRunner(output=output),
         #              failfast=False, buffer=False, catchbreak=False)
-        testRunner.run(suite)
+        ret = testRunner.run(suite).wasSuccessful()
+        sys.exit(not ret)

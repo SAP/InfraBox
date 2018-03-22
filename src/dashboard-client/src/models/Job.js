@@ -152,6 +152,14 @@ export default class Job {
 
         if (this.currentSection) {
             this.currentSection.generateHtml()
+
+            if (this.state === 'failed' ||
+                this.state === 'finished' ||
+                this.state === 'error' ||
+                this.state === 'aborted' ||
+                this.state === 'skipped') {
+                this.currentSection.setEndTime(new Date())
+            }
         }
     }
 

@@ -4,6 +4,8 @@ coverage run --source=.,$1 --branch test.py
 
 rc=$?
 
+echo "exit code $rc"
+
 set -e
 
 coverage report -m

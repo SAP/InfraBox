@@ -234,11 +234,14 @@ def parse_docker(d, path):
 
 def parse_docker_compose(d, path):
     check_allowed_properties(d, path, ("type", "name", "docker_compose_file", "depends_on",
-                                       "environment", "resources", "cache"))
+                                       "environment", "resources", "cache", "timeout"))
     check_required_properties(d, path, ("type", "name", "docker_compose_file", "resources"))
     check_name(d['name'], path + ".name")
     check_text(d['docker_compose_file'], path + ".docker_compose_file")
     parse_resources(d['resources'], path + ".resources")
+
+    if 'timeout' in d:
+        check_number(d['timeout'], path + ".timeout")
 
     if 'cache' in d:
         parse_cache(d['cache'], path + ".cache")
