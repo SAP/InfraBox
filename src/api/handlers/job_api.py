@@ -266,24 +266,26 @@ class Job(Resource):
                     abort(400, "Unknown deployment type")
 
         # Default env vars
-        data['environment'] = {
+        data['env_vars'] = {
             "TERM": "xterm-256color",
             "INFRABOX_JOB_ID": data['job']['id'],
             "INFRABOX_BUILD_NUMBER": "%s" % data['build']['build_number']
         }
 
+        data['secrets'] = {}
+
         if data['commit']['branch']:
-            data['environment']['INFRABOX_GIT_BRANCH'] = data['commit']['branch']
+            data['env_vars']['INFRABOX_GIT_BRANCH'] = data['commit']['branch']
 
         if data['commit']['tag']:
-            data['environment']['INFRABOX_GIT_TAG'] = data['commit']['tag']
+            data['env_vars']['INFRABOX_GIT_TAG'] = data['commit']['tag']
 
         if pull_request_id:
-            data['environment']['INFRABOX_GITHUB_PULL_REQUEST'] = "true"
+            data['env_vars']['INFRABOX_GITHUB_PULL_REQUEST'] = "true"
 
         if env_vars:
             for name, value in env_vars.iteritems():
-                data['environment'][name] = value
+                data['env_vars'][name] = value
 
         if env_var_refs:
             for name, value in env_var_refs.iteritems():
@@ -292,7 +294,7 @@ class Job(Resource):
                 if not secret:
                     abort(400, "Secret %s not found" % value)
 
-                data['environment'][name] = secret
+                data['secrets'][name] = secret
 
         return jsonify(data)
 
@@ -579,7 +581,7 @@ class CreateJobs(Resource):
                         SELECT id parent_id
                         FROM job, jsonb_array_elements(job.dependencies) as deps
                         WHERE (deps->>'job-id')::uuid = %s
-                            AND build_id = %s 
+                            AND build_id = %s
                             AND project_id = %s
                     )
                 ''', [json.dumps(wait_job), job_id, build_id, project_id])

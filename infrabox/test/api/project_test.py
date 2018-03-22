@@ -8,7 +8,7 @@ class ProjectTest(ApiTestTemplate):
 
     def test_get_project_does_not_exist(self):
         r = TestClient.get('/api/v1/projects/%s' % self.repo_id, TestClient.get_user_authorization(self.user_id))
-        self.assertEqual(r['message'], 'Unauthorized')
+        self.assertEqual(r['message'], 'Project not found')
 
     def test_get_project(self):
         r = TestClient.get('/api/v1/projects/%s' % self.project_id, TestClient.get_user_authorization(self.user_id))
