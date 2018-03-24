@@ -271,8 +271,6 @@ def is_public(project_id, project_name):
 
 
 def validate_user_token(token, check_project_access, project_id, check_project_owner):
-    g.token = token
-
     u = g.db.execute_one('''
         SELECT id FROM "user" WHERE id = %s
     ''', [token['user']['id']])
@@ -322,6 +320,7 @@ def validate_project_token(token, check_project_access, project_id):
 def auth_required(types,
                   check_project_access=True,
                   check_project_owner=False,
+                  check_admin=False,
                   allow_if_public=False):
     def actual_decorator(f):
         @wraps(f)
@@ -350,10 +349,15 @@ def auth_required(types,
 
                 validate_job_token(token)
             elif token_type == 'user':
-                validate_user_token(token,
-                                    check_project_access,
-                                    project_id,
-                                    check_project_owner)
+                g.token = token
+                if token['user']['id'] != '00000000-0000-0000-0000-000000000000':
+                    if check_admin:
+                        abort(401, 'Unauthorized')
+                    else:
+                        validate_user_token(token,
+                                            check_project_access,
+                                            project_id,
+                                            check_project_owner)
             elif token_type == 'project':
                 project_id = kwargs.get('project_id')
 

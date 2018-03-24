@@ -1,6 +1,6 @@
-FROM alpine:3.6
+FROM debian:9.3
 
-RUN apk add --no-cache python py-psycopg2 py-requests
+RUN apt-get update -y && apt-get install -y python python-psycopg2 python-requests python-bcrypt
 
 COPY src/db db
 COPY src/pyinfraboxutils /pyinfraboxutils

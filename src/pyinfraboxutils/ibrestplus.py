@@ -11,7 +11,7 @@ authorizations = {
 api = Api(app,
           authorizations=authorizations,
           security=['TokenAuth'],
-          doc='/doc/',
+          doc='/api/doc/',
           validate=True)
 
 def abort(code, message, data=None):

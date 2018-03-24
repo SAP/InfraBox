@@ -45,7 +45,7 @@
                 </md-list-item>
 
                 <md-list-item class="navi-link">
-                    <a href="/docs/"
+                    <a href="https://github.com/InfraBox/infrabox/blob/master/docs/doc.md"
                        class="md-list-item-container md-button"
                        target="_blank" @click="toggleLeftSidenav()">
                         <md-icon><i class="fa fa-book fa-fw"></i></md-icon>
@@ -67,6 +67,31 @@
                         <md-icon><i class="fa fa-sign-out fa-fw"></i></md-icon>
                         <span>Logout</span>
                     </a>
+                </md-list-item>
+
+                <md-list-item>
+                    <md-icon><i class="fa fa-fw fa-unlock"></i></md-icon>
+                    <span>Admin</span>
+                    <md-list-expand>
+                        <md-list>
+                            <md-list-item class="md-inset">
+                                <router-link :to="{name: 'AdminProjects'}">
+                                    <span @click="toggleLeftSidenav()">
+                                        <i class="fa fa-cubes"></i>
+                                        Projects
+                                    </span>
+                                </router-link>
+                            </md-list-item>
+                            <md-list-item class="md-inset">
+                                <router-link :to="{name: 'AdminUsers'}">
+                                    <span @click="toggleLeftSidenav()">
+                                        <i class="fa fa-users"></i>
+                                        Users
+                                    </span>
+                                </router-link>
+                            </md-list-item>
+                        </md-list>
+                    </md-list-expand>
                 </md-list-item>
             </md-list>
         </md-sidenav>

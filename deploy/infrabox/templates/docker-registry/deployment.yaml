@@ -40,17 +40,14 @@ spec:
                 imagePullPolicy: Always
                 env:
                 -
+                    name: INFRABOX_DOCKER_REGISTRY_ADMIN_USERNAME
+                    value: "admin"
+                -
                     name: INFRABOX_DOCKER_REGISTRY_ADMIN_PASSWORD
                     valueFrom:
                         secretKeyRef:
-                            name: infrabox-docker-registry
+                            name: infrabox-admin
                             key: password
-                -
-                    name: INFRABOX_DOCKER_REGISTRY_ADMIN_USERNAME
-                    valueFrom:
-                        secretKeyRef:
-                            name: infrabox-docker-registry
-                            key: username
                 -
                     name: INFRABOX_AUTH_HOST
                     value: localhost

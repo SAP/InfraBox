@@ -10,7 +10,7 @@
                         </div>
                         <div class="md-subheading text-center">Welcome to InfraBox!</div>
                     </md-card-header>
-                    <md-card-content class="m-xl" v-if="$store.state.settings.INFRABOX_ACCOUNT_SIGNUP_ENABLED || $store.state.settings.INFRABOX_ACCOUNT_LDAP_ENABLED">
+                    <md-card-content class="m-xl">
                         <md-input-container :class="{'md-input-invalid': !mailValid}">
                             <md-input type="email" v-model="mail" name="email" @keyup.enter.native="login" required/>
                             <label>E-Mail</label>
