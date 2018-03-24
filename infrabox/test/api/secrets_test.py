@@ -58,7 +58,7 @@ class SecretsTest(ApiTestTemplate):
         r = TestClient.execute_one("""SELECT count(*) FROM secret WHERE id = %s""", [secret_id])
         self.assertGreater(r[0], 0)
 
-        r = TestClient.delete('api/v1/projects/%s/secrets/%s' % (self.project_id, secret_id),
+        r = TestClient.delete('api/v1/projects/%s/secrets/%s' % (self.project_id, self.test_secret_data['name']),
                               headers=TestClient.get_user_authorization(self.user_id))
 
         self.assertEqual(r['message'], 'Successfully deleted secret')
