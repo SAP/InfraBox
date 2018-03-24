@@ -47,7 +47,7 @@ The job type docker is one of the most important jobs. You can use it to run any
 |docker_file|true|string||Path to the `Dockerfile`|
 |resources|true|[Resource Configuration](#resource-configuration)||Specify the required resources for your job|
 |build_only|true|boolean|true|If set to true the container will only be build but not run. Use it if you only want to build a container and push it to a registry. See here for how to push to a docker registry.|
-|build_context|false|string||Specify the docker build context. If not set the directory container the `infrabox.json` file will be used.|
+|build_context|false|string||Specify the docker build context. If not set the directory containing the `infrabox.json` file will be used.|
 |cache|false|[Cache Configuration](#cache-configuration)|{}|Configure the caching behavior|
 |timeout|false|integer|3600|Timeout in seconds after which the job should be killed. Timeout starts when the job is set to running|
 |depends_on|false|[Dependency Configuration](#job-dependencies)|[]|Jobs may have dependencies. You can list all jobs which should finish before the current job may be executed.|

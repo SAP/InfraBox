@@ -21,6 +21,19 @@ spec:
                 -
                     name: INFRABOX_VERSION
                     value: {{ .Values.db.tag }}
+                -
+                    name: INFRABOX_ADMIN_EMAIL
+                    valueFrom:
+                        secretKeyRef:
+                            name: infrabox-admin
+                            key: email
+                -
+                    name: INFRABOX_ADMIN_PASSWORD
+                    valueFrom:
+                        secretKeyRef:
+                            name: infrabox-admin
+                            key: password
+
             restartPolicy: OnFailure
             volumes:
                 {{ include "volumes_database" . | indent 16 }}
