@@ -273,13 +273,13 @@ class RunJob(Job):
         # Show environment
         self.console.collect("Environment:\n", show=True)
         for name, value in self.env_vars.iteritems():
-            self.console.collect("%s=%s:\n" % (name, value), show=True)
+            self.console.collect("%s=%s\n" % (name, value), show=True)
 
         self.console.collect("\n", show=True)
 
         self.console.collect("Secrets:\n", show=True)
         for name, _ in self.secrets.iteritems():
-            self.console.collect("%s=*****:\n" % name, show=True)
+            self.console.collect("%s=*****\n" % name, show=True)
 
         self.console.collect("\n", show=True)
 
@@ -475,10 +475,12 @@ class RunJob(Job):
                 c.collect("no cache found\n", show=True)
 
         try:
-            if self.job['type'] == 'run_project_container':
-                self.run_container(c)
-            elif self.job['type'] == 'run_docker_compose':
-                self.run_docker_compose(c)
+            if self.job['definition']['type'] == 'docker':
+                self.run_job_docker(c)
+            elif self.job['definition']['type'] == 'docker-image':
+                self.run_job_docker_image(c)
+            elif self.job['definition']['type'] == 'docker-compose':
+                self.run_job_docker_compose(c)
             else:
                 raise Exception('Unknown job type: %s' % self.job['type'])
         except:
@@ -534,7 +536,7 @@ class RunJob(Job):
         shutil.rmtree(self.mount_data_dir, True)
         shutil.rmtree(self.infrabox_cache_dir, True)
 
-    def run_docker_compose(self, c):
+    def run_job_docker_compose(self, c):
         c.header("Build containers", show=True)
         f = self.job['dockerfile']
 
@@ -722,9 +724,6 @@ class RunJob(Job):
             raise Failure(e.__str__())
 
     def run_docker_container(self, image_name):
-        if self.job['build_only']:
-            return
-
         c = self.console
         collector = StatsCollector()
 
@@ -785,6 +784,9 @@ class RunJob(Job):
             cmd += ['-v', '/data/inner/docker:/var/lib/docker']
 
         cmd += [image_name]
+
+        if self.job['definition'].get('command', None):
+            cmd += self.job['definition']['command']
 
         try:
             c.header("Run container", show=True)
@@ -854,7 +856,19 @@ class RunJob(Job):
         except Exception as e:
             raise Failure("Failed to build the image: %s" % e)
 
-    def run_container(self, c):
+    def run_job_docker_image(self, c):
+        self._login_deployment_registries()
+
+        image_name = self.job['definition']['image']
+        self.run_docker_container(image_name)
+        self.deploy_container(image_name)
+
+        c.header("Finalize", show=True)
+        self.push_container(image_name)
+
+    def _login_deployment_registries(self):
+        c = self.console
+
         for dep in self.deployments:
             try:
                 if dep['type'] == 'aws-ecr':
@@ -877,6 +891,8 @@ class RunJob(Job):
             except Exception as e:
                 raise Failure("Failed to login to registry: " + e.message)
 
+    def run_job_docker(self, c):
+        self._login_deployment_registries()
 
         image_name = get_registry_name() + '/' \
                      + self.project['id'] + '/' \
@@ -885,7 +901,10 @@ class RunJob(Job):
         image_name_latest = image_name + ':latest'
 
         self.build_docker_container(image_name_build, image_name_latest)
-        self.run_docker_container(image_name_build)
+
+        if not self.job['build_only']:
+            self.run_docker_container(image_name_build)
+
         self.deploy_container(image_name_build)
 
         c.header("Finalize", show=True)
