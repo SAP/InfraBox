@@ -13,7 +13,6 @@ from pyinfraboxutils.token import encode_user_token
 
 from api.namespaces import account as ns
 
-
 login_model = api.model('Login', {
     'email': fields.String(required=True),
     'password': fields.String(required=True),

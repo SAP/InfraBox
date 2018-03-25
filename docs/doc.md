@@ -28,7 +28,7 @@ The job type docker is one of the most important jobs. You can use it to run any
         "resources": { "limits": { "cpu": 1, "memory": 1024 } },
         "build_only": false,
         "build_context": "...",
-        "catche": { ... },
+        "cache": { ... },
         "timeout": 3600,
         "depends_on": ["other_job_name"],
         "environment": { ... },
@@ -47,13 +47,14 @@ The job type docker is one of the most important jobs. You can use it to run any
 |docker_file|true|string||Path to the `Dockerfile`|
 |resources|true|[Resource Configuration](#resource-configuration)||Specify the required resources for your job|
 |build_only|true|boolean|true|If set to true the container will only be build but not run. Use it if you only want to build a container and push it to a registry. See here for how to push to a docker registry.|
-|build_context|false|string||Specify the docker build context. If not set the directory container the `infrabox.json` file will be used.|
+|build_context|false|string||Specify the docker build context. If not set the directory containing the `infrabox.json` file will be used.|
 |cache|false|[Cache Configuration](#cache-configuration)|{}|Configure the caching behavior|
 |timeout|false|integer|3600|Timeout in seconds after which the job should be killed. Timeout starts when the job is set to running|
 |depends_on|false|[Dependency Configuration](#job-dependencies)|[]|Jobs may have dependencies. You can list all jobs which should finish before the current job may be executed.|
 |environment|false|object|{}|Can be used to set environment variables for the job. See Environment Variables for more details.|
 |build_arguments|false|object|{}|Can be used to set docker build arguments. See Build Arguments for more details.|
 |deployments|false|[Deployment Configuration](#deployments)|[]|Push your images to a registry|
+|security_context|false|[Security Context](#security_context)|[]|Configure security related options|
 |repository|false|[Repository Configuration](#repository)|{}|Configure git repository options|
 
 ### Deployments
@@ -124,6 +125,46 @@ Build arguments are only supported for `docker` job types.
 |------|----------|------|---------|-------------|
 |clone|false|boolean|true|Set to `false` if the git repository should not be cloned|
 |submodules|false|boolean|false|Set to `true` if submodules should be cloned|
+
+## Job: Docker Image
+You can also specify an already build image and run it as a job.
+
+```json
+{
+    "version": 1,
+    "jobs": [{
+        "type": "docker-image",
+        "name": "test",
+        "image": "alpine:latest",
+        "command": ["echo", "hello world"]
+        "resources": { "limits": { "cpu": 1, "memory": 1024 } },
+        "build_context": "...",
+        "cache": { ... },
+        "timeout": 3600,
+        "depends_on": ["other_job_name"],
+        "environment": { ... },
+        "security_context": { ... },
+        "repository": { ... }
+    }]
+}
+```
+
+| Name | Required | Type | Default | Description |
+|------|----------|------|---------|-------------|
+|type|true|string||Has to be "docker" to run a single Docker container|
+|name|true|string||Name of the job|
+|image|true|string||Image to use, i.e. `alpine:latest`|
+|command|true|string||The command in [exec form](https://docs.docker.com/engine/reference/builder/#cmd)|
+|resources|true|[Resource Configuration](#resource-configuration)||Specify the required resources for your job|
+|build_context|false|string||Specify the docker build context. If not set the directory containing the `infrabox.json` file will be used.|
+|cache|false|[Cache Configuration](#cache-configuration)|{}|Configure the caching behavior|
+|timeout|false|integer|3600|Timeout in seconds after which the job should be killed. Timeout starts when the job is set to running|
+|depends_on|false|[Dependency Configuration](#job-dependencies)|[]|Jobs may have dependencies. You can list all jobs which should finish before the current job may be executed.|
+|environment|false|object|{}|Can be used to set environment variables for the job. See Environment Variables for more details.|
+|deployments|false|[Deployment Configuration](#deployments)|[]|Push your images to a registry|
+|security_context|false|[Security Context](#security_context)|[]|Configure security related options|
+|repository|false|[Repository Configuration](#repository)|{}|Configure git repository options|
+
 
 ## Job: Docker-Compose
 Sometimes you want to start multiple containers to test your application. For this InfraBox supports also docker-compose. You can specify a docker-compose.yml and InfraBox will start it as one job.
@@ -208,6 +249,23 @@ An example job definition:
 |infrabox_file|true|string||Path to another `infrabox.json` file|
 |depends_on|false|array of job names|[]|Jobs may have dependencies. You can list all jobs which should finish before the current job may be executed.|
 
+## Security Context
+
+```json
+{
+    "version": 1,
+    "jobs": [{
+        ...
+        "security_context": {
+            "privileged": false
+        }
+    }]
+}
+```
+
+| Name | Required | Type | Default | Description |
+|------|----------|------|---------|-------------|
+|privileged|false|boolean|false|If set to true the container will be run in privileged mode|
 
 ## Cache Configuration
 InfraBox can cache custom data and images for you. This can significantly speed up your jobs. You can control the caching behavior with

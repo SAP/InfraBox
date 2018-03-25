@@ -1,0 +1,18 @@
+{{ if .Values.api.enabled }}
+kind: Service
+apiVersion: v1
+metadata:
+    name: infrabox-swagger
+    namespace: {{ default "infrabox-system" .Values.general.system_namespace }}
+    labels:
+        app: infrabox-swagger
+spec:
+    selector:
+        app: infrabox-swagger
+    ports:
+    -
+        name: http-web
+        protocol: TCP
+        port: 8080
+        targetPort: 8080
+{{ end }}
