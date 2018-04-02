@@ -1,5 +1,7 @@
 import store from '../store'
 import NewAPIService from '../services/NewAPIService'
+import NotificationService from '../services/NotificationService'
+import Notification from '../models/Notification'
 
 class AdminService {
     loadProjects () {
@@ -7,12 +9,28 @@ class AdminService {
             .then((s) => {
                 store.commit('setAdminProjects', s)
             })
+            .catch((err) => {
+                NotificationService.$emit('NOTIFICATION', new Notification(err))
+            })
     }
 
     loadUsers () {
         return NewAPIService.get(`admin/users/`)
             .then((s) => {
                 store.commit('setAdminUsers', s)
+            })
+            .catch((err) => {
+                NotificationService.$emit('NOTIFICATION', new Notification(err))
+            })
+    }
+
+    loadClusters () {
+        return NewAPIService.get(`admin/clusters/`)
+            .then((s) => {
+                store.commit('setClusters', s)
+            })
+            .catch((err) => {
+                NotificationService.$emit('NOTIFICATION', new Notification(err))
             })
     }
 }

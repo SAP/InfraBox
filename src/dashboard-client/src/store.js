@@ -17,7 +17,8 @@ const state = {
     settings: {},
     admin: {
         projects: [],
-        users: []
+        users: [],
+        clusters: []
     }
 }
 
@@ -281,6 +282,10 @@ function setAdminProjects (state, projects) {
     state.admin.projects = projects
 }
 
+function setClusters (state, clusters) {
+    state.admin.clusters = clusters
+}
+
 const mutations = {
     addProjects,
     addJobs,
@@ -299,7 +304,8 @@ const mutations = {
     setStats,
     setTabs,
     setAdminUsers,
-    setAdminProjects
+    setAdminProjects,
+    setClusters
 }
 
 const getters = {}

@@ -76,6 +76,9 @@ class Install(object):
     def __init__(self, args):
         self.args = args
 
+    def is_master(self):
+        return self.args.cluster_name == "master"
+
     def required_option(self, name):
         args = vars(self.args)
         m = name.replace("-", "_")
@@ -130,6 +133,9 @@ class Kubernetes(Install):
         self.config.add(n, v)
 
     def setup_postgres(self):
+        if not self.is_master():
+            self.set('storage.migration.enabled', False)
+
         self.required_option('database')
         args = self.args
 
@@ -273,6 +279,9 @@ class Kubernetes(Install):
             self.set('local_cache.host_path', self.args.local_cache_host_path)
 
     def setup_ldap(self):
+        if not self.is_master():
+            return
+
         if not self.args.ldap_enabled:
             return
 
@@ -294,6 +303,9 @@ class Kubernetes(Install):
         self.set('account.signup.enabled', False)
 
     def setup_gerrit(self):
+        if not self.is_master():
+            return
+
         if not self.args.gerrit_enabled:
             return
 
@@ -320,6 +332,9 @@ class Kubernetes(Install):
         self.create_secret("infrabox-gerrit-ssh", self.args.general_worker_namespace, secret)
 
     def setup_github(self):
+        if not self.is_master():
+            return
+
         if not self.args.github_enabled:
             return
 
@@ -349,15 +364,21 @@ class Kubernetes(Install):
         self.create_secret("infrabox-github", self.args.general_system_namespace, secret)
 
     def setup_dashboard(self):
-        self.set('dashboard.api.tag', self.args.version)
-        self.set('dashboard.url', self.args.root_url)
+        if not self.is_master():
+            self.set('dashboard.enabled', False)
+        else:
+            self.set('dashboard.api.tag', self.args.version)
+            self.set('dashboard.url', self.args.root_url)
 
     def setup_api(self):
         self.set('api.url', self.args.root_url + '/api/cli')
         self.set('api.tag', self.args.version)
 
     def setup_static(self):
-        self.set('static.tag', self.args.version)
+        if not self.is_master():
+            self.set('static.enabled', False)
+        else:
+            self.set('static.tag', self.args.version)
 
     def setup_general(self):
         self.required_option('general-rsa-private-key')
@@ -394,6 +415,10 @@ class Kubernetes(Install):
     def setup_scheduler(self):
         self.set('scheduler.tag', self.args.version)
         self.set('scheduler.enabled', not self.args.scheduler_disabled)
+
+    def setup_cluster(self):
+        self.set('cluster.name', self.args.cluster_name)
+        self.set('cluster.labels', self.args.cluster_labels)
 
     def setup_ingress(self):
         host = self.args.root_url.replace('http://', '')
@@ -432,6 +457,7 @@ class Kubernetes(Install):
         self.setup_job()
         self.setup_db()
         self.setup_scheduler()
+        self.setup_cluster()
         self.setup_gerrit()
         self.setup_github()
         self.setup_dashboard()
@@ -458,7 +484,6 @@ class DockerCompose(Install):
     def __init__(self, args):
         super(DockerCompose, self).__init__(args)
         self.config = Configuration()
-
 
     def setup_job_git(self):
         self.config.add('services.job-git.image',
@@ -600,6 +625,8 @@ class DockerCompose(Install):
                 "INFRABOX_ACCOUNT_SIGNUP_ENABLED=true"
             ]
 
+        self.config.append('services.api.environment', env)
+
     def setup_database(self):
         if self.args.database == 'postgres':
             self.required_option('postgres-host')
@@ -677,6 +704,10 @@ def main():
     parser.add_argument('--version', default='latest')
     parser.add_argument('--root-url')
     parser.add_argument('--docker-registry', default='quay.io/infrabox')
+
+    # Cluster
+    parser.add_argument('--cluster-name', default='master')
+    parser.add_argument('--cluster-labels')
 
     # Admin config
     parser.add_argument('--admin-email')

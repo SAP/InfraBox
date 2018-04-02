@@ -155,12 +155,12 @@ def handle_patchset_created_project(conn, event, project_id, project_name):
     c = conn.cursor()
     c.execute('''INSERT INTO job (id, state, build_id, type, name,
                                  project_id, build_only, dockerfile,
-                                 cpu, memory, repo, env_var)
+                                 cpu, memory, repo, env_var, cluster_name)
                 VALUES (gen_random_uuid(), 'queued', %s, 'create_job_matrix', 'Create Jobs',
-                        %s, false, '', 1, 1024, %s, %s)''', (build_id,
-                                                             project_id,
-                                                             json.dumps(git_repo),
-                                                             json.dumps(env_vars)))
+                        %s, false, '', 1, 1024, %s, %s, 'master')''', (build_id,
+                                                                       project_id,
+                                                                       json.dumps(git_repo),
+                                                                       json.dumps(env_vars)))
 
 def handle_patchset_created(conn, event):
     conn.rollback()

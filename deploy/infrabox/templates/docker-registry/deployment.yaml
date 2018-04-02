@@ -39,15 +39,7 @@ spec:
                 image: {{ .Values.general.docker_registry }}/{{ default "docker-registry-nginx" .Values.docker_registry.nginx_image }}:{{ .Values.docker_registry.nginx_tag }}
                 imagePullPolicy: Always
                 env:
-                -
-                    name: INFRABOX_DOCKER_REGISTRY_ADMIN_USERNAME
-                    value: "admin"
-                -
-                    name: INFRABOX_DOCKER_REGISTRY_ADMIN_PASSWORD
-                    valueFrom:
-                        secretKeyRef:
-                            name: infrabox-admin
-                            key: password
+                {{ include "env_docker_registry" . | indent 16 }}
                 -
                     name: INFRABOX_AUTH_HOST
                     value: localhost
@@ -63,6 +55,9 @@ spec:
                 -
                     name: REGISTRY_HTTP_HOST
                     value: {{ .Values.docker_registry.url }}
+                -
+                    name: REGISTRY_LOG_LEVEL
+                    value: debug
                 {{ if .Values.storage.s3.enabled }}
                 -
                     name: REGISTRY_STORAGE
@@ -87,7 +82,7 @@ spec:
                     value: http://{{ .Values.storage.s3.endpoint }}:{{ .Values.storage.s3.port }}
                 -
                     name: REGISTRY_STORAGE_S3_SECURE
-                    value: {{ .Values.storage.s3.secure | quote }}
+                    value: "true"
                 -
                     name: REGISTRY_STORAGE_S3_ACCESSKEY
                     valueFrom:

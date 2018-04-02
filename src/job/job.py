@@ -28,7 +28,7 @@ def makedirs(path):
     os.chmod(path, 0o777)
 
 def get_registry_name():
-    n = os.environ['INFRABOX_DOCKER_REGISTRY_URL'].replace('https://', '')
+    n = os.environ['INFRABOX_ROOT_URL'].replace('https://', '')
     n = n.replace('http://', '')
     return n
 
@@ -1131,7 +1131,6 @@ class RunJob(Job):
 def main():
     get_env('INFRABOX_SERVICE')
     get_env('INFRABOX_VERSION')
-    get_env('INFRABOX_DOCKER_REGISTRY_URL')
     get_env('INFRABOX_ROOT_URL')
     get_env('INFRABOX_GENERAL_DONT_CHECK_CERTIFICATES')
     get_env('INFRABOX_LOCAL_CACHE_ENABLED')
