@@ -18,6 +18,11 @@ def parse_repository(d, path):
     check_boolean(d['clone'], path + ".clone")
     check_boolean(d['submodules'], path + ".submodules")
 
+def parse_cluster(d, path):
+    check_allowed_properties(d, path, ('selector',))
+
+    check_string_array(d['selector'], path + ".selector")
+
 def parse_depends_on_condition(d, path):
     check_allowed_properties(d, path, ("job", "on"))
     check_required_properties(d, path, ("job", "on"))
@@ -195,11 +200,15 @@ def parse_resources(d, path):
 def parse_docker_image(d, path):
     check_allowed_properties(d, path, ("type", "name", "image", "depends_on", "resources",
                                        "environment", "timeout", "security_context",
-                                       "build_context", "cache", "repository", "command"))
+                                       "build_context", "cache", "repository", "command",
+                                       "cluster"))
     check_required_properties(d, path, ("type", "name", "image", "resources"))
     check_name(d['name'], path + ".name")
     check_text(d['image'], path + ".image")
     parse_resources(d['resources'], path + ".resources")
+
+    if 'cluster' in d:
+        parse_cluster(d['cluster'], path + ".cluster")
 
     if 'command' in d:
         check_string_array(d['command'], path + ".command")
@@ -229,11 +238,14 @@ def parse_docker(d, path):
     check_allowed_properties(d, path, ("type", "name", "docker_file", "depends_on", "resources",
                                        "build_only", "environment",
                                        "build_arguments", "deployments", "timeout", "security_context",
-                                       "build_context", "cache", "repository"))
+                                       "build_context", "cache", "repository", "cluster"))
     check_required_properties(d, path, ("type", "name", "docker_file", "resources"))
     check_name(d['name'], path + ".name")
     check_text(d['docker_file'], path + ".docker_file")
     parse_resources(d['resources'], path + ".resources")
+
+    if 'cluster' in d:
+        parse_cluster(d['cluster'], path + ".cluster")
 
     if 'repository' in d:
         parse_repository(d['repository'], path + ".repository")
@@ -267,11 +279,14 @@ def parse_docker(d, path):
 
 def parse_docker_compose(d, path):
     check_allowed_properties(d, path, ("type", "name", "docker_compose_file", "depends_on",
-                                       "environment", "resources", "cache", "timeout"))
+                                       "environment", "resources", "cache", "timeout", "cluster"))
     check_required_properties(d, path, ("type", "name", "docker_compose_file", "resources"))
     check_name(d['name'], path + ".name")
     check_text(d['docker_compose_file'], path + ".docker_compose_file")
     parse_resources(d['resources'], path + ".resources")
+
+    if 'cluster' in d:
+        parse_cluster(d['cluster'], path + ".cluster")
 
     if 'timeout' in d:
         check_number(d['timeout'], path + ".timeout")

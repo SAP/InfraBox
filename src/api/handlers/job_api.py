@@ -7,6 +7,8 @@ import copy
 import urllib
 from datetime import datetime
 
+import requests
+
 from flask import jsonify, request, send_file, g, after_this_request, abort
 from flask_restplus import Resource
 
@@ -18,6 +20,7 @@ from pyinfrabox.testresult import validate_result
 from pyinfrabox import ValidationError
 
 from pyinfraboxutils import get_env
+from pyinfraboxutils.token import encode_job_token
 from pyinfraboxutils.ibrestplus import api
 from pyinfraboxutils.ibflask import job_token_required, app
 from pyinfraboxutils.storage import storage
@@ -407,12 +410,52 @@ class Output(Resource):
     @ns.expect(output_upload_parser)
     def post(self):
         job_id = g.token['job']['id']
+
         key = "%s.tar.gz" % job_id
         key = key.replace('/', '_')
 
+        stream = request.files['output.tar.gz'].stream
+
+        # determine all children
+        jobs = g.db.execute_many_dict('''
+            SELECT cluster_name, dependencies
+            FROM job
+            WHERE build_id = (SELECT build_id FROM job WHERE id = %s)
+            AND state = 'queued'
+        ''', [job_id])
+
+        clusters = set()
+
+        for j in jobs:
+            for dep in j['dependencies']:
+                if dep['job-id'] != job_id:
+                    continue
+
+                clusters.add(j['cluster_name'])
+
+        clusters = g.db.execute_many_dict('''
+            SELECT root_url
+            FROM cluster
+            WHERE active = true
+            AND name = ANY (%s)
+            AND name != %s
+        ''', [list(clusters), os.environ['INFRABOX_CLUSTER_NAME']])
+
         g.release_db()
-        #print(request.files)
-        storage.upload_output(request.files['output.tar.gz'].stream, key)
+
+        storage.upload_output(stream, key)
+
+        for c in clusters:
+            stream.seek(0)
+            url = '%s/api/job/output' % c['root_url']
+            files = {'output.tar.gz': stream}
+            token = encode_job_token(job_id)
+            headers = {'Authorization': 'bearer ' + token}
+            r = requests.post(url, files=files, headers=headers, timeout=120)
+
+            if r.status_code != 200:
+                abort(500, "Failed to upload data")
+
         return jsonify({})
 
 @ns.route("/output/<parent_job_id>")
@@ -482,6 +525,51 @@ def find_leaf_jobs(jobs):
 
 @ns.route("/create_jobs")
 class CreateJobs(Resource):
+    def get_target_cluster(self, clusters, cluster_selector):
+        for c in clusters:
+            matches = True
+            for s in cluster_selector:
+                if s not in c['labels']:
+                    matches = False
+                    break
+
+            if matches:
+                return c['name']
+
+        return None
+
+    def assign_cluster(self, jobs):
+        clusters = g.db.execute_many_dict('''
+            SELECT name, labels
+            FROM cluster
+        ''')
+
+        assigned_clusters = {}
+
+        for j in jobs:
+            if not 'cluster' in j:
+                j['cluster'] = {}
+
+            cluster_selector = j['cluster'].get('selector', None)
+            target_cluster = None
+
+            # Find a cluster which matches the selector
+            if cluster_selector:
+                target_cluster = self.get_target_cluster(clusters, cluster_selector)
+
+                if not target_cluster:
+                    abort(400, 'Could not find a cluster which could satisfy the selector: %s' %
+                          json.dumps(cluster_selector))
+
+            # Use the same cluster as the parent if there's not selector
+            if not target_cluster:
+                target_cluster = 'master'
+                for d in j.get('depends_on', []):
+                    target_cluster = assigned_clusters[d['job']]
+                    break
+
+            assigned_clusters[j['name']] = target_cluster
+            j['cluster']['name'] = target_cluster
 
     @job_token_required
     def post(self):
@@ -502,7 +590,7 @@ class CreateJobs(Resource):
                     continue
 
                 if sc.get('capabilities', None):
-                    abort(404, 'Capabilities are disabled')
+                    abort(400, 'Capabilities are disabled')
 
         result = g.db.execute_one("SELECT env_var, build_id FROM job WHERE id = %s", [parent_job_id])
         base_env_var = result[0]
@@ -603,6 +691,8 @@ class CreateJobs(Resource):
                     )
                 ''', [json.dumps(wait_job), job_id, build_id, project_id])
 
+        self.assign_cluster(jobs)
+
         for job in jobs:
             name = job["name"]
 
@@ -677,15 +767,16 @@ class CreateJobs(Resource):
                          INSERT INTO job (id, state, build_id, type, dockerfile, name,
                              project_id, dependencies, build_only,
                              created_at, repo,
-                             env_var_ref, env_var, build_arg, deployment, cpu, memory, timeout, resources, definition)
+                             env_var_ref, env_var, build_arg, deployment, cpu, memory,
+                             timeout, resources, definition, cluster_name)
                          VALUES (%s, 'queued', %s, %s, %s, %s, %s, %s, %s, %s, %s,
-                                 %s, %s, %s, %s, %s, %s, %s, %s, %s);
+                                 %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
                          """, [job_id, build_id, t, f, name,
                                project_id,
                                json.dumps(depends_on), build_only, datetime.now(),
                                repo, env_var_refs, env_vars,
                                build_arguments, deployments, limits_cpu, limits_memory, timeout,
-                               resources, json.dumps(job)])
+                               resources, json.dumps(job), job['cluster']['name']])
 
             # to make sure the get picked up in the right order by the scheduler
             time.sleep(0.1)

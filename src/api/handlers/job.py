@@ -2,7 +2,6 @@
 from flask import g, jsonify, abort, send_file
 from flask_restplus import Resource, fields
 
-from pyinfraboxutils import get_env
 from pyinfraboxutils.ibflask import auth_required, check_job_belongs_to_project
 from pyinfraboxutils.ibrestplus import api
 from pyinfraboxutils.storage import storage
@@ -80,14 +79,21 @@ class Project(Resource):
     @check_job_belongs_to_project
     def get(self, project_id, job_id):
         result = g.db.execute_one_dict('''
-            SELECT j.name, j.start_date, j.end_date, j.cpu, memory, j.state, j.id, b.build_number, j.env_var, j.env_var_ref
+            SELECT j.name, j.start_date, j.end_date, j.cpu, memory, j.state, j.id, b.build_number, j.env_var, j.env_var_ref, c.root_url
             FROM job j
             JOIN build b
                 ON b.id = j.build_id
                 AND b.project_id = j.project_id
+            JOIN cluster c
+                ON j.cluster_name = c.name
             WHERE j.id = %s
             AND j.project_id = %s
         ''', [job_id, project_id])
+
+        if not result:
+            abort(404)
+
+        root_url = result['root_url']
 
         m = {
             'name': result['name'],
@@ -105,7 +111,7 @@ class Project(Resource):
         }
 
         # Image
-        image = get_env('INFRABOX_DOCKER_REGISTRY_URL') + '/' + \
+        image = root_url + '/' + \
                 project_id + '/' + \
                 result['name'] + ':build_' + \
                 str(result['build_number'])
@@ -116,7 +122,7 @@ class Project(Resource):
 
         # Output
         m['output'] = {
-            'url': get_env('INFRABOX_ROOT_URL') + \
+            'url': root_url + \
                    '/api/v1/projects/' + project_id + \
                    '/jobs/' + job_id + '/output',
             'format': 'tar.gz'
@@ -124,7 +130,10 @@ class Project(Resource):
 
         # Dependencies
         deps = g.db.execute_many_dict('''
-             SELECT name, state, id FROM job
+             SELECT j.name, j.state, j.id, c.root_url
+             FROM job j
+             JOIN cluster c
+             ON j.cluster_name = c.name
              WHERE id IN (SELECT (p->>'job-id')::uuid
                           FROM job, jsonb_array_elements(job.dependencies) as p
                           WHERE job.id = %s)
@@ -132,7 +141,7 @@ class Project(Resource):
 
         for d in deps:
             d['output'] = {
-                'url': get_env('INFRABOX_ROOT_URL') + \
+                'url': d['root_url'] + \
                        '/api/v1/projects/' + project_id + \
                        '/jobs/' + d['id'] + '/output',
                 'format': 'tar.gz'

@@ -238,19 +238,15 @@
     value: {{ .Values.root_url }}
 {{ end }}
 
-
 {{ define "env_docker_registry" }}
 -
     name: INFRABOX_DOCKER_REGISTRY_ADMIN_USERNAME
-    valueFrom:
-        secretKeyRef:
-            name: infrabox-docker-registry
-            key: username
+    value: "admin"
 -
     name: INFRABOX_DOCKER_REGISTRY_ADMIN_PASSWORD
     valueFrom:
         secretKeyRef:
-            name: infrabox-docker-registry
+            name: infrabox-admin
             key: password
 {{ end }}
 

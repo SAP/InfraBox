@@ -11,6 +11,8 @@ metadata:
         {{- if .Values.ingress.tls.acme }}
         kubernetes.io/tls-acme: "true"
         {{- end }}
+        {{ else }}
+        nginx.ingress.kubernetes.io/ssl-redirect: "false"
         {{- end }}
 spec:
     rules:
@@ -20,11 +22,13 @@ spec:
         {{ end }}
         http:
             paths:
+            {{ if .Values.static.enabled }}
             -
                 path: /dashboard
                 backend:
                     serviceName: infrabox-static
                     servicePort: 80
+            {{ end }}
             -
                 path: /api
                 backend:
@@ -47,18 +51,21 @@ spec:
                 backend:
                     serviceName: infrabox-docker-registry
                     servicePort: 8080
+            {{ if .Values.static.enabled }}
             -
                 path: /
                 backend:
                     serviceName: infrabox-static
                     servicePort: 80
-{{ if .Values.ingress.tls.enabled }}
+            {{ end }}
+    {{ if .Values.ingress.tls.enabled }}
     tls:
         - hosts:
             - {{ .Values.ingress.tls.host }}
           secretName: infrabox-tls-certs
-{{ end }}
+    {{ end }}
 ---
+{{ if .Values.static.enabled }}
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
@@ -83,12 +90,12 @@ spec:
                 backend:
                     serviceName: infrabox-api
                     servicePort: 8080
-{{ if .Values.ingress.tls.enabled }}
+    {{ if .Values.ingress.tls.enabled }}
     tls:
         - hosts:
             - {{ .Values.ingress.tls.host }}
           secretName: infrabox-tls-certs
-{{ end }}
+    {{ end }}
 ---
 apiVersion: extensions/v1beta1
 kind: Ingress
@@ -114,10 +121,11 @@ spec:
                 backend:
                     serviceName: infrabox-swagger
                     servicePort: 8080
-{{ if .Values.ingress.tls.enabled }}
+    {{ if .Values.ingress.tls.enabled }}
     tls:
         - hosts:
             - {{ .Values.ingress.tls.host }}
           secretName: infrabox-tls-certs
+    {{ end }}
 {{ end }}
 {{ end }}
