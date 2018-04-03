@@ -1,11 +1,15 @@
 import json
+import os
 
 from flask import g, abort, Response, send_file, request
 from flask_restplus import Resource
 
+from pyinfraboxutils import get_logger
 from pyinfraboxutils.ibflask import auth_required, OK
 from pyinfraboxutils.storage import storage
 from api.namespaces import project as ns
+
+logger = get_logger('api')
 
 @ns.route('/<project_id>/jobs/')
 class Jobs(Resource):
@@ -282,6 +286,44 @@ class Tabs(Resource):
         ''', [job_id, project_id])
 
         return result
+
+@ns.route('/<project_id>/jobs/<job_id>/archive/download')
+class ArchiveDownload(Resource):
+
+    @auth_required(['user'], allow_if_public=True)
+    def get(self, project_id, job_id):
+        f = request.args.get('filename', None)
+
+        if not f:
+            abort(404)
+
+        key = '%s/%s' % (job_id, f)
+        f = storage.download_archive(key)
+
+        if not f:
+            logger.error(key)
+            abort(404)
+
+        return send_file(f, attachment_filename=os.path.basename(f))
+
+
+@ns.route('/<project_id>/jobs/<job_id>/archive')
+class Archive(Resource):
+
+    @auth_required(['user'], allow_if_public=True)
+    def get(self, project_id, job_id):
+        result = g.db.execute_one_dict('''
+            SELECT archive
+            FROM job
+            WHERE   id = %s
+                AND project_id = %s
+        ''', [job_id, project_id])
+
+        if not result or not result['archive']:
+            return []
+
+        return result['archive']
+
 
 @ns.route('/<project_id>/jobs/<job_id>/console')
 class Console(Resource):

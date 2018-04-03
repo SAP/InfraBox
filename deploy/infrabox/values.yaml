@@ -71,17 +71,8 @@ storage:
         # Your project ID
         project_id: <REQUIRED>
 
-        # Bucket name to store output of the jobs
-        # container_output_bucket: infrabox-container-output
-
-        # Bucket name of infraboxcli push uploads
-        # project_upload_bucket: infrabox-project-upload
-
-        # Bucket name for job cache
-        # container_content_cache_bucket: infrabox-container-content-cache
-
-        # Bucket name for docker registry
-        # docker_registry_bucket: infrabox-docker-registry
+        # Bucket name
+        bucket: infrabox
 
     s3:
         enabled: true
@@ -98,19 +89,12 @@ storage:
         # If https should be used or not
         # secure: true
 
-        # Bucket name to store output of the jobs
-        # container_output_bucket: infrabox-container-output
+        # Bucket name
+        bucket: infrabox
 
-        # Bucket name of infraboxcli push uploads
-        # project_upload_bucket: infrabox-project-upload
-
-        # Bucket name for job cache
-        # container_content_cache_bucket: infrabox-container-content-cache
-
-        # Bucket name for docker registry
-        # docker_registry_bucket: infrabox-docker-registry
     cloudsql:
         enabled: false
+
     postgres:
         enabled: true
 

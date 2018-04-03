@@ -200,19 +200,13 @@ class Kubernetes(Install):
             self.required_option('s3-region')
             self.required_option('s3-endpoint')
             self.required_option('s3-port')
-            self.required_option('s3-container-output-bucket')
-            self.required_option('s3-project-upload-bucket')
-            self.required_option('s3-container-content-cache-bucket')
-            self.required_option('s3-docker-registry-bucket')
+            self.required_option('s3-bucket')
 
             self.set('storage.gcs.enabled', False)
             self.set('storage.s3.enabled', True)
             self.set('storage.s3.region', args.s3_region)
             self.set('storage.s3.endpoint', args.s3_endpoint)
-            self.set('storage.s3.container_output_bucket', args.s3_container_output_bucket)
-            self.set('storage.s3.project_upload_bucket', args.s3_project_upload_bucket)
-            self.set('storage.s3.container_content_cache_bucket', args.s3_container_content_cache_bucket)
-            self.set('storage.s3.docker_registry_bucket', args.s3_docker_registry_bucket)
+            self.set('storage.s3.bucket', args.s3_bucket)
             self.set('storage.s3.port', args.s3_port)
             self.set('storage.s3.secure', args.s3_secure == 'true')
 
@@ -225,20 +219,14 @@ class Kubernetes(Install):
         elif args.storage == 'gcs':
             self.required_option('gcs-project-id')
             self.required_option('gcs-service-account-key-file')
-            self.required_option('gcs-container-output-bucket')
-            self.required_option('gcs-project-upload-bucket')
-            self.required_option('gcs-container-content-cache-bucket')
-            self.required_option('gcs-docker-registry-bucket')
+            self.required_option('gcs-bucket')
 
             self.check_file_exists(args.gcs_service_account_key_file)
 
             self.set('storage.s3.enabled', False)
             self.set('storage.gcs.enabled', True)
             self.set('storage.gcs.project_id', args.gcs_project_id)
-            self.set('storage.gcs.container_output_bucket', args.gcs_container_output_bucket)
-            self.set('storage.gcs.project_upload_bucket', args.gcs_project_upload_bucket)
-            self.set('storage.gcs.container_content_cache_bucket', args.gcs_container_content_cache_bucket)
-            self.set('storage.gcs.docker_registry_bucket', args.gcs_docker_registry_bucket)
+            self.set('storage.gcs.bucket', args.gcs_bucket)
 
             with open(args.gcs_service_account_key_file) as keyfile:
                 secret = {
@@ -747,18 +735,12 @@ def main():
     parser.add_argument('--s3-region')
     parser.add_argument('--s3-endpoint')
     parser.add_argument('--s3-port', default=443, type=int)
-    parser.add_argument('--s3-container-output-bucket', default='infrabox-container-output')
-    parser.add_argument('--s3-project-upload-bucket', default='infrabox-project-upload')
-    parser.add_argument('--s3-container-content-cache-bucket', default='infrabox-container-cache')
-    parser.add_argument('--s3-docker-registry-bucket', default='infrabox-docker-registry')
+    parser.add_argument('--s3-bucket', default='infrabox')
     parser.add_argument('--s3-secure', default='true')
 
     parser.add_argument('--gcs-project-id')
     parser.add_argument('--gcs-service-account-key-file')
-    parser.add_argument('--gcs-container-output-bucket')
-    parser.add_argument('--gcs-project-upload-bucket')
-    parser.add_argument('--gcs-container-content-cache-bucket')
-    parser.add_argument('--gcs-docker-registry-bucket')
+    parser.add_argument('--gcs-bucket')
 
     # Scheduler
     parser.add_argument('--scheduler-disabled', action='store_true', default=False)
