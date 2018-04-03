@@ -140,6 +140,10 @@ class Test(unittest.TestCase):
         self.run_it('/infrabox/context/infrabox/test/e2e/tests/docker_compose_job')
         self.expect_job('test')
 
+    def test_docker_job_archive(self):
+        self.run_it('/infrabox/context/infrabox/test/e2e/tests/docker_job_archive')
+        self.expect_job('test')
+
     def test_docker_compose_invalid_compose_file(self):
         self.run_it('/infrabox/context/infrabox/test/e2e/tests/docker_compose_invalid_compose_file')
         self.expect_job('Create Jobs',

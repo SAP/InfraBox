@@ -395,6 +395,37 @@ class Cache(Resource):
         return jsonify({})
 
 
+@ns.route("/archive")
+class Archive(Resource):
+
+    @job_token_required
+    def post(self):
+        job_id = g.token['job']['id']
+
+        for f in request.files:
+            stream = request.files[f].stream
+            key = '%s/%s' % (job_id, f)
+            app.logger.error(f)
+            app.logger.error(job_id)
+            storage.upload_archive(stream, key)
+            size = stream.tell()
+
+            archive = {
+                'filename': f,
+                'size': size
+            }
+
+            g.db.execute('''
+                UPDATE job
+                SET archive = archive || %s::jsonb
+                WHERE id = %s
+            ''', [json.dumps(archive), job_id])
+
+        g.db.commit()
+
+        return jsonify({})
+
+
 # TODO(steffen): check upload output sizes
 # max_output_size = os.environ['INFRABOX_JOB_MAX_OUTPUT_SIZE']
 

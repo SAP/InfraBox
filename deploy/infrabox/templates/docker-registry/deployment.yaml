@@ -67,13 +67,13 @@ spec:
                     value: "false"
                 -
                     name: REGISTRY_STORAGE_S3_ROOTDIRECTORY
-                    value: "/"
+                    value: "/docker-registry/"
                 -
                     name: REGISTRY_STORAGE_S3_CHUNKSIZE
                     value: "5242880"
                 -
                     name: REGISTRY_STORAGE_S3_BUCKET
-                    value: {{ default "infrabox-docker-registry" .Values.storage.s3.docker_registry_bucket | quote }}
+                    value: {{ default "infrabox" .Values.storage.s3.bucket | quote }}
                 -
                     name: REGISTRY_STORAGE_S3_REGION
                     value: {{ .Values.storage.s3.region }}
@@ -101,8 +101,11 @@ spec:
                     name: REGISTRY_STORAGE
                     value: gcs
                 -
+                    name: REGISTRY_STORAGE_GCS_ROOTDIRECTORY
+                    value: "/docker-registry/"
+                -
                     name: REGISTRY_STORAGE_GCS_BUCKET
-                    value: {{ default "infrabox-docker-registry" .Values.storage.gcs.docker_registry_bucket }}
+                    value: {{ default "infrabox" .Values.storage.gcs.bucket }}
                 -
                     name: REGISTRY_STORAGE_GCS_KEYFILE
                     value: /etc/infrabox/gcs/gcs_service_account.json

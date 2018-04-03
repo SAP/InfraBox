@@ -236,6 +236,12 @@ function setStats (state, data) {
     job.stats = stats
 }
 
+function setArchive (state, data) {
+    const job = data.job
+    const archive = data.archive
+    job.archive = archive
+}
+
 function setTabs (state, data) {
     const job = data.job
     const tabs = data.tabs
@@ -305,7 +311,8 @@ const mutations = {
     setTabs,
     setAdminUsers,
     setAdminProjects,
-    setClusters
+    setClusters,
+    setArchive
 }
 
 const getters = {}

@@ -102,9 +102,7 @@ services:
             - INFRABOX_STORAGE_S3_ENDPOINT=minio
             - INFRABOX_STORAGE_S3_SECURE=false
             - INFRABOX_STORAGE_S3_REGION=us-east-1
-            - INFRABOX_STORAGE_S3_CONTAINER_CONTENT_CACHE_BUCKET=infrabox-container-content-cache
-            - INFRABOX_STORAGE_S3_PROJECT_UPLOAD_BUCKET=infrabox-project-upload
-            - INFRABOX_STORAGE_S3_CONTAINER_OUTPUT_BUCKET=infrabox-container-output
+            - INFRABOX_STORAGE_S3_BUCKET=infrabox
             - INFRABOX_GITHUB_ENABLED=false
             - INFRABOX_GITHUB_LOGIN_ENABLED=false
             - INFRABOX_GERRIT_ENABLED=false

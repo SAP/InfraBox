@@ -7,10 +7,7 @@ until mc ls compose &> /dev/null; do
     sleep 1
 done
 
-mc mb compose/infrabox-container-content-cache
-mc mb compose/infrabox-project-upload
-mc mb compose/infrabox-container-output
-mc mb compose/infrabox-docker-registry
+mc mb compose/infrabox
 
 while true
 do

@@ -25,69 +25,67 @@ class S3(object):
         url += get_env('INFRABOX_STORAGE_S3_PORT')
         self.url = url
 
-        self.upload_bucket = get_env('INFRABOX_STORAGE_S3_PROJECT_UPLOAD_BUCKET')
-        self.cache_bucket = get_env('INFRABOX_STORAGE_S3_CONTAINER_CONTENT_CACHE_BUCKET')
-        self.output_bucket = get_env('INFRABOX_STORAGE_S3_CONTAINER_OUTPUT_BUCKET')
+        self.bucket = get_env('INFRABOX_STORAGE_S3_BUCKET')
+
+    def _upload(self, stream, key):
+        client = self._get_client()
+        client.put_object(Body=stream,
+                          Bucket=self.bucket,
+                          Key=key)
 
     def upload_project(self, stream, key):
-        client = self._get_client()
-        client.put_object(Body=stream,
-                          Bucket=self.upload_bucket,
-                          Key=key)
+        return self._upload(stream, 'upload/%s' % key)
 
     def upload_cache(self, stream, key):
-        client = self._get_client()
-        client.put_object(Body=stream,
-                          Bucket=self.cache_bucket,
-                          Key=key)
+        return self._upload(stream, 'cache/%s' % key)
 
     def upload_output(self, stream, key):
-        client = self._get_client()
-        client.put_object(Body=stream,
-                          Bucket=self.output_bucket,
-                          Key=key)
+        return self._upload(stream, 'output/%s' % key)
+
+    def upload_archive(self, stream, key):
+        return self._upload(stream, 'archive/%s' % key)
 
     def download_source(self, key):
-        return self._download(self.upload_bucket, key)
+        return self._download('upload/%s' % key)
 
     def download_output(self, key):
-        return self._download(self.output_bucket, key)
+        return self._download('output/%s' % key)
+
+    def download_archive(self, key):
+        return self._download('archive/%s' % key)
 
     def download_cache(self, key):
-        return self._download(self.cache_bucket, key)
+        return self._download('cache/%s' % key)
 
     def delete_cache(self, key):
-        return self._delete(self.cache_bucket, key)
+        return self._delete('cache/%s' % key)
 
     def create_buckets(self):
         client = self._get_client()
         try:
-            client.create_bucket(Bucket=self.upload_bucket)
-            client.create_bucket(Bucket=self.cache_bucket)
-            client.create_bucket(Bucket=self.output_bucket)
+            client.create_bucket(Bucket=self.bucket)
         except:
             pass
 
-    def _delete(self, bucket, key):
+    def _delete(self, key):
         client = self._get_client()
         try:
-            client.delete_object(Bucket=bucket,
+            client.delete_object(Bucket=self.bucket,
                                  Key=key)
-        except Exception as e:
-            print e
-            return None
+        except:
+            pass
 
 
-    def _download(self, bucket, key):
+    def _download(self, key):
         client = self._get_client()
         try:
-            result = client.get_object(Bucket=bucket,
+            result = client.get_object(Bucket=self.bucket,
                                        Key=key)
         except:
             return None
 
-        path = '/tmp/%s_%s' % (uuid.uuid4(), key)
-        with open(path, 'w') as f:
+        path = '/tmp/%s_%s' % (uuid.uuid4(), key.replace('/', '_'))
+        with open(path, 'w+') as f:
             f.write(result['Body'].read())
 
         if 'g' in globals():
@@ -109,50 +107,49 @@ class S3(object):
         return client
 
 class GCS(object):
+    def __init__(self):
+        self.bucket = get_env('INFRABOX_STORAGE_GCS_BUCKET')
+
+
     def upload_project(self, stream, key):
-        bucket = get_env('INFRABOX_STORAGE_GCS_PROJECT_UPLOAD_BUCKET')
-        self._upload(stream, bucket, key)
+        self._upload(stream, 'upload/%s' % key)
 
     def upload_cache(self, stream, key):
-        bucket = get_env('INFRABOX_STORAGE_GCS_CONTAINER_CONTENT_CACHE_BUCKET')
-        self._upload(stream, bucket, key)
+        self._upload(stream, 'cache/%s' % key)
 
     def upload_output(self, stream, key):
-        bucket = get_env('INFRABOX_STORAGE_GCS_CONTAINER_OUTPUT_BUCKET')
-        self._upload(stream, bucket, key)
+        self._upload(stream, 'output/%s' % key)
 
+    def download_archive(self, key):
+        return self._download('archive/%s' % key)
 
     def download_source(self, key):
-        bucket = get_env('INFRABOX_STORAGE_GCS_PROJECT_UPLOAD_BUCKET')
-        return self._download(bucket, key)
+        return self._download('upload/%s' % key)
 
     def download_output(self, key):
-        bucket = get_env('INFRABOX_STORAGE_GCS_CONTAINER_OUTPUT_BUCKET')
-        return self._download(bucket, key)
+        return self._download('output/%s' % key)
 
     def download_cache(self, key):
-        bucket = get_env('INFRABOX_STORAGE_GCS_CONTAINER_CONTENT_CACHE_BUCKET')
-        return self._download(bucket, key)
+        return self._download('cache/%s' % key)
 
     def delete_cache(self, key):
-        bucket = get_env('INFRABOX_STORAGE_GCS_CONTAINER_CONTENT_CACHE_BUCKET')
-        return self._delete(bucket, key)
+        return self._delete('cache/%s' % key)
 
-    def _delete(self, bucket, key):
+    def _delete(self, key):
         client = gcs.Client(project=get_env('INFRABOX_STORAGE_GCS_PROJECT_ID'))
-        bucket = client.get_bucket(bucket)
+        bucket = client.get_bucket(self.bucket)
         blob = bucket.blob(key)
         blob.delete()
 
-    def _upload(self, stream, bucket, key):
+    def _upload(self, stream, key):
         client = gcs.Client(project=get_env('INFRABOX_STORAGE_GCS_PROJECT_ID'))
-        bucket = client.get_bucket(bucket)
+        bucket = client.get_bucket(self.bucket)
         blob = bucket.blob(key)
         blob.upload_from_file(stream)
 
-    def _download(self, bucket, key):
+    def _download(self, key):
         client = gcs.Client(project=get_env('INFRABOX_STORAGE_GCS_PROJECT_ID'))
-        bucket = client.get_bucket(bucket)
+        bucket = client.get_bucket(self.bucket)
         blob = bucket.get_blob(key)
 
         if not blob:
