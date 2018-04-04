@@ -1,0 +1,50 @@
+version: "3.2"
+
+services:
+    docker_registry:
+        build:
+            context: ../..
+            dockerfile: infrabox/test-registry/mock-registry/Dockerfile
+    postgres:
+        build:
+            context: ../..
+            dockerfile: src/postgres/Dockerfile
+    docker_auth:
+        build:
+            context: ../..
+            dockerfile: infrabox/test-registry/Dockerfile_auth
+        environment:
+            - INFRABOX_SERVICE=registry-auth
+            - INFRABOX_VERSION=testing
+            - INFRABOX_DATABASE_USER=postgres
+            - INFRABOX_DATABASE_PASSWORD=postgres
+            - INFRABOX_DATABASE_HOST=postgres
+            - INFRABOX_DATABASE_PORT=5432
+            - INFRABOX_DATABASE_DB=postgres
+    docker_nginx:
+        build:
+            context: ../..
+            dockerfile: src/docker-registry/nginx/Dockerfile
+        links:
+            - docker_registry:infrabox-docker-registry
+            - docker_auth:infrabox-docker-registry-auth
+        environment:
+            - INFRABOX_DOCKER_REGISTRY_ADMIN_PASSWORD=admin_pw
+            - INFRABOX_DOCKER_REGISTRY_ADMIN_USERNAME=admin_user
+            - INFRABOX_AUTH_HOST=infrabox-docker-registry-auth
+            - INFRABOX_REGISTRY_HOST=infrabox-docker-registry
+    test:
+        build:
+            context: ../..
+            dockerfile: infrabox/test-registry/Dockerfile
+        command: /wait-for-webserver.sh docker-auth:8081 /test/entrypoint.sh
+        links:
+            - docker_nginx:docker-registry
+            - docker_auth:docker-auth
+        environment:
+            - INFRABOX_DATABASE_USER=postgres
+            - INFRABOX_DATABASE_PASSWORD=postgres
+            - INFRABOX_DATABASE_HOST=postgres
+            - INFRABOX_DATABASE_PORT=5432
+            - INFRABOX_DATABASE_DB=postgres
+

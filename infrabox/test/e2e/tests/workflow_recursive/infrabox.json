@@ -1,0 +1,8 @@
+{
+    "version": 1,
+    "jobs": [{
+        "type": "workflow",
+        "name": "flow",
+        "infrabox_file": "infrabox.json"
+    }]
+}

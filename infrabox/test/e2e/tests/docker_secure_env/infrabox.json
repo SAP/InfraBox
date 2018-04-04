@@ -1,0 +1,11 @@
+{
+    "version": 1,
+    "jobs": [{
+        "type": "docker",
+        "name": "test",
+        "docker_file": "Dockerfile",
+        "build_only": false,
+        "resources": { "limits": { "cpu": 1, "memory": 1024 } },
+        "environment": { "ENV_VAR_1": { "$secret": "SECRET_ENV" } }
+    }]
+}

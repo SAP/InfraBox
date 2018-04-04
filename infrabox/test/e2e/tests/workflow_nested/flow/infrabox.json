@@ -1,0 +1,20 @@
+{
+    "version": 1,
+    "jobs": [{
+        "name": "sub-1",
+        "type": "docker",
+        "docker_file": "Dockerfile_flow",
+        "resources": { "limits": { "cpu": 1, "memory": 1024 } }
+    }, {
+        "name": "sub-2",
+        "type": "workflow",
+        "infrabox_file": "nested-flow/infrabox.json",
+        "depends_on": ["sub-1"]
+     }, {
+        "name": "sub-3",
+        "type": "docker",
+        "docker_file": "Dockerfile_flow",
+        "resources": { "limits": { "cpu": 1, "memory": 1024 } },
+        "depends_on": ["sub-1"]
+    }]
+}
