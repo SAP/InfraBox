@@ -418,7 +418,6 @@ class Kubernetes(Install):
         self.set('ingress.tls.force_redirect', not self.args.ingress_tls_dont_force_redirect)
         self.set('ingress.tls.enabled', not self.args.ingress_tls_disabled)
         self.set('ingress.tls.host', self.args.ingress_tls_host)
-        self.set('ingress.tls.acme', self.args.ingress_tls_acme)
 
     def main(self):
         self.required_option('root-url')
@@ -774,7 +773,6 @@ def main():
     parser.add_argument('--ingress-tls-disabled', action='store_true', default=False)
     parser.add_argument('--ingress-tls-host')
     parser.add_argument('--ingress-tls-dont-force-redirect', action='store_true', default=False)
-    parser.add_argument('--ingress-tls-acme', action='store_true', default=False)
 
     # Account
     parser.add_argument('--account-signup-enabled', action='store_true', default=False)
