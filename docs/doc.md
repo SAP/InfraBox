@@ -449,3 +449,6 @@ InfraBox can store secret values for you, so you don't have to store passwords o
 - [Environment Variable](#environment-variables)
 - [Docker Registry Passwird](#deployments)
 
+# Archive
+Sometimes it's helpful to store some files for later access. Every file you write to `/infrabox/upload/archive` will later be accessible in the Dashboard for the job.
+

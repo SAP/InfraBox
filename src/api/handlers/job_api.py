@@ -1029,7 +1029,7 @@ class Testresult(Resource):
             with open(path, 'r') as testresult:
                 data = json.load(testresult)
         except:
-            abort(404, 'Failed to parse json')
+            abort(400, 'Failed to parse json')
 
         # Validate it
         try:
@@ -1040,7 +1040,7 @@ class Testresult(Resource):
         testruns = g.db.execute_one("SELECT COUNT(*) as cnt FROM test_run WHERE job_id = %s", [job_id])
 
         if testruns[0] > 0:
-            abort(404, "testrun already created")
+            abort(400, "testrun already created")
 
         rows = g.db.execute_one("""
                 SELECT j.project_id, b.build_number
