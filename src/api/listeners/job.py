@@ -92,8 +92,6 @@ def __handle_event(event, socketio):
         }
     }
 
-    logger.error(json.dumps(msg, indent=4))
-
     socketio.emit('notify:job', msg, room=build_id)
     socketio.emit('notify:job', msg, room=project_id)
 
