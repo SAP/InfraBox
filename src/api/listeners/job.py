@@ -67,7 +67,7 @@ def __handle_event(event, socketio):
 		WHERE
                     c.id = %s
                     c.project_id = %s
-            ''', [commit_id, project])
+            ''', [commit_id, project_id])
 
             pull_request_id = commit['pull_request_id']
 
