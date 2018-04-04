@@ -7,6 +7,6 @@ Now create a Kubernetes secret for the certificate:
 
     kubectl create -n infrabox-system secret tls infrabox-tls-certs --key /tmp/tls.key --cert /tmp/tls.crt
 
-**It's important to pass the following option `install.py` when configuring InfraBox:**
+**It's important to pass the following option to `install.py` when configuring InfraBox:**
 
     --general-dont-check-certificates
