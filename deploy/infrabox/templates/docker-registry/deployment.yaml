@@ -39,15 +39,7 @@ spec:
                 image: {{ .Values.general.docker_registry }}/{{ default "docker-registry-nginx" .Values.docker_registry.nginx_image }}:{{ .Values.docker_registry.nginx_tag }}
                 imagePullPolicy: Always
                 env:
-                -
-                    name: INFRABOX_DOCKER_REGISTRY_ADMIN_USERNAME
-                    value: "admin"
-                -
-                    name: INFRABOX_DOCKER_REGISTRY_ADMIN_PASSWORD
-                    valueFrom:
-                        secretKeyRef:
-                            name: infrabox-admin
-                            key: password
+                {{ include "env_docker_registry" . | indent 16 }}
                 -
                     name: INFRABOX_AUTH_HOST
                     value: localhost
@@ -63,6 +55,9 @@ spec:
                 -
                     name: REGISTRY_HTTP_HOST
                     value: {{ .Values.docker_registry.url }}
+                -
+                    name: REGISTRY_LOG_LEVEL
+                    value: debug
                 {{ if .Values.storage.s3.enabled }}
                 -
                     name: REGISTRY_STORAGE
@@ -72,13 +67,13 @@ spec:
                     value: "false"
                 -
                     name: REGISTRY_STORAGE_S3_ROOTDIRECTORY
-                    value: "/"
+                    value: "/docker-registry/"
                 -
                     name: REGISTRY_STORAGE_S3_CHUNKSIZE
                     value: "5242880"
                 -
                     name: REGISTRY_STORAGE_S3_BUCKET
-                    value: {{ default "infrabox-docker-registry" .Values.storage.s3.docker_registry_bucket | quote }}
+                    value: {{ default "infrabox" .Values.storage.s3.bucket | quote }}
                 -
                     name: REGISTRY_STORAGE_S3_REGION
                     value: {{ .Values.storage.s3.region }}
@@ -87,7 +82,7 @@ spec:
                     value: http://{{ .Values.storage.s3.endpoint }}:{{ .Values.storage.s3.port }}
                 -
                     name: REGISTRY_STORAGE_S3_SECURE
-                    value: {{ .Values.storage.s3.secure | quote }}
+                    value: "true"
                 -
                     name: REGISTRY_STORAGE_S3_ACCESSKEY
                     valueFrom:
@@ -106,8 +101,11 @@ spec:
                     name: REGISTRY_STORAGE
                     value: gcs
                 -
+                    name: REGISTRY_STORAGE_GCS_ROOTDIRECTORY
+                    value: "/docker-registry/"
+                -
                     name: REGISTRY_STORAGE_GCS_BUCKET
-                    value: {{ default "infrabox-docker-registry" .Values.storage.gcs.docker_registry_bucket }}
+                    value: {{ default "infrabox" .Values.storage.gcs.bucket }}
                 -
                     name: REGISTRY_STORAGE_GCS_KEYFILE
                     value: /etc/infrabox/gcs/gcs_service_account.json

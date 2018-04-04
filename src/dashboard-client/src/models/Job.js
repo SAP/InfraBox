@@ -88,6 +88,7 @@ export default class Job {
         this.tests = []
         this.stats = []
         this.tabs = []
+        this.archive = []
         this.currentSection = null
         this.linesProcessed = 0
         this.message = message
@@ -209,6 +210,16 @@ export default class Job {
             })
     }
 
+    loadArchive () {
+        return NewAPIService.get(`projects/${this.project.id}/jobs/${this.id}/archive`)
+            .then((archive) => {
+                store.commit('setArchive', { job: this, archive: archive })
+            })
+            .catch((err) => {
+                NotificationService.$emit('NOTIFICATION', new Notification(err))
+            })
+    }
+
     loadTests () {
         return NewAPIService.get(`projects/${this.project.id}/jobs/${this.id}/testruns`)
             .then((tests) => {
@@ -247,6 +258,11 @@ export default class Job {
 
     downloadDataOutput () {
         const url = `projects/${this.project.id}/jobs/${this.id}/output`
+        NewAPIService.openAPIUrl(url)
+    }
+
+    downloadArchive (filename) {
+        const url = `projects/${this.project.id}/jobs/${this.id}/archive/download?filename=${filename}`
         NewAPIService.openAPIUrl(url)
     }
 

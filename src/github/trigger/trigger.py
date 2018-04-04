@@ -116,9 +116,9 @@ class Trigger(object):
         self.execute('''
             INSERT INTO job (id, state, build_id, type,
                              name, project_id, build_only,
-                             dockerfile, cpu, memory, repo, env_var)
+                             dockerfile, cpu, memory, repo, env_var, cluster_name)
             VALUES (gen_random_uuid(), 'queued', %s, 'create_job_matrix',
-                    'Create Jobs', %s, false, '', 1, 1024, %s, %s)
+                    'Create Jobs', %s, false, '', 1, 1024, %s, %s, 'master')
         ''', [build_id, project_id, json.dumps(git_repo), env], fetch=False)
 
 
@@ -229,7 +229,7 @@ class Trigger(object):
 
     def handle_pull_request(self, event):
         if event['action'] not in ['opened', 'reopened', 'synchronize']:
-            return
+            return res(200, 'action ignored')
 
         result = self.execute('''
             SELECT id, project_id, private FROM repository WHERE github_id = %s;

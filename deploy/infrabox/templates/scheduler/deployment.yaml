@@ -10,7 +10,7 @@ metadata:
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1beta1
 metadata:
-  name: infrabox-scheduler
+  name: infrabox-scheduler-{{ .Values.cluster.name }}
   namespace: {{ default "infrabox-system" .Values.general.system_namespace }}
 subjects:
 - kind: ServiceAccount
@@ -68,17 +68,17 @@ spec:
                     name: INFRABOX_ROOT_URL
                     value: {{ required "root_url is required" .Values.root_url }}
                 -
-                    name: INFRABOX_DOCKER_REGISTRY_URL
-                    value: {{ required "docker_registry.url is required" .Values.docker_registry.url }}
-                -
                     name: INFRABOX_SERVICE
                     value: {{ default "scheduler" .Values.scheduler.image }}
                 -
                     name: INFRABOX_VERSION
                     value: {{ required "scheduler.tag is required" .Values.scheduler.tag }}
                 -
-                    name: INFRABOX_SCHEDULER_LOG_LEVEL
-                    value: {{ default "info" .Values.scheduler.log.level }}
+                    name: INFRABOX_CLUSTER_NAME
+                    value: {{ required "cluster.name is required" .Values.cluster.name }}
+                -
+                    name: INFRABOX_CLUSTER_LABELS
+                    value: {{ .Values.cluster.labels }}
                 ports:
                 - containerPort: 8000
                   name: prometheus

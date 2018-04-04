@@ -13,7 +13,7 @@ class User(Resource):
     @auth_required(['user'], check_project_access=False)
     def get(self):
         user = g.db.execute_one_dict('''
-            SELECT github_id, username, avatar_url, name, email
+            SELECT github_id, username, avatar_url, name, email, id
             FROM "user"
             WHERE id = %s
         ''', [g.token['user']['id']])

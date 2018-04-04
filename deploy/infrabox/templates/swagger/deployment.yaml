@@ -1,4 +1,4 @@
-{{ if .Values.api.enabled }}
+{{ if .Values.static.enabled }}
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:

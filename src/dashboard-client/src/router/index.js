@@ -12,6 +12,7 @@ import BuildDetailJobs from '@/components/build/BuildDetailJobs'
 import JobDetail from '@/components/job/JobDetail'
 import TestDetail from '@/components/test/TestDetail'
 import AdminUsers from '@/components/admin/AdminUsers'
+import AdminClusters from '@/components/admin/AdminClusters'
 import AdminProjects from '@/components/admin/AdminProjects'
 
 Vue.use(Router)
@@ -41,6 +42,10 @@ export default new Router({
         path: '/admin/users',
         name: 'AdminUsers',
         component: AdminUsers
+    }, {
+        path: '/admin/clusters',
+        name: 'AdminClusters',
+        component: AdminClusters
     }, {
         path: '/project/:projectName',
         name: 'ProjectDetailBuilds',

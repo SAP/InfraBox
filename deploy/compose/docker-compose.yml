@@ -102,20 +102,16 @@ services:
             - INFRABOX_STORAGE_S3_ENDPOINT=minio
             - INFRABOX_STORAGE_S3_SECURE=false
             - INFRABOX_STORAGE_S3_REGION=us-east-1
-            - INFRABOX_STORAGE_S3_CONTAINER_CONTENT_CACHE_BUCKET=infrabox-container-content-cache
-            - INFRABOX_STORAGE_S3_PROJECT_UPLOAD_BUCKET=infrabox-project-upload
-            - INFRABOX_STORAGE_S3_CONTAINER_OUTPUT_BUCKET=infrabox-container-output
+            - INFRABOX_STORAGE_S3_BUCKET=infrabox
             - INFRABOX_GITHUB_ENABLED=false
             - INFRABOX_GITHUB_LOGIN_ENABLED=false
             - INFRABOX_GERRIT_ENABLED=false
             - INFRABOX_ACCOUNT_LDAP_ENABLED=false
-            - INFRABOX_ACCOUNT_SIGNUP_ENABLED=true
             - INFRABOX_API_PORT=8080
             - INFRABOX_API_MONITORING_PORT=8080
-            - INFRABOX_ROOT_URL="localhost"
-            - INFRABOX_DOCKER_REGISTRY_URL="localhost"
             - INFRABOX_JOB_MAX_OUTPUT_SIZE=104857600
             - INFRABOX_JOB_SECURITY_CONTEXT_CAPABILITIES_ENABLED=false
+            - INFRABOX_CLUSTER_NAME=master
         links:
             - minio
         networks:

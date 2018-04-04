@@ -32,19 +32,7 @@ resources:
   properties:
 
 - type: storage.v1.bucket
-  name: {{ PROJECT }}-{{ CLUSTER_NAME }}-container-output
-  properties:
-
-- type: storage.v1.bucket
-  name: {{ PROJECT }}-{{ CLUSTER_NAME }}-project-upload
-  properties:
-
-- type: storage.v1.bucket
-  name: {{ PROJECT }}-{{ CLUSTER_NAME }}-content-cache
-  properties:
-
-- type: storage.v1.bucket
-  name: {{ PROJECT }}-{{ CLUSTER_NAME }}-docker-registry
+  name: {{ PROJECT }}-{{ CLUSTER_NAME }}-infrabox
   properties:
 
 - name: {{ SA_NAME }}
@@ -185,10 +173,7 @@ resources:
             --storage gcs \\
             --gcs-project-id {{ PROJECT }} \\
             --gcs-service-account-key-file gcs_sa.json \\
-            --gcs-container-output-bucket {{ PROJECT }}-{{ CLUSTER_NAME }}-container-output \\
-            --gcs-project-upload-bucket {{ PROJECT }}-{{ CLUSTER_NAME }}-project-upload \\
-            --gcs-container-content-cache-bucket {{ PROJECT }}-{{ CLUSTER_NAME }}-content-cache \\
-            --gcs-docker-registry {{ PROJECT }}-{{ CLUSTER_NAME }}-docker-registry \\
+            --gcs-bucket {{ PROJECT }}-{{ CLUSTER_NAME }}-infrabox \\
             {% if properties['githubEnabled'] %}
             --github-enabled \\
             --github-client-id {{ properties['githubClientID'] }} \\
