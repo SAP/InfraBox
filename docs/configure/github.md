@@ -1,12 +1,12 @@
 # Configure GitHub
 
-To be able to use the GitHub integration you first have to create a OAuth application. See [here](https://developer.github.com/apps/building-integrations/setting-up-and-registering-oauth-apps/registering-oauth-apps/) for some instructions on how to create it.
+To be able to use the GitHub integration you first have to create an OAuth application. See [here](https://developer.github.com/apps/building-integrations/setting-up-and-registering-oauth-apps/registering-oauth-apps/) for some instructions on how to create it.
 
 As "Authorization callback URL" use:
 
-    http://<URL>:<DashboardNodePort>/github/auth/callback
+    https://<YOUR_DOMAIN>/github/auth/callback
 
-If you use github.com and not a local GitHub Enterprise installation you may have to tunnel the webhooks. See [these instructions](https://developer.github.com/webhooks/configuring/#using-ngrok) on how you can do it with ngrok.
+When configuring your InfraBox with `install.py` set these options:
 
     --github-enabled
     --github-client-id <GITHUB_CLIENT_ID>
@@ -22,4 +22,8 @@ By default the login with a GitHub account to InfraBox is disabled. If you would
 
     --github-login-enabled
 
-Now your users can login with their GitHub account.
+Now your users can login with their GitHub account. If you want to limit login to users belonging to a certain set of GitHub Organizations you can additionaly specify a comma separated list of GitHub Organization names:
+
+    --github-login-allowed-organizations Org1,Org2
+
+With this only users who belong to at least one of the organization may be able to login.

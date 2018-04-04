@@ -6,14 +6,11 @@ metadata:
     namespace: {{ default "infrabox-system" .Values.general.system_namespace }}
     annotations:
         kubernetes.io/ingress.class: "nginx"
-        nginx.ingress.kubernetes.io/proxy-read-timeout: 1200
-        nginx.ingress.kubernetes.io/proxy-connect-timeout: 1200
-        nginx.ingress.kubernetes.io/proxy-send-timeout: 1200
+        nginx.ingress.kubernetes.io/proxy-read-timeout: "1200"
+        nginx.ingress.kubernetes.io/proxy-connect-timeout: "1200"
+        nginx.ingress.kubernetes.io/proxy-send-timeout: "1200"
         {{ if .Values.ingress.tls.enabled }}
         ingress.kubernetes.io/force-ssl-redirect: {{ .Values.ingress.tls.force_redirect | quote }}
-        {{- if .Values.ingress.tls.acme }}
-        kubernetes.io/tls-acme: "true"
-        {{- end }}
         {{ else }}
         nginx.ingress.kubernetes.io/ssl-redirect: "false"
         {{- end }}
