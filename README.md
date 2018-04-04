@@ -17,13 +17,12 @@ Some of InfraBox' features are:
 ## Want to see it in action?
 InfraBox is built on InfraBox. See all the builds [here](https://infrabox.ninja/dashboard/#/project/infrabox).
 
-## You want to try it for free?
-Have a look at the InfraBox playground [https://infrabox.ninja/](https://infrabox.ninja/dashboard/#/login).
-It's a hosted version of InfraBox. You can use it for free with up to 1 CPU and 1024MB per job.
+## Requirements
+Currently InfraBox requires the following list of components to be already available:
 
-Quickstart Guides:
-- [Connect your github repository](docs/guides/connect_github.md)
-- [Upload a workflow (you don't need a git repository)](docs/guides/upload.md)
+- Kubernetes Cluster (1.9 or higher)
+- PostgreSQL 9.6
+- Object Store (S3 (or S3 compatible like minio) or Google Cloud Storage)
 
 ## Install InfraBox
 You have multiple options to install InfraBox:
@@ -32,14 +31,14 @@ You have multiple options to install InfraBox:
 - [Kubernetes Engine (GCP, Deployment Manager)](deploy/gcp/deployment_manager/)
 - [Kubernetes Engine (GCP, manual configuration)](docs/install_gcloud.md)
 
-## Contribute
-Any contribute is highly appreciated. See our [developer's documentation](docs/dev.md) for details.
-
-## Contact
+## How to obtain support
+If you need help please post your questions to [Stack Overflow](https://stackoverflow.com/questions/tagged/infrabox).
+In case you found a bug please open a [Github Issue](https://github.com/InfraBox/infrabox/issues).
 Follow us on Twitter: [@Infra_Box](https://twitter.com/Infra_Box) or have look at our Slack channel [infrabox.slack.com](https://infrabox.slack.com/).
 
-|Component|Coverage|
-|---------|--------|
-|github-review|[![coverage](https://infrabox.ninja/api/v1/projects/0c8204bb-7ce5-48a3-aa08-0fc38d7255d0/badge.svg?subject=coverage&job_name=ib/test/github-review)](https://infrabox.ninja/dashboard/#/project/infrabox)|
-|pyinfrabox|[![coverage](https://infrabox.ninja/api/v1/projects/0c8204bb-7ce5-48a3-aa08-0fc38d7255d0/badge.svg?subject=coverage&job_name=ib/test/pyinfrabox)](https://infrabox.ninja/dashboard/#/project/infrabox)|
-|registry-auth|[![coverage](https://infrabox.ninja/api/v1/projects/0c8204bb-7ce5-48a3-aa08-0fc38d7255d0/badge.svg?subject=coverage&job_name=ib/test/registry-auth)](https://infrabox.ninja/dashboard/#/project/infrabox)|
+## Contribute
+Any contribution is highly appreciated. See our [contribution guide](CONTRIBUTING.md) for details.
+
+## License
+Copyright (c) 2018 SAP SE or an SAP affiliate company. All rights reserved.
+This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the [LICENSE file](LICENSE).
