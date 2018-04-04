@@ -69,7 +69,7 @@
                     </a>
                 </md-list-item>
 
-                <md-list-item>
+                <md-list-item v-if="$store.state.user.isAdmin()">
                     <md-icon><i class="fa fa-fw fa-unlock"></i></md-icon>
                     <span>Admin</span>
                     <md-list-expand>
