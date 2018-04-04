@@ -1,0 +1,69 @@
+{{ if .Values.gerrit.enabled }}
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+    name: infrabox-gerrit
+    namespace: {{ default "infrabox-system" .Values.general.system_namespace }}
+    labels:
+        app: infrabox-gerrit
+spec:
+    replicas: 1
+    template:
+        metadata:
+            labels:
+                app: infrabox-gerrit
+        spec:
+            {{- if .Values.gerrit.node_selector }}
+            nodeSelector:
+{{ toYaml .Values.gerrit.node_selector | indent 16 }}
+            {{- end }}
+            containers:
+            {{ include "containers_database" . | indent 12 }}
+            -
+                name: gerrit-trigger
+                image: {{ required "general.docker_registry is required" .Values.general.docker_registry }}/{{ default "gerrit-trigger" .Values.gerrit.trigger.image }}:{{ required "gerrit.trigger.tag is required" .Values.gerrit.trigger.tag }}
+                imagePullPolicy: Always
+                env:
+                {{ include "env_database" . | indent 16 }}
+                {{ include "env_gerrit" . | indent 16 }}
+                {{ include "env_general" . | indent 16 }}
+                -
+                    name: INFRABOX_SERVICE
+                    value: {{ default "gerrit-trigger" .Values.gerrit.trigger.image }}
+                -
+                    name: INFRABOX_VERSION
+                    value: {{ required "gerrit.trigger.tag is required" .Values.gerrit.trigger.tag }}
+                volumeMounts:
+                - name: gerrit-ssh
+                  mountPath: /tmp/gerrit
+                  readOnly: true
+            {{ if .Values.gerrit.review.enabled }}
+            -
+                name: gerrit-review
+                image: {{ required "general.docker_registry is required" .Values.general.docker_registry }}/{{ default "gerrit-review" .Values.gerrit.review.image }}:{{ required "gerrit.review.tag is required" .Values.gerrit.review.tag }}
+                imagePullPolicy: Always
+                env:
+                {{ include "env_database" . | indent 16 }}
+                {{ include "env_gerrit" . | indent 16 }}
+                {{ include "env_general" . | indent 16 }}
+                -
+                    name: INFRABOX_SERVICE
+                    value: {{ default "gerrit-review" .Values.gerrit.review.image }}
+                -
+                    name: INFRABOX_VERSION
+                    value: {{ required "gerrit.tag is required" .Values.gerrit.review.tag }}
+                -
+                    name: INFRABOX_ROOT_URL
+                    value: {{ .Values.root_url }}
+                volumeMounts:
+                - name: gerrit-ssh
+                  mountPath: /tmp/gerrit
+                  readOnly: true
+            {{ end }}
+            volumes:
+                {{ include "volumes_database" . | indent 16 }}
+                -
+                    name: gerrit-ssh
+                    secret:
+                        secretName: infrabox-gerrit-ssh
+{{ end }}

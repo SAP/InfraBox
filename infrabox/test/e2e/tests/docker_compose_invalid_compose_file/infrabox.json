@@ -1,0 +1,9 @@
+{
+    "version": 1,
+    "jobs": [{
+        "type": "docker-compose",
+        "name": "benchmark-server",
+        "docker_compose_file": "docker-compose.yml",
+        "resources": { "limits": { "cpu": 1, "memory": 1024 } }
+    }]
+}

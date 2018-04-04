@@ -1,0 +1,21 @@
+{{ if .Values.static.enabled }}
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+    name: infrabox-static
+    namespace: {{ default "infrabox-system" .Values.general.system_namespace }}
+    labels:
+        app: infrabox-static
+spec:
+    replicas: {{ default 1 .Values.static.replicas }}
+    template:
+        metadata:
+            labels:
+                app: infrabox-static
+        spec:
+            containers:
+            -
+                name: static
+                image: {{ .Values.general.docker_registry }}/{{ default "static" .Values.static.image }}:{{ .Values.static.tag }}
+                imagePullPolicy: Always
+{{ end }}

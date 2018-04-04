@@ -1,0 +1,130 @@
+{{ if .Values.docker_registry.enabled }}
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+    name: infrabox-docker-registry
+    namespace: {{ default "infrabox-system" .Values.general.system_namespace }}
+    labels:
+        app: infrabox-docker-registry
+spec:
+    replicas: 1
+    template:
+        metadata:
+            labels:
+                app: infrabox-docker-registry
+        spec:
+            {{- if .Values.docker_registry.node_selector }}
+            nodeSelector:
+{{ toYaml .Values.docker_registry.node_selector | indent 16 }}
+            {{- end }}
+            containers:
+            {{ include "containers_database" . | indent 12 }}
+            -
+                name: auth
+                image: {{ .Values.general.docker_registry }}/{{ default "docker-registry-auth" .Values.docker_registry.auth_image }}:{{ .Values.docker_registry.auth_tag }}
+                imagePullPolicy: Always
+                env:
+                {{ include "env_database" . | indent 16 }}
+                {{ include "env_docker_registry" . | indent 16 }}
+                -
+                    name: INFRABOX_SERVICE
+                    value: {{ default "docker-registry-auth" .Values.docker_registry.auth_image }}
+                -
+                    name: INFRABOX_VERSION
+                    value: {{ .Values.docker_registry.auth_tag }}
+                volumeMounts:
+                {{ include "mounts_rsa_public" . | indent 16 }}
+            -
+                name: nginx
+                image: {{ .Values.general.docker_registry }}/{{ default "docker-registry-nginx" .Values.docker_registry.nginx_image }}:{{ .Values.docker_registry.nginx_tag }}
+                imagePullPolicy: Always
+                env:
+                {{ include "env_docker_registry" . | indent 16 }}
+                -
+                    name: INFRABOX_AUTH_HOST
+                    value: localhost
+                -
+                    name: INFRABOX_REGISTRY_HOST
+                    value: localhost
+                volumeMounts:
+            -
+                name: registry
+                image: registry:2.6
+                imagePullPolicy: Always
+                env:
+                -
+                    name: REGISTRY_HTTP_HOST
+                    value: {{ .Values.docker_registry.url }}
+                -
+                    name: REGISTRY_LOG_LEVEL
+                    value: debug
+                {{ if .Values.storage.s3.enabled }}
+                -
+                    name: REGISTRY_STORAGE
+                    value: s3
+                -
+                    name: REGISTRY_STORAGE_S3_ENCRYPT
+                    value: "false"
+                -
+                    name: REGISTRY_STORAGE_S3_ROOTDIRECTORY
+                    value: "/docker-registry/"
+                -
+                    name: REGISTRY_STORAGE_S3_CHUNKSIZE
+                    value: "5242880"
+                -
+                    name: REGISTRY_STORAGE_S3_BUCKET
+                    value: {{ default "infrabox" .Values.storage.s3.bucket | quote }}
+                -
+                    name: REGISTRY_STORAGE_S3_REGION
+                    value: {{ .Values.storage.s3.region }}
+                -
+                    name: REGISTRY_STORAGE_S3_REGIONENDPOINT
+                    value: http://{{ .Values.storage.s3.endpoint }}:{{ .Values.storage.s3.port }}
+                -
+                    name: REGISTRY_STORAGE_S3_SECURE
+                    value: "true"
+                -
+                    name: REGISTRY_STORAGE_S3_ACCESSKEY
+                    valueFrom:
+                        secretKeyRef:
+                            name: infrabox-s3-credentials
+                            key: accessKey
+                -
+                    name: REGISTRY_STORAGE_S3_SECRETKEY
+                    valueFrom:
+                        secretKeyRef:
+                            name: infrabox-s3-credentials
+                            key: secretKey
+                {{ end }}
+                {{ if .Values.storage.gcs.enabled }}
+                -
+                    name: REGISTRY_STORAGE
+                    value: gcs
+                -
+                    name: REGISTRY_STORAGE_GCS_ROOTDIRECTORY
+                    value: "/docker-registry/"
+                -
+                    name: REGISTRY_STORAGE_GCS_BUCKET
+                    value: {{ default "infrabox" .Values.storage.gcs.bucket }}
+                -
+                    name: REGISTRY_STORAGE_GCS_KEYFILE
+                    value: /etc/infrabox/gcs/gcs_service_account.json
+                {{ end }}
+                volumeMounts:
+                {{ if .Values.storage.gcs.enabled }}
+                -
+                    name: gcs-service-account
+                    mountPath: /etc/infrabox/gcs
+                    readOnly: true
+                {{ end }}
+
+            volumes:
+                {{ include "volumes_database" . | indent 16 }}
+                {{ include "volumes_rsa" . | indent 16 }}
+                {{ if .Values.storage.gcs.enabled }}
+                -
+                    name: gcs-service-account
+                    secret:
+                        secretName: infrabox-gcs
+                {{ end }}
+{{ end }}
