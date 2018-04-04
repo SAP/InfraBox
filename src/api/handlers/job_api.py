@@ -288,7 +288,7 @@ class Job(Resource):
             "INFRABOX_JOB_ID": data['job']['id'],
             "INFRABOX_JOB_URL": job_url,
             "INFRABOX_BUILD_NUMBER": "%s" % data['build']['build_number'],
-            "INFRABOX_BUILD_RESTART_COUNTER": data['build']['restart_counter'],
+            "INFRABOX_BUILD_RESTART_COUNTER": "%s" % data['build']['restart_counter'],
             "INFRABOX_BUILD_URL": build_url,
         }
 
@@ -601,7 +601,7 @@ class CreateJobs(Resource):
             if not target_cluster:
                 target_cluster = 'master'
                 for d in j.get('depends_on', []):
-                    target_cluster = assigned_clusters[d['job']]
+                    target_cluster = assigned_clusters.get(d['job'], 'master')
                     break
 
             assigned_clusters[j['name']] = target_cluster
