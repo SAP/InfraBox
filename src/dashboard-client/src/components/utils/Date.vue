@@ -12,7 +12,7 @@ export default {
     props: ['date'],
     methods: {
         moment (v) {
-            return moment(v).format('LTS')
+            return moment(v).format('lll')
         }
     }
 }

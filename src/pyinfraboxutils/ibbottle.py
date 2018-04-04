@@ -25,7 +25,7 @@ class InfraBoxPostgresPlugin(object):
             return callback
 
         def wrapper(*args, **kwargs):
-            for _ in range(0, 2):
+            for _ in range(0, 3):
                 # Connect to the database
                 conn = None
                 try:
@@ -38,11 +38,16 @@ class InfraBoxPostgresPlugin(object):
 
                 try:
                     rv = callback(*args, **kwargs)
+                    return rv
                 except HTTPError, e:
                     raise
                 except HTTPResponse, e:
                     raise
                 except psycopg2.OperationalError:
+                    print "Operational Error. Retrying."
+                    continue
+                except psycopg2.DatabaseError:
+                    print "Database Error. Retrying."
                     continue
                 finally:
                     try:
@@ -50,7 +55,6 @@ class InfraBoxPostgresPlugin(object):
                     except:
                         pass
                     self.pool.putconn(conn)
-                return rv
 
         # Replace the route callback with the wrapped one.
         return wrapper

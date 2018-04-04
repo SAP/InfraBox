@@ -234,6 +234,8 @@ class RunJob(Job):
         else:
             raise Exception('Unknown project type')
 
+        c.execute(['chmod', '-R', 'a+rwX', self.mount_repo_dir])
+
     def main_create_jobs(self):
         c = self.console
 
@@ -273,13 +275,13 @@ class RunJob(Job):
         # Show environment
         self.console.collect("Environment:\n", show=True)
         for name, value in self.env_vars.iteritems():
-            self.console.collect("%s=%s:\n" % (name, value), show=True)
+            self.console.collect("%s=%s\n" % (name, value), show=True)
 
         self.console.collect("\n", show=True)
 
         self.console.collect("Secrets:\n", show=True)
         for name, _ in self.secrets.iteritems():
-            self.console.collect("%s=*****:\n" % name, show=True)
+            self.console.collect("%s=*****\n" % name, show=True)
 
         self.console.collect("\n", show=True)
 
@@ -769,6 +771,8 @@ class RunJob(Job):
             cmd += ['-e', 'INFRABOX_RESOURCES_KUBERNETES_MASTER_URL=%s' %
                     os.environ['INFRABOX_RESOURCES_KUBERNETES_MASTER_URL']]
 
+        cmd += ['--tmpfs', '/infrabox/tmpfs']
+
         # Add capabilities
         security_context = self.job['definition'].get('security_context', {})
 
@@ -1013,7 +1017,7 @@ class RunJob(Job):
                 c.execute(['rm', '-rf', new_repo_path])
                 os.makedirs(new_repo_path)
 
-                self.clone_repo('master', clone_url, None, None, False, sub_path)
+                self.clone_repo(job['commit'], clone_url, None, None, False, sub_path)
 
                 c.header("Parsing infrabox.json", show=True)
                 ib_file = job.get('infrabox_file', 'infrabox.json')

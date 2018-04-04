@@ -44,7 +44,7 @@ def main():
             try:
                 event = json.loads(line)
 
-                if event['type'] == "patchset-created":
+                if event['type'] in ("patchset-created", "draft-published"):
                     logger.info(json.dumps(event, indent=4))
                     handle_patchset_created(conn, event)
                     break
@@ -121,6 +121,7 @@ def handle_patchset_created_project(conn, event, project_id, project_name):
         "GERRIT_PATCHSET_UPLOADER_USERNAME": event['patchSet']['uploader']['username'],
         "GERRIT_PATCHSET_UPLOADER_NAME": event['patchSet']['uploader'].get('name', None),
         "GERRIT_PATCHSET_UPLOADER_EMAIL": event['patchSet']['uploader']['email'],
+        "GERRIT_PATCHSET_NUMBER": event['patchSet']['number'],
         "GERRIT_PATCHSET_REF": event['patchSet']['ref'],
         "GERRIT_REFSPEC": event['patchSet']['ref'],
         "GERRIT_PATCHSET_REVISION": event['patchSet']['revision'],

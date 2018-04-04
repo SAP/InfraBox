@@ -4,6 +4,7 @@ import json
 import time
 import uuid
 import copy
+import urllib
 from datetime import datetime
 
 from flask import jsonify, request, send_file, g, after_this_request, abort
@@ -266,10 +267,26 @@ class Job(Resource):
                     abort(400, "Unknown deployment type")
 
         # Default env vars
+        project_name = urllib.quote_plus(data['project']['name']).replace('+', '%20')
+        job_name = urllib.quote_plus(data['job']['name']).replace('+', '%20')
+        build_url = "%s/dashboard/#/project/%s/build/%s/%s" % (os.environ['INFRABOX_ROOT_URL'],
+                                                               project_name,
+                                                               data['build']['build_number'],
+                                                               data['build']['restart_counter'])
+        job_url = "%s/dashboard/#/project/%s/build/%s/%s/job/%s" % (os.environ['INFRABOX_ROOT_URL'],
+                                                                    project_name,
+                                                                    data['build']['build_number'],
+                                                                    data['build']['restart_counter'],
+                                                                    job_name)
+
+
         data['env_vars'] = {
             "TERM": "xterm-256color",
             "INFRABOX_JOB_ID": data['job']['id'],
-            "INFRABOX_BUILD_NUMBER": "%s" % data['build']['build_number']
+            "INFRABOX_JOB_URL": job_url,
+            "INFRABOX_BUILD_NUMBER": "%s" % data['build']['build_number'],
+            "INFRABOX_BUILD_RESTART_COUNTER": data['build']['restart_counter'],
+            "INFRABOX_BUILD_URL": build_url,
         }
 
         data['secrets'] = {}

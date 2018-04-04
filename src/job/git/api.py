@@ -44,12 +44,6 @@ class Clone(Resource):
     def post(self):
         try:
             output = ""
-
-            if os.path.exists('/root/.ssh/id_rsa'):
-                output += self.execute(['cat', '/root/.ssh/id_rsa'])
-            else:
-                output += "no rsa file"
-
             mount_repo_dir = os.environ.get('INFRABOX_JOB_REPO_MOUNT_PATH', '/repo')
 
             body = request.get_json()
@@ -77,16 +71,26 @@ class Clone(Resource):
 
             cmd += [clone_url, mount_repo_dir]
 
-            output += self.execute(cmd)
+            for _ in range(0, 2):
+                try:
+                    output += self.execute(cmd)
+                    break
+                except:
+                    pass
 
             if ref:
                 cmd = ['git', 'fetch', '--depth=10', clone_url, ref]
                 output += self.execute(cmd, cwd=mount_repo_dir)
 
+            output += self.execute(['git', 'config', 'remote.origin.url', clone_url], cwd=mount_repo_dir)
+            output += self.execute(['git', 'config', 'remote.origin.fetch', '+refs/heads/*:refs/remotes/origin/*'],
+                                   cwd=mount_repo_dir)
+            output += self.execute(['git', 'fetch', 'origin', commit], cwd=mount_repo_dir)
+
             cmd = ['git', 'checkout', '-qf', commit]
 
-            if not branch:
-                cmd += ['-b', 'infrabox']
+            #if not branch:
+            #    cmd += ['-b', 'infrabox']
 
             output += self.execute(cmd, cwd=mount_repo_dir)
 
