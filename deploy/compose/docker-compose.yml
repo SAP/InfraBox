@@ -111,6 +111,7 @@ services:
             - INFRABOX_API_MONITORING_PORT=8080
             - INFRABOX_JOB_MAX_OUTPUT_SIZE=104857600
             - INFRABOX_JOB_SECURITY_CONTEXT_CAPABILITIES_ENABLED=false
+            - INFRABOX_CLUSTER_NAME=master
         links:
             - minio
         networks:
