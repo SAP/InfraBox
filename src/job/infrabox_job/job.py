@@ -1,5 +1,6 @@
 import os
 import sys
+import copy
 import time
 import requests
 
@@ -61,7 +62,7 @@ class Job(object):
         self.commit = data['commit']
         self.dependencies = data['dependencies']
         self.parents = data['parents']
-        self.environment = data['env_vars']
+        self.environment = copy.deepcopy(data['env_vars'])
         self.environment.update(data['secrets'])
         self.secrets = data['secrets']
         self.env_vars = data['env_vars']

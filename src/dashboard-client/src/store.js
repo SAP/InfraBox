@@ -167,6 +167,8 @@ function addProjects (state, projects) {
         p = new Project(project.name, project.id, project.type)
         state.projects.push(p)
 
+        state.projects = _.sortBy(state.projects, function (i) { return i.name.toLowerCase() })
+
         p._loadJobs()
     }
 }
