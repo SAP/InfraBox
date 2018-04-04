@@ -14,7 +14,11 @@ const state = {
     user: null,
     projects: [],
     jobs: {},
-    settings: {}
+    settings: {},
+    admin: {
+        projects: [],
+        users: []
+    }
 }
 
 function findProject (state, projectId) {
@@ -269,6 +273,14 @@ function deleteProject (state, projectId) {
     }
 }
 
+function setAdminUsers (state, users) {
+    state.admin.users = users
+}
+
+function setAdminProjects (state, projects) {
+    state.admin.projects = projects
+}
+
 const mutations = {
     addProjects,
     addJobs,
@@ -285,7 +297,9 @@ const mutations = {
     setConsole,
     setTests,
     setStats,
-    setTabs
+    setTabs,
+    setAdminUsers,
+    setAdminProjects
 }
 
 const getters = {}

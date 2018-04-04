@@ -243,18 +243,18 @@ class Kubernetes(Install):
         else:
             raise Exception("unknown storage")
 
-    def setup_docker_registry(self):
-        self.required_option('docker-registry-admin-username')
-        self.required_option('docker-registry-admin-password')
+    def setup_admin_password(self):
+        self.required_option('admin-password')
+        self.required_option('admin-email')
 
         secret = {
-            "username": self.args.docker_registry_admin_username,
-            "password": self.args.docker_registry_admin_password
+            "email": self.args.admin_email,
+            "password": self.args.admin_password
         }
 
-        self.create_secret("infrabox-docker-registry", self.args.general_worker_namespace, secret)
-        self.create_secret("infrabox-docker-registry", self.args.general_system_namespace, secret)
+        self.create_secret("infrabox-admin", self.args.general_system_namespace, secret)
 
+    def setup_docker_registry(self):
         self.set('docker_registry.nginx_tag', self.args.version)
         self.set('docker_registry.auth_tag', self.args.version)
 
@@ -424,6 +424,7 @@ class Kubernetes(Install):
         self.config.load(values_path)
 
         self.setup_general()
+        self.setup_admin_password()
         self.setup_storage()
         self.setup_postgres()
         self.setup_docker_registry()
@@ -677,6 +678,10 @@ def main():
     parser.add_argument('--root-url')
     parser.add_argument('--docker-registry', default='quay.io/infrabox')
 
+    # Admin config
+    parser.add_argument('--admin-email')
+    parser.add_argument('--admin-password')
+
     # General
     parser.add_argument('--general-dont-check-certificates', action='store_true', default=False)
     parser.add_argument('--general-worker-namespace', default='infrabox-worker')
@@ -684,10 +689,6 @@ def main():
     parser.add_argument('--general-rsa-public-key')
     parser.add_argument('--general-rsa-private-key')
     parser.add_argument('--general-rbac-disabled', action='store_true', default=False)
-
-    # Docker configuration
-    parser.add_argument('--docker-registry-admin-username')
-    parser.add_argument('--docker-registry-admin-password')
 
     # Database configuration
     parser.add_argument('--database',

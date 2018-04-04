@@ -1,4 +1,5 @@
 import os
+import bcrypt
 
 from pyinfraboxutils import get_logger, get_env, print_stackdriver
 from pyinfraboxutils.db import connect_db
@@ -84,6 +85,25 @@ def migrate_db(conn):
 
     logger.info("Finished database migration")
 
+def configure_admin(conn):
+    logger.info("Updating admin credentials")
+
+    password = get_env('INFRABOX_ADMIN_PASSWORD')
+    email = get_env('INFRABOX_ADMIN_EMAIL')
+
+    hashed_password = bcrypt.hashpw(password.encode('utf8'), bcrypt.gensalt())
+
+    cur = conn.cursor()
+    cur.execute('''
+        INSERT into "user" (id, username, name, email, password)
+        VALUES ('00000000-0000-0000-0000-000000000000', 'Admin', 'Admin', %s, %s)
+        ON CONFLICT (id) DO UPDATE
+        SET email = %s,
+            password = %s
+    ''', [email, hashed_password, email, hashed_password])
+    cur.close()
+    conn.commit()
+
 def main():
     get_env('INFRABOX_SERVICE')
     get_env('INFRABOX_VERSION')
@@ -92,9 +112,12 @@ def main():
     get_env('INFRABOX_DATABASE_PASSWORD')
     get_env('INFRABOX_DATABASE_HOST')
     get_env('INFRABOX_DATABASE_PORT')
+    get_env('INFRABOX_ADMIN_PASSWORD')
+    get_env('INFRABOX_ADMIN_EMAIL')
 
     conn = connect_db()
     migrate_db(conn)
+    configure_admin(conn)
     conn.close()
 
 if __name__ == "__main__":

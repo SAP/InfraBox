@@ -175,7 +175,7 @@ class JobRestart(Resource):
     def get(self, project_id, job_id):
 
         job = g.db.execute_one_dict('''
-            SELECT state, type
+            SELECT state, type, build_id
             FROM job
             WHERE id = %s
             AND project_id = %s
@@ -186,16 +186,55 @@ class JobRestart(Resource):
 
         job_type = job['type']
         job_state = job['state']
+        build_id = job['build_id']
 
         if job_type not in ('run_project_container', 'run_docker_compose'):
             abort(400, 'Job type cannot be restarted')
 
-        if job_state not in ('error', 'failure', 'finished', 'killed'):
+        restart_states = ('error', 'failure', 'finished', 'killed')
+
+        if job_state not in restart_states:
             abort(400, 'Job in state %s cannot be restarted' % job_state)
 
-        g.db.execute('''
-            UPDATE job SET state = 'queued', console = null, message = null WHERE id = %s
-        ''', [job_id])
+        jobs = g.db.execute_many_dict('''
+            SELECT state, id, dependencies
+            FROM job
+            WHERE build_id = %s
+            AND project_id = %s
+        ''', [build_id, project_id])
+
+        restart_jobs = [job_id]
+
+        while True:
+            found = False
+            for j in jobs:
+                if j['id'] in restart_jobs:
+                    continue
+
+                if not j['dependencies']:
+                    continue
+
+                if j['state'] not in restart_states:
+                    abort(400, 'Some children jobs are still running')
+
+                for dep in j['dependencies']:
+                    dep_id = dep['job-id']
+
+                    if dep_id in restart_jobs:
+                        found = True
+                        restart_jobs.append(j['id'])
+                        break
+
+            if not found:
+                break
+
+
+        for j in restart_jobs:
+            g.db.execute('''
+                UPDATE job
+                SET state = 'queued', console = null, message = null
+                WHERE id = %s
+            ''', [j])
         g.db.commit()
 
         return OK('Successfully restarted job')

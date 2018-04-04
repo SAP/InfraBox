@@ -1,5 +1,6 @@
-import jwt
 import os
+
+import jwt
 
 private_key_path = os.environ.get('INFRABOX_RSA_PRIVATE_KEY_PATH', '/var/run/secrets/infrabox.net/rsa/id_rsa')
 public_key_path = os.environ.get('INFRABOX_RSA_PUBLIC_KEY_PATH', '/var/run/secrets/infrabox.net/rsa/id_rsa.pub')
