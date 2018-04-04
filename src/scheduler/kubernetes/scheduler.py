@@ -118,9 +118,6 @@ class Scheduler(object):
             "name": "INFRABOX_VERSION",
             "value": self.args.tag
         }, {
-            "name": "INFRABOX_DOCKER_REGISTRY_URL",
-            "value": os.environ['INFRABOX_DOCKER_REGISTRY_URL']
-        }, {
             "name": "INFRABOX_LOCAL_CACHE_ENABLED",
             "value": os.environ['INFRABOX_LOCAL_CACHE_ENABLED']
         }, {
@@ -473,9 +470,9 @@ class Scheduler(object):
         cursor.execute('''
             SELECT j.id, j.cpu, j.type, j.memory, j.dependencies
             FROM job j
-            WHERE j.state = 'queued'
+            WHERE j.state = 'queued' and cluster_name = %s
             ORDER BY j.created_at
-        ''')
+        ''', [os.environ['INFRABOX_CLUSTER_NAME']])
         jobs = cursor.fetchall()
         cursor.close()
 
@@ -721,8 +718,67 @@ class Scheduler(object):
                 ORPHANED_JOBS.inc()
                 self.kube_delete_job(job_id)
 
+    def update_cluster_state(self):
+        cluster_name = os.environ['INFRABOX_CLUSTER_NAME']
+        labels = []
+
+        if os.environ['INFRABOX_CLUSTER_LABELS']:
+            labels = os.environ['INFRABOX_CLUSTER_LABELS'].split(',')
+
+        root_url = os.environ['INFRABOX_ROOT_URL']
+
+        h = {'Authorization': 'Bearer %s' % self.args.token}
+        r = requests.get(self.args.api_server + '/api/v1/nodes',
+                         headers=h,
+                         timeout=10)
+        data = r.json()
+
+        memory = 0
+        cpu = 0
+        nodes = 0
+
+        items = data.get('items', [])
+
+        for i in items:
+            nodes += 1
+            cpu += int(i['status']['capacity']['cpu'])
+            mem = i['status']['capacity']['memory']
+            mem = mem.replace('Ki', '')
+            memory += int(mem)
+
+        cursor = self.conn.cursor()
+        cursor.execute("""
+            INSERT INTO cluster (name, labels, root_url, nodes, cpu_capacity, memory_capacity, active)
+            VALUES(%s, %s, %s, %s, %s, %s, true)
+            ON CONFLICT (name) DO UPDATE
+            SET labels = %s, root_url = %s, nodes = %s, cpu_capacity = %s, memory_capacity = %s
+            WHERE cluster.name = %s """, [cluster_name, labels, root_url, nodes, cpu, memory, labels,
+                                          root_url, nodes, cpu, memory, cluster_name])
+        cursor.close()
+
+    def sleep_if_inactive(self):
+        while True:
+            cluster_name = os.environ['INFRABOX_CLUSTER_NAME']
+            cursor = self.conn.cursor()
+            cursor.execute("""
+                SELECT active
+                FROM cluster
+                WHERE name = %s """, [cluster_name])
+            active = cursor.fetchone()[0]
+            cursor.close()
+
+            if active:
+                break
+
+            self.logger.info('Cluster set to inactive, sleeping...')
+            time.sleep(5)
+
+
     @LOOP_SECONDS.time()
     def handle(self):
+        self.update_cluster_state()
+        self.sleep_if_inactive()
+
         try:
             self.handle_timeouts()
             self.handle_aborts()
@@ -761,13 +817,13 @@ def main():
 
     get_env('INFRABOX_SERVICE')
     get_env('INFRABOX_VERSION')
+    get_env('INFRABOX_CLUSTER_NAME')
     get_env('INFRABOX_DATABASE_DB')
     get_env('INFRABOX_DATABASE_USER')
     get_env('INFRABOX_DATABASE_PASSWORD')
     get_env('INFRABOX_DATABASE_HOST')
     get_env('INFRABOX_DATABASE_PORT')
     get_env('INFRABOX_ROOT_URL')
-    get_env('INFRABOX_DOCKER_REGISTRY_URL')
     get_env('INFRABOX_GENERAL_DONT_CHECK_CERTIFICATES')
     get_env('INFRABOX_GENERAL_WORKER_NAMESPACE')
     get_env('INFRABOX_JOB_MAX_OUTPUT_SIZE')

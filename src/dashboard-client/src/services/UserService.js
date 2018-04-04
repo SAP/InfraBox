@@ -29,7 +29,8 @@ class UserService {
                                    d.avatar_url,
                                    d.name,
                                    d.email,
-                                   d.github_id)
+                                   d.github_id,
+                                   d.id)
                 store.commit('setUser', u)
 
                 if (u.hasGithubAccount() && store.state.settings.INFRABOX_GITHUB_ENABLED) {

@@ -28,7 +28,7 @@ def makedirs(path):
     os.chmod(path, 0o777)
 
 def get_registry_name():
-    n = os.environ['INFRABOX_DOCKER_REGISTRY_URL'].replace('https://', '')
+    n = os.environ['INFRABOX_ROOT_URL'].replace('https://', '')
     n = n.replace('http://', '')
     return n
 
@@ -92,6 +92,10 @@ class RunJob(Job):
         self.infrabox_badge_dir = os.path.join(self.infrabox_upload_dir, 'badge')
         makedirs(self.infrabox_badge_dir)
 
+        # <data_dir>/upload/archive is mounted in the job to /infrabox/upload/archive
+        self.infrabox_archive_dir = os.path.join(self.infrabox_upload_dir, 'archive')
+        makedirs(self.infrabox_archive_dir)
+
     def create_jobs_json(self):
         # create job.json
         infrabox_job_json = os.path.join(self.mount_data_dir, 'job.json')
@@ -133,18 +137,16 @@ class RunJob(Job):
         c.collect(cmd, show=True)
         subprocess.check_call(cmd, shell=True)
 
-    def get_files_in_dir(self, d, ending):
+    def get_files_in_dir(self, d, ending=None):
         result = []
-        for root, dirs, files in os.walk(d):
-            for di in dirs:
-                result += self.get_files_in_dir(os.path.join(root, di), ending)
-
+        for root, _, files in os.walk(d):
             for f in files:
-                if not f.endswith(ending):
-                    continue
+                if ending:
+                    if not f.endswith(ending):
+                        continue
 
-                if len(f) < len(ending):
-                    continue
+                    if len(f) < len(ending):
+                        continue
 
                 result.append(os.path.join(root, f))
 
@@ -298,12 +300,27 @@ class RunJob(Job):
         r = parser.parse(self.infrabox_badge_dir)
         return r
 
+    def upload_archive(self):
+        c = self.console
+        if not os.path.exists(self.infrabox_archive_dir):
+            return
+
+        files = self.get_files_in_dir(self.infrabox_archive_dir)
+        if not files:
+            return
+
+        c.collect("Uplading contents of /infrabox/upload/archive", show=True)
+
+        for f in files:
+            c.collect("%s\n" % f, show=True)
+            self.post_file_to_api_server("/archive", f, filename=f.replace(self.infrabox_archive_dir, ''))
+
     def upload_coverage_results(self):
         c = self.console
         if not os.path.exists(self.infrabox_coverage_dir):
             return
 
-        files = self.get_files_in_dir(self.infrabox_coverage_dir, ".xml")
+        files = self.get_files_in_dir(self.infrabox_coverage_dir, ending=".xml")
         for f in files:
             c.collect("%s\n" % f, show=True)
             converted_result = self.convert_coverage_result(f)
@@ -329,7 +346,7 @@ class RunJob(Job):
         if not os.path.exists(self.infrabox_testresult_dir):
             return
 
-        files = self.get_files_in_dir(self.infrabox_testresult_dir, ".xml")
+        files = self.get_files_in_dir(self.infrabox_testresult_dir, ending=".xml")
         for f in files:
             c.collect("%s\n" % f, show=True)
             converted_result = self.convert_test_result(f)
@@ -347,7 +364,7 @@ class RunJob(Job):
         if not os.path.exists(self.infrabox_markdown_dir):
             return
 
-        files = self.get_files_in_dir(self.infrabox_markdown_dir, ".md")
+        files = self.get_files_in_dir(self.infrabox_markdown_dir, ending=".md")
         for f in files:
             c.collect("%s\n" % f, show=True)
 
@@ -365,7 +382,7 @@ class RunJob(Job):
         if not os.path.exists(self.infrabox_markup_dir):
             return
 
-        files = self.get_files_in_dir(self.infrabox_markup_dir, ".json")
+        files = self.get_files_in_dir(self.infrabox_markup_dir, ending=".json")
         for f in files:
             c.collect("%s\n" % f, show=True)
 
@@ -383,7 +400,7 @@ class RunJob(Job):
         if not os.path.exists(self.infrabox_badge_dir):
             return
 
-        files = self.get_files_in_dir(self.infrabox_badge_dir, ".json")
+        files = self.get_files_in_dir(self.infrabox_badge_dir, ending=".json")
 
         for f in files:
             c.collect("%s\n" % f, show=True)
@@ -493,6 +510,7 @@ class RunJob(Job):
             self.upload_markdown_files()
             self.upload_markup_files()
             self.upload_badge_files()
+            self.upload_archive()
 
         self.create_dynamic_jobs()
 
@@ -1131,7 +1149,6 @@ class RunJob(Job):
 def main():
     get_env('INFRABOX_SERVICE')
     get_env('INFRABOX_VERSION')
-    get_env('INFRABOX_DOCKER_REGISTRY_URL')
     get_env('INFRABOX_ROOT_URL')
     get_env('INFRABOX_GENERAL_DONT_CHECK_CERTIFICATES')
     get_env('INFRABOX_LOCAL_CACHE_ENABLED')

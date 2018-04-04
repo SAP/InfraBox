@@ -20,6 +20,7 @@ class ApiTestTemplate(unittest.TestCase):
         TestClient.execute('TRUNCATE job_badge')
         TestClient.execute('TRUNCATE source_upload')
         TestClient.execute('TRUNCATE secret')
+        TestClient.execute('TRUNCATE cluster')
 
         self.project_id = '1514af82-3c4f-4bb5-b1da-a89a0ced5e6f'
         self.user_id = '2514af82-3c4f-4bb5-b1da-a89a0ced5e6f'
@@ -34,6 +35,11 @@ class ApiTestTemplate(unittest.TestCase):
         self.user_github_id = 24122
 
         self.job_headers = TestClient.get_job_authorization(self.job_id)
+
+        TestClient.execute("""
+                INSERT INTO cluster (name, active, labels, root_url, nodes, cpu_capacity, memory_capacity)
+                VALUES ('master', true, '{master}', 'http://localhost:8080', 1, 10, 10000);
+            """)
 
         TestClient.execute("""
                 INSERT INTO collaborator (user_id, project_id, owner)

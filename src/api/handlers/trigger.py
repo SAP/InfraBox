@@ -182,9 +182,9 @@ def create_git_job(commit, build_no, project_id, repo, project_type, env):
 
     g.db.execute('''
         INSERT INTO job (id, state, build_id, type, name, project_id,
-                         build_only, dockerfile, cpu, memory, repo, env_var)
+                         build_only, dockerfile, cpu, memory, repo, env_var, cluster_name)
         VALUES (gen_random_uuid(), 'queued', %s, 'create_job_matrix',
-                'Create Jobs', %s, false, '', 1, 1024, %s, %s)
+                'Create Jobs', %s, false, '', 1, 1024, %s, %s, 'master')
     ''', [build['id'], project_id, json.dumps(git_repo), json.dumps(env_var)])
 
     return (build['id'], build['build_number'])

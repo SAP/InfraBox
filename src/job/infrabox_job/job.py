@@ -146,10 +146,14 @@ class Job(object):
                 if chunk:
                     f.write(chunk)
 
-    def post_file_to_api_server(self, url, path):
+    def post_file_to_api_server(self, url, path, filename=None):
         message = None
+
+        if not filename:
+            filename = os.path.basename(path)
+
         for _ in xrange(0, 5):
-            files = {os.path.basename(path): open(path)}
+            files = {filename: open(path)}
             try:
                 r = requests.post("%s%s" % (self.api_server, url),
                                   headers=self.get_headers(),

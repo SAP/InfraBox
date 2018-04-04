@@ -76,6 +76,9 @@ class Install(object):
     def __init__(self, args):
         self.args = args
 
+    def is_master(self):
+        return self.args.cluster_name == "master"
+
     def required_option(self, name):
         args = vars(self.args)
         m = name.replace("-", "_")
@@ -130,6 +133,9 @@ class Kubernetes(Install):
         self.config.add(n, v)
 
     def setup_postgres(self):
+        if not self.is_master():
+            self.set('storage.migration.enabled', False)
+
         self.required_option('database')
         args = self.args
 
@@ -194,19 +200,13 @@ class Kubernetes(Install):
             self.required_option('s3-region')
             self.required_option('s3-endpoint')
             self.required_option('s3-port')
-            self.required_option('s3-container-output-bucket')
-            self.required_option('s3-project-upload-bucket')
-            self.required_option('s3-container-content-cache-bucket')
-            self.required_option('s3-docker-registry-bucket')
+            self.required_option('s3-bucket')
 
             self.set('storage.gcs.enabled', False)
             self.set('storage.s3.enabled', True)
             self.set('storage.s3.region', args.s3_region)
             self.set('storage.s3.endpoint', args.s3_endpoint)
-            self.set('storage.s3.container_output_bucket', args.s3_container_output_bucket)
-            self.set('storage.s3.project_upload_bucket', args.s3_project_upload_bucket)
-            self.set('storage.s3.container_content_cache_bucket', args.s3_container_content_cache_bucket)
-            self.set('storage.s3.docker_registry_bucket', args.s3_docker_registry_bucket)
+            self.set('storage.s3.bucket', args.s3_bucket)
             self.set('storage.s3.port', args.s3_port)
             self.set('storage.s3.secure', args.s3_secure == 'true')
 
@@ -219,20 +219,14 @@ class Kubernetes(Install):
         elif args.storage == 'gcs':
             self.required_option('gcs-project-id')
             self.required_option('gcs-service-account-key-file')
-            self.required_option('gcs-container-output-bucket')
-            self.required_option('gcs-project-upload-bucket')
-            self.required_option('gcs-container-content-cache-bucket')
-            self.required_option('gcs-docker-registry-bucket')
+            self.required_option('gcs-bucket')
 
             self.check_file_exists(args.gcs_service_account_key_file)
 
             self.set('storage.s3.enabled', False)
             self.set('storage.gcs.enabled', True)
             self.set('storage.gcs.project_id', args.gcs_project_id)
-            self.set('storage.gcs.container_output_bucket', args.gcs_container_output_bucket)
-            self.set('storage.gcs.project_upload_bucket', args.gcs_project_upload_bucket)
-            self.set('storage.gcs.container_content_cache_bucket', args.gcs_container_content_cache_bucket)
-            self.set('storage.gcs.docker_registry_bucket', args.gcs_docker_registry_bucket)
+            self.set('storage.gcs.bucket', args.gcs_bucket)
 
             with open(args.gcs_service_account_key_file) as keyfile:
                 secret = {
@@ -273,6 +267,9 @@ class Kubernetes(Install):
             self.set('local_cache.host_path', self.args.local_cache_host_path)
 
     def setup_ldap(self):
+        if not self.is_master():
+            return
+
         if not self.args.ldap_enabled:
             return
 
@@ -294,6 +291,9 @@ class Kubernetes(Install):
         self.set('account.signup.enabled', False)
 
     def setup_gerrit(self):
+        if not self.is_master():
+            return
+
         if not self.args.gerrit_enabled:
             return
 
@@ -320,6 +320,9 @@ class Kubernetes(Install):
         self.create_secret("infrabox-gerrit-ssh", self.args.general_worker_namespace, secret)
 
     def setup_github(self):
+        if not self.is_master():
+            return
+
         if not self.args.github_enabled:
             return
 
@@ -349,15 +352,21 @@ class Kubernetes(Install):
         self.create_secret("infrabox-github", self.args.general_system_namespace, secret)
 
     def setup_dashboard(self):
-        self.set('dashboard.api.tag', self.args.version)
-        self.set('dashboard.url', self.args.root_url)
+        if not self.is_master():
+            self.set('dashboard.enabled', False)
+        else:
+            self.set('dashboard.api.tag', self.args.version)
+            self.set('dashboard.url', self.args.root_url)
 
     def setup_api(self):
         self.set('api.url', self.args.root_url + '/api/cli')
         self.set('api.tag', self.args.version)
 
     def setup_static(self):
-        self.set('static.tag', self.args.version)
+        if not self.is_master():
+            self.set('static.enabled', False)
+        else:
+            self.set('static.tag', self.args.version)
 
     def setup_general(self):
         self.required_option('general-rsa-private-key')
@@ -394,6 +403,10 @@ class Kubernetes(Install):
     def setup_scheduler(self):
         self.set('scheduler.tag', self.args.version)
         self.set('scheduler.enabled', not self.args.scheduler_disabled)
+
+    def setup_cluster(self):
+        self.set('cluster.name', self.args.cluster_name)
+        self.set('cluster.labels', self.args.cluster_labels)
 
     def setup_ingress(self):
         host = self.args.root_url.replace('http://', '')
@@ -432,6 +445,7 @@ class Kubernetes(Install):
         self.setup_job()
         self.setup_db()
         self.setup_scheduler()
+        self.setup_cluster()
         self.setup_gerrit()
         self.setup_github()
         self.setup_dashboard()
@@ -458,7 +472,6 @@ class DockerCompose(Install):
     def __init__(self, args):
         super(DockerCompose, self).__init__(args)
         self.config = Configuration()
-
 
     def setup_job_git(self):
         self.config.add('services.job-git.image',
@@ -600,6 +613,8 @@ class DockerCompose(Install):
                 "INFRABOX_ACCOUNT_SIGNUP_ENABLED=true"
             ]
 
+        self.config.append('services.api.environment', env)
+
     def setup_database(self):
         if self.args.database == 'postgres':
             self.required_option('postgres-host')
@@ -678,6 +693,10 @@ def main():
     parser.add_argument('--root-url')
     parser.add_argument('--docker-registry', default='quay.io/infrabox')
 
+    # Cluster
+    parser.add_argument('--cluster-name', default='master')
+    parser.add_argument('--cluster-labels')
+
     # Admin config
     parser.add_argument('--admin-email')
     parser.add_argument('--admin-password')
@@ -716,18 +735,12 @@ def main():
     parser.add_argument('--s3-region')
     parser.add_argument('--s3-endpoint')
     parser.add_argument('--s3-port', default=443, type=int)
-    parser.add_argument('--s3-container-output-bucket', default='infrabox-container-output')
-    parser.add_argument('--s3-project-upload-bucket', default='infrabox-project-upload')
-    parser.add_argument('--s3-container-content-cache-bucket', default='infrabox-container-cache')
-    parser.add_argument('--s3-docker-registry-bucket', default='infrabox-docker-registry')
+    parser.add_argument('--s3-bucket', default='infrabox')
     parser.add_argument('--s3-secure', default='true')
 
     parser.add_argument('--gcs-project-id')
     parser.add_argument('--gcs-service-account-key-file')
-    parser.add_argument('--gcs-container-output-bucket')
-    parser.add_argument('--gcs-project-upload-bucket')
-    parser.add_argument('--gcs-container-content-cache-bucket')
-    parser.add_argument('--gcs-docker-registry-bucket')
+    parser.add_argument('--gcs-bucket')
 
     # Scheduler
     parser.add_argument('--scheduler-disabled', action='store_true', default=False)

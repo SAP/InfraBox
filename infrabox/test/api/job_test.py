@@ -16,4 +16,3 @@ class JobTest(ApiTestTemplate):
         r = TestClient.get('/api/v1/projects/%s/jobs/%s/manifest' % (self.project_id, self.job_id),
                            TestClient.get_project_authorization(self.user_id, self.project_id))
         self.assertEqual(r['id'], self.job_id)
-

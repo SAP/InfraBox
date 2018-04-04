@@ -139,6 +139,9 @@
                     <md-tab id="stats" md-icon="insert_chart" md-label="Stats">
                         <ib-stats :job="job"></ib-stats>
                     </md-tab>
+                    <md-tab id="archive" md-icon="insert_chart" md-label="Archive">
+                        <ib-archive :job="job"></ib-archive>
+                    </md-tab>
                     <md-tab v-for="t in job.tabs" :key="t.name" :id="'tab_' + t.name" md-icon="insert_chart" :md-label="t.name.replace('.json', '').replace('.xml', '')">
                         <ib-tab :tab="t"></ib-tab>
                     </md-tab>
@@ -166,6 +169,7 @@ import Console from './Console'
 import Tab from './Tab'
 import Stats from './Stats'
 import Tests from './TestList'
+import Archive from './Archive'
 import Badge from '../utils/Badge'
 import store from '../../store'
 
@@ -181,7 +185,8 @@ export default {
         'ib-badge': Badge,
         'ib-tests': Tests,
         'ib-stats': Stats,
-        'ib-tab': Tab
+        'ib-tab': Tab,
+        'ib-archive': Archive
     },
     data () {
         return {
@@ -208,6 +213,7 @@ export default {
                         this.job = j
                         j.loadBadges()
                         j.loadTabs()
+                        j.loadArchive()
 
                         this.runLocalCommand = '$ export INFRABOX_CLI_TOKEN=<YOUR_TOKEN> \n$ infrabox pull --job-id ' + j.id
                     })

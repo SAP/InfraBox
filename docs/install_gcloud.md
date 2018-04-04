@@ -97,7 +97,7 @@ After minio has been started create a Job to initalize the minio buckets:
                     name: init-minio
                     image: minio/mc
                     command: ["/bin/sh", "-c"]
-                    args: ["mc config host add infrabox http://minio-minio-svc.infrabox-system:9000 AKIAIOSFODNN7EXAMPLE wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY S3v4 && mc mb infrabox/infrabox-container-output && mc mb infrabox/infrabox-project-upload && mc mb infrabox/infrabox-container-content-cache && mc mb infrabox/infrabox-docker-registry && mc ls infrabox"]
+                    args: ["mc config host add infrabox http://minio-minio-svc.infrabox-system:9000 AKIAIOSFODNN7EXAMPLE wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY S3v4 && mc mb infrabox/infrabox && mc ls infrabox"]
                 restartPolicy: Never
 
 Save it to minio-init.yaml and run:

@@ -69,7 +69,7 @@
                     </a>
                 </md-list-item>
 
-                <md-list-item>
+                <md-list-item v-if="$store.state.user.isAdmin()">
                     <md-icon><i class="fa fa-fw fa-unlock"></i></md-icon>
                     <span>Admin</span>
                     <md-list-expand>
@@ -87,6 +87,14 @@
                                     <span @click="toggleLeftSidenav()">
                                         <i class="fa fa-users"></i>
                                         Users
+                                    </span>
+                                </router-link>
+                            </md-list-item>
+                            <md-list-item class="md-inset">
+                                <router-link :to="{name: 'AdminClusters'}">
+                                    <span @click="toggleLeftSidenav()">
+                                        <i class="fa fa-users"></i>
+                                        Clusters
                                     </span>
                                 </router-link>
                             </md-list-item>

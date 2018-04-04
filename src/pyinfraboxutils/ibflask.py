@@ -334,6 +334,7 @@ def auth_required(types,
 
             token = get_token()
             token_type = token['type']
+            g.token = token
 
             if token_type == 'project-token':
                 token_type = 'project'
@@ -349,7 +350,6 @@ def auth_required(types,
 
                 validate_job_token(token)
             elif token_type == 'user':
-                g.token = token
                 if token['user']['id'] != '00000000-0000-0000-0000-000000000000':
                     if check_admin:
                         abort(401, 'Unauthorized')
