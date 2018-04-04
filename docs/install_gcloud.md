@@ -56,13 +56,13 @@ Currently InfraBox only supports an nginx-ingress controller. To add one to your
 **Don't forget to add your external IP address, which you have created earlier, as loadBalancerIP**
 
 ### Create namespaces
-InfraBox seperates the controle plane (dashboard, docker-registry, api server, etc) from the actual jobs. Create two namespaces:
+InfraBox seperates the control plane (dashboard, docker-registry, api server, etc) from the actual jobs. Create two namespaces:
 
     kubectl create ns infrabox-system
     kubectl create ns infrabox-worker
 
 ### Create TLS certificate
-InfraBox requires a valid TLS certificate. InfraBox expects the a `Secret` with name `infrabox-tls-certs` in the `infrabox-system` namespace.
+InfraBox requires a valid TLS certificate. It must be stored as a `Secret` with name `infrabox-tls-certs` in the `infrabox-system` namespace.
 
 You have multiple options to create one:
 
@@ -71,11 +71,11 @@ You have multiple options to create one:
 - Use cert-manager to issue a certificate (TODO)
 
 ### Storage
-InfraBox requires an object store to persist some data like inputs/outpus, caches and as sotrage for the docker-registry. Choose one of the options:
+InfraBox requires an object store to persist some data like inputs/outpus, caches and as storage for the docker-registry. Chose one of the options:
 
-- [Google Cloud Storage (recommended on GCP)](/docs/configure/gcs.md)
-- [S3](/docs/configure/s3.md)
-- [Minio](/docs/configure/minio)
+- [Google Cloud Storage (recommended on GCP)](/docs/storage/gcs.md)
+- [S3](/docs/storage/s3.md)
+- [Minio](/docs/storage/minio)
 
 ### Install PostgreSQL
 InfraBox requires a PostgreSQL Database for persisting some data. You have the following options:
@@ -117,11 +117,11 @@ To create a very basic configuration use:
         <APPEND_STORAGE_OPTIONS>
         <APPEND_AUTHENICATION_OPTIONS>
 
-**Set --root-url to your domain name**
-**Set --admin-password**
-**Set --admin-email**
-**Append the postgres options**
-**Append the storage options**
+- **Set --root-url to your domain name**
+- **Set --admin-password**
+- **Set --admin-email**
+- **Append the postgres options**
+- **Append the storage options**
 
 This command generated the neccessary files in `/tmp/infrabox-configuration`.
 
