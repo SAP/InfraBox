@@ -44,6 +44,17 @@ def main():
                 notify = conn.notifies.pop(0)
                 handle_job_update(conn, json.loads(notify.payload))
 
+def handle_job_update_retry(conn, update):
+    for _ in xrange(0, 3):
+        try:
+            handle_job_update(conn, update)
+            return
+        except:
+            logger.exception()
+
+    logger.error('Failed to set review multiple times. Restarting')
+
+
 def execute_ssh_cmd(client, cmd):
     _, stdout, stderr = client.exec_command(cmd)
     err = stderr.read()
@@ -52,7 +63,7 @@ def execute_ssh_cmd(client, cmd):
 
     out = stdout.read()
     if out:
-        logger.out(out)
+        logger.error(out)
 
 
 def handle_job_update(conn, update):
