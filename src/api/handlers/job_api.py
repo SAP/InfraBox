@@ -458,7 +458,12 @@ class Output(Resource):
         clusters = set()
 
         for j in jobs:
-            for dep in j['dependencies']:
+            dependencies = j.get('dependencies', None)
+
+            if not dependencies:
+                continue
+
+            for dep in dependencies:
                 if dep['job-id'] != job_id:
                     continue
 
