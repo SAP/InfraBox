@@ -621,6 +621,9 @@ class CreateJobs(Resource):
             if job_type == "docker":
                 f = job['docker_file']
                 t = 'run_project_container'
+            elif job_type == "docker-image":
+                f = None
+                t = 'run_project_container'
             elif job_type == "docker-compose":
                 f = job['docker_compose_file']
                 t = 'run_docker_compose'
@@ -628,7 +631,7 @@ class CreateJobs(Resource):
                 f = None
                 t = 'wait'
             else:
-                abort(400, "Unknown job type")
+                abort(400, "Unknown job type: %s" % job_type)
 
             limits_cpu = 1
             limits_memory = 1024

@@ -192,6 +192,39 @@ def parse_resources(d, path):
 
     parse_limits(d['limits'], path + ".limits")
 
+def parse_docker_image(d, path):
+    check_allowed_properties(d, path, ("type", "name", "image", "depends_on", "resources",
+                                       "environment", "timeout", "security_context",
+                                       "build_context", "cache", "repository", "command"))
+    check_required_properties(d, path, ("type", "name", "image", "resources"))
+    check_name(d['name'], path + ".name")
+    check_text(d['image'], path + ".image")
+    parse_resources(d['resources'], path + ".resources")
+
+    if 'command' in d:
+        check_string_array(d['command'], path + ".command")
+
+    if 'repository' in d:
+        parse_repository(d['repository'], path + ".repository")
+
+    if 'cache' in d:
+        parse_cache(d['cache'], path + ".cache")
+
+    if 'depends_on' in d:
+        parse_depends_on(d['depends_on'], path + ".depends_on")
+
+    if 'environment' in d:
+        parse_environment(d['environment'], path + ".environment")
+
+    if 'timeout' in d:
+        check_number(d['timeout'], path + ".timeout")
+
+    if 'security_context' in d:
+        parse_security_context(d['security_context'], path + '.security_context')
+
+    if 'build_context' in d:
+        check_text(d['build_context'], path + ".build_context")
+
 def parse_docker(d, path):
     check_allowed_properties(d, path, ("type", "name", "docker_file", "depends_on", "resources",
                                        "build_only", "environment",
@@ -318,6 +351,8 @@ def parse_jobs(e, path):
             parse_workflow(elem, p)
         elif t == 'docker':
             parse_docker(elem, p)
+        elif t == 'docker-image':
+            parse_docker_image(elem, p)
         elif t == 'docker-compose':
             parse_docker_compose(elem, p)
         else:

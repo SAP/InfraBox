@@ -1,0 +1,17 @@
+{
+    "version": 1,
+    "jobs": [{
+        "type": "docker-image",
+        "name": "producer",
+        "image": "alpine:latest",
+        "command": ["sh", "-c", "echo 'hello world' > /infrabox/output/data.txt"],
+        "resources": { "limits": { "cpu": 1, "memory": 1024 } }
+     }, {
+        "type": "docker",
+        "name": "consumer",
+        "docker_file": "Dockerfile_consumer",
+        "build_only": false,
+        "resources": { "limits": { "cpu": 1, "memory": 1024 } },
+        "depends_on": ["producer"]
+     }]
+}
