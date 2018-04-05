@@ -130,9 +130,6 @@ def create_github_commit(project_id, repo_id, branch_or_sha):
 
     commit = get_github_commit(github_owner, github_api_token, repo_name, branch_or_sha)
 
-    if r.status_code != 200:
-        abort(r.status_code, commit['message'])
-
     insert_commit(project_id, repo_id, commit)
     return commit
 

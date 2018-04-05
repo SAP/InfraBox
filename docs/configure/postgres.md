@@ -1,3 +1,0 @@
-# Postgres
-
-    --database postgres

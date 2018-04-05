@@ -66,9 +66,6 @@ spec:
                     name: REGISTRY_STORAGE_S3_ENCRYPT
                     value: "false"
                 -
-                    name: REGISTRY_STORAGE_S3_ROOTDIRECTORY
-                    value: "/docker-registry/"
-                -
                     name: REGISTRY_STORAGE_S3_CHUNKSIZE
                     value: "5242880"
                 -
@@ -100,9 +97,6 @@ spec:
                 -
                     name: REGISTRY_STORAGE
                     value: gcs
-                -
-                    name: REGISTRY_STORAGE_GCS_ROOTDIRECTORY
-                    value: "/docker-registry/"
                 -
                     name: REGISTRY_STORAGE_GCS_BUCKET
                     value: {{ default "infrabox" .Values.storage.gcs.bucket }}
