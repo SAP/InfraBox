@@ -100,7 +100,7 @@ InfraBox uses a RSA key to sign certain information for security reasons. You ne
     ssh-keygen -f id_rsa.pub -e -m pem > id_rsa.pem
 
 ## Configure InfraBox
-InfraBox contains a python script to generate all the neccessary configuration files for you. You find it under _deplpy/install.py_.
+InfraBox contains a python script to generate all the neccessary configuration files for you. You find it under _deploy/install.py_.
 To create a very basic configuration use:
 
     python deploy/install.py \
