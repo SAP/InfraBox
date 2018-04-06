@@ -5,6 +5,7 @@ from flask import g, request, abort
 from flask_restplus import Resource, fields
 
 import ldap
+import bcrypt
 
 from pyinfraboxutils import get_logger
 from pyinfraboxutils.ibflask import OK
@@ -41,12 +42,12 @@ def authenticate(email, password):
 
     except Exception as e:
         logger.warning("authentication error: %s", e)
-        abort(400, 'user/password invalid')
+        abort(400, 'Invalid email/password combination')
     finally:
         connect.unbind_s()
 
     if not user_dn:
-        abort(400, 'user/password invalid')
+        abort(400, 'Invalid email/password combination')
 
     try:
         connect = ldap.initialize(ldap_server)
@@ -58,7 +59,7 @@ def authenticate(email, password):
 
         user = result[0]
         if not user or not user[0]:
-            abort(400, 'user/password invalid')
+            abort(400, 'Invalid email/password combination')
 
         return {
             'cn': user[1]['cn'][0],
@@ -67,7 +68,7 @@ def authenticate(email, password):
 
     except Exception as e:
         logger.exception(e)
-        abort(400, 'user/password invalid')
+        abort(400, 'Invalid email/password combination')
     finally:
         connect.unbind_s()
 
@@ -81,18 +82,23 @@ class Login(Resource):
         email = b['email']
         password = b['password']
 
-        ldap_user = authenticate(email, password)
-
         user = g.db.execute_one_dict('''
-            SELECT id FROM "user"
+            SELECT id, password FROM "user"
             WHERE email = %s
         ''', [email])
 
-        if not user:
-            user = g.db.execute_one_dict('''
-                INSERT INTO "user" (email, username, name)
-                VALUES (%s, %s, %s) RETURNING id
-            ''', [email, ldap_user['cn'], ldap_user['displayName']])
+        if user and user['id'] == '00000000-0000-0000-0000-000000000000':
+            # Admin login
+            if not bcrypt.checkpw(password.encode('utf8'), user['password'].encode('utf8')):
+                abort(400, 'Invalid email/password combination')
+        else:
+            ldap_user = authenticate(email, password)
+
+            if not user:
+                user = g.db.execute_one_dict('''
+                    INSERT INTO "user" (email, username, name)
+                    VALUES (%s, %s, %s) RETURNING id
+                ''', [email, ldap_user['cn'], ldap_user['displayName']])
 
         token = encode_user_token(user['id'])
 
