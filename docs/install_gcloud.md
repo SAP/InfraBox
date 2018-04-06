@@ -110,7 +110,7 @@ To create a very basic configuration use:
         --general-rsa-private-key ./id_rsa \
         --root-url https://<YOUR_DOMAIN_NAME> \
         --admin-password <CHOSE_A_SECURE_PASSWORD> \
-        --admin-email <EMAIL_ADDRESS_OF_THE_ADMIN \
+        --admin-email <EMAIL_ADDRESS_OF_THE_ADMIN> \
         <APPEND_POSTGRES_OPTIONS>
         <APPEND_STORAGE_OPTIONS>
         <APPEND_AUTHENICATION_OPTIONS>
