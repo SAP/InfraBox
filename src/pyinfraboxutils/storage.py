@@ -136,19 +136,19 @@ class GCS(object):
         return self._delete('cache/%s' % key)
 
     def _delete(self, key):
-        client = gcs.Client(project=get_env('INFRABOX_STORAGE_GCS_PROJECT_ID'))
+        client = gcs.Client()
         bucket = client.get_bucket(self.bucket)
         blob = bucket.blob(key)
         blob.delete()
 
     def _upload(self, stream, key):
-        client = gcs.Client(project=get_env('INFRABOX_STORAGE_GCS_PROJECT_ID'))
+        client = gcs.Client()
         bucket = client.get_bucket(self.bucket)
         blob = bucket.blob(key)
         blob.upload_from_file(stream)
 
     def _download(self, key):
-        client = gcs.Client(project=get_env('INFRABOX_STORAGE_GCS_PROJECT_ID'))
+        client = gcs.Client()
         bucket = client.get_bucket(self.bucket)
         blob = bucket.get_blob(key)
 
