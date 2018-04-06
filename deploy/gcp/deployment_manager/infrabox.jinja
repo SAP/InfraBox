@@ -171,7 +171,6 @@ resources:
             --postgres-port 5432 \\
             --postgres-password qweasdzxc1 \\
             --storage gcs \\
-            --gcs-project-id {{ PROJECT }} \\
             --gcs-service-account-key-file gcs_sa.json \\
             --gcs-bucket {{ PROJECT }}-{{ CLUSTER_NAME }}-infrabox \\
             {% if properties['githubEnabled'] %}
