@@ -73,7 +73,7 @@ InfraBox requires an object store to persist some data like inputs/outpus, cache
 
 - [Google Cloud Storage (recommended on GCP)](/docs/storage/gcs.md)
 - [S3](/docs/storage/s3.md)
-- [Minio](/docs/storage/minio)
+- [Minio](/docs/storage/minio.md)
 
 ### Install PostgreSQL
 InfraBox requires a PostgreSQL Database for persisting some data. You have the following options:
