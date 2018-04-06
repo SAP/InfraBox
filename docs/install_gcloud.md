@@ -120,6 +120,7 @@ To create a very basic configuration use:
 - **Set --admin-email**
 - **Append the postgres options**
 - **Append the storage options**
+- **Append the authentication options**
 
 This command generated the neccessary files in `/tmp/infrabox-configuration`.
 
