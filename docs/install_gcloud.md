@@ -41,8 +41,6 @@ We use [helm][helm] to deploy the different components. To install helm into you
     helm init --service-account tiller
 
 ### nginx ingress controller
-TODO: Add support for GCLB
-
 Currently InfraBox only supports an nginx-ingress controller. To add one to your cluster:
 
     helm install \
@@ -68,7 +66,7 @@ You have multiple options to create one:
 
 - [Self signed certificates (not recommended, ok for testing, easiest to get started)](/docs/tls/self_signed.md)
 - [Set an already existing certificate](/docs/tls/existing_certificate.md)
-- Use cert-manager to issue a certificate (TODO)
+- [Use cert-manager to issue a certificate](/docs/tls/cert_manager.md)
 
 ### Storage
 InfraBox requires an object store to persist some data like inputs/outpus, caches and as storage for the docker-registry. Chose one of the options:
