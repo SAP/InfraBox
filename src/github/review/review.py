@@ -48,18 +48,56 @@ def main(): # pragma: no cover
                 handle_job_update(conn, json.loads(notify.payload))
 
 
-def handle_job_update(conn, update):
-    if update['data']['project']['type'] != 'github':
+def handle_job_update(conn, event):
+    job_id = event['job_id']
+
+    c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    c.execute('''
+        SELECT id, state, name, project_id, build_id
+        FROM job
+        WHERE id = %s
+    ''', [job_id])
+
+    job = c.fetchone()
+    c.close()
+
+    if not job:
         return
 
-    project_id = update['data']['project']['id']
-    project_name = update['data']['project']['name']
-    job_state = update['data']['job']['state']
-    job_id = update['data']['job']['id']
-    job_name = update['data']['job']['name']
-    commit_sha = update['data']['commit']['id']
-    build_number = update['data']['build']['build_number']
-    build_restartCounter = update['data']['build']['restart_counter']
+    project_id = job['project_id']
+    build_id = job['build_id']
+
+    c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    c.execute('''
+        SELECT id, name, type
+        FROM project
+        WHERE id = %s
+    ''', [project_id])
+    project = c.fetchone()
+    c.close()
+
+    if not project:
+        return
+
+    if project['type'] != 'github':
+        return
+
+    c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    c.execute('''
+        SELECT id, build_number, restart_counter, commit_id
+        FROM build
+        WHERE id = %s
+    ''', [build_id])
+    build = c.fetchone()
+    c.close()
+
+    project_name = project['name']
+    job_state = job['state']
+    job_name = job['name']
+    commit_sha = build['commit_id']
+    build_id = build['id']
+    build_number = build['build_number']
+    build_restartCounter = build['restart_counter']
     dashboard_url = get_env('INFRABOX_ROOT_URL')
 
     # determine github commit state

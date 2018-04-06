@@ -16,13 +16,13 @@ def __handle_event(event, socketio, client_manager):
     if not client_manager.has_clients(job_id):
         return
 
-    logger.info('start console %s', console_id)
+    logger.debug('start console %s', console_id)
     conn = dbpool.get()
     try:
         r = conn.execute_one('''
            SELECT output FROM console WHERE id = %s
         ''', [console_id])
-        logger.info('retrived console %s', console_id)
+        logger.debug('retrived console %s', console_id)
 
         if not r:
             return
@@ -35,7 +35,7 @@ def __handle_event(event, socketio, client_manager):
         }, room=job_id)
     finally:
         dbpool.put(conn)
-        logger.info('stop console %s', console_id)
+        logger.debug('stop console %s', console_id)
 
 def listen(socketio, client_manager):
     while True:
