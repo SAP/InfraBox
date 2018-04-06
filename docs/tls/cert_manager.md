@@ -2,7 +2,7 @@
 
 This is only an example for the Let's Encrypt Staging. Please also read the [cert-manager documentation](https://github.com/jetstack/cert-manager/blob/master/docs/user-guides/acme-http-validation.md).
 
-Create an `Issuer` for (set the `email`):
+Create an `Issuer` (set the `email`):
 
     apiVersion: certmanager.k8s.io/v1alpha1
     kind: Issuer
