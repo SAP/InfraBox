@@ -22,7 +22,7 @@ Create the `Certificate`:
 	apiVersion: certmanager.k8s.io/v1alpha1
 	kind: Certificate
 	metadata:
-	  name: ninjabox
+	  name: infrabox
 	  namespace: infrabox-system # Don't change
 	spec:
 	  secretName: infrabox-tls-certs # Don't change
@@ -38,5 +38,5 @@ Create the `Certificate`:
 
 Wait until the `Certificate` has been issued successfully:
 
-	kubectl describe certificate ninjabox -n infrabox-system
+	kubectl describe certificate infrabox -n infrabox-system
 
