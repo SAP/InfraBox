@@ -75,9 +75,6 @@
     value: {{ .Values.storage.gcs.enabled | quote }}
 {{ if .Values.storage.gcs.enabled }}
 -
-    name: INFRABOX_STORAGE_GCS_PROJECT_ID
-    value: {{ .Values.storage.gcs.project_id }}
--
     name: INFRABOX_STORAGE_GCS_BUCKET
     value: {{ .Values.storage.gcs.bucket }}
 -
