@@ -218,7 +218,7 @@ class JobRestart(Resource):
                 if not j['dependencies']:
                     continue
 
-                if j['state'] not in restart_states:
+                if j['state'] not in restart_states and j['state'] != 'skipped':
                     abort(400, 'Some children jobs are still running')
 
                 for dep in j['dependencies']:
