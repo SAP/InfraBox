@@ -75,7 +75,7 @@ class Test(unittest.TestCase):
             self.assertEqual(j['state'], state, data)
 
             if message:
-                self.assertEqual(j['message'], message, data)
+                self.assertIn(message, j['message'], data)
 
             if dockerfile:
                 self.assertEqual(j['docker_file'], dockerfile, data)
@@ -148,7 +148,7 @@ class Test(unittest.TestCase):
         self.run_it('/infrabox/context/infrabox/test/e2e/tests/docker_compose_invalid_compose_file')
         self.expect_job('Create Jobs',
                         state='failure',
-                        message='/tmp/infrabox-compose/repo/docker-compose.yml: version not found')
+                        message='version not found')
 
     def test_failed_job(self):
         self.run_it('/infrabox/context/infrabox/test/e2e/tests/failed_job')
