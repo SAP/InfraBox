@@ -112,10 +112,7 @@ _installMinio() {
     mc config host add minio http://localhost:9000 AKIAIOSFODNN7EXAMPLE wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY S3v4
 
     # Create buckets
-    mc mb minio/infrabox-container-output
-    mc mb minio/infrabox-project-upload
-    mc mb minio/infrabox-container-cache
-    mc mb minio/infrabox-docker-registry
+    mc mb minio/infrabox
     mc ls minio
 }
 
@@ -169,8 +166,8 @@ _installInfrabox() {
         --general-system-namespace $NAMESPACE \
         --general-rsa-public-key ./id_rsa.pem \
         --general-rsa-private-key ./id_rsa \
-        --docker-registry-admin-username admin \
-        --docker-registry-admin-password admin \
+        --admin-email admin@infrabox.net \
+        --admin-password admin \
         --database postgres \
         --postgres-host infrabox-postgres.$NAMESPACE \
         --postgres-username postgres \
@@ -178,12 +175,12 @@ _installInfrabox() {
         --postgres-database postgres \
         --storage s3 \
         --s3-endpoint infrabox-minio-minio-svc.$NAMESPACE \
+        --s3-bucket infrabox \
         --s3-secure false \
         --s3-secret-key wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY \
         --s3-access-key AKIAIOSFODNN7EXAMPLE \
         --s3-region us-east-1 \
-        --s3-port 9000 \
-        --ingress-tls-dont-force-redirect
+        --s3-port 9000
 
     pushd $outdir/infrabox
     helm install --tiller-namespace $NAMESPACE --namespace $NAMESPACE .
