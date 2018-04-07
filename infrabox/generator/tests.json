@@ -7,12 +7,18 @@
         "resources": { "limits": { "cpu": 1, "memory": 1024 } },
         "environment": {
             "CODECOV_TOKEN": { "$secret": "CODECOV_TOKEN" }
+        },
+        "cache": {
+            "images": true
         }
     }, {
         "type": "docker-compose",
         "name": "docker-registry",
         "docker_compose_file": "../../infrabox/test-registry/docker-compose.yml",
-        "resources": { "limits": { "cpu": 1, "memory": 1024 } }
+        "resources": { "limits": { "cpu": 1, "memory": 1024 } },
+        "cache": {
+            "images": true
+        }
     }, {
         "type": "docker-compose",
         "name": "registry-auth",
@@ -20,6 +26,9 @@
         "resources": { "limits": { "cpu": 1, "memory": 1024 } },
         "environment": {
             "CODECOV_TOKEN": { "$secret": "CODECOV_TOKEN" }
+        },
+        "cache": {
+            "image": true
         }
     }, {
         "type": "docker",
@@ -30,7 +39,11 @@
         "resources": { "limits": { "cpu": 1, "memory": 1024 } },
         "environment": {
             "CODECOV_TOKEN": { "$secret": "CODECOV_TOKEN" }
+        },
+        "cache": {
+            "image": true
         }
+
     }, {
         "type": "docker",
         "name": "github-review",
@@ -40,6 +53,9 @@
         "build_only": false,
         "environment": {
             "CODECOV_TOKEN": { "$secret": "CODECOV_TOKEN" }
+        },
+        "cache": {
+            "image": true
         }
     }]
 }

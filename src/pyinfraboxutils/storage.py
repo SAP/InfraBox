@@ -155,7 +155,7 @@ class GCS(object):
         if not blob:
             return None
 
-        path = '/tmp/%s_%s' % (uuid.uuid4(), key)
+        path = '/tmp/%s_%s' % (uuid.uuid4(), key.replace('/', '_'))
         with open(path, 'w+') as f:
             blob.download_to_file(f)
 
