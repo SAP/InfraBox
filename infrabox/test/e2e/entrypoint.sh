@@ -174,7 +174,7 @@ _installInfrabox() {
         --postgres-password postgres \
         --postgres-database postgres \
         --storage s3 \
-        --s3-endpoint infrabox-minio-minio-svc.$NAMESPACE \
+        --s3-endpoint infrabox-minio.$NAMESPACE \
         --s3-bucket infrabox \
         --s3-secure false \
         --s3-secret-key wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY \
