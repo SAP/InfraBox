@@ -1,5 +1,6 @@
 # pylint: disable=attribute-defined-outside-init,relative-import
 import unittest
+import copy
 import mock
 import xmlrunner
 
@@ -13,47 +14,88 @@ class MockResponse(object):
 class TestIt(unittest.TestCase):
 
     def setUp(self):
-        self.update = {
-            'data': {
-                'project': {
-                    'type': 'github',
-                    'id': 'projectid',
-                    'name': 'projectname'
-                },
-                'job': {
-                    'state': 'scheduled',
-                    'id': 'jobid',
-                    'name': 'jobname',
-                },
-                'commit': {
-                    'id': 'commitid',
-                },
-                'build': {
-                    'id': 'buildid',
-                    'build_number': 123,
-                    'restart_counter': 123
-                }
-            }
+        self.event = {
+            'job_id': 'bfdf1c99-ba5d-4cb9-a7f5-d574375d8187'
         }
 
-
-    def test_gerrit_update(self):
-        update = {
-            'data': {
-                'project': {
-                    'type': 'gerrit'
-                }
-            }
+        self.job_data = {
+            'id': 'bfdf1c99-ba5d-4cb9-a7f5-d574375d8187',
+            'state': 'running',
+            'name': 'jobname',
+            'project_id': 'afdf1c99-ba5d-4cb9-a7f5-d574375d8187',
+            'build_id': 'cfdf1c99-ba5d-4cb9-a7f5-d574375d8187'
         }
 
-        handle_job_update(None, update)
+        self.project_data = {
+            'id': 'afdf1c99-ba5d-4cb9-a7f5-d574375d8187',
+            'name': 'projectname',
+            'type': 'github'
+        }
+
+        self.build_data = {
+            'id': 'cfdf1c99-ba5d-4cb9-a7f5-d574375d8187',
+            'build_number': 123,
+            'restart_counter': 123,
+            'commit_id': 'sha'
+        }
+
+        self.token_data = {
+            'github_api_token': 'token'
+        }
+
+        self.commit_data = {
+            'github_status_url': 'status_url'
+        }
+
+    @mock.patch('review.execute_sql')
+    def test_job_not_found(self, execute_sql):
+        execute_sql.return_value = []
+        r = handle_job_update(None, self.event)
+        self.assertFalse(r)
+
+    @mock.patch('review.execute_sql')
+    def test_project_not_found(self, execute_sql):
+        sql_result = [[self.job_data], []]
+
+        def side_effect(_1, _2, _3):
+            return sql_result.pop(0)
+
+        execute_sql.side_effect = side_effect
+        r = handle_job_update(None, self.event)
+        self.assertFalse(r)
+
+    @mock.patch('review.execute_sql')
+    def test_project_is_not_github(self, execute_sql):
+        project_data = copy.deepcopy(self.project_data)
+        project_data['type'] = 'gerrit'
+
+        sql_result = [[self.job_data], []]
+
+        def side_effect(_1, _2, _3):
+            return sql_result.pop(0)
+
+        execute_sql.side_effect = side_effect
+        r = handle_job_update(None, self.event)
+        self.assertFalse(r)
+
+    @mock.patch('review.execute_sql')
+    def test_build_not_found(self, execute_sql):
+        sql_result = [[self.job_data], [self.project_data], []]
+
+        def side_effect(_1, _2, _3):
+            return sql_result.pop(0)
+
+        execute_sql.side_effect = side_effect
+        r = handle_job_update(None, self.event)
+        self.assertFalse(r)
 
     @mock.patch('review.get_env')
     @mock.patch('review.execute_sql')
     def test_no_token_found(self, execute_sql, get_env):
         get_env.return_value = 'GITHUB_URL'
         execute_sql.return_value = []
-        handle_job_update(None, self.update)
+        r = handle_job_update(None, self.event)
+        self.assertFalse(r)
 
     @mock.patch('requests.post')
     @mock.patch('review.get_env')
@@ -62,13 +104,17 @@ class TestIt(unittest.TestCase):
         get_env.return_value = 'GITHUB_URL'
         requests_post.return_value = MockResponse(404)
 
-        sql_result = [[['status_url']], [['token']]]
+        sql_result = [[self.job_data],
+                      [self.project_data],
+                      [self.build_data],
+                      [self.token_data],
+                      [self.commit_data]]
 
         def side_effect(_1, _2, _3):
-            return sql_result.pop()
+            return sql_result.pop(0)
 
         execute_sql.side_effect = side_effect
-        handle_job_update(None, self.update)
+        handle_job_update(None, self.event)
 
         requests_post.assert_called_with(
             'status_url',
@@ -81,17 +127,22 @@ class TestIt(unittest.TestCase):
     @mock.patch('review.get_env')
     @mock.patch('review.execute_sql')
     def run_github_status_post_succeeded(self, execute_sql, get_env, requests_post):
-        self.update['data']['job']['state'] = self.job_state
+        job_data = copy.deepcopy(self.job_data)
+        job_data['state'] = self.job_state
         get_env.return_value = 'GITHUB_URL'
         requests_post.return_value = MockResponse(201)
 
-        sql_result = [[['status_url']], [['token']]]
+        sql_result = [[job_data],
+                      [self.project_data],
+                      [self.build_data],
+                      [self.token_data],
+                      [self.commit_data]]
 
         def side_effect(_1, _2, _3):
-            return sql_result.pop()
+            return sql_result.pop(0)
 
         execute_sql.side_effect = side_effect
-        handle_job_update(None, self.update)
+        handle_job_update(None, self.event)
         data = '{"state": "%s", "target_url": "GITHUB_URL/dashboard/#/project/projectname/build/123/123/job/jobname", "description": "InfraBox", "context": "Job: jobname"}' % self.expected_github_status
         requests_post.assert_called_with(
             'status_url',
