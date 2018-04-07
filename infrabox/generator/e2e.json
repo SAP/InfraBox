@@ -6,13 +6,19 @@
         "build_context": "../..",
         "docker_file": "infrabox/test/gen-compose/Dockerfile",
         "build_only": false,
-        "resources": { "limits": { "cpu": 1, "memory": 512 } }
+        "resources": { "limits": { "cpu": 1, "memory": 512 } },
+        "cache": {
+            "image": true
+        }
     }, {
         "type": "docker-compose",
         "name": "e2e-compose",
         "docker_compose_file": "../../.infrabox/inputs/gen-compose/e2e/compose/docker-compose.yml",
         "resources": { "limits": { "cpu": 1, "memory": 2048 } },
-        "depends_on": ["gen-compose"]
+        "depends_on": ["gen-compose"],
+        "cache": {
+            "image": true
+        }
     }, {
         "type": "docker",
         "name": "e2e-k8s",
@@ -22,6 +28,9 @@
         "resources": {
             "limits": { "cpu": 1, "memory": 2048 },
             "kubernetes": { "limits": { "cpu": 1, "memory": 2048 } }
+        },
+        "cache": {
+            "image": true
         }
     }]
 }
