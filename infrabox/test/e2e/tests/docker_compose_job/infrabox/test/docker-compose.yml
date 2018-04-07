@@ -1,7 +1,7 @@
 version: "3.2"
 
 services:
-    server:
+    test-server:
         build:
             context: ../../
             dockerfile: infrabox/server/Dockerfile
@@ -10,5 +10,5 @@ services:
             context: ../../
             dockerfile: infrabox/test/Dockerfile
         links:
-            - server
+            - test-server
         container_name: compose_test_server
