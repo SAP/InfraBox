@@ -261,7 +261,7 @@ class Job(Resource):
                     secret_name = dep['password']['$secret']
                     secret = get_secret(secret_name)
 
-                    if not secret:
+                    if secret is None:
                         abort(400, "Secret %s not found" % secret_name)
 
                     dep['password'] = secret
@@ -311,7 +311,7 @@ class Job(Resource):
             for name, value in env_var_refs.iteritems():
                 secret = get_secret(value)
 
-                if not secret:
+                if secret is None:
                     abort(400, "Secret %s not found" % value)
 
                 data['secrets'][name] = secret

@@ -574,12 +574,6 @@
             ],
             "version": "==3.8"
         },
-        "prometheus-client": {
-            "hashes": [
-                "sha256:bf0a5c22de74026966075f3e1ea45a314a2dee41953dabc0c45c218cdeff9898"
-            ],
-            "version": "==0.1.1"
-        },
         "proto-google-cloud-datastore-v1": {
             "hashes": [
                 "sha256:a431bb6a286107900c9ce3c48d316378867293c50a4d8a6c7393264600e916f9"
