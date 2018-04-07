@@ -9,7 +9,7 @@
             "CODECOV_TOKEN": { "$secret": "CODECOV_TOKEN" }
         },
         "cache": {
-            "images": true
+            "image": true
         }
     }, {
         "type": "docker-compose",
@@ -17,7 +17,7 @@
         "docker_compose_file": "../../infrabox/test-registry/docker-compose.yml",
         "resources": { "limits": { "cpu": 1, "memory": 1024 } },
         "cache": {
-            "images": true
+            "image": true
         }
     }, {
         "type": "docker-compose",
