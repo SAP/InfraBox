@@ -54,11 +54,12 @@ def main():
         j['deployments'] = new_deps
 
     # Disable caches for tag builds
-    for j in deployments['jobs']:
-        j['cache'] = {
-            'image': False,
-            'data': False
-        }
+    if tag:
+        for j in deployments['jobs']:
+            j['cache'] = {
+                'image': False,
+                'data': False
+            }
 
     branch = os.environ.get('INFRABOX_GIT_BRANCH', None)
     if not branch:
