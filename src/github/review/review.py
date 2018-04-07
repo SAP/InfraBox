@@ -12,7 +12,7 @@ from pyinfraboxutils.leader import elect_leader, is_leader
 logger = get_logger("github")
 
 def execute_sql(conn, stmt, params): # pragma: no cover
-    c = conn.cursor()
+    c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
     c.execute(stmt, params)
     result = c.fetchall()
     c.close()
@@ -51,45 +51,44 @@ def main(): # pragma: no cover
 def handle_job_update(conn, event):
     job_id = event['job_id']
 
-    c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-    c.execute('''
+    jobs = execute_sql(conn, '''
         SELECT id, state, name, project_id, build_id
         FROM job
         WHERE id = %s
     ''', [job_id])
 
-    job = c.fetchone()
-    c.close()
+    if not jobs:
+        return False
 
-    if not job:
-        return
+    job = jobs[0]
 
     project_id = job['project_id']
     build_id = job['build_id']
 
-    c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-    c.execute('''
+    projects = execute_sql(conn, '''
         SELECT id, name, type
         FROM project
         WHERE id = %s
     ''', [project_id])
-    project = c.fetchone()
-    c.close()
 
-    if not project:
-        return
+    if not projects:
+        return False
+
+    project = projects[0]
 
     if project['type'] != 'github':
-        return
+        return False
 
-    c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-    c.execute('''
+    builds = execute_sql(conn, '''
         SELECT id, build_number, restart_counter, commit_id
         FROM build
         WHERE id = %s
     ''', [build_id])
-    build = c.fetchone()
-    c.close()
+
+    if not builds:
+        return False
+
+    build = builds[0]
 
     project_name = project['name']
     job_state = job['state']
@@ -125,16 +124,16 @@ def handle_job_update(conn, event):
 
     if not token:
         logger.info("No API token, not updating status")
-        return
+        return False
 
-    github_api_token = token[0][0]
+    github_api_token = token[0]['github_api_token']
 
     github_status_url = execute_sql(conn, '''
         SELECT github_status_url
         FROM "commit"
         WHERE id = %s
         AND project_id = %s
-    ''', [commit_sha, project_id])[0][0]
+    ''', [commit_sha, project_id])[0]['github_status_url']
 
     payload = {
         "state": state,
@@ -167,8 +166,9 @@ def handle_job_update(conn, event):
             logger.info("Successfully updated github status")
     except Exception as e:
         logger.warn("Failed to update github status: %s", e)
-        return
+        return False
 
+    return True
 
 if __name__ == "__main__": # pragma: no cover
     try:
