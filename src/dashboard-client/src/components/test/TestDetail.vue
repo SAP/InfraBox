@@ -5,21 +5,21 @@
             <md-card-header-text>
                 <h3 class="md-title card-title">
                 <router-link :to="{name: 'ProjectDetail', params: {
-                projectName: data.project.name
+                    projectName: encodeURIComponent(data.project.name)
                 }}">
                     <span v-if="data.project.isGit()"><i class="fa fa-github"></i></span>
                     <span v-if="!data.project.isGit()"><i class="fa fa-home"></i></span>
                     {{ data.project.name }}
                 </router-link>
                 / <router-link :to="{name: 'BuildDetail', params: {
-                    projectName: data.project.name,
+                    projectName: encodeURIComponent(data.project.name),
                     buildNumber: data.build.number,
                     buildRestartCounter: data.build.restartCounter
                     }}">
                     Build {{ data.build.number }}.{{ data.build.restartCounter }}
                 </router-link>
                 / <router-link :to="{name: 'JobDetail', params: {
-                projectName: data.project.name,
+                projectName: encodeURIComponent(data.project.name),
                 buildNumber: data.build.number,
                 buildRestartCounter: data.build.restartCounter,
                 jobId: data.job.name
@@ -112,7 +112,7 @@ export default {
                 let project = null
                 let test = null
                 return ProjectService
-                    .findProjectByName(this.projectName)
+                    .findProjectByName(decodeURIComponent(this.projectName))
                     .then((p) => {
                         project = p
                         return p.getBuild(this.buildNumber, this.buildRestartCounter)

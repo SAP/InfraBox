@@ -11,7 +11,7 @@ def handle_version(d, r):
 def handle_service(name, d, r):
     r['services'][name] = {}
 
-    for key, value in d[name].iteritems():
+    for key, value in d[name].items():
         allowed_fields = [
             'links',
             'environment',

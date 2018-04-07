@@ -91,9 +91,9 @@ class Trigger(object):
 
     def create_build(self, commit_id, project_id):
         build_no = self.execute('''
-            SELECT count(distinct build_number) + 1 AS build_no
-                          FROM build AS b
-                          WHERE b.project_id = %s
+            SELECT max(build_number) + 1 AS build_no
+            FROM build AS b
+            WHERE b.project_id = %s
         ''', [project_id])[0][0]
 
         result = self.execute('''
@@ -104,20 +104,21 @@ class Trigger(object):
         build_id = result[0][0]
         return build_id
 
-    def create_job(self, commit_id, clone_url, build_id, project_id, github_private_repo, branch, env=None):
+    def create_job(self, commit_id, clone_url, build_id, project_id, github_private_repo, branch, env=None, fork=False):
         git_repo = {
             "commit": commit_id,
             "clone_url": clone_url,
             "github_private_repo": github_private_repo,
-            "branch": branch
+            "branch": branch,
+            "fork": fork
         }
 
         self.execute('''
             INSERT INTO job (id, state, build_id, type,
                              name, project_id, build_only,
-                             dockerfile, cpu, memory, repo, env_var)
+                             dockerfile, cpu, memory, repo, env_var, cluster_name)
             VALUES (gen_random_uuid(), 'queued', %s, 'create_job_matrix',
-                    'Create Jobs', %s, false, '', 1, 1024, %s, %s)
+                    'Create Jobs', %s, false, '', 1, 1024, %s, %s, 'master')
         ''', [build_id, project_id, json.dumps(git_repo), env], fetch=False)
 
 
@@ -228,7 +229,7 @@ class Trigger(object):
 
     def handle_pull_request(self, event):
         if event['action'] not in ['opened', 'reopened', 'synchronize']:
-            return
+            return res(200, 'action ignored')
 
         result = self.execute('''
             SELECT id, project_id, private FROM repository WHERE github_id = %s;
@@ -269,6 +270,8 @@ class Trigger(object):
             logger.error(json.dumps(commits, indent=4))
             return res(500, 'Internal Server Error')
 
+        is_fork = event['pull_request']['head']['repo']['fork']
+
         result = self.execute('''
             SELECT id FROM pull_request WHERE project_id = %s and github_pull_request_id = %s
         ''', [repo_id, event['pull_request']['id']])
@@ -302,7 +305,8 @@ class Trigger(object):
             "GITHUB_PULL_REQUEST_BASE_LABEL": event['pull_request']['base']['label'],
             "GITHUB_PULL_REQUEST_BASE_REF": event['pull_request']['base']['ref'],
             "GITHUB_PULL_REQUEST_BASE_SHA": event['pull_request']['base']['sha'],
-            "GITHUB_PULL_REQUEST_BASE_REPO_CLONE_URL": event['pull_request']['base']['repo']['clone_url']
+            "GITHUB_PULL_REQUEST_BASE_REPO_CLONE_URL": event['pull_request']['base']['repo']['clone_url'],
+            "GITHUB_REPOSITORY_FULL_NAME": event['repository']['full_name']
         })
 
         if not result:
@@ -330,7 +334,7 @@ class Trigger(object):
             build_id = self.create_build(commit_id, project_id)
             self.create_job(event['pull_request']['head']['sha'],
                             event['pull_request']['head']['repo']['clone_url'],
-                            build_id, project_id, github_repo_private, branch, env)
+                            build_id, project_id, github_repo_private, branch, env=env, fork=is_fork)
 
             self.conn.commit()
 

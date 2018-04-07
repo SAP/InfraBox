@@ -78,14 +78,8 @@
     name: INFRABOX_STORAGE_GCS_PROJECT_ID
     value: {{ .Values.storage.gcs.project_id }}
 -
-    name: INFRABOX_STORAGE_GCS_CONTAINER_OUTPUT_BUCKET
-    value: {{ .Values.storage.gcs.container_output_bucket }}
--
-    name: INFRABOX_STORAGE_GCS_PROJECT_UPLOAD_BUCKET
-    value: {{ .Values.storage.gcs.project_upload_bucket }}
--
-    name: INFRABOX_STORAGE_GCS_CONTAINER_CONTENT_CACHE_BUCKET
-    value: {{ .Values.storage.gcs.container_content_cache_bucket }}
+    name: INFRABOX_STORAGE_GCS_BUCKET
+    value: {{ .Values.storage.gcs.bucket }}
 -
     name: GOOGLE_APPLICATION_CREDENTIALS
     value: /etc/infrabox/gcs/gcs_service_account.json
@@ -110,14 +104,8 @@
     name: INFRABOX_STORAGE_S3_SECURE
     value: {{ .Values.storage.s3.secure | quote }}
 -
-    name: INFRABOX_STORAGE_S3_CONTAINER_OUTPUT_BUCKET
-    value: {{ default "infrabox-container-output" .Values.storage.s3.container_output_bucket | quote }}
--
-    name: INFRABOX_STORAGE_S3_PROJECT_UPLOAD_BUCKET
-    value: {{ default "infrabox-project-upload" .Values.storage.s3.project_upload_bucket | quote }}
--
-    name: INFRABOX_STORAGE_S3_CONTAINER_CONTENT_CACHE_BUCKET
-    value: {{ default "infrabox-container-content-cache" .Values.storage.s3.container_content_cache_bucket | quote }}
+    name: INFRABOX_STORAGE_S3_BUCKET
+    value: {{ default "infrabox" .Values.storage.s3.bucket | quote }}
 -
     name: INFRABOX_STORAGE_S3_ACCESS_KEY
     valueFrom:
@@ -147,6 +135,9 @@
 -
     name: INFRABOX_GITHUB_LOGIN_URL
     value: {{ default "https://github.com/login" .Values.github.login.url }}
+-
+    name: INFRABOX_GITHUB_LOGIN_ALLOWED_ORGANIZATIONS
+    value: {{ default "false" .Values.github.login.allowed_organizations | quote }}
 {{ end }}
 {{ end }}
 
@@ -235,19 +226,15 @@
     value: {{ .Values.root_url }}
 {{ end }}
 
-
 {{ define "env_docker_registry" }}
 -
     name: INFRABOX_DOCKER_REGISTRY_ADMIN_USERNAME
-    valueFrom:
-        secretKeyRef:
-            name: infrabox-docker-registry
-            key: username
+    value: "admin"
 -
     name: INFRABOX_DOCKER_REGISTRY_ADMIN_PASSWORD
     valueFrom:
         secretKeyRef:
-            name: infrabox-docker-registry
+            name: infrabox-admin
             key: password
 {{ end }}
 

@@ -9,6 +9,7 @@
                         <md-table-head>Started</md-table-head>
                         <md-table-head>Duration</md-table-head>
                         <md-table-head>Resources</md-table-head>
+                        <md-table-head>Cluster</md-table-head>
                     </md-table-row>
                 </md-table-header>
 
@@ -17,7 +18,7 @@
                         <md-table-cell><ib-state :state="j.state"></ib-state></md-table-cell>
                         <md-table-cell>
                             <router-link :to="{name: 'JobDetail', params: {
-                                        projectName: project.name,
+                                        projectName: encodeURIComponent(project.name),
                                         buildNumber: build.number,
                                         buildRestartCounter: build.restartCounter,
                                         jobName: j.name
@@ -32,6 +33,7 @@
                             <ib-duration :start="j.startDate" :end="j.endDate"></ib-duration>
                         </md-table-cell>
                         <md-table-cell><div>{{ j.cpu }} CPU / {{ j.memory }} GiB </div></md-table-cell>
+                        <md-table-cell>{{ j.definition.cluster.name }}</md-table-cell>
                     </md-table-row>
                 </md-table-body>
             </md-table>

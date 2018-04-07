@@ -4,7 +4,10 @@ import json
 import time
 import uuid
 import copy
+import urllib
 from datetime import datetime
+
+import requests
 
 from flask import jsonify, request, send_file, g, after_this_request, abort
 from flask_restplus import Resource
@@ -17,6 +20,7 @@ from pyinfrabox.testresult import validate_result
 from pyinfrabox import ValidationError
 
 from pyinfraboxutils import get_env
+from pyinfraboxutils.token import encode_job_token
 from pyinfraboxutils.ibrestplus import api
 from pyinfraboxutils.ibflask import job_token_required, app
 from pyinfraboxutils.storage import storage
@@ -95,7 +99,7 @@ class Job(Resource):
             INNER JOIN project p
                 ON co.project_id = p.id
             WHERE j.id = %s
-        ''', (job_id, ))
+        ''', [job_id])
 
         data['job'] = {
             "id": job_id,
@@ -153,7 +157,7 @@ class Job(Resource):
                     r.clone_url, r.name, r.private
                 FROM repository r
                 WHERE r.project_id = %s
-            ''', (data['project']['id'],))
+            ''', [data['project']['id']])
 
             data['repository']['clone_url'] = r[0]
             data['repository']['name'] = r[1]
@@ -166,7 +170,7 @@ class Job(Resource):
                 FROM commit c
                 WHERE c.id = %s
                     AND c.project_id = %s
-            ''', (data['build']['commit_id'], data['project']['id']))
+            ''', [data['build']['commit_id'], data['project']['id']])
 
             data['commit'] = {
                 "id": data['build']['commit_id'],
@@ -180,7 +184,7 @@ class Job(Resource):
             r = g.db.execute_one('''
                 SELECT filename FROM source_upload
                 WHERE id = %s
-            ''', (data['build']['source_upload_id'], ))
+            ''', [data['build']['source_upload_id']])
 
             data['source_upload'] = {
                 "filename": r[0]
@@ -200,7 +204,7 @@ class Job(Resource):
               )
               SELECT id, name, state, start_date, end_date, dependencies
               FROM job WHERE id IN (SELECT distinct id FROM next_job WHERE id != %s)
-        ''', (data['job']['id'], data['job']['id']))
+        ''', [data['job']['id'], data['job']['id']])
 
         data['dependencies'] = []
 
@@ -218,7 +222,7 @@ class Job(Resource):
         r = g.db.execute_many('''
           SELECT id, name FROM job where id
               IN (SELECT (deps->>'job-id')::uuid FROM job, jsonb_array_elements(job.dependencies) as deps WHERE id = %s)
-        ''', (data['job']['id'], ))
+        ''', [data['job']['id']])
 
         data['parents'] = []
 
@@ -233,9 +237,13 @@ class Job(Resource):
              SELECT name, value
              FROM secret
              WHERE project_id = %s
-        ''', (data['project']['id'], ))
+        ''', [data['project']['id']])
 
+        is_fork = data['job'].get('fork', False)
         def get_secret(name):
+            if is_fork:
+                abort(400, 'Access to secret %s is not allowed from a fork' % name)
+
             for ev in secrets:
                 if ev[0] == name:
                     return ev[1]
@@ -253,7 +261,7 @@ class Job(Resource):
                     secret_name = dep['password']['$secret']
                     secret = get_secret(secret_name)
 
-                    if not secret:
+                    if secret is None:
                         abort(400, "Secret %s not found" % secret_name)
 
                     dep['password'] = secret
@@ -262,33 +270,51 @@ class Job(Resource):
                     abort(400, "Unknown deployment type")
 
         # Default env vars
-        data['environment'] = {
+        project_name = urllib.quote_plus(data['project']['name']).replace('+', '%20')
+        job_name = urllib.quote_plus(data['job']['name']).replace('+', '%20')
+        build_url = "%s/dashboard/#/project/%s/build/%s/%s" % (os.environ['INFRABOX_ROOT_URL'],
+                                                               project_name,
+                                                               data['build']['build_number'],
+                                                               data['build']['restart_counter'])
+        job_url = "%s/dashboard/#/project/%s/build/%s/%s/job/%s" % (os.environ['INFRABOX_ROOT_URL'],
+                                                                    project_name,
+                                                                    data['build']['build_number'],
+                                                                    data['build']['restart_counter'],
+                                                                    job_name)
+
+
+        data['env_vars'] = {
             "TERM": "xterm-256color",
             "INFRABOX_JOB_ID": data['job']['id'],
-            "INFRABOX_BUILD_NUMBER": "%s" % data['build']['build_number']
+            "INFRABOX_JOB_URL": job_url,
+            "INFRABOX_BUILD_NUMBER": "%s" % data['build']['build_number'],
+            "INFRABOX_BUILD_RESTART_COUNTER": "%s" % data['build']['restart_counter'],
+            "INFRABOX_BUILD_URL": build_url,
         }
 
+        data['secrets'] = {}
+
         if data['commit']['branch']:
-            data['environment']['INFRABOX_GIT_BRANCH'] = data['commit']['branch']
+            data['env_vars']['INFRABOX_GIT_BRANCH'] = data['commit']['branch']
 
         if data['commit']['tag']:
-            data['environment']['INFRABOX_GIT_TAG'] = data['commit']['tag']
+            data['env_vars']['INFRABOX_GIT_TAG'] = data['commit']['tag']
 
         if pull_request_id:
-            data['environment']['INFRABOX_GITHUB_PULL_REQUEST'] = "true"
+            data['env_vars']['INFRABOX_GITHUB_PULL_REQUEST'] = "true"
 
         if env_vars:
             for name, value in env_vars.iteritems():
-                data['environment'][name] = value
+                data['env_vars'][name] = value
 
         if env_var_refs:
             for name, value in env_var_refs.iteritems():
                 secret = get_secret(value)
 
-                if not secret:
+                if secret is None:
                     abort(400, "Secret %s not found" % value)
 
-                data['environment'][name] = secret
+                data['secrets'][name] = secret
 
         return jsonify(data)
 
@@ -312,7 +338,8 @@ class Source(Resource):
                 j.id = %s AND
                 b.project_id = %s AND
                 j.project_id = %s
-        ''', (job_id, project_id, project_id))
+        ''', [job_id, project_id, project_id])
+
 
         filename = r[0]
         filename = filename.replace('/', '_')
@@ -368,6 +395,37 @@ class Cache(Resource):
         return jsonify({})
 
 
+@ns.route("/archive")
+class Archive(Resource):
+
+    @job_token_required
+    def post(self):
+        job_id = g.token['job']['id']
+
+        for f in request.files:
+            stream = request.files[f].stream
+            key = '%s/%s' % (job_id, f)
+            app.logger.error(f)
+            app.logger.error(job_id)
+            storage.upload_archive(stream, key)
+            size = stream.tell()
+
+            archive = {
+                'filename': f,
+                'size': size
+            }
+
+            g.db.execute('''
+                UPDATE job
+                SET archive = archive || %s::jsonb
+                WHERE id = %s
+            ''', [json.dumps(archive), job_id])
+
+        g.db.commit()
+
+        return jsonify({})
+
+
 # TODO(steffen): check upload output sizes
 # max_output_size = os.environ['INFRABOX_JOB_MAX_OUTPUT_SIZE']
 
@@ -383,11 +441,57 @@ class Output(Resource):
     @ns.expect(output_upload_parser)
     def post(self):
         job_id = g.token['job']['id']
+
         key = "%s.tar.gz" % job_id
         key = key.replace('/', '_')
 
+        stream = request.files['output.tar.gz'].stream
+
+        # determine all children
+        jobs = g.db.execute_many_dict('''
+            SELECT cluster_name, dependencies
+            FROM job
+            WHERE build_id = (SELECT build_id FROM job WHERE id = %s)
+            AND state = 'queued'
+        ''', [job_id])
+
+        clusters = set()
+
+        for j in jobs:
+            dependencies = j.get('dependencies', None)
+
+            if not dependencies:
+                continue
+
+            for dep in dependencies:
+                if dep['job-id'] != job_id:
+                    continue
+
+                clusters.add(j['cluster_name'])
+
+        clusters = g.db.execute_many_dict('''
+            SELECT root_url
+            FROM cluster
+            WHERE active = true
+            AND name = ANY (%s)
+            AND name != %s
+        ''', [list(clusters), os.environ['INFRABOX_CLUSTER_NAME']])
+
         g.release_db()
-        storage.upload_output(request.files['output.tar.gz'].stream, key)
+
+        storage.upload_output(stream, key)
+
+        for c in clusters:
+            stream.seek(0)
+            url = '%s/api/job/output' % c['root_url']
+            files = {'output.tar.gz': stream}
+            token = encode_job_token(job_id)
+            headers = {'Authorization': 'bearer ' + token}
+            r = requests.post(url, files=files, headers=headers, timeout=120)
+
+            if r.status_code != 200:
+                abort(500, "Failed to upload data")
+
         return jsonify({})
 
 @ns.route("/output/<parent_job_id>")
@@ -404,7 +508,7 @@ class OutputParent(Resource):
             SELECT dependencies
             FROM job
             WHERE id = %s
-        ''', (job_id,))[0]
+        ''', [job_id])[0]
 
         is_valid_dependency = False
         for dep in dependencies:
@@ -436,7 +540,7 @@ class SetRunning(Resource):
         g.db.execute("DELETE FROM console WHERE job_id = %s", (job_id,))
         g.db.execute("""
             UPDATE job SET state = 'running', start_date = current_timestamp
-            WHERE id = %s""", (job_id,))
+            WHERE id = %s""", [job_id])
         g.db.commit()
 
         return jsonify({})
@@ -457,6 +561,51 @@ def find_leaf_jobs(jobs):
 
 @ns.route("/create_jobs")
 class CreateJobs(Resource):
+    def get_target_cluster(self, clusters, cluster_selector):
+        for c in clusters:
+            matches = True
+            for s in cluster_selector:
+                if s not in c['labels']:
+                    matches = False
+                    break
+
+            if matches:
+                return c['name']
+
+        return None
+
+    def assign_cluster(self, jobs):
+        clusters = g.db.execute_many_dict('''
+            SELECT name, labels
+            FROM cluster
+        ''')
+
+        assigned_clusters = {}
+
+        for j in jobs:
+            if not 'cluster' in j:
+                j['cluster'] = {}
+
+            cluster_selector = j['cluster'].get('selector', None)
+            target_cluster = None
+
+            # Find a cluster which matches the selector
+            if cluster_selector:
+                target_cluster = self.get_target_cluster(clusters, cluster_selector)
+
+                if not target_cluster:
+                    abort(400, 'Could not find a cluster which could satisfy the selector: %s' %
+                          json.dumps(cluster_selector))
+
+            # Use the same cluster as the parent if there's not selector
+            if not target_cluster:
+                target_cluster = 'master'
+                for d in j.get('depends_on', []):
+                    target_cluster = assigned_clusters.get(d['job'], 'master')
+                    break
+
+            assigned_clusters[j['name']] = target_cluster
+            j['cluster']['name'] = target_cluster
 
     @job_token_required
     def post(self):
@@ -477,9 +626,9 @@ class CreateJobs(Resource):
                     continue
 
                 if sc.get('capabilities', None):
-                    abort(404, 'Capabilities are disabled')
+                    abort(400, 'Capabilities are disabled')
 
-        result = g.db.execute_one("SELECT env_var, build_id FROM job WHERE id = %s", (parent_job_id,))
+        result = g.db.execute_one("SELECT env_var, build_id FROM job WHERE id = %s", [parent_job_id])
         base_env_var = result[0]
         build_id = result[1]
 
@@ -492,7 +641,7 @@ class CreateJobs(Resource):
                 AND j.id = %s
             INNER JOIN build b
                 ON b.id = j.build_id
-        """, (parent_job_id,))
+        """, [parent_job_id])
 
         build_number = result[1]
         project_id = result[2]
@@ -521,7 +670,7 @@ class CreateJobs(Resource):
                     AND b.build_number between %s and %s
                     AND j.name = %s
                     AND j.state = 'finished'
-            """, (project_id, project_id, build_number - 10, build_number, job['name'],))[0]
+            """, [project_id, project_id, build_number - 10, build_number, job['name']])[0]
 
             job['avg_duration'] = avg_duration
 
@@ -533,8 +682,8 @@ class CreateJobs(Resource):
                     if isinstance(value, dict):
                         env_var_ref_name = value['$secret']
                         result = g.db.execute_many("""
-                                SELECT value FROM secret WHERE name = %s and project_id = %s""",
-                                                   (env_var_ref_name, project_id))
+                                    SELECT value FROM secret WHERE name = %s and project_id = %s
+                                    """, [env_var_ref_name, project_id])
 
                         if not result:
                             abort(400, "Secret '%s' not found" % env_var_ref_name)
@@ -573,10 +722,12 @@ class CreateJobs(Resource):
                         SELECT id parent_id
                         FROM job, jsonb_array_elements(job.dependencies) as deps
                         WHERE (deps->>'job-id')::uuid = %s
-                        AND build_id = %s
-                        AND project_id = %s
+                            AND build_id = %s
+                            AND project_id = %s
                     )
-                ''', (json.dumps(wait_job), job_id, build_id, project_id))
+                ''', [json.dumps(wait_job), job_id, build_id, project_id])
+
+        self.assign_cluster(jobs)
 
         for job in jobs:
             name = job["name"]
@@ -596,6 +747,9 @@ class CreateJobs(Resource):
             if job_type == "docker":
                 f = job['docker_file']
                 t = 'run_project_container'
+            elif job_type == "docker-image":
+                f = None
+                t = 'run_project_container'
             elif job_type == "docker-compose":
                 f = job['docker_compose_file']
                 t = 'run_docker_compose'
@@ -603,7 +757,7 @@ class CreateJobs(Resource):
                 f = None
                 t = 'wait'
             else:
-                abort(400, "Unknown job type")
+                abort(400, "Unknown job type: %s" % job_type)
 
             limits_cpu = 1
             limits_memory = 1024
@@ -646,18 +800,19 @@ class CreateJobs(Resource):
 
             # Create job
             g.db.execute("""
-                INSERT INTO job (id, state, build_id, type, dockerfile, name,
-                    project_id, dependencies, build_only,
-                    created_at, repo,
-                    env_var_ref, env_var, build_arg, deployment, cpu, memory, timeout, resources, definition)
-                VALUES (%s, 'queued', %s, %s, %s, %s, %s, %s, %s, %s, %s,
-                        %s, %s, %s, %s, %s, %s, %s, %s, %s);""",
-                         (job_id, build_id, t, f, name,
-                          project_id,
-                          json.dumps(depends_on), build_only, datetime.now(),
-                          repo, env_var_refs, env_vars,
-                          build_arguments, deployments, limits_cpu, limits_memory, timeout,
-                          resources, json.dumps(job)))
+                         INSERT INTO job (id, state, build_id, type, dockerfile, name,
+                             project_id, dependencies, build_only,
+                             created_at, repo,
+                             env_var_ref, env_var, build_arg, deployment, cpu, memory,
+                             timeout, resources, definition, cluster_name)
+                         VALUES (%s, 'queued', %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                                 %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
+                         """, [job_id, build_id, t, f, name,
+                               project_id,
+                               json.dumps(depends_on), build_only, datetime.now(),
+                               repo, env_var_refs, env_vars,
+                               build_arguments, deployments, limits_cpu, limits_memory, timeout,
+                               resources, json.dumps(job), job['cluster']['name']])
 
             # to make sure the get picked up in the right order by the scheduler
             time.sleep(0.1)
@@ -676,7 +831,7 @@ class ConsoleUpdate(Resource):
 
         r = g.db.execute_one("""
             SELECT sum(char_length(output)), count(*) FROM console WHERE job_id = %s
-        """, (job_id,))
+        """, [job_id])
 
         if not r:
             abort(404, "Not found")
@@ -691,7 +846,7 @@ class ConsoleUpdate(Resource):
             abort(400, "Too many console updates")
 
         try:
-            g.db.execute("INSERT INTO console (job_id, output) VALUES (%s, %s)", (job_id, output))
+            g.db.execute("INSERT INTO console (job_id, output) VALUES (%s, %s)", [job_id, output])
             g.db.commit()
         except:
             pass
@@ -708,7 +863,7 @@ class Stats(Resource):
         stats = request.json['stats']
 
         try:
-            g.db.execute("UPDATE job SET stats = %s WHERE id = %s", (json.dumps(stats), job_id))
+            g.db.execute("UPDATE job SET stats = %s WHERE id = %s", [json.dumps(stats), job_id])
             g.db.commit()
         except:
             pass
@@ -741,7 +896,7 @@ class Markup(Resource):
 
         r = g.db.execute_one("""
             SELECT count(*) FROM job_markup WHERE job_id = %s
-        """, (job_id,))
+        """, [job_id])
 
         if r[0] > 0:
             abort(403, "Forbidden")
@@ -774,8 +929,8 @@ class Markup(Resource):
                     validate_markup(data)
 
                 g.db.execute("""INSERT INTO job_markup (job_id, name, data, project_id, type)
-                                  VALUES (%s, %s, %s, %s, 'markup')""",
-                             (job_id, name, content, project_id))
+                                VALUES (%s, %s, %s, %s, 'markup')
+                             """, [job_id, name, content, project_id])
                 g.db.commit()
             except ValidationError as e:
                 abort(400, e.message)
@@ -793,9 +948,8 @@ class Badge(Resource):
         job_id = g.token['job']['id']
         project_id = g.token['project']['id']
 
-        r = g.db.execute_one("""
-            SELECT count(*) FROM job_badge WHERE job_id = %s
-        """, (job_id,))
+        r = g.db.execute_one(""" SELECT count(*) FROM job_badge WHERE job_id = %s
+                             """, [job_id])
 
         if r[0] > 0:
             abort(403, "Forbidden")
@@ -811,7 +965,7 @@ class Badge(Resource):
             return response
 
         for _, f in request.files.iteritems():
-            if not allowed_file(f.filename, ("json",)):
+            if not allowed_file(f.filename, ("json")):
                 abort(400, "Filetype not allowed")
 
             f.save(path)
@@ -835,8 +989,8 @@ class Badge(Resource):
             color = data['color']
 
             g.db.execute("""INSERT INTO job_badge (job_id, subject, status, color, project_id)
-                              VALUES (%s, %s, %s, %s, %s)""",
-                         (job_id, subject, status, color, project_id))
+                            VALUES (%s, %s, %s, %s, %s)
+                         """, [job_id, subject, status, color, project_id])
             g.db.commit()
 
         return jsonify({})
@@ -854,7 +1008,7 @@ class Testresult(Resource):
 
         f = request.files['data']
 
-        if not allowed_file(f.filename, ("json"),):
+        if not allowed_file(f.filename, ("json")):
             abort(400, 'file ending not allowed')
 
         path = '/tmp/%s.json' % uuid.uuid4()
@@ -875,7 +1029,7 @@ class Testresult(Resource):
             with open(path, 'r') as testresult:
                 data = json.load(testresult)
         except:
-            abort(404, 'Failed to parse json')
+            abort(400, 'Failed to parse json')
 
         # Validate it
         try:
@@ -883,21 +1037,22 @@ class Testresult(Resource):
         except ValidationError as e:
             abort(400, e.message)
 
-        testruns = g.db.execute_one("SELECT COUNT(*) as cnt FROM test_run WHERE job_id=%s", (job_id,))
+        testruns = g.db.execute_one("SELECT COUNT(*) as cnt FROM test_run WHERE job_id = %s", [job_id])
 
         if testruns[0] > 0:
-            abort(404, "testrun already created")
+            abort(400, "testrun already created")
 
-        rows = g.db.execute_one("""SELECT j.project_id, b.build_number
+        rows = g.db.execute_one("""
+                SELECT j.project_id, b.build_number
                 FROM job  j
                 INNER JOIN build b
                     ON j.id = %s
                     AND b.id = j.build_id
-        """, (job_id,))
+            """, [job_id])
         project_id = rows[0]
         build_number = rows[1]
 
-        existing_tests = g.db.execute_many("""SELECT suite, name, id FROM test WHERE project_id = %s""", (project_id,))
+        existing_tests = g.db.execute_many("""SELECT suite, name, id FROM test WHERE project_id = %s""", [project_id])
 
         test_index = {}
         for t in existing_tests:
@@ -1002,7 +1157,7 @@ class SetFinished(Resource):
 
         # collect console output
         lines = g.db.execute_many("""SELECT output FROM console WHERE job_id = %s
-                          ORDER BY date""", (job_id,))
+                                     ORDER BY date""", [job_id])
 
         output = ""
         for l in lines:
@@ -1015,10 +1170,10 @@ class SetFinished(Resource):
             console = %s,
             end_date = current_timestamp,
             message = %s
-        WHERE id = %s""", (state, output, message, job_id))
+        WHERE id = %s""", [state, output, message, job_id])
 
         # remove form console table
-        g.db.execute("DELETE FROM console WHERE job_id = %s", (job_id,))
+        g.db.execute("DELETE FROM console WHERE job_id = %s", [job_id])
 
         g.db.commit()
         return jsonify({})

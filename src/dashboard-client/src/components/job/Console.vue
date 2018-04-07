@@ -1,6 +1,11 @@
 <template>
     <div>
         <md-table-card class="console-table">
+            <md-layout  md-column  md-align="center" width="100%" v-if="job.message">
+                <md-card :md-theme="job.state" class="md-primary p-t-xs p-b-xs p-l-md p-r-md font-roboto">
+                    <span><i class="fa fa-exclamation-triangle p-r-sm"></i> {{ job.message }}</span>
+                </md-card>
+            </md-layout>
             <md-table>
                 <md-table-header class="text-right">
                     <md-table-row>
@@ -10,9 +15,10 @@
                     </md-table-row>
                 </md-table-header>
                 <md-table-body>
-                    <md-table-row v-for="section of job.sections" :key="section.text">
-                        <md-table-cell class="console-table"><md-card-expand>
-                            <md-card-actions class="console-table text-left text-top">
+                    <md-table-row v-for="section of job.sections" :key="section.id">
+                        <md-table-cell class="console-table">
+                            <md-card-expand>
+                                <md-card-actions class="console-table text-left text-top">
                                 <md-button md-theme="skipped" class="md-icon-button md-primary md-raised md-dense" md-expand-trigger>
                                     <md-icon>expand_less</md-icon>
                                 </md-button>
@@ -54,5 +60,10 @@ export default {
         color: white !important;
         font-family: monospace;
         box-shadow: none;
+    }
+
+    .font-roboto {
+        font-family: Roboto;
+        font-weight: 500;
     }
 </style>

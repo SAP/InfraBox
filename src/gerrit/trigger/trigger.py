@@ -3,8 +3,9 @@ import datetime
 
 import paramiko
 
+import psycopg2
+
 from pyinfraboxutils import get_logger, get_env, print_stackdriver
-from pyinfraboxutils.leader import elect_leader, is_leader
 from pyinfraboxutils.db import connect_db
 
 logger = get_logger("gerrit")
@@ -25,8 +26,6 @@ def main():
     conn = connect_db()
     logger.info("Connected to db")
 
-    elect_leader(conn, "gerrit-trigger")
-
     client = paramiko.SSHClient()
     client.load_system_host_keys()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -41,12 +40,23 @@ def main():
 
     logger.info("Waiting for stream-events")
     for line in stdout:
-        event = json.loads(line)
-        is_leader(conn, "gerrit-trigger")
+        for _ in range(0, 2):
+            try:
+                event = json.loads(line)
 
-        if event['type'] == "patchset-created":
-            logger.info(json.dumps(event, indent=4))
-            handle_patchset_created(conn, event)
+                if event['type'] in ("patchset-created", "draft-published"):
+                    logger.info(json.dumps(event, indent=4))
+                    handle_patchset_created(conn, event)
+                    break
+            except psycopg2.OperationalError:
+                try:
+                    conn.close()
+                except:
+                    pass
+
+                conn = connect_db()
+                logger.info("reconnected to db")
+
 
 def handle_patchset_created_project(conn, event, project_id, project_name):
     if event['patchSet']['isDraft']:
@@ -91,9 +101,10 @@ def handle_patchset_created_project(conn, event, project_id, project_name):
         commit = result
 
     c = conn.cursor()
-    c.execute('''SELECT count(distinct build_number) + 1 AS build_no
-              FROM build AS b
-              WHERE b.project_id = %s''', [project_id])
+    c.execute('''
+        SELECT max(build_number) + 1 AS build_no
+        FROM build AS b
+        WHERE b.project_id = %s''', [project_id])
     result = c.fetchone()
     c.close()
 
@@ -111,6 +122,7 @@ def handle_patchset_created_project(conn, event, project_id, project_name):
         "GERRIT_PATCHSET_UPLOADER_USERNAME": event['patchSet']['uploader']['username'],
         "GERRIT_PATCHSET_UPLOADER_NAME": event['patchSet']['uploader'].get('name', None),
         "GERRIT_PATCHSET_UPLOADER_EMAIL": event['patchSet']['uploader']['email'],
+        "GERRIT_PATCHSET_NUMBER": event['patchSet']['number'],
         "GERRIT_PATCHSET_REF": event['patchSet']['ref'],
         "GERRIT_REFSPEC": event['patchSet']['ref'],
         "GERRIT_PATCHSET_REVISION": event['patchSet']['revision'],
@@ -144,12 +156,12 @@ def handle_patchset_created_project(conn, event, project_id, project_name):
     c = conn.cursor()
     c.execute('''INSERT INTO job (id, state, build_id, type, name,
                                  project_id, build_only, dockerfile,
-                                 cpu, memory, repo, env_var)
+                                 cpu, memory, repo, env_var, cluster_name)
                 VALUES (gen_random_uuid(), 'queued', %s, 'create_job_matrix', 'Create Jobs',
-                        %s, false, '', 1, 1024, %s, %s)''', (build_id,
-                                                             project_id,
-                                                             json.dumps(git_repo),
-                                                             json.dumps(env_vars)))
+                        %s, false, '', 1, 1024, %s, %s, 'master')''', (build_id,
+                                                                       project_id,
+                                                                       json.dumps(git_repo),
+                                                                       json.dumps(env_vars)))
 
 def handle_patchset_created(conn, event):
     conn.rollback()

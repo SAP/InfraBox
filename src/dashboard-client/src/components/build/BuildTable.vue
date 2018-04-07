@@ -21,7 +21,7 @@
                         </md-table-cell>
                         <md-table-cell>
                             <router-link :to="{name: 'BuildDetailGraph', params: {
-                                projectName: project.name,
+                                projectName: encodeURIComponent(project.name),
                                 buildNumber: b.number,
                                 buildRestartCounter: b.restartCounter
                             }}">

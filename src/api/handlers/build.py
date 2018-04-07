@@ -4,7 +4,7 @@ from flask_restplus import Resource, fields
 from pyinfraboxutils.ibflask import auth_required
 from pyinfraboxutils.ibrestplus import api
 
-from job import job_model
+from api.handlers.job import job_model
 
 ns = api.namespace('api/v1/projects/<project_id>/builds', description='Build related operations')
 
@@ -65,5 +65,4 @@ class Jobs(Resource):
                 del j['docker_file']
             elif j['type'] == 'run_project_container':
                 j['type'] = 'docker'
-
         return jobs

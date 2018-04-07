@@ -10,7 +10,7 @@
                         </div>
                         <div class="md-subheading text-center">Welcome to InfraBox!</div>
                     </md-card-header>
-                    <md-card-content class="m-xl" v-if="$store.state.settings.INFRABOX_ACCOUNT_SIGNUP_ENABLED || $store.state.settings.INFRABOX_ACCOUNT_LDAP_ENABLED">
+                    <md-card-content class="m-xl">
                         <md-input-container :class="{'md-input-invalid': !mailValid}">
                             <md-input type="email" v-model="mail" name="email" @keyup.enter.native="login" required/>
                             <label>E-Mail</label>
@@ -28,7 +28,7 @@
                     <h3 class="md-subheading">Don't have an InfraBox account?</h3>
                     <div class=" m-b-md"></div>
                     <md-button @click="loginGithub()"
-                        v-if="$store.state.settings.INFRABOX_GITHUB_ENABLED"
+                        v-if="$store.state.settings.INFRABOX_GITHUB_LOGIN_ENABLED"
                         md-theme="default"
                         class="md-raised md-primary">
                         <i class="fa fa-fw fa-github"></i>
@@ -52,7 +52,7 @@
 <script>
 import store from '../../store'
 import router from '../../router'
-import APIService from '../../services/APIService'
+import NewAPIService from '../../services/NewAPIService'
 import UserService from '../../services/UserService'
 import NotificationService from '../../services/NotificationService'
 import Notification from '../../models/Notification'
@@ -86,7 +86,7 @@ export default {
             router.push('signup')
         },
         login () {
-            APIService.post('account/login', {
+            NewAPIService.post('account/login', {
                 email: this.mail,
                 password: this.password
             }).then(() => {

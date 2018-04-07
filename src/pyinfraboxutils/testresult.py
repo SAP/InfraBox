@@ -34,7 +34,10 @@ class Parser(object):
 
     def parse_testsuite(self, root):
         assert root.tag == 'testsuite'
-        ts_name = root.attrib.get('name')
+        ts_name = root.attrib.get('name', 'None')
+
+        if not ts_name:
+            ts_name = 'None'
 
         for el in root:
             if el.tag != 'testcase':
@@ -55,10 +58,6 @@ class Parser(object):
             duration = get_ms(time)
 
         suite = ts_name
-        classname = el.attrib.get('classname')
-
-        if classname:
-            suite += ' = ' + classname
 
         tc = {
             "measurements":  [],
@@ -72,21 +71,25 @@ class Parser(object):
         if message is None:
             message = error
 
-        if message is None:
-            message = ''
-
-        stack = ''
+        stack = None
         if error:
-            stack += error
+            stack = error
 
         for e in el:
             if e.tag in ('failure', 'error', 'skipped'):
                 if e.text:
+                    if not stack:
+                        stack = ''
+
                     stack += '\n'
                     stack += e.text
 
                 tc['status'] = RESULT_MAPPING[e.tag]
-                tc['message'] = message
-                tc['stack'] = stack
+
+                if message:
+                    tc['message'] = message
+
+                if stack:
+                    tc['stack'] = stack
 
         return tc

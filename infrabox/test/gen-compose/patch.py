@@ -36,7 +36,7 @@ data['services']['test'] = {
     ],
     'links': ['postgres', 'nginx-ingress'],
     'networks': ['infrabox'],
-    'volumes': copy.deepcopy(data['services']['dashboard-api']['volumes'])
+    'volumes': copy.deepcopy(data['services']['api']['volumes'])
 }
 
 with open('/infrabox/output/e2e/compose/docker-compose.yml', 'w') as o:

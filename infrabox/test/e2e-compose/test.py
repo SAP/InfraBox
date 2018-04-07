@@ -140,6 +140,10 @@ class Test(unittest.TestCase):
         self.run_it('/infrabox/context/infrabox/test/e2e/tests/docker_compose_job')
         self.expect_job('test')
 
+    def test_docker_job_archive(self):
+        self.run_it('/infrabox/context/infrabox/test/e2e/tests/docker_job_archive')
+        self.expect_job('test')
+
     def test_docker_compose_invalid_compose_file(self):
         self.run_it('/infrabox/context/infrabox/test/e2e/tests/docker_compose_invalid_compose_file')
         self.expect_job('Create Jobs',
@@ -162,6 +166,10 @@ class Test(unittest.TestCase):
         self.run_it('/infrabox/context/infrabox/test/e2e/tests/workflow_simple_job')
         self.expect_job('flow', parents=['flow/test-sub'])
         self.expect_job('flow/test-sub', parents=['Create Jobs'])
+
+    def test_image_input_output(self):
+        self.run_it('/infrabox/context/infrabox/test/e2e/tests/docker_image_input_output')
+        self.expect_job('consumer')
 
     def test_input_output(self):
         self.run_it('/infrabox/context/infrabox/test/e2e/tests/docker_input_output')

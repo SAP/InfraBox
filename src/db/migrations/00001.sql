@@ -179,9 +179,9 @@ CREATE TABLE job (
     build_id uuid NOT NULL,
     console text,
     type job_type NOT NULL,
-    dockerfile character varying(255),
+    dockerfile character varying,
     end_date timestamp with time zone,
-    name character varying(50) NOT NULL,
+    name character varying NOT NULL,
     project_id uuid NOT NULL,
     dependencies jsonb,
     build_only boolean NOT NULL,
@@ -643,81 +643,12 @@ CREATE FUNCTION job_queue_notify() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 DECLARE
-	build_json json;
-	project_json json;
-	job_json json;
-	commit_json json;
-	data_json json;
-	pull_request_json json;
-	project project%ROWTYPE;
 BEGIN
 	IF TG_OP = 'DELETE' THEN
 		RETURN OLD;
 	END IF;
 
-	-- create build json
-	SELECT json_build_object(
-		'id', b.id,
-		'build_number', b.build_number,
-		'restart_counter', b.restart_counter
-	) INTO build_json FROM build b WHERE id = NEW.build_id;
-
-	-- create project json
-	SELECT json_build_object(
-		'id', p.id,
-		'name', p.name,
-		'type', p.type
-	) INTO project_json FROM project p WHERE id = NEW.project_id;
-
-	-- create job json
-	job_json := json_build_object(
-		'id', NEW.id,
-		'state', NEW.state,
-		'start_date', NEW.start_date,
-		'type', NEW.type,
-		'dockerfile', NEW.dockerfile,
-		'end_date', NEW.end_date,
-		'name', NEW.name,
-		'cpu', NEW.cpu,
-		'memory', NEW.memory,
-		'dependencies', NEW.dependencies,
-		'created_at', NEW.created_at,
-        'message', NEW.message
-	);
-
-	SELECT * INTO project FROM project WHERE id = NEW.project_id;
-	IF project.type in ('github', 'gerrit') THEN
-		-- create commit json
-		SELECT json_build_object(
-			'id', c.id,
-			'message', split_part(c.message, '\n', 1),
-			'author_name', c.author_name,
-			'author_email', c.author_email,
-			'author_username', c.author_username,
-			'committer_name', c.committer_name,
-			'committer_email', c.committer_email,
-			'committer_username', c.committer_username,
-			'committer_avatar_url', u.avatar_url,
-			'url', c.url,
-			'branch', c.branch
-		), json_build_object(
-			'title', pr.title,
-			'url', pr.url
-		) INTO commit_json, pull_request_json
-		FROM job j
-		INNER JOIN build b
-			ON j.build_id = b.id
-		INNER JOIN commit c
-			ON b.commit_id = c.id
-		LEFT OUTER JOIN "user" u
-			ON c.committer_username = u.username
-		LEFT OUTER JOIN pull_request pr
-			ON c.pull_request_id = pr.id
-		WHERE b.id = NEW.build_id AND j.id = NEW.id;
-	END IF;
-
-	data_json := json_build_object('job', job_json, 'build', build_json, 'project', project_json, 'commit', commit_json, 'pull_request', pull_request_json);
-	PERFORM pg_notify('job_update', json_build_object('type', TG_OP, 'data', data_json)::text);
+	PERFORM pg_notify('job_update', json_build_object('type', TG_OP, 'job_id', NEW.id, 'state', NEW.state)::text);
 
   RETURN NEW;
 END;

@@ -1,5 +1,6 @@
 import json
 import select
+import urllib
 
 import psycopg2
 import paramiko
@@ -41,32 +42,85 @@ def main():
             conn.poll()
             while conn.notifies:
                 notify = conn.notifies.pop(0)
-                logger.info(notify.payload)
                 handle_job_update(conn, json.loads(notify.payload))
 
+def handle_job_update_retry(conn, update):
+    for _ in xrange(0, 3):
+        try:
+            handle_job_update(conn, update)
+            return
+        except:
+            logger.exception()
+
+    logger.error('Failed to set review multiple times. Restarting')
+
+
 def execute_ssh_cmd(client, cmd):
-    _, _, stderr = client.exec_command(cmd)
+    _, stdout, stderr = client.exec_command(cmd)
     err = stderr.read()
     if err:
         logger.error(err)
 
+    out = stdout.read()
+    if out:
+        logger.error(out)
 
-def handle_job_update(conn, update):
-    if update['type'] != 'UPDATE':
+
+def handle_job_update(conn, event):
+    if event['type'] != 'UPDATE':
         return
 
-    if update['data']['project']['type'] != 'gerrit':
+    job_id = event['job_id']
+
+    c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    c.execute('''
+        SELECT id, state, name, project_id, build_id
+        FROM job
+        WHERE id = %s
+    ''', [job_id])
+
+    job = c.fetchone()
+    c.close()
+
+    if not job:
         return
 
-    project_name = update['data']['project']['name']
-    project_id = update['data']['project']['id']
-    job_state = update['data']['job']['state']
-    job_id = update['data']['job']['id']
-    job_name = update['data']['job']['name']
-    commit_sha = update['data']['commit']['id']
-    build_id = update['data']['build']['id']
+    project_id = job['project_id']
+    build_id = job['build_id']
 
-    if job_state in ('queued', 'scheduled'):
+    c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    c.execute('''
+        SELECT id, name, type
+        FROM project
+        WHERE id = %s
+    ''', [project_id])
+    project = c.fetchone()
+    c.close()
+
+    if not project:
+        return
+
+    if project['type'] != 'gerrit':
+        return
+
+    c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    c.execute('''
+        SELECT id, build_number, restart_counter, commit_id
+        FROM build
+        WHERE id = %s
+    ''', [build_id])
+    build = c.fetchone()
+    c.close()
+
+    project_name = project['name']
+    job_state = job['state']
+    job_name = job['name']
+    commit_sha = build['commit_id']
+    build_id = build['id']
+    build_number = build['build_number']
+    build_restart_counter = build['restart_counter']
+
+    if job_state in ('queued', 'scheduled', 'running'):
         return
 
     gerrit_port = int(get_env('INFRABOX_GERRIT_PORT'))
@@ -83,39 +137,43 @@ def handle_job_update(conn, update):
                    port=gerrit_port,
                    key_filename=gerrit_key_filename)
     client.get_transport().set_keepalive(60)
-    logger.info("Connected to gerrit")
 
-    message = "Job %s: %s\n%s/dashboard/project/%s/build/%s/job/%s/console" % (job_state,
-                                                                               job_name,
-                                                                               dashboard_url,
-                                                                               project_id,
-                                                                               build_id,
-                                                                               job_id)
+    project_name = urllib.quote_plus(project_name).replace('+', '%20')
+    build_url = "%s/dashboard/#/project/%s/build/%s/%s" % (dashboard_url,
+                                                           project_name,
+                                                           build_number,
+                                                           build_restart_counter)
 
     c = conn.cursor()
     c.execute('''SELECT state, count(*) FROM job WHERE build_id = %s GROUP BY state''', [build_id])
     states = c.fetchall()
     c.close()
 
-    vote = "0"
+    vote = None
     if len(states) == 1 and states[0][0] == 'finished':
         # all finished
         vote = "+1"
+        message = "Build finished: %s" % build_url
     else:
         for s in states:
             if s[0] in ('running', 'scheduled', 'queued'):
                 # still some running
                 vote = "0"
+                message = "Build running: %s" % build_url
                 break
             elif s[0] != 'finished':
                 # not successful
                 vote = "-1"
+                message = "Build failed: %s" % build_url
 
-    logger.info('Setting InfraBox=%s', vote)
-    execute_ssh_cmd(client, 'gerrit review --project %s -m "%s" --label InfraBox=%s %s' % (project_name,
-                                                                                           message,
-                                                                                           vote,
-                                                                                           commit_sha))
+
+    if (job_name == 'Create Jobs' and vote == '0') or vote in ('-1', '+1'):
+        logger.info('Setting InfraBox=%s for sha=%s', vote, commit_sha)
+        cmd = 'gerrit review --project %s -m "%s" --label InfraBox=%s %s' % (project_name,
+                                                                             message,
+                                                                             vote,
+                                                                             commit_sha)
+        execute_ssh_cmd(client, cmd)
 
     client.close()
 

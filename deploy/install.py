@@ -5,9 +5,10 @@ import sys
 import stat
 import shutil
 import base64
-import hashlib
 import logging
 import yaml
+
+from Crypto.PublicKey import RSA
 
 logging.basicConfig(
     format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s',
@@ -75,6 +76,9 @@ class Install(object):
     def __init__(self, args):
         self.args = args
 
+    def is_master(self):
+        return self.args.cluster_name == "master"
+
     def required_option(self, name):
         args = vars(self.args)
         m = name.replace("-", "_")
@@ -129,6 +133,9 @@ class Kubernetes(Install):
         self.config.add(n, v)
 
     def setup_postgres(self):
+        if not self.is_master():
+            self.set('storage.migration.enabled', False)
+
         self.required_option('database')
         args = self.args
 
@@ -193,19 +200,13 @@ class Kubernetes(Install):
             self.required_option('s3-region')
             self.required_option('s3-endpoint')
             self.required_option('s3-port')
-            self.required_option('s3-container-output-bucket')
-            self.required_option('s3-project-upload-bucket')
-            self.required_option('s3-container-content-cache-bucket')
-            self.required_option('s3-docker-registry-bucket')
+            self.required_option('s3-bucket')
 
             self.set('storage.gcs.enabled', False)
             self.set('storage.s3.enabled', True)
             self.set('storage.s3.region', args.s3_region)
             self.set('storage.s3.endpoint', args.s3_endpoint)
-            self.set('storage.s3.container_output_bucket', args.s3_container_output_bucket)
-            self.set('storage.s3.project_upload_bucket', args.s3_project_upload_bucket)
-            self.set('storage.s3.container_content_cache_bucket', args.s3_container_content_cache_bucket)
-            self.set('storage.s3.docker_registry_bucket', args.s3_docker_registry_bucket)
+            self.set('storage.s3.bucket', args.s3_bucket)
             self.set('storage.s3.port', args.s3_port)
             self.set('storage.s3.secure', args.s3_secure == 'true')
 
@@ -218,20 +219,14 @@ class Kubernetes(Install):
         elif args.storage == 'gcs':
             self.required_option('gcs-project-id')
             self.required_option('gcs-service-account-key-file')
-            self.required_option('gcs-container-output-bucket')
-            self.required_option('gcs-project-upload-bucket')
-            self.required_option('gcs-container-content-cache-bucket')
-            self.required_option('gcs-docker-registry-bucket')
+            self.required_option('gcs-bucket')
 
             self.check_file_exists(args.gcs_service_account_key_file)
 
             self.set('storage.s3.enabled', False)
             self.set('storage.gcs.enabled', True)
             self.set('storage.gcs.project_id', args.gcs_project_id)
-            self.set('storage.gcs.container_output_bucket', args.gcs_container_output_bucket)
-            self.set('storage.gcs.project_upload_bucket', args.gcs_project_upload_bucket)
-            self.set('storage.gcs.container_content_cache_bucket', args.gcs_container_content_cache_bucket)
-            self.set('storage.gcs.docker_registry_bucket', args.gcs_docker_registry_bucket)
+            self.set('storage.gcs.bucket', args.gcs_bucket)
 
             with open(args.gcs_service_account_key_file) as keyfile:
                 secret = {
@@ -242,18 +237,18 @@ class Kubernetes(Install):
         else:
             raise Exception("unknown storage")
 
-    def setup_docker_registry(self):
-        self.required_option('docker-registry-admin-username')
-        self.required_option('docker-registry-admin-password')
+    def setup_admin_password(self):
+        self.required_option('admin-password')
+        self.required_option('admin-email')
 
         secret = {
-            "username": self.args.docker_registry_admin_username,
-            "password": self.args.docker_registry_admin_password
+            "email": self.args.admin_email,
+            "password": self.args.admin_password
         }
 
-        self.create_secret("infrabox-docker-registry", self.args.general_worker_namespace, secret)
-        self.create_secret("infrabox-docker-registry", self.args.general_system_namespace, secret)
+        self.create_secret("infrabox-admin", self.args.general_system_namespace, secret)
 
+    def setup_docker_registry(self):
         self.set('docker_registry.nginx_tag', self.args.version)
         self.set('docker_registry.auth_tag', self.args.version)
 
@@ -272,6 +267,9 @@ class Kubernetes(Install):
             self.set('local_cache.host_path', self.args.local_cache_host_path)
 
     def setup_ldap(self):
+        if not self.is_master():
+            return
+
         if not self.args.ldap_enabled:
             return
 
@@ -293,6 +291,9 @@ class Kubernetes(Install):
         self.set('account.signup.enabled', False)
 
     def setup_gerrit(self):
+        if not self.is_master():
+            return
+
         if not self.args.gerrit_enabled:
             return
 
@@ -319,6 +320,9 @@ class Kubernetes(Install):
         self.create_secret("infrabox-gerrit-ssh", self.args.general_worker_namespace, secret)
 
     def setup_github(self):
+        if not self.is_master():
+            return
+
         if not self.args.github_enabled:
             return
 
@@ -336,6 +340,9 @@ class Kubernetes(Install):
         self.set('github.api.tag', self.args.version)
         self.set('github.review.tag', self.args.version)
 
+        if self.args.github_login_allowed_organizations:
+            self.set('github.login.allowed_organizations', self.args.github_login_allowed_organizations)
+
         secret = {
             "client_id": self.args.github_client_id,
             "client_secret": self.args.github_client_secret,
@@ -345,25 +352,26 @@ class Kubernetes(Install):
         self.create_secret("infrabox-github", self.args.general_system_namespace, secret)
 
     def setup_dashboard(self):
-        secret = hashlib.sha256(open(self.args.general_rsa_private_key, 'rb').read()).hexdigest()
-
-        secret = {
-            "secret": secret
-        }
-
-        self.create_secret("infrabox-dashboard", self.args.general_system_namespace, secret)
-
-        self.set('dashboard.api.tag', self.args.version)
-        self.set('dashboard.url', self.args.root_url)
+        if not self.is_master():
+            self.set('dashboard.enabled', False)
+        else:
+            self.set('dashboard.api.tag', self.args.version)
+            self.set('dashboard.url', self.args.root_url)
 
     def setup_api(self):
         self.set('api.url', self.args.root_url + '/api/cli')
         self.set('api.tag', self.args.version)
 
     def setup_static(self):
-        self.set('static.tag', self.args.version)
+        if not self.is_master():
+            self.set('static.enabled', False)
+        else:
+            self.set('static.tag', self.args.version)
 
     def setup_general(self):
+        self.required_option('general-rsa-private-key')
+        self.required_option('general-rsa-public-key')
+
         self.set('general.dont_check_certificates', self.args.general_dont_check_certificates)
         self.set('general.worker_namespace', self.args.general_worker_namespace)
         self.set('general.system_namespace', self.args.general_system_namespace)
@@ -396,8 +404,9 @@ class Kubernetes(Install):
         self.set('scheduler.tag', self.args.version)
         self.set('scheduler.enabled', not self.args.scheduler_disabled)
 
-    def setup_stats(self):
-        self.set('stats.tag', self.args.version)
+    def setup_cluster(self):
+        self.set('cluster.name', self.args.cluster_name)
+        self.set('cluster.labels', self.args.cluster_labels)
 
     def setup_ingress(self):
         host = self.args.root_url.replace('http://', '')
@@ -409,7 +418,6 @@ class Kubernetes(Install):
         self.set('ingress.tls.force_redirect', not self.args.ingress_tls_dont_force_redirect)
         self.set('ingress.tls.enabled', not self.args.ingress_tls_disabled)
         self.set('ingress.tls.host', self.args.ingress_tls_host)
-        self.set('ingress.tls.acme', self.args.ingress_tls_acme)
 
     def main(self):
         self.required_option('root-url')
@@ -428,14 +436,15 @@ class Kubernetes(Install):
         self.config.load(values_path)
 
         self.setup_general()
+        self.setup_admin_password()
         self.setup_storage()
         self.setup_postgres()
         self.setup_docker_registry()
         self.setup_account()
         self.setup_job()
         self.setup_db()
-        self.setup_stats()
         self.setup_scheduler()
+        self.setup_cluster()
         self.setup_gerrit()
         self.setup_github()
         self.setup_dashboard()
@@ -463,18 +472,6 @@ class DockerCompose(Install):
         super(DockerCompose, self).__init__(args)
         self.config = Configuration()
 
-    def setup_dashboard(self):
-        self.config.append('services.dashboard-api.environment', ['INFRABOX_ROOT_URL=%s' % self.args.root_url])
-
-        self.config.append('services.dashboard-api.volumes', [
-            '%s:/var/run/secrets/infrabox.net/rsa/id_rsa' % os.path.join(self.args.o, 'id_rsa'),
-            '%s:/var/run/secrets/infrabox.net/rsa/id_rsa.pub' % os.path.join(self.args.o, 'id_rsa.pub'),
-        ])
-
-        if self.args.gerrit_enabled:
-            self.config.append('services.dashboard-api.environment', self.get_gerrit_env())
-
-
     def setup_job_git(self):
         self.config.add('services.job-git.image',
                         '%s/job-git:%s' % (self.args.docker_registry, self.args.version))
@@ -493,16 +490,23 @@ class DockerCompose(Install):
                         '%s/api:%s' % (self.args.docker_registry, self.args.version))
 
         self.config.append('services.api.volumes', [
+            '%s:/var/run/secrets/infrabox.net/rsa/id_rsa' % os.path.join(self.args.o, 'id_rsa'),
             '%s:/var/run/secrets/infrabox.net/rsa/id_rsa.pub' % os.path.join(self.args.o, 'id_rsa.pub'),
         ])
 
+        if self.args.gerrit_enabled:
+            self.config.append('services.api.environment', self.get_gerrit_env())
+
     def setup_rsa(self):
-        self.check_file_exists(self.args.general_rsa_private_key)
-        self.check_file_exists(self.args.general_rsa_public_key)
+        new_key = RSA.generate(bits=2048)
+        public_key = new_key.publickey().exportKey()
+        private_key = new_key.exportKey()
 
-        shutil.copy(self.args.general_rsa_private_key, os.path.join(self.args.o, 'id_rsa'))
-        shutil.copy(self.args.general_rsa_public_key, os.path.join(self.args.o, 'id_rsa.pub'))
+        with open(os.path.join(self.args.o, 'id_rsa'), 'w+') as out:
+            out.write(private_key)
 
+        with open(os.path.join(self.args.o, 'id_rsa.pub'), 'w+') as out:
+            out.write(public_key)
 
     def setup_docker_registry(self):
         self.required_option('docker-registry')
@@ -515,8 +519,6 @@ class DockerCompose(Install):
         self.config.add('services.static.image',
                         '%s/static"%s' % (self.args.docker_registry, self.args.version))
 
-        self.config.add('services.dashboard-api.image',
-                        '%s/dashboard-api:%s' % (self.args.docker_registry, self.args.version))
         self.config.add('services.static.image',
                         '%s/static:%s' % (self.args.docker_registry, self.args.version))
 
@@ -610,7 +612,7 @@ class DockerCompose(Install):
                 "INFRABOX_ACCOUNT_SIGNUP_ENABLED=true"
             ]
 
-        self.config.append('services.dashboard-api.environment', env)
+        self.config.append('services.api.environment', env)
 
     def setup_database(self):
         if self.args.database == 'postgres':
@@ -647,10 +649,8 @@ class DockerCompose(Install):
 
             self.config.append('services.docker-registry-auth.links', ['postgres'])
             self.config.append('services.scheduler.links', ['postgres'])
-            self.config.append('services.dashboard-api.links', ['postgres'])
             self.config.append('services.api.links', ['postgres'])
 
-        self.config.append('services.dashboard-api.environment', env)
         self.config.append('services.api.environment', env)
         self.config.append('services.scheduler.environment', env)
         self.config.append('services.docker-registry-auth.environment', env)
@@ -670,7 +670,6 @@ class DockerCompose(Install):
         self.setup_database()
         self.setup_docker_registry()
         self.setup_ldap()
-        self.setup_dashboard()
         self.setup_nginx_ingress()
         self.setup_api()
         self.setup_job_git()
@@ -693,17 +692,21 @@ def main():
     parser.add_argument('--root-url')
     parser.add_argument('--docker-registry', default='quay.io/infrabox')
 
+    # Cluster
+    parser.add_argument('--cluster-name', default='master')
+    parser.add_argument('--cluster-labels')
+
+    # Admin config
+    parser.add_argument('--admin-email')
+    parser.add_argument('--admin-password')
+
     # General
     parser.add_argument('--general-dont-check-certificates', action='store_true', default=False)
     parser.add_argument('--general-worker-namespace', default='infrabox-worker')
     parser.add_argument('--general-system-namespace', default='infrabox-system')
-    parser.add_argument('--general-rsa-public-key', required=True)
-    parser.add_argument('--general-rsa-private-key', required=True)
+    parser.add_argument('--general-rsa-public-key')
+    parser.add_argument('--general-rsa-private-key')
     parser.add_argument('--general-rbac-disabled', action='store_true', default=False)
-
-    # Docker configuration
-    parser.add_argument('--docker-registry-admin-username')
-    parser.add_argument('--docker-registry-admin-password')
 
     # Database configuration
     parser.add_argument('--database',
@@ -731,18 +734,12 @@ def main():
     parser.add_argument('--s3-region')
     parser.add_argument('--s3-endpoint')
     parser.add_argument('--s3-port', default=443, type=int)
-    parser.add_argument('--s3-container-output-bucket', default='infrabox-container-output')
-    parser.add_argument('--s3-project-upload-bucket', default='infrabox-project-upload')
-    parser.add_argument('--s3-container-content-cache-bucket', default='infrabox-container-cache')
-    parser.add_argument('--s3-docker-registry-bucket', default='infrabox-docker-registry')
+    parser.add_argument('--s3-bucket', default='infrabox')
     parser.add_argument('--s3-secure', default='true')
 
     parser.add_argument('--gcs-project-id')
     parser.add_argument('--gcs-service-account-key-file')
-    parser.add_argument('--gcs-container-output-bucket')
-    parser.add_argument('--gcs-project-upload-bucket')
-    parser.add_argument('--gcs-container-content-cache-bucket')
-    parser.add_argument('--gcs-docker-registry-bucket')
+    parser.add_argument('--gcs-bucket')
 
     # Scheduler
     parser.add_argument('--scheduler-disabled', action='store_true', default=False)
@@ -770,12 +767,12 @@ def main():
     parser.add_argument('--github-api-url', default='https://api.github.com')
     parser.add_argument('--github-login-enabled', action='store_true', default=False)
     parser.add_argument('--github-login-url', default='https://github.com/login')
+    parser.add_argument('--github-login-allowed-organizations', default=None)
 
     # TLS
     parser.add_argument('--ingress-tls-disabled', action='store_true', default=False)
     parser.add_argument('--ingress-tls-host')
     parser.add_argument('--ingress-tls-dont-force-redirect', action='store_true', default=False)
-    parser.add_argument('--ingress-tls-acme', action='store_true', default=False)
 
     # Account
     parser.add_argument('--account-signup-enabled', action='store_true', default=False)

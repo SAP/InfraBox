@@ -1,4 +1,3 @@
-import APIService from '../services/APIService'
 import NewAPIService from '../services/NewAPIService'
 import NotificationService from '../services/NotificationService'
 import Notification from '../models/Notification'
@@ -44,36 +43,48 @@ export default class Project {
             return new Promise((resolve) => { resolve(b) })
         }
 
-        return APIService.get(`projects/${this.id}/builds/${number}/${restartCounter}`)
+        return NewAPIService.get(`projects/${this.id}/builds/${number}/${restartCounter}`)
             .then((jobs) => {
                 this._addJobs(jobs)
                 return this._getBuild(number, restartCounter)
             })
+            .catch((err) => {
+                NotificationService.$emit('NOTIFICATION', new Notification(err))
+            })
     }
 
     removeCollaborator (co) {
-        return APIService.delete(`projects/${this.id}/collaborators/${co.id}`)
+        return NewAPIService.delete(`projects/${this.id}/collaborators/${co.id}`)
             .then((response) => {
                 NotificationService.$emit('NOTIFICATION', new Notification(response, 'done'))
                 this._reloadCollaborators()
             })
+            .catch((err) => {
+                NotificationService.$emit('NOTIFICATION', new Notification(err))
+            })
     }
 
     deleteToken (id) {
-        delete APIService.delete(`projects/${this.id}/tokens/${id}`)
+        return NewAPIService.delete(`projects/${this.id}/tokens/${id}`)
         .then((response) => {
             NotificationService.$emit('NOTIFICATION', new Notification(response, 'done'))
             this._reloadTokens()
+        })
+        .catch((err) => {
+            NotificationService.$emit('NOTIFICATION', new Notification(err))
         })
     }
 
     addToken (description) {
         const d = { description: description, scope_pull: true, scope_push: true }
-        return APIService.post(`projects/${this.id}/tokens`, d)
+        return NewAPIService.post(`projects/${this.id}/tokens`, d)
         .then((response) => {
             const token = response.data.token
             this._reloadTokens()
             return token
+        })
+        .catch((err) => {
+            NotificationService.$emit('NOTIFICATION', new Notification(err))
         })
     }
 
@@ -85,19 +96,25 @@ export default class Project {
             const d = r.data
             router.push(`/project/${this.name}/build/${d.build.build_number}/${d.build.restartCounter}/`)
         })
+        .catch((err) => {
+            NotificationService.$emit('NOTIFICATION', new Notification(err))
+        })
     }
 
     addCollaborator (username) {
         const d = { username: username }
-        return APIService.post(`projects/${this.id}/collaborators`, d)
+        return NewAPIService.post(`projects/${this.id}/collaborators`, d)
         .then((response) => {
             NotificationService.$emit('NOTIFICATION', new Notification(response))
             this._reloadCollaborators()
         })
+        .catch((err) => {
+            NotificationService.$emit('NOTIFICATION', new Notification(err))
+        })
     }
 
     _loadJobs () {
-        return APIService.get(`projects/${this.id}/jobs/`)
+        return NewAPIService.get(`projects/${this.id}/jobs/`)
         .then((response) => {
             store.commit('addJobs', response)
             events.listenJobs(this)
@@ -113,9 +130,12 @@ export default class Project {
     }
 
     _reloadCollaborators () {
-        return APIService.get(`projects/${this.id}/collaborators`)
+        return NewAPIService.get(`projects/${this.id}/collaborators`)
             .then((collaborators) => {
                 store.commit('setCollaborators', { project: this, collaborators: collaborators })
+            })
+            .catch((err) => {
+                NotificationService.$emit('NOTIFICATION', new Notification(err))
             })
     }
 
@@ -128,9 +148,12 @@ export default class Project {
     }
 
     _reloadSecrets () {
-        return APIService.get(`projects/${this.id}/secrets`)
+        return NewAPIService.get(`projects/${this.id}/secrets`)
             .then((secrets) => {
                 store.commit('setSecrets', { project: this, secrets: secrets })
+            })
+            .catch((err) => {
+                NotificationService.$emit('NOTIFICATION', new Notification(err))
             })
     }
 
@@ -143,9 +166,12 @@ export default class Project {
     }
 
     _reloadTokens () {
-        return APIService.get(`projects/${this.id}/tokens`)
+        return NewAPIService.get(`projects/${this.id}/tokens`)
             .then((tokens) => {
                 store.commit('setTokens', { project: this, tokens: tokens })
+            })
+            .catch((err) => {
+                NotificationService.$emit('NOTIFICATION', new Notification(err))
             })
     }
 
