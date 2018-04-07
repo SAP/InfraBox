@@ -6,11 +6,13 @@ metadata:
     namespace: {{ default "infrabox-system" .Values.general.system_namespace }}
     annotations:
         kubernetes.io/ingress.class: "nginx"
-        ingress.kubernetes.io/force-ssl-redirect: {{ .Values.ingress.tls.force_redirect | quote }}
+        nginx.ingress.kubernetes.io/proxy-read-timeout: "1200"
+        nginx.ingress.kubernetes.io/proxy-connect-timeout: "1200"
+        nginx.ingress.kubernetes.io/proxy-send-timeout: "1200"
         {{ if .Values.ingress.tls.enabled }}
-        {{- if .Values.ingress.tls.acme }}
-        kubernetes.io/tls-acme: "true"
-        {{- end }}
+        ingress.kubernetes.io/force-ssl-redirect: {{ .Values.ingress.tls.force_redirect | quote }}
+        {{ else }}
+        nginx.ingress.kubernetes.io/ssl-redirect: "false"
         {{- end }}
 spec:
     rules:
@@ -20,28 +22,15 @@ spec:
         {{ end }}
         http:
             paths:
-            -
-                path: /docs
-                backend:
-                    serviceName: infrabox-static
-                    servicePort: 80
+            {{ if .Values.static.enabled }}
             -
                 path: /dashboard
                 backend:
                     serviceName: infrabox-static
                     servicePort: 80
+            {{ end }}
             -
-                path: /api/dashboard
-                backend:
-                    serviceName: infrabox-dashboard-api
-                    servicePort: 8080
-            -
-                path: /api/v1
-                backend:
-                    serviceName: infrabox-api
-                    servicePort: 8080
-            -
-                path: /api/job
+                path: /api
                 backend:
                     serviceName: infrabox-api
                     servicePort: 8080
@@ -54,7 +43,7 @@ spec:
             -
                 path: /github/auth
                 backend:
-                    serviceName: infrabox-dashboard-api
+                    serviceName: infrabox-api
                     servicePort: 8080
             {{ end }}
             -
@@ -62,15 +51,17 @@ spec:
                 backend:
                     serviceName: infrabox-docker-registry
                     servicePort: 8080
+            {{ if .Values.static.enabled }}
             -
                 path: /
                 backend:
                     serviceName: infrabox-static
                     servicePort: 80
-{{ if .Values.ingress.tls.enabled }}
+            {{ end }}
+    {{ if .Values.ingress.tls.enabled }}
     tls:
         - hosts:
             - {{ .Values.ingress.tls.host }}
           secretName: infrabox-tls-certs
-{{ end }}
+    {{ end }}
 {{ end }}

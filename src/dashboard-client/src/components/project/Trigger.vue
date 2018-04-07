@@ -5,7 +5,7 @@
                 <md-card-header-text>
                     <h3 class="md-title card-title">
                         <router-link :to="{name: 'ProjectDetailBuilds', params: {
-                            projectName: project.name
+                            projectName: encodeURIComponent(project.name)
                         }}">
                             <span v-if="project.isGit()"><i class="fa fa-github"></i></span>
                             <span v-if="!project.isGit()"><i class="fa fa-home"></i></span>
@@ -90,7 +90,7 @@ export default {
         project: {
             get () {
                 return ProjectService
-                    .findProjectByName(this.projectName)
+                    .findProjectByName(decodeURIComponent(this.projectName))
             },
             watch () {
                 // eslint-disable-next-line no-unused-expressions

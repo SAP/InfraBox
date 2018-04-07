@@ -12,9 +12,14 @@ from flask_restplus import Resource, fields
 
 from werkzeug.datastructures import FileStorage
 
+from pyinfraboxutils import get_logger
+
 from pyinfraboxutils.ibflask import auth_required, OK
 from pyinfraboxutils.ibrestplus import api
 from pyinfraboxutils.storage import storage
+from pyinfraboxutils.token import encode_project_token
+
+logger = get_logger('api')
 
 ns = api.namespace('api/v1/projects', description='Project related operations')
 
@@ -130,38 +135,73 @@ class Tests(Resource):
 
     @nocache
     def get(self, project_id):
-        r = g.db.execute_one_dict('''
-            SELECT
-                count(CASE WHEN tr.state = 'ok' THEN 1 END) success,
-                count(CASE WHEN tr.state = 'failure' THEN 1 END) failure,
-                count(CASE WHEN tr.state = 'error' THEN 1 END) error,
-                count(CASE WHEN tr.state = 'skipped' THEN 1 END) skipped
-            FROM test_run tr
-            WHERE  tr.project_id = %s
-                AND tr.job_id IN (
-                    SELECT j.id
-                    FROM job j
-                    WHERE j.project_id = %s
-                        AND j.build_id = (
-                            SELECT b.id
-                            FROM build b
-                            INNER JOIN job j
-                            ON b.id = j.build_id
-                                AND b.project_id = %s
-                                AND j.project_id = %s
-                            ORDER BY j.created_at DESC
-                            LIMIT 1
-                        )
-                )
-        ''', [project_id, project_id, project_id, project_id])
+        branch = request.args.get('branch', None)
+        p = g.db.execute_one_dict('''
+            SELECT type FROM project WHERE id = %s
+        ''', [project_id])
+
+        project_type = p['type']
+
+        if branch and project_type in ('github', 'gerrit'):
+            r = g.db.execute_one_dict('''
+                SELECT
+                    count(CASE WHEN tr.state = 'ok' THEN 1 END) success,
+                    count(CASE WHEN tr.state = 'failure' THEN 1 END) failure,
+                    count(CASE WHEN tr.state = 'error' THEN 1 END) error,
+                    count(CASE WHEN tr.state = 'skipped' THEN 1 END) skipped
+                FROM test_run tr
+                WHERE  tr.project_id = %s
+                    AND tr.job_id IN (
+                        SELECT j.id
+                        FROM job j
+                        WHERE j.project_id = %s
+                            AND j.build_id = (
+                                SELECT b.id
+                                FROM build b
+                                INNER JOIN job j
+                                ON b.id = j.build_id
+                                    AND b.project_id = %s
+                                    AND j.project_id = %s
+                                INNER JOIN "commit" c
+                                    ON c.id = b.commit_id
+                                    AND c.project_id = b.project_id
+                                    AND c.branch = %s
+                                ORDER BY j.created_at DESC
+                                LIMIT 1
+                            )
+                    )
+            ''', [project_id, project_id, project_id, project_id, branch])
+        else:
+            r = g.db.execute_one_dict('''
+                SELECT
+                    count(CASE WHEN tr.state = 'ok' THEN 1 END) success,
+                    count(CASE WHEN tr.state = 'failure' THEN 1 END) failure,
+                    count(CASE WHEN tr.state = 'error' THEN 1 END) error,
+                    count(CASE WHEN tr.state = 'skipped' THEN 1 END) skipped
+                FROM test_run tr
+                WHERE  tr.project_id = %s
+                    AND tr.job_id IN (
+                        SELECT j.id
+                        FROM job j
+                        WHERE j.project_id = %s
+                            AND j.build_id = (
+                                SELECT b.id
+                                FROM build b
+                                INNER JOIN job j
+                                ON b.id = j.build_id
+                                    AND b.project_id = %s
+                                    AND j.project_id = %s
+                                ORDER BY j.created_at DESC
+                                LIMIT 1
+                            )
+                    )
+            ''', [project_id, project_id, project_id, project_id])
 
         total = int(r['success']) + int(r['failure']) + int(r['error'])
         status = '%s / %s' % (r['success'], total)
 
         return get_badge('https://img.shields.io/badge/infrabox-%s-%s.svg' % (status,
                                                                               'brightgreen'))
-
-
 
 @ns.route('/<project_id>/badge.svg')
 @api.doc(security=[])
@@ -171,22 +211,49 @@ class Badge(Resource):
     def get(self, project_id):
         job_name = request.args.get('job_name', None)
         subject = request.args.get('subject', None)
+        branch = request.args.get('branch', None)
+        p = g.db.execute_one_dict('''
+            SELECT type FROM project WHERE id = %s
+        ''', [project_id])
 
-        badge = g.db.execute_one_dict('''
-            SELECT status, color
-            FROM job_badge jb
-            JOIN job j
-                ON j.id = jb.job_id
-                AND j.project_id = %s
-                AND j.state = 'finished'
-                AND j.name = %s
-                AND jb.subject = %s
-            JOIN build b
-                ON j.build_id = b.id
-                AND b.project_id = %s
-            ORDER BY j.end_date desc
-            LIMIT 1
-        ''', [project_id, job_name, subject, project_id])
+        project_type = p['type']
+
+        if branch and project_type in ('github', 'gerrit'):
+            badge = g.db.execute_one_dict('''
+                SELECT status, color
+                FROM job_badge jb
+                JOIN job j
+                    ON j.id = jb.job_id
+                    AND j.project_id = %s
+                    AND j.state = 'finished'
+                    AND j.name = %s
+                    AND jb.subject = %s
+                JOIN build b
+                    ON j.build_id = b.id
+                    AND b.project_id = %s
+                INNER JOIN "commit" c
+                    ON c.id = b.commit_id
+                    AND c.project_id = b.project_id
+                    AND c.branch = %s
+                ORDER BY j.end_date desc
+                LIMIT 1
+            ''', [project_id, job_name, subject, project_id, branch])
+        else:
+            badge = g.db.execute_one_dict('''
+                SELECT status, color
+                FROM job_badge jb
+                JOIN job j
+                    ON j.id = jb.job_id
+                    AND j.project_id = %s
+                    AND j.state = 'finished'
+                    AND j.name = %s
+                    AND jb.subject = %s
+                JOIN build b
+                    ON j.build_id = b.id
+                    AND b.project_id = %s
+                ORDER BY j.end_date desc
+                LIMIT 1
+            ''', [project_id, job_name, subject, project_id])
 
         if not badge:
             abort(404)
@@ -203,55 +270,115 @@ upload_parser = api.parser()
 upload_parser.add_argument('project.zip', location='files',
                            type=FileStorage, required=True)
 
-@ns.route('/<project_id>/upload/')
+
+@ns.route('/<project_id>/upload/<build_id>/')
 @ns.expect(upload_parser)
-class Upload(Resource):
+class UploadRemote(Resource):
 
     @auth_required(['project'])
-    def post(self, project_id):
-        build_id = str(uuid.uuid4())
+    def post(self, project_id, build_id):
+        project = g.db.execute_one_dict('''
+            SELECT type
+            FROM project
+            WHERE id = %s
+        ''', [project_id])
+
+        if not project:
+            abort(404, 'Project not found')
+
+        if project['type'] != 'upload':
+            abort(400, 'Project is not of type "upload"')
+
         key = '%s.zip' % build_id
 
-        storage.upload_project(request.files['project.zip'].stream, key)
+        stream = request.files['project.zip'].stream
+        storage.upload_project(stream, key)
 
-        build_number = g.db.execute_one_dict('''
-            SELECT count(distinct build_number) + 1 AS build_number
-            FROM build AS b
-            WHERE b.project_id = %s
-        ''', [project_id])['build_number']
+        return OK('successfully uploaded data')
 
-        source_upload_id = g.db.execute_one('''
-            INSERT INTO source_upload(filename, project_id, filesize) VALUES (%s, %s, 0) RETURNING ID
-        ''', [key, project_id])[0]
 
-        g.db.execute('''
-            INSERT INTO build (commit_id, build_number, project_id, source_upload_id, id)
-            VALUES (null, %s, %s, %s, %s)
-        ''', [build_number, project_id, source_upload_id, build_id])
+if os.environ['INFRABOX_CLUSTER_NAME'] == 'master':
+    @ns.route('/<project_id>/upload/')
+    @ns.expect(upload_parser)
+    class Upload(Resource):
 
-        g.db.execute('''
-            INSERT INTO job (id, state, build_id, type, name, project_id,
-                             dockerfile, build_only, cpu, memory)
-            VALUES (gen_random_uuid(), 'queued', %s, 'create_job_matrix',
-                    'Create Jobs', %s, '', false, 1, 1024);
-        ''', [build_id, project_id])
+        @auth_required(['project'])
+        def post(self, project_id):
+            project = g.db.execute_one_dict('''
+                SELECT type
+                FROM project
+                WHERE id = %s
+            ''', [project_id])
 
-        project_name = g.db.execute_one('''
-            SELECT name FROM project WHERE id = %s
-        ''', [project_id])[0]
+            if not project:
+                abort(404, 'Project not found')
 
-        url = '%s/dashboard/#/project/%s/build/%s/1' % (os.environ['INFRABOX_ROOT_URL'],
-                                                        project_name,
-                                                        build_number)
+            if project['type'] != 'upload':
+                abort(400, 'Project is not of type "upload"')
 
-        data = {
-            'build': {
-                'id': build_id,
-                'number': build_number
-            },
-            'url': url
-        }
+            build_id = str(uuid.uuid4())
+            key = '%s.zip' % build_id
 
-        g.db.commit()
+            stream = request.files['project.zip'].stream
+            storage.upload_project(stream, key)
 
-        return OK('successfully started build', data=data)
+            clusters = g.db.execute_many_dict('''
+                SELECT root_url
+                FROM cluster
+                WHERE active = true
+                AND name != 'master'
+            ''')
+
+            for c in clusters:
+                stream.seek(0)
+                url = '%s/api/v1/projects/%s/upload/%s/' % (c['root_url'], project_id, build_id)
+                files = {'project.zip': stream}
+                token = encode_project_token(g.token['id'], project_id)
+                headers = {'Authorization': 'bearer ' + token}
+                logger.info('Also uploading to %s', url)
+                r = requests.post(url, files=files, headers=headers, timeout=120)
+
+                if r.status_code != 200:
+                    abort(500, "Failed to upload data")
+
+            build_number = g.db.execute_one_dict('''
+                SELECT count(distinct build_number) + 1 AS build_number
+                FROM build AS b
+                WHERE b.project_id = %s
+            ''', [project_id])['build_number']
+
+            source_upload_id = g.db.execute_one('''
+                INSERT INTO source_upload(filename, project_id, filesize) VALUES (%s, %s, 0) RETURNING ID
+            ''', [key, project_id])[0]
+
+            g.db.execute('''
+                INSERT INTO build (commit_id, build_number, project_id, source_upload_id, id)
+                VALUES (null, %s, %s, %s, %s)
+            ''', [build_number, project_id, source_upload_id, build_id])
+
+            g.db.execute('''
+                INSERT INTO job (id, state, build_id, type, name, project_id,
+                                 dockerfile, build_only, cpu, memory)
+                VALUES (gen_random_uuid(), 'queued', %s, 'create_job_matrix',
+                        'Create Jobs', %s, '', false, 1, 1024);
+            ''', [build_id, project_id])
+
+            project_name = g.db.execute_one('''
+                SELECT name FROM project WHERE id = %s
+            ''', [project_id])[0]
+
+            url = '%s/dashboard/#/project/%s/build/%s/1' % (os.environ['INFRABOX_ROOT_URL'],
+                                                            project_name,
+                                                            build_number)
+
+            data = {
+                'build': {
+                    'id': build_id,
+                    'number': build_number
+                },
+                'url': url
+            }
+
+            g.db.commit()
+
+            return OK('successfully started build', data=data)

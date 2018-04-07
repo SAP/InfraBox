@@ -33,7 +33,7 @@
                     <md-list-expand>
                         <md-list>
                             <md-list-item v-for="project of $store.state.projects" class="md-inset" :key="project.id">
-                                <router-link :to="{name: 'ProjectDetailBuilds', params: {projectName: project.name}}">
+                                <router-link :to="{name: 'ProjectDetailBuilds', params: {projectName: encodeURIComponent(project.name)}}">
                                     <span @click="toggleLeftSidenav()">
                                         <i v-if="project.isGit()" class="fa fa-github"></i>
                                         <i v-if="!project.isGit()" class="fa fa-home"></i>{{ project.name }}
@@ -45,7 +45,7 @@
                 </md-list-item>
 
                 <md-list-item class="navi-link">
-                    <a href="/docs/"
+                    <a href="https://github.com/InfraBox/infrabox/blob/master/docs/doc.md"
                        class="md-list-item-container md-button"
                        target="_blank" @click="toggleLeftSidenav()">
                         <md-icon><i class="fa fa-book fa-fw"></i></md-icon>
@@ -67,6 +67,39 @@
                         <md-icon><i class="fa fa-sign-out fa-fw"></i></md-icon>
                         <span>Logout</span>
                     </a>
+                </md-list-item>
+
+                <md-list-item v-if="$store.state.user.isAdmin()">
+                    <md-icon><i class="fa fa-fw fa-unlock"></i></md-icon>
+                    <span>Admin</span>
+                    <md-list-expand>
+                        <md-list>
+                            <md-list-item class="md-inset">
+                                <router-link :to="{name: 'AdminProjects'}">
+                                    <span @click="toggleLeftSidenav()">
+                                        <i class="fa fa-cubes"></i>
+                                        Projects
+                                    </span>
+                                </router-link>
+                            </md-list-item>
+                            <md-list-item class="md-inset">
+                                <router-link :to="{name: 'AdminUsers'}">
+                                    <span @click="toggleLeftSidenav()">
+                                        <i class="fa fa-users"></i>
+                                        Users
+                                    </span>
+                                </router-link>
+                            </md-list-item>
+                            <md-list-item class="md-inset">
+                                <router-link :to="{name: 'AdminClusters'}">
+                                    <span @click="toggleLeftSidenav()">
+                                        <i class="fa fa-users"></i>
+                                        Clusters
+                                    </span>
+                                </router-link>
+                            </md-list-item>
+                        </md-list>
+                    </md-list-expand>
                 </md-list-item>
             </md-list>
         </md-sidenav>

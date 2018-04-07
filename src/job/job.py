@@ -28,7 +28,7 @@ def makedirs(path):
     os.chmod(path, 0o777)
 
 def get_registry_name():
-    n = os.environ['INFRABOX_DOCKER_REGISTRY_URL'].replace('https://', '')
+    n = os.environ['INFRABOX_ROOT_URL'].replace('https://', '')
     n = n.replace('http://', '')
     return n
 
@@ -92,6 +92,10 @@ class RunJob(Job):
         self.infrabox_badge_dir = os.path.join(self.infrabox_upload_dir, 'badge')
         makedirs(self.infrabox_badge_dir)
 
+        # <data_dir>/upload/archive is mounted in the job to /infrabox/upload/archive
+        self.infrabox_archive_dir = os.path.join(self.infrabox_upload_dir, 'archive')
+        makedirs(self.infrabox_archive_dir)
+
     def create_jobs_json(self):
         # create job.json
         infrabox_job_json = os.path.join(self.mount_data_dir, 'job.json')
@@ -133,24 +137,22 @@ class RunJob(Job):
         c.collect(cmd, show=True)
         subprocess.check_call(cmd, shell=True)
 
-    def get_files_in_dir(self, d, ending):
+    def get_files_in_dir(self, d, ending=None):
         result = []
-        for root, dirs, files in os.walk(d):
-            for di in dirs:
-                result += self.get_files_in_dir(os.path.join(root, di), ending)
-
+        for root, _, files in os.walk(d):
             for f in files:
-                if not f.endswith(ending):
-                    continue
+                if ending:
+                    if not f.endswith(ending):
+                        continue
 
-                if len(f) < len(ending):
-                    continue
+                    if len(f) < len(ending):
+                        continue
 
                 result.append(os.path.join(root, f))
 
         return result
 
-    def clone_repo(self, commit, clone_url, branch, ref, clone_all, sub_path=None):
+    def clone_repo(self, commit, clone_url, branch, ref, clone_all, sub_path=None, submodules=True):
         git_server = os.environ["INFRABOX_JOB_GIT_URL"]
 
         while True:
@@ -172,11 +174,14 @@ class RunJob(Job):
             'branch': branch,
             'ref': ref,
             'clone_all': clone_all,
-            'sub_path': sub_path
+            'sub_path': sub_path,
+            'submodules': submodules
         }
 
         r = requests.post('%s/clone_repo' % git_server, json=d, timeout=1800)
-        self.console.collect(r.text, show=True)
+
+        for l in r.text.split('\\n'):
+            self.console.collect(l, show=True)
 
         if r.status_code != 200:
             raise Failure('Failed to clone repository')
@@ -191,13 +196,29 @@ class RunJob(Job):
             private = repo.get('github_private_repo', False)
             clone_all = repo.get('clone_all', False)
             ref = repo.get('ref', None)
+
+            definition = self.job['definition']
+
+            if not definition:
+                definition = {}
+
+            def_repo = definition.get('repository', {})
+            repo_clone = def_repo.get('clone', True)
+            repo_submodules = def_repo.get('submodules', True)
+
             commit = repo['commit']
+
+            if self.job['type'] == 'create_job_matrix':
+                repo_submodules = False
+
+            if not repo_clone:
+                return
 
             if private:
                 clone_url = clone_url.replace('github.com',
                                               '%s@github.com' % self.repository['github_api_token'])
 
-            self.clone_repo(commit, clone_url, branch, ref, clone_all)
+            self.clone_repo(commit, clone_url, branch, ref, clone_all, submodules=repo_submodules)
         elif self.project['type'] == 'upload':
             c.collect("Downloading Source")
             storage_source_zip = os.path.join(self.storage_dir, 'source.zip')
@@ -214,6 +235,8 @@ class RunJob(Job):
             pass
         else:
             raise Exception('Unknown project type')
+
+        c.execute(['chmod', '-R', 'a+rwX', self.mount_repo_dir])
 
     def main_create_jobs(self):
         c = self.console
@@ -250,6 +273,20 @@ class RunJob(Job):
     def main(self):
         self.update_status('running')
         self.load_data()
+
+        # Show environment
+        self.console.collect("Environment:\n", show=True)
+        for name, value in self.env_vars.iteritems():
+            self.console.collect("%s=%s\n" % (name, value), show=True)
+
+        self.console.collect("\n", show=True)
+
+        self.console.collect("Secrets:\n", show=True)
+        for name, _ in self.secrets.iteritems():
+            self.console.collect("%s=*****\n" % name, show=True)
+
+        self.console.collect("\n", show=True)
+
         self.get_source()
         self.create_infrabox_directories()
 
@@ -263,12 +300,27 @@ class RunJob(Job):
         r = parser.parse(self.infrabox_badge_dir)
         return r
 
+    def upload_archive(self):
+        c = self.console
+        if not os.path.exists(self.infrabox_archive_dir):
+            return
+
+        files = self.get_files_in_dir(self.infrabox_archive_dir)
+        if not files:
+            return
+
+        c.collect("Uplading contents of /infrabox/upload/archive", show=True)
+
+        for f in files:
+            c.collect("%s\n" % f, show=True)
+            self.post_file_to_api_server("/archive", f, filename=f.replace(self.infrabox_archive_dir, ''))
+
     def upload_coverage_results(self):
         c = self.console
         if not os.path.exists(self.infrabox_coverage_dir):
             return
 
-        files = self.get_files_in_dir(self.infrabox_coverage_dir, ".xml")
+        files = self.get_files_in_dir(self.infrabox_coverage_dir, ending=".xml")
         for f in files:
             c.collect("%s\n" % f, show=True)
             converted_result = self.convert_coverage_result(f)
@@ -294,7 +346,7 @@ class RunJob(Job):
         if not os.path.exists(self.infrabox_testresult_dir):
             return
 
-        files = self.get_files_in_dir(self.infrabox_testresult_dir, ".xml")
+        files = self.get_files_in_dir(self.infrabox_testresult_dir, ending=".xml")
         for f in files:
             c.collect("%s\n" % f, show=True)
             converted_result = self.convert_test_result(f)
@@ -312,7 +364,7 @@ class RunJob(Job):
         if not os.path.exists(self.infrabox_markdown_dir):
             return
 
-        files = self.get_files_in_dir(self.infrabox_markdown_dir, ".md")
+        files = self.get_files_in_dir(self.infrabox_markdown_dir, ending=".md")
         for f in files:
             c.collect("%s\n" % f, show=True)
 
@@ -330,7 +382,7 @@ class RunJob(Job):
         if not os.path.exists(self.infrabox_markup_dir):
             return
 
-        files = self.get_files_in_dir(self.infrabox_markup_dir, ".json")
+        files = self.get_files_in_dir(self.infrabox_markup_dir, ending=".json")
         for f in files:
             c.collect("%s\n" % f, show=True)
 
@@ -348,7 +400,7 @@ class RunJob(Job):
         if not os.path.exists(self.infrabox_badge_dir):
             return
 
-        files = self.get_files_in_dir(self.infrabox_badge_dir, ".json")
+        files = self.get_files_in_dir(self.infrabox_badge_dir, ending=".json")
 
         for f in files:
             c.collect("%s\n" % f, show=True)
@@ -423,26 +475,31 @@ class RunJob(Job):
 
         storage_cache_tar = os.path.join(storage_cache_dir, 'cache.tar.gz')
 
-        c.collect("Syncing cache", show=True)
-        self.get_file_from_api_server("/cache", storage_cache_tar)
-
-        c.collect("Unpacking cache", show=True)
-
-        if os.path.isfile(storage_cache_tar):
-            try:
-                c.execute(['time', 'tar', '-zxf', storage_cache_tar, '-C', self.infrabox_cache_dir], show=True)
-                c.collect("cache found\n", show=True)
-            except:
-                c.collect("Failed to unpack cache\n", show=True)
-            os.remove(storage_cache_tar)
+        if not self.job['definition'].get('cache', {}).get('data', True):
+            c.collect("Not downloading cache, because cache.data has been set to false", show=True)
         else:
-            c.collect("no cache found\n", show=True)
+            c.collect("Syncing cache", show=True)
+            self.get_file_from_api_server("/cache", storage_cache_tar)
+
+            c.collect("Unpacking cache", show=True)
+
+            if os.path.isfile(storage_cache_tar):
+                try:
+                    c.execute(['time', 'tar', '-zxf', storage_cache_tar, '-C', self.infrabox_cache_dir], show=True)
+                    c.collect("cache found\n", show=True)
+                except:
+                    c.collect("Failed to unpack cache\n", show=True)
+                os.remove(storage_cache_tar)
+            else:
+                c.collect("no cache found\n", show=True)
 
         try:
-            if self.job['type'] == 'run_project_container':
-                self.run_container(c)
-            elif self.job['type'] == 'run_docker_compose':
-                self.run_docker_compose(c)
+            if self.job['definition']['type'] == 'docker':
+                self.run_job_docker(c)
+            elif self.job['definition']['type'] == 'docker-image':
+                self.run_job_docker_image(c)
+            elif self.job['definition']['type'] == 'docker-compose':
+                self.run_job_docker_compose(c)
             else:
                 raise Exception('Unknown job type: %s' % self.job['type'])
         except:
@@ -453,6 +510,7 @@ class RunJob(Job):
             self.upload_markdown_files()
             self.upload_markup_files()
             self.upload_badge_files()
+            self.upload_archive()
 
         self.create_dynamic_jobs()
 
@@ -475,27 +533,30 @@ class RunJob(Job):
             c.collect("Output is empty\n", show=True)
 
         # Compressing cache
-        c.collect("Updating Cache", show=True)
-        if os.path.isdir(self.infrabox_cache_dir) and os.listdir(self.infrabox_cache_dir):
-            self.compress(self.infrabox_cache_dir, storage_cache_tar)
-            c.execute(['md5sum', storage_cache_tar], show=True)
-
-            if os.stat(storage_cache_tar).st_size > (1024 * 1024 * 100):
-                # cache too big
-                c.collect("Cache is too big, not uploading it\n", show=True)
-            else:
-                c.collect("Syncing cache", show=True)
-                try:
-                    self.post_file_to_api_server('/cache', storage_cache_tar)
-                except:
-                    logger.exception("message")
+        if not self.job['definition'].get('cache', {}).get('data', True):
+            c.collect("Not updating cache, because cache.data has been set to false", show=True)
         else:
-            c.collect("Cache is empty\n", show=True)
+            c.collect("Updating Cache", show=True)
+            if os.path.isdir(self.infrabox_cache_dir) and os.listdir(self.infrabox_cache_dir):
+                self.compress(self.infrabox_cache_dir, storage_cache_tar)
+                c.execute(['md5sum', storage_cache_tar], show=True)
+
+                if os.stat(storage_cache_tar).st_size > (1024 * 1024 * 100):
+                    # cache too big
+                    c.collect("Cache is too big, not uploading it\n", show=True)
+                else:
+                    c.collect("Syncing cache", show=True)
+                    try:
+                        self.post_file_to_api_server('/cache', storage_cache_tar)
+                    except:
+                        logger.exception("message")
+            else:
+                c.collect("Cache is empty\n", show=True)
 
         shutil.rmtree(self.mount_data_dir, True)
         shutil.rmtree(self.infrabox_cache_dir, True)
 
-    def run_docker_compose(self, c):
+    def run_job_docker_compose(self, c):
         c.header("Build containers", show=True)
         f = self.job['dockerfile']
 
@@ -683,9 +744,6 @@ class RunJob(Job):
             raise Failure(e.__str__())
 
     def run_docker_container(self, image_name):
-        if self.job['build_only']:
-            return
-
         c = self.console
         collector = StatsCollector()
 
@@ -730,8 +788,10 @@ class RunJob(Job):
             cmd += ['-e', 'INFRABOX_RESOURCES_KUBERNETES_MASTER_URL=%s' %
                     os.environ['INFRABOX_RESOURCES_KUBERNETES_MASTER_URL']]
 
+        cmd += ['--tmpfs', '/infrabox/tmpfs']
+
         # Add capabilities
-        security_context = self.job.get('security_context', {})
+        security_context = self.job['definition'].get('security_context', {})
 
         if security_context:
             capabilities = security_context.get('capabilities', {})
@@ -739,7 +799,16 @@ class RunJob(Job):
             if add_capabilities:
                 cmd += ['--cap-add=%s' % ','.join(add_capabilities)]
 
+        # Privileged
+        privileged = security_context.get('privileged', False)
+        if privileged:
+            cmd += ['--privileged']
+            cmd += ['-v', '/data/inner/docker:/var/lib/docker']
+
         cmd += [image_name]
+
+        if self.job['definition'].get('command', None):
+            cmd += self.job['definition']['command']
 
         try:
             c.header("Run container", show=True)
@@ -809,7 +878,19 @@ class RunJob(Job):
         except Exception as e:
             raise Failure("Failed to build the image: %s" % e)
 
-    def run_container(self, c):
+    def run_job_docker_image(self, c):
+        self._login_deployment_registries()
+
+        image_name = self.job['definition']['image']
+        self.run_docker_container(image_name)
+        self.deploy_container(image_name)
+
+        c.header("Finalize", show=True)
+        self.push_container(image_name)
+
+    def _login_deployment_registries(self):
+        c = self.console
+
         for dep in self.deployments:
             try:
                 if dep['type'] == 'aws-ecr':
@@ -822,12 +903,18 @@ class RunJob(Job):
 
                     c.execute(['/usr/local/bin/ecr_login.sh'], show=True, env=login_env)
                 elif dep['type'] == 'docker-registry' and 'username' in dep:
+                    cmd = ['docker', 'login', '-u', dep['username'], '-p', dep['password']]
+
                     host = dep['host']
-                    c.execute(['docker', 'login', '-u', dep['username'],
-                               '-p', dep['password'], host], show=False)
+                    if not host.startswith('docker.io') and not host.startswith('index.docker.io'):
+                        cmd += [host]
+
+                    c.execute(cmd, show=False)
             except Exception as e:
                 raise Failure("Failed to login to registry: " + e.message)
 
+    def run_job_docker(self, c):
+        self._login_deployment_registries()
 
         image_name = get_registry_name() + '/' \
                      + self.project['id'] + '/' \
@@ -836,7 +923,10 @@ class RunJob(Job):
         image_name_latest = image_name + ':latest'
 
         self.build_docker_container(image_name_build, image_name_latest)
-        self.run_docker_container(image_name_build)
+
+        if not self.job['build_only']:
+            self.run_docker_container(image_name_build)
+
         self.deploy_container(image_name_build)
 
         c.header("Finalize", show=True)
@@ -844,6 +934,11 @@ class RunJob(Job):
 
     def get_cached_image(self, image_name_latest):
         c = self.console
+
+        if not self.job['definition'].get('cache', {}).get('image', False):
+            c.collect("Not pulling cached image, because cache.image has been set to false", show=True)
+            return
+
         c.collect("Get cached image %s" % image_name_latest, show=True)
 
         self.login_docker_registry()
@@ -852,6 +947,11 @@ class RunJob(Job):
 
     def cache_docker_image(self, image_name_build, image_name_latest):
         c = self.console
+
+        if not self.job['definition'].get('cache', {}).get('image', False):
+            c.collect("Not pushed cached image, because cache.image has been set to false", show=True)
+            return
+
         c.collect("Upload cached image %s" % image_name_latest, show=True)
 
         try:
@@ -880,16 +980,6 @@ class RunJob(Job):
         jobs = data.get('jobs', [])
         for job in jobs:
             job_type = job['type']
-
-            if job_type == "docker":
-                job_build_context = job.get('build_context', None)
-                build_context = self._get_build_context_impl(job_build_context, infrabox_context)
-                dockerfile = os.path.normpath(os.path.join(build_context,
-                                                           job['docker_file']))
-
-                p = os.path.join(infrabox_context, dockerfile)
-                if not os.path.exists(p):
-                    raise Failure("%s does not exist" % p)
 
             if job_type == "docker-compose":
                 composefile = job['docker_compose_file']
@@ -964,7 +1054,7 @@ class RunJob(Job):
                 c.execute(['rm', '-rf', new_repo_path])
                 os.makedirs(new_repo_path)
 
-                self.clone_repo('master', clone_url, None, None, False, sub_path)
+                self.clone_repo(job['commit'], clone_url, None, None, False, sub_path)
 
                 c.header("Parsing infrabox.json", show=True)
                 ib_file = job.get('infrabox_file', 'infrabox.json')
@@ -1059,7 +1149,6 @@ class RunJob(Job):
 def main():
     get_env('INFRABOX_SERVICE')
     get_env('INFRABOX_VERSION')
-    get_env('INFRABOX_DOCKER_REGISTRY_URL')
     get_env('INFRABOX_ROOT_URL')
     get_env('INFRABOX_GENERAL_DONT_CHECK_CERTIFICATES')
     get_env('INFRABOX_LOCAL_CACHE_ENABLED')
@@ -1087,7 +1176,7 @@ def main():
             msg = traceback.format_exc()
             j.console.collect(msg, show=True)
             j.console.flush()
-            j.update_status('error', message=msg)
+            j.update_status('error', message='An error occured')
 
 if __name__ == "__main__":
     try:

@@ -3,7 +3,7 @@
     "jobs": [{
         "type": "docker",
         "build_context": "../..",
-        "name": "docker-auth",
+        "name": "docker-registry-auth",
         "docker_file": "src/docker-registry/auth/Dockerfile",
         "build_only": true,
         "resources": { "limits": { "cpu": 1, "memory": 1024 } },
@@ -13,7 +13,10 @@
             "repository": "docker-registry-auth",
             "username": "infrabox+infrabox_ci",
             "password": { "$secret": "QUAY_PASSWORD" }
-        }]
+        }],
+        "cache": {
+            "image": true
+        }
     }, {
         "type": "docker",
         "build_context": "../..",
@@ -27,7 +30,11 @@
             "repository": "db",
             "username": "infrabox+infrabox_ci",
             "password": { "$secret": "QUAY_PASSWORD" }
-        }]
+        }],
+        "cache": {
+            "image": true
+        }
+
     }, {
         "type": "docker",
         "build_context": "../..",
@@ -41,7 +48,10 @@
             "repository": "gerrit-trigger",
             "username": "infrabox+infrabox_ci",
             "password": { "$secret": "QUAY_PASSWORD" }
-        }]
+        }],
+        "cache": {
+            "image": true
+        }
    }, {
         "type": "docker",
         "build_context": "../..",
@@ -55,21 +65,10 @@
             "repository": "gerrit-api",
             "username": "infrabox+infrabox_ci",
             "password": { "$secret": "QUAY_PASSWORD" }
-        }]
-    }, {
-        "type": "docker",
-        "build_context": "../..",
-        "name": "github-api",
-        "docker_file": "src/github/api/Dockerfile",
-        "build_only": true,
-        "resources": { "limits": { "cpu": 1, "memory": 1024 } },
-        "deployments": [{
-            "type": "docker-registry",
-            "host": "quay.io/infrabox",
-            "repository": "github-api",
-            "username": "infrabox+infrabox_ci",
-            "password": { "$secret": "QUAY_PASSWORD" }
-        }]
+        }],
+        "cache": {
+            "image": true
+        }
     }, {
         "type": "docker",
         "build_context": "../..",
@@ -83,7 +82,10 @@
             "repository": "github-trigger",
             "username": "infrabox+infrabox_ci",
             "password": { "$secret": "QUAY_PASSWORD" }
-        }]
+        }],
+        "cache": {
+            "image": true
+        }
     }, {
         "type": "docker",
         "build_context": "../..",
@@ -97,7 +99,10 @@
             "repository": "github-review",
             "username": "infrabox+infrabox_ci",
             "password": { "$secret": "QUAY_PASSWORD" }
-        }]
+        }],
+        "cache": {
+            "image": true
+        }
     }, {
         "type": "docker",
         "build_context": "../..",
@@ -111,11 +116,14 @@
             "repository": "gerrit-review",
             "username": "infrabox+infrabox_ci",
             "password": { "$secret": "QUAY_PASSWORD" }
-        }]
+        }],
+        "cache": {
+            "image": true
+        }
     }, {
         "type": "docker",
         "build_context": "../..",
-        "name": "docker-nginx",
+        "name": "docker-registry-nginx",
         "docker_file": "src/docker-registry/nginx/Dockerfile",
         "build_only": true,
         "resources": { "limits": { "cpu": 1, "memory": 1024 } },
@@ -125,21 +133,10 @@
             "repository": "docker-registry-nginx",
             "username": "infrabox+infrabox_ci",
             "password": { "$secret": "QUAY_PASSWORD" }
-        }]
-    }, {
-        "type": "docker",
-        "build_context": "../..",
-        "name": "dashboard-api",
-        "docker_file": "src/dashboard_api/Dockerfile",
-        "build_only": true,
-        "resources": { "limits": { "cpu": 1, "memory": 2048 } },
-        "deployments": [{
-            "type": "docker-registry",
-            "host": "quay.io/infrabox",
-            "repository": "dashboard-api",
-            "username": "infrabox+infrabox_ci",
-            "password": { "$secret": "QUAY_PASSWORD" }
-        }]
+        }],
+        "cache": {
+            "image": true
+        }
     }, {
         "type": "docker",
         "build_context": "../..",
@@ -153,7 +150,10 @@
             "repository": "api",
             "username": "infrabox+infrabox_ci",
             "password": { "$secret": "QUAY_PASSWORD" }
-        }]
+        }],
+        "cache": {
+            "image": true
+        }
     }, {
         "type": "docker",
         "build_context": "../..",
@@ -167,7 +167,10 @@
             "repository": "job",
             "username": "infrabox+infrabox_ci",
             "password": { "$secret": "QUAY_PASSWORD" }
-        }]
+        }],
+        "cache": {
+            "image": true
+        }
     }, {
         "type": "docker",
         "build_context": "../..",
@@ -181,7 +184,10 @@
             "repository": "scheduler-kubernetes",
             "username": "infrabox+infrabox_ci",
             "password": { "$secret": "QUAY_PASSWORD" }
-        }]
+        }],
+        "cache": {
+            "image": true
+        }
     }, {
         "type": "docker",
         "build_context": "../..",
@@ -195,21 +201,10 @@
             "repository": "scheduler-docker-compose",
             "username": "infrabox+infrabox_ci",
             "password": { "$secret": "QUAY_PASSWORD" }
-        }]
-    }, {
-        "type": "docker",
-        "build_context": "../..",
-        "name": "stats",
-        "docker_file": "src/stats/Dockerfile",
-        "build_only": true,
-        "resources": { "limits": { "cpu": 1, "memory": 1024 } },
-        "deployments": [{
-            "type": "docker-registry",
-            "host": "quay.io/infrabox",
-            "repository": "stats",
-            "username": "infrabox+infrabox_ci",
-            "password": { "$secret": "QUAY_PASSWORD" }
-        }]
+        }],
+        "cache": {
+            "image": true
+        }
     }, {
         "type": "docker",
         "build_context": "../..",
@@ -223,7 +218,10 @@
             "repository": "job-git",
             "username": "infrabox+infrabox_ci",
             "password": { "$secret": "QUAY_PASSWORD" }
-        }]
+        }],
+        "cache": {
+            "image": true
+        }
     }, {
         "type": "docker",
         "build_context": "../..",
@@ -237,21 +235,20 @@
             "repository": "postgres",
             "username": "infrabox+infrabox_ci",
             "password": { "$secret": "QUAY_PASSWORD" }
-        }]
-    }, {
-        "type": "docker",
-        "build_context": "../..",
-        "name": "docker-gc",
-        "docker_file": "src/docker-gc/Dockerfile",
-        "build_only": true,
-        "resources": { "limits": { "cpu": 1, "memory": 1024 } }
+        }],
+        "cache": {
+            "image": true
+        }
     }, {
         "type": "docker",
         "build_context": "../..",
         "name": "build-dashboard-client",
         "docker_file": "infrabox/deploy/build-dashboard-client/Dockerfile",
         "resources": { "limits": { "cpu": 1, "memory": 2048 } },
-        "build_only": false
+        "build_only": false,
+        "cache": {
+            "image": true
+        }
     }, {
         "type": "docker",
         "build_context": "../..",
@@ -264,7 +261,10 @@
             "repository": "docker-compose-ingress",
             "username": "infrabox+infrabox_ci",
             "password": { "$secret": "QUAY_PASSWORD" }
-        }]
+        }],
+        "cache": {
+            "image": true
+        }
     }, {
         "type": "docker",
         "build_context": "../..",
@@ -277,7 +277,10 @@
             "repository": "docker-compose-minio-init",
             "username": "infrabox+infrabox_ci",
             "password": { "$secret": "QUAY_PASSWORD" }
-        }]
+        }],
+        "cache": {
+            "image": true
+        }
     }, {
         "type": "docker",
         "build_context": "../..",
@@ -291,6 +294,9 @@
             "repository": "static",
             "username": "infrabox+infrabox_ci",
             "password": { "$secret": "QUAY_PASSWORD" }
-        }]
+        }],
+        "cache": {
+            "image": true
+        }
     }]
 }

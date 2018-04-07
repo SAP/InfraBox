@@ -1,6 +1,6 @@
 import Notification from '../models/Notification'
 import NotificationService from '../services/NotificationService'
-import APIService from '../services/APIService'
+import NewAPIService from '../services/NewAPIService'
 
 export default class Test {
     constructor (opts, job) {
@@ -15,16 +15,16 @@ export default class Test {
     }
 
     loadHistory () {
-        const url = 'project/' +
+        const url = 'projects/' +
                     this.job.project.id +
-                    '/job/' +
+                    '/jobs/' +
                     this.job.id +
-                    '/test/history?suite=' +
+                    '/tests/history?suite=' +
                     encodeURIComponent(this.suite) +
                     '&test=' +
                     encodeURIComponent(this.name)
 
-        return APIService.get(url)
+        return NewAPIService.get(url)
             .then((history) => {
                 this.history = history
             })

@@ -1,5 +1,6 @@
 import os
 import sys
+import copy
 import time
 import requests
 
@@ -25,6 +26,8 @@ class Job(object):
         self.dependencies = None
         self.parents = None
         self.environment = None
+        self.env_vars = None
+        self.secrets = None
         self.source_upload = None
         self.deployments = None
 
@@ -40,7 +43,14 @@ class Job(object):
                 if r.status_code == 409:
                     sys.exit(0)
                 elif r.status_code == 400:
-                    raise Failure(r.text)
+                    msg = r.text
+
+                    try:
+                        msg = r.json()['message']
+                    except:
+                        pass
+
+                    raise Failure(msg)
                 elif r.status_code == 200:
                     break
                 else:
@@ -59,7 +69,10 @@ class Job(object):
         self.commit = data['commit']
         self.dependencies = data['dependencies']
         self.parents = data['parents']
-        self.environment = data['environment']
+        self.environment = copy.deepcopy(data['env_vars'])
+        self.environment.update(data['secrets'])
+        self.secrets = data['secrets']
+        self.env_vars = data['env_vars']
 
         if 'source_upload' in data:
             self.source_upload = data['source_upload']
@@ -133,17 +146,28 @@ class Job(object):
             return
 
         if r.status_code != 200:
-            raise Failure('Failed to download file: %s' % r.text)
+            msg = r.text
+
+            try:
+                msg = r.json()['message']
+            except:
+                pass
+
+            raise Failure('Failed to download file: %s' % msg)
 
         with open(path, 'wb') as  f:
             for chunk in r.iter_content(chunk_size=1024):
                 if chunk:
                     f.write(chunk)
 
-    def post_file_to_api_server(self, url, path):
+    def post_file_to_api_server(self, url, path, filename=None):
         message = None
+
+        if not filename:
+            filename = os.path.basename(path)
+
         for _ in xrange(0, 5):
-            files = {os.path.basename(path): open(path)}
+            files = {filename: open(path)}
             try:
                 r = requests.post("%s%s" % (self.api_server, url),
                                   headers=self.get_headers(),

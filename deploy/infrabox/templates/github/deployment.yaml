@@ -1,0 +1,56 @@
+{{ if .Values.github.enabled }}
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+    name: infrabox-github
+    namespace: {{ default "infrabox-system" .Values.general.system_namespace }}
+    labels:
+        app: infrabox-github
+spec:
+    replicas: 1
+    template:
+        metadata:
+            labels:
+                app: infrabox-github
+        spec:
+            {{- if .Values.github.node_selector }}
+            nodeSelector:
+{{ toYaml .Values.github.node_selector | indent 16 }}
+            {{- end }}
+            containers:
+            {{ include "containers_database" . | indent 12 }}
+            -
+                name: github-trigger
+                image: {{ required "general.docker_registry is required" .Values.general.docker_registry }}/{{ default "github-trigger" .Values.github.trigger.image }}:{{ required "github.trigger.tag is required" .Values.github.trigger.tag }}
+                imagePullPolicy: Always
+                env:
+                {{ include "env_database" . | indent 16 }}
+                {{ include "env_github" . | indent 16 }}
+                {{ include "env_general" . | indent 16 }}
+                {{ include "env_github_secrets" . | indent 16 }}
+                -
+                    name: INFRABOX_SERVICE
+                    value: {{ default "github-trigger" .Values.github.trigger.image }}
+                -
+                    name: INFRABOX_VERSION
+                    value: {{ required "github.trigger.tag is required" .Values.github.trigger.tag }}
+            -
+                name: github-review
+                image: {{ required "general.docker_registry is required" .Values.general.docker_registry }}/{{ default "github-review" .Values.github.review.image }}:{{ required "github.review.tag is required" .Values.github.review.tag }}
+                imagePullPolicy: Always
+                env:
+                {{ include "env_database" . | indent 16 }}
+                {{ include "env_github" . | indent 16 }}
+                {{ include "env_general" . | indent 16 }}
+                -
+                    name: INFRABOX_SERVICE
+                    value: {{ default "github-review" .Values.github.review.image }}
+                -
+                    name: INFRABOX_VERSION
+                    value: {{ required "github.review.tag is required" .Values.github.review.tag }}
+                -
+                    name: INFRABOX_ROOT_URL
+                    value: {{ .Values.root_url }}
+            volumes:
+                {{ include "volumes_database" . | indent 16 }}
+{{ end }}

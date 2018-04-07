@@ -1,12 +1,10 @@
 FROM alpine:3.6
 
 RUN apk add --no-cache python py-requests py-pip git py-psycopg2
-RUN pip install coverage mock xmlrunner
+RUN pip install coverage mock xmlrunner codecov
 
-COPY src/github/review/review.py /tests/review.py
-COPY infrabox/test/github-review /tests
-COPY src/pyinfraboxutils /pyinfraboxutils
+ENV PYTHONPATH=/infrabox/context/src:/infrabox/context/src/github/review
 
-ENV PYTHONPATH=/
+WORKDIR /infrabox/context/infrabox/test/github-review
 
-CMD /tests/entrypoint.sh
+CMD ../utils/python_tests.sh /infrabox/context/src/github/review

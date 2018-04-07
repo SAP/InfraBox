@@ -1,6 +1,6 @@
 import store from '../store'
 
-import APIService from '../services/APIService'
+import NewAPIService from '../services/NewAPIService'
 import NotificationService from './NotificationService'
 import Notification from '../models/Notification'
 import router from '../router'
@@ -11,7 +11,7 @@ class ProjectService {
     }
 
     deleteProject (id) {
-        APIService.delete(`projects/${id}`)
+        NewAPIService.delete(`projects/${id}`)
             .then((response) => {
                 NotificationService.$emit('NOTIFICATION', new Notification(response))
                 store.commit('deleteProject', id)
@@ -23,7 +23,7 @@ class ProjectService {
 
     addProject (name, priv, type, githubRepoName) {
         const d = { name: name, type: type, private: priv, github_repo_name: githubRepoName }
-        return APIService.post('projects', d)
+        return NewAPIService.post('projects', d)
             .then((response) => {
                 NotificationService.$emit('NOTIFICATION', new Notification(response))
                 this._loadProjects()
@@ -35,16 +35,24 @@ class ProjectService {
     }
 
     findProjectByName (name) {
+        const encodedName = encodeURIComponent(name)
+        const decodedName = decodeURIComponent(name)
+
         for (let p of store.state.projects) {
-            if (p.name === name) {
+            if (p.name === decodedName) {
                 return new Promise((resolve) => { resolve(p) })
             }
         }
 
-        return APIService.get(`projects/name/${name}`)
+        return NewAPIService.get(`projects/name/${encodedName}`)
             .then((project) => {
                 store.commit('addProjects', [project])
-                return project
+
+                for (let p of store.state.projects) {
+                    if (p.name === decodedName) {
+                        return p
+                    }
+                }
             })
             .catch((err) => {
                 NotificationService.$emit('NOTIFICATION', new Notification(err))
@@ -52,7 +60,7 @@ class ProjectService {
     }
 
     _loadProjects () {
-        return APIService.get('projects/')
+        return NewAPIService.get('projects/')
             .then((response) => {
                 store.commit('addProjects', response)
             })

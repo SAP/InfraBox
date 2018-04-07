@@ -1,5 +1,5 @@
 import store from '../store'
-import APIService from './APIService'
+import NewAPIService from './NewAPIService'
 import ProjectService from './ProjectService'
 import User from '../models/User'
 
@@ -15,7 +15,7 @@ class UserService {
     }
 
     _loadSettings () {
-        return APIService.get(`settings/`)
+        return NewAPIService.get(`settings/`)
             .then((s) => {
                 console.log(s)
                 store.commit('setSettings', s)
@@ -23,17 +23,18 @@ class UserService {
     }
 
     _loadUser () {
-        return APIService.get(`user/`, true)
+        return NewAPIService.get(`user/`, true)
             .then((d) => {
                 const u = new User(d.username,
                                    d.avatar_url,
                                    d.name,
                                    d.email,
-                                   d.github_id)
+                                   d.github_id,
+                                   d.id)
                 store.commit('setUser', u)
 
                 if (u.hasGithubAccount() && store.state.settings.INFRABOX_GITHUB_ENABLED) {
-                    return APIService.get('github/repos/')
+                    return NewAPIService.get('github/repos/')
                 }
             })
             .then((d) => {

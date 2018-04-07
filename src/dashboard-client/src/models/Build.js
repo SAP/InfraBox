@@ -1,4 +1,4 @@
-import APIService from '../services/APIService'
+import NewAPIService from '../services/NewAPIService'
 import NotificationService from '../services/NotificationService'
 import Notification from '../models/Notification'
 import router from '../router'
@@ -41,7 +41,7 @@ export default class Build {
     }
 
     abort () {
-        return APIService.get(`projects/${this.project.id}/builds/${this.id}/abort`)
+        return NewAPIService.get(`projects/${this.project.id}/builds/${this.id}/abort`)
             .then((message) => {
                 NotificationService.$emit('NOTIFICATION', new Notification(message, 'done'))
             })
@@ -51,7 +51,7 @@ export default class Build {
     }
 
     restart () {
-        return APIService.get(`projects/${this.project.id}/builds/${this.id}/restart`)
+        return NewAPIService.get(`projects/${this.project.id}/builds/${this.id}/restart`)
             .then((message) => {
                 NotificationService.$emit('NOTIFICATION', new Notification(message, 'done'))
                 router.push(`/project/${this.project.name}/build/${this.number}/${message.data.build.restartCounter}/`)
@@ -62,7 +62,7 @@ export default class Build {
     }
 
     clearCache () {
-        return APIService.get(`projects/${this.project.id}/builds/${this.id}/cache/clear`)
+        return NewAPIService.get(`projects/${this.project.id}/builds/${this.id}/cache/clear`)
             .then((message) => {
                 NotificationService.$emit('NOTIFICATION', new Notification(message, 'done'))
             })

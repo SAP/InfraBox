@@ -223,8 +223,11 @@ def validate_job_token(token):
     token['project']['id'] = r[1]
     g.token = token
 
-def is_collaborator(user_id, project_id):
-    u = g.db.execute_many('''
+def is_collaborator(user_id, project_id, db=None):
+    if not db:
+        db = g.db
+
+    u = db.execute_many('''
         SELECT co.*
         FROM collaborator co
         INNER JOIN "user" u
@@ -243,6 +246,9 @@ def is_public(project_id, project_name):
             WHERE id = %s
         ''', [project_id])
 
+        if not p:
+            abort(404, 'Project not found')
+
         if p['public']:
             return True
     elif project_name:
@@ -251,6 +257,9 @@ def is_public(project_id, project_name):
             FROM project
             WHERE name = %s
         ''', [project_name])
+
+        if not p:
+            abort(404, 'Project not found')
 
         if p['public']:
             return True
@@ -262,8 +271,6 @@ def is_public(project_id, project_name):
 
 
 def validate_user_token(token, check_project_access, project_id, check_project_owner):
-    g.token = token
-
     u = g.db.execute_one('''
         SELECT id FROM "user" WHERE id = %s
     ''', [token['user']['id']])
@@ -313,6 +320,7 @@ def validate_project_token(token, check_project_access, project_id):
 def auth_required(types,
                   check_project_access=True,
                   check_project_owner=False,
+                  check_admin=False,
                   allow_if_public=False):
     def actual_decorator(f):
         @wraps(f)
@@ -326,6 +334,7 @@ def auth_required(types,
 
             token = get_token()
             token_type = token['type']
+            g.token = token
 
             if token_type == 'project-token':
                 token_type = 'project'
@@ -341,10 +350,14 @@ def auth_required(types,
 
                 validate_job_token(token)
             elif token_type == 'user':
-                validate_user_token(token,
-                                    check_project_access,
-                                    project_id,
-                                    check_project_owner)
+                if token['user']['id'] != '00000000-0000-0000-0000-000000000000':
+                    if check_admin:
+                        abort(401, 'Unauthorized')
+                    else:
+                        validate_user_token(token,
+                                            check_project_access,
+                                            project_id,
+                                            check_project_owner)
             elif token_type == 'project':
                 project_id = kwargs.get('project_id')
 

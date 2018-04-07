@@ -39,7 +39,7 @@
 </template>
 
 <script>
-import APIService from '../../services/APIService'
+import NewAPIService from '../../services/NewAPIService'
 import NotificationService from '../../services/NotificationService'
 import Notification from '../../models/Notification'
 
@@ -54,18 +54,24 @@ export default {
     },
     methods: {
         deleteSecret (id) {
-            APIService.delete(`projects/${this.project.id}/secrets/${id}`)
+            NewAPIService.delete(`projects/${this.project.id}/secrets/${id}`)
             .then((response) => {
                 NotificationService.$emit('NOTIFICATION', new Notification(response))
                 this.project._reloadSecrets()
             })
+            .catch((err) => {
+                NotificationService.$emit('NOTIFICATION', new Notification(err))
+            })
         },
         addSecret () {
             const d = { name: this.name, value: this.value }
-            APIService.post(`projects/${this.project.id}/secrets`, d)
+            NewAPIService.post(`projects/${this.project.id}/secrets`, d)
             .then((response) => {
                 NotificationService.$emit('NOTIFICATION', new Notification(response))
                 this.project._reloadSecrets()
+            })
+            .catch((err) => {
+                NotificationService.$emit('NOTIFICATION', new Notification(err))
             })
         }
     }

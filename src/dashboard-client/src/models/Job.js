@@ -1,19 +1,21 @@
 import events from '../events'
 import Notification from '../models/Notification'
 import NotificationService from '../services/NotificationService'
-import APIService from '../services/APIService'
+import NewAPIService from '../services/NewAPIService'
 import store from '../store'
 const Convert = require('ansi-to-html')
 
 class Section {
     linesInSection = 0
     duration = 0
+    id = 0
 
-    constructor (line, text, startTime) {
+    constructor (line, text, startTime, id) {
         this.line = line
         this.text = text
         this.startTime = startTime
         this.lines_raw = []
+        this.id = id
     }
 
     setEndTime (end) {
@@ -86,6 +88,7 @@ export default class Job {
         this.tests = []
         this.stats = []
         this.tabs = []
+        this.archive = []
         this.currentSection = null
         this.linesProcessed = 0
         this.message = message
@@ -134,12 +137,12 @@ export default class Job {
                     this.currentSection.setEndTime(date)
                     this.currentSection.generateHtml()
                 }
-                this.currentSection = new Section(this.linesProcessed, header, date)
+                this.currentSection = new Section(this.linesProcessed, header, date, this.sections.length)
                 this.linesProcessed++
                 this.sections.push(this.currentSection)
             } else {
                 if (!this.currentSection) {
-                    this.currentSection = new Section(this.linesProcessed, 'Prepare Job', date)
+                    this.currentSection = new Section(this.linesProcessed, 'Prepare Job', date, 0)
                     this.sections.push(this.currentSection)
                 }
 
@@ -150,6 +153,14 @@ export default class Job {
 
         if (this.currentSection) {
             this.currentSection.generateHtml()
+
+            if (this.state === 'failed' ||
+                this.state === 'finished' ||
+                this.state === 'error' ||
+                this.state === 'aborted' ||
+                this.state === 'skipped') {
+                this.currentSection.setEndTime(new Date())
+            }
         }
     }
 
@@ -165,7 +176,7 @@ export default class Job {
     }
 
     loadBadges () {
-        return APIService.get(`projects/${this.project.id}/jobs/${this.id}/badges`)
+        return NewAPIService.get(`projects/${this.project.id}/jobs/${this.id}/badges`)
             .then((badges) => {
                 store.commit('setBadges', { job: this, badges: badges })
             })
@@ -179,7 +190,7 @@ export default class Job {
             return
         }
 
-        return APIService.get(`projects/${this.project.id}/jobs/${this.id}/console`)
+        return NewAPIService.get(`projects/${this.project.id}/jobs/${this.id}/console`)
             .then((console) => {
                 store.commit('setConsole', { job: this, console: console })
                 events.listenConsole(this.id)
@@ -190,7 +201,7 @@ export default class Job {
     }
 
     loadTabs () {
-        return APIService.get(`projects/${this.project.id}/jobs/${this.id}/tabs`)
+        return NewAPIService.get(`projects/${this.project.id}/jobs/${this.id}/tabs`)
             .then((tabs) => {
                 store.commit('setTabs', { job: this, tabs: tabs })
             })
@@ -199,8 +210,18 @@ export default class Job {
             })
     }
 
+    loadArchive () {
+        return NewAPIService.get(`projects/${this.project.id}/jobs/${this.id}/archive`)
+            .then((archive) => {
+                store.commit('setArchive', { job: this, archive: archive })
+            })
+            .catch((err) => {
+                NotificationService.$emit('NOTIFICATION', new Notification(err))
+            })
+    }
+
     loadTests () {
-        return APIService.get(`projects/${this.project.id}/jobs/${this.id}/testruns`)
+        return NewAPIService.get(`projects/${this.project.id}/jobs/${this.id}/testruns`)
             .then((tests) => {
                 store.commit('setTests', { job: this, tests: tests })
             })
@@ -210,7 +231,7 @@ export default class Job {
     }
 
     loadStats () {
-        return APIService.get(`projects/${this.project.id}/jobs/${this.id}/stats`)
+        return NewAPIService.get(`projects/${this.project.id}/jobs/${this.id}/stats`)
             .then((values) => {
                 const stats = []
                 for (const n of Object.keys(values)) {
@@ -237,7 +258,12 @@ export default class Job {
 
     downloadDataOutput () {
         const url = `projects/${this.project.id}/jobs/${this.id}/output`
-        APIService.openAPIUrl(url)
+        NewAPIService.openAPIUrl(url)
+    }
+
+    downloadArchive (filename) {
+        const url = `projects/${this.project.id}/jobs/${this.id}/archive/download?filename=${filename}`
+        NewAPIService.openAPIUrl(url)
     }
 
     listenConsole () {
@@ -246,11 +272,11 @@ export default class Job {
 
     downloadOutput () {
         const url = `projects/${this.project.id}/jobs/${this.id}/console`
-        APIService.openAPIUrl(url)
+        NewAPIService.openAPIUrl(url)
     }
 
     abort () {
-        return APIService.get(`projects/${this.project.id}/jobs/${this.id}/abort`)
+        return NewAPIService.get(`projects/${this.project.id}/jobs/${this.id}/abort`)
             .then((message) => {
                 NotificationService.$emit('NOTIFICATION', new Notification(message, 'done'))
             })
@@ -260,7 +286,7 @@ export default class Job {
     }
 
     restart () {
-        return APIService.get(`projects/${this.project.id}/jobs/${this.id}/restart`)
+        return NewAPIService.get(`projects/${this.project.id}/jobs/${this.id}/restart`)
             .then((message) => {
                 console.log(message)
                 NotificationService.$emit('NOTIFICATION', new Notification(message, 'done'))
@@ -279,7 +305,7 @@ export default class Job {
     }
 
     clearCache () {
-        return APIService.get(`projects/${this.project.id}/jobs/${this.id}/cache/clear`)
+        return NewAPIService.get(`projects/${this.project.id}/jobs/${this.id}/cache/clear`)
             .then((message) => {
                 NotificationService.$emit('NOTIFICATION', new Notification(message, 'done'))
             })
