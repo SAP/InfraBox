@@ -16,6 +16,5 @@ InfraBox requires you to have one bucket created. As bucket names have to be glo
 When configuring the InfraBox installation with `install.py` use these options:
 
     --storage gcs
-    --gcs-project-id <YOUR_GCP_PROJECT_ID>
     --gcs-service-account-key-file <PATH_TO_THE_SERVICE_ACCOUNT_KEY_FILE>
     --gcs-bucket <NAME>
