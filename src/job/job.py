@@ -872,7 +872,7 @@ class RunJob(Job):
                 for name, value in self.job['build_arguments'].iteritems():
                     cmd += ['--build-arg', '%s=%s' % (name, value)]
 
-            cmd += ['--build-arg', 'INFRABOX_BUILD_NUMBER=%s' % self.build['number']]
+            cmd += ['--build-arg', 'INFRABOX_BUILD_NUMBER=%s' % self.build['build_number']]
 
             cwd = self._get_build_context_current_job()
             c.execute(cmd, cwd=cwd, show=True)
