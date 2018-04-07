@@ -134,7 +134,7 @@ _installNginxIngress() {
         --set controller.service.type="ClusterIP" \
         --set controller.name="c" \
         --set controller.config.proxy-body-size="0" \
-        --set controller.config.ssl-redirect="false" \
+        --set controller.config.ssl-redirect='"false"' \
         stable/nginx-ingress
 }
 
