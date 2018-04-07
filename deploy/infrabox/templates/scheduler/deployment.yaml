@@ -79,9 +79,6 @@ spec:
                 -
                     name: INFRABOX_CLUSTER_LABELS
                     value: {{ .Values.cluster.labels }}
-                ports:
-                - containerPort: 8000
-                  name: prometheus
                 volumeMounts:
                 -
                     mountPath: /etc/docker
