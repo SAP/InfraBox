@@ -8,7 +8,7 @@ if [ ! -e /var/run/docker.sock ]; then
 
     echo "Waiting for docker daemon to start up"
     # Start docker daemon
-    dockerd-entrypoint.sh --storage-driver overlay --graph /data/docker &
+    dockerd-entrypoint.sh --storage-driver overlay --data-root /data/docker &
 
     # Wait until daemon is ready
     COUNTER=0
