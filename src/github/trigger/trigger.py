@@ -91,9 +91,9 @@ class Trigger(object):
 
     def create_build(self, commit_id, project_id):
         build_no = self.execute('''
-            SELECT count(distinct build_number) + 1 AS build_no
-                          FROM build AS b
-                          WHERE b.project_id = %s
+            SELECT max(build_number) + 1 AS build_no
+            FROM build AS b
+            WHERE b.project_id = %s
         ''', [project_id])[0][0]
 
         result = self.execute('''

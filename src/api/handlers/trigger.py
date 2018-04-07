@@ -255,7 +255,7 @@ class Trigger(Resource):
         project_type = project[0]
 
         r = g.db.execute_one('''
-            SELECT count(distinct build_number) + 1 AS build_no
+            SELECT max(build_number) + 1 AS build_no
             FROM build AS b
             WHERE b.project_id = %s
         ''', [project_id])

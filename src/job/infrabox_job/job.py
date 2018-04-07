@@ -43,7 +43,14 @@ class Job(object):
                 if r.status_code == 409:
                     sys.exit(0)
                 elif r.status_code == 400:
-                    raise Failure(r.text)
+                    msg = r.text
+
+                    try:
+                        msg = r.json()['message']
+                    except:
+                        pass
+
+                    raise Failure(msg)
                 elif r.status_code == 200:
                     break
                 else:
@@ -139,7 +146,14 @@ class Job(object):
             return
 
         if r.status_code != 200:
-            raise Failure('Failed to download file: %s' % r.text)
+            msg = r.text
+
+            try:
+                msg = r.json()['message']
+            except:
+                pass
+
+            raise Failure('Failed to download file: %s' % msg)
 
         with open(path, 'wb') as  f:
             for chunk in r.iter_content(chunk_size=1024):
