@@ -217,7 +217,6 @@ class Kubernetes(Install):
 
             self.create_secret("infrabox-s3-credentials", self.args.general_system_namespace, secret)
         elif args.storage == 'gcs':
-            self.required_option('gcs-project-id')
             self.required_option('gcs-service-account-key-file')
             self.required_option('gcs-bucket')
 
@@ -225,7 +224,6 @@ class Kubernetes(Install):
 
             self.set('storage.s3.enabled', False)
             self.set('storage.gcs.enabled', True)
-            self.set('storage.gcs.project_id', args.gcs_project_id)
             self.set('storage.gcs.bucket', args.gcs_bucket)
 
             with open(args.gcs_service_account_key_file) as keyfile:
@@ -737,7 +735,6 @@ def main():
     parser.add_argument('--s3-bucket', default='infrabox')
     parser.add_argument('--s3-secure', default='true')
 
-    parser.add_argument('--gcs-project-id')
     parser.add_argument('--gcs-service-account-key-file')
     parser.add_argument('--gcs-bucket')
 

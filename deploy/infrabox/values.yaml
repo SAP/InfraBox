@@ -61,9 +61,6 @@ storage:
     gcs:
         enabled: false
 
-        # Your project ID
-        project_id: <REQUIRED>
-
         # Bucket name
         bucket: infrabox
 
