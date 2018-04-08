@@ -261,6 +261,9 @@ class Trigger(Resource):
         ''', [project_id])
         build_no = r[0]
 
+        if not build_no:
+            build_no = 1
+
         new_build_id = None
         new_build_number = None
 
