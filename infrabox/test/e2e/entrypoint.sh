@@ -13,18 +13,6 @@ _prepareKubectl() {
     kubectl get pods
 }
 
-_portForwardAPI() {
-    # Port forward API
-    api_pod=$(_getPodName "infrabox-api")
-
-    echo "Port forwarding to API: '$api_pod'"
-    kubectl port-forward -n $NAMESPACE $api_pod 8080 > /dev/null 2>&1 &
-    until $(curl --output /dev/null --silent --head --fail http://localhost:8080/ping); do
-      >&2 echo "API is unavailable - sleeping"
-      sleep 1
-    done
-}
-
 _getDependencies() {
     echo "## install infraboxcli"
     # pip install infraboxcli
@@ -78,13 +66,8 @@ _installPostgres() {
     kubectl run postgres --image=quay.io/infrabox/postgres:$IMAGE_TAG -n $NAMESPACE
     kubectl expose -n $NAMESPACE deployment postgres --port 5432 --target-port 5432 --name infrabox-postgres
 
-    # Port forward postgres
-    postgres_pod=$(_getPodName "postgres")
-    echo "Port forwarding to postgres: '$postgres_pod'"
-    kubectl port-forward -n $NAMESPACE $postgres_pod 5432 &
-
     # Wait until postgres is ready
-    until psql -U postgres -h localhost -c '\l'; do
+    until psql -U postgres -h infrabox-postgres.$NAMESPACE -c '\l'; do
         >&2 echo "Postgres is unavailable - sleeping"
         sleep 1
     done
@@ -99,21 +82,23 @@ _installMinio() {
     _deinstallMinio
 
     echo "## Install minio"
-    helm install --tiller-namespace $NAMESPACE stable/minio --set serviceType=ClusterIP,replicas=1,persistence.enabled=false -n infrabox-minio --namespace $NAMESPACE
-
-    # Port forward API
-    minio_pod=$(_getPodName "infrabox-minio")
-    echo "Port forwarding to minio: '$minio_pod'"
-    kubectl port-forward -n $NAMESPACE $minio_pod 9000 &
+    helm install --tiller-namespace $NAMESPACE \
+        --set serviceType=ClusterIP,replicas=1,persistence.enabled=false \
+        -n infrabox-minio \
+        --namespace $NAMESPACE \
+        stable/minio
 
     sleep 30
 
     # init minio client
-    mc config host add minio http://localhost:9000 AKIAIOSFODNN7EXAMPLE wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY S3v4
+    mc config host add minio \
+        http://infrabox-minio.$NAMESPACE:9000 \
+        AKIAIOSFODNN7EXAMPLE \
+        wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY \
+        S3v4
 
     # Create buckets
     mc mb minio/infrabox
-    mc ls minio
 }
 
 _installNginxIngress() {
@@ -186,15 +171,13 @@ _installInfrabox() {
     helm install --tiller-namespace $NAMESPACE --namespace $NAMESPACE .
     popd
 
-    export INFRABOX_DATABASE_HOST=localhost
+    export INFRABOX_DATABASE_HOST=infrabox-postgres.$NAMESPACE
     export INFRABOX_DATABASE_DB=postgres
     export INFRABOX_DATABASE_USER=postgres
     export INFRABOX_DATABASE_PORT=5432
     export INFRABOX_DATABASE_PASSWORD=postgres
-    export INFRABOX_URL=http://localhost:8080
-    export INFRABOX_ROOT_URL=http://localhost:8080
-
-    _portForwardAPI
+    export INFRABOX_URL=https://$ROOT_URL
+    export INFRABOX_ROOT_URL=https://$ROOT_URL
 }
 
 _runTests() {
