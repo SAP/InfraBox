@@ -109,6 +109,10 @@ def handle_patchset_created_project(conn, event, project_id, project_name):
     c.close()
 
     build_no = result[0]
+
+    if not build_no:
+        build_no = 1
+
     c = conn.cursor()
     c.execute('''INSERT INTO build (commit_id, build_number, project_id)
                  VALUES (%s, %s, %s)

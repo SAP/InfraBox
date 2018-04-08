@@ -731,7 +731,12 @@ class RunJob(Job):
 
     def push_container(self, image_name):
         c = self.console
-        c.collect("Uploading to docker registry", show=True)
+        c.collect("Uploading after image to docker registry", show=True)
+
+        cache_after_image = self.job['definition'].get('cache', {}).get('after_image', False)
+
+        if not cache_after_image:
+            return
 
         try:
             if self.job['build_only']:
