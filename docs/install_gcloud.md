@@ -48,7 +48,6 @@ Currently InfraBox only supports an nginx-ingress controller. To add one to your
         --namespace kube-system \
         --set rbac.create=true \
         --set controller.service.loadBalancerIP="<INSERT_YOUR_EXTERNAL_IP_HERE>" \
-        --set controller.config.proxy-body-size="0" \
         --set controller.scope.enabled="true" \
         --set controller.scope.namespace="infrabox-system" \
         stable/nginx-ingress
