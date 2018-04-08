@@ -62,10 +62,10 @@ class Test(unittest.TestCase):
         root_url = os.environ['INFRABOX_ROOT_URL']
         headers = {'Authorization': 'bearer ' + os.environ['INFRABOX_CLI_TOKEN']}
         url = '%s/api/v1/projects/%s/builds/' % (root_url, self.project_id)
-        result = requests.get(url, headers=headers).json()
+        result = requests.get(url, headers=headers, verify=False).json()
         build = result[0]
         url = '%s/api/v1/projects/%s/builds/%s/jobs/' % (root_url, self.project_id, build['id'])
-        jobs = requests.get(url, headers=headers).json()
+        jobs = requests.get(url, headers=headers, verify=False).json()
 
         for j in jobs:
             data = json.dumps(j, indent=4)
@@ -95,7 +95,7 @@ class Test(unittest.TestCase):
 
 
     def run_it(self, cwd):
-        command = ['infrabox', 'push', '--show-console']
+        command = ['infrabox', '--ca-bundle', 'false', 'push', '--show-console']
         output = None
         try:
             output = subprocess.check_output(command, cwd=cwd)
@@ -199,19 +199,23 @@ def main():
     print "ROOT_URL: %s" % root_url
     while True:
         time.sleep(1)
+        r = None
         try:
-            r = requests.get(root_url)
+            r = requests.get(root_url, verify=False)
 
             if r.status_code in (200, 404):
                 break
 
             print r.text
-        except:
-            pass
+        except Exception as e:
+            print e
+
         print "Server not yet ready"
 
+    print "Connecting to DB"
     connect_db() # Wait for DB
 
+    print "Starting tests"
     with open('results.xml', 'wb') as output:
         unittest.main(testRunner=xmlrunner.XMLTestRunner(output=output))
 
