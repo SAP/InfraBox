@@ -96,6 +96,9 @@ class Trigger(object):
             WHERE b.project_id = %s
         ''', [project_id])[0][0]
 
+        if not build_no:
+            build_no = 1
+
         result = self.execute('''
             INSERT INTO build (commit_id, build_number, project_id)
             VALUES (%s, %s, %s)
