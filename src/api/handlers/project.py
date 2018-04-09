@@ -77,6 +77,9 @@ class State(Resource):
             SELECT type FROM project WHERE id = %s
         ''', [project_id])
 
+        if not p:
+            abort(404)
+
         project_type = p['type']
 
         rows = None
@@ -139,6 +142,9 @@ class Tests(Resource):
         p = g.db.execute_one_dict('''
             SELECT type FROM project WHERE id = %s
         ''', [project_id])
+
+        if not p:
+            abort(404)
 
         project_type = p['type']
 
