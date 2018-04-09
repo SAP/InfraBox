@@ -1,0 +1,234 @@
+general:
+    # hostname / IP of your kubernetes master
+    # kubernetes_master_host: kubernetes.default.svc.cluster.local
+
+    # port of your kubernetes master
+    # kubernetes_master_port: 443
+
+    # Namespace for system components
+    # system_namespace: infrabox-system
+
+    # Namespace in which all jobs will be started
+    # worker_namespace: infrabox-worker
+
+    # Address of the docker registry which contains
+    # all the InfraBox images. It must be accessible
+    # by all hosts which run your kubernetes cluster.
+    docker_registry: <REQUIRED>
+
+    # Set it to true if certificates of your Github Enterprise the SSL
+    # certificate you are using for InfraBox itself are self signed.
+    # dont_check_certificates: false
+
+    log:
+        # If true the log output will be formatted for google's stackdriver
+        stackdriver: false
+
+    rbac:
+        enabled: true
+
+root_url: <REQUIRED>
+
+ingress:
+    enabled: true
+    tls:
+        acme: false
+        host: <REQUIRED>
+
+db:
+    # name of the db image in your general.docker_registry
+    # image: db
+
+    # Tag
+    tag: latest
+
+docker_gc:
+    # name of the docker-gc image in your general.docker_registry
+    # image: docker-gc
+
+    # Tag
+    tag: latest
+
+scheduler:
+    enabled: true
+
+    # name of the scheduler image in your general.docker_registry
+    # image: scheduler
+
+    # Tag
+    tag: latest
+
+    log:
+        level: info
+
+storage:
+    migration:
+        enabled: true
+
+    gcs:
+        enabled: false
+
+        # Your project ID
+        project_id: <REQUIRED>
+
+        # Bucket name
+        bucket: infrabox
+
+    s3:
+        enabled: true
+
+        # Region
+        region: <REQUIRED>
+
+        # Regeion endpoint
+        endpoint: <REQUIRED>
+
+        # Region endpoint port
+        # port: 443
+
+        # If https should be used or not
+        # secure: true
+
+        # Bucket name
+        bucket: infrabox
+
+    cloudsql:
+        enabled: false
+
+    postgres:
+        enabled: true
+
+        # Host of your postgres database
+        # Set this to localhost if you use GCS!
+        host: <REQUIRED>
+
+        # Port of your postgres database
+        # Don't set this if you use GCS!
+        # port: 5432
+
+        # Database name
+        # db: infrabox
+
+docker_registry:
+    enabled: true
+
+    url: <REQUIRED>
+
+    # name of the docker-registry auth image in your general.docker_registry
+    # auth_image: docker-registry-auth
+
+    # Tag
+    auth_tag: latest
+
+    # name of the docker-registry nginx image in your general.docker_registry
+    # nginx_image: docker-registry-nginx
+
+    # Tag
+    nginx_tag: latest
+
+static:
+    enabled: true
+
+    # name of the static image in your general.docker_registry
+    # image: static
+
+    # Tag
+    tag: latest
+
+api:
+    enabled: true
+
+    # name of the api image in your general.docker_registry
+    # image: api
+
+    # Tag
+    tag: latest
+
+    # URL on which the api will be reachable by your users
+    url: <REQUIRED>
+
+    log:
+        level: info
+
+        # If true prints output for stackdriver
+        stackdriver: false
+
+account:
+    signup:
+        enabled: true
+
+    ldap:
+        enabled: false
+
+        # url: <REQUIRED>
+        # base: <REQUIRED>
+
+gerrit:
+    enabled: false
+
+    review:
+        enabled: false
+
+        # name of the gerrit review image in your general.docker_registry
+        # image: gerrit-review
+
+        # Tag
+        tag: latest
+
+    trigger:
+        # name of the gerrit trigger image in your general.docker_registry
+        # image: gerrit-trigger
+
+        # Tag
+        tag: latest
+
+    api:
+        # name of the gerrit api image in your general.docker_registry
+        # image: gerrit-api
+
+        # Tag
+        tag: latest
+
+    # hostname: <REQUIRED>
+    # username: <REQUIRED>
+    # port: 29418
+
+job:
+    max_output_size: 104857600
+
+    # mount_docker_socket: false
+    # use_host_docker_daemon: false
+    #
+    security_context:
+        capabilities:
+            enabled: false
+
+local_cache:
+    enabled: false
+
+    # host_path: /tmp/infrabox/local_cache
+
+github:
+    enabled: false
+
+    trigger:
+        # image: github-trigger
+
+        tag: latest
+
+    review:
+        # image: review-api
+
+        tag: latest
+
+    login:
+        enabled: false
+
+        # Github Login URL
+        # url: https://github.com/login
+
+        # Comma separated list of github organizations
+        # allowed_organizations:
+
+    # Github API URL
+    # api_url: https://api.github.com

@@ -1,0 +1,170 @@
+<template>
+    <div v-if="build && project">
+		<md-card class="main-card">
+            <md-card-header class="main-card-header no-padding">
+                <md-card-header-text>
+                    <h3 class="md-title left-margin">
+                        <md-layout>
+                            <md-layout md-hide-medium-and-up md-vertical-align="center">
+                                <ib-state :state="build.state"></ib-state>
+                            </md-layout>
+                            <md-layout md-vertical-align="center">
+                                <router-link :to="{name: 'ProjectDetailBuilds', params: {
+                                    projectName: project.name
+                                }}">
+                                    <span v-if="project.isGit()"><i class="fa fa-fw fa-github"></i></span>
+                                    <span v-if="!project.isGit()"><i class="fa fa-fw fa-home"></i></span>
+                                    {{ project.name }}
+                                </router-link>
+                                / Build {{ build.number }}.{{ build.restartCounter }}
+                            </md-layout>
+                            <md-layout md-hide-medium-and-up class="min-header-height" md-vertical-align="center">
+                                <md-menu md-size="3" class="bg-white" md-hide-small-and-up>
+                                    <md-button md-theme="default" class="md-icon-button md-primary" md-menu-trigger>
+                                        <md-icon>info</md-icon>
+                                    </md-button>
+                                    <md-menu-content class="bg-white">
+                                        <md-menu-item class="bg-white">
+                                            <span><i class="fa fa-calendar fa-fw" aria-hidden="true"></i><strong> Started</strong>
+                                            <ib-date :date="build.startDate"></ib-date></span>
+                                        </md-menu-item>
+                                        <md-menu-item class="bg-white">
+                                            <span><i class="fa fa-clock-o fa-fw" aria-hidden="true"></i><strong> Duration</strong>
+                                            <ib-duration :start="build.startDate" :end="build.endDate"></ib-duration></span>
+                                        </md-menu-item>
+                                        <md-menu-item class="bg-white" v-if="build.commit">
+                                            <span><i class="fa fa-list-ol fa-fw" aria-hidden="true"></i><strong> Commit</strong>
+                                            <a target="_blank" :href="build.commit.url"><ib-commit-sha :sha="build.commit.id"></ib-commit-sha></a></span>
+                                        </md-menu-item>
+                                        <md-menu-item class="bg-white" v-if="build.commit">
+                                            <span><i class="fa fa-user fa-fw" aria-hidden="true"></i><strong> Author</strong><br/>
+                                            {{ build.commit.author_name }}</span>
+                                        </md-menu-item>
+                                        <md-menu-item class="bg-white" v-if="build.commit">
+                                            <span><i class="fa fa-code-fork fa-fw" aria-hidden="true"></i><strong> Branch</strong><br/>
+                                            {{ build.commit.branch }}</span>
+                                        </md-menu-item>
+                                    </md-menu-content>
+                                </md-menu>
+                            </md-layout>
+                            <md-layout md-hide-small md-flex="75" md-align="end" md-vertical-align="start">
+                                <md-table-card class="clean-card">
+                                    <md-table class="p-xs m-t-sm m-r-xxl m-b-sm">
+                                        <md-table-body>
+                                            <md-table-row style="border-top: none">
+                                                <md-table-cell>
+                                                    <ib-state :state="build.state"></ib-state>
+                                                </md-table-cell>
+                                                <md-table-cell style="text-align: left !important">
+                                                    <span><i class="fa fa-calendar fa-fw" aria-hidden="true"></i><strong> Started</strong>
+                                                    <ib-date :date="build.startDate"></ib-date></span>
+                                                </md-table-cell>
+                                                <md-table-cell>
+                                                    <span><i class="fa fa-clock-o fa-fw" aria-hidden="true"></i><strong> Duration</strong>
+                                                    <ib-duration :start="build.startDate" :end="build.endDate"></ib-duration></span>
+                                                </md-table-cell>
+                                                <md-table-cell v-if="build.commit">
+                                                    <span><i class="fa fa-list-ol fa-fw" aria-hidden="true"></i><strong> Commit</strong>
+                                                    <a target="_blank" :href="build.commit.url"><ib-commit-sha :sha="build.commit.id"></ib-commit-sha></a></span>
+                                                </md-table-cell>
+                                                <md-table-cell v-if="build.commit">
+                                                    <span><i class="fa fa-user fa-fw" aria-hidden="true"></i><strong> Author</strong><br/>
+                                                    {{ build.commit.author_name }}</span>
+                                                </md-table-cell>
+                                                <md-table-cell v-if="build.commit">
+                                                    <span><i class="fa fa-code-fork fa-fw" aria-hidden="true"></i><strong> Branch</strong><br/>
+                                                    {{ build.commit.branch }}</span>
+                                                </md-table-cell>
+                                        </md-table-row>
+                                      </md-table-body>
+                                    </md-table>
+                                </md-table-card>
+                            </md-layout>
+                        </md-layout>
+                    </h3>
+                </md-card-header-text>
+            </md-card-header>
+            <md-speed-dial v-if="$store.state.user" md-open="hover" md-direction="bottom" class="md-fab-top-right" md-theme="default">
+                <md-button class="md-icon-button md-primary" md-fab-trigger>
+                    <md-icon md-icon-morph>more_vert</md-icon>
+                    <md-icon>more_vert</md-icon>
+                </md-button>
+                <md-button class="md-fab md-primary md-mini md-clean" md-fab-trigger v-on:click="build.abort()">
+                    <md-icon style="color: white">not_interested</md-icon>
+                    <md-tooltip md-direction="left">Stop Build</md-tooltip>
+                </md-button>
+                <md-button class="md-fab md-primary md-mini md-clean" md-fab-trigger v-on:click="build.restart()">
+                    <md-icon style="color: white">replay</md-icon>
+                    <md-tooltip md-direction="left">Restart Build</md-tooltip>
+                </md-button>
+                <md-button class="md-fab md-primary md-mini md-clean" v-on:click="build.clearCache()">
+                    <md-icon style="color: white">delete_sweep</md-icon>
+                    <md-tooltip md-direction="left">Clear Cache</md-tooltip>
+                </md-button>
+            </md-speed-dial>
+            <md-card-content>
+                 <md-tabs md-fixed class="md-transparent" @change="tabSelected">
+                    <md-tab id="build-graph" md-label="Build" md-icon="widgets" class="widget-container" :md-active="tabIndex==0"></md-tab>
+                    <md-tab id="job-list" md-label="Jobs" md-icon="view_list" :md-active="tabIndex==1"></md-tab>
+                </md-tabs>
+                <slot></slot>
+            </md-card-content>
+		</md-card>
+    </div>
+</template>
+
+<script>
+import store from '../../store'
+import GanttChart from './Gantt'
+import Date from '../utils/Date'
+import Duration from '../utils/Duration'
+import CommitSha from '../utils/CommitSha'
+import JobList from '../job/JobList'
+import Badge from '../utils/Badge'
+import router from '../../router'
+
+export default {
+    name: 'BuildDetail',
+    store,
+    props: ['project', 'build', 'tabIndex'],
+    components: {
+        'ib-job-gantt': GanttChart,
+        'ib-date': Date,
+        'ib-duration': Duration,
+        'ib-commit-sha': CommitSha,
+        'ib-job-list': JobList,
+        'ib-badge': Badge
+    },
+    data () {
+        return {
+            index: null
+        }
+    },
+    methods: {
+        tabSelected (index) {
+            if (this.index === null) {
+                this.index = index
+                return
+            }
+
+            const projectName = encodeURIComponent(this.project.name)
+
+            if (index === 0) {
+                router.push(`/project/${projectName}/build/${this.build.number}/${this.build.restartCounter}`)
+            } else {
+                router.push(`/project/${projectName}/build/${this.build.number}/${this.build.restartCounter}/jobs`)
+            }
+        }
+    }
+}
+</script>
+
+<style scoped>
+.widget-container {
+    width: 100%;
+}
+
+.left-margin {
+    margin-left: 25px !important;
+}
+</style>

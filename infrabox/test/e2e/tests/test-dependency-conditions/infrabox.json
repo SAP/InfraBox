@@ -1,0 +1,37 @@
+{
+    "version": 1,
+    "jobs": [{
+        "type": "docker",
+        "name": "producer",
+        "docker_file": "Dockerfile_producer",
+        "build_only": false,
+        "resources": {"limits": {"cpu": 1, "memory": 1024}}
+    }, {
+        "type": "docker",
+        "name": "consumer1",
+        "docker_file": "Dockerfile_consumer1",
+        "build_only": false,
+        "resources": {"limits": {"cpu": 1, "memory": 1024}},
+        "depends_on": [
+            "producer"
+        ]
+    }, {
+        "type": "docker",
+        "name": "consumer2",
+        "docker_file": "Dockerfile_consumer2",
+        "build_only": false,
+        "resources": {"limits": {"cpu": 1, "memory": 1024}},
+        "depends_on": [
+            {"job": "producer", "on": ["error", "failure"]}
+        ]
+    }, {
+        "type": "docker",
+        "name": "consumer3",
+        "docker_file": "Dockerfile_consumer3",
+        "build_only": false,
+        "resources": {"limits": {"cpu": 1, "memory": 1024}},
+        "depends_on": [
+            {"job": "producer", "on": ["*"]}
+        ]
+    }]
+}

@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <link rel="shortcut icon" href="img/favicon.ico">
+    <link rel="icon" type="image/png" href="img/favicon-32x32.png" sizes="32x32">
+    <link rel="icon" type="image/png" href="img/favicon-96x96.png" sizes="96x96">
+    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png">
+    <link href='http://fonts.googleapis.com/css?family=Roboto' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="path/to/font-awesome/css/font-awesome.min.css">
+    <title>InfraBox</title>
+
+    <style>
+        body {
+            background-color: #293846;
+            color: #f3f3f4;
+            font-family: 'Roboto', sans-serif;
+            font-size: 48px;
+        }
+
+        a {
+            background-color: #293846;
+            border-style: none;
+            color: #f3f3f4;
+            font-family: 'Roboto', sans-serif;
+            font-size: 25px;
+            font-weight: bold;
+            text-decoration: none;
+        }
+
+        a.login {
+            background-color: #23c6c8;
+            border-radius: 5%;
+            box-shadow: 2px 2px 10px 0px grey;
+            padding: 10px;
+            position: fixed;
+            right: 5%;
+            text-align: center;
+            width: 125px;
+        }
+
+        a.link {
+            color: #23c6c8;
+            background-color: transparent;
+            font-size: inherit;
+        }
+
+        img.icon {
+            height: 25px;
+            padding-right: 5px;
+            vertical-align: middle;
+        }
+
+        footer {
+            position: fixed;
+            top: 90%;
+        }
+
+        /* Popup container - can be anything you want */
+
+        .popup {
+            background-color: #293846;
+            border-style: none;
+            color: #f3f3f4;
+            font-family: 'Roboto', sans-serif;
+            font-size: 25px;
+            font-weight: bold;
+            cursor: pointer;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            text-align: left;
+            user-select: none;
+        }
+
+        /* The actual popup */
+
+        .popup .popuptext {
+            visibility: hidden;
+            background-color: #f3f3f4;
+            color: #293846;
+            font-size: 16px;
+            text-align: left;
+            border-radius: 6px;
+            padding: 15px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            right: 5%;
+            margin-left: -80px;
+            width: 250%;
+        }
+
+        /* Popup arrow */
+
+        .popup .popuptext::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: #555 transparent transparent transparent;
+        }
+
+        /* Toggle this class - hide and show the popup */
+
+        .popup .show {
+            visibility: visible;
+            -webkit-animation: fadeIn 1s;
+            animation: fadeIn 1s;
+        }
+
+        /* Add animation (fade in the popup) */
+
+        @-webkit-keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+    </style>
+</head>
+<header>
+    <a href="/dashboard/#/login" class="login"><img src="img/fa-signin.svg" class="icon"/><span> Login</span></a>
+</header>
+
+<body>
+    <img src="img/logo_compact_light.png" width=50% style="position: fixed; top: 25%; left: 25%;" />
+</body>
+
+<footer>
+    <a href="https://github.com/infrabox/infrabox" target="_blank" style="position: fixed; left: 5%"><img src="img/fa-git.svg" class="icon"/><span> GitHub</span></a>
+    <a href="/docs" target="_blank" style="position: fixed; left: 50%; width: 250px; margin-left: -125px"><img src="img/fa-book.svg" class="icon"/><span> Documentation</span></a>
+
+    <div class="popup" onclick="myFunction()" style="position: fixed; right: 5%"><img src="img/fa-envelope.svg" class="icon" /><span> Contact</span>
+        <span class="popuptext" id="myPopup">
+            <address>
+                <h1>Impressum</h1>
+                <h2>Angaben gem&auml;&szlig; &sect; 5 TMG:</h2>
+                <p>InfraBox UG (haftungsbeschr&auml;nkt)<br /> Papa-Stra&szlig;e 23<br /> 68723 Schwetzingen</p>
+                <h2>Vertreten durch:</h2>
+                <p>Franziska Schilling</p>
+                <h2>Kontakt:</h2><p> E-Mail: info@infrabox.net</p>
+                <h2>Registereintrag:</h2> <p>Eintragung im Handelsregister. <br /> Registergericht:Amtsgericht Mannheim <br /> Registernummer: HRB 728914</p>
+            </address>
+        </span>
+    </div>
+    <script>
+        // When the user clicks on <div>, open the popup
+        function myFunction() {
+            var popup = document.getElementById("myPopup");
+            popup.classList.toggle("show");
+        }
+
+    </script>
+</footer>
+
+</html>

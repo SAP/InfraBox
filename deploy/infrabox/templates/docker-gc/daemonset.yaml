@@ -1,0 +1,44 @@
+{{ if .Values.job.use_host_docker_daemon }}
+apiVersion: extensions/v1beta1
+kind: DaemonSet
+metadata:
+    name: infrabox-docker-gc
+    namespace: {{ default "infrabox-system" .Values.general.system_namespace }}
+    labels:
+        app: infrabox-docker-gc
+spec:
+    selector:
+        matchLabels:
+            app: infrabox-docker-gc
+    template:
+        metadata:
+            labels:
+               app: infrabox-docker-gc
+        spec:
+            containers:
+            -
+                name: docker-gc
+                image: {{ .Values.general.docker_registry }}/{{ default "docker-gc" .Values.docker_gc.image }}:{{ .Values.docker_gc.tag }}
+                volumeMounts:
+                -
+                    name: docker-socket
+                    mountPath: /var/run/docker.sock
+                env:
+                -
+                    name: DRY_RUN
+                    value: "1"
+                -
+                    name: FORCE_IMAGE_REMOVAL
+                    value: "1"
+                -
+                    name: FORCE_CONTAINER_REMOVAL
+                    value: "1"
+                -
+                    name: GRACE_PERIOD_SECONDS
+                    value: "60"
+            volumes:
+            -
+                name: docker-socket
+                hostPath:
+                    path: /var/run/docker.sock
+{{ end }}

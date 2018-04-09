@@ -1,3 +1,4 @@
+
                                  Apache License
                            Version 2.0, January 2004
                         http://www.apache.org/licenses/
@@ -199,3 +200,31 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
+
+------------------------------------------------------------------------------
+APIs
+
+This project may include APIs to SAP or third party products or services. The use of these APIs, products and services may be subject to additional agreements. In no event shall the application of the Apache Software License, v.2 to this project grant any rights in or to these APIs, products or services that would alter, expand, be inconsistent with, or supersede any terms of these additional agreements. “API” means application programming interfaces, as well as their respective specifications and implementing code that allows other software products to communicate with or call on SAP or third party products or services (for example, SAP Enterprise Services, BAPIs, Idocs, RFCs and ABAP calls or other user exits) and may be made available through SAP or third party products, SDKs, documentation or other media.
+
+------------------------------------------------------------------------------
+SUBCOMPONENTS
+
+
+[****NOTE: Use this section to identify third party components or code snippets that are included in the project. This is for embedded components, not dependencies or prerequisites that must be obtained by users from third party sources outside of the project. If you have any questions please contact the Industry Standards and Open Source Team. Please delete this note prior to publication]
+
+This project includes the following subcomponents that are subject to separate license terms.
+Your use of these subcomponents is subject to the separate license terms applicable to
+each subcomponent.
+
+[****NOTE: List all third party components included in the project. Do not include the license text for these components here. License text should be included in the subsequent section. Please delete this note prior to publication]
+
+Component: [****name and versions]
+Licensor: [****licensor/author]
+Website: [****website]
+License: [****license]
+Additional Notices: [****Include any additional notices here. This can include owner or copyright year listed in MIT and BSD licenses, subcomponent notices listed at the end of the LICENSE file in Apache licensed components, notices contained in the NOTICE file in Apache licensed components, or other notices.]
+
+------------------------------------------------------------------------------
+
+[****Note: Use this section to include a single copy of each unique subcomponent license referenced in the previous section. For example, if there are three MIT licensed subcomponents then only publish the MIT license once. If there are Apache Software License subcomponents do not publish the Apache Software License in this section since it is already published above. Please delete this note prior to publication
+------------------------------------------------------------------------------

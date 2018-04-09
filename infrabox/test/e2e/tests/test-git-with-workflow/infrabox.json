@@ -1,0 +1,9 @@
+{
+    "version": 1,
+    "jobs": [{
+        "type": "git",
+        "name": "external",
+        "clone_url": "/project/infrabox/test/create-jobs/test/test-git-with-workflow/external_git/",
+        "commit": "master"
+    }]
+}

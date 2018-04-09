@@ -1,0 +1,17 @@
+{
+    "version": 1,
+    "jobs": [{
+        "type": "docker",
+        "name": "gen-compose",
+        "build_context": "../..",
+        "docker_file": "infrabox/test/gen-compose/Dockerfile",
+        "build_only": false,
+        "resources": { "limits": { "cpu": 1, "memory": 512 } }
+    }, {
+        "type": "docker-compose",
+        "name": "e2e-compose",
+        "docker_compose_file": "../../.infrabox/inputs/gen-compose/e2e/compose/docker-compose.yml",
+        "resources": { "limits": { "cpu": 1, "memory": 2048 } },
+        "depends_on": ["gen-compose"]
+    }]
+}

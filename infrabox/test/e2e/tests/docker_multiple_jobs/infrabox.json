@@ -1,0 +1,31 @@
+{
+    "version": 1,
+    "jobs": [{
+        "type": "docker",
+        "name": "test-1",
+        "docker_file": "Dockerfile",
+        "resources": { "limits": { "cpu": 1, "memory": 1024 } }
+    }, {
+        "type": "docker",
+        "name": "test-2",
+        "docker_file": "Dockerfile",
+        "resources": { "limits": { "cpu": 1, "memory": 1024 } }
+    }, {
+        "type": "docker",
+        "name": "test-3",
+        "docker_file": "Dockerfile",
+        "resources": { "limits": { "cpu": 1, "memory": 1024 } }
+    }, {
+        "type": "docker",
+        "name": "test-4",
+        "docker_file": "Dockerfile",
+        "depends_on": ["test-1", "test-2"],
+        "resources": { "limits": { "cpu": 1, "memory": 1024 } }
+    }, {
+        "type": "docker",
+        "name": "test-5",
+        "docker_file": "Dockerfile",
+        "resources": { "limits": { "cpu": 1, "memory": 1024 } },
+        "depends_on": ["test-2", "test-3"]
+    }]
+}
