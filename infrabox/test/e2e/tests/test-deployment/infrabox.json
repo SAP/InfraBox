@@ -1,0 +1,20 @@
+{
+    "version": 1,
+    "jobs": [{
+        "type": "docker",
+        "name": "test-server",
+        "docker_file": "Dockerfile",
+        "resources": { "limits": { "cpu": 1, "memory": 1024 } },
+        "deployments": [{
+            "type": "docker-registry",
+            "host": "myhost",
+            "repository": "repo",
+            "username": "myuser",
+            "password": { "$secret": "MY_SECRET" }
+        }, {
+            "type": "docker-registry",
+            "host": "myhost",
+            "repository": "repo"
+        }]
+    }]
+}

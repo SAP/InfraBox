@@ -1,0 +1,10 @@
+{
+    "version": 1,
+    "jobs": [{
+        "type": "docker",
+        "name": "ib",
+        "docker_file": "infrabox/generator/Dockerfile",
+        "build_only": false,
+        "resources": { "limits": { "cpu": 1, "memory": 512 }}
+    }]
+}

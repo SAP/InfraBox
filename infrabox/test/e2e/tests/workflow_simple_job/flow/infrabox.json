@@ -1,0 +1,9 @@
+{
+    "version": 1,
+    "jobs": [{
+        "type": "docker",
+        "name": "test-sub",
+        "docker_file": "Dockerfile",
+        "resources": { "limits": { "cpu": 1, "memory": 1024 } }
+    }]
+}

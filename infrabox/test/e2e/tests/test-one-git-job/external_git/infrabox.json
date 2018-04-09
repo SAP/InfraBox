@@ -1,0 +1,9 @@
+{
+    "version": 1,
+    "jobs": [{
+        "type": "docker",
+        "name": "test-server",
+        "docker_file": "Dockerfile_external",
+        "resources": { "limits": { "cpu": 1, "memory": 1024 } }
+    }]
+}

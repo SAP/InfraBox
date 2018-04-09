@@ -1,0 +1,102 @@
+{{ if .Values.api.enabled }}
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+    name: infrabox-api
+    namespace: {{ default "infrabox-system" .Values.general.system_namespace }}
+    labels:
+        app: infrabox-api
+spec:
+    replicas: {{ default 1 .Values.api.replicas }}
+    template:
+        metadata:
+            labels:
+                app: infrabox-api
+        spec:
+            {{- if .Values.api.node_selector }}
+            nodeSelector:
+{{ toYaml .Values.api.node_selector | indent 16 }}
+            {{- end }}
+            containers:
+            {{ include "containers_database" . | indent 12 }}
+            {{ if .Values.gerrit.enabled }}
+            -
+                image: {{ .Values.general.docker_registry }}/{{ default "gerrit-api" .Values.gerrit.api.image }}:{{ .Values.gerrit.api.tag }}
+                imagePullPolicy: Always
+                name: gerrit-api
+                env:
+                {{ include "env_general" . | indent 16 }}
+                {{ include "env_gerrit" . | indent 16 }}
+                -
+                    name: INFRABOX_SERVICE
+                    value: {{ default "gerrit-api" .Values.gerrit.api.image }}
+                -
+                    name: INFRABOX_VERSION
+                    value: {{ .Values.gerrit.api.tag }}
+                volumeMounts:
+                - name: gerrit-ssh
+                  mountPath: /tmp/gerrit
+                  readOnly: true
+            {{ end }}
+            -
+                name: api
+                image: {{ .Values.general.docker_registry }}/{{ default "api" .Values.api.image }}:{{ .Values.api.tag }}
+                imagePullPolicy: Always
+                volumeMounts:
+                {{ include "mounts_rsa_public" . | indent 16 }}
+                {{ include "mounts_rsa_private" . | indent 16 }}
+                {{ if .Values.storage.gcs.enabled }}
+                -
+                    name: gcs-service-account
+                    mountPath: /etc/infrabox/gcs
+                    readOnly: true
+                {{ end }}
+                env:
+                {{ include "env_database" . | indent 16 }}
+                {{ include "env_gcs" . | indent 16 }}
+                {{ include "env_s3" . | indent 16 }}
+                {{ include "env_job" . | indent 16 }}
+                {{ include "env_general" . | indent 16 }}
+                {{ include "env_github" . | indent 16 }}
+                {{ include "env_github_secrets" . | indent 16 }}
+                {{ include "env_ldap" . | indent 16 }}
+                -
+                    name: INFRABOX_GERRIT_ENABLED
+                    value: {{ .Values.gerrit.enabled | quote }}
+                -
+                    name: INFRABOX_SERVICE
+                    value: {{ default "api" .Values.api.image }}
+                -
+                    name: INFRABOX_VERSION
+                    value: {{ .Values.api.tag }}
+                -
+                    name: INFRABOX_API_LOG_LEVEL
+                    value: {{ default "info" .Values.api.log.level | quote }}
+                -
+                    name: INFRABOX_ROOT_URL
+                    value: {{ .Values.root_url }}
+                -
+                    name: INFRABOX_CLUSTER_NAME
+                    value: {{ .Values.cluster.name }}
+                -
+                    name: INFRABOX_API_PORT
+                    value: "8080"
+                -
+                    name: INFRABOX_ACCOUNT_SIGNUP_ENABLED
+                    value: {{ .Values.account.signup.enabled | quote }}
+            volumes:
+                {{ include "volumes_database" . | indent 16 }}
+                {{ include "volumes_rsa" . | indent 16 }}
+                {{ if .Values.storage.gcs.enabled }}
+                -
+                    name: gcs-service-account
+                    secret:
+                        secretName: infrabox-gcs
+                {{ end }}
+                {{ if .Values.gerrit.enabled }}
+                -
+                    name: gerrit-ssh
+                    secret:
+                        secretName: infrabox-gerrit-ssh
+                {{ end }}
+{{ end }}

@@ -1,0 +1,25 @@
+{{ if .Values.static.enabled }}
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+    name: infrabox-swagger
+    namespace: {{ default "infrabox-system" .Values.general.system_namespace }}
+    labels:
+        app: infrabox-swagger
+spec:
+    replicas: 1
+    template:
+        metadata:
+            labels:
+                app: infrabox-swagger
+        spec:
+            containers:
+            -
+                image: swaggerapi/swagger-ui:v3.13.0
+                imagePullPolicy: Always
+                name: swagger
+                env:
+                -
+                    name: API_URL
+                    value: {{ .Values.root_url }}/api/swagger/swagger.json
+{{ end }}

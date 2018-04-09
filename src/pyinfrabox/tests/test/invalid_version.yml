@@ -1,0 +1,4 @@
+version: "asd"
+services:
+    test:
+        image: asd
