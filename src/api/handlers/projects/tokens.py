@@ -1,6 +1,7 @@
-from flask import request, g
+from flask import request, g, abort
 from flask_restplus import Resource, fields
 
+from pyinfrabox.utils import validate_uuid4
 from pyinfraboxutils.ibflask import auth_required, OK
 from pyinfraboxutils.ibrestplus import api
 from pyinfraboxutils.token import encode_project_token
@@ -49,10 +50,13 @@ class Token(Resource):
 
     @auth_required(['user'])
     def delete(self, project_id, token_id):
-        g.db.execute('''
-            DELETE FROM auth_token
-            WHERE project_id = %s and id = %s
-        ''', [project_id, token_id])
+        if not validate_uuid4(token_id):
+            abort(400, "Invalid projet-token uuid")
+
+        g.db.execute("""
+                     DELETE FROM auth_token
+                     WHERE project_id = %s and id = %s
+        """, [project_id, token_id])
         g.db.commit()
 
         return OK('Successfully deleted token')

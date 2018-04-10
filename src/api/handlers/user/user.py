@@ -1,7 +1,7 @@
 from flask import g, abort
 from flask_restplus import Resource
 
-from pyinfraboxutils.ibflask import auth_required
+from pyinfraboxutils.ibflask import auth_required, OK
 from pyinfraboxutils.ibrestplus import api
 
 ns = api.namespace('api/v1/user',
@@ -36,6 +36,6 @@ class User(Resource):
         ''', [username])
 
         if not user_id:
-            abort(404, 'User not found')
+            abort(400, 'User not found.')
 
-        return user_id[0]
+        return OK('User exists.', { 'user_id': user_id[0] })
