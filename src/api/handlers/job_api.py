@@ -14,6 +14,7 @@ from flask_restplus import Resource
 
 from werkzeug.datastructures import FileStorage
 
+from pyinfrabox.utils import validate_uuid4
 from pyinfrabox.badge import validate_badge
 from pyinfrabox.markup import validate_markup
 from pyinfrabox.testresult import validate_result
@@ -25,19 +26,12 @@ from pyinfraboxutils.ibrestplus import api
 from pyinfraboxutils.ibflask import job_token_required, app
 from pyinfraboxutils.storage import storage
 
+
 ns = api.namespace('api/job',
                    description='Job runtime related operations')
 
 def allowed_file(filename, extensions):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in extensions
-
-def validate_uuid4(uuid_string):
-    try:
-        val = uuid.UUID(uuid_string, version=4)
-    except ValueError:
-        return False
-
-    return val.hex == uuid_string.replace('-', '')
 
 def delete_file(path):
     if os.path.exists(path):
