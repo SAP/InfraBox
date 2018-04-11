@@ -266,6 +266,23 @@ class Job(Resource):
 
                     dep['password'] = secret
                     data['deployments'].append(dep)
+                if dep['type'] == 'ecr':
+                    access_key_id_name = dep['access_key_id']['$secret']
+                    secret = get_secret(access_key_id_name)
+
+                    if secret is None:
+                        abort(400, "Secret %s not found" % access_key_id_name)
+
+                    dep['access_key_id'] = secret
+
+                    secret_access_key_name = dep['secret_access_key']['$secret']
+                    secret = get_secret(secret_access_key_name)
+
+                    if secret is None:
+                        abort(400, "Secret %s not found" % secret_access_key_name)
+
+                    dep['secret_access_key'] = secret
+                    data['deployments'].append(dep)
                 else:
                     abort(400, "Unknown deployment type")
 
@@ -583,7 +600,7 @@ class CreateJobs(Resource):
         assigned_clusters = {}
 
         for j in jobs:
-            if not 'cluster' in j:
+            if 'cluster' not in j:
                 j['cluster'] = {}
 
             cluster_selector = j['cluster'].get('selector', None)

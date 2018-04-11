@@ -900,10 +900,10 @@ class RunJob(Job):
 
         for dep in self.deployments:
             try:
-                if dep['type'] == 'aws-ecr':
+                if dep['type'] == 'ecr':
                     login_env = {
-                        'AWS_ACCESS_KEY_ID': dep['access_key'],
-                        'AWS_SECRET_ACCESS_KEY': dep['secret_key'],
+                        'AWS_ACCESS_KEY_ID': dep['access_key_id'],
+                        'AWS_SECRET_ACCESS_KEY': dep['secret_access_key'],
                         'AWS_DEFAULT_REGION': dep['region'],
                         'PATH': os.environ['PATH']
                     }
