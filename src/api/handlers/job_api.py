@@ -266,7 +266,7 @@ class Job(Resource):
 
                     dep['password'] = secret
                     data['deployments'].append(dep)
-                if dep['type'] == 'ecr':
+                elif dep['type'] == 'ecr':
                     access_key_id_name = dep['access_key_id']['$secret']
                     secret = get_secret(access_key_id_name)
 
@@ -285,6 +285,46 @@ class Job(Resource):
                     data['deployments'].append(dep)
                 else:
                     abort(400, "Unknown deployment type")
+
+        # Registries
+        data['registries'] = []
+        definition = data['job']['definition']
+        registries = None
+
+        if definition:
+            registries = definition.get('registries', None)
+
+        if registries:
+            for r in registries:
+                if r['type'] == 'docker-registry':
+                    secret_name = r['password']['$secret']
+                    secret = get_secret(secret_name)
+
+                    if secret is None:
+                        abort(400, "Secret %s not found" % secret_name)
+
+                    r['password'] = secret
+                    data['registries'].append(r)
+                elif r['type'] == 'ecr':
+                    access_key_id_name = r['access_key_id']['$secret']
+                    secret = get_secret(access_key_id_name)
+
+                    if secret is None:
+                        abort(400, "Secret %s not found" % access_key_id_name)
+
+                    r['access_key_id'] = secret
+
+                    secret_access_key_name = r['secret_access_key']['$secret']
+                    secret = get_secret(secret_access_key_name)
+
+                    if secret is None:
+                        abort(400, "Secret %s not found" % secret_access_key_name)
+
+                    r['secret_access_key'] = secret
+                    data['registries'].append(r)
+                else:
+                    abort(400, "Unknown deployment type")
+
 
         # Default env vars
         project_name = urllib.quote_plus(data['project']['name']).replace('+', '%20')
