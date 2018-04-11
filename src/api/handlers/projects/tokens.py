@@ -33,10 +33,18 @@ class Tokens(Resource):
     def post(self, project_id):
         b = request.get_json()
 
-        result = g.db.execute_one_dict('''
+        result = g.db.execute_one("""
+            SELECT COUNT(*) FROM auth_token
+            WHERE project_id = %s AND description = %s
+        """, [project_id, b['description']])[0]
+
+        if result != 0:
+            return abort(400, 'Token with such a description already exists.')
+
+        result = g.db.execute_one_dict("""
             INSERT INTO auth_token (description, scope_push, scope_pull, project_id)
             VALUES (%s, %s, %s, %s) RETURNING id
-        ''', [b['description'], b['scope_push'], b['scope_pull'], project_id])
+        """, [b['description'], b['scope_push'], b['scope_pull'], project_id])
 
         token_id = result['id']
         token = encode_project_token(token_id, project_id)
@@ -53,6 +61,14 @@ class Token(Resource):
         if not validate_uuid4(token_id):
             abort(400, "Invalid projet-token uuid")
 
+        num_tokens = g.db.execute_one("""
+            SELECT COUNT(*) FROM auth_token
+            WHERE project_id = %s and id = %s
+        """, [project_id, token_id])[0]
+
+        if num_tokens == 0:
+            return abort(400, 'Such token does not exist.')
+
         g.db.execute("""
                      DELETE FROM auth_token
                      WHERE project_id = %s and id = %s
@@ -60,3 +76,19 @@ class Token(Resource):
         g.db.commit()
 
         return OK('Successfully deleted token')
+
+@ns.route('/<project_id>/tokens/<token_description>')
+class TokenUtilities(Resource):
+
+    @auth_required(['user'])
+    def get(self, project_id, token_description):
+        token_id = g.db.execute_one("""
+            SELECT id FROM auth_token
+            WHERE project_id = %s AND description = %s
+        """, [project_id, token_description])
+
+        if not token_id:
+            abort(400, 'Token with such a description does not exist.')
+
+        token_id = token_id[0]
+        return OK('Found token with provided description', { 'token_id': token_id})
