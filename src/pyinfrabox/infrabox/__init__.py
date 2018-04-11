@@ -204,7 +204,7 @@ def parse_docker_image(d, path):
     check_allowed_properties(d, path, ("type", "name", "image", "depends_on", "resources",
                                        "environment", "timeout", "security_context",
                                        "build_context", "cache", "repository", "command",
-                                       "cluster"))
+                                       "cluster", "registries"))
     check_required_properties(d, path, ("type", "name", "image", "resources"))
     check_name(d['name'], path + ".name")
     check_text(d['image'], path + ".image")
@@ -233,6 +233,9 @@ def parse_docker_image(d, path):
 
     if 'security_context' in d:
         parse_security_context(d['security_context'], path + '.security_context')
+
+    if 'registries' in d:
+        parse_registries(d['registries'], path + '.registries')
 
     if 'build_context' in d:
         check_text(d['build_context'], path + ".build_context")
@@ -326,6 +329,21 @@ def parse_deployment_docker_registry(d, path):
     if 'password' in d:
         parse_secret_ref(d['password'], path + ".password")
 
+def parse_registry_docker_registry(d, path):
+    check_required_properties(d, path, ("type", "host", "repository", "username", "password"))
+    check_text(d['host'], path + ".host")
+    check_text(d['repository'], path + ".repository")
+    check_text(d['username'], path + ".username")
+    parse_secret_ref(d['password'], path + ".password")
+
+def parse_registry_ecr(d, path):
+    check_required_properties(d, path, ("type", "access_key_id", "secret_access_key", "region", "host"))
+
+    check_text(d['host'], path + ".host")
+    check_text(d['region'], path + ".region")
+    parse_secret_ref(d['secret_access_key'], path + ".secret_access_key")
+    parse_secret_ref(d['access_key_id'], path + ".access_key_id")
+
 def parse_deployment_ecr(d, path):
     check_allowed_properties(d, path, ("type", "access_key_id", "secret_access_key",
                                        "region", "repository", "host", "tag"))
@@ -339,6 +357,29 @@ def parse_deployment_ecr(d, path):
 
     if 'tag' in d:
         check_text(d['tag'], path + ".tag")
+
+def parse_registries(e, path):
+    if not isinstance(e, list):
+        raise ValidationError(path, "must be an array")
+
+    if not e:
+        raise ValidationError(path, "must not be empty")
+
+    for i in range(0, len(e)):
+        elem = e[i]
+        p = "%s[%s]" % (path, i)
+
+        if 'type' not in elem:
+            raise ValidationError(p, "does not contain a 'type'")
+
+        t = elem['type']
+
+        if t == 'docker-registry':
+            parse_registry_docker_registry(elem, p)
+        if t == 'ecr':
+            parse_registry_ecr(elem, p)
+        else:
+            raise ValidationError(p, "type '%s' not supported" % t)
 
 
 def parse_deployments(e, path):
