@@ -326,6 +326,21 @@ def parse_deployment_docker_registry(d, path):
     if 'password' in d:
         parse_secret_ref(d['password'], path + ".password")
 
+def parse_deployment_ecr(d, path):
+    check_allowed_properties(d, path, ("type", "access_key_id", "secret_access_key",
+                                       "region", "repository", "host", "tag"))
+    check_required_properties(d, path, ("type", "access_key_id", "secret_access_key", "region", "repository", "host"))
+
+    check_text(d['host'], path + ".host")
+    check_text(d['repository'], path + ".repository")
+    check_text(d['region'], path + ".region")
+    parse_secret_ref(d['secret_access_key'], path + ".secret_access_key")
+    parse_secret_ref(d['access_key_id'], path + ".access_key_id")
+
+    if 'tag' in d:
+        check_text(d['tag'], path + ".tag")
+
+
 def parse_deployments(e, path):
     if not isinstance(e, list):
         raise ValidationError(path, "must be an array")
@@ -344,6 +359,8 @@ def parse_deployments(e, path):
 
         if t == 'docker-registry':
             parse_deployment_docker_registry(elem, p)
+        if t == 'ecr':
+            parse_deployment_ecr(elem, p)
         else:
             raise ValidationError(p, "type '%s' not supported" % t)
 
