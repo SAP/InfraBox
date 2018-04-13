@@ -27,12 +27,12 @@ def get_next_page(r):
 
     n1 = link.find('rel=\"next\"')
 
-    if not n1:
+    if n1 < 0:
         return None
 
     n2 = link.rfind('<', 0, n1)
 
-    if not n2:
+    if n2 < 0:
         return None
 
     n2 += 1

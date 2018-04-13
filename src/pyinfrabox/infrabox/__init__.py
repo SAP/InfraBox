@@ -15,8 +15,11 @@ def check_name(n, path):
 def parse_repository(d, path):
     check_allowed_properties(d, path, ('clone', 'submodules'))
 
-    check_boolean(d['clone'], path + ".clone")
-    check_boolean(d['submodules'], path + ".submodules")
+    if 'clone' in d:
+        check_boolean(d['clone'], path + ".clone")
+
+    if 'submodules' in d:
+        check_boolean(d['submodules'], path + ".submodules")
 
 def parse_cluster(d, path):
     check_allowed_properties(d, path, ('selector',))
@@ -376,7 +379,7 @@ def parse_registries(e, path):
 
         if t == 'docker-registry':
             parse_registry_docker_registry(elem, p)
-        if t == 'ecr':
+        elif t == 'ecr':
             parse_registry_ecr(elem, p)
         else:
             raise ValidationError(p, "type '%s' not supported" % t)
@@ -400,7 +403,7 @@ def parse_deployments(e, path):
 
         if t == 'docker-registry':
             parse_deployment_docker_registry(elem, p)
-        if t == 'ecr':
+        elif t == 'ecr':
             parse_deployment_ecr(elem, p)
         else:
             raise ValidationError(p, "type '%s' not supported" % t)

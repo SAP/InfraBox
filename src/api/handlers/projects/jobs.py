@@ -218,9 +218,6 @@ class JobRestart(Resource):
                 if not j['dependencies']:
                     continue
 
-                if j['state'] not in restart_states and j['state'] != 'skipped':
-                    abort(400, 'Some children jobs are still running')
-
                 for dep in j['dependencies']:
                     dep_id = dep['job-id']
 
@@ -232,6 +229,12 @@ class JobRestart(Resource):
             if not found:
                 break
 
+        for j in jobs:
+            if j['id'] not in restart_jobs:
+                continue
+
+            if j['state'] not in restart_states and j['state'] != 'skipped':
+                abort(400, 'Some children jobs are still running')
 
         for j in restart_jobs:
             g.db.execute('''
