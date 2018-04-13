@@ -228,7 +228,7 @@ class RunJob(Job):
                 os.makedirs(self.mount_repo_dir)
             else:
                 c.collect('Source already exists, deleting it')
-                c.execute(['rm', '-rf', self.mount_repo_dir + '/*'], show=True)
+                c.execute(['rm', '-rf', self.mount_repo_dir + '/*'])
 
             c.execute(['unzip', storage_source_zip, '-d', self.mount_repo_dir])
         elif self.project['type'] == 'test':
@@ -281,11 +281,26 @@ class RunJob(Job):
 
         self.console.collect("\n", show=True)
 
-        self.console.collect("Secrets:\n", show=True)
-        for name, _ in self.secrets.iteritems():
-            self.console.collect("%s=*****\n" % name, show=True)
+        # Show secrets
+        if self.secrets:
+            self.console.collect("Secrets:\n", show=True)
+            for name, _ in self.secrets.iteritems():
+                self.console.collect("%s=*****\n" % name, show=True)
+            self.console.collect("\n", show=True)
 
-        self.console.collect("\n", show=True)
+        # Show Registries
+        if self.registries:
+            self.console.collect("Registries:\n", show=True)
+            for r in self.registries:
+                self.console.collect("%s\n" % r['host'], show=True)
+            self.console.collect("\n", show=True)
+
+        # Show Deployments
+        if self.deployments:
+            self.console.collect("Deployments:\n", show=True)
+            for d in self.deployments:
+                self.console.collect("%s\n" % d['host'], show=True)
+            self.console.collect("\n", show=True)
 
         self.get_source()
         self.create_infrabox_directories()
@@ -450,7 +465,7 @@ class RunJob(Job):
         storage_inputs_dir = os.path.join(self.storage_dir, 'inputs')
 
         # Sync deps
-        c.collect("Syncing inputs", show=True)
+        c.collect("Syncing inputs:", show=True)
         for dep in self.parents:
             storage_input_file_dir = os.path.join(storage_inputs_dir, dep['id'])
             os.makedirs(storage_input_file_dir)
@@ -467,6 +482,7 @@ class RunJob(Job):
                 os.remove(storage_input_file_tar)
             else:
                 c.collect("no output found for %s\n" % dep['name'], show=True)
+        c.collect("\n", show=True)
 
         # <storage_dir>/cache is synced with the corresponding
         # Storage path which stores the compressed cache
@@ -475,23 +491,22 @@ class RunJob(Job):
 
         storage_cache_tar = os.path.join(storage_cache_dir, 'cache.tar.gz')
 
+        c.collect("Syncing cache:", show=True)
         if not self.job['definition'].get('cache', {}).get('data', True):
             c.collect("Not downloading cache, because cache.data has been set to false", show=True)
         else:
-            c.collect("Syncing cache", show=True)
             self.get_file_from_api_server("/cache", storage_cache_tar)
 
-            c.collect("Unpacking cache", show=True)
-
             if os.path.isfile(storage_cache_tar):
+                c.collect("Unpacking cache", show=True)
                 try:
                     c.execute(['time', 'tar', '-zxf', storage_cache_tar, '-C', self.infrabox_cache_dir], show=True)
-                    c.collect("cache found\n", show=True)
                 except:
                     c.collect("Failed to unpack cache\n", show=True)
                 os.remove(storage_cache_tar)
             else:
                 c.collect("no cache found\n", show=True)
+        c.collect("\n", show=True)
 
         try:
             if self.job['definition']['type'] == 'docker':
@@ -716,7 +731,10 @@ class RunJob(Job):
             tag = dep.get('tag', 'build_%s' % self.build['build_number'])
             dep_image_name = dep['host'] + '/' + dep['repository'] + ":" + tag
             c.execute(['docker', 'tag', image_name, dep_image_name], show=True)
+
+            self._login_registry(dep)
             c.execute(['docker', 'push', dep_image_name], show=True)
+            self._logout_registry(dep)
 
     def login_docker_registry(self):
         c = self.console
@@ -861,6 +879,8 @@ class RunJob(Job):
     def build_docker_container(self, image_name, cache_image):
         c = self.console
 
+        self._login_source_registries()
+
         try:
             c.header("Build image", show=True)
             self.get_cached_image(cache_image)
@@ -885,43 +905,58 @@ class RunJob(Job):
         except Exception as e:
             raise Failure("Failed to build the image: %s" % e)
 
-    def run_job_docker_image(self, c):
-        self._login_deployment_registries()
+        self._logout_source_registries()
 
-        image_name = self.job['definition']['image']
+    def run_job_docker_image(self, c):
+        image_name = self.job['definition']['image'].replace('$INFRABOX_BUILD_NUMBER', str(self.build['build_number']))
+
+        self._login_source_registries()
         self.run_docker_container(image_name)
+        self._logout_source_registries()
+
         self.deploy_container(image_name)
 
         c.header("Finalize", show=True)
         self.push_container(image_name)
 
-    def _login_deployment_registries(self):
+    def _login_registry(self, reg):
         c = self.console
 
-        for dep in self.deployments:
-            try:
-                if dep['type'] == 'aws-ecr':
-                    login_env = {
-                        'AWS_ACCESS_KEY_ID': dep['access_key'],
-                        'AWS_SECRET_ACCESS_KEY': dep['secret_key'],
-                        'AWS_DEFAULT_REGION': dep['region'],
-                        'PATH': os.environ['PATH']
-                    }
+        try:
+            if reg['type'] == 'ecr':
+                login_env = {
+                    'AWS_ACCESS_KEY_ID': reg['access_key_id'],
+                    'AWS_SECRET_ACCESS_KEY': reg['secret_access_key'],
+                    'AWS_DEFAULT_REGION': reg['region'],
+                    'PATH': os.environ['PATH']
+                }
 
-                    c.execute(['/usr/local/bin/ecr_login.sh'], show=True, env=login_env)
-                elif dep['type'] == 'docker-registry' and 'username' in dep:
-                    cmd = ['docker', 'login', '-u', dep['username'], '-p', dep['password']]
+                c.execute(['/usr/local/bin/ecr_login.sh'], show=True, env=login_env)
+            elif reg['type'] == 'docker-registry' and 'username' in reg:
+                cmd = ['docker', 'login', '-u', reg['username'], '-p', reg['password']]
 
-                    host = dep['host']
-                    if not host.startswith('docker.io') and not host.startswith('index.docker.io'):
-                        cmd += [host]
+                host = reg['host']
+                if not host.startswith('docker.io') and not host.startswith('index.docker.io'):
+                    cmd += [host]
 
-                    c.execute(cmd, show=False)
-            except Exception as e:
-                raise Failure("Failed to login to registry: " + e.message)
+                c.execute(cmd, show=False)
+        except Exception as e:
+            raise Failure("Failed to login to registry: " + e.message)
+
+    def _logout_registry(self, reg):
+        c = self.console
+        c.execute(['docker', 'logout', reg['host']], show=False)
+
+    def _login_source_registries(self):
+        for r in self.registries:
+            self._login_registry(r)
+
+    def _logout_source_registries(self):
+        for r in self.registries:
+            self._logout_registry(r)
 
     def run_job_docker(self, c):
-        self._login_deployment_registries()
+        self._login_source_registries()
 
         image_name = get_registry_name() + '/' \
                      + self.project['id'] + '/' \

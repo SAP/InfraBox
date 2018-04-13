@@ -30,6 +30,7 @@ class Job(object):
         self.secrets = None
         self.source_upload = None
         self.deployments = None
+        self.registries = None
 
     def load_data(self):
         while True:
@@ -73,6 +74,7 @@ class Job(object):
         self.environment.update(data['secrets'])
         self.secrets = data['secrets']
         self.env_vars = data['env_vars']
+        self.registries = data['registries']
 
         if 'source_upload' in data:
             self.source_upload = data['source_upload']
