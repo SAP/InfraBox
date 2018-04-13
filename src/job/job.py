@@ -324,7 +324,7 @@ class RunJob(Job):
         if not files:
             return
 
-        c.collect("Uplading contents of /infrabox/upload/archive", show=True)
+        c.collect("Uploading /infrabox/upload/archive", show=True)
 
         for f in files:
             c.collect("%s\n" % f, show=True)
@@ -530,24 +530,30 @@ class RunJob(Job):
         self.create_dynamic_jobs()
 
         # Compressing output
-        c.collect("Handling output", show=True)
+        c.collect("Uploading /infrabox/output", show=True)
         if os.path.isdir(self.infrabox_output_dir) and os.listdir(self.infrabox_output_dir):
             storage_output_dir = os.path.join(self.storage_dir, self.job['id'])
             os.makedirs(storage_output_dir)
 
             storage_output_tar = os.path.join(storage_output_dir, 'output.tar.gz')
+            c.collect("Compressing it", show=True)
             self.compress(self.infrabox_output_dir, storage_output_tar)
+            file_size = os.stat(storage_output_tar).st_size
 
             max_output_size = os.environ['INFRABOX_JOB_MAX_OUTPUT_SIZE']
-            if os.stat(storage_output_tar).st_size > max_output_size:
+            c.collect("File size: %s" % file_size, show=True)
+            if  file_size > max_output_size:
                 raise Failure("Output too large")
 
-            c.header("Saving output", show=True)
+            c.collect("Saving output", show=True)
             self.post_file_to_api_server("/output", storage_output_tar)
         else:
-            c.collect("Output is empty\n", show=True)
+            c.collect("Output is empty", show=True)
+
+        c.collect("\n", show=True)
 
         # Compressing cache
+        c.collect("Uploading /infrabox/cache", show=True)
         if not self.job['definition'].get('cache', {}).get('data', True):
             c.collect("Not updating cache, because cache.data has been set to false", show=True)
         else:
@@ -558,7 +564,7 @@ class RunJob(Job):
 
                 if os.stat(storage_cache_tar).st_size > (1024 * 1024 * 100):
                     # cache too big
-                    c.collect("Cache is too big, not uploading it\n", show=True)
+                    c.collect("Cache is too big, not uploading it", show=True)
                 else:
                     c.collect("Syncing cache", show=True)
                     try:
@@ -566,7 +572,8 @@ class RunJob(Job):
                     except:
                         logger.exception("message")
             else:
-                c.collect("Cache is empty\n", show=True)
+                c.collect("Cache is empty", show=True)
+        c.collect("\n", show=True)
 
         shutil.rmtree(self.mount_data_dir, True)
         shutil.rmtree(self.infrabox_cache_dir, True)
@@ -749,12 +756,13 @@ class RunJob(Job):
 
     def push_container(self, image_name):
         c = self.console
-        c.collect("Uploading after image to docker registry", show=True)
 
         cache_after_image = self.job['definition'].get('cache', {}).get('after_image', False)
 
         if not cache_after_image:
             return
+
+        c.collect("Uploading after image to docker registry", show=True)
 
         try:
             if self.job['build_only']:
