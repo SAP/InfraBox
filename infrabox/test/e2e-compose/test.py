@@ -3,8 +3,9 @@ import os
 import subprocess
 import time
 import json
-import xmlrunner
 import requests
+
+import xmlrunner
 
 from pyinfraboxutils.db import connect_db
 from pyinfraboxutils.token import encode_project_token
@@ -45,57 +46,93 @@ class Test(unittest.TestCase):
         conn.commit()
 
         os.environ['INFRABOX_CLI_TOKEN'] = encode_project_token(self.token_id, self.project_id)
+        self.root_url = os.environ['INFRABOX_ROOT_URL']
 
-        ## TODO: docker: testresult
-        ## TODO: docker: badge
-        ## TODO: docker: markup
-        ## TODO: docker: caching
-        ## TODO: compose: caching
-        ## TODO: compose: insecure environment vars
-        ## TODO: compose: secure environment vars
-        ## TODO: compose: output/input
-        ## TODO: compose: testresult
-        ## TODO: compose: badge
-        ## TODO: compose: markup
-
-    def expect_job(self, job_name, state='finished', message=None, parents=None, dockerfile=None):
-        root_url = os.environ['INFRABOX_ROOT_URL']
+    def _api_get(self, url):
         headers = {'Authorization': 'bearer ' + os.environ['INFRABOX_CLI_TOKEN']}
-        url = '%s/api/v1/projects/%s/builds/' % (root_url, self.project_id)
-        result = requests.get(url, headers=headers, verify=False).json()
-        build = result[0]
-        url = '%s/api/v1/projects/%s/builds/%s/jobs/' % (root_url, self.project_id, build['id'])
-        jobs = requests.get(url, headers=headers, verify=False).json()
+        result = requests.get(url, headers=headers, verify=False)
+        return result
+
+    def _get_build(self):
+        url = '%s/api/v1/projects/%s/builds/' % (self.root_url, self.project_id)
+        result = self._api_get(url).json()
+        return result[0]
+
+    def _get_jobs(self):
+        build = self._get_build()
+        url = '%s/api/v1/projects/%s/builds/%s/jobs/' % (self.root_url, self.project_id, build['id'])
+        jobs = self._api_get(url).json()
+        return jobs
+
+    def _wait_build(self):
+        while True:
+            time.sleep(5)
+            jobs = self._get_jobs()
+
+            active = False
+            for j in jobs:
+                if j['state'] not in ('finished', 'error', 'killed', 'skipped', 'failure'):
+                    active = True
+
+            if not active:
+                return
+
+
+    def _print_job_logs(self):
+        self._wait_build()
+        build = self._get_build()
+        jobs = self._get_jobs()
+
+        for j in jobs:
+            url = '%s/api/v1/projects/%s/builds/%s/jobs/%s/console' % (self.root_url,
+                                                                       self.project_id,
+                                                                       build['id'], j['id'])
+            r = self._api_get(url)
+            print r.text
+
+    def _get_job(self, job_name):
+        jobs = self._get_jobs()
 
         for j in jobs:
             data = json.dumps(j, indent=4)
-            if j['name'] != job_name:
-                continue
-
-            self.assertEqual(j['state'], state, data)
-
-            if message:
-                self.assertIn(message, j['message'], data)
-
-            if dockerfile:
-                self.assertEqual(j['docker_file'], dockerfile, data)
-
-            if parents:
-                actual_parents = {}
-                for p in j.get('depends_on', []):
-                    actual_parents[p['job']] = p
-
-                for p in parents:
-                    self.assertTrue(p in actual_parents, data)
-
-            return
+            if j['name'] == job_name:
+                return j
 
         data = json.dumps(jobs, indent=4)
         raise Exception('Job "%s" not found in: %s' % (job_name, data))
 
+    def _wait_job(self, job_name):
+        while True:
+            j = self._get_job(job_name)
+
+            if j['state'] in ('finished', 'error', 'killed', 'skipped', 'failure'):
+                return j
+
+            time.sleep(5)
+
+    def expect_job(self, job_name, state='finished', message=None, parents=None, dockerfile=None):
+        j = self._get_job(job_name)
+        data = json.dumps(j, indent=4)
+
+        self.assertEqual(j['state'], state, data)
+
+        if message:
+            self.assertIn(message, j['message'], data)
+
+        if dockerfile:
+            self.assertEqual(j['docker_file'], dockerfile, data)
+
+        if parents:
+            actual_parents = {}
+            for p in j.get('depends_on', []):
+                actual_parents[p['job']] = p
+
+            for p in parents:
+                self.assertTrue(p in actual_parents, data)
+
 
     def run_it(self, cwd):
-        command = ['infrabox', '--ca-bundle', 'false', 'push', '--show-console']
+        command = ['infrabox', '--ca-bundle', 'false', 'push']
         output = None
         try:
             output = subprocess.check_output(command, cwd=cwd)

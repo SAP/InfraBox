@@ -1131,11 +1131,19 @@ class Testresult(Resource):
 
         tests = data['tests']
         for t in tests:
+
+            if len(t['suite']) > 250:
+                t['suite'] = t['suite'][0:250]
+
+            if len(t['name']) > 250:
+                t['name'] = t['name'][0:250]
+
             # check if if already exists
             test_id = None
-            if t['suite'] + '|' + t['name'] in test_index:
+            concat_name = t['suite'] + '|' + t['name']
+            if  concat_name in test_index:
                 # existing test
-                test_id = test_index[t['suite'] + '|' + t['name']]
+                test_id = test_index[concat_name]
             else:
                 # new test
                 test_id = str(uuid.uuid4())

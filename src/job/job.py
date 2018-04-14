@@ -145,9 +145,6 @@ class RunJob(Job):
                     if not f.endswith(ending):
                         continue
 
-                    if len(f) < len(ending):
-                        continue
-
                 result.append(os.path.join(root, f))
 
         return result
