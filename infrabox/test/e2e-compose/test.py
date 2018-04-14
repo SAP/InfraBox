@@ -5,6 +5,9 @@ import time
 import json
 import requests
 
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
 import xmlrunner
 
 from pyinfraboxutils.db import connect_db
@@ -35,8 +38,8 @@ class Test(unittest.TestCase):
         cur.execute('''INSERT INTO "user"(id, github_id, avatar_url, name,
                             email, github_api_token, username)
                         VALUES(%s, 1, 'avatar', 'name', 'email', 'token', 'login')''', (self.user_id,))
-        cur.execute('''INSERT INTO project(name, type, id)
-                        VALUES('test', 'upload', %s)''', (self.project_id,))
+        cur.execute('''INSERT INTO project(name, type, id, public)
+                        VALUES('test', 'upload', %s, true)''', (self.project_id,))
         cur.execute('''INSERT INTO collaborator(project_id, user_id, owner)
                         VALUES(%s, %s, true)''', (self.project_id, self.user_id,))
         cur.execute('''INSERT INTO auth_token(project_id, id, description, scope_push, scope_pull)
@@ -80,14 +83,12 @@ class Test(unittest.TestCase):
 
     def _print_job_logs(self):
         self._wait_build()
-        build = self._get_build()
         jobs = self._get_jobs()
 
         for j in jobs:
-            url = '%s/api/v1/projects/%s/builds/%s/jobs/%s/console' % (self.root_url,
-                                                                       self.project_id,
-                                                                       build['id'],
-                                                                       j['id'])
+            url = '%s/api/v1/projects/%s/jobs/%s/console' % (self.root_url,
+                                                             self.project_id,
+                                                             j['id'])
             r = self._api_get(url)
             print r.text
 
