@@ -77,7 +77,6 @@ class Test(unittest.TestCase):
             if not active:
                 return
 
-
     def _print_job_logs(self):
         self._wait_build()
         build = self._get_build()
@@ -140,6 +139,8 @@ class Test(unittest.TestCase):
             output = e.output
 
         print output
+
+        self._print_job_logs()
 
     def test_docker_job(self):
         self.run_it('/infrabox/context/infrabox/test/e2e/tests/docker_job')
