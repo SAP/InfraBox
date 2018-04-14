@@ -5,9 +5,6 @@ import time
 import json
 import requests
 
-import urllib3
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-
 import xmlrunner
 
 from pyinfraboxutils.db import connect_db
