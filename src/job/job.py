@@ -533,16 +533,14 @@ class RunJob(Job):
             os.makedirs(storage_output_dir)
 
             storage_output_tar = os.path.join(storage_output_dir, 'output.tar.gz')
-            c.collect("Compressing it", show=True)
             self.compress(self.infrabox_output_dir, storage_output_tar)
             file_size = os.stat(storage_output_tar).st_size
 
             max_output_size = os.environ['INFRABOX_JOB_MAX_OUTPUT_SIZE']
-            c.collect("File size: %s" % file_size, show=True)
-            if  file_size > max_output_size:
+            c.collect("Output size: %s kb" % file_size / 1024, show=True)
+            if file_size > max_output_size:
                 raise Failure("Output too large")
 
-            c.collect("Saving output", show=True)
             self.post_file_to_api_server("/output", storage_output_tar)
         else:
             c.collect("Output is empty", show=True)
@@ -554,20 +552,17 @@ class RunJob(Job):
         if not self.job['definition'].get('cache', {}).get('data', True):
             c.collect("Not updating cache, because cache.data has been set to false", show=True)
         else:
-            c.collect("Updating Cache", show=True)
             if os.path.isdir(self.infrabox_cache_dir) and os.listdir(self.infrabox_cache_dir):
                 self.compress(self.infrabox_cache_dir, storage_cache_tar)
-                c.execute(['md5sum', storage_cache_tar], show=True)
 
-                if os.stat(storage_cache_tar).st_size > (1024 * 1024 * 100):
-                    # cache too big
-                    c.collect("Cache is too big, not uploading it", show=True)
-                else:
-                    c.collect("Syncing cache", show=True)
-                    try:
-                        self.post_file_to_api_server('/cache', storage_cache_tar)
-                    except:
-                        logger.exception("message")
+                file_size = os.stat(storage_cache_tar).st_size
+
+                max_output_size = os.environ['INFRABOX_JOB_MAX_OUTPUT_SIZE']
+                c.collect("Output size: %s kb" % file_size / 1024, show=True)
+                if file_size > max_output_size:
+                    raise Failure("Output too large")
+
+                self.post_file_to_api_server('/cache', storage_cache_tar)
             else:
                 c.collect("Cache is empty", show=True)
         c.collect("\n", show=True)
