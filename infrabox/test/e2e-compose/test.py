@@ -50,6 +50,7 @@ class Test(unittest.TestCase):
 
     def _api_get(self, url):
         headers = {'Authorization': 'bearer ' + os.environ['INFRABOX_CLI_TOKEN']}
+        print url
         result = requests.get(url, headers=headers, verify=False)
         return result
 
@@ -85,7 +86,8 @@ class Test(unittest.TestCase):
         for j in jobs:
             url = '%s/api/v1/projects/%s/builds/%s/jobs/%s/console' % (self.root_url,
                                                                        self.project_id,
-                                                                       build['id'], j['id'])
+                                                                       build['id'],
+                                                                       j['id'])
             r = self._api_get(url)
             print r.text
 
