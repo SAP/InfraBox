@@ -368,9 +368,6 @@ class RunJob(Job):
         c.collect("Uploading /infrabox/upload/testresult", show=True)
         files = self.get_files_in_dir(self.infrabox_testresult_dir, ending=".xml")
         for f in files:
-            with open(f) as testresult:
-                c.collect(testresult.read(), show=True)
-
             c.collect("%s\n" % f, show=True)
             converted_result = self.convert_test_result(f)
 
