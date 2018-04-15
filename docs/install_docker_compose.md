@@ -29,10 +29,10 @@ You are now ready to startup InfraBox
 After it started up successfully you may start [pushing workflows](./guides/upload.md) to it.
 
 ## Configure additional components
-- [external postgres](configure/postgres.md)
+- [external postgres](/docs/storage/postgres.md)
 - [ldap](configure/ldap.md)
 
 Not yet supported:
 - [gerrit](configure/gerrit.md)
 - [github](configure/github.md)
-- [external s3](configure/s3.md)
+- [external s3](/docs/storage/s3.md)
