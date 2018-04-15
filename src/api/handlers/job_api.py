@@ -261,13 +261,70 @@ class Job(Resource):
                     secret_name = dep['password']['$secret']
                     secret = get_secret(secret_name)
 
-                    if not secret:
+                    if secret is None:
                         abort(400, "Secret %s not found" % secret_name)
 
                     dep['password'] = secret
                     data['deployments'].append(dep)
+                elif dep['type'] == 'ecr':
+                    access_key_id_name = dep['access_key_id']['$secret']
+                    secret = get_secret(access_key_id_name)
+
+                    if secret is None:
+                        abort(400, "Secret %s not found" % access_key_id_name)
+
+                    dep['access_key_id'] = secret
+
+                    secret_access_key_name = dep['secret_access_key']['$secret']
+                    secret = get_secret(secret_access_key_name)
+
+                    if secret is None:
+                        abort(400, "Secret %s not found" % secret_access_key_name)
+
+                    dep['secret_access_key'] = secret
+                    data['deployments'].append(dep)
                 else:
                     abort(400, "Unknown deployment type")
+
+        # Registries
+        data['registries'] = []
+        definition = data['job']['definition']
+        registries = None
+
+        if definition:
+            registries = definition.get('registries', None)
+
+        if registries:
+            for r in registries:
+                if r['type'] == 'docker-registry':
+                    secret_name = r['password']['$secret']
+                    secret = get_secret(secret_name)
+
+                    if secret is None:
+                        abort(400, "Secret %s not found" % secret_name)
+
+                    r['password'] = secret
+                    data['registries'].append(r)
+                elif r['type'] == 'ecr':
+                    access_key_id_name = r['access_key_id']['$secret']
+                    secret = get_secret(access_key_id_name)
+
+                    if secret is None:
+                        abort(400, "Secret %s not found" % access_key_id_name)
+
+                    r['access_key_id'] = secret
+
+                    secret_access_key_name = r['secret_access_key']['$secret']
+                    secret = get_secret(secret_access_key_name)
+
+                    if secret is None:
+                        abort(400, "Secret %s not found" % secret_access_key_name)
+
+                    r['secret_access_key'] = secret
+                    data['registries'].append(r)
+                else:
+                    abort(400, "Unknown deployment type")
+
 
         # Default env vars
         project_name = urllib.quote_plus(data['project']['name']).replace('+', '%20')
@@ -282,11 +339,15 @@ class Job(Resource):
                                                                     data['build']['restart_counter'],
                                                                     job_name)
 
+        job_api_url = "%s/api/v1/projects/%s/jobs/%s" % (os.environ['INFRABOX_ROOT_URL'],
+                                                         data['project']['id'],
+                                                         data['job']['id'])
 
         data['env_vars'] = {
             "TERM": "xterm-256color",
             "INFRABOX_JOB_ID": data['job']['id'],
             "INFRABOX_JOB_URL": job_url,
+            "INFRABOX_JOB_API_URL": job_api_url,
             "INFRABOX_BUILD_NUMBER": "%s" % data['build']['build_number'],
             "INFRABOX_BUILD_RESTART_COUNTER": "%s" % data['build']['restart_counter'],
             "INFRABOX_BUILD_URL": build_url,
@@ -311,7 +372,7 @@ class Job(Resource):
             for name, value in env_var_refs.iteritems():
                 secret = get_secret(value)
 
-                if not secret:
+                if secret is None:
                     abort(400, "Secret %s not found" % value)
 
                 data['secrets'][name] = secret
@@ -583,7 +644,7 @@ class CreateJobs(Resource):
         assigned_clusters = {}
 
         for j in jobs:
-            if not 'cluster' in j:
+            if 'cluster' not in j:
                 j['cluster'] = {}
 
             cluster_selector = j['cluster'].get('selector', None)
@@ -1074,11 +1135,19 @@ class Testresult(Resource):
 
         tests = data['tests']
         for t in tests:
+
+            if len(t['suite']) > 250:
+                t['suite'] = t['suite'][0:250]
+
+            if len(t['name']) > 250:
+                t['name'] = t['name'][0:250]
+
             # check if if already exists
             test_id = None
-            if t['suite'] + '|' + t['name'] in test_index:
+            concat_name = t['suite'] + '|' + t['name']
+            if  concat_name in test_index:
                 # existing test
-                test_id = test_index[t['suite'] + '|' + t['name']]
+                test_id = test_index[concat_name]
             else:
                 # new test
                 test_id = str(uuid.uuid4())

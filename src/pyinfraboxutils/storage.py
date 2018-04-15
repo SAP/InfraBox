@@ -120,6 +120,9 @@ class GCS(object):
     def upload_output(self, stream, key):
         self._upload(stream, 'output/%s' % key)
 
+    def upload_archive(self, stream, key):
+        self._upload(stream, 'archive/%s' % key)
+
     def download_archive(self, key):
         return self._download('archive/%s' % key)
 
@@ -136,26 +139,26 @@ class GCS(object):
         return self._delete('cache/%s' % key)
 
     def _delete(self, key):
-        client = gcs.Client(project=get_env('INFRABOX_STORAGE_GCS_PROJECT_ID'))
+        client = gcs.Client()
         bucket = client.get_bucket(self.bucket)
         blob = bucket.blob(key)
         blob.delete()
 
     def _upload(self, stream, key):
-        client = gcs.Client(project=get_env('INFRABOX_STORAGE_GCS_PROJECT_ID'))
+        client = gcs.Client()
         bucket = client.get_bucket(self.bucket)
         blob = bucket.blob(key)
         blob.upload_from_file(stream)
 
     def _download(self, key):
-        client = gcs.Client(project=get_env('INFRABOX_STORAGE_GCS_PROJECT_ID'))
+        client = gcs.Client()
         bucket = client.get_bucket(self.bucket)
         blob = bucket.get_blob(key)
 
         if not blob:
             return None
 
-        path = '/tmp/%s_%s' % (uuid.uuid4(), key)
+        path = '/tmp/%s_%s' % (uuid.uuid4(), key.replace('/', '_'))
         with open(path, 'w+') as f:
             blob.download_to_file(f)
 

@@ -77,6 +77,9 @@ class State(Resource):
             SELECT type FROM project WHERE id = %s
         ''', [project_id])
 
+        if not p:
+            abort(404)
+
         project_type = p['type']
 
         rows = None
@@ -139,6 +142,9 @@ class Tests(Resource):
         p = g.db.execute_one_dict('''
             SELECT type FROM project WHERE id = %s
         ''', [project_id])
+
+        if not p:
+            abort(404)
 
         project_type = p['type']
 
@@ -336,7 +342,9 @@ if os.environ['INFRABOX_CLUSTER_NAME'] == 'master':
                 token = encode_project_token(g.token['id'], project_id)
                 headers = {'Authorization': 'bearer ' + token}
                 logger.info('Also uploading to %s', url)
-                r = requests.post(url, files=files, headers=headers, timeout=120)
+
+                # TODO(ib-steffen): allow custom ca bundles
+                r = requests.post(url, files=files, headers=headers, timeout=120, verify=False)
 
                 if r.status_code != 200:
                     abort(500, "Failed to upload data")

@@ -60,10 +60,6 @@
     secret:
         secretName: infrabox-cloudsql-instance-credentials
 -
-    name: ssl-certs
-    hostPath:
-        path: /etc/ssl/certs
--
     name: cloudsql
     emptyDir:
 {{ end }}
@@ -74,9 +70,6 @@
     name: INFRABOX_STORAGE_GCS_ENABLED
     value: {{ .Values.storage.gcs.enabled | quote }}
 {{ if .Values.storage.gcs.enabled }}
--
-    name: INFRABOX_STORAGE_GCS_PROJECT_ID
-    value: {{ .Values.storage.gcs.project_id }}
 -
     name: INFRABOX_STORAGE_GCS_BUCKET
     value: {{ .Values.storage.gcs.bucket }}
@@ -250,8 +243,6 @@
     - name: cloudsql-instance-credentials
       mountPath: /secrets/cloudsql
       readOnly: true
-    - name: ssl-certs
-      mountPath: /etc/ssl/certs
     - name: cloudsql
       mountPath: /cloudsql
 {{ end }}

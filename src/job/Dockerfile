@@ -1,4 +1,4 @@
-FROM docker:17.03.2-dind
+FROM docker:17.12.1-ce-dind
 
 RUN apk add --no-cache \
     python \
@@ -6,7 +6,7 @@ RUN apk add --no-cache \
     py-requests \
     bash \
     pigz && \
-    pip install docker==2.0.1 && \
+    pip install docker==2.0.1 awscli && \
     pip install docker-compose future PyJWT && \
     apk del py-pip
 

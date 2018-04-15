@@ -145,9 +145,6 @@ class RunJob(Job):
                     if not f.endswith(ending):
                         continue
 
-                    if len(f) < len(ending):
-                        continue
-
                 result.append(os.path.join(root, f))
 
         return result
@@ -228,7 +225,7 @@ class RunJob(Job):
                 os.makedirs(self.mount_repo_dir)
             else:
                 c.collect('Source already exists, deleting it')
-                c.execute(['rm', '-rf', self.mount_repo_dir + '/*'], show=True)
+                c.execute(['rm', '-rf', self.mount_repo_dir + '/*'])
 
             c.execute(['unzip', storage_source_zip, '-d', self.mount_repo_dir])
         elif self.project['type'] == 'test':
@@ -281,11 +278,26 @@ class RunJob(Job):
 
         self.console.collect("\n", show=True)
 
-        self.console.collect("Secrets:\n", show=True)
-        for name, _ in self.secrets.iteritems():
-            self.console.collect("%s=*****\n" % name, show=True)
+        # Show secrets
+        if self.secrets:
+            self.console.collect("Secrets:\n", show=True)
+            for name, _ in self.secrets.iteritems():
+                self.console.collect("%s=*****\n" % name, show=True)
+            self.console.collect("\n", show=True)
 
-        self.console.collect("\n", show=True)
+        # Show Registries
+        if self.registries:
+            self.console.collect("Registries:\n", show=True)
+            for r in self.registries:
+                self.console.collect("%s\n" % r['host'], show=True)
+            self.console.collect("\n", show=True)
+
+        # Show Deployments
+        if self.deployments:
+            self.console.collect("Deployments:\n", show=True)
+            for d in self.deployments:
+                self.console.collect("%s\n" % d['host'], show=True)
+            self.console.collect("\n", show=True)
 
         self.get_source()
         self.create_infrabox_directories()
@@ -302,18 +314,25 @@ class RunJob(Job):
 
     def upload_archive(self):
         c = self.console
-        if not os.path.exists(self.infrabox_archive_dir):
-            return
 
-        files = self.get_files_in_dir(self.infrabox_archive_dir)
-        if not files:
-            return
+        if os.path.exists(self.infrabox_archive_dir):
+            files = self.get_files_in_dir(self.infrabox_archive_dir)
 
-        c.collect("Uplading contents of /infrabox/upload/archive", show=True)
+            if files:
+                c.collect("Uploading /infrabox/upload/archive", show=True)
 
-        for f in files:
-            c.collect("%s\n" % f, show=True)
-            self.post_file_to_api_server("/archive", f, filename=f.replace(self.infrabox_archive_dir, ''))
+                for f in files:
+                    c.collect("%s\n" % f, show=True)
+                    self.post_file_to_api_server("/archive", f, filename=f.replace(self.infrabox_upload_dir, ''))
+
+        if os.path.exists(self.infrabox_testresult_dir):
+            files = self.get_files_in_dir(self.infrabox_testresult_dir)
+
+            if files:
+
+                for f in files:
+                    c.collect("%s\n" % f, show=True)
+
 
     def upload_coverage_results(self):
         c = self.console
@@ -346,6 +365,7 @@ class RunJob(Job):
         if not os.path.exists(self.infrabox_testresult_dir):
             return
 
+        c.collect("Uploading /infrabox/upload/testresult", show=True)
         files = self.get_files_in_dir(self.infrabox_testresult_dir, ending=".xml")
         for f in files:
             c.collect("%s\n" % f, show=True)
@@ -358,6 +378,8 @@ class RunJob(Job):
 
             if r.status_code != 200:
                 c.collect("%s\n" % r.text, show=True)
+
+            self.post_file_to_api_server("/archive", f, filename=f.replace(self.infrabox_upload_dir, ''))
 
     def upload_markdown_files(self):
         c = self.console
@@ -450,7 +472,7 @@ class RunJob(Job):
         storage_inputs_dir = os.path.join(self.storage_dir, 'inputs')
 
         # Sync deps
-        c.collect("Syncing inputs", show=True)
+        c.collect("Syncing inputs:", show=True)
         for dep in self.parents:
             storage_input_file_dir = os.path.join(storage_inputs_dir, dep['id'])
             os.makedirs(storage_input_file_dir)
@@ -467,6 +489,7 @@ class RunJob(Job):
                 os.remove(storage_input_file_tar)
             else:
                 c.collect("no output found for %s\n" % dep['name'], show=True)
+        c.collect("\n", show=True)
 
         # <storage_dir>/cache is synced with the corresponding
         # Storage path which stores the compressed cache
@@ -475,23 +498,22 @@ class RunJob(Job):
 
         storage_cache_tar = os.path.join(storage_cache_dir, 'cache.tar.gz')
 
+        c.collect("Syncing cache:", show=True)
         if not self.job['definition'].get('cache', {}).get('data', True):
             c.collect("Not downloading cache, because cache.data has been set to false", show=True)
         else:
-            c.collect("Syncing cache", show=True)
             self.get_file_from_api_server("/cache", storage_cache_tar)
 
-            c.collect("Unpacking cache", show=True)
-
             if os.path.isfile(storage_cache_tar):
+                c.collect("Unpacking cache", show=True)
                 try:
                     c.execute(['time', 'tar', '-zxf', storage_cache_tar, '-C', self.infrabox_cache_dir], show=True)
-                    c.collect("cache found\n", show=True)
                 except:
                     c.collect("Failed to unpack cache\n", show=True)
                 os.remove(storage_cache_tar)
             else:
                 c.collect("no cache found\n", show=True)
+        c.collect("\n", show=True)
 
         try:
             if self.job['definition']['type'] == 'docker':
@@ -515,43 +537,45 @@ class RunJob(Job):
         self.create_dynamic_jobs()
 
         # Compressing output
-        c.collect("Handling output", show=True)
+        c.collect("Uploading /infrabox/output", show=True)
         if os.path.isdir(self.infrabox_output_dir) and os.listdir(self.infrabox_output_dir):
             storage_output_dir = os.path.join(self.storage_dir, self.job['id'])
             os.makedirs(storage_output_dir)
 
             storage_output_tar = os.path.join(storage_output_dir, 'output.tar.gz')
             self.compress(self.infrabox_output_dir, storage_output_tar)
+            file_size = os.stat(storage_output_tar).st_size
 
             max_output_size = os.environ['INFRABOX_JOB_MAX_OUTPUT_SIZE']
-            if os.stat(storage_output_tar).st_size > max_output_size:
+            c.collect("Output size: %s kb" % (file_size / 1024), show=True)
+            if file_size > max_output_size:
                 raise Failure("Output too large")
 
-            c.header("Saving output", show=True)
             self.post_file_to_api_server("/output", storage_output_tar)
         else:
-            c.collect("Output is empty\n", show=True)
+            c.collect("Output is empty", show=True)
+
+        c.collect("\n", show=True)
 
         # Compressing cache
+        c.collect("Uploading /infrabox/cache", show=True)
         if not self.job['definition'].get('cache', {}).get('data', True):
             c.collect("Not updating cache, because cache.data has been set to false", show=True)
         else:
-            c.collect("Updating Cache", show=True)
             if os.path.isdir(self.infrabox_cache_dir) and os.listdir(self.infrabox_cache_dir):
                 self.compress(self.infrabox_cache_dir, storage_cache_tar)
-                c.execute(['md5sum', storage_cache_tar], show=True)
 
-                if os.stat(storage_cache_tar).st_size > (1024 * 1024 * 100):
-                    # cache too big
-                    c.collect("Cache is too big, not uploading it\n", show=True)
-                else:
-                    c.collect("Syncing cache", show=True)
-                    try:
-                        self.post_file_to_api_server('/cache', storage_cache_tar)
-                    except:
-                        logger.exception("message")
+                file_size = os.stat(storage_cache_tar).st_size
+
+                max_output_size = os.environ['INFRABOX_JOB_MAX_OUTPUT_SIZE']
+                c.collect("Output size: %s kb" % (file_size / 1024), show=True)
+                if file_size > max_output_size:
+                    raise Failure("Output too large")
+
+                self.post_file_to_api_server('/cache', storage_cache_tar)
             else:
-                c.collect("Cache is empty\n", show=True)
+                c.collect("Cache is empty", show=True)
+        c.collect("\n", show=True)
 
         shutil.rmtree(self.mount_data_dir, True)
         shutil.rmtree(self.infrabox_cache_dir, True)
@@ -716,7 +740,10 @@ class RunJob(Job):
             tag = dep.get('tag', 'build_%s' % self.build['build_number'])
             dep_image_name = dep['host'] + '/' + dep['repository'] + ":" + tag
             c.execute(['docker', 'tag', image_name, dep_image_name], show=True)
+
+            self._login_registry(dep)
             c.execute(['docker', 'push', dep_image_name], show=True)
+            self._logout_registry(dep)
 
     def login_docker_registry(self):
         c = self.console
@@ -731,7 +758,13 @@ class RunJob(Job):
 
     def push_container(self, image_name):
         c = self.console
-        c.collect("Uploading to docker registry", show=True)
+
+        cache_after_image = self.job['definition'].get('cache', {}).get('after_image', False)
+
+        if not cache_after_image:
+            return
+
+        c.collect("Uploading after image to docker registry", show=True)
 
         try:
             if self.job['build_only']:
@@ -856,6 +889,8 @@ class RunJob(Job):
     def build_docker_container(self, image_name, cache_image):
         c = self.console
 
+        self._login_source_registries()
+
         try:
             c.header("Build image", show=True)
             self.get_cached_image(cache_image)
@@ -872,49 +907,66 @@ class RunJob(Job):
                 for name, value in self.job['build_arguments'].iteritems():
                     cmd += ['--build-arg', '%s=%s' % (name, value)]
 
+            cmd += ['--build-arg', 'INFRABOX_BUILD_NUMBER=%s' % self.build['build_number']]
+
             cwd = self._get_build_context_current_job()
             c.execute(cmd, cwd=cwd, show=True)
             self.cache_docker_image(image_name, cache_image)
         except Exception as e:
             raise Failure("Failed to build the image: %s" % e)
 
-    def run_job_docker_image(self, c):
-        self._login_deployment_registries()
+        self._logout_source_registries()
 
-        image_name = self.job['definition']['image']
+    def run_job_docker_image(self, c):
+        image_name = self.job['definition']['image'].replace('$INFRABOX_BUILD_NUMBER', str(self.build['build_number']))
+
+        self._login_source_registries()
         self.run_docker_container(image_name)
+        self._logout_source_registries()
+
         self.deploy_container(image_name)
 
         c.header("Finalize", show=True)
         self.push_container(image_name)
 
-    def _login_deployment_registries(self):
+    def _login_registry(self, reg):
         c = self.console
 
-        for dep in self.deployments:
-            try:
-                if dep['type'] == 'aws-ecr':
-                    login_env = {
-                        'AWS_ACCESS_KEY_ID': dep['access_key'],
-                        'AWS_SECRET_ACCESS_KEY': dep['secret_key'],
-                        'AWS_DEFAULT_REGION': dep['region'],
-                        'PATH': os.environ['PATH']
-                    }
+        try:
+            if reg['type'] == 'ecr':
+                login_env = {
+                    'AWS_ACCESS_KEY_ID': reg['access_key_id'],
+                    'AWS_SECRET_ACCESS_KEY': reg['secret_access_key'],
+                    'AWS_DEFAULT_REGION': reg['region'],
+                    'PATH': os.environ['PATH']
+                }
 
-                    c.execute(['/usr/local/bin/ecr_login.sh'], show=True, env=login_env)
-                elif dep['type'] == 'docker-registry' and 'username' in dep:
-                    cmd = ['docker', 'login', '-u', dep['username'], '-p', dep['password']]
+                c.execute(['/usr/local/bin/ecr_login.sh'], show=True, env=login_env)
+            elif reg['type'] == 'docker-registry' and 'username' in reg:
+                cmd = ['docker', 'login', '-u', reg['username'], '-p', reg['password']]
 
-                    host = dep['host']
-                    if not host.startswith('docker.io') and not host.startswith('index.docker.io'):
-                        cmd += [host]
+                host = reg['host']
+                if not host.startswith('docker.io') and not host.startswith('index.docker.io'):
+                    cmd += [host]
 
-                    c.execute(cmd, show=False)
-            except Exception as e:
-                raise Failure("Failed to login to registry: " + e.message)
+                c.execute(cmd, show=False)
+        except Exception as e:
+            raise Failure("Failed to login to registry: " + e.message)
+
+    def _logout_registry(self, reg):
+        c = self.console
+        c.execute(['docker', 'logout', reg['host']], show=False)
+
+    def _login_source_registries(self):
+        for r in self.registries:
+            self._login_registry(r)
+
+    def _logout_source_registries(self):
+        for r in self.registries:
+            self._logout_registry(r)
 
     def run_job_docker(self, c):
-        self._login_deployment_registries()
+        self._login_source_registries()
 
         image_name = get_registry_name() + '/' \
                      + self.project['id'] + '/' \
@@ -1163,6 +1215,7 @@ def main():
         j = RunJob(console)
         j.main()
         j.console.flush()
+        j.console.header('Finished', show=True)
         j.update_status('finished', message='Successfully finished')
     except Failure as e:
         j.console.header('Failure', show=True)

@@ -3,24 +3,14 @@ import argparse
 import time
 import os
 import sys
+import requests
 import psycopg2
 import psycopg2.extensions
-import requests
-from prometheus_client import start_http_server, Histogram, Counter
 
 from pyinfraboxutils import get_logger, get_env, print_stackdriver
 from pyinfraboxutils.leader import is_leader
 from pyinfraboxutils.db import connect_db
 from pyinfraboxutils.token import encode_job_token
-
-
-# pylint: disable=no-value-for-parameter
-LOOP_SECONDS = Histogram('infrabox_scheduler_loop_seconds', 'Time spent for one scheduler loop iteration')
-ORPHANED_JOBS = Counter('infrabox_scheduler_orphaned_jobs_total', 'Number of removed orphaned jobs')
-ABORTED_JOBS = Counter('infrabox_scheduler_killed_jobs_total', 'Number of killed jobs')
-SCHEDULED_JOBS = Counter('infrabox_scheduler_scheduled_jobs_total', 'Number of scheduled jobs')
-TIMEOUT_JOBS = Counter('infrabox_scheduler_timeout_jobs_total', 'Number of timed out scheduled jobs')
-ORPHANED_NAMESPACES = Counter('infrabox_scheduler_orphaned_namespaces_total', 'Number of removed orphaned namespaces')
 
 def gerrit_enabled():
     return os.environ['INFRABOX_GERRIT_ENABLED'] == 'true'
@@ -330,6 +320,10 @@ class Scheduler(object):
                 'apiGroups': ['rbac.authorization.k8s.io'],
                 'resources': ['roles', 'rolebindings'],
                 'verbs': ['*']
+            }, {
+                'apiGroups': ['policy'],
+                'resources': ['poddisruptionbudgets'],
+                'verbs': ['*']
             }]
         }
 
@@ -461,8 +455,6 @@ class Scheduler(object):
 
         self.logger.info("Finished scheduling job")
         self.logger.info("")
-
-        SCHEDULED_JOBS.inc()
 
     def schedule(self):
         # find jobs
@@ -600,8 +592,6 @@ class Scheduler(object):
 
             cursor.close()
 
-            ABORTED_JOBS.inc()
-
     def handle_timeouts(self):
         cursor = self.conn.cursor()
         cursor.execute('''
@@ -632,8 +622,6 @@ class Scheduler(object):
                 WHERE id = %s""", (output, job_id,))
 
             cursor.close()
-
-            TIMEOUT_JOBS.inc()
 
     def handle_orphaned_namespaces(self):
         h = {'Authorization': 'Bearer %s' % self.args.token}
@@ -673,10 +661,7 @@ class Scheduler(object):
                     continue
 
                 self.logger.info('Deleting orphaned namespace ib-%s', job_id)
-                ORPHANED_NAMESPACES.inc()
                 self.kube_delete_namespace(job_id)
-
-
 
     def handle_orphaned_jobs(self):
         h = {'Authorization': 'Bearer %s' % self.args.token}
@@ -715,7 +700,6 @@ class Scheduler(object):
                     continue
 
                 self.logger.info('Deleting orphaned job %s', job_id)
-                ORPHANED_JOBS.inc()
                 self.kube_delete_job(job_id)
 
     def update_cluster_state(self):
@@ -756,28 +740,20 @@ class Scheduler(object):
                                           root_url, nodes, cpu, memory, cluster_name])
         cursor.close()
 
-    def sleep_if_inactive(self):
-        while True:
-            cluster_name = os.environ['INFRABOX_CLUSTER_NAME']
-            cursor = self.conn.cursor()
-            cursor.execute("""
-                SELECT active
-                FROM cluster
-                WHERE name = %s """, [cluster_name])
-            active = cursor.fetchone()[0]
-            cursor.close()
+    def _inactive(self):
+        cluster_name = os.environ['INFRABOX_CLUSTER_NAME']
+        cursor = self.conn.cursor()
+        cursor.execute("""
+            SELECT active
+            FROM cluster
+            WHERE name = %s """, [cluster_name])
+        active = cursor.fetchone()[0]
+        cursor.close()
 
-            if active:
-                break
+        return not active
 
-            self.logger.info('Cluster set to inactive, sleeping...')
-            time.sleep(5)
-
-
-    @LOOP_SECONDS.time()
     def handle(self):
         self.update_cluster_state()
-        self.sleep_if_inactive()
 
         try:
             self.handle_timeouts()
@@ -786,6 +762,11 @@ class Scheduler(object):
             self.handle_orphaned_namespaces()
         except Exception as e:
             self.logger.exception(e)
+
+        if self._inactive():
+            self.logger.info('Cluster set to inactive, sleeping...')
+            time.sleep(5)
+            return
 
         self.schedule()
 
@@ -846,8 +827,6 @@ def main():
 
     conn = connect_db()
     conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
-
-    start_http_server(8000)
 
     scheduler = Scheduler(conn, args)
     scheduler.run()

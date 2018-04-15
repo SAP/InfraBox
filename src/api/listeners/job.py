@@ -53,7 +53,7 @@ def __handle_event(event, socketio):
             commit = db.execute_one_dict('''
 		SELECT
                     c.id,
-                    split_part(c.message, '\n', 1) as message
+                    split_part(c.message, '\n', 1) as message,
                     c.author_name,
                     c.author_email,
                     c.author_username,
@@ -64,10 +64,9 @@ def __handle_event(event, socketio):
                     c.branch,
                     c.pull_request_id
 		FROM commit c
-		WHERE
-                    c.id = %s
-                    c.project_id = %s
-            ''', [commit_id, project])
+		WHERE c.id = %s
+                AND   c.project_id = %s
+            ''', [commit_id, project_id])
 
             pull_request_id = commit['pull_request_id']
 
@@ -75,7 +74,7 @@ def __handle_event(event, socketio):
                 SELECT title, url
                 FROM pull_request
                 WHERE id = %s
-                AND project_id = %s
+                AND   project_id = %s
             ''', [pull_request_id, project_id])
 
     finally:

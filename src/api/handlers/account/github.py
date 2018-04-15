@@ -147,7 +147,7 @@ class Auth(Resource):
         return redirect(url)
 
 def check_org(access_token):
-    allowed_orgs = os.environ.get('INFRABOX_GITHUB_LIMIT_ORG', None)
+    allowed_orgs = os.environ.get('INFRABOX_GITHUB_LOGIN_ALLOWED_ORGANIZATIONS', None)
 
     if not allowed_orgs:
         return

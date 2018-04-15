@@ -12,7 +12,7 @@ from pyinfraboxutils.leader import elect_leader, is_leader
 logger = get_logger("github")
 
 def execute_sql(conn, stmt, params): # pragma: no cover
-    c = conn.cursor()
+    c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
     c.execute(stmt, params)
     result = c.fetchall()
     c.close()
@@ -48,18 +48,55 @@ def main(): # pragma: no cover
                 handle_job_update(conn, json.loads(notify.payload))
 
 
-def handle_job_update(conn, update):
-    if update['data']['project']['type'] != 'github':
-        return
+def handle_job_update(conn, event):
+    job_id = event['job_id']
 
-    project_id = update['data']['project']['id']
-    project_name = update['data']['project']['name']
-    job_state = update['data']['job']['state']
-    job_id = update['data']['job']['id']
-    job_name = update['data']['job']['name']
-    commit_sha = update['data']['commit']['id']
-    build_number = update['data']['build']['build_number']
-    build_restartCounter = update['data']['build']['restart_counter']
+    jobs = execute_sql(conn, '''
+        SELECT id, state, name, project_id, build_id
+        FROM job
+        WHERE id = %s
+    ''', [job_id])
+
+    if not jobs:
+        return False
+
+    job = jobs[0]
+
+    project_id = job['project_id']
+    build_id = job['build_id']
+
+    projects = execute_sql(conn, '''
+        SELECT id, name, type
+        FROM project
+        WHERE id = %s
+    ''', [project_id])
+
+    if not projects:
+        return False
+
+    project = projects[0]
+
+    if project['type'] != 'github':
+        return False
+
+    builds = execute_sql(conn, '''
+        SELECT id, build_number, restart_counter, commit_id
+        FROM build
+        WHERE id = %s
+    ''', [build_id])
+
+    if not builds:
+        return False
+
+    build = builds[0]
+
+    project_name = project['name']
+    job_state = job['state']
+    job_name = job['name']
+    commit_sha = build['commit_id']
+    build_id = build['id']
+    build_number = build['build_number']
+    build_restartCounter = build['restart_counter']
     dashboard_url = get_env('INFRABOX_ROOT_URL')
 
     # determine github commit state
@@ -87,16 +124,16 @@ def handle_job_update(conn, update):
 
     if not token:
         logger.info("No API token, not updating status")
-        return
+        return False
 
-    github_api_token = token[0][0]
+    github_api_token = token[0]['github_api_token']
 
     github_status_url = execute_sql(conn, '''
         SELECT github_status_url
         FROM "commit"
         WHERE id = %s
         AND project_id = %s
-    ''', [commit_sha, project_id])[0][0]
+    ''', [commit_sha, project_id])[0]['github_status_url']
 
     payload = {
         "state": state,
@@ -129,8 +166,9 @@ def handle_job_update(conn, update):
             logger.info("Successfully updated github status")
     except Exception as e:
         logger.warn("Failed to update github status: %s", e)
-        return
+        return False
 
+    return True
 
 if __name__ == "__main__": # pragma: no cover
     try:

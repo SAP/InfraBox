@@ -34,7 +34,6 @@ IMAGES = [
     {'name': 'docker-registry-auth'},
     {'name': 'docker-registry-nginx'},
     {'name': 'db'},
-    {'name': 'docker-gc'},
     {'name': 'postgres'},
 ]
 

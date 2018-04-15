@@ -5,6 +5,11 @@
         "name": "test",
         "docker_file": "Dockerfile",
         "build_only": false,
-        "resources": { "limits": { "cpu": 1, "memory": 1024 } }
+        "resources": { "limits": { "cpu": 1, "memory": 1024 } },
+        "cache": {
+            "image": true,
+            "data": true,
+            "after_image": true
+        }
     }]
 }
