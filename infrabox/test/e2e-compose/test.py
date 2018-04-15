@@ -257,8 +257,5 @@ def main():
     with open('results.xml', 'wb') as output:
         unittest.main(testRunner=xmlrunner.XMLTestRunner(output=output))
 
-    with open('results.xml') as output:
-        print output.read()
-
 if __name__ == '__main__':
     main()

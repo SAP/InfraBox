@@ -12,6 +12,7 @@ coverage report -m
 coverage xml
 
 if [ -e results.xml ]; then
+    cat results.xml
     cp results.xml /infrabox/upload/testresult
 fi
 
