@@ -537,7 +537,7 @@ class RunJob(Job):
             file_size = os.stat(storage_output_tar).st_size
 
             max_output_size = os.environ['INFRABOX_JOB_MAX_OUTPUT_SIZE']
-            c.collect("Output size: %s kb" % file_size / 1024, show=True)
+            c.collect("Output size: %s kb" % (file_size / 1024), show=True)
             if file_size > max_output_size:
                 raise Failure("Output too large")
 
@@ -558,7 +558,7 @@ class RunJob(Job):
                 file_size = os.stat(storage_cache_tar).st_size
 
                 max_output_size = os.environ['INFRABOX_JOB_MAX_OUTPUT_SIZE']
-                c.collect("Output size: %s kb" % file_size / 1024, show=True)
+                c.collect("Output size: %s kb" % (file_size / 1024), show=True)
                 if file_size > max_output_size:
                     raise Failure("Output too large")
 
