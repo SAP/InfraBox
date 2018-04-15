@@ -42,13 +42,6 @@ db:
     # Tag
     tag: latest
 
-docker_gc:
-    # name of the docker-gc image in your general.docker_registry
-    # image: docker-gc
-
-    # Tag
-    tag: latest
-
 scheduler:
     enabled: true
 
@@ -67,9 +60,6 @@ storage:
 
     gcs:
         enabled: false
-
-        # Your project ID
-        project_id: <REQUIRED>
 
         # Bucket name
         bucket: infrabox

@@ -66,20 +66,59 @@ def execute_ssh_cmd(client, cmd):
         logger.error(out)
 
 
-def handle_job_update(conn, update):
-    if update['type'] != 'UPDATE':
+def handle_job_update(conn, event):
+    if event['type'] != 'UPDATE':
         return
 
-    if update['data']['project']['type'] != 'gerrit':
+    job_id = event['job_id']
+
+    c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    c.execute('''
+        SELECT id, state, name, project_id, build_id
+        FROM job
+        WHERE id = %s
+    ''', [job_id])
+
+    job = c.fetchone()
+    c.close()
+
+    if not job:
         return
 
-    project_name = update['data']['project']['name']
-    job_state = update['data']['job']['state']
-    job_name = update['data']['job']['name']
-    commit_sha = update['data']['commit']['id']
-    build_id = update['data']['build']['id']
-    build_number = update['data']['build']['build_number']
-    build_restart_counter = update['data']['build']['restart_counter']
+    project_id = job['project_id']
+    build_id = job['build_id']
+
+    c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    c.execute('''
+        SELECT id, name, type
+        FROM project
+        WHERE id = %s
+    ''', [project_id])
+    project = c.fetchone()
+    c.close()
+
+    if not project:
+        return
+
+    if project['type'] != 'gerrit':
+        return
+
+    c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    c.execute('''
+        SELECT id, build_number, restart_counter, commit_id
+        FROM build
+        WHERE id = %s
+    ''', [build_id])
+    build = c.fetchone()
+    c.close()
+
+    project_name = project['name']
+    job_state = job['state']
+    job_name = job['name']
+    commit_sha = build['commit_id']
+    build_id = build['id']
+    build_number = build['build_number']
+    build_restart_counter = build['restart_counter']
 
     if job_state in ('queued', 'scheduled', 'running'):
         return
@@ -130,7 +169,6 @@ def handle_job_update(conn, update):
 
     if (job_name == 'Create Jobs' and vote == '0') or vote in ('-1', '+1'):
         logger.info('Setting InfraBox=%s for sha=%s', vote, commit_sha)
-        logger.info(json.dumps(update, indent=4))
         cmd = 'gerrit review --project %s -m "%s" --label InfraBox=%s %s' % (project_name,
                                                                              message,
                                                                              vote,

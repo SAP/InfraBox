@@ -30,6 +30,7 @@ class Job(object):
         self.secrets = None
         self.source_upload = None
         self.deployments = None
+        self.registries = None
 
     def load_data(self):
         while True:
@@ -43,7 +44,14 @@ class Job(object):
                 if r.status_code == 409:
                     sys.exit(0)
                 elif r.status_code == 400:
-                    raise Failure(r.text)
+                    msg = r.text
+
+                    try:
+                        msg = r.json()['message']
+                    except:
+                        pass
+
+                    raise Failure(msg)
                 elif r.status_code == 200:
                     break
                 else:
@@ -66,6 +74,7 @@ class Job(object):
         self.environment.update(data['secrets'])
         self.secrets = data['secrets']
         self.env_vars = data['env_vars']
+        self.registries = data['registries']
 
         if 'source_upload' in data:
             self.source_upload = data['source_upload']
@@ -139,7 +148,14 @@ class Job(object):
             return
 
         if r.status_code != 200:
-            raise Failure('Failed to download file: %s' % r.text)
+            msg = r.text
+
+            try:
+                msg = r.json()['message']
+            except:
+                pass
+
+            raise Failure('Failed to download file: %s' % msg)
 
         with open(path, 'wb') as  f:
             for chunk in r.iter_content(chunk_size=1024):

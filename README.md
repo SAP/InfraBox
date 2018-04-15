@@ -1,4 +1,4 @@
-# <a href="http://infrabox.net"><img src="src\dashboard-client\static\logo_compact_transparent.png" width="200"></a> [![Build Status](https://infrabox.ninja/api/v1/projects/0c8204bb-7ce5-48a3-aa08-0fc38d7255d0/state.svg?branch=master)](https://infrabox.ninja/dashboard/#/project/infrabox)
+# <a href="http://infrabox.net"><img src="src\dashboard-client\static\logo_compact_transparent.png" width="200"></a> [![Build Status](https://infrabox.ninja/api/v1/projects/8aec1f31-a1fb-4fd2-9ae9-cb4f7b7dd49b/state.svg?branch=master)](https://infrabox.ninja/dashboard/#/project/infrabox)
 
 InfraBox is a continuous integration system. It's well suited for cloud native applications and has [native support for kubernetes](https://github.com/InfraBox/examples/tree/master/kubernetes). Watch our short introduction video:
 
@@ -35,9 +35,6 @@ You have multiple options to install InfraBox:
 If you need help please post your questions to [Stack Overflow](https://stackoverflow.com/questions/tagged/infrabox).
 In case you found a bug please open a [Github Issue](https://github.com/InfraBox/infrabox/issues).
 Follow us on Twitter: [@Infra_Box](https://twitter.com/Infra_Box) or have look at our Slack channel [infrabox.slack.com](https://infrabox.slack.com/).
-
-## Contribute
-Any contribution is highly appreciated. See our [contribution guide](CONTRIBUTING.md) for details.
 
 ## License
 Copyright (c) 2018 SAP SE or an SAP affiliate company. All rights reserved.

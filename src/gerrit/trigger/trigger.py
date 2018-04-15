@@ -101,13 +101,18 @@ def handle_patchset_created_project(conn, event, project_id, project_name):
         commit = result
 
     c = conn.cursor()
-    c.execute('''SELECT count(distinct build_number) + 1 AS build_no
-              FROM build AS b
-              WHERE b.project_id = %s''', [project_id])
+    c.execute('''
+        SELECT max(build_number) + 1 AS build_no
+        FROM build AS b
+        WHERE b.project_id = %s''', [project_id])
     result = c.fetchone()
     c.close()
 
     build_no = result[0]
+
+    if not build_no:
+        build_no = 1
+
     c = conn.cursor()
     c.execute('''INSERT INTO build (commit_id, build_number, project_id)
                  VALUES (%s, %s, %s)
