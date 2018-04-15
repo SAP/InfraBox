@@ -329,11 +329,9 @@ class RunJob(Job):
             files = self.get_files_in_dir(self.infrabox_testresult_dir)
 
             if files:
-                c.collect("Uploading /infrabox/upload/testresult", show=True)
 
                 for f in files:
                     c.collect("%s\n" % f, show=True)
-                    self.post_file_to_api_server("/archive", f, filename=f.replace(self.infrabox_upload_dir, ''))
 
 
     def upload_coverage_results(self):
@@ -367,8 +365,12 @@ class RunJob(Job):
         if not os.path.exists(self.infrabox_testresult_dir):
             return
 
+        c.collect("Uploading /infrabox/upload/testresult", show=True)
         files = self.get_files_in_dir(self.infrabox_testresult_dir, ending=".xml")
         for f in files:
+            with open(f) as testresult:
+                c.collect(testresult.read(), show=True)
+
             c.collect("%s\n" % f, show=True)
             converted_result = self.convert_test_result(f)
 
@@ -379,6 +381,8 @@ class RunJob(Job):
 
             if r.status_code != 200:
                 c.collect("%s\n" % r.text, show=True)
+
+            self.post_file_to_api_server("/archive", f, filename=f.replace(self.infrabox_upload_dir, ''))
 
     def upload_markdown_files(self):
         c = self.console
@@ -1214,6 +1218,7 @@ def main():
         j = RunJob(console)
         j.main()
         j.console.flush()
+        j.console.header('Finished', show=True)
         j.update_status('finished', message='Successfully finished')
     except Failure as e:
         j.console.header('Failure', show=True)

@@ -1,6 +1,7 @@
 import unittest
 import os
 import subprocess
+import re
 import time
 import json
 import requests
@@ -87,7 +88,11 @@ class Test(unittest.TestCase):
                                                              self.project_id,
                                                              j['id'])
             r = self._api_get(url)
-            print r.text
+
+            ansi_escape = re.compile(r'\x1B\[[0-?]*[ -/]*[@-~]')
+            logs = ansi_escape.sub('', r.text)
+
+            print logs
 
     def _get_job(self, job_name):
         jobs = self._get_jobs()
