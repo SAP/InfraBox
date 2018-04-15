@@ -7,7 +7,7 @@ For this guide you need:
 - [infraboxcli](https://github.com/InfraBox/cli) (pip install infraboxcli)
 
 ## Create a project on InfraBox
-First login to the InfraBox dashboard [https://infrabox.ninja/](https://infrabox.ninja/dashboard/#/login) with your github account.
+First login to the InfraBox dashboard with your github account.
 
 After logging in you can click on the "+" sign at the bottom right corner of the dashboard. Select "upload" and click on *continue*. Give your project a name and click *continue*. Select if the dashboard of your project should be accsible by everybody (public) or only by you and the projects collaborators (private) and click *finish*.
 
@@ -16,23 +16,22 @@ Click on the newly created project name and open the Settings tab. In the *Token
 ## Create a local workflow
 We can use [infraboxcli](https://github.com/InfraBox/cli) to intialize a project.
 
-    $ mkdir /tmp/infrabox-project
-    $ cd /tmpinfrabox-project
-    $ infrabox init
+    mkdir /tmp/infrabox-project
+    cd /tmpinfrabox-project
+    infrabox init
 
 ## Push your project
 Before we can push the projec to InfraBox we have to configure the environment.
 
-    $ export INFRABOX_CLI_TOKEN=<THE_TOKEN_YOU_CREATED_EARLIER>
-    $ export INFRABOX_URL=https://infrabox.ninja
+    export INFRABOX_CLI_TOKEN=<THE_TOKEN_YOU_CREATED_EARLIER>
+    export INFRABOX_URL=<YOUR_INFRABOX_INSTALLATION_URL>
 
 If You used docker-compose to start InfraBox you have to set instead:
 
-    $ export INFRABOX_URL=http://localhost:8090
+    export INFRABOX_URL=http://localhost:8090
 
 To actually push your project run
 
-    $ infrabox push
+    infrabox push
 
-Open the [dashboard](https://infrabox.ninja/dashboard/#/) and watch your worklfow running.
-See the [documentation](https://infrabox.ninja/docs) for more examples on how to configure your builds.
+See the [documentation](https://github.com/SAP/InfraBox/blob/master/docs/doc.md) for more examples on how to configure your builds.

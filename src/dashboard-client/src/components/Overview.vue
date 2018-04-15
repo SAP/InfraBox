@@ -66,7 +66,7 @@
                     <md-button md-theme="running" class="md-raised md-primary m-lg"><i class="fa fa-plus"></i> Add project</md-button>
                 </router-link>
 
-                <p class="md-body-2"><i class="fa fa-info-circle text-blue"></i> If you are completely new to InfraBox or need some further information have a look at the <a href="https://infrabox.ninja/docs/" target="_blank">documentation</a>.</p>
+                <p class="md-body-2"><i class="fa fa-info-circle text-blue"></i> If you are completely new to InfraBox or need some further information have a look at the <a href="https://github.com/SAP/InfraBox/blob/master/docs/doc.md" target="_blank">documentation</a>.</p>
             </md-card-area>
         </md-card>
         <router-link to="/addproject/" style="color: inherit">
