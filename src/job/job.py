@@ -314,18 +314,27 @@ class RunJob(Job):
 
     def upload_archive(self):
         c = self.console
-        if not os.path.exists(self.infrabox_archive_dir):
-            return
 
-        files = self.get_files_in_dir(self.infrabox_archive_dir)
-        if not files:
-            return
+        if os.path.exists(self.infrabox_archive_dir):
+            files = self.get_files_in_dir(self.infrabox_archive_dir)
 
-        c.collect("Uploading /infrabox/upload/archive", show=True)
+            if files:
+                c.collect("Uploading /infrabox/upload/archive", show=True)
 
-        for f in files:
-            c.collect("%s\n" % f, show=True)
-            self.post_file_to_api_server("/archive", f, filename=f.replace(self.infrabox_archive_dir, ''))
+                for f in files:
+                    c.collect("%s\n" % f, show=True)
+                    self.post_file_to_api_server("/archive", f, filename=f.replace(self.infrabox_upload_dir, ''))
+
+        if os.path.exists(self.infrabox_testresult_dir):
+            files = self.get_files_in_dir(self.infrabox_testresult_dir)
+
+            if files:
+                c.collect("Uploading /infrabox/upload/testresult", show=True)
+
+                for f in files:
+                    c.collect("%s\n" % f, show=True)
+                    self.post_file_to_api_server("/archive", f, filename=f.replace(self.infrabox_upload_dir, ''))
+
 
     def upload_coverage_results(self):
         c = self.console
@@ -346,6 +355,10 @@ class RunJob(Job):
     def convert_test_result(self, f):
         parser = TestresultParser(f)
         r = parser.parse(self.infrabox_badge_dir)
+
+        with open(f) as result:
+            c = self.console
+            c.collect(result.read(), show=True)
 
         out = f + '.json'
         with open(out, 'w') as testresult:
