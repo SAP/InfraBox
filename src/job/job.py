@@ -356,10 +356,6 @@ class RunJob(Job):
         parser = TestresultParser(f)
         r = parser.parse(self.infrabox_badge_dir)
 
-        with open(f) as result:
-            c = self.console
-            c.collect(result.read(), show=True)
-
         out = f + '.json'
         with open(out, 'w') as testresult:
             json.dump(r, testresult)
