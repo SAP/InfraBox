@@ -14,7 +14,6 @@ rc=$?
 
 set -e
 
-cat results.xml
 cp results.xml /infrabox/upload/testresult
 
 exit $rc
