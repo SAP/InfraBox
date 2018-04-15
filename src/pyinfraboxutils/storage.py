@@ -120,6 +120,9 @@ class GCS(object):
     def upload_output(self, stream, key):
         self._upload(stream, 'output/%s' % key)
 
+    def upload_archive(self, stream, key):
+        self._upload(stream, 'archive/%s' % key)
+
     def download_archive(self, key):
         return self._download('archive/%s' % key)
 
