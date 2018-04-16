@@ -27,7 +27,7 @@
                             <div class="md-list-text-container">
                                 {{ secret.name }}
                             </div>
-                            <md-button type="submit" class="md-icon-button md-list-action" @click="deleteSecret(secret.name)">
+                            <md-button type="submit" class="md-icon-button md-list-action" @click="deleteSecret(secret.id)">
                                 <md-icon class="md-primary">delete</md-icon>
                                 <md-tooltip>Delete secret permanently</md-tooltip>
                             </md-button>
@@ -53,8 +53,8 @@ export default {
         this.project._loadSecrets()
     },
     methods: {
-        deleteSecret (name) {
-            NewAPIService.delete(`projects/${this.project.id}/secrets/${name}`)
+        deleteSecret (id) {
+            NewAPIService.delete(`projects/${this.project.id}/secrets/${id}`)
             .then((response) => {
                 NotificationService.$emit('NOTIFICATION', new Notification(response))
                 this.project._reloadSecrets()

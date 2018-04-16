@@ -63,13 +63,13 @@ class Secrets(Resource):
         return OK('Successfully added secret')
 
 
-@ns.route('/<project_id>/secrets/<secret_name>')
+@ns.route('/<project_id>/secrets/<secret_id>')
 class Secret(Resource):
     @auth_required(['user'])
-    def delete(self, project_id, secret_name):
+    def delete(self, project_id, secret_id):
         g.db.execute('''
-            DELETE FROM secret WHERE project_id = %s and name = %s
-        ''', [project_id, secret_name])
+            DELETE FROM secret WHERE project_id = %s and id = %s
+        ''', [project_id, secret_id])
         g.db.commit()
 
         return OK('Successfully deleted secret')
