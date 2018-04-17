@@ -16,7 +16,7 @@ class CollaboratorsTest(ApiTestTemplate):
                            """, [self.collaborator_id,
                                  self.test_collaborator_data['username']])
 
-        # test collaborator creation
+        # test collaborator's creation
         r = TestClient.post('api/v1/projects/%s/collaborators' % self.project_id,
                             data=self.test_collaborator_data,
                             headers=TestClient.get_user_authorization(self.user_id))
@@ -43,13 +43,13 @@ class CollaboratorsTest(ApiTestTemplate):
                            VALUES (%s, %s, false)
                            """, [self.collaborator_id, self.project_id])
 
-        # make sure collaborator insert succeed
+        # make sure collaborator's insertion is successfull
         r = TestClient.execute_one("""
                                    SELECT count(*) FROM collaborator WHERE user_id = %s
                                    """, [self.collaborator_id])
         self.assertGreater(r[0], 0)
 
-        # removing collaborator
+        # make sure collaborator's removal is successfull
         r = TestClient.delete('api/v1/projects/%s/collaborators/%s'
                               % (self.project_id, self.collaborator_id),
                               headers=TestClient.get_user_authorization(self.user_id))
@@ -57,7 +57,7 @@ class CollaboratorsTest(ApiTestTemplate):
         self.assertEqual(r['message'], 'Successfully removed user')
         self.assertEqual(r['status'], 200)
 
-        # check database not contain this collaborator
+        # check if database does not contain this collaborator anymore
         r = TestClient.execute_one("""
                                    SELECT count(*) FROM collaborator WHERE user_id = %s
                                    """, [self.collaborator_id])
