@@ -76,19 +76,3 @@ class Token(Resource):
         g.db.commit()
 
         return OK('Successfully deleted token')
-
-@ns.route('/<project_id>/tokens/<token_description>')
-class TokenUtilities(Resource):
-
-    @auth_required(['user'])
-    def get(self, project_id, token_description):
-        token_id = g.db.execute_one("""
-            SELECT id FROM auth_token
-            WHERE project_id = %s AND description = %s
-        """, [project_id, token_description])
-
-        if not token_id:
-            abort(400, 'Token with such a description does not exist.')
-
-        token_id = token_id[0]
-        return OK('Found token with provided description', { 'token_id': token_id})
