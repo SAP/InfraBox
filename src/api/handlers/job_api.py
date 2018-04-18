@@ -343,11 +343,16 @@ class Job(Resource):
                                                          data['project']['id'],
                                                          data['job']['id'])
 
+        build_api_url = "%s/api/v1/projects/%s/builds/%s" % (os.environ['INFRABOX_ROOT_URL'],
+                                                             data['project']['id'],
+                                                             data['build']['id'])
+
         data['env_vars'] = {
             "TERM": "xterm-256color",
             "INFRABOX_JOB_ID": data['job']['id'],
             "INFRABOX_JOB_URL": job_url,
             "INFRABOX_JOB_API_URL": job_api_url,
+            "INFRABOX_BUILD_API_URL": build_api_url,
             "INFRABOX_BUILD_NUMBER": "%s" % data['build']['build_number'],
             "INFRABOX_BUILD_RESTART_COUNTER": "%s" % data['build']['restart_counter'],
             "INFRABOX_BUILD_URL": build_url,
