@@ -3,6 +3,8 @@ import hashlib
 import hmac
 
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 from pyinfraboxutils import get_env, get_logger
 from pyinfraboxutils.ibbottle import InfraBoxPostgresPlugin
@@ -27,12 +29,12 @@ def get_next_page(r):
 
     n1 = link.find('rel=\"next\"')
 
-    if not n1:
+    if n1 < 0:
         return None
 
     n2 = link.rfind('<', 0, n1)
 
-    if not n2:
+    if n2 < 0:
         return None
 
     n2 += 1
@@ -45,6 +47,14 @@ def get_commits(url, token):
         "Authorization": "token " + token,
         "User-Agent": "InfraBox"
     }
+
+    s = requests.Session()
+
+    retries = Retry(total=5,
+                    backoff_factor=0.1,
+                    status_forcelist=[500, 502, 503, 504])
+
+    s.mount('http://', HTTPAdapter(max_retries=retries))
 
     # TODO(ib-steffen): allow custom ca bundles
     r = requests.get(url + '?per_page=100', headers=headers, verify=False)

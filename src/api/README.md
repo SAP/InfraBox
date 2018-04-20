@@ -1,6 +1,4 @@
 # API
-[![coverage](https://infrabox.ninja/api/v1/projects/0c8204bb-7ce5-48a3-aa08-0fc38d7255d0/badge.svg?subject=coverage&job_name=ib/test/api)](https://infrabox.ninja/dashboard/#/project/infrabox)
-
 The API Component implements the API for *infraboxcli* and the running *jobs*.
 
 ## Run tests

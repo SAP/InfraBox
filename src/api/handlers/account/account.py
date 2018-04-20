@@ -1,3 +1,4 @@
+import os
 from email.utils import parseaddr
 
 from flask import g, request, abort
@@ -60,6 +61,9 @@ class Register(Resource):
 
     @api.expect(register_model)
     def post(self):
+        if os.environ['INFRABOX_ACCOUNT_SIGNUP_ENABLED'] != 'true':
+            abort(404)
+
         b = request.get_json()
 
         email = b['email']
