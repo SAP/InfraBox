@@ -15,6 +15,9 @@
             <md-button v-if="!$store.state.user" class="md-button" @click="login" md-right>
                 <i class="fa fa-sign-in"></i> Login
             </md-button>
+            <div v-if="$store.state.user" md-right>
+                {{ $store.state.user.username }} ({{$store.state.user.email }})
+            </div>
         </md-toolbar>
 
         <md-sidenav v-if="$store.state.user" class="md-left" ref="leftSidenav">
