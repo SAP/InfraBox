@@ -60,10 +60,6 @@
     secret:
         secretName: infrabox-cloudsql-instance-credentials
 -
-    name: ssl-certs
-    hostPath:
-        path: /etc/ssl/certs
--
     name: cloudsql
     emptyDir:
 {{ end }}
@@ -247,8 +243,6 @@
     - name: cloudsql-instance-credentials
       mountPath: /secrets/cloudsql
       readOnly: true
-    - name: ssl-certs
-      mountPath: /etc/ssl/certs
     - name: cloudsql
       mountPath: /cloudsql
 {{ end }}

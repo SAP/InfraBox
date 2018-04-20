@@ -130,7 +130,8 @@ function handleJobUpdate (state, event) {
             build,
             project,
             d.dependencies,
-            d.message
+            d.message,
+            d.definition
         )
         build.jobs.push(job)
         state.jobs[d.id] = job
@@ -141,16 +142,6 @@ function handleJobUpdate (state, event) {
 
         if (d.message) {
             job.message = d.message
-        }
-
-        if (job.state === 'failed' ||
-            job.state === 'finished' ||
-            job.state === 'error' ||
-            job.state === 'aborted' ||
-            job.state === 'skipped') {
-            if (job.currentSection) {
-                job.currentSection.setEndDate(new Date())
-            }
         }
     }
 

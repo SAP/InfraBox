@@ -15,6 +15,9 @@
             <md-button v-if="!$store.state.user" class="md-button" @click="login" md-right>
                 <i class="fa fa-sign-in"></i> Login
             </md-button>
+            <div v-if="$store.state.user" md-right>
+                {{ $store.state.user.username }} ({{$store.state.user.email }})
+            </div>
         </md-toolbar>
 
         <md-sidenav v-if="$store.state.user" class="md-left" ref="leftSidenav">
@@ -24,7 +27,12 @@
 
             <md-list>
                 <md-list-item>
-                    <router-link to="/" style="color: inherit"><span @click="toggleLeftSidenav()"><md-icon><i class="fa fa-th-large fa-fw"></i></md-icon><span class="fix-list">Overview</span></span></router-link>
+                    <router-link to="/" style="color: inherit">
+                        <span @click="toggleLeftSidenav()">
+                            <md-icon><i class="fa fa-th-large fa-fw"></i></md-icon>
+                            <span class="fix-list">Overview</span>
+                        </span>
+                    </router-link>
                 </md-list-item>
 
                 <md-list-item>
@@ -42,6 +50,15 @@
                             </md-list-item>
                         </md-list>
                     </md-list-expand>
+                </md-list-item>
+
+                <md-list-item>
+                    <router-link :to="{name: 'AdminClusters'}" style="color: inherit">
+                        <span @click="toggleLeftSidenav()">
+                            <md-icon><i class="fa fa-desktop fa-fw"></i></md-icon>
+                            <span class="fix-list">Clusters</span>
+                        </span>
+                    </router-link>
                 </md-list-item>
 
                 <md-list-item class="navi-link">
@@ -87,14 +104,6 @@
                                     <span @click="toggleLeftSidenav()">
                                         <i class="fa fa-users"></i>
                                         Users
-                                    </span>
-                                </router-link>
-                            </md-list-item>
-                            <md-list-item class="md-inset">
-                                <router-link :to="{name: 'AdminClusters'}">
-                                    <span @click="toggleLeftSidenav()">
-                                        <i class="fa fa-users"></i>
-                                        Clusters
                                     </span>
                                 </router-link>
                             </md-list-item>

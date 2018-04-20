@@ -740,26 +740,20 @@ class Scheduler(object):
                                           root_url, nodes, cpu, memory, cluster_name])
         cursor.close()
 
-    def sleep_if_inactive(self):
-        while True:
-            cluster_name = os.environ['INFRABOX_CLUSTER_NAME']
-            cursor = self.conn.cursor()
-            cursor.execute("""
-                SELECT active
-                FROM cluster
-                WHERE name = %s """, [cluster_name])
-            active = cursor.fetchone()[0]
-            cursor.close()
+    def _inactive(self):
+        cluster_name = os.environ['INFRABOX_CLUSTER_NAME']
+        cursor = self.conn.cursor()
+        cursor.execute("""
+            SELECT active
+            FROM cluster
+            WHERE name = %s """, [cluster_name])
+        active = cursor.fetchone()[0]
+        cursor.close()
 
-            if active:
-                break
-
-            self.logger.info('Cluster set to inactive, sleeping...')
-            time.sleep(5)
+        return not active
 
     def handle(self):
         self.update_cluster_state()
-        self.sleep_if_inactive()
 
         try:
             self.handle_timeouts()
@@ -768,6 +762,11 @@ class Scheduler(object):
             self.handle_orphaned_namespaces()
         except Exception as e:
             self.logger.exception(e)
+
+        if self._inactive():
+            self.logger.info('Cluster set to inactive, sleeping...')
+            time.sleep(5)
+            return
 
         self.schedule()
 
