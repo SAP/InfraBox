@@ -59,7 +59,7 @@ class Token(Resource):
     @auth_required(['user'])
     def delete(self, project_id, token_id):
         if not validate_uuid4(token_id):
-            abort(400, "Invalid projet-token uuid")
+            abort(400, "Invalid project-token uuid")
 
         num_tokens = g.db.execute_one("""
             SELECT COUNT(*) FROM auth_token
