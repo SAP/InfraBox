@@ -111,11 +111,11 @@ function handleJobUpdate (state, event) {
     let endDate = null
 
     if (d.start_date) {
-        startDate = new Date(d.start_date)
+        startDate = new Date(d.start_date.split('+')[0])
     }
 
     if (d.end_date) {
-        endDate = new Date(d.end_date)
+        endDate = new Date(d.end_date.split('+')[0])
     }
 
     if (!job) {
