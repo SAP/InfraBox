@@ -62,20 +62,22 @@ class UserService {
                                    d.github_id,
                                    d.id)
                 store.commit('setUser', u)
-
-                if (u.hasGithubAccount() && store.state.settings.INFRABOX_GITHUB_ENABLED) {
-                    return NewAPIService.get('github/repos/')
-                }
-            })
-            .then((d) => {
-                if (d) {
-                    store.commit('setGithubRepos', d)
-                }
                 ProjectService.init()
             })
             .catch(() => {
                 // ignore
             })
+    }
+
+    loadRepos () {
+        if (store.state.user.hasGithubAccount() && store.state.settings.INFRABOX_GITHUB_ENABLED) {
+            return NewAPIService.get('github/repos/')
+            .then((d) => {
+                if (d) {
+                    store.commit('setGithubRepos', d)
+                }
+            })
+        }
     }
 }
 
