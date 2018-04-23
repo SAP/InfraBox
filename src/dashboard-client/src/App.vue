@@ -120,6 +120,7 @@
 import store from './store'
 import router from './router'
 import Disconnect from './components/utils/Disconnect'
+import UserService from './services/UserService'
 
 export default {
     name: 'app',
@@ -134,8 +135,8 @@ export default {
             router.push('/login')
         },
         logout () {
+            UserService.logout()
             this.toggleLeftSidenav()
-            document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/; Max-Age=0'
             router.push('/login')
         }
     },
