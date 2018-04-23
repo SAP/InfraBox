@@ -71,7 +71,7 @@
                 </md-list-item>
 
                 <md-list-item class="navi-link">
-                    <a href="https://github.com/InfraBox/infrabox/issues"
+                    <a :href="$store.state.settings.INFRABOX_GENERAL_REPORT_ISSUE_URL"
                        class="md-list-item-container md-button"
                        target="_blank" @click="toggleLeftSidenav()">
                         <md-icon><i class="fa fa-bug fa-fw"></i></md-icon>

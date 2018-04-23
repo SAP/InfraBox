@@ -374,6 +374,7 @@ class Kubernetes(Install):
         self.set('general.worker_namespace', self.args.general_worker_namespace)
         self.set('general.system_namespace', self.args.general_system_namespace)
         self.set('general.rbac.enabled', not self.args.general_rbac_disabled)
+        self.set('general.report_issue_url', self.args.general_report_issue_url)
         self.set('root_url', self.args.root_url)
 
         self.check_file_exists(self.args.general_rsa_private_key)
@@ -483,7 +484,11 @@ class DockerCompose(Install):
 
 
     def setup_api(self):
-        self.config.append('services.api.environment', ['INFRABOX_ROOT_URL=%s' % self.args.root_url])
+        self.config.append('services.api.environment', [
+            'INFRABOX_ROOT_URL=%s' % self.args.root_url,
+            'INFRABOX_GENERAL_REPORT_ISSUE_URL=%s' % self.args.general_report_issue_url
+        ])
+
         self.config.add('services.api.image',
                         '%s/api:%s' % (self.args.docker_registry, self.args.version))
 
@@ -705,6 +710,7 @@ def main():
     parser.add_argument('--general-rsa-public-key')
     parser.add_argument('--general-rsa-private-key')
     parser.add_argument('--general-rbac-disabled', action='store_true', default=False)
+    parser.add_argument('--general-report-issue-url', default='https://github.com/InfraBox/infrabox/issues')
 
     # Database configuration
     parser.add_argument('--database',
