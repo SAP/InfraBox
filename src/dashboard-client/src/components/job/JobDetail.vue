@@ -123,7 +123,7 @@
                     <md-icon style="color: white">subtitles</md-icon>
                     <md-tooltip md-direction="left">Console Output</md-tooltip>
                 </md-button>
-                <md-button class="md-fab md-primary md-mini md-clean" v-on:click="downloadDataOutput()" :disabled="job.state=='running'||job.state=='queued'||job.state=='scheduled'">
+                <md-button v-if="job.state === 'finished'" class="md-fab md-primary md-mini md-clean" v-on:click="downloadDataOutput()" :disabled="job.state=='running'||job.state=='queued'||job.state=='scheduled'">
                     <md-icon style="color: white">insert_drive_file</md-icon>
                     <md-tooltip md-direction="left">Data Output</md-tooltip>
                 </md-button>
