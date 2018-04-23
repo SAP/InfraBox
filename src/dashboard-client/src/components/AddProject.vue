@@ -97,6 +97,7 @@
 
 <script>
 import ProjectService from '../services/ProjectService'
+import UserService from '../services/UserService'
 import store from '../store'
 
 export default {
@@ -111,6 +112,9 @@ export default {
         invalidMessage: 'Name required',
         selectRepo: false
     }),
+    created () {
+        UserService.loadRepos()
+    },
     watch: {
         projName () {
             if (this.projName.length < 3) {
