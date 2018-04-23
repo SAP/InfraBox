@@ -217,6 +217,9 @@
 -
     name: INFRABOX_ROOT_URL
     value: {{ .Values.root_url }}
+-
+    name: INFRABOX_GENERAL_REPORT_ISSUE_URL
+    value: {{ .Values.general.report_issue_url }}
 {{ end }}
 
 {{ define "env_docker_registry" }}
