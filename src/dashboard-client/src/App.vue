@@ -7,7 +7,7 @@
                 <md-icon>menu</md-icon>
             </md-button>
             <div style="width: 110px">
-                <a href="http://infrabox.net">
+                <a href="/">
                     <img src="../static/logo_white_on_transparent.png" style="flex: 1" />
                 </a>
             </div>
@@ -16,7 +16,7 @@
                 <i class="fa fa-sign-in"></i> Login
             </md-button>
             <div v-if="$store.state.user" md-right>
-                {{ $store.state.user.username }} ({{$store.state.user.email }})
+                {{ $store.state.user.username }} <div v-if="$store.state.user.email">({{ $store.state.user.email }})</div>
             </div>
         </md-toolbar>
 
@@ -120,6 +120,7 @@
 import store from './store'
 import router from './router'
 import Disconnect from './components/utils/Disconnect'
+import UserService from './services/UserService'
 
 export default {
     name: 'app',
@@ -134,8 +135,8 @@ export default {
             router.push('/login')
         },
         logout () {
+            UserService.logout()
             this.toggleLeftSidenav()
-            document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/; Max-Age=0'
             router.push('/login')
         }
     },
