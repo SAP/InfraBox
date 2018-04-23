@@ -16,7 +16,7 @@
                 <i class="fa fa-sign-in"></i> Login
             </md-button>
             <div v-if="$store.state.user" md-right>
-                {{ $store.state.user.username }} ({{$store.state.user.email }})
+                {{ $store.state.user.username }} <div v-if="$store.state.user.email">({{ $store.state.user.email }})</div>
             </div>
         </md-toolbar>
 
