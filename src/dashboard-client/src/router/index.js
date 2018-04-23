@@ -15,21 +15,40 @@ import AdminUsers from '@/components/admin/AdminUsers'
 import AdminClusters from '@/components/admin/AdminClusters'
 import AdminProjects from '@/components/admin/AdminProjects'
 
+import UserService from '../services/UserService'
+
 Vue.use(Router)
+
+let loginGuard = function (to, from, next) {
+    if (UserService.isLoggedIn()) {
+        next()
+    } else {
+        next('/login')
+    }
+}
 
 export default new Router({
     routes: [{
         path: '/',
         name: 'Overview',
-        component: Overview
+        component: Overview,
+        beforeEnter: loginGuard
     }, {
         path: '/addproject',
         name: 'addproject',
-        component: AddProject
+        component: AddProject,
+        beforeEnter: loginGuard
     }, {
         path: '/login',
         name: 'login',
-        component: Login
+        component: Login,
+        beforeEnter (to, from, next) {
+            if (UserService.isLoggedIn()) {
+                next('/')
+            } else {
+                next()
+            }
+        }
     }, {
         path: '/signup',
         name: 'signup',
@@ -37,15 +56,18 @@ export default new Router({
     }, {
         path: '/admin/projects',
         name: 'AdminProjects',
-        component: AdminProjects
+        component: AdminProjects,
+        beforeEnter: loginGuard
     }, {
         path: '/admin/users',
         name: 'AdminUsers',
-        component: AdminUsers
+        component: AdminUsers,
+        beforeEnter: loginGuard
     }, {
         path: '/admin/clusters',
         name: 'AdminClusters',
-        component: AdminClusters
+        component: AdminClusters,
+        beforeEnter: loginGuard
     }, {
         path: '/project/:projectName',
         name: 'ProjectDetailBuilds',
@@ -55,12 +77,14 @@ export default new Router({
         path: '/project/:projectName/settings',
         name: 'ProjectDetailSettings',
         component: ProjectDetailSettings,
-        props: true
+        props: true,
+        beforeEnter: loginGuard
     }, {
         path: '/project/:projectName/trigger',
         name: 'TriggerBuild',
         component: TriggerBuild,
-        props: true
+        props: true,
+        beforeEnter: loginGuard
     }, {
         path: '/project/:projectName/build/:buildNumber/:buildRestartCounter',
         name: 'BuildDetailGraph',

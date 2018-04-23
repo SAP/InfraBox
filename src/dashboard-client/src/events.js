@@ -20,31 +20,8 @@ socket.on('connect_error', (error) => {
 
 Vue.use(VueSocketio, socket)
 
-function getCookie (cname) {
-    const name = cname + '='
-    const ca = document.cookie.split(';')
-
-    for (let c of ca) {
-        while (c.charAt(0) === ' ') {
-            c = c.substring(1)
-        }
-
-        if (c.indexOf(name) === 0) {
-            return c.substring(name.length, c.length)
-        }
-    }
-    return ''
-}
-
-export function getToken () {
-    return getCookie('token')
-}
-
 export default new Vue({
     sockets: {
-        connect () {
-            this.$socket.emit('auth', getToken())
-        },
         disconnect () {
             this.$emit('DISCONNECTED')
         },
