@@ -113,14 +113,19 @@ export default {
     }),
     watch: {
         projName () {
-            var nameRegex = /^[A-Za-z0-9-_/]+$/
-
-            this.nameValid = nameRegex.test(this.projName)
-            if (this.nameValid) {
-                this.invalidMessage = 'Valid name'
-            } else {
-                this.invalidMessage = 'Name required'
+            if (this.projName.length < 3) {
+                this.invalidMessage = 'Name must be at least 3 characters long'
+                return
             }
+
+            var nameRegex = /^[A-Za-z0-9-_/]+$/
+            this.nameValid = nameRegex.test(this.projName)
+            if (!this.nameValid) {
+                this.invalidMessage = 'Only A-Z, a-z, 0-9, "_" and "-" allowed characters'
+                return
+            }
+
+            this.invalidMessage = 'Valid name'
         }
     },
     methods: {
