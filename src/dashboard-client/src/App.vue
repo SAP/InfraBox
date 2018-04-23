@@ -7,7 +7,7 @@
                 <md-icon>menu</md-icon>
             </md-button>
             <div style="width: 110px">
-                <a href="http://infrabox.net">
+                <a href="/">
                     <img src="../static/logo_white_on_transparent.png" style="flex: 1" />
                 </a>
             </div>
