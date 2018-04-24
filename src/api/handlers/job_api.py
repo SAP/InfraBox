@@ -465,8 +465,6 @@ class Archive(Resource):
         for f in request.files:
             stream = request.files[f].stream
             key = '%s/%s' % (job_id, f)
-            app.logger.error(f)
-            app.logger.error(job_id)
             storage.upload_archive(stream, key)
             size = stream.tell()
 
@@ -515,6 +513,12 @@ class Output(Resource):
             AND state = 'queued'
         ''', [job_id])
 
+        current_cluster = g.db.execute_one_dict('''
+            SELECT cluster_name
+            FROM job
+            WHERE id = %s
+        ''', [job_id])['cluster_name']
+
         clusters = set()
 
         for j in jobs:
@@ -535,7 +539,8 @@ class Output(Resource):
             WHERE active = true
             AND name = ANY (%s)
             AND name != %s
-        ''', [list(clusters), os.environ['INFRABOX_CLUSTER_NAME']])
+            AND name != %s
+        ''', [list(clusters), os.environ['INFRABOX_CLUSTER_NAME'], current_cluster])
 
         g.release_db()
 
@@ -547,9 +552,10 @@ class Output(Resource):
             files = {'output.tar.gz': stream}
             token = encode_job_token(job_id)
             headers = {'Authorization': 'bearer ' + token}
-            r = requests.post(url, files=files, headers=headers, timeout=120)
+            r = requests.post(url, files=files, headers=headers, timeout=120, verify=False)
 
             if r.status_code != 200:
+                app.logger.error(r.text)
                 abort(500, "Failed to upload data")
 
         return jsonify({})
