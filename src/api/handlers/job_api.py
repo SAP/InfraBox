@@ -25,7 +25,7 @@ from pyinfraboxutils.token import encode_job_token
 from pyinfraboxutils.ibrestplus import api
 from pyinfraboxutils.ibflask import job_token_required, app
 from pyinfraboxutils.storage import storage
-
+from pyinfraboxutils.secrets import decrypt_secret
 
 ns = api.namespace('api/job',
                    description='Job runtime related operations')
@@ -240,7 +240,7 @@ class Job(Resource):
 
             for ev in secrets:
                 if ev[0] == name:
-                    return ev[1]
+                    return decrypt_secret(ev[1])
             return None
 
         # Deployments
