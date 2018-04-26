@@ -102,4 +102,4 @@ class Collaborator(Resource):
 
         g.db.commit()
 
-        return OK('Successfully removed user')
+        return OK('Successfully removed user.')
