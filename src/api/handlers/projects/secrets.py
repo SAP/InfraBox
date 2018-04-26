@@ -37,14 +37,14 @@ class Secrets(Resource):
         b = request.get_json()
 
         if not Secrets.name_pattern.match(b['name']):
-            abort(400, 'Secret name must be not empty alphanumeric string')
+            abort(400, 'Secret name must be not empty alphanumeric string.')
 
         result = g.db.execute_one_dict('''
             SELECT COUNT(*) as cnt FROM secret WHERE project_id = %s
         ''', [project_id])
 
         if result['cnt'] > 50:
-            abort(400, 'Too many secrets')
+            abort(400, 'Too many secrets.')
 
         r = g.db.execute_one('''
                     SELECT count(*) FROM secret
@@ -52,7 +52,7 @@ class Secrets(Resource):
                 ''', [project_id, b['name']])
 
         if r[0] > 0:
-            abort(400, 'Secret with this name already exist')
+            abort(400, 'Secret with this name already exist.')
 
         g.db.execute('''
             INSERT INTO secret (project_id, name, value) VALUES(%s, %s, %s)
@@ -60,7 +60,7 @@ class Secrets(Resource):
 
         g.db.commit()
 
-        return OK('Successfully added secret')
+        return OK('Successfully added secret.')
 
 
 @ns.route('/<project_id>/secrets/<secret_id>')
@@ -72,4 +72,4 @@ class Secret(Resource):
         ''', [project_id, secret_id])
         g.db.commit()
 
-        return OK('Successfully deleted secret')
+        return OK('Successfully deleted secret.')
