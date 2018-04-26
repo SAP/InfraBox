@@ -51,7 +51,7 @@ class Tokens(Resource):
 
         g.db.commit()
 
-        return OK('Successfully added token', {'token': token})
+        return OK('Successfully added token.', {'token': token})
 
 @ns.route('/<project_id>/tokens/<token_id>')
 class Token(Resource):
@@ -59,7 +59,7 @@ class Token(Resource):
     @auth_required(['user'])
     def delete(self, project_id, token_id):
         if not validate_uuid4(token_id):
-            abort(400, "Invalid project-token uuid")
+            abort(400, "Invalid project-token uuid.")
 
         num_tokens = g.db.execute_one("""
             SELECT COUNT(*) FROM auth_token
@@ -75,4 +75,4 @@ class Token(Resource):
         """, [project_id, token_id])
         g.db.commit()
 
-        return OK('Successfully deleted token')
+        return OK('Successfully deleted token.')
