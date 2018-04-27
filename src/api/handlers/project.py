@@ -54,32 +54,6 @@ project_model = api.model('ProjectModel', {
     'public': fields.Boolean
 })
 
-@ns.route('')
-class Projects(Resource):
-
-    @auth_required(['user'])
-    def get(self):
-        b = request.get_json()
-        username = b['username']
-
-        user_id = g.db.execute_one("""
-            SELECT id
-            FROM "user"
-            WHERE username = %s
-        """, [username])[0]['id']
-
-        response = g.db.execute_many_dict("""
-            SELECT name, id, type, public
-            FROM project p
-            INNER JOIN collaborators c
-            WHERE c.project_id = p.id
-                AND c.owner = true
-                AND c.user_id = %s
-        """, [user_id])
-
-        return response
-
-
 @ns.route('/<project_id>')
 class Project(Resource):
 

@@ -16,7 +16,8 @@ logger = get_logger('project')
 project_model = api.model('Project', {
     'id': fields.String(required=True),
     'name': fields.String(required=True),
-    'type': fields.String(required=True)
+    'type': fields.String(required=True),
+    'public': fields.String(required=True)
 })
 
 add_project_schema = {
@@ -38,13 +39,14 @@ class Projects(Resource):
     @auth_required(['user'], check_project_access=False)
     @api.marshal_list_with(project_model)
     def get(self):
-        projects = g.db.execute_many_dict('''
-            SELECT p.id, p.name, p.type FROM project p
+        projects = g.db.execute_many_dict("""
+            SELECT p.id, p.name, p.type, p.public
+            FROM project p
             INNER JOIN collaborator co
             ON co.project_id = p.id
             AND %s = co.user_id
             ORDER BY p.name
-        ''', [g.token['user']['id']])
+        """, [g.token['user']['id']])
 
         return projects
 
@@ -200,7 +202,7 @@ class ProjectName(Resource):
     @api.marshal_with(project_model)
     def get(self, project_name):
         project = g.db.execute_one_dict('''
-            SELECT id, name, type
+            SELECT id, name, type, public
             FROM project
             WHERE name = %s
         ''', [project_name])
@@ -218,7 +220,7 @@ class Project(Resource):
     @api.marshal_with(project_model)
     def get(self, project_id):
         project = g.db.execute_one_dict('''
-            SELECT p.id, p.name, p.type
+            SELECT p.id, p.name, p.type, p.public
             FROM project p
             WHERE id = %s
         ''', [project_id])
