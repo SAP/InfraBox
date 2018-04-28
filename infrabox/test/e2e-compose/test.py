@@ -1,6 +1,7 @@
 import unittest
 import os
 import subprocess
+import logging
 import re
 import time
 import json
@@ -53,9 +54,18 @@ class Test(unittest.TestCase):
 
     def _api_get(self, url):
         headers = {'Authorization': 'bearer ' + os.environ['INFRABOX_CLI_TOKEN']}
-        print url
-        result = requests.get(url, headers=headers, verify=False)
-        return result
+        retries = 600
+
+        while True:
+            try:
+                return requests.get(url, headers=headers, verify=False)
+            except Exception as e:
+                logging.exception(e)
+                time.sleep(1)
+                retries -= 1
+
+                if retries < 0:
+                    raise e
 
     def _get_build(self):
         url = '%s/api/v1/projects/%s/builds/' % (self.root_url, self.project_id)
