@@ -91,12 +91,13 @@ export default class Build {
     }
 
     _updateStartDate () {
-        if (!this.startDate) {
-            this.startDate = this.jobs[0].startDate
-        }
-
         for (let j of this.jobs) {
             if (!j.startDate) {
+                continue
+            }
+
+            if (!this.startDate) {
+                this.startDate = j.startDate
                 continue
             }
 
