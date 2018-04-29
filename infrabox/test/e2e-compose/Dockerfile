@@ -1,7 +1,8 @@
 FROM alpine:3.6
 
-RUN apk add --no-cache py2-psycopg2 py2-pip py2-jwt py2-cryptography py2-requests git && \
-    pip install xmlrunner coverage pycrypto
+RUN apk add --no-cache py2-psycopg2 py2-pip py2-jwt py2-cryptography py2-requests git py2-crypto && \
+    pip install xmlrunner coverage && \
+    apk del py2-pip
 
 ENV PYTHONPATH=/infrabox/context/src
 
