@@ -34,8 +34,11 @@ spec:
                         secretKeyRef:
                             name: infrabox-admin
                             key: password
+                volumeMounts:
+                {{ include "mounts_rsa_public" . | indent 16 }}
 
             restartPolicy: OnFailure
             volumes:
                 {{ include "volumes_database" . | indent 16 }}
+                {{ include "volumes_rsa" . | indent 16 }}
 {{ end }}
