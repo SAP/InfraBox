@@ -1,6 +1,7 @@
 import unittest
 import os
 import subprocess
+import logging
 import re
 import time
 import json
@@ -10,6 +11,7 @@ import xmlrunner
 
 from pyinfraboxutils.db import connect_db
 from pyinfraboxutils.token import encode_project_token
+from pyinfraboxutils.secrets import encrypt_secret
 
 class Test(unittest.TestCase):
     job_id = '1514af82-3c4f-4bb5-b1da-a89a0ced5e6f'
@@ -33,6 +35,7 @@ class Test(unittest.TestCase):
         cur.execute('''DELETE FROM measurement''')
         cur.execute('''DELETE FROM test''')
         cur.execute('''DELETE FROM job_markup''')
+        cur.execute('''DELETE FROM secret''')
         cur.execute('''INSERT INTO "user"(id, github_id, avatar_url, name,
                             email, github_api_token, username)
                         VALUES(%s, 1, 'avatar', 'name', 'email', 'token', 'login')''', (self.user_id,))
@@ -43,7 +46,7 @@ class Test(unittest.TestCase):
         cur.execute('''INSERT INTO auth_token(project_id, id, description, scope_push, scope_pull)
                         VALUES(%s, %s, 'asd', true, true)''', (self.project_id, self.token_id,))
         cur.execute('''INSERT INTO secret(project_id, name, value)
-                        VALUES(%s, 'SECRET_ENV', 'hello world')''', (self.project_id,))
+                        VALUES(%s, 'SECRET_ENV', %s)''', (self.project_id, encrypt_secret('hello world')))
         conn.commit()
 
         os.environ['INFRABOX_CLI_TOKEN'] = encode_project_token(self.token_id, self.project_id)
@@ -51,9 +54,18 @@ class Test(unittest.TestCase):
 
     def _api_get(self, url):
         headers = {'Authorization': 'bearer ' + os.environ['INFRABOX_CLI_TOKEN']}
-        print url
-        result = requests.get(url, headers=headers, verify=False)
-        return result
+        retries = 600
+
+        while True:
+            try:
+                return requests.get(url, headers=headers, verify=False)
+            except Exception as e:
+                logging.exception(e)
+                time.sleep(1)
+                retries -= 1
+
+                if retries < 0:
+                    raise e
 
     def _get_build(self):
         url = '%s/api/v1/projects/%s/builds/' % (self.root_url, self.project_id)
