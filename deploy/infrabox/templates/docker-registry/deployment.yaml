@@ -60,7 +60,7 @@ spec:
                     value: debug
                 -
                     name: REGISTRY_STORAGE_REDIRECT_DISABLE
-                    value: true
+                    value: "true"
                 {{ if .Values.storage.s3.enabled }}
                 -
                     name: REGISTRY_STORAGE
