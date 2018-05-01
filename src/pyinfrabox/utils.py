@@ -1,3 +1,5 @@
+import uuid
+
 from builtins import int, range, str
 from past.builtins import basestring
 
@@ -49,3 +51,11 @@ def check_number(d, path):
 def check_color(d, path):
     if d not in ("red", "green", "blue", "yellow", "orange", "white", "black", "grey"):
         raise ValidationError(path, "not a valid value")
+
+def validate_uuid4(uuid_string):
+    try:
+        val = uuid.UUID(uuid_string, version=4)
+    except ValueError:
+        return False
+
+    return val.hex == uuid_string.replace('-', '')

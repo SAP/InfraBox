@@ -33,7 +33,8 @@
                             <ib-duration :start="j.startDate" :end="j.endDate"></ib-duration>
                         </md-table-cell>
                         <md-table-cell><div>{{ j.cpu }} CPU / {{ j.memory }} GiB </div></md-table-cell>
-                        <md-table-cell>{{ j.definition.cluster.name }}</md-table-cell>
+                        <md-table-cell v-if="j.definition">{{ j.definition.cluster.name }}</md-table-cell>
+                        <md-table-cell v-if="!j.definition">master</md-table-cell>
                     </md-table-row>
                 </md-table-body>
             </md-table>

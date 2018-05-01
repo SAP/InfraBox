@@ -14,6 +14,7 @@ from flask_restplus import Resource
 
 from werkzeug.datastructures import FileStorage
 
+from pyinfrabox.utils import validate_uuid4
 from pyinfrabox.badge import validate_badge
 from pyinfrabox.markup import validate_markup
 from pyinfrabox.testresult import validate_result
@@ -24,20 +25,13 @@ from pyinfraboxutils.token import encode_job_token
 from pyinfraboxutils.ibrestplus import api
 from pyinfraboxutils.ibflask import job_token_required, app
 from pyinfraboxutils.storage import storage
+from pyinfraboxutils.secrets import decrypt_secret
 
 ns = api.namespace('api/job',
                    description='Job runtime related operations')
 
 def allowed_file(filename, extensions):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in extensions
-
-def validate_uuid4(uuid_string):
-    try:
-        val = uuid.UUID(uuid_string, version=4)
-    except ValueError:
-        return False
-
-    return val.hex == uuid_string.replace('-', '')
 
 def delete_file(path):
     if os.path.exists(path):
@@ -246,7 +240,7 @@ class Job(Resource):
 
             for ev in secrets:
                 if ev[0] == name:
-                    return ev[1]
+                    return decrypt_secret(ev[1])
             return None
 
         # Deployments
@@ -343,11 +337,16 @@ class Job(Resource):
                                                          data['project']['id'],
                                                          data['job']['id'])
 
+        build_api_url = "%s/api/v1/projects/%s/builds/%s" % (os.environ['INFRABOX_ROOT_URL'],
+                                                             data['project']['id'],
+                                                             data['build']['id'])
+
         data['env_vars'] = {
             "TERM": "xterm-256color",
             "INFRABOX_JOB_ID": data['job']['id'],
             "INFRABOX_JOB_URL": job_url,
             "INFRABOX_JOB_API_URL": job_api_url,
+            "INFRABOX_BUILD_API_URL": build_api_url,
             "INFRABOX_BUILD_NUMBER": "%s" % data['build']['build_number'],
             "INFRABOX_BUILD_RESTART_COUNTER": "%s" % data['build']['restart_counter'],
             "INFRABOX_BUILD_URL": build_url,
@@ -466,8 +465,6 @@ class Archive(Resource):
         for f in request.files:
             stream = request.files[f].stream
             key = '%s/%s' % (job_id, f)
-            app.logger.error(f)
-            app.logger.error(job_id)
             storage.upload_archive(stream, key)
             size = stream.tell()
 
@@ -516,6 +513,12 @@ class Output(Resource):
             AND state = 'queued'
         ''', [job_id])
 
+        current_cluster = g.db.execute_one_dict('''
+            SELECT cluster_name
+            FROM job
+            WHERE id = %s
+        ''', [job_id])['cluster_name']
+
         clusters = set()
 
         for j in jobs:
@@ -536,7 +539,8 @@ class Output(Resource):
             WHERE active = true
             AND name = ANY (%s)
             AND name != %s
-        ''', [list(clusters), os.environ['INFRABOX_CLUSTER_NAME']])
+            AND name != %s
+        ''', [list(clusters), os.environ['INFRABOX_CLUSTER_NAME'], current_cluster])
 
         g.release_db()
 
@@ -548,9 +552,10 @@ class Output(Resource):
             files = {'output.tar.gz': stream}
             token = encode_job_token(job_id)
             headers = {'Authorization': 'bearer ' + token}
-            r = requests.post(url, files=files, headers=headers, timeout=120)
+            r = requests.post(url, files=files, headers=headers, timeout=120, verify=False)
 
             if r.status_code != 200:
+                app.logger.error(r.text)
                 abort(500, "Failed to upload data")
 
         return jsonify({})
