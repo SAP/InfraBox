@@ -1,37 +1,50 @@
 import os
 import bcrypt
+import importlib
 
 from pyinfraboxutils import get_logger, get_env, print_stackdriver
 from pyinfraboxutils.db import connect_db
 
 logger = get_logger("migrate")
 
-def get_sql_files(current_schema_version):
+def get_files(current_schema_version):
     dir_path = os.path.dirname(os.path.realpath(__file__))
     migration_path = os.path.join(dir_path, 'migrations')
 
-    files = [f for f in os.listdir(migration_path) if os.path.isfile(os.path.join(migration_path, f))]
+    files = [f for f in os.listdir(migration_path) if os.path.isfile(os.path.join(migration_path, f)) and f.startswith('0')]
 
-    files.sort(key=lambda f: int(f[:-4]))
+    files.sort(key=lambda f: int(f[:5]))
     files = files[current_schema_version:]
 
-    return [(os.path.join(migration_path, f), int(f[:-4])) for f in files]
+    return [(os.path.join(migration_path, f), int(f[:5])) for f in files]
 
 def apply_migration(conn, migration):
-    logger.info("Starting to apply migration %s", migration[1])
-    with open(migration[0]) as sql_file:
-        sql = sql_file.read().strip()
+    filename = migration[0]
+    logger.info("Starting to apply migration %s", filename)
 
-        cur = conn.cursor()
-        if sql:
-            cur.execute(sql)
+    if filename.endswith('.sql'):
+        with open(migration[0]) as sql_file:
+            sql = sql_file.read().strip()
 
-        cur.execute('UPDATE infrabox SET schema_version = %s', (migration[1],))
-        cur.close()
-        conn.commit()
+            cur = conn.cursor()
+            if sql:
+                cur.execute(sql)
+
+            cur.close()
+    elif filename.endswith('.py'):
+        module_name = os.path.basename(filename)[:-3]
+        m = importlib.import_module('migrations.%s' % module_name)
+        m.migrate(conn)
+    else:
+        raise Exception('Unsupported migration file type: %s' % filename)
+
+    cur = conn.cursor()
+    cur.execute('UPDATE infrabox SET schema_version = %s', (migration[1],))
+    cur.close()
+    conn.commit()
 
 def apply_migrations(conn, current_schema_version):
-    migrations = get_sql_files(current_schema_version)
+    migrations = get_files(current_schema_version)
     if not migrations:
         logger.info("No migration neccessary")
         return

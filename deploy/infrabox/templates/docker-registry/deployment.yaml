@@ -58,6 +58,9 @@ spec:
                 -
                     name: REGISTRY_LOG_LEVEL
                     value: debug
+                -
+                    name: REGISTRY_STORAGE_REDIRECT_DISABLE
+                    value: "true"
                 {{ if .Values.storage.s3.enabled }}
                 -
                     name: REGISTRY_STORAGE

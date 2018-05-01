@@ -64,6 +64,7 @@ export default {
     methods: {
         addCollaborator () {
             this.project.addCollaborator(this.username)
+            this.username = ''
         }
     }
 }
