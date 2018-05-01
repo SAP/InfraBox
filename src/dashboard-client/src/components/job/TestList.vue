@@ -4,7 +4,7 @@
             <md-table class="min-medium" @sort="sort">
                 <md-table-header>
                     <md-table-row>
-                        <md-table-head md-sort-by="test">Test</md-table-head>
+                        <md-table-head md-sort-by="name">Test</md-table-head>
                         <md-table-head md-sort-by="suite">Suite</md-table-head>
                         <md-table-head md-sort-by="duration">Duration</md-table-head>
                         <md-table-head md-sort-by="result">Result</md-table-head>
@@ -52,6 +52,7 @@ export default {
     },
     created () {
         this.job.loadTests().then(() => {
+            this.job.tests = _.sortBy(this.job.tests, (j) => { return j['name'] })
             this.onPagination({ size: this.size, page: this.page })
         })
     },
@@ -72,18 +73,14 @@ export default {
             this.tests = this.job.tests.slice(s, e)
         },
         sort (opt) {
-            if (opt.type === 'asc') {
-                this.job.tests = _(this.job.tests)
-                    .chain()
-                    .sortBy((j) => { return j[opt.name] })
-                    .value()
-            } else {
-                this.job.tests = _(this.job.tests)
-                    .chain()
-                    .sortBy((j) => { return j[opt.name] })
-                    .value()
-                    .reverse()
+            this.page = 1
+
+            this.job.tests = _.sortBy(this.job.tests, (j) => { return j[opt.name] })
+
+            if (opt.type === 'desc') {
+                this.job.tests = this.job.tests.reverse()
             }
+
             this.onPagination({ size: this.size, page: this.page })
         }
     }

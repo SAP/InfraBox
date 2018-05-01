@@ -337,9 +337,7 @@ class Kubernetes(Install):
         self.set('github.trigger.tag', self.args.version)
         self.set('github.api.tag', self.args.version)
         self.set('github.review.tag', self.args.version)
-
-        if self.args.github_login_allowed_organizations:
-            self.set('github.login.allowed_organizations', self.args.github_login_allowed_organizations)
+        self.set('github.login.allowed_organizations', self.args.github_login_allowed_organizations)
 
         secret = {
             "client_id": self.args.github_client_id,
@@ -374,6 +372,7 @@ class Kubernetes(Install):
         self.set('general.worker_namespace', self.args.general_worker_namespace)
         self.set('general.system_namespace', self.args.general_system_namespace)
         self.set('general.rbac.enabled', not self.args.general_rbac_disabled)
+        self.set('general.report_issue_url', self.args.general_report_issue_url)
         self.set('root_url', self.args.root_url)
 
         self.check_file_exists(self.args.general_rsa_private_key)
@@ -483,7 +482,11 @@ class DockerCompose(Install):
 
 
     def setup_api(self):
-        self.config.append('services.api.environment', ['INFRABOX_ROOT_URL=%s' % self.args.root_url])
+        self.config.append('services.api.environment', [
+            'INFRABOX_ROOT_URL=%s' % self.args.root_url,
+            'INFRABOX_GENERAL_REPORT_ISSUE_URL=%s' % self.args.general_report_issue_url
+        ])
+
         self.config.add('services.api.image',
                         '%s/api:%s' % (self.args.docker_registry, self.args.version))
 
@@ -705,6 +708,7 @@ def main():
     parser.add_argument('--general-rsa-public-key')
     parser.add_argument('--general-rsa-private-key')
     parser.add_argument('--general-rbac-disabled', action='store_true', default=False)
+    parser.add_argument('--general-report-issue-url', default='https://github.com/InfraBox/infrabox/issues')
 
     # Database configuration
     parser.add_argument('--database',
@@ -764,7 +768,7 @@ def main():
     parser.add_argument('--github-api-url', default='https://api.github.com')
     parser.add_argument('--github-login-enabled', action='store_true', default=False)
     parser.add_argument('--github-login-url', default='https://github.com/login')
-    parser.add_argument('--github-login-allowed-organizations', default=None)
+    parser.add_argument('--github-login-allowed-organizations', default="")
 
     # TLS
     parser.add_argument('--ingress-tls-disabled', action='store_true', default=False)

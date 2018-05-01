@@ -1,7 +1,7 @@
 from flask import g, abort
 from flask_restplus import Resource
 
-from pyinfraboxutils.ibflask import auth_required
+from pyinfraboxutils.ibflask import auth_required, OK
 from pyinfraboxutils.ibrestplus import api
 
 ns = api.namespace('api/v1/user',

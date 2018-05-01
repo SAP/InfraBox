@@ -130,7 +130,7 @@
     value: {{ default "https://github.com/login" .Values.github.login.url }}
 -
     name: INFRABOX_GITHUB_LOGIN_ALLOWED_ORGANIZATIONS
-    value: {{ default "false" .Values.github.login.allowed_organizations | quote }}
+    value: {{ default "" .Values.github.login.allowed_organizations | quote }}
 {{ end }}
 {{ end }}
 
@@ -217,6 +217,9 @@
 -
     name: INFRABOX_ROOT_URL
     value: {{ .Values.root_url }}
+-
+    name: INFRABOX_GENERAL_REPORT_ISSUE_URL
+    value: {{ .Values.general.report_issue_url }}
 {{ end }}
 
 {{ define "env_docker_registry" }}
