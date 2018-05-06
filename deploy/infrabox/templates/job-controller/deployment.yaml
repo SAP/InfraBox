@@ -1,0 +1,48 @@
+{{ if .Values.job-controller.enabled }}
+
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+    name: infrabox-job-controller
+    namespace: {{ default "infrabox-system" .Values.general.system_namespace }}
+    labels:
+        app: infrabox-job-controller
+spec:
+    replicas: 1
+    template:
+        metadata:
+            labels:
+                app: infrabox-job-controller
+        spec:
+            {{ if .Values.general.rbac.enabled }}
+            serviceAccountName: infrabox-scheduler
+            {{ end }}
+            containers:
+            {{ include "containers_database" . | indent 12 }}
+            -
+                name: job-controller
+                image: {{ required "general.docker_registry is required" .Values.general.docker_registry }}/{{ default "job-controller" .Values.job-controller.image }}:{{ required "job-controller.tag is required" .Values.job-controller.tag }}
+                imagePullPolicy: Always
+                env:
+                {{ include "env_gerrit" . | indent 16 }}
+                {{ include "env_local_cache" . | indent 16 }}
+                {{ include "env_job" . | indent 16 }}
+                {{ include "env_general" . | indent 16 }}
+                {{ include "env_kubernetes" . | indent 16 }}
+                -
+                    name: INFRABOX_ROOT_URL
+                    value: {{ required "root_url is required" .Values.root_url }}
+                -
+                    name: INFRABOX_SERVICE
+                    value: {{ default "job-controller" .Values.job-controller.image }}
+                -
+                    name: INFRABOX_VERSION
+                    value: {{ required "job-controller.tag is required" .Values.job-controller.tag }}
+                volumeMounts:
+                -
+                    mountPath: /etc/docker
+                    name: dockerd-config
+                {{ include "mounts_rsa_private" . | indent 16 }}
+            volumes:
+                {{ include "volumes_rsa" . | indent 16 }}
+{{ end }}

@@ -7,6 +7,7 @@ WORKDIR /go/src/github.com/infrabox/infrabox/src/job-controller
 COPY src/job-controller .
 
 RUN godep restore
+RUN ./hack/update-codegen.sh
 RUN go build
 
 FROM alpine:3.6
