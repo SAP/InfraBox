@@ -433,6 +433,38 @@ func (c *Controller) deleteJob(job *jobv1alpha1.Job) error {
 	return nil
 }
 
+func (c *Controller) getServiceUrl(job *jobv1alpha1.Service) (string, error) {
+
+}
+
+func (c *Controller) provisionServices(service *jobv1alpha1.Service) (bool, error) {
+    url, err := c.getServiceUrl(service)
+}
+
+func (c *Controller) provisionServices(job *jobv1alpha1.Job) (bool, error) {
+    if job.Spec.Services == nil {
+        return true, nil
+    }
+
+	glog.Infof("%s/%s: Provision additional services", job.Namespace, job.Name)
+
+    ready := true
+    for _, s := range job.Spec.Services {
+        r, err := c.provosionService(s)
+
+        if err != nil {
+            return false, nil
+        }
+
+        if r {
+            glog.Infof("%s/%s: Service %s/%s ready", job.Namespace, job.Name, s.ApiVersion, s.Kind)
+        } else {
+            ready = false
+            glog.Infof("%s/%s: Service %s/%s not yet ready", job.Namespace, job.Name, s.ApiVersion, s.Kind)
+        }
+    }
+}
+
 func (c *Controller) createJob(job *jobv1alpha1.Job) error {
 	glog.Infof("%s/%s: Creating Batch Job", job.Namespace, job.Name)
 

@@ -191,11 +191,25 @@ def parse_security_context(d, path):
     if 'privileged' in d:
         check_boolean(d['privileged'], path + ".privileged")
 
-def parse_resources_kubernetes(d, path):
-    check_allowed_properties(d, path, ('limits',))
-    check_required_properties(d, path, ("limits",))
+def parse_services(d, path):
+    if not isinstance(d, list):
+        raise ValidationError(path, "must be an array")
 
-    parse_kubernetes_limits(d['limits'], path + ".limits")
+    names = []
+
+    for i in range(0, len(d)):
+        elem = d[i]
+        p = "%s[%s]" % (path, i)
+
+        check_required_properties(elem, p, ("apiVersion", "kind", "metadata"))
+        check_required_properties(elem['metadata'], p + ".metadata", ("name", ))
+
+        name = elem['metadata']['name']
+
+        if name in names:
+            raise ValidationError(p, "duplicate service name found: %s" % name)
+
+        names.append(name)
 
 def parse_resources(d, path):
     check_allowed_properties(d, path, ("limits", "kubernetes"))
@@ -207,11 +221,14 @@ def parse_docker_image(d, path):
     check_allowed_properties(d, path, ("type", "name", "image", "depends_on", "resources",
                                        "environment", "timeout", "security_context",
                                        "build_context", "cache", "repository", "command",
-                                       "cluster", "registries"))
+                                       "cluster", "registries", "services"))
     check_required_properties(d, path, ("type", "name", "image", "resources"))
     check_name(d['name'], path + ".name")
     check_text(d['image'], path + ".image")
     parse_resources(d['resources'], path + ".resources")
+
+    if 'services' in d:
+        parse_services(d['services'], path + ".services")
 
     if 'cluster' in d:
         parse_cluster(d['cluster'], path + ".cluster")
@@ -247,11 +264,14 @@ def parse_docker(d, path):
     check_allowed_properties(d, path, ("type", "name", "docker_file", "depends_on", "resources",
                                        "build_only", "environment",
                                        "build_arguments", "deployments", "timeout", "security_context",
-                                       "build_context", "cache", "repository", "cluster"))
+                                       "build_context", "cache", "repository", "cluster", "services"))
     check_required_properties(d, path, ("type", "name", "docker_file", "resources"))
     check_name(d['name'], path + ".name")
     check_text(d['docker_file'], path + ".docker_file")
     parse_resources(d['resources'], path + ".resources")
+
+    if 'services' in d:
+        parse_services(d['services'], path + ".services")
 
     if 'cluster' in d:
         parse_cluster(d['cluster'], path + ".cluster")
