@@ -5,7 +5,6 @@ src/api/dist/*
 src/dashboard-client/node_modules/*
 src/dashboard-client/dist/*
 .vscode/*
-.git/*
 *.swp
 *.pyc
 .infrabox*
