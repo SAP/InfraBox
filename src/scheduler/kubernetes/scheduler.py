@@ -47,9 +47,8 @@ class Scheduler(object):
                         '/apis/infrabox.net/v1alpha1/namespaces/%s/jobs/%s' % (self.namespace, job_id,),
                         headers=h, params=p, timeout=5)
 
-    def kube_job(self, job_id, cpu, mem, additional_env=None):
+    def kube_job(self, job_id, cpu, mem, additional_env=None, services=None):
         h = {'Authorization': 'Bearer %s' % self.args.token}
-
         job = {
             'apiVersion': 'infrabox.net/v1alpha1',
             'kind': 'Job',
@@ -63,7 +62,8 @@ class Scheduler(object):
                         'cpu': cpu
                     }
                 },
-                'env': additional_env
+                'env': additional_env,
+                'services': services,
             }
         }
 
@@ -210,7 +210,7 @@ class Scheduler(object):
                          headers=h, timeout=5)
 
         if r.status_code != 200:
-            self.logger.warn("Failed to get service account secret: %s", r.txt)
+            self.logger.warn("Failed to get service account secret: %s", r.text)
             return False
 
         data = r.json()
@@ -228,13 +228,13 @@ class Scheduler(object):
     def schedule_job(self, job_id, cpu, memory):
         cursor = self.conn.cursor()
         cursor.execute('''
-            SELECT j.type, build_id, resources FROM job j WHERE j.id = %s
+            SELECT j.type, build_id, resources, definition FROM job j WHERE j.id = %s
         ''', (job_id,))
         j = cursor.fetchone()
         cursor.close()
 
-        build_id = j[1]
         resources = j[2]
+        definition = j[3]
 
         cpu -= 0.2
 
@@ -255,7 +255,12 @@ class Scheduler(object):
 
         self.logger.info("Scheduling job to kubernetes")
 
-        if not self.kube_job(job_id, cpu, memory, additional_env=additional_env):
+        services = None
+
+        if definition and 'services' in definition:
+            services = definition['services']
+
+        if not self.kube_job(job_id, cpu, memory, additional_env=additional_env, services=services):
             return
 
         cursor = self.conn.cursor()

@@ -864,6 +864,10 @@ class CreateJobs(Resource):
             if 'resources' in job:
                 resources = json.dumps(job['resources'])
 
+            if 'services' in job:
+                for s in job['services']:
+                    s['id'] = str(uuid.uuid4())
+
             # Create job
             g.db.execute("""
                          INSERT INTO job (id, state, build_id, type, dockerfile, name,
