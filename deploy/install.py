@@ -577,14 +577,8 @@ def main():
         print "%s does already exist" % args.o
         sys.exit(1)
 
-    if args.platform == 'docker-compose':
-        d = DockerCompose(args)
-        d.main()
-    elif args.platform == 'kubernetes':
-        k = Kubernetes(args)
-        k.main()
-    else:
-        raise Exception("unknown platform")
+    k = Kubernetes(args)
+    k.main()
 
 if __name__ == '__main__':
     main()

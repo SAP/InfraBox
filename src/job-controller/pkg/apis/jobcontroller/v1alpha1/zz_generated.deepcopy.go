@@ -21,6 +21,7 @@ limitations under the License.
 package v1alpha1
 
 import (
+	v1 "k8s.io/api/core/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -89,6 +90,13 @@ func (in *JobList) DeepCopyObject() runtime.Object {
 func (in *JobSpec) DeepCopyInto(out *JobSpec) {
 	*out = *in
 	in.Resources.DeepCopyInto(&out.Resources)
+	if in.Env != nil {
+		in, out := &in.Env, &out.Env
+		*out = make([]v1.EnvVar, len(*in))
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
+	}
 	return
 }
 

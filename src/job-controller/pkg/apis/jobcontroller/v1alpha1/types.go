@@ -17,8 +17,8 @@ type Job struct {
 }
 
 type JobSpec struct {
-	Type      string                      `json:"type"`
 	Resources corev1.ResourceRequirements `json:"resources,omitempty" protobuf:"bytes,8,opt,name=resources"`
+    Env []corev1.EnvVar `json:"env,omitempty" patchStrategy:"merge" patchMergeKey:"name" protobuf:"bytes,7,rep,name=env"`
 }
 
 type JobStatus struct {
