@@ -106,7 +106,6 @@ To create a very basic configuration use:
 
     python deploy/install.py \
         -o /tmp/infrabox-configuration \
-        --platform kubernetes \
         --general-rsa-public-key ./id_rsa.pem \
         --general-rsa-private-key ./id_rsa \
         --root-url https://<YOUR_DOMAIN_NAME> \

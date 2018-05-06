@@ -142,7 +142,6 @@ _installInfrabox() {
     rm -rf $outdir
     python /infrabox/context/deploy/install.py \
         -o $outdir \
-        --platform kubernetes \
         --general-dont-check-certificates \
         --version $IMAGE_TAG \
         --root-url https://$ROOT_URL \

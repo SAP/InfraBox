@@ -1,8 +1,12 @@
 package main
 
 import (
+	"crypto/rsa"
 	"fmt"
+	jwt "github.com/dgrijalva/jwt-go"
+	"io/ioutil"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/golang/glog"
@@ -75,6 +79,11 @@ func NewController(
 	eventBroadcaster.StartRecordingToSink(&typedcorev1.EventSinkImpl{Interface: kubeclientset.CoreV1().Events("")})
 	recorder := eventBroadcaster.NewRecorder(scheme.Scheme, corev1.EventSource{Component: controllerAgentName})
 
+	data, err := ioutil.ReadFile("/etc/docker/daemon.json")
+	if err != nil {
+		panic(err)
+	}
+
 	controller := &Controller{
 		kubeclientset:                kubeclientset,
 		jobclientset:                 jobclientset,
@@ -88,10 +97,10 @@ func NewController(
 		localCacheEnabled:            os.Getenv("INFRABOX_LOCAL_CACHE_ENABLED"),
 		jobMaxOutputSize:             os.Getenv("INFRABOX_JOB_MAX_OUTPUT_SIZE"),
 		jobMountdockerSocket:         os.Getenv("INFRABOX_JOB_MOUNT_DOCKER_SOCKET"),
-		daemonJSON:                   os.Getenv("INFRABOX_JOB_DAEMON_JSON"),
+		daemonJSON:                   string(data),
 		rootURL:                      os.Getenv("INFRABOX_ROOT_URL"),
-		tag:                          os.Getenv("INFRABOX_TAG"),
-		dockerRegistry:               os.Getenv("INFRABOX_DOCKER_REGISTRY"),
+		tag:                          os.Getenv("INFRABOX_VERSION"),
+		dockerRegistry:               os.Getenv("INFRABOX_GENERAL_DOCKER_REGISTRY"),
 		localCacheHostPath:           os.Getenv("INFRABOX_LOCAL_CACHE_HOST_PATH"),
 		gerritEnabled:                os.Getenv("INFRABOX_GERRIT_ENABLED"),
 	}
@@ -203,7 +212,7 @@ func (c *Controller) syncHandler(key string) error {
 	return c.syncHandlerImpl(*job.DeepCopy())
 }
 
-func (c *Controller) newBatchJob(job *jobv1alpha1.Job) *batchv1.Job {
+func (c *Controller) newBatchJob(job *jobv1alpha1.Job, token string) *batchv1.Job {
 	volumes := []corev1.Volume{
 		corev1.Volume{
 			Name: "data-dir",
@@ -223,6 +232,9 @@ func (c *Controller) newBatchJob(job *jobv1alpha1.Job) *batchv1.Job {
 			Name:      "repo",
 		},
 	}
+
+	mem, _ := job.Spec.Resources.Limits.Memory().AsInt64()
+    mem = mem / 1024 / 1024
 
 	env := []corev1.EnvVar{
 		corev1.EnvVar{
@@ -271,11 +283,11 @@ func (c *Controller) newBatchJob(job *jobv1alpha1.Job) *batchv1.Job {
 		},
 		corev1.EnvVar{
 			Name:  "INFRABOX_JOB_TOKEN",
-			Value: "", // encode_job_token(job_id).decode()
+			Value: token,
 		},
 		corev1.EnvVar{
 			Name:  "INFRABOX_JOB_RESOURCES_LIMITS_MEMORY",
-			Value: job.Spec.Resources.Limits.Memory().String(),
+			Value: strconv.FormatInt(mem, 10),
 		},
 		corev1.EnvVar{
 			Name:  "INFRABOX_JOB_RESOURCES_LIMITS_CPU",
@@ -283,7 +295,7 @@ func (c *Controller) newBatchJob(job *jobv1alpha1.Job) *batchv1.Job {
 		},
 	}
 
-	// TODO: additional env
+    env = append(env, job.Spec.Env...)
 
 	if c.localCacheEnabled == "true" {
 		volumes = append(volumes, corev1.Volume{
@@ -355,7 +367,6 @@ func (c *Controller) newBatchJob(job *jobv1alpha1.Job) *batchv1.Job {
 		Name:            "run-job",
 		ImagePullPolicy: "Always",
 		Image:           c.dockerRegistry + "/job:" + c.tag,
-		Command:         []string{"/usr/local/bin/entrypoint.sh", "--type", job.Spec.Type},
 		SecurityContext: &corev1.SecurityContext{
 			Privileged: &t,
 		},
@@ -424,7 +435,42 @@ func (c *Controller) deleteJob(job *jobv1alpha1.Job) error {
 
 func (c *Controller) createJob(job *jobv1alpha1.Job) error {
 	glog.Infof("%s/%s: Creating Batch Job", job.Namespace, job.Name)
-	_, err := c.kubeclientset.BatchV1().Jobs(job.Namespace).Create(c.newBatchJob(job))
+
+	keyPath := os.Getenv("INFRABOX_RSA_PRIVATE_KEY_PATH")
+
+	if keyPath == "" {
+		keyPath = "/var/run/secrets/infrabox.net/rsa/id_rsa"
+	}
+
+	var signKey *rsa.PrivateKey
+
+	signBytes, err := ioutil.ReadFile(keyPath)
+	if err != nil {
+		runtime.HandleError(fmt.Errorf("%s/%s: Failed to creat token", job.Namespace, job.Name))
+		return err
+	}
+
+	signKey, err = jwt.ParseRSAPrivateKeyFromPEM(signBytes)
+	if err != nil {
+		runtime.HandleError(fmt.Errorf("%s/%s: Failed to creat token", job.Namespace, job.Name))
+		return err
+	}
+
+	t := jwt.NewWithClaims(jwt.GetSigningMethod("RS256"), jwt.MapClaims{
+		"job": map[string]string{
+			"id": job.Name,
+		},
+		"type": "job",
+	})
+
+	token, err := t.SignedString(signKey)
+
+	if err != nil {
+		runtime.HandleError(fmt.Errorf("%s/%s: Failed to creat token", job.Namespace, job.Name))
+		return err
+	}
+
+	_, err = c.kubeclientset.BatchV1().Jobs(job.Namespace).Create(c.newBatchJob(job, token))
 
 	if err != nil {
 		runtime.HandleError(fmt.Errorf("%s/%s: Failed to create job: %s", job.Namespace, job.Name, err.Error()))

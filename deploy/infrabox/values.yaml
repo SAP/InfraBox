@@ -42,7 +42,7 @@ db:
     # Tag
     tag: latest
 
-scheduler:
+job_controller:
     # name of the job-controller image in your general.docker_registry
     # image: job-controller
 

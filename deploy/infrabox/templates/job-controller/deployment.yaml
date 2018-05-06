@@ -1,5 +1,3 @@
-{{ if .Values.job-controller.enabled }}
-
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
@@ -21,7 +19,7 @@ spec:
             {{ include "containers_database" . | indent 12 }}
             -
                 name: job-controller
-                image: {{ required "general.docker_registry is required" .Values.general.docker_registry }}/{{ default "job-controller" .Values.job-controller.image }}:{{ required "job-controller.tag is required" .Values.job-controller.tag }}
+                image: {{ required "general.docker_registry is required" .Values.general.docker_registry }}/{{ default "job-controller" .Values.job_controller.image }}:{{ required "job_controller.tag is required" .Values.job_controller.tag }}
                 imagePullPolicy: Always
                 env:
                 {{ include "env_gerrit" . | indent 16 }}
@@ -34,10 +32,10 @@ spec:
                     value: {{ required "root_url is required" .Values.root_url }}
                 -
                     name: INFRABOX_SERVICE
-                    value: {{ default "job-controller" .Values.job-controller.image }}
+                    value: {{ default "job-controller" .Values.job_controller.image }}
                 -
                     name: INFRABOX_VERSION
-                    value: {{ required "job-controller.tag is required" .Values.job-controller.tag }}
+                    value: {{ required "job_controller.tag is required" .Values.job_controller.tag }}
                 volumeMounts:
                 -
                     mountPath: /etc/docker
@@ -45,4 +43,7 @@ spec:
                 {{ include "mounts_rsa_private" . | indent 16 }}
             volumes:
                 {{ include "volumes_rsa" . | indent 16 }}
-{{ end }}
+                -
+                    name: dockerd-config
+                    configMap:
+                        name: infrabox-dockerd-config
