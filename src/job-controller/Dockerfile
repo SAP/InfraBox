@@ -7,7 +7,6 @@ COPY . /go/src/github.com/infrabox/infrabox/
 
 WORKDIR /go/src/github.com/infrabox/infrabox/src/job-controller
 
-RUN go get
 RUN godep restore
 RUN ./hack/update-codegen.sh
 RUN go build
