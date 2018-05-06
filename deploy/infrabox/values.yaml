@@ -43,6 +43,13 @@ db:
     tag: latest
 
 scheduler:
+    # name of the job-controller image in your general.docker_registry
+    # image: job-controller
+
+    # Tag
+    tag: latest
+
+scheduler:
     enabled: true
 
     # name of the scheduler image in your general.docker_registry

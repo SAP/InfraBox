@@ -20,7 +20,6 @@ InfraBox is built on InfraBox. See all the builds [here](https://infrabox.ninja/
 ## Install InfraBox
 You have multiple options to install InfraBox:
 
-- [Docker Compose (For local testing)](docs/install_docker_compose.md)
 - [Kubernetes Engine (GCP, Deployment Manager)](deploy/gcp/deployment_manager/)
 - [Kubernetes Engine (GCP, manual configuration)](docs/install_gcloud.md)
 
