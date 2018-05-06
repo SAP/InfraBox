@@ -3,8 +3,9 @@ FROM golang:1.10-alpine AS build-env
 RUN apk add --no-cache git bash
 RUN go get github.com/tools/godep
 
+COPY . /go/src/github.com/infrabox/infrabox/
+
 WORKDIR /go/src/github.com/infrabox/infrabox/src/job-controller
-COPY src/job-controller .
 
 RUN go get
 RUN godep restore
