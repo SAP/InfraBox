@@ -23,13 +23,20 @@ type JobSpec struct {
 }
 
 type Service struct {
-	ApiVersion string `json:"apiVersion"`
-	Kind string `json:"kind"`
-    Spec map[string]interface{} `json:"spec,omitempty"`
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+    Spec map[string]string `json:"spec,omitempty"`
+	Status ServiceStatus `json:"status"`
+}
+
+type ServiceStatus struct {
+	Status string `json:"status"`
+    Message string `json:"message"`
 }
 
 type JobStatus struct {
 	Status string `json:"status"`
+	Message string `json:"message"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

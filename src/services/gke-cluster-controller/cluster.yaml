@@ -1,0 +1,15 @@
+apiVersion: gke.infrabox.net/v1alpha1
+kind: Cluster
+metadata:
+  name: test-cluster-local
+spec:
+    infrabox:
+        secretName: "my-test-secret"
+    #diskSize: 100
+    #machineType: "n1-standard-1"
+    #enableNetworkPolicy: false
+    numNodes: 1
+    #preemptible: true
+    #enableAutoscaling: false
+    #maxNodes: 1
+    #minNodes: 1
