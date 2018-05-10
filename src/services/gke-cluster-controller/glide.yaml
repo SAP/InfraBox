@@ -1,4 +1,4 @@
-package: github.com/infrabox/infrabox/src/job-controller
+package: github.com/infrabox/infrabox/src/services/gke-cluster-controller
 import:
 - package: github.com/dgrijalva/jwt-go
 - package: github.com/golang/glog
