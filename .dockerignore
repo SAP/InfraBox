@@ -9,3 +9,7 @@ src/dashboard-client/dist/*
 *.pyc
 .infrabox*
 !.infrabox/inputs
+src/job-controller/vendor
+src/job-controller/job-controller
+src/services/gke-cluster-controller/vendor
+src/services/gke-cluster-controller/gke-cluster-controller

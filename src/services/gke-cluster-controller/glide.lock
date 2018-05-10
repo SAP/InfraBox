@@ -1,5 +1,5 @@
-hash: f9827ad7f51ce57cf228db37049053a9dd6a339c5b2c5485779ce39ec69c7faa
-updated: 2018-05-10T10:20:45.623417909+02:00
+hash: 974fa2549b5fc24fd0f69d88220dd46335620c525091198034f332510030a6ba
+updated: 2018-05-10T11:43:00.015047352+02:00
 imports:
 - name: github.com/davecgh/go-spew
   version: 782f4967f2dc4564575ca782fe2d04090b5faca8
@@ -156,7 +156,7 @@ imports:
   - third_party/forked/golang/json
   - third_party/forked/golang/reflect
 - name: k8s.io/client-go
-  version: 23781f4d6632d88e869066eaebb743857aa1ef9b
+  version: 33f2870a2b83179c823ddc90e5513f9e5fe43b38
   subpackages:
   - discovery
   - discovery/fake

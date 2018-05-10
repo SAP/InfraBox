@@ -7,7 +7,7 @@ COPY . /go/src/github.com/infrabox/infrabox/
 
 WORKDIR /go/src/github.com/infrabox/infrabox/src/job-controller
 
-RUN glide update
+RUN glide install
 RUN ./hack/update-codegen.sh
 RUN go build
 
