@@ -33,6 +33,7 @@ IMAGES = [
     {'name': 'docker-registry-nginx'},
     {'name': 'db'},
     {'name': 'postgres'},
+    {'name': 'service-gke-cluster'},
 ]
 
 def execute(command, cwd=None, env=None, ignore_error=False, ignore_output=False):

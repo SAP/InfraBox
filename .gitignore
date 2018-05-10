@@ -38,3 +38,5 @@ src/pyinfrabox/.coverage
 src/pyinfrabox/coverage.xml
 src/pyinfrabox/results.xml
 src/job-controller/pkg/client
+src/job-controller/job-controller
+src/job-controller/vendor

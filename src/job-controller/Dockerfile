@@ -1,15 +1,14 @@
 FROM golang:1.10-alpine AS build-env
 
-RUN apk add --no-cache git bash
-RUN go get github.com/tools/godep
+RUN apk add --no-cache git bash curl
+RUN curl https://glide.sh/get | sh
 
 COPY . /go/src/github.com/infrabox/infrabox/
 
 WORKDIR /go/src/github.com/infrabox/infrabox/src/job-controller
 
-RUN godep restore
+RUN glide update
 RUN ./hack/update-codegen.sh
-RUN go get
 RUN go build
 
 FROM alpine:3.6

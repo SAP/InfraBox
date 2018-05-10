@@ -2,6 +2,7 @@ package main
 
 import (
 	"crypto/rsa"
+	"encoding/json"
 	"fmt"
 	jwt "github.com/dgrijalva/jwt-go"
 	"io/ioutil"
@@ -9,14 +10,19 @@ import (
 	"strconv"
 	"time"
 
+	goerr "errors"
+
 	"github.com/golang/glog"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/discovery"
+	"k8s.io/client-go/dynamic"
 	kubeinformers "k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -25,6 +31,8 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/workqueue"
+
+	restclient "k8s.io/client-go/rest"
 
 	jobv1alpha1 "github.com/infrabox/infrabox/src/job-controller/pkg/apis/jobcontroller/v1alpha1"
 	clientset "github.com/infrabox/infrabox/src/job-controller/pkg/client/clientset/versioned"
@@ -44,6 +52,7 @@ type Controller struct {
 	k8sJobSynced                 cache.InformerSynced
 	workqueue                    workqueue.RateLimitingInterface
 	recorder                     record.EventRecorder
+	config                       *restclient.Config
 	generalDontCheckCertificates string
 	localCacheEnabled            string
 	jobMaxOutputSize             string
@@ -64,7 +73,8 @@ func NewController(
 	kubeclientset kubernetes.Interface,
 	jobclientset clientset.Interface,
 	kubeInformerFactory kubeinformers.SharedInformerFactory,
-	jobInformerFactory informers.SharedInformerFactory) *Controller {
+	jobInformerFactory informers.SharedInformerFactory,
+	config *restclient.Config) *Controller {
 
 	jobInformer := jobInformerFactory.Infrabox().V1alpha1().Jobs()
 	k8sJobInformer := kubeInformerFactory.Batch().V1().Jobs()
@@ -85,14 +95,15 @@ func NewController(
 	}
 
 	controller := &Controller{
-		kubeclientset:                kubeclientset,
-		jobclientset:                 jobclientset,
-		jobLister:                    jobInformer.Lister(),
-		jobSynced:                    jobInformer.Informer().HasSynced,
-		k8sJobLister:                 k8sJobInformer.Lister(),
-		k8sJobSynced:                 k8sJobInformer.Informer().HasSynced,
-		workqueue:                    workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "Clusters"),
-		recorder:                     recorder,
+		kubeclientset: kubeclientset,
+		jobclientset:  jobclientset,
+		jobLister:     jobInformer.Lister(),
+		jobSynced:     jobInformer.Informer().HasSynced,
+		k8sJobLister:  k8sJobInformer.Lister(),
+		k8sJobSynced:  k8sJobInformer.Informer().HasSynced,
+		workqueue:     workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "Clusters"),
+		recorder:      recorder,
+		config:        config,
 		generalDontCheckCertificates: os.Getenv("INFRABOX_GENERAL_DONT_CHECK_CERTIFICATES"),
 		localCacheEnabled:            os.Getenv("INFRABOX_LOCAL_CACHE_ENABLED"),
 		jobMaxOutputSize:             os.Getenv("INFRABOX_JOB_MAX_OUTPUT_SIZE"),
@@ -209,7 +220,25 @@ func (c *Controller) syncHandler(key string) error {
 		return err
 	}
 
-	return c.syncHandlerImpl(*job.DeepCopy())
+	if job.Status.Status == "error" {
+		return nil
+	}
+
+	err = c.syncHandlerImpl(*job.DeepCopy())
+
+	if err != nil {
+		job = job.DeepCopy()
+		job.Status.Status = "error"
+		job.Status.Message = err.Error()
+		_, err := c.jobclientset.InfraboxV1alpha1().Jobs(job.Namespace).Update(job)
+
+		if err != nil {
+			runtime.HandleError(fmt.Errorf("%s: Failed to update status", key))
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (c *Controller) newBatchJob(job *jobv1alpha1.Job, token string) *batchv1.Job {
@@ -234,7 +263,7 @@ func (c *Controller) newBatchJob(job *jobv1alpha1.Job, token string) *batchv1.Jo
 	}
 
 	mem, _ := job.Spec.Resources.Limits.Memory().AsInt64()
-    mem = mem / 1024 / 1024
+	mem = mem / 1024 / 1024
 
 	env := []corev1.EnvVar{
 		corev1.EnvVar{
@@ -295,7 +324,7 @@ func (c *Controller) newBatchJob(job *jobv1alpha1.Job, token string) *batchv1.Jo
 		},
 	}
 
-    env = append(env, job.Spec.Env...)
+	env = append(env, job.Spec.Env...)
 
 	if c.localCacheEnabled == "true" {
 		volumes = append(volumes, corev1.Volume{
@@ -420,12 +449,58 @@ func (c *Controller) newBatchJob(job *jobv1alpha1.Job, token string) *batchv1.Jo
 	}
 }
 
-func (c *Controller) deleteJob(job *jobv1alpha1.Job) error {
+func (c *Controller) deleteBatchJob(job *jobv1alpha1.Job) (bool, error) {
+	batch, err := c.jobLister.Jobs(job.Namespace).Get(job.Name)
+
+	if err != nil {
+		return errors.IsNotFound(err), err
+	}
+
+	if batch == nil {
+		return true, nil
+	}
+
 	glog.Infof("%s/%s: Deleting Batch Job", job.Namespace, job.Name)
-	err := c.kubeclientset.BatchV1().Jobs(job.Namespace).Delete(job.Name, &metav1.DeleteOptions{})
+	err = c.kubeclientset.BatchV1().Jobs(job.Namespace).Delete(job.Name, &metav1.DeleteOptions{})
 
 	if err != nil {
 		runtime.HandleError(fmt.Errorf("%s/%s: Failed to delete job: %s", job.Namespace, job.Name, err.Error()))
+		return false, err
+	}
+
+	return true, nil
+}
+
+func (c *Controller) deleteJob(job *jobv1alpha1.Job) error {
+	servicesDeleted, err := c.deleteServices(job)
+	if err != nil {
+		runtime.HandleError(fmt.Errorf("%s/%s: Failed to delete service: %s", job.Namespace, job.Name, err.Error()))
+		return err
+	}
+
+	batchDeleted, err := c.deleteBatchJob(job)
+	if err != nil {
+		runtime.HandleError(fmt.Errorf("%s/%s: Failed to delete batch job: %s", job.Namespace, job.Name, err.Error()))
+		return err
+	}
+
+	if !servicesDeleted {
+		glog.Infof("%s/%s: Not all services deleted yet", job.Namespace, job.Name)
+		return nil
+	}
+
+	if !batchDeleted {
+		glog.Infof("%s/%s: Batch not deleted yet", job.Namespace, job.Name)
+		return nil
+	}
+
+	// Everything deleted, remove finalizers and delete job
+	glog.Infof("%s/%s: removing finalizers", job.Namespace, job.Name)
+	job.SetFinalizers([]string{})
+	_, err = c.jobclientset.InfraboxV1alpha1().Jobs(job.Namespace).Update(job)
+
+	if err != nil {
+		runtime.HandleError(fmt.Errorf("%s/%s: Failed to set finalizers", job.Namespace, job.Name))
 		return err
 	}
 
@@ -433,39 +508,173 @@ func (c *Controller) deleteJob(job *jobv1alpha1.Job) error {
 	return nil
 }
 
-func (c *Controller) getServiceUrl(job *jobv1alpha1.Service) (string, error) {
+func (c *Controller) deleteService(job *jobv1alpha1.Job, service *jobv1alpha1.Service) (bool, error) {
+	glog.Infof("%s/%s: Deleting Service", job.Namespace, job.Name)
 
+	si, err := c.getServiceInterface(service, job)
+	if err != nil {
+		return false, err
+	}
+
+	err = si.Delete(service.Name, &metav1.DeleteOptions{})
+
+	if err != nil {
+		runtime.HandleError(fmt.Errorf("%s/%s: Failed to delete service: %s", job.Namespace, job.Name, err.Error()))
+		return false, err
+	}
+
+	glog.Infof("%s/%s: Successfully deleted service", job.Namespace, job.Name)
+	return true, nil
 }
 
-func (c *Controller) provisionServices(service *jobv1alpha1.Service) (bool, error) {
-    url, err := c.getServiceUrl(service)
+func (c *Controller) getServiceInterface(service *jobv1alpha1.Service, job *jobv1alpha1.Job) (dynamic.ResourceInterface, error) {
+	client, err := discovery.NewDiscoveryClientForConfig(c.config)
+	if err != nil {
+		return nil, err
+	}
+
+	resourceList, err := client.ServerResourcesForGroupVersion(service.TypeMeta.APIVersion)
+
+	if err != nil {
+		return nil, err
+	}
+
+	var resource metav1.APIResource
+	for _, res := range resourceList.APIResources {
+		if res.Kind == service.Kind {
+			resource = res
+			break
+		}
+	}
+
+	dyn, err := dynamic.NewClient(c.config)
+	if err != nil {
+		return nil, err
+	}
+
+	r := dyn.Resource(&resource, job.Namespace)
+	return r, err
 }
 
-func (c *Controller) provisionServices(job *jobv1alpha1.Job) (bool, error) {
-    if job.Spec.Services == nil {
-        return true, nil
-    }
+func (c *Controller) createService(service *jobv1alpha1.Service, job *jobv1alpha1.Job) (bool, error) {
+	si, err := c.getServiceInterface(service, job)
 
-	glog.Infof("%s/%s: Provision additional services", job.Namespace, job.Name)
+	if err != nil {
+		return false, err
+	}
 
-    ready := true
-    for _, s := range job.Spec.Services {
-        r, err := c.provosionService(s)
+	id, ok := service.ObjectMeta.Labels["service.infrabox.net/id"]
+	if !ok {
+		return false, goerr.New("Infrabox service id not set")
+	}
 
-        if err != nil {
-            return false, nil
-        }
+	s, err := si.Get(id, metav1.GetOptions{})
 
-        if r {
-            glog.Infof("%s/%s: Service %s/%s ready", job.Namespace, job.Name, s.ApiVersion, s.Kind)
-        } else {
-            ready = false
-            glog.Infof("%s/%s: Service %s/%s not yet ready", job.Namespace, job.Name, s.ApiVersion, s.Kind)
-        }
-    }
+	if err != nil {
+		if !errors.IsNotFound(err) {
+			return false, err
+		}
+	}
+
+	if s != nil {
+		// Already exists, check status
+		var remote jobv1alpha1.Service
+		serviceJson, err := s.MarshalJSON()
+		if err != nil {
+			runtime.HandleError(fmt.Errorf("Failed to parse service"))
+			return false, err
+		}
+
+		err = json.Unmarshal(serviceJson, &remote)
+
+		if err != nil {
+			runtime.HandleError(fmt.Errorf("Failed to parse service"))
+			return false, err
+		}
+
+		if remote.Status.Status == "ready" {
+			return true, nil
+		}
+
+		if remote.Status.Status == "error" {
+			return false, goerr.New("Failed to create service: " + remote.Status.Message)
+		}
+	} else {
+		newService := service.DeepCopy()
+		newService.ObjectMeta.Labels["service.infrabox.net/secret-name"] = id
+		newService.ObjectMeta.Name = id
+		newService.ObjectMeta.Namespace = job.Namespace
+
+		bytes, err := json.Marshal(newService)
+		if err != nil {
+			return false, err
+		}
+
+		var tmp map[string]interface{}
+		err = json.Unmarshal(bytes, &tmp)
+		if err != nil {
+			return false, err
+		}
+
+		si.Create(&unstructured.Unstructured{Object: tmp})
+	}
+
+	return true, nil
 }
 
-func (c *Controller) createJob(job *jobv1alpha1.Job) error {
+func (c *Controller) deleteServices(job *jobv1alpha1.Job) (bool, error) {
+	if job.Spec.Services == nil {
+		return true, nil
+	}
+
+	glog.Infof("%s/%s: Delete additional services", job.Namespace, job.Name)
+
+	ready := true
+	for _, s := range job.Spec.Services {
+		r, err := c.deleteService(job, &s)
+
+		if err != nil {
+			return false, nil
+		}
+
+		if r {
+			glog.Infof("%s/%s: Service %s/%s deleted", job.Namespace, job.Name, s.TypeMeta.APIVersion, s.Kind)
+		} else {
+			ready = false
+			glog.Infof("%s/%s: Service %s/%s not yet deleted", job.Namespace, job.Name, s.TypeMeta.APIVersion, s.Kind)
+		}
+	}
+
+	return ready, nil
+}
+
+func (c *Controller) createServices(job *jobv1alpha1.Job) (bool, error) {
+	if job.Spec.Services == nil {
+		return true, nil
+	}
+
+	glog.Infof("%s/%s: Create additional services", job.Namespace, job.Name)
+
+	ready := true
+	for _, s := range job.Spec.Services {
+		r, err := c.createService(&s, job)
+
+		if err != nil {
+			return false, nil
+		}
+
+		if r {
+			glog.Infof("%s/%s: Service %s/%s ready", job.Namespace, job.Name, s.TypeMeta.APIVersion, s.Kind)
+		} else {
+			ready = false
+			glog.Infof("%s/%s: Service %s/%s not yet ready", job.Namespace, job.Name, s.TypeMeta.APIVersion, s.Kind)
+		}
+	}
+
+	return ready, nil
+}
+
+func (c *Controller) createBatchJob(job *jobv1alpha1.Job) error {
 	glog.Infof("%s/%s: Creating Batch Job", job.Namespace, job.Name)
 
 	keyPath := os.Getenv("INFRABOX_RSA_PRIVATE_KEY_PATH")
@@ -510,6 +719,35 @@ func (c *Controller) createJob(job *jobv1alpha1.Job) error {
 	}
 
 	glog.Infof("%s/%s: Successfully created job", job.Namespace, job.Name)
+	return nil
+}
+
+func (c *Controller) createJob(job *jobv1alpha1.Job) error {
+	// First set finalizers so we don't forget to delete it later on
+	job.SetFinalizers([]string{"job.infrabox.net"})
+	job, err := c.jobclientset.InfraboxV1alpha1().Jobs(job.Namespace).Update(job)
+
+	if err != nil {
+		runtime.HandleError(fmt.Errorf("%s/%s: Failed to set finalizers", job.Namespace, job.Name))
+		return err
+	}
+
+	servicesCreated, err := c.createServices(job)
+
+	if err != nil {
+		return err
+	}
+
+	if !servicesCreated {
+		return nil
+	}
+
+	err = c.createBatchJob(job)
+
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
