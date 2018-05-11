@@ -235,26 +235,26 @@
     }, {
         "type": "docker",
         "build_context": "../..",
-        "name": "job-controller",
-        "docker_file": "src/job-controller/Dockerfile",
+        "name": "controller",
+        "docker_file": "src/controller/Dockerfile",
         "resources": { "limits": { "cpu": 1, "memory": 2048 } },
         "deployments": [{
             "type": "docker-registry",
             "host": "quay.io/infrabox",
-            "repository": "job-controller",
+            "repository": "controller",
             "username": "infrabox+infrabox_ci",
             "password": { "$secret": "QUAY_PASSWORD" }
         }]
     }, {
         "type": "docker",
         "build_context": "../..",
-        "name": "service-gke-cluster",
-        "docker_file": "src/services/gke-cluster-controller/Dockerfile",
+        "name": "service-gcp",
+        "docker_file": "src/services/gcp/Dockerfile",
         "resources": { "limits": { "cpu": 1, "memory": 2048 } },
         "deployments": [{
             "type": "docker-registry",
             "host": "quay.io/infrabox",
-            "repository": "service-gke-cluster",
+            "repository": "service-gcp",
             "username": "infrabox+infrabox_ci",
             "password": { "$secret": "QUAY_PASSWORD" }
         }]

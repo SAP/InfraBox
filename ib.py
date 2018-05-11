@@ -24,7 +24,7 @@ IMAGES = [
     {'name': 'github-review'},
     {'name': 'job'},
     {'name': 'job-git'},
-    {'name': 'job-controller'},
+    {'name': 'controller'},
     {'name': 'scheduler-kubernetes'},
     {'name': 'api'},
     {'name': 'build-dashboard-client'},
@@ -33,7 +33,7 @@ IMAGES = [
     {'name': 'docker-registry-nginx'},
     {'name': 'db'},
     {'name': 'postgres'},
-    {'name': 'service-gke-cluster'},
+    {'name': 'service-gcp'},
 ]
 
 def execute(command, cwd=None, env=None, ignore_error=False, ignore_output=False):

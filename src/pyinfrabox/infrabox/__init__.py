@@ -191,6 +191,13 @@ def parse_security_context(d, path):
     if 'privileged' in d:
         check_boolean(d['privileged'], path + ".privileged")
 
+def parse_service_spec(d, path):
+    if not isinstance(d, dict):
+        raise ValidationError(path, "must be an object")
+
+    for key, value in d.items():
+        check_text(value, path + "." + key)
+
 def parse_services(d, path):
     if not isinstance(d, list):
         raise ValidationError(path, "must be an array")
@@ -201,6 +208,7 @@ def parse_services(d, path):
         elem = d[i]
         p = "%s[%s]" % (path, i)
 
+        check_allowed_properties(elem, p, ("apiVersion", "kind", "metadata", "spec"))
         check_required_properties(elem, p, ("apiVersion", "kind", "metadata"))
         check_required_properties(elem['metadata'], p + ".metadata", ("name", ))
 
@@ -210,6 +218,9 @@ def parse_services(d, path):
             raise ValidationError(p, "duplicate service name found: %s" % name)
 
         names.append(name)
+
+        if 'spec' in elem:
+            parse_service_spec(elem['spec'], p + ".spec")
 
 def parse_resources(d, path):
     check_allowed_properties(d, path, ("limits", "kubernetes"))

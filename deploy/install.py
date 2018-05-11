@@ -400,7 +400,7 @@ class Kubernetes(Install):
     def setup_scheduler(self):
         self.set('scheduler.tag', self.args.version)
         self.set('scheduler.enabled', not self.args.scheduler_disabled)
-        self.set('job-controller.tag', self.args.version)
+        self.set('controller.tag', self.args.version)
 
     def setup_cluster(self):
         self.set('cluster.name', self.args.cluster_name)

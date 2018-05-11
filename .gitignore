@@ -37,9 +37,9 @@ infrabox/test/github-review/results.xml
 src/pyinfrabox/.coverage
 src/pyinfrabox/coverage.xml
 src/pyinfrabox/results.xml
-src/job-controller/pkg/client
-src/job-controller/job-controller
-src/job-controller/vendor
-src/services/gke-cluster-controller/pkg/client
-src/services/gke-cluster-controller/vendor
-src/services/gke-cluster-controller/gke-cluster-controller
+src/controller/pkg/client
+src/controller/controller
+src/controller/vendor
+src/services/gcp/pkg/client
+src/services/gcp/vendor
+src/services/gcp/gcp
