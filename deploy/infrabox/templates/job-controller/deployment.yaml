@@ -1,16 +1,16 @@
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-    name: infrabox-job-controller
+    name: infrabox-controller
     namespace: {{ default "infrabox-system" .Values.general.system_namespace }}
     labels:
-        app: infrabox-job-controller
+        app: infrabox-controller
 spec:
     replicas: 1
     template:
         metadata:
             labels:
-                app: infrabox-job-controller
+                app: infrabox-controller
         spec:
             {{ if .Values.general.rbac.enabled }}
             serviceAccountName: infrabox-scheduler
@@ -18,8 +18,8 @@ spec:
             containers:
             {{ include "containers_database" . | indent 12 }}
             -
-                name: job-controller
-                image: {{ required "general.docker_registry is required" .Values.general.docker_registry }}/{{ default "job-controller" .Values.job_controller.image }}:{{ required "job_controller.tag is required" .Values.job_controller.tag }}
+                name: controller
+                image: {{ required "general.docker_registry is required" .Values.general.docker_registry }}/{{ default "controller" .Values.controller.image }}:{{ required "controller.tag is required" .Values.controller.tag }}
                 imagePullPolicy: Always
                 env:
                 {{ include "env_gerrit" . | indent 16 }}
@@ -32,10 +32,10 @@ spec:
                     value: {{ required "root_url is required" .Values.root_url }}
                 -
                     name: INFRABOX_SERVICE
-                    value: {{ default "job-controller" .Values.job_controller.image }}
+                    value: {{ default "controller" .Values.controller.image }}
                 -
                     name: INFRABOX_VERSION
-                    value: {{ required "job_controller.tag is required" .Values.job_controller.tag }}
+                    value: {{ required "controller.tag is required" .Values.controller.tag }}
                 volumeMounts:
                 -
                     mountPath: /etc/docker

@@ -866,7 +866,10 @@ class CreateJobs(Resource):
 
             if 'services' in job:
                 for s in job['services']:
-                    s['id'] = str(uuid.uuid4())
+                    if 'labels' not in s['metadata']:
+                        s['metadata']['labels'] = {}
+
+                    s['metadata']['labels']['service.infrabox.net/id'] = str(uuid.uuid4())
 
             # Create job
             g.db.execute("""

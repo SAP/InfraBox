@@ -1,0 +1,43 @@
+package: github.com/infrabox/infrabox/src/services/gcp
+import:
+- package: github.com/dgrijalva/jwt-go
+- package: github.com/golang/glog
+- package: k8s.io/api
+  version: kubernetes-1.10.2
+  subpackages:
+  - batch/v1
+  - core/v1
+- package: k8s.io/apimachinery
+  version: kubernetes-1.10.2
+  subpackages:
+  - pkg/api/errors
+  - pkg/apis/meta/v1
+  - pkg/apis/meta/v1/unstructured
+  - pkg/labels
+  - pkg/runtime
+  - pkg/runtime/schema
+  - pkg/runtime/serializer
+  - pkg/types
+  - pkg/util/runtime
+  - pkg/util/wait
+  - pkg/watch
+- package: k8s.io/client-go
+  version: kubernetes-1.10.2
+  subpackages:
+  - discovery
+  - discovery/fake
+  - dynamic
+  - informers
+  - kubernetes
+  - kubernetes/scheme
+  - kubernetes/typed/core/v1
+  - listers/batch/v1
+  - rest
+  - testing
+  - tools/cache
+  - tools/clientcmd
+  - tools/record
+  - util/flowcontrol
+  - util/workqueue
+- package: k8s.io/code-generator
+  version: release-1.10

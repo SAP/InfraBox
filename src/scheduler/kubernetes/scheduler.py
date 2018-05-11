@@ -42,16 +42,15 @@ class Scheduler(object):
 
     def kube_delete_job(self, job_id):
         h = {'Authorization': 'Bearer %s' % self.args.token}
-        p = {"gracePeriodSeconds": 0}
         requests.delete(self.args.api_server +
-                        '/apis/infrabox.net/v1alpha1/namespaces/%s/jobs/%s' % (self.namespace, job_id,),
-                        headers=h, params=p, timeout=5)
+                        '/apis/core.infrabox.net/v1alpha1/namespaces/%s/ibjobs/%s' % (self.namespace, job_id,),
+                        headers=h, timeout=5)
 
     def kube_job(self, job_id, cpu, mem, additional_env=None, services=None):
         h = {'Authorization': 'Bearer %s' % self.args.token}
         job = {
-            'apiVersion': 'infrabox.net/v1alpha1',
-            'kind': 'Job',
+            'apiVersion': 'core.infrabox.net/v1alpha1',
+            'kind': 'IBJob',
             'metadata': {
                 'name': job_id
             },
@@ -67,7 +66,7 @@ class Scheduler(object):
             }
         }
 
-        r = requests.post(self.args.api_server + '/apis/infrabox.net/v1alpha1/namespaces/%s/jobs' % self.namespace,
+        r = requests.post(self.args.api_server + '/apis/core.infrabox.net/v1alpha1/namespaces/%s/ibjobs' % self.namespace,
                           headers=h, json=job, timeout=10)
 
         if r.status_code != 201:
@@ -479,13 +478,17 @@ class Scheduler(object):
 
     def handle_orphaned_jobs(self):
         h = {'Authorization': 'Bearer %s' % self.args.token}
-        r = requests.get(self.args.api_server + '/apis/infrabox.net/v1alpha1/namespaces/%s/jobs' % self.namespace,
+        r = requests.get(self.args.api_server + '/apis/core.infrabox.net/v1alpha1/namespaces/%s/ibjobs' % self.namespace,
                          headers=h,
                          timeout=10)
         data = r.json()
 
         for j in data['items']:
             if 'metadata' not in j:
+                continue
+
+            if 'deletionTimestamp' in j['metadata']:
+                # Already marked for deletion
                 continue
 
             metadata = j['metadata']
@@ -497,13 +500,32 @@ class Scheduler(object):
             result = cursor.fetchall()
             cursor.close()
 
-            if len(result) != 1:
+            if not result:
+                self.logger.info('Deleting orphaned job %s', job_id)
+                self.kube_delete_job(job_id)
                 continue
 
             state = result[0][0]
-
             if state in ('queued', 'scheduled', 'running'):
-                continue
+                status = j.get('status', {}).get('status', None)
+
+                if not status:
+                    continue
+
+                if status == 'error':
+                    message = j['status']['message']
+
+                    if not message:
+                        message = "Internal Controller Error"
+
+                    cursor = self.conn.cursor()
+                    cursor.execute("""
+                        UPDATE job SET state = 'error', message = %s, end_date = current_timestamp
+                        WHERE id = %s AND state IN ('scheduled', 'running', 'queued')
+                    """, (message, job_id,))
+                    cursor.close()
+                else:
+                    continue
 
             self.logger.info('Deleting orphaned job %s', job_id)
             self.kube_delete_job(job_id)
