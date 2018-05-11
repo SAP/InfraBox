@@ -11,7 +11,7 @@
         },
         "cache": {
             "image": true
-        }
+        },
         "services": [{
             "apiVersion": "gcp.service.infrabox.net/v1alpha1",
             "kind": "GKECluster",
