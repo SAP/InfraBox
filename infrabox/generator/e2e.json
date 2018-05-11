@@ -8,10 +8,21 @@
         "build_only": false,
         "resources": {
             "limits": { "cpu": 1, "memory": 2048 },
-            "kubernetes": { "limits": { "cpu": 1, "memory": 2048 } }
         },
         "cache": {
             "image": true
         }
+        "services": [{
+            "apiVersion": "gcp.service.infrabox.net/v1alpha1",
+            "kind": "GKECluster",
+            "metadata": {
+                "name": "e2e-cluster"
+            },
+            "spec": {
+                "machineType": "n1-standard-2",
+                "numNodes": "2",
+                "preemptible": "false"
+            }
+        }]
     }]
 }
