@@ -1,0 +1,37 @@
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: {{ template "infrabox-service-gcp.fullname" . }}
+  labels:
+    app: {{ template "infrabox-service-gcp.name" . }}
+    chart: {{ template "infrabox-service-gcp.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ template "infrabox-service-gcp.name" . }}
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "infrabox-service-gcp.name" . }}
+        release: {{ .Release.Name }}
+    spec:
+      serviceAccountName: infrabox-service-gcp
+      containers:
+        - name: {{ .Chart.Name }}
+          command: ["./gcp"]
+          args: ["-logtostderr", "-gcpserviceaccount", "/var/run/infrabox.net/gcp/service_account.json"]
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: "Always"
+          resources:
+          volumeMounts:
+          - name: service-account
+            mountPath: "/var/run/infrabox.net/gcp"
+            readOnly: true
+      volumes:
+      - name: service-account
+        secret:
+          secretName: "infrabox-service-gcp-sa"

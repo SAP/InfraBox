@@ -48,9 +48,9 @@ func main() {
 		glog.Fatalf("-gcpserviceaccount is required")
 	}
 
-	glog.Info("Activating service account")
+	glog.Info("Activating GCP service account")
 	authCmd := exec.Command("gcloud", "auth", "activate-service-account", "--key-file", gcpserviceaccount)
-	authOut, err := authCmd.Output()
+	authOut, err := authCmd.CombinedOutput()
 	if err != nil {
 		glog.Fatalf(string(authOut))
 	}
