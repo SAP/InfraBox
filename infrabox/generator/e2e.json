@@ -7,7 +7,7 @@
         "build_context": "../..",
         "build_only": false,
         "resources": {
-            "limits": { "cpu": 1, "memory": 2048 },
+            "limits": { "cpu": 1, "memory": 2048 }
         },
         "cache": {
             "image": true
