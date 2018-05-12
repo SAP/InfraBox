@@ -1,6 +1,5 @@
 #!/bin/bash -ev
 
-NAMESPACE=infrabox-system
 IMAGE_TAG=build_$INFRABOX_BUILD_NUMBER
 
 _prepareKubectl() {
@@ -36,7 +35,8 @@ _prepareKubectl() {
 
     kubectl get nodes
 
-    kubectl create ns $NAMESPACE
+    kubectl create ns infrabox-worker
+    kubectl create ns infrabox-system
 }
 
 _getDependencies() {
@@ -53,7 +53,7 @@ _getDependencies() {
 }
 
 _getPodNameImpl() {
-    kubectl get pods -n $NAMESPACE | grep $1 | grep Running | awk '{print $1}'
+    kubectl get pods -n infrabox-system | grep $1 | grep Running | awk '{print $1}'
 }
 
 _getPodName() {
@@ -72,7 +72,9 @@ _getPodName() {
 
 _initHelm() {
     echo "## init helm"
-    helm init --tiller-namespace $NAMESPACE
+    kubectl -n kube-system create sa tiller
+    kubectl create clusterrolebinding tiller --clusterrole cluster-admin --serviceaccount=kube-system:tiller
+    helm init --service-account tiller
 
     echo "## Wait for tiller to be ready"
     # wait for tiller to be ready
@@ -80,45 +82,41 @@ _initHelm() {
     sleep 20
 }
 
-_deinstallPostgres() {
-    echo "## Deinstall postgres"
-    helm delete --tiller-namespace $NAMESPACE --purge infrabox-postgres || true
-}
-
 _installPostgres() {
-    _deinstallPostgres
-
     echo "## Install postgres"
-    kubectl run postgres --image=quay.io/infrabox/postgres:$IMAGE_TAG -n $NAMESPACE
-    kubectl expose -n $NAMESPACE deployment postgres --port 5432 --target-port 5432 --name infrabox-postgres
+    kubectl run postgres --image=quay.io/infrabox/postgres:$IMAGE_TAG -n infrabox-system
+    kubectl expose -n infrabox-system deployment postgres --port 5432 --target-port 5432 --name infrabox-postgres
 
     # Wait until postgres is ready
-    until psql -U postgres -h infrabox-postgres.$NAMESPACE -c '\l'; do
+    postgres_pod=$(_getPodName "postgres")
+    echo "Port forwarding to postgres: '$postgres_pod'"
+    kubectl port-forward -n infrabox-system $postgres_pod 5432 &
+
+    # Wait until postgres is ready
+    until psql -U postgres -h localhost -c '\l'; do
         >&2 echo "Postgres is unavailable - sleeping"
         sleep 1
     done
 }
 
-_deinstallMinio() {
-    echo "## Deinstall minio"
-    helm delete --tiller-namespace $NAMESPACE --purge infrabox-minio || true
-}
-
 _installMinio() {
-    _deinstallMinio
-
     echo "## Install minio"
-    helm install --tiller-namespace $NAMESPACE \
+    helm install \
         --set serviceType=ClusterIP,replicas=1,persistence.enabled=false \
         -n infrabox-minio \
-        --namespace $NAMESPACE \
+        --namespace infrabox-system \
         stable/minio
 
+    # Wait until minio is ready
     sleep 30
 
     # init minio client
+    minio_pod=$(_getPodName "minio")
+    echo "Port forwarding to minio: '$minio_pod'"
+    kubectl port-forward -n infrabox-system $minio_pod 9000 &
+
     mc config host add minio \
-        http://infrabox-minio.$NAMESPACE:9000 \
+        http://localhost:9000 \
         AKIAIOSFODNN7EXAMPLE \
         wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY \
         S3v4
@@ -130,18 +128,17 @@ _installMinio() {
 _installNginxIngress() {
     echo "## Install nginx ingress"
 
-    export ROOT_URL="nic-nginx-ingress-c.$NAMESPACE"
+    export ROOT_URL="nic-nginx-ingress-c.infrabox-system"
     echo "Generating certs for: $ROOT_URL"
     openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /tmp/tls.key -out /tmp/tls.crt -subj "/CN=$ROOT_URL"
 
-    kubectl create -n $NAMESPACE secret tls infrabox-tls-certs --key /tmp/tls.key --cert /tmp/tls.crt
+    kubectl create -n infrabox-system secret tls infrabox-tls-certs --key /tmp/tls.key --cert /tmp/tls.crt
 
     helm install \
-        --tiller-namespace $NAMESPACE \
         -n nic \
-        --namespace $NAMESPACE \
+        --namespace infrabox-system \
         --set controller.scope.enabled="true" \
-        --set controller.scope.namespace="$NAMESPACE" \
+        --set controller.scope.namespace="infrabox-system" \
         --set controller.service.type="ClusterIP" \
         --set controller.name="c" \
         --set controller.config.proxy-body-size="0" \
@@ -149,14 +146,7 @@ _installNginxIngress() {
         stable/nginx-ingress
 }
 
-_deinstallInfrabox() {
-    echo "## Deinstall infrabox"
-    helm delete --tiller-namespace $NAMESPACE --purge infrabox || true
-}
-
 _installInfrabox() {
-    _deinstallInfrabox
-
     ssh-keygen -N '' -t rsa -f id_rsa
     ssh-keygen -f id_rsa.pub -e -m pem > id_rsa.pem
 
@@ -172,19 +162,17 @@ _installInfrabox() {
         --version $IMAGE_TAG \
         --root-url https://$ROOT_URL \
         --general-rbac-disabled \
-        --general-worker-namespace $NAMESPACE \
-        --general-system-namespace $NAMESPACE \
         --general-rsa-public-key ./id_rsa.pem \
         --general-rsa-private-key ./id_rsa \
         --admin-email admin@infrabox.net \
         --admin-password admin \
         --database postgres \
-        --postgres-host infrabox-postgres.$NAMESPACE \
+        --postgres-host infrabox-postgres.infrabox-system \
         --postgres-username postgres \
         --postgres-password postgres \
         --postgres-database postgres \
         --storage s3 \
-        --s3-endpoint infrabox-minio.$NAMESPACE \
+        --s3-endpoint infrabox-minio.infrabox-system \
         --s3-bucket infrabox \
         --s3-secure false \
         --s3-secret-key wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY \
@@ -193,10 +181,10 @@ _installInfrabox() {
         --s3-port 9000
 
     pushd $outdir/infrabox
-    helm install --tiller-namespace $NAMESPACE --namespace $NAMESPACE .
+    helm install --namespace infrabox-system .
     popd
 
-    export INFRABOX_DATABASE_HOST=infrabox-postgres.$NAMESPACE
+    export INFRABOX_DATABASE_HOST=infrabox-postgres.infrabox-system
     export INFRABOX_DATABASE_DB=postgres
     export INFRABOX_DATABASE_USER=postgres
     export INFRABOX_DATABASE_PORT=5432
@@ -222,8 +210,8 @@ main() {
     _prepareKubectl
     _getDependencies
     _initHelm
-    _installMinio
     _installPostgres
+    _installMinio
     _installNginxIngress
     _installInfrabox
     _runTests
