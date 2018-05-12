@@ -130,11 +130,11 @@ _installMinio() {
     kubectl get pod --all-namespaces
     kubectl port-forward -n infrabox-system $minio_pod 9000 &
 
-    mc config host add minio \
-        http://localhost:9000 \
-        AKIAIOSFODNN7EXAMPLE \
-        wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY \
-        S3v4
+    until mc config host add minio http://localhost:9000 AKIAIOSFODNN7EXAMPLE wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY S3v4;
+    do
+        echo "Waiting for minio to be ready"
+        sleep 3
+    done
 
     # Create buckets
     mc mb minio/infrabox
