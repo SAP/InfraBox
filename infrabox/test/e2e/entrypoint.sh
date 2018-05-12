@@ -145,9 +145,6 @@ _installNginxIngress() {
 
     helm install \
         -n nic \
-        --namespace infrabox-system \
-        --set controller.scope.enabled="true" \
-        --set controller.scope.namespace="infrabox-system" \
         --set controller.config.proxy-body-size="0" \
         --set controller.config.ssl-redirect='"false"' \
         stable/nginx-ingress
