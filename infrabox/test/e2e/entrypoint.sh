@@ -127,6 +127,7 @@ _installMinio() {
     # init minio client
     minio_pod=$(_getPodName "infrabox-system" "minio")
     echo "Port forwarding to minio: '$minio_pod'"
+    kubectl get pod --all-namespaces
     kubectl port-forward -n infrabox-system $minio_pod 9000 &
 
     mc config host add minio \
