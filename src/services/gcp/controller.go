@@ -165,7 +165,7 @@ type RemoteCluster struct {
 }
 
 func (c *Controller) updateClusterStatus(cluster *clusterv1alpha1.GKECluster, gke *RemoteCluster) error {
-    oldStatus := cluster.Status.Status
+	oldStatus := cluster.Status.Status
 
 	switch gke.Status {
 	case "RUNNING":
@@ -176,9 +176,9 @@ func (c *Controller) updateClusterStatus(cluster *clusterv1alpha1.GKECluster, gk
 		cluster.Status.Status = "error"
 	}
 
-    if cluster.Status.Status == oldStatus {
-        return nil
-    }
+	if cluster.Status.Status == oldStatus {
+		return nil
+	}
 
 	_, err := c.gkeclientset.GcpV1alpha1().GKEClusters(cluster.Namespace).Update(cluster)
 	return err
@@ -189,7 +189,7 @@ func (c *Controller) getRemoteClusters() ([]RemoteCluster, error) {
 	out, err := cmd.CombinedOutput()
 
 	if err != nil {
-		runtime.HandleError(fmt.Errorf("Could not list clusters"))
+		runtime.HandleError(fmt.Errorf("Could not list clusters: %s", err.Error()))
 		return nil, err
 	}
 
@@ -197,7 +197,7 @@ func (c *Controller) getRemoteClusters() ([]RemoteCluster, error) {
 	err = json.Unmarshal(out, &gkeclusters)
 
 	if err != nil {
-		runtime.HandleError(fmt.Errorf("Could not parse cluster list"))
+		runtime.HandleError(fmt.Errorf("Could not parse cluster list: %s", err.Error()))
 		return nil, err
 	}
 
@@ -208,12 +208,11 @@ func (c *Controller) getRemoteCluster(name string) (*RemoteCluster, error) {
 	cmd := exec.Command("gcloud", "container", "clusters", "list",
 		"--filter", "name=ib-"+name, "--format", "json")
 
-	out, err := cmd.Output()
+	out, err := cmd.CombinedOutput()
 
 	if err != nil {
-		runtime.HandleError(fmt.Errorf("Could not list clusters"))
-		out, _ := cmd.CombinedOutput()
-		glog.Warning(out)
+		runtime.HandleError(fmt.Errorf("Could not list clusters: %s", err.Error()))
+		glog.Warning(string(out))
 		return nil, err
 	}
 
@@ -221,9 +220,8 @@ func (c *Controller) getRemoteCluster(name string) (*RemoteCluster, error) {
 	err = json.Unmarshal(out, &gkeclusters)
 
 	if err != nil {
-		runtime.HandleError(fmt.Errorf("Could not parse cluster list"))
-		out, _ := cmd.CombinedOutput()
-		glog.Warning(out)
+		runtime.HandleError(fmt.Errorf("Could not parse cluster list: %s", err.Error()))
+		glog.Warning(string(out))
 		return nil, err
 	}
 
@@ -239,7 +237,7 @@ func newSecret(cluster *clusterv1alpha1.GKECluster, gke *RemoteCluster) *corev1.
 	clientKey, _ := b64.StdEncoding.DecodeString(gke.MasterAuth.ClientKey)
 	clientCrt, _ := b64.StdEncoding.DecodeString(gke.MasterAuth.ClientCertificate)
 
-    secretName := cluster.ObjectMeta.Labels["service.infrabox.net/secret-name"]
+	secretName := cluster.ObjectMeta.Labels["service.infrabox.net/secret-name"]
 
 	return &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
@@ -266,11 +264,15 @@ func newSecret(cluster *clusterv1alpha1.GKECluster, gke *RemoteCluster) *corev1.
 }
 
 func (c *Controller) deleteSecret(cluster *clusterv1alpha1.GKECluster) (bool, error) {
-    secretName := cluster.ObjectMeta.Labels["service.infrabox.net/secret-name"]
+	secretName := cluster.ObjectMeta.Labels["service.infrabox.net/secret-name"]
 	secret, err := c.secretsLister.Secrets(cluster.Namespace).Get(secretName)
 
 	if err != nil {
-		return errors.IsNotFound(err), err
+		if errors.IsNotFound(err) {
+			return true, nil
+		}
+
+		return false, err
 	}
 
 	if secret != nil {
@@ -281,7 +283,7 @@ func (c *Controller) deleteSecret(cluster *clusterv1alpha1.GKECluster) (bool, er
 	err = c.kubeclientset.CoreV1().Secrets(cluster.Namespace).Delete(secretName, metav1.NewDeleteOptions(0))
 
 	if err != nil {
-		runtime.HandleError(fmt.Errorf("%s/%s: Failed to delete secret", cluster.Namespace, cluster.Name))
+		runtime.HandleError(fmt.Errorf("%s/%s: Failed to delete secret: %s", cluster.Namespace, cluster.Name, err.Error()))
 		return false, err
 	}
 
@@ -289,7 +291,7 @@ func (c *Controller) deleteSecret(cluster *clusterv1alpha1.GKECluster) (bool, er
 }
 
 func (c *Controller) createSecret(cluster *clusterv1alpha1.GKECluster, gkecluster *RemoteCluster) error {
-    secretName := cluster.ObjectMeta.Labels["service.infrabox.net/secret-name"]
+	secretName := cluster.ObjectMeta.Labels["service.infrabox.net/secret-name"]
 	secret, err := c.secretsLister.Secrets(cluster.Namespace).Get(secretName)
 
 	if err != nil {
@@ -318,22 +320,10 @@ func (c *Controller) deleteGKECluster(cluster *clusterv1alpha1.GKECluster) (bool
 	// Get the GKE Cluster
 	gkecluster, err := c.getRemoteCluster(cluster.Name)
 	if err != nil {
-        if errors.IsNotFound(err) {
-            runtime.HandleError(fmt.Errorf("%s/%s: Could not get GKE Cluster", cluster.Namespace, cluster.Name))
-            return false, err
-        }
-	}
-
-    if gkecluster == nil {
-        return true, nil
-    }
-
-	glog.Infof("%s/%s: deleting gke cluster", cluster.Namespace, cluster.Name)
-	gkecluster, err = c.getRemoteCluster(cluster.Name)
-	if err != nil {
-		runtime.HandleError(fmt.Errorf("%s/%s: Could not get GKE Cluster for", cluster.Namespace, cluster.Name))
-		glog.Warning(err)
-		return false, err
+		if errors.IsNotFound(err) {
+			runtime.HandleError(fmt.Errorf("%s/%s: Could not get GKE Cluster", cluster.Namespace, cluster.Name))
+			return false, err
+		}
 	}
 
 	if gkecluster == nil {
@@ -341,7 +331,8 @@ func (c *Controller) deleteGKECluster(cluster *clusterv1alpha1.GKECluster) (bool
 	}
 
 	// Cluster still exists, delete it
-	cmd := exec.Command("gcloud", "-q", "container", "clusters", "delete", "ib-"+cluster.Name, "--async")
+	glog.Infof("%s/%s: deleting gke cluster", cluster.Namespace, cluster.Name)
+	cmd := exec.Command("gcloud", "-q", "container", "clusters", "delete", "ib-"+cluster.Name, "--async", "--zone", "us-east1-b")
 	out, err := cmd.CombinedOutput()
 
 	if err != nil {
@@ -397,14 +388,14 @@ func (c *Controller) deleteCluster(cluster *clusterv1alpha1.GKECluster) error {
 		return err
 	}
 
-    /*
-	glog.Infof("%s/%s: Finally deleting cluster", cluster.Namespace, cluster.Name)
-	err = c.gkeclientset.GcpV1alpha1().GKEClusters(cluster.Namespace).Delete(cluster.Name, metav1.NewDeleteOptions(0))
-	if err != nil {
-		runtime.HandleError(fmt.Errorf("%s/%s: Failed to delete cluster", cluster.Namespace, cluster.Name))
-		return err
-	}
-    */
+	/*
+		glog.Infof("%s/%s: Finally deleting cluster", cluster.Namespace, cluster.Name)
+		err = c.gkeclientset.GcpV1alpha1().GKEClusters(cluster.Namespace).Delete(cluster.Name, metav1.NewDeleteOptions(0))
+		if err != nil {
+			runtime.HandleError(fmt.Errorf("%s/%s: Failed to delete cluster", cluster.Namespace, cluster.Name))
+			return err
+		}
+	*/
 
 	return nil
 }
@@ -424,10 +415,6 @@ func (c *Controller) syncHandler(key string) error {
 			return nil
 		}
 		return err
-	}
-
-	if cluster.Status.Status == "error" {
-		return nil
 	}
 
 	err = c.syncHandlerImpl(key, cluster.DeepCopy())
@@ -456,20 +443,25 @@ func (c *Controller) syncHandlerImpl(key string, cluster *clusterv1alpha1.GKEClu
 		return c.deleteCluster(cluster)
 	}
 
+	if cluster.Status.Status == "error" {
+		glog.Infof("%s: Cluster in error state, skipping", key)
+		return nil
+	}
+
 	// Get the GKE Cluster
 	gkecluster, err := c.getRemoteCluster(cluster.Name)
 	if err != nil {
-        if errors.IsNotFound(err) {
-            runtime.HandleError(fmt.Errorf("%s: Could not get GKE Cluster", key))
-            return err
-        }
+		if !errors.IsNotFound(err) {
+			runtime.HandleError(fmt.Errorf("%s: Could not get GKE Cluster", key))
+			return err
+		}
 	}
 
 	if gkecluster == nil {
 		glog.Infof("%s: Cluster does not exist yet, creating one", key)
 
 		// First set finalizers so we don't forget to delete it later on
-		cluster.SetFinalizers([]string{"gkecontroller.infrabox.net"})
+		cluster.SetFinalizers([]string{"gcp.service.infrabox.net"})
 		cluster, err := c.gkeclientset.GcpV1alpha1().GKEClusters(cluster.Namespace).Update(cluster)
 
 		if err != nil {
@@ -479,7 +471,7 @@ func (c *Controller) syncHandlerImpl(key string, cluster *clusterv1alpha1.GKEClu
 
 		name := "ib-" + cluster.Name
 		args := []string{"container", "clusters",
-			"create", name, "--async"}
+			"create", name, "--async", "--zone", "us-east1-b", "--enable-autorepair"}
 
 		if cluster.Spec.DiskSize != "" {
 			args = append(args, "--disk-size")
@@ -543,21 +535,21 @@ func (c *Controller) syncHandlerImpl(key string, cluster *clusterv1alpha1.GKEClu
 		}
 	} else {
 		if err != nil {
-            runtime.HandleError(fmt.Errorf("%s: Failed to create secret: %s", key, err.Error()))
+			runtime.HandleError(fmt.Errorf("%s: Failed to create secret: %s", key, err.Error()))
 			return err
 		}
 
-        if gkecluster.Status == "RUNNING" {
-            glog.Infof("%s: Cluster is ready", key)
-            err = c.createSecret(cluster, gkecluster)
-        }
+		if gkecluster.Status == "RUNNING" {
+			glog.Infof("%s: Cluster is ready", key)
+			err = c.createSecret(cluster, gkecluster)
+		}
 
-        err = c.updateClusterStatus(cluster, gkecluster)
+		err = c.updateClusterStatus(cluster, gkecluster)
 
-        if err != nil {
-            runtime.HandleError(fmt.Errorf("%s: Failed to update status", key))
-            return err
-        }
+		if err != nil {
+			runtime.HandleError(fmt.Errorf("%s: Failed to update status", key))
+			return err
+		}
 	}
 
 	glog.Infof("%s: Finished sync", key)

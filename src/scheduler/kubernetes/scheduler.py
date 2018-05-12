@@ -508,6 +508,7 @@ class Scheduler(object):
             state = result[0][0]
             if state in ('queued', 'scheduled', 'running'):
                 status = j.get('status', {}).get('status', None)
+                self.logger.error(j)
 
                 if not status:
                     continue
