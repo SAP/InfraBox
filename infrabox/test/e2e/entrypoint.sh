@@ -53,11 +53,25 @@ _getDependencies() {
 }
 
 _getPodNameImpl() {
-    kubectl get pods -n infrabox-system | grep $1 | grep Running | awk '{print $1}'
+    kubectl get pods -n $1 | grep $2 | grep Running | awk '{print $1}'
+}
+
+_getNginxIP() {
+    kubectl get services --all-namespaces
+
+    external_ip=""
+    while [ -z $external_ip ]; do
+        echo "Waiting for nginx endpoint..."
+        external_ip=$(kubectl -n kube-system get svc nginx-ingress-controller-controller --template="{{range .status.loadBalancer.ingress}}{{.ip}}{{end}}")
+        [ -z "$external_ip" ] && sleep 10
+    done
+
+    echo "Nginx endpoint: $external_ip"
+    echo $external_ip
 }
 
 _getPodName() {
-    pod_name=$(_getPodNameImpl $1)
+    pod_name=$(_getPodNameImpl $1 $2)
 
     while true; do
         if [ -n "$pod_name" ]; then
@@ -65,7 +79,7 @@ _getPodName() {
         fi
 
         sleep 1
-        pod_name=$(_getPodNameImpl $1)
+        pod_name=$(_getPodNameImpl $1 $2)
     done
     echo $pod_name
 }
@@ -78,7 +92,7 @@ _initHelm() {
 
     echo "## Wait for tiller to be ready"
     # wait for tiller to be ready
-    tiller_pod=$(_getPodName "tiller")
+    tiller_pod=$(_getPodName "kube-system" "tiller")
     sleep 20
 }
 
@@ -88,7 +102,7 @@ _installPostgres() {
     kubectl expose -n infrabox-system deployment postgres --port 5432 --target-port 5432 --name infrabox-postgres
 
     # Wait until postgres is ready
-    postgres_pod=$(_getPodName "postgres")
+    postgres_pod=$(_getPodName "infrabox-system" "postgres")
     echo "Port forwarding to postgres: '$postgres_pod'"
     kubectl port-forward -n infrabox-system $postgres_pod 5432 &
 
@@ -111,7 +125,7 @@ _installMinio() {
     sleep 30
 
     # init minio client
-    minio_pod=$(_getPodName "minio")
+    minio_pod=$(_getPodName "infrabox-system" "minio")
     echo "Port forwarding to minio: '$minio_pod'"
     kubectl port-forward -n infrabox-system $minio_pod 9000 &
 
@@ -128,22 +142,22 @@ _installMinio() {
 _installNginxIngress() {
     echo "## Install nginx ingress"
 
-    export ROOT_URL="nic-nginx-ingress-c.infrabox-system"
-    echo "Generating certs for: $ROOT_URL"
-    openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /tmp/tls.key -out /tmp/tls.crt -subj "/CN=$ROOT_URL"
-
-    kubectl create -n infrabox-system secret tls infrabox-tls-certs --key /tmp/tls.key --cert /tmp/tls.crt
-
     helm install \
         -n nic \
         --namespace infrabox-system \
         --set controller.scope.enabled="true" \
         --set controller.scope.namespace="infrabox-system" \
-        --set controller.service.type="ClusterIP" \
-        --set controller.name="c" \
         --set controller.config.proxy-body-size="0" \
         --set controller.config.ssl-redirect='"false"' \
         stable/nginx-ingress
+
+    nginx_ip=$(_getNginxIP)
+
+    export ROOT_URL="$nginx_ip.nip.io"
+    echo "Generating certs for: $ROOT_URL"
+    openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /tmp/tls.key -out /tmp/tls.crt -subj "/CN=$ROOT_URL"
+
+    kubectl create -n infrabox-system secret tls infrabox-tls-certs --key /tmp/tls.key --cert /tmp/tls.crt
 }
 
 _installInfrabox() {
