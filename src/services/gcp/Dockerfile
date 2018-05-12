@@ -31,6 +31,9 @@ RUN apk --no-cache add \
     gcloud config set core/disable_usage_reporting true && \
     gcloud config set component_manager/disable_update_check true && \
     gcloud config set metrics/environment github_docker_image && \
+    gcloud config set container/use_v1_api false && \
+    gcloud config set container/new_scopes_behavior true && \
+    gcloud components install kubectl && \
     gcloud --version
 
 WORKDIR /app

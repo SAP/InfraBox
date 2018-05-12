@@ -79,7 +79,7 @@ kubectl get pods
 ```
 
 ## Install
-To install the service in your Kubernetes cluser you have to first create a GCP Service Account with `Kubernetes Engine Admin` permissions.
+To install the service in your Kubernetes cluser you have to first create a GCP Service Account with `Kubernetes Engine Admin` and `Service Account User` roles.
 Download the service account json file and save it as `service_account.json`. Then create a secret for it:
 
 ```

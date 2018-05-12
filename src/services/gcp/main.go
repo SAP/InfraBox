@@ -1,7 +1,9 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
+	"io/ioutil"
 	"os/exec"
 	"time"
 
@@ -54,7 +56,23 @@ func main() {
 	if err != nil {
 		glog.Fatalf(string(authOut))
 	}
-	glog.Info("Successfully activated service account")
+
+	glog.Info("Setting GCP Project")
+	raw, err := ioutil.ReadFile(gcpserviceaccount)
+
+	if err != nil {
+		glog.Fatalf(err.Error())
+	}
+
+	var sa map[string]interface{}
+	json.Unmarshal(raw, &sa)
+
+	projectId := sa["project_id"].(string)
+	authCmd = exec.Command("gcloud", "config", "set", "core/project", projectId)
+	authOut, err = authCmd.CombinedOutput()
+	if err != nil {
+		glog.Fatalf(string(authOut))
+	}
 
 	kubeInformerFactory := kubeinformers.NewSharedInformerFactory(kubeClient, time.Second*30)
 	clusterInformerFactory := informers.NewSharedInformerFactory(clusterClient, time.Second*30)

@@ -12,12 +12,12 @@ import (
 
 	goerr "errors"
 
-    "k8s.io/apimachinery/pkg/labels"
 	"github.com/golang/glog"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -29,10 +29,10 @@ import (
 	typedcorev1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	batchlisters "k8s.io/client-go/listers/batch/v1"
 	podlisters "k8s.io/client-go/listers/core/v1"
+	rest "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/workqueue"
-	rest "k8s.io/client-go/rest"
 
 	restclient "k8s.io/client-go/rest"
 
@@ -52,8 +52,8 @@ type Controller struct {
 	jobSynced                    cache.InformerSynced
 	k8sJobLister                 batchlisters.JobLister
 	k8sJobSynced                 cache.InformerSynced
-	podLister                 podlisters.PodLister
-	podSynced                 cache.InformerSynced
+	podLister                    podlisters.PodLister
+	podSynced                    cache.InformerSynced
 	workqueue                    workqueue.RateLimitingInterface
 	recorder                     record.EventRecorder
 	config                       *restclient.Config
@@ -106,8 +106,8 @@ func NewController(
 		jobSynced:     jobInformer.Informer().HasSynced,
 		k8sJobLister:  k8sJobInformer.Lister(),
 		k8sJobSynced:  k8sJobInformer.Informer().HasSynced,
-		podLister:  podJobInformer.Lister(),
-		podSynced:  podJobInformer.Informer().HasSynced,
+		podLister:     podJobInformer.Lister(),
+		podSynced:     podJobInformer.Informer().HasSynced,
 		workqueue:     workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "Jobs"),
 		recorder:      recorder,
 		config:        config,
@@ -395,7 +395,7 @@ func (c *Controller) newBatchJob(job *jobv1alpha1.IBJob, token string) *batchv1.
 	}
 
 	for _, s := range job.Spec.Services {
-        id, _ := s.Metadata.Labels["service.infrabox.net/id"]
+		id, _ := s.Metadata.Labels["service.infrabox.net/id"]
 
 		volumes = append(volumes, corev1.Volume{
 			Name: id,
@@ -458,9 +458,9 @@ func (c *Controller) newBatchJob(job *jobv1alpha1.IBJob, token string) *batchv1.
 					Kind:    "Job",
 				}),
 			},
-            Labels: map[string]string {
-                "job.infrabox.net/id": job.Name,
-            },
+			Labels: map[string]string{
+				"job.infrabox.net/id": job.Name,
+			},
 		},
 		Spec: batchv1.JobSpec{
 			Template: corev1.PodTemplateSpec{
@@ -470,11 +470,11 @@ func (c *Controller) newBatchJob(job *jobv1alpha1.IBJob, token string) *batchv1.
 					Volumes:                      volumes,
 					RestartPolicy:                "OnFailure",
 				},
-                ObjectMeta: metav1.ObjectMeta{
-                    Labels: map[string]string {
-                        "job.infrabox.net/id": job.Name,
-                    },
-                },
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: map[string]string{
+						"job.infrabox.net/id": job.Name,
+					},
+				},
 			},
 		},
 	}
@@ -495,45 +495,44 @@ func (c *Controller) deleteBatchJob(job *jobv1alpha1.IBJob) (bool, error) {
 	err = c.kubeclientset.BatchV1().Jobs(job.Namespace).Delete(job.Name, &metav1.DeleteOptions{})
 
 	if err != nil {
-        if !errors.IsNotFound(err) {
-            runtime.HandleError(fmt.Errorf("%s/%s: Failed to delete job: %s", job.Namespace, job.Name, err.Error()))
-            return false, err
-        }
+		if !errors.IsNotFound(err) {
+			runtime.HandleError(fmt.Errorf("%s/%s: Failed to delete job: %s", job.Namespace, job.Name, err.Error()))
+			return false, err
+		}
 	}
 
 	return true, nil
 }
 
 func (c *Controller) deletePods(job *jobv1alpha1.IBJob) (bool, error) {
-    l := labels.Set {
-        "job.infrabox.net/id": job.Name,
-    }
+	l := labels.Set{
+		"job.infrabox.net/id": job.Name,
+	}
 
 	pods, err := c.podLister.Pods(job.Namespace).List(l.AsSelector())
 
 	if err != nil {
-        return false, err
+		return false, err
 	}
 
-    if len(pods) == 0 {
-        return true, nil
-    }
+	if len(pods) == 0 {
+		return true, nil
+	}
 
 	for _, pod := range pods {
-        glog.Infof("%s/%s: Deleting pod", job.Namespace, job.Name)
-        err = c.kubeclientset.CoreV1().Pods(job.Namespace).Delete(pod.Name, &metav1.DeleteOptions{})
+		glog.Infof("%s/%s: Deleting pod", job.Namespace, job.Name)
+		err = c.kubeclientset.CoreV1().Pods(job.Namespace).Delete(pod.Name, &metav1.DeleteOptions{})
 
-        if err != nil {
-            if !errors.IsNotFound(err) {
-                runtime.HandleError(fmt.Errorf("%s/%s: Failed to delete pod: %s", job.Namespace, job.Name, err.Error()))
-                return false, err
-            }
-        }
+		if err != nil {
+			if !errors.IsNotFound(err) {
+				runtime.HandleError(fmt.Errorf("%s/%s: Failed to delete pod: %s", job.Namespace, job.Name, err.Error()))
+				return false, err
+			}
+		}
 	}
 
 	return false, nil
 }
-
 
 func (c *Controller) deleteJob(job *jobv1alpha1.IBJob) error {
 	servicesDeleted, err := c.deleteServices(job)
@@ -584,27 +583,27 @@ func (c *Controller) deleteJob(job *jobv1alpha1.IBJob) error {
 }
 
 func (c *Controller) deleteService(job *jobv1alpha1.IBJob, service *jobv1alpha1.IBJobService) (bool, error) {
-    glog.Infof("%s/%s: Deleting Service: %s", job.Namespace, job.Name, service.Metadata.Name)
+	glog.Infof("%s/%s: Deleting Service: %s", job.Namespace, job.Name, service.Metadata.Name)
 
-    gv, resource, err := c.getGroupVersion(service, job)
+	gv, resource, err := c.getGroupVersion(service, job)
 
-    if err != nil {
-        return false, err
-    }
+	if err != nil {
+		return false, err
+	}
 
-    rc, err := NewRESTClientForConfig(c.config, gv)
+	rc, err := NewRESTClientForConfig(c.config, gv)
 
-    if err != nil {
-        runtime.HandleError(fmt.Errorf("%s/%s: Failed to create rest client: %s", job.Namespace, job.Name, err.Error()))
-        return false, err
-    }
+	if err != nil {
+		runtime.HandleError(fmt.Errorf("%s/%s: Failed to create rest client: %s", job.Namespace, job.Name, err.Error()))
+		return false, err
+	}
 
-    result := rc.Delete().Namespace(job.Namespace).Name(resource.Name).Do()
+	result := rc.Delete().Namespace(job.Namespace).Name(resource.Name).Do()
 
-    if err := result.Error(); err != nil {
-        runtime.HandleError(fmt.Errorf("%s/%s: Failed to delete service: %s", job.Namespace, job.Name, err.Error()))
-        return false, err
-    }
+	if err := result.Error(); err != nil {
+		runtime.HandleError(fmt.Errorf("%s/%s: Failed to delete service: %s", job.Namespace, job.Name, err.Error()))
+		return false, err
+	}
 
 	glog.Infof("%s/%s: Successfully deleted service", job.Namespace, job.Name)
 	return true, nil
@@ -613,20 +612,20 @@ func (c *Controller) deleteService(job *jobv1alpha1.IBJob, service *jobv1alpha1.
 func NewConfig(inConfig *rest.Config, gv *schema.GroupVersion) *rest.Config {
 	config := rest.CopyConfig(inConfig)
 	config.GroupVersion = gv
-    config.APIPath = "/apis"
+	config.APIPath = "/apis"
 	config.AcceptContentTypes = "application/json"
 	config.ContentType = "application/json"
-    config.NegotiatedSerializer = scheme.Codecs
+	config.NegotiatedSerializer = scheme.Codecs
 
 	if config.UserAgent == "" {
 		config.UserAgent = rest.DefaultKubernetesUserAgent()
 	}
 
-    return config
+	return config
 }
 
 func NewRESTClientForConfig(inConfig *rest.Config, gv *schema.GroupVersion) (*rest.RESTClient, error) {
-    config := NewConfig(inConfig, gv)
+	config := NewConfig(inConfig, gv)
 
 	restClient, err := rest.UnversionedRESTClientFor(config)
 	if err != nil {
@@ -639,14 +638,14 @@ func NewRESTClientForConfig(inConfig *rest.Config, gv *schema.GroupVersion) (*re
 func (c *Controller) getGroupVersion(service *jobv1alpha1.IBJobService, job *jobv1alpha1.IBJob) (*schema.GroupVersion, *metav1.APIResource, error) {
 	client, err := discovery.NewDiscoveryClientForConfig(c.config)
 	if err != nil {
-        runtime.HandleError(fmt.Errorf("%s/%s: Failed to create discovery client: %s", job.Namespace, job.Name, err.Error()))
+		runtime.HandleError(fmt.Errorf("%s/%s: Failed to create discovery client: %s", job.Namespace, job.Name, err.Error()))
 		return nil, nil, err
 	}
 
 	resourceList, err := client.ServerResourcesForGroupVersion(service.APIVersion)
 
 	if err != nil {
-        runtime.HandleError(fmt.Errorf("%s/%s: Failed to get server resources for group version: %s", job.Namespace, job.Name, err.Error()))
+		runtime.HandleError(fmt.Errorf("%s/%s: Failed to get server resources for group version: %s", job.Namespace, job.Name, err.Error()))
 		return nil, nil, err
 	}
 
@@ -658,20 +657,20 @@ func (c *Controller) getGroupVersion(service *jobv1alpha1.IBJobService, job *job
 		}
 	}
 
-    gv, err := schema.ParseGroupVersion(service.APIVersion)
+	gv, err := schema.ParseGroupVersion(service.APIVersion)
 
-    if err != nil {
-        return nil, nil, err
-    }
+	if err != nil {
+		return nil, nil, err
+	}
 
-    return &gv, &resource, nil
+	return &gv, &resource, nil
 }
 
 func (c *Controller) getServiceInterface(job *jobv1alpha1.IBJob, gv *schema.GroupVersion, resource *metav1.APIResource) (dynamic.ResourceInterface, error) {
-    config := NewConfig(c.config, gv)
+	config := NewConfig(c.config, gv)
 	dyn, err := dynamic.NewClient(config)
 	if err != nil {
-        runtime.HandleError(fmt.Errorf("%s/%s: Failed to create new rest client", job.Namespace, job.Name))
+		runtime.HandleError(fmt.Errorf("%s/%s: Failed to create new rest client", job.Namespace, job.Name))
 		return nil, err
 	}
 
@@ -680,22 +679,22 @@ func (c *Controller) getServiceInterface(job *jobv1alpha1.IBJob, gv *schema.Grou
 }
 
 func (c *Controller) createService(service *jobv1alpha1.IBJobService, job *jobv1alpha1.IBJob) (bool, error) {
-    gv, resource, err := c.getGroupVersion(service, job)
+	gv, resource, err := c.getGroupVersion(service, job)
 	if err != nil {
-        runtime.HandleError(fmt.Errorf("%s/%s: Failed to get GroupVersion for service", job.Namespace, job.Name))
+		runtime.HandleError(fmt.Errorf("%s/%s: Failed to get GroupVersion for service", job.Namespace, job.Name))
 		return false, err
 	}
 
 	si, err := c.getServiceInterface(job, gv, resource)
 
 	if err != nil {
-        runtime.HandleError(fmt.Errorf("%s/%s: Failed to get service interface", job.Namespace, job.Name))
+		runtime.HandleError(fmt.Errorf("%s/%s: Failed to get service interface", job.Namespace, job.Name))
 		return false, err
 	}
 
 	id, ok := service.Metadata.Labels["service.infrabox.net/id"]
 	if !ok {
-        runtime.HandleError(fmt.Errorf("%s/%s: Infrabox service id not set", job.Namespace, job.Name))
+		runtime.HandleError(fmt.Errorf("%s/%s: Infrabox service id not set", job.Namespace, job.Name))
 		return false, goerr.New("Infrabox service id not set")
 	}
 
@@ -703,25 +702,26 @@ func (c *Controller) createService(service *jobv1alpha1.IBJobService, job *jobv1
 
 	if err != nil {
 		if !errors.IsNotFound(err) {
+			runtime.HandleError(fmt.Errorf("%s/%s: Could not get service: %s", job.Namespace, job.Name, err.Error()))
 			return false, err
 		}
 	}
 
-    if len(s.Object) != 0 {
+	if len(s.Object) != 0 {
 		glog.Infof("%s/%s: Service %s/%s already exists, checking status", job.Namespace, job.Name, service.APIVersion, service.Kind)
 
 		// Already exists, check status
 		var remote jobv1alpha1.IBService
 		serviceJson, err := s.MarshalJSON()
 		if err != nil {
-			runtime.HandleError(fmt.Errorf("Failed to parse service"))
+			runtime.HandleError(fmt.Errorf("%s/%s: Failed to parse service: %s", job.Namespace, job.Name, err.Error()))
 			return false, err
 		}
 
 		err = json.Unmarshal(serviceJson, &remote)
 
 		if err != nil {
-			runtime.HandleError(fmt.Errorf("Failed to parse service"))
+			runtime.HandleError(fmt.Errorf("%s/%s: Failed to parse service: %s", job.Namespace, job.Name, err.Error()))
 			return false, err
 		}
 
@@ -730,55 +730,57 @@ func (c *Controller) createService(service *jobv1alpha1.IBJobService, job *jobv1
 		}
 
 		if remote.Status.Status == "error" {
-			return false, goerr.New("Failed to create service: " + remote.Status.Message)
+			runtime.HandleError(fmt.Errorf("%s/%s: service is in state error: %s", job.Namespace, job.Name, remote.Status.Message))
+			return false, goerr.New(remote.Status.Message)
 		}
 	} else {
 		glog.Infof("%s/%s: Service %s/%s does not yet exist, creating it", job.Namespace, job.Name, service.APIVersion, service.Kind)
 
-        newService := map[string]interface{} {
-            "apiVersion": service.APIVersion,
-            "kind": service.Kind,
-            "metadata": map[string]interface{} {
-                "name": id,
-                "namespace": job.Namespace,
-                "labels": map[string]string {
-                    "service.infrabox.net/secret-name": id,
-                },
-            },
-            "spec": service.Spec,
-        }
+		newService := map[string]interface{}{
+			"apiVersion": service.APIVersion,
+			"kind":       service.Kind,
+			"metadata": map[string]interface{}{
+				"name":      id,
+				"namespace": job.Namespace,
+				"labels": map[string]string{
+					"service.infrabox.net/secret-name": id,
+				},
+			},
+			"spec": service.Spec,
+		}
 
-        gv, err := schema.ParseGroupVersion(service.APIVersion)
+		gv, err := schema.ParseGroupVersion(service.APIVersion)
 
-        if err != nil {
-            return false, err
-        }
+		if err != nil {
+			runtime.HandleError(fmt.Errorf("%s/%s: Failed to parse GroupVersion: %s", job.Namespace, job.Name, err.Error()))
+			return false, err
+		}
 
 		rc, err := NewRESTClientForConfig(c.config, &gv)
 
 		if err != nil {
-            runtime.HandleError(fmt.Errorf("%s/%s: Failed to create rest client: %s", job.Namespace, job.Name, err.Error()))
+			runtime.HandleError(fmt.Errorf("%s/%s: Failed to create rest client: %s", job.Namespace, job.Name, err.Error()))
 			return false, err
 		}
 
 		bytes, err := json.Marshal(newService)
-        if err != nil {
-            runtime.HandleError(fmt.Errorf("%s/%s: Failed to marshal service: %s", job.Namespace, job.Name, err.Error()))
-            return false, err
-        }
+		if err != nil {
+			runtime.HandleError(fmt.Errorf("%s/%s: Failed to marshal service: %s", job.Namespace, job.Name, err.Error()))
+			return false, err
+		}
 
 		request := rc.Post().Namespace(job.Namespace).Name("gkeclusters")
-        result := request.Body(bytes).Do()
+		result := request.Body(bytes).Do()
 
 		if err := result.Error(); err != nil {
-            runtime.HandleError(fmt.Errorf("%s/%s: Failed to post service: %s", job.Namespace, job.Name, err.Error()))
-            return false, err
+			runtime.HandleError(fmt.Errorf("%s/%s: Failed to post service: %s", job.Namespace, job.Name, err.Error()))
+			return false, err
 		}
 
 		glog.Infof("%s/%s: Service %s/%s created", job.Namespace, job.Name, service.APIVersion, service.Kind)
 	}
 
-    return false, nil
+	return false, nil
 }
 
 func (c *Controller) deleteServices(job *jobv1alpha1.IBJob) (bool, error) {
@@ -819,7 +821,7 @@ func (c *Controller) createServices(job *jobv1alpha1.IBJob) (bool, error) {
 		r, err := c.createService(&s, job)
 
 		if err != nil {
-            runtime.HandleError(fmt.Errorf("%s/%s: Failed to create service", job.Namespace, job.Name))
+			runtime.HandleError(fmt.Errorf("%s/%s: Failed to create service: %s", job.Namespace, job.Name, err.Error()))
 			return false, err
 		}
 
@@ -907,23 +909,23 @@ func (c *Controller) createJob(job *jobv1alpha1.IBJob) error {
 	servicesCreated, err := c.createServices(job)
 
 	if err != nil {
-        runtime.HandleError(fmt.Errorf("%s/%s: Failed to create services: %s", job.Namespace, job.Name, err.Error()))
+		runtime.HandleError(fmt.Errorf("%s/%s: Failed to create services: %s", job.Namespace, job.Name, err.Error()))
 		return err
 	}
 
 	if !servicesCreated {
-        glog.Infof("%s/%s: Services not yet ready", job.Namespace, job.Name)
+		glog.Infof("%s/%s: Services not yet ready", job.Namespace, job.Name)
 		return nil
 	}
 
 	err = c.createBatchJob(job)
 
 	if err != nil {
-        runtime.HandleError(fmt.Errorf("%s/%s: Failed to create batch job: %s", job.Namespace, job.Name, err.Error()))
+		runtime.HandleError(fmt.Errorf("%s/%s: Failed to create batch job: %s", job.Namespace, job.Name, err.Error()))
 		return err
 	}
 
-    glog.Infof("%s/%s: Batch job created", job.Namespace, job.Name)
+	glog.Infof("%s/%s: Batch job created", job.Namespace, job.Name)
 	return nil
 }
 
@@ -937,7 +939,7 @@ func (c *Controller) syncHandlerImpl(job jobv1alpha1.IBJob) error {
 	}
 
 	if job.Status.Status == "error" {
-        glog.Infof("%s/%s: job in error state, ignoring", job.Namespace, job.Name)
+		glog.Infof("%s/%s: job in error state, ignoring", job.Namespace, job.Name)
 		return nil
 	}
 
@@ -946,19 +948,19 @@ func (c *Controller) syncHandlerImpl(job jobv1alpha1.IBJob) error {
 
 	if err != nil {
 		if !errors.IsNotFound(err) {
-            runtime.HandleError(fmt.Errorf("%s/%s: Failed to get job: %s", job.Namespace, job.Name, err.Error()))
+			runtime.HandleError(fmt.Errorf("%s/%s: Failed to get job: %s", job.Namespace, job.Name, err.Error()))
 			return err
 		}
 	}
 
 	if k8sjob == nil {
 		err = c.createJob(&job)
-        if err != nil {
-            runtime.HandleError(fmt.Errorf("%s/%s: Failed to create job: %s", job.Namespace, job.Name, err.Error()))
-        }
+		if err != nil {
+			runtime.HandleError(fmt.Errorf("%s/%s: Failed to create job: %s", job.Namespace, job.Name, err.Error()))
+		}
 	}
 
-    glog.Infof("%s/%s: Sync finished", job.Namespace, job.Name)
+	glog.Infof("%s/%s: Sync finished", job.Namespace, job.Name)
 	return nil
 }
 
