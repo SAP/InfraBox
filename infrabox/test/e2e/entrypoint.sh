@@ -35,6 +35,8 @@ _prepareKubectl() {
     kubectl config use-context default-system
 
     kubectl get nodes
+
+    kubectl create ns $NAMESPACE
 }
 
 _getDependencies() {
