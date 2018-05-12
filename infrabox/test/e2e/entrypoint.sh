@@ -62,7 +62,7 @@ _getNginxIP() {
     external_ip=""
     while [ -z $external_ip ]; do
         echo "Waiting for nginx endpoint..."
-        external_ip=$(kubectl -n kube-system get svc nginx-ingress-controller-controller --template="{{range .status.loadBalancer.ingress}}{{.ip}}{{end}}")
+        external_ip=$(kubectl -n kube-system get svc nic-nginx-ingress-controller --template="{{range .status.loadBalancer.ingress}}{{.ip}}{{end}}")
         [ -z "$external_ip" ] && sleep 10
     done
 
