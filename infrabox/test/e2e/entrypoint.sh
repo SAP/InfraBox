@@ -145,7 +145,7 @@ _installNginxIngress() {
 
     helm install \
         -n nic \
-        --namespace kube-system
+        --namespace kube-system \
         --set controller.config.proxy-body-size="0" \
         --set controller.config.ssl-redirect='"false"' \
         stable/nginx-ingress
