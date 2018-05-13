@@ -91,7 +91,6 @@ class Test(unittest.TestCase):
 
     def _wait_build(self):
         while True:
-            time.sleep(5)
             jobs = self._get_jobs()
 
             active = False
@@ -101,6 +100,8 @@ class Test(unittest.TestCase):
 
             if not active:
                 return
+
+            time.sleep(3)
 
     def _print_job_logs(self):
         self._wait_build()
@@ -265,6 +266,9 @@ class Test(unittest.TestCase):
 def main():
     root_url = os.environ['INFRABOX_ROOT_URL']
 
+    print "Connecting to DB"
+    connect_db() # Wait for DB
+
     print "ROOT_URL: %s" % root_url
     while True:
         time.sleep(1)
@@ -281,8 +285,7 @@ def main():
 
         print "Server not yet ready"
 
-    print "Connecting to DB"
-    connect_db() # Wait for DB
+    time.sleep(30)
 
     print "Starting tests"
     with open('results.xml', 'wb') as output:
