@@ -36,11 +36,11 @@ import (
 
 	restclient "k8s.io/client-go/rest"
 
-	jobv1alpha1 "github.com/SAP/infrabox/src/controller/pkg/apis/infrabox-controller/v1alpha1"
-	clientset "github.com/SAP/infrabox/src/controller/pkg/client/clientset/versioned"
-	jobscheme "github.com/SAP/infrabox/src/controller/pkg/client/clientset/versioned/scheme"
-	informers "github.com/SAP/infrabox/src/controller/pkg/client/informers/externalversions"
-	listers "github.com/SAP/infrabox/src/controller/pkg/client/listers/infrabox-controller/v1alpha1"
+	jobv1alpha1 "github.com/sap/infrabox/src/controller/pkg/apis/infrabox-controller/v1alpha1"
+	clientset "github.com/sap/infrabox/src/controller/pkg/client/clientset/versioned"
+	jobscheme "github.com/sap/infrabox/src/controller/pkg/client/clientset/versioned/scheme"
+	informers "github.com/sap/infrabox/src/controller/pkg/client/informers/externalversions"
+	listers "github.com/sap/infrabox/src/controller/pkg/client/listers/infrabox-controller/v1alpha1"
 )
 
 const controllerAgentName = "infrabox-controller"

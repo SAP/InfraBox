@@ -5,7 +5,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	controller "github.com/SAP/infrabox/src/services/gcp/pkg/apis/gcp"
+	controller "github.com/sap/infrabox/src/services/gcp/pkg/apis/gcp"
 )
 
 // SchemeGroupVersion is group version used to register these objects

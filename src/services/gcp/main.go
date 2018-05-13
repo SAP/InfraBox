@@ -14,9 +14,9 @@ import (
 	// Uncomment the following line to load the gcp plugin (only required to authenticate against GKE clusters).
 	// _ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 
-	clientset "github.com/SAP/infrabox/src/services/gcp/pkg/client/clientset/versioned"
-	informers "github.com/SAP/infrabox/src/services/gcp/pkg/client/informers/externalversions"
-	"github.com/SAP/infrabox/src/services/gcp/pkg/signals"
+	clientset "github.com/sap/infrabox/src/services/gcp/pkg/client/clientset/versioned"
+	informers "github.com/sap/infrabox/src/services/gcp/pkg/client/informers/externalversions"
+	"github.com/sap/infrabox/src/services/gcp/pkg/signals"
 )
 
 var (
