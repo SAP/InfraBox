@@ -492,7 +492,7 @@ func (c *Controller) deleteBatchJob(job *jobv1alpha1.IBJob) (bool, error) {
 	}
 
 	glog.Infof("%s/%s: Deleting Batch Job", job.Namespace, job.Name)
-	err = c.kubeclientset.BatchV1().Jobs(job.Namespace).Delete(job.Name, &metav1.NewDeleteOptions(0))
+	err = c.kubeclientset.BatchV1().Jobs(job.Namespace).Delete(job.Name, metav1.NewDeleteOptions(0))
 
 	if err != nil {
 		if !errors.IsNotFound(err) {
@@ -521,7 +521,7 @@ func (c *Controller) deletePods(job *jobv1alpha1.IBJob) (bool, error) {
 
 	for _, pod := range pods {
 		glog.Infof("%s/%s: Deleting pod", job.Namespace, job.Name)
-		err = c.kubeclientset.CoreV1().Pods(job.Namespace).Delete(pod.Name, &metav1.NewDeleteOptions(0))
+		err = c.kubeclientset.CoreV1().Pods(job.Namespace).Delete(pod.Name, metav1.NewDeleteOptions(0))
 
 		if err != nil {
 			if !errors.IsNotFound(err) {
