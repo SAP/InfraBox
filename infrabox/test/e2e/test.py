@@ -50,7 +50,6 @@ class Test(unittest.TestCase):
         conn.commit()
 
         os.environ['INFRABOX_CLI_TOKEN'] = encode_project_token(self.token_id, self.project_id)
-        print os.environ['INFRABOX_CLI_TOKEN']
         self.root_url = os.environ['INFRABOX_ROOT_URL']
 
     def _api_get(self, url):
@@ -70,14 +69,23 @@ class Test(unittest.TestCase):
 
     def _get_build(self):
         url = '%s/api/v1/projects/%s/builds/' % (self.root_url, self.project_id)
-        result = self._api_get(url).json()
-        return result[0]
+        result = self._api_get(url)
+        try:
+            return result.json()[0]
+        except:
+            print result.text
+            raise
 
     def _get_jobs(self):
         build = self._get_build()
         url = '%s/api/v1/projects/%s/builds/%s/jobs/' % (self.root_url, self.project_id, build['id'])
-        jobs = self._api_get(url).json()
-        return jobs
+        jobs = self._api_get(url)
+
+        try:
+            return jobs.json()
+        except:
+            print jobs
+            raise
 
     def _wait_build(self):
         while True:
