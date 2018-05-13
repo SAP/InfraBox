@@ -5,9 +5,9 @@ import (
 	"time"
 
 	"github.com/golang/glog"
-	clientset "github.com/infrabox/infrabox/src/controller/pkg/client/clientset/versioned"
-	informers "github.com/infrabox/infrabox/src/controller/pkg/client/informers/externalversions"
-	"github.com/infrabox/infrabox/src/controller/pkg/signals"
+	clientset "github.com/SAP/infrabox/src/controller/pkg/client/clientset/versioned"
+	informers "github.com/SAP/infrabox/src/controller/pkg/client/informers/externalversions"
+	"github.com/SAP/infrabox/src/controller/pkg/signals"
 	kubeinformers "k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"

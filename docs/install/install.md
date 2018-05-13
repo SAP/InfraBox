@@ -92,7 +92,7 @@ You can configure different ways of how your user can authenticate.
 ## Clone InfraBox repository
 If you have not already cloned the InfraBox repository do so with:
 
-    git clone https://github.com/infrabox/infrabox /tmp/infrabox
+    git clone https://github.com/SAP/infrabox /tmp/infrabox
 
 ## Generate RSA Key
 InfraBox uses a RSA key to sign certain information for security reasons. You need to generate a RSA key and keep it at a secure place

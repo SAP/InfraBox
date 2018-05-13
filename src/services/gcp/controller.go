@@ -23,11 +23,11 @@ import (
 	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/workqueue"
 
-	clusterv1alpha1 "github.com/infrabox/infrabox/src/services/gcp/pkg/apis/gcp/v1alpha1"
-	clientset "github.com/infrabox/infrabox/src/services/gcp/pkg/client/clientset/versioned"
-	gkescheme "github.com/infrabox/infrabox/src/services/gcp/pkg/client/clientset/versioned/scheme"
-	informers "github.com/infrabox/infrabox/src/services/gcp/pkg/client/informers/externalversions"
-	listers "github.com/infrabox/infrabox/src/services/gcp/pkg/client/listers/gcp/v1alpha1"
+	clusterv1alpha1 "github.com/SAP/infrabox/src/services/gcp/pkg/apis/gcp/v1alpha1"
+	clientset "github.com/SAP/infrabox/src/services/gcp/pkg/client/clientset/versioned"
+	gkescheme "github.com/SAP/infrabox/src/services/gcp/pkg/client/clientset/versioned/scheme"
+	informers "github.com/SAP/infrabox/src/services/gcp/pkg/client/informers/externalversions"
+	listers "github.com/SAP/infrabox/src/services/gcp/pkg/client/listers/gcp/v1alpha1"
 )
 
 const controllerAgentName = "infrabox-service-gcp"

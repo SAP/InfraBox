@@ -1,7 +1,7 @@
 # Developer Guide
 You need these requirementes to be installed on your machine:
 
-- [infraboxcli](https://github.com/infrabox/cli)
+- [infraboxcli](https://github.com/SAP/infrabox-cli)
 - [docker](https://www.docker.com/)
 - python 2.7
 

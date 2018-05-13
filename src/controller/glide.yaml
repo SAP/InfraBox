@@ -1,4 +1,4 @@
-package: github.com/infrabox/infrabox/src/controller
+package: github.com/SAP/infrabox/src/controller
 import:
 - package: github.com/dgrijalva/jwt-go
 - package: github.com/golang/glog
