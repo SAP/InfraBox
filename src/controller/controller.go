@@ -957,6 +957,7 @@ func (c *Controller) syncHandlerImpl(job jobv1alpha1.IBJob) error {
 		err = c.createJob(&job)
 		if err != nil {
 			runtime.HandleError(fmt.Errorf("%s/%s: Failed to create job: %s", job.Namespace, job.Name, err.Error()))
+			return err
 		}
 	}
 
