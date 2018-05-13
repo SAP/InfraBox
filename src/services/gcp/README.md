@@ -3,7 +3,7 @@ The InfraBox GCP Service can be used to dynamically provision a Kubernetes Clust
 
 ## Usage
 
-```
+```json
 {
     "version": 1,
     "jobs": [{
@@ -46,7 +46,7 @@ The GKE Cluster credentials will be available under `/var/run/infrabox.net/servi
 
 You may configure kubectl in your job as follows:
 
-```
+```bash
 #!/bin/bash -e
 SERVICE_NAME="my-cluster"
 
@@ -79,16 +79,16 @@ kubectl get pods
 ```
 
 ## Install
-To install the service in your Kubernetes cluser you have to first create a GCP Service Account with `Kubernetes Engine Admin` and `Service Account User` roles.
+To install the service in your Kubernetes cluster you have to first create a GCP Service Account with `Kubernetes Engine Admin` and `Service Account User` roles.
 Download the service account json file and save it as `service_account.json`. Then create a secret for it:
 
-```
+```bash
 kubectl -n infrabox-system create secret generic infrabox-service-gcp-sa --from-file ./service_account.json
 ```
 
 Now use helm to install the GCP Service.
 
-```
+```bash
 cd infrabox-service-gcp
-helm install -n infrabox-system .
+helm install --namespace infrabox-system -n infrabox-service-gcp .
 ```

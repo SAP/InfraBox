@@ -3,7 +3,7 @@ InfraBox can be installed on multiple Kubernetes cluster and connected to one bi
 
 The multi cluster installation works almost as the regular installation, but with two additional requirements. The Postgres database you use has to be accessible by all clusters. So depending on your network and if you are on a cloud or on-prem you have to make the database available to all kubernetes installation with propper firewall rules.
 
-The API Endpoints, bascially the `--root-url` of each cluster must be accessible by all other clusters. If this is not possible for you, because you i.e. run one cluster on-prem and one in the cloud and you are not allowed to change your on-prem firewall rules to make the on-prem cluster accessible then see the limitation section.
+The API Endpoints, bascially the `--root-url` of each cluster must be accessible by all other clusters. If this is not possible for you, because you i.e. run one cluster on-prem and one in the cloud and you are not allowed to change your on-prem firewall rules to make the on-prem cluster accessible then see the [limitation section](limitation-if-not-all-clusters-are-accessible).
 
 A Multi Cluster Setup always has one "master" installation. This one will contain the Dashboard and UI relevant components. The "worker" clusters will only host the API, Docker-Registry and Scheduler. You may also use different Storage backends on each cluster. So i.e. you want to run a master on AWS and a worker on GCP. So you would choose S3 on AWS and GCS on GCP, but remember the Postgres database must be available from all clusters so you could use Amazons' RDS or GCP's Cloud SQL.
 
