@@ -17,24 +17,16 @@ Some of InfraBox' features are:
 ## Want to see it in action?
 InfraBox is built on InfraBox. See all the builds [here](https://infrabox.ninja/dashboard/#/project/infrabox).
 
-## Requirements
-Currently InfraBox requires the following list of components to be already available:
-
-- Kubernetes Cluster (1.9 or higher)
-- PostgreSQL 9.6
-- Object Store (S3 (or S3 compatible like minio) or Google Cloud Storage)
-
-## Install InfraBox
-You have multiple options to install InfraBox:
-
-- [Docker Compose (For local testing)](docs/install_docker_compose.md)
-- [Kubernetes Engine (GCP, Deployment Manager)](deploy/gcp/deployment_manager/)
-- [Kubernetes Engine (GCP, manual configuration)](docs/install_gcloud.md)
+## Documentation
+All our documentation can be found [here](docs/README.md). You can also look at our [example repository](https://github.com/SAP/infrabox-examples) on how to make use of the different features InfraBox provides.
 
 ## How to obtain support
 If you need help please post your questions to [Stack Overflow](https://stackoverflow.com/questions/tagged/infrabox).
 In case you found a bug please open a [Github Issue](https://github.com/InfraBox/infrabox/issues).
 Follow us on Twitter: [@Infra_Box](https://twitter.com/Infra_Box) or have look at our Slack channel [infrabox.slack.com](https://infrabox.slack.com/).
+
+## Contribute
+Any contribution is highly appreciated. See our [developer's documentation](docs/dev.md) for details.
 
 ## License
 Copyright (c) 2018 SAP SE or an SAP affiliate company. All rights reserved.
