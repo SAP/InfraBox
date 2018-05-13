@@ -73,6 +73,7 @@ class Test(unittest.TestCase):
         try:
             return result.json()[0]
         except:
+            print "Get build failed: "
             print result.text
             raise
 
@@ -84,6 +85,7 @@ class Test(unittest.TestCase):
         try:
             return jobs.json()
         except:
+            print "Get jobs failed: "
             print jobs
             raise
 
@@ -159,12 +161,15 @@ class Test(unittest.TestCase):
     def run_it(self, cwd):
         command = ['infrabox', '--ca-bundle', 'false', 'push']
         output = None
-        try:
-            output = subprocess.check_output(command, cwd=cwd)
-        except subprocess.CalledProcessError as e:
-            output = e.output
 
-        print output
+        while True:
+            try:
+                output = subprocess.check_output(command, cwd=cwd)
+                break
+            except subprocess.CalledProcessError as e:
+                output = e.output
+                print output
+                time.sleep(5)
 
         self._print_job_logs()
 
