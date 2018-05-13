@@ -37,3 +37,9 @@ infrabox/test/github-review/results.xml
 src/pyinfrabox/.coverage
 src/pyinfrabox/coverage.xml
 src/pyinfrabox/results.xml
+src/controller/pkg/client
+src/controller/controller
+src/controller/vendor
+src/services/gcp/pkg/client
+src/services/gcp/vendor
+src/services/gcp/gcp

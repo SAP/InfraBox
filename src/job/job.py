@@ -821,6 +821,10 @@ class RunJob(Job):
             cmd += ['-e', 'INFRABOX_RESOURCES_KUBERNETES_MASTER_URL=%s' %
                     os.environ['INFRABOX_RESOURCES_KUBERNETES_MASTER_URL']]
 
+        # add services
+        if os.path.exists('/var/run/infrabox.net/services'):
+            cmd += ['-v', '/var/run/infrabox.net/services:/var/run/infrabox.net/services']
+
         cmd += ['--tmpfs', '/infrabox/tmpfs']
 
         # Add capabilities
