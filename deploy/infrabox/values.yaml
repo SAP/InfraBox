@@ -42,6 +42,13 @@ db:
     # Tag
     tag: latest
 
+controller:
+    # name of the controller image in your general.docker_registry
+    # image: controller
+
+    # Tag
+    tag: latest
+
 scheduler:
     enabled: true
 

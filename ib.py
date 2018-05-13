@@ -24,10 +24,8 @@ IMAGES = [
     {'name': 'github-review'},
     {'name': 'job'},
     {'name': 'job-git'},
+    {'name': 'controller'},
     {'name': 'scheduler-kubernetes'},
-    {'name': 'scheduler-docker-compose'},
-    {'name': 'docker-compose-ingress'},
-    {'name': 'docker-compose-minio-init'},
     {'name': 'api'},
     {'name': 'build-dashboard-client'},
     {'name': 'static', 'depends_on': ['build-dashboard-client']},
@@ -35,6 +33,7 @@ IMAGES = [
     {'name': 'docker-registry-nginx'},
     {'name': 'db'},
     {'name': 'postgres'},
+    {'name': 'service-gcp'},
 ]
 
 def execute(command, cwd=None, env=None, ignore_error=False, ignore_output=False):
