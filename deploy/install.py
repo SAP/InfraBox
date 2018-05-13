@@ -492,7 +492,7 @@ def main():
     parser.add_argument('--general-rsa-public-key')
     parser.add_argument('--general-rsa-private-key')
     parser.add_argument('--general-rbac-disabled', action='store_true', default=False)
-    parser.add_argument('--general-report-issue-url', default='https://github.com/InfraBox/infrabox/issues')
+    parser.add_argument('--general-report-issue-url', default='https://github.com/SAP/infrabox/issues')
 
     # Database configuration
     parser.add_argument('--database',

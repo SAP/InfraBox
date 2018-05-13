@@ -4,7 +4,7 @@
         "type": "git",
         "name": "examples-cpp",
         "commit": "master",
-        "clone_url": "https://github.com/InfraBox/examples.git",
+        "clone_url": "https://github.com/SAP/InfraBox-examples.git",
         "infrabox_file": "cpp_example/infrabox.json"
     }]
 }

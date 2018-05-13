@@ -206,7 +206,7 @@ An example git job definition:
     "jobs": [{
         "type": "git",
         "name": "some-external-jobs",
-        "clone_url": "https://github.com/InfraBox/examples.git",
+        "clone_url": "https://github.com/SAP/infrabox-examples.git",
         "commit": "master",
         "depends_on": [ ... ],
         "environment": { ... },

@@ -1,4 +1,4 @@
-package: github.com/infrabox/infrabox/src/services/gcp
+package: github.com/SAP/infrabox/src/services/gcp
 import:
 - package: github.com/dgrijalva/jwt-go
 - package: github.com/golang/glog
