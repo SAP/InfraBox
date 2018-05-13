@@ -28,6 +28,6 @@ echo $CODEGEN_PKG
 #                  k8s.io/kubernetes. The output-base is needed for the generators to output into the vendor dir
 #                  instead of the $GOPATH directly. For normal projects this can be dropped.
 ${CODEGEN_PKG}/generate-groups.sh "deepcopy,client,informer,lister" \
-  github.com/SAP/infrabox/src/controller/pkg/client github.com/SAP/infrabox/src/controller/pkg/apis \
+  github.com/sap/infrabox/src/controller/pkg/client github.com/sap/infrabox/src/controller/pkg/apis \
   infrabox-controller:v1alpha1 \
   --go-header-file ${SCRIPT_ROOT}/hack/boilerplate.go.txt
