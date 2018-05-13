@@ -50,6 +50,7 @@ class Test(unittest.TestCase):
         conn.commit()
 
         os.environ['INFRABOX_CLI_TOKEN'] = encode_project_token(self.token_id, self.project_id)
+        print os.environ['INFRABOX_CLI_TOKEN']
         self.root_url = os.environ['INFRABOX_ROOT_URL']
 
     def _api_get(self, url):
@@ -272,7 +273,7 @@ def main():
 
     print "Starting tests"
     with open('results.xml', 'wb') as output:
-        unittest.main(testRunner=xmlrunner.XMLTestRunner(output=output))
+        unittest.main(testRunner=xmlrunner.XMLTestRunner(output=output), buffer=False)
 
 if __name__ == '__main__':
     main()
