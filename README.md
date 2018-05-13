@@ -1,4 +1,5 @@
-# <a href="http://infrabox.net"><img src="src\dashboard-client\static\logo_compact_transparent.png" width="200"></a> [![Build Status](https://infrabox.ninja/api/v1/projects/8aec1f31-a1fb-4fd2-9ae9-cb4f7b7dd49b/state.svg?branch=master)](https://infrabox.ninja/dashboard/#/project/infrabox)
+# <a href="http://infrabox.net"><img src="src\dashboard-client\static\logo_compact_transparent.png" width="200"></a>
+[![Build Status](https://infrabox.ninja/api/v1/projects/deb14c11-dcbe-41f0-ade8-9d26e87266c3/state.svg)](https://infrabox.ninja/dashboard/#/project/sap-infrabox)
 
 InfraBox is a continuous integration system. It's well suited for cloud native applications and has [native support for kubernetes](https://github.com/InfraBox/examples/tree/master/kubernetes). Watch our short introduction video:
 
