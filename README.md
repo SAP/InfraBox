@@ -17,15 +17,11 @@ Some of InfraBox' features are:
 ## Want to see it in action?
 InfraBox is built on InfraBox. See all the builds [here](https://infrabox.ninja/dashboard/#/project/infrabox).
 
-## Install InfraBox
-You have multiple options to install InfraBox:
-
-- [Docker Compose (For local testing)](docs/install_docker_compose.md)
-- [Kubernetes Engine (GCP, Deployment Manager)](deploy/gcp/deployment_manager/)
-- [Kubernetes Engine (GCP, manual configuration)](docs/install_gcloud.md)
+## Documentation
+All our documentation can be found [here](docs/README.md). You can also look at our [example repository](https://github.com/SAP/infrabox-examples) on how to make use of the different features InfraBox provides.
 
 ## Contribute
-Any contribute is highly appreciated. See our [developer's documentation](docs/dev.md) for details.
+Any contribution is highly appreciated. See our [developer's documentation](docs/dev.md) for details.
 
 ## Contact
 Follow us on Twitter: [@Infra_Box](https://twitter.com/Infra_Box) or have look at our Slack channel [infrabox.slack.com](https://infrabox.slack.com/).

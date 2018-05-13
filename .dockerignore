@@ -5,8 +5,13 @@ src/api/dist/*
 src/dashboard-client/node_modules/*
 src/dashboard-client/dist/*
 .vscode/*
-.git/*
 *.swp
 *.pyc
 .infrabox*
 !.infrabox/inputs
+src/controller/pkg/client
+src/controller/vendor
+src/controller/controller
+src/services/gcp/pkg/client
+src/services/gcp/vendor
+src/services/gcp/gke-cluster-controller
