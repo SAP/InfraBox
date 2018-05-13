@@ -65,29 +65,29 @@ InfraBox requires a valid TLS certificate. It must be stored as a `Secret` with 
 
 You have multiple options to create one:
 
-- [Self signed certificates (not recommended, ok for testing, easiest to get started)](/docs/tls/self_signed.md)
-- [Set an already existing certificate](/docs/tls/existing_certificate.md)
-- [Use cert-manager to issue a certificate](/docs/tls/cert_manager.md)
+- [Self signed certificates (not recommended, ok for testing, easiest to get started)](/docs/install/tls/self_signed.md)
+- [Set an already existing certificate](/docs/install/tls/existing_certificate.md)
+- [Use cert-manager to issue a certificate](/docs/install/tls/cert_manager.md)
 
 ### Storage
 InfraBox requires an object store to persist some data like inputs/outpus, caches and as storage for the docker-registry. Chose one of the options:
 
-- [Google Cloud Storage (recommended on GCP)](/docs/storage/gcs.md)
-- [S3](/docs/storage/s3.md)
-- [Minio](/docs/storage/minio.md)
+- [Google Cloud Storage (recommended on GCP)](/docs/install/storage/gcs.md)
+- [S3](/docs/install/storage/s3.md)
+- [Minio](/docs/install/storage/minio.md)
 
 ### Install PostgreSQL
 InfraBox requires a PostgreSQL Database for persisting some data. You have the following options:
 
-- [Deploy in Kubernetes (not recommended, ok for testing, easiest to get started)](/docs/storage/deploy_postgres.md)
-- [CloudSQL](/docs/storage/cloudsql.md)
-- [Connect to any PostgreSQL database](/docs/storage/postgres.md)
+- [Deploy in Kubernetes (not recommended, ok for testing, easiest to get started)](/docs/install/storage/deploy_postgres.md)
+- [CloudSQL](/docs/install/storage/cloudsql.md)
+- [Connect to any PostgreSQL database](/docs/install/storage/postgres.md)
 
 ### Configure Authentication
 You can configure different ways of how your user can authenticate.
 
-- [GitHub (Use this if you want to connect your GitHub repositories)](/docs/configure/github.md)
-- [Manual signup / login](/docs/configure/signup.md)
+- [GitHub (Use this if you want to connect your GitHub repositories)](/docs/install/configure/github.md)
+- [Manual signup / login](/docs/install/configure/signup.md)
 
 ## Clone InfraBox repository
 If you have not already cloned the InfraBox repository do so with:
