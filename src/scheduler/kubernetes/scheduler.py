@@ -483,6 +483,9 @@ class Scheduler(object):
                          timeout=10)
         data = r.json()
 
+        if 'items' not in data:
+            return
+
         for j in data['items']:
             if 'metadata' not in j:
                 continue

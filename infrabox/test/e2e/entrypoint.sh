@@ -170,7 +170,6 @@ _installInfrabox() {
         --general-dont-check-certificates \
         --version $IMAGE_TAG \
         --root-url https://$ROOT_URL \
-        --general-rbac-disabled \
         --general-rsa-public-key ./id_rsa.pem \
         --general-rsa-private-key ./id_rsa \
         --admin-email admin@infrabox.net \
