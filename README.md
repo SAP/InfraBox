@@ -9,10 +9,10 @@ Some of InfraBox' features are:
 
 - [Static and dynamic workflows](https://github.com/SAP/infrabox-examples)
 - [Set resource limits (CPU and memory) for each task](https://github.com/SAP/infrabox-examples)
-- [GitHub integration](docs/configure/github.md)
-- [Gerrit integration](docs/configure/gerrit.md)
+- [GitHub integration](docs/install/configure/github.md)
+- [Gerrit integration](docs/install/configure/gerrit.md)
 - GitLab (comming soon)
-- [LDAP support](docs/configure/ldap.md)
+- [LDAP support](docs/install/configure/ldap.md)
 - [and many more, see our examples](https://github.com/SAP/infrabox-examples)
 
 ## Want to see it in action?
