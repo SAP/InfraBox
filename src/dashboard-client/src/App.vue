@@ -7,7 +7,7 @@
                 <md-icon>menu</md-icon>
             </md-button>
             <div style="width: 110px">
-                <a href="http://infrabox.net">
+                <a href="/">
                     <img src="../static/logo_white_on_transparent.png" style="flex: 1" />
                 </a>
             </div>
@@ -15,6 +15,9 @@
             <md-button v-if="!$store.state.user" class="md-button" @click="login" md-right>
                 <i class="fa fa-sign-in"></i> Login
             </md-button>
+            <div v-if="$store.state.user" md-right>
+                {{ $store.state.user.username }} <div v-if="$store.state.user.email">({{ $store.state.user.email }})</div>
+            </div>
         </md-toolbar>
 
         <md-sidenav v-if="$store.state.user" class="md-left" ref="leftSidenav">
@@ -24,7 +27,12 @@
 
             <md-list>
                 <md-list-item>
-                    <router-link to="/" style="color: inherit"><span @click="toggleLeftSidenav()"><md-icon><i class="fa fa-th-large fa-fw"></i></md-icon><span class="fix-list">Overview</span></span></router-link>
+                    <router-link to="/" style="color: inherit">
+                        <span @click="toggleLeftSidenav()">
+                            <md-icon><i class="fa fa-th-large fa-fw"></i></md-icon>
+                            <span class="fix-list">Overview</span>
+                        </span>
+                    </router-link>
                 </md-list-item>
 
                 <md-list-item>
@@ -44,8 +52,17 @@
                     </md-list-expand>
                 </md-list-item>
 
+                <md-list-item>
+                    <router-link :to="{name: 'AdminClusters'}" style="color: inherit">
+                        <span @click="toggleLeftSidenav()">
+                            <md-icon><i class="fa fa-desktop fa-fw"></i></md-icon>
+                            <span class="fix-list">Clusters</span>
+                        </span>
+                    </router-link>
+                </md-list-item>
+
                 <md-list-item class="navi-link">
-                    <a href="https://github.com/InfraBox/infrabox/blob/master/docs/doc.md"
+                    <a href="https://github.com/SAP/infrabox/docs"
                        class="md-list-item-container md-button"
                        target="_blank" @click="toggleLeftSidenav()">
                         <md-icon><i class="fa fa-book fa-fw"></i></md-icon>
@@ -54,7 +71,7 @@
                 </md-list-item>
 
                 <md-list-item class="navi-link">
-                    <a href="https://github.com/InfraBox/infrabox/issues"
+                    <a :href="$store.state.settings.INFRABOX_GENERAL_REPORT_ISSUE_URL"
                        class="md-list-item-container md-button"
                        target="_blank" @click="toggleLeftSidenav()">
                         <md-icon><i class="fa fa-bug fa-fw"></i></md-icon>
@@ -90,14 +107,6 @@
                                     </span>
                                 </router-link>
                             </md-list-item>
-                            <md-list-item class="md-inset">
-                                <router-link :to="{name: 'AdminClusters'}">
-                                    <span @click="toggleLeftSidenav()">
-                                        <i class="fa fa-users"></i>
-                                        Clusters
-                                    </span>
-                                </router-link>
-                            </md-list-item>
                         </md-list>
                     </md-list-expand>
                 </md-list-item>
@@ -111,6 +120,7 @@
 import store from './store'
 import router from './router'
 import Disconnect from './components/utils/Disconnect'
+import UserService from './services/UserService'
 
 export default {
     name: 'app',
@@ -125,8 +135,8 @@ export default {
             router.push('/login')
         },
         logout () {
+            UserService.logout()
             this.toggleLeftSidenav()
-            document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/; Max-Age=0'
             router.push('/login')
         }
     },

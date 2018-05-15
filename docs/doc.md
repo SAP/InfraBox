@@ -50,7 +50,7 @@ The job type docker is one of the most important jobs. You can use it to run any
 |build_context|false|string||Specify the docker build context. If not set the directory containing the `infrabox.json` file will be used.|
 |cache|false|[Cache Configuration](#cache-configuration)|{}|Configure the caching behavior|
 |timeout|false|integer|3600|Timeout in seconds after which the job should be killed. Timeout starts when the job is set to running|
-|depends_on|false|[Dependency Configuration](#job-dependencies)|[]|Jobs may have dependencies. You can list all jobs which should finish before the current job may be executed.|
+|depends_on|false|[Dependency Configuration](#dependency-configuration)|[]|Jobs may have dependencies. You can list all jobs which should finish before the current job may be executed.|
 |environment|false|object|{}|Can be used to set environment variables for the job. See Environment Variables for more details.|
 |build_arguments|false|object|{}|Can be used to set docker build arguments. See Build Arguments for more details.|
 |deployments|false|[Deployment Configuration](#deployments)|[]|Push your images to a registry|
@@ -159,7 +159,7 @@ You can also specify an already build image and run it as a job.
 |build_context|false|string||Specify the docker build context. If not set the directory containing the `infrabox.json` file will be used.|
 |cache|false|[Cache Configuration](#cache-configuration)|{}|Configure the caching behavior|
 |timeout|false|integer|3600|Timeout in seconds after which the job should be killed. Timeout starts when the job is set to running|
-|depends_on|false|[Dependency Configuration](#job-dependencies)|[]|Jobs may have dependencies. You can list all jobs which should finish before the current job may be executed.|
+|depends_on|false|[Dependency Configuration](#dependency-configuration)|[]|Jobs may have dependencies. You can list all jobs which should finish before the current job may be executed.|
 |environment|false|object|{}|Can be used to set environment variables for the job. See Environment Variables for more details.|
 |deployments|false|[Deployment Configuration](#deployments)|[]|Push your images to a registry|
 |security_context|false|[Security Context](#security_context)|[]|Configure security related options|
@@ -206,7 +206,7 @@ An example git job definition:
     "jobs": [{
         "type": "git",
         "name": "some-external-jobs",
-        "clone_url": "https://github.com/InfraBox/examples.git",
+        "clone_url": "https://github.com/SAP/infrabox-examples.git",
         "commit": "master",
         "depends_on": [ ... ],
         "environment": { ... },
@@ -390,6 +390,30 @@ To model dependencies between jobs you simply use `depends_on` in the job defini
 }
 ```
 Jobs `A` and `B` would start in parallel and `C` would only start if `A` and `B` succeeded successfully. If either of the parent jobs failed `C` would not be started at all. You may use dependencies with all available job types.
+
+It's also possible to specify the required job state of the parent. So if you want to run the child job only if the parent has failed you can do:
+
+```json
+{
+    "version": 1,
+    "jobs": [{
+        "name": "A",
+        ...
+    }, {
+        "name": "B",
+        ...
+        "depends_on": [{"job": "A", "on": ["failure"]}]
+    }]
+}
+```
+
+Possible values for `on` are:
+- `failure`
+- `finished`
+- `error`
+- `*`  results in all -> `failed`, `finished`, `error`
+
+So if you have a cleanup job which you want to run allways, independent of the parent state, use `*`.
 
 ### Transfer data between jobs
 

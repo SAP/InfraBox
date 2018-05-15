@@ -8,6 +8,7 @@ RUN apt-get update -y && apt-get install -y \
     python-requests \
     python-psycopg2 \
     python-jwt \
+    python-crypto \
     python-cryptography \
     git
 

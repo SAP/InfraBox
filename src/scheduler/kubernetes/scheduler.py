@@ -2,15 +2,12 @@ import logging
 import argparse
 import time
 import os
-import sys
 import requests
 import psycopg2
 import psycopg2.extensions
 
 from pyinfraboxutils import get_logger, get_env, print_stackdriver
-from pyinfraboxutils.leader import is_leader
 from pyinfraboxutils.db import connect_db
-from pyinfraboxutils.token import encode_job_token
 
 def gerrit_enabled():
     return os.environ['INFRABOX_GERRIT_ENABLED'] == 'true'
@@ -24,7 +21,6 @@ class Scheduler(object):
         self.args = args
         self.namespace = get_env("INFRABOX_GENERAL_WORKER_NAMESPACE")
         self.logger = get_logger("scheduler")
-        self.daemon_json = None
 
         if self.args.loglevel == 'debug':
             self.logger.setLevel(logging.DEBUG)
@@ -46,211 +42,32 @@ class Scheduler(object):
 
     def kube_delete_job(self, job_id):
         h = {'Authorization': 'Bearer %s' % self.args.token}
+        requests.delete(self.args.api_server +
+                        '/apis/core.infrabox.net/v1alpha1/namespaces/%s/ibjobs/%s' % (self.namespace, job_id,),
+                        headers=h, timeout=5)
 
-        # find pods which belong to the job
-        p = {"labelSelector": "job-name=%s" % job_id}
-        r = requests.get(self.args.api_server + '/api/v1/namespaces/%s/pods' % (self.namespace,),
-                         headers=h, params=p, timeout=5)
-        pods = r.json()
-
-        # delete the job
-        p = {"gracePeriodSeconds": 0}
-        requests.delete(self.args.api_server + '/apis/batch/v1/namespaces/%s/jobs/%s' % (self.namespace, job_id,),
-                        headers=h, params=p, timeout=5)
-
-        # If there are no pods it is already set to None
-        # so we check it before the loop
-        if not pods.get('items', None):
-            return
-
-        # delete all pods
-        for pod in pods.get('items', []):
-            pod_name = pod['metadata']['name']
-
-            p = {"gracePeriodSeconds": 0}
-            requests.delete(self.args.api_server + '/api/v1/namespaces/%s/pods/%s' % (self.namespace, pod_name,),
-                            headers=h, params=p, timeout=5)
-
-    def kube_job(self, job_id, build_id, cpu, mem, job_type, additional_env=None):
+    def kube_job(self, job_id, cpu, mem, additional_env=None, services=None):
         h = {'Authorization': 'Bearer %s' % self.args.token}
-        volumes = [{
-            "name": "data-dir",
-            "emptyDir": {}
-        }, {
-            "name": "repo",
-            "emptyDir": {}
-        }]
-
-        volume_mounts = [{
-            "mountPath": "/data",
-            "name": "data-dir"
-        }, {
-            "mountPath": "/repo",
-            "name": "repo"
-        }]
-
-        env = [{
-            "name": "INFRABOX_JOB_ID",
-            "value": job_id
-        }, {
-            "name": "INFRABOX_GENERAL_DONT_CHECK_CERTIFICATES",
-            "value": os.environ['INFRABOX_GENERAL_DONT_CHECK_CERTIFICATES']
-        }, {
-            "name": "INFRABOX_JOB_API_URL",
-            "value": os.environ['INFRABOX_ROOT_URL'] + '/api/job'
-        }, {
-            "name": "INFRABOX_JOB_GIT_URL",
-            "value": "http://localhost:8080"
-        }, {
-            "name": "INFRABOX_SERVICE",
-            "value": "job"
-        }, {
-            "name": "INFRABOX_VERSION",
-            "value": self.args.tag
-        }, {
-            "name": "INFRABOX_LOCAL_CACHE_ENABLED",
-            "value": os.environ['INFRABOX_LOCAL_CACHE_ENABLED']
-        }, {
-            "name": "INFRABOX_JOB_MAX_OUTPUT_SIZE",
-            "value": os.environ['INFRABOX_JOB_MAX_OUTPUT_SIZE']
-        }, {
-            "name": "INFRABOX_JOB_MOUNT_DOCKER_SOCKET",
-            "value": os.environ['INFRABOX_JOB_MOUNT_DOCKER_SOCKET']
-        }, {
-            "name": "INFRABOX_JOB_DAEMON_JSON",
-            "value": self.daemon_json
-        }, {
-            "name": "INFRABOX_ROOT_URL",
-            "value": os.environ['INFRABOX_ROOT_URL']
-        }, {
-            "name": "INFRABOX_JOB_TOKEN",
-            "value": encode_job_token(job_id).decode()
-        }, {
-            "name": "INFRABOX_JOB_RESOURCES_LIMITS_MEMORY",
-            "value": str(mem)
-        }, {
-            "name": "INFRABOX_JOB_RESOURCES_LIMITS_CPU",
-            "value": str(cpu)
-        }]
-
-        if additional_env:
-            env += additional_env
-
-        if use_host_docker_daemon():
-            volumes.append({
-                "name": "docker-socket",
-                "hostPath": {
-                    "path": "/var/run/docker.sock",
-                    "type": "Socket"
-                }
-            })
-
-            volume_mounts.append({
-                "mountPath": "/var/run/docker.sock",
-                "name": "docker-socket"
-            })
-
-        if os.environ['INFRABOX_LOCAL_CACHE_ENABLED'] == 'true':
-            volumes.append({
-                "name": "local-cache",
-                "hostPath": {
-                    "path": os.environ['INFRABOX_LOCAL_CACHE_HOST_PATH']
-                }
-            })
-
-            volume_mounts.append({
-                "mountPath": "/local-cache",
-                "name": "local-cache"
-            })
-
-        clone_volume_mounts = [{
-            "mountPath": "/repo",
-            "name": "repo"
-        }]
-
-        clone_env = [{
-            "name": "INFRABOX_GENERAL_DONT_CHECK_CERTIFICATES",
-            "value": os.environ['INFRABOX_GENERAL_DONT_CHECK_CERTIFICATES']
-        }]
-
-        if gerrit_enabled():
-            gerrit_env = ({
-                "name": "INFRABOX_GERRIT_HOSTNAME",
-                "value": os.environ['INFRABOX_GERRIT_HOSTNAME']
-            }, {
-                "name": "INFRABOX_GERRIT_USERNAME",
-                "value": os.environ['INFRABOX_GERRIT_USERNAME']
-            }, {
-                "name": "INFRABOX_GERRIT_PORT",
-                "value": os.environ['INFRABOX_GERRIT_PORT']
-            })
-
-            env.extend(gerrit_env)
-            clone_env.extend(gerrit_env)
-
-            clone_volume_mounts.append({
-                "name": "gerrit-ssh",
-                "mountPath": "/tmp/gerrit/"
-            })
-
-            volumes.append({
-                "name": "gerrit-ssh",
-                "secret": {
-                    "secretName": "infrabox-gerrit-ssh"
-                }
-            })
-
-        run_job = {
-            "kind": "Job",
-            "apiVersion": "batch/v1",
-            "metadata": {
-                "name": job_id,
-                "labels": {
-                    "infrabox-job-type": "run-job",
-                    "infrabox-job-id": job_id,
-                    "infrabox-build-id": build_id
-                }
+        job = {
+            'apiVersion': 'core.infrabox.net/v1alpha1',
+            'kind': 'IBJob',
+            'metadata': {
+                'name': job_id
             },
-            "spec": {
-                "template": {
-                    "spec": {
-                        "imagePullSecrets": [{"name": "infrabox-docker-secret"}],
-                        "imagePullPolicy": "Always",
-                        "automountServiceAccountToken": False,
-                        "containers": [{
-                            "name": "run-job",
-                            "image": self.args.docker_registry + "/job:%s" % self.args.tag,
-                            "command": ["/usr/local/bin/entrypoint.sh", "--type", job_type],
-
-                            "securityContext": {
-                                "privileged": True
-                            },
-                            "env": env,
-                            "resources": {
-                                "requests": {
-                                    "cpu": cpu,
-                                    "memory": "%sMi" % (mem + 256) # Some more memory for docker itself
-                                },
-                                "limits": {
-                                    "cpu": cpu,
-                                }
-                            },
-                            "volumeMounts": volume_mounts
-                        }, {
-                            "name": "git-clone",
-                            "image": self.args.docker_registry + "/job-git:%s" % self.args.tag,
-                            "env": clone_env,
-                            "volumeMounts": clone_volume_mounts
-                        }],
-                        "restartPolicy": "OnFailure",
-                        "volumes": volumes
+            'spec': {
+                'resources': {
+                    'limits': {
+                        'memory': '%sMi' % mem,
+                        'cpu': cpu
                     }
-                }
+                },
+                'env': additional_env,
+                'services': services,
             }
         }
 
-        r = requests.post(self.args.api_server + '/apis/batch/v1/namespaces/%s/jobs' % self.namespace,
-                          headers=h, json=run_job, timeout=10)
+        r = requests.post(self.args.api_server + '/apis/core.infrabox.net/v1alpha1/namespaces/%s/ibjobs' % self.namespace,
+                          headers=h, json=job, timeout=10)
 
         if r.status_code != 201:
             self.logger.info('API Server response')
@@ -392,7 +209,7 @@ class Scheduler(object):
                          headers=h, timeout=5)
 
         if r.status_code != 200:
-            self.logger.warn("Failed to get service account secret: %s", r.txt)
+            self.logger.warn("Failed to get service account secret: %s", r.text)
             return False
 
         data = r.json()
@@ -410,14 +227,13 @@ class Scheduler(object):
     def schedule_job(self, job_id, cpu, memory):
         cursor = self.conn.cursor()
         cursor.execute('''
-            SELECT j.type, build_id, resources FROM job j WHERE j.id = %s
+            SELECT j.type, build_id, resources, definition FROM job j WHERE j.id = %s
         ''', (job_id,))
         j = cursor.fetchone()
         cursor.close()
 
-        job_type = j[0]
-        build_id = j[1]
         resources = j[2]
+        definition = j[3]
 
         cpu -= 0.2
 
@@ -438,15 +254,12 @@ class Scheduler(object):
 
         self.logger.info("Scheduling job to kubernetes")
 
-        if job_type == 'create_job_matrix':
-            job_type = 'create'
-        elif job_type == "run_project_container" or job_type == "run_docker_compose":
-            job_type = 'run'
-        else:
-            self.logger.error("Unknown job type: %s", job_type)
-            return
+        services = None
 
-        if not self.kube_job(job_id, build_id, cpu, memory, job_type, additional_env=additional_env):
+        if definition and 'services' in definition:
+            services = definition['services']
+
+        if not self.kube_job(job_id, cpu, memory, additional_env=additional_env, services=services):
             return
 
         cursor = self.conn.cursor()
@@ -665,42 +478,61 @@ class Scheduler(object):
 
     def handle_orphaned_jobs(self):
         h = {'Authorization': 'Bearer %s' % self.args.token}
-        r = requests.get(self.args.api_server + '/apis/batch/v1/namespaces/%s/jobs' % self.namespace,
+        r = requests.get(self.args.api_server + '/apis/core.infrabox.net/v1alpha1/namespaces/%s/ibjobs' % self.namespace,
                          headers=h,
                          timeout=10)
         data = r.json()
+
+        if 'items' not in data:
+            return
 
         for j in data['items']:
             if 'metadata' not in j:
                 continue
 
-            metadata = j['metadata']
-            if 'labels' not in metadata:
+            if 'deletionTimestamp' in j['metadata']:
+                # Already marked for deletion
                 continue
 
-            labels = metadata['labels']
+            metadata = j['metadata']
+            name = metadata['name']
+            job_id = name
 
-            for key in labels:
-                if key != 'infrabox-job-id':
-                    continue
+            cursor = self.conn.cursor()
+            cursor.execute('''SELECT state FROM job where id = %s''', (job_id,))
+            result = cursor.fetchall()
+            cursor.close()
 
-                job_id = labels[key]
-
-                cursor = self.conn.cursor()
-                cursor.execute('''SELECT state FROM job where id = %s''', (job_id,))
-                result = cursor.fetchall()
-                cursor.close()
-
-                if len(result) != 1:
-                    continue
-
-                state = result[0][0]
-
-                if state in ('queued', 'scheduled', 'running'):
-                    continue
-
+            if not result:
                 self.logger.info('Deleting orphaned job %s', job_id)
                 self.kube_delete_job(job_id)
+                continue
+
+            state = result[0][0]
+            if state in ('queued', 'scheduled', 'running'):
+                status = j.get('status', {}).get('status', None)
+                self.logger.error(j)
+
+                if not status:
+                    continue
+
+                if status == 'error':
+                    message = j['status']['message']
+
+                    if not message:
+                        message = "Internal Controller Error"
+
+                    cursor = self.conn.cursor()
+                    cursor.execute("""
+                        UPDATE job SET state = 'error', message = %s, end_date = current_timestamp
+                        WHERE id = %s AND state IN ('scheduled', 'running', 'queued')
+                    """, (message, job_id,))
+                    cursor.close()
+                else:
+                    continue
+
+            self.logger.info('Deleting orphaned job %s', job_id)
+            self.kube_delete_job(job_id)
 
     def update_cluster_state(self):
         cluster_name = os.environ['INFRABOX_CLUSTER_NAME']
@@ -740,26 +572,20 @@ class Scheduler(object):
                                           root_url, nodes, cpu, memory, cluster_name])
         cursor.close()
 
-    def sleep_if_inactive(self):
-        while True:
-            cluster_name = os.environ['INFRABOX_CLUSTER_NAME']
-            cursor = self.conn.cursor()
-            cursor.execute("""
-                SELECT active
-                FROM cluster
-                WHERE name = %s """, [cluster_name])
-            active = cursor.fetchone()[0]
-            cursor.close()
+    def _inactive(self):
+        cluster_name = os.environ['INFRABOX_CLUSTER_NAME']
+        cursor = self.conn.cursor()
+        cursor.execute("""
+            SELECT active
+            FROM cluster
+            WHERE name = %s """, [cluster_name])
+        active = cursor.fetchone()[0]
+        cursor.close()
 
-            if active:
-                break
-
-            self.logger.info('Cluster set to inactive, sleeping...')
-            time.sleep(5)
+        return not active
 
     def handle(self):
         self.update_cluster_state()
-        self.sleep_if_inactive()
 
         try:
             self.handle_timeouts()
@@ -769,19 +595,15 @@ class Scheduler(object):
         except Exception as e:
             self.logger.exception(e)
 
+        if self._inactive():
+            self.logger.info('Cluster set to inactive, sleeping...')
+            time.sleep(5)
+            return
+
         self.schedule()
 
     def run(self):
-        daemon_json_path = '/etc/docker/daemon.json'
-        if not os.path.exists(daemon_json_path):
-            self.logger.error('%s does not exist', daemon_json_path)
-            sys.exit(1)
-
-        with open(daemon_json_path) as daemon_json:
-            self.daemon_json = str(daemon_json.read())
-
         while True:
-            is_leader(self.conn, "scheduler")
             self.handle()
             time.sleep(2)
 

@@ -25,7 +25,7 @@ from pyinfraboxutils.token import encode_job_token
 from pyinfraboxutils.ibrestplus import api
 from pyinfraboxutils.ibflask import job_token_required, app
 from pyinfraboxutils.storage import storage
-
+from pyinfraboxutils.secrets import decrypt_secret
 
 ns = api.namespace('api/job',
                    description='Job runtime related operations')
@@ -240,7 +240,7 @@ class Job(Resource):
 
             for ev in secrets:
                 if ev[0] == name:
-                    return ev[1]
+                    return decrypt_secret(ev[1])
             return None
 
         # Deployments
@@ -260,8 +260,65 @@ class Job(Resource):
 
                     dep['password'] = secret
                     data['deployments'].append(dep)
+                elif dep['type'] == 'ecr':
+                    access_key_id_name = dep['access_key_id']['$secret']
+                    secret = get_secret(access_key_id_name)
+
+                    if secret is None:
+                        abort(400, "Secret %s not found" % access_key_id_name)
+
+                    dep['access_key_id'] = secret
+
+                    secret_access_key_name = dep['secret_access_key']['$secret']
+                    secret = get_secret(secret_access_key_name)
+
+                    if secret is None:
+                        abort(400, "Secret %s not found" % secret_access_key_name)
+
+                    dep['secret_access_key'] = secret
+                    data['deployments'].append(dep)
                 else:
                     abort(400, "Unknown deployment type")
+
+        # Registries
+        data['registries'] = []
+        definition = data['job']['definition']
+        registries = None
+
+        if definition:
+            registries = definition.get('registries', None)
+
+        if registries:
+            for r in registries:
+                if r['type'] == 'docker-registry':
+                    secret_name = r['password']['$secret']
+                    secret = get_secret(secret_name)
+
+                    if secret is None:
+                        abort(400, "Secret %s not found" % secret_name)
+
+                    r['password'] = secret
+                    data['registries'].append(r)
+                elif r['type'] == 'ecr':
+                    access_key_id_name = r['access_key_id']['$secret']
+                    secret = get_secret(access_key_id_name)
+
+                    if secret is None:
+                        abort(400, "Secret %s not found" % access_key_id_name)
+
+                    r['access_key_id'] = secret
+
+                    secret_access_key_name = r['secret_access_key']['$secret']
+                    secret = get_secret(secret_access_key_name)
+
+                    if secret is None:
+                        abort(400, "Secret %s not found" % secret_access_key_name)
+
+                    r['secret_access_key'] = secret
+                    data['registries'].append(r)
+                else:
+                    abort(400, "Unknown deployment type")
+
 
         # Default env vars
         project_name = urllib.quote_plus(data['project']['name']).replace('+', '%20')
@@ -276,11 +333,20 @@ class Job(Resource):
                                                                     data['build']['restart_counter'],
                                                                     job_name)
 
+        job_api_url = "%s/api/v1/projects/%s/jobs/%s" % (os.environ['INFRABOX_ROOT_URL'],
+                                                         data['project']['id'],
+                                                         data['job']['id'])
+
+        build_api_url = "%s/api/v1/projects/%s/builds/%s" % (os.environ['INFRABOX_ROOT_URL'],
+                                                             data['project']['id'],
+                                                             data['build']['id'])
 
         data['env_vars'] = {
             "TERM": "xterm-256color",
             "INFRABOX_JOB_ID": data['job']['id'],
             "INFRABOX_JOB_URL": job_url,
+            "INFRABOX_JOB_API_URL": job_api_url,
+            "INFRABOX_BUILD_API_URL": build_api_url,
             "INFRABOX_BUILD_NUMBER": "%s" % data['build']['build_number'],
             "INFRABOX_BUILD_RESTART_COUNTER": "%s" % data['build']['restart_counter'],
             "INFRABOX_BUILD_URL": build_url,
@@ -399,8 +465,6 @@ class Archive(Resource):
         for f in request.files:
             stream = request.files[f].stream
             key = '%s/%s' % (job_id, f)
-            app.logger.error(f)
-            app.logger.error(job_id)
             storage.upload_archive(stream, key)
             size = stream.tell()
 
@@ -449,6 +513,12 @@ class Output(Resource):
             AND state = 'queued'
         ''', [job_id])
 
+        current_cluster = g.db.execute_one_dict('''
+            SELECT cluster_name
+            FROM job
+            WHERE id = %s
+        ''', [job_id])['cluster_name']
+
         clusters = set()
 
         for j in jobs:
@@ -469,7 +539,8 @@ class Output(Resource):
             WHERE active = true
             AND name = ANY (%s)
             AND name != %s
-        ''', [list(clusters), os.environ['INFRABOX_CLUSTER_NAME']])
+            AND name != %s
+        ''', [list(clusters), os.environ['INFRABOX_CLUSTER_NAME'], current_cluster])
 
         g.release_db()
 
@@ -481,9 +552,10 @@ class Output(Resource):
             files = {'output.tar.gz': stream}
             token = encode_job_token(job_id)
             headers = {'Authorization': 'bearer ' + token}
-            r = requests.post(url, files=files, headers=headers, timeout=120)
+            r = requests.post(url, files=files, headers=headers, timeout=120, verify=False)
 
             if r.status_code != 200:
+                app.logger.error(r.text)
                 abort(500, "Failed to upload data")
 
         return jsonify({})
@@ -577,7 +649,7 @@ class CreateJobs(Resource):
         assigned_clusters = {}
 
         for j in jobs:
-            if not 'cluster' in j:
+            if 'cluster' not in j:
                 j['cluster'] = {}
 
             cluster_selector = j['cluster'].get('selector', None)
@@ -791,6 +863,13 @@ class CreateJobs(Resource):
             resources = None
             if 'resources' in job:
                 resources = json.dumps(job['resources'])
+
+            if 'services' in job:
+                for s in job['services']:
+                    if 'labels' not in s['metadata']:
+                        s['metadata']['labels'] = {}
+
+                    s['metadata']['labels']['service.infrabox.net/id'] = str(uuid.uuid4())
 
             # Create job
             g.db.execute("""
@@ -1068,11 +1147,19 @@ class Testresult(Resource):
 
         tests = data['tests']
         for t in tests:
+
+            if len(t['suite']) > 250:
+                t['suite'] = t['suite'][0:250]
+
+            if len(t['name']) > 250:
+                t['name'] = t['name'][0:250]
+
             # check if if already exists
             test_id = None
-            if t['suite'] + '|' + t['name'] in test_index:
+            concat_name = t['suite'] + '|' + t['name']
+            if  concat_name in test_index:
                 # existing test
-                test_id = test_index[t['suite'] + '|' + t['name']]
+                test_id = test_index[concat_name]
             else:
                 # new test
                 test_id = str(uuid.uuid4())

@@ -60,10 +60,6 @@
     secret:
         secretName: infrabox-cloudsql-instance-credentials
 -
-    name: ssl-certs
-    hostPath:
-        path: /etc/ssl/certs
--
     name: cloudsql
     emptyDir:
 {{ end }}
@@ -134,7 +130,7 @@
     value: {{ default "https://github.com/login" .Values.github.login.url }}
 -
     name: INFRABOX_GITHUB_LOGIN_ALLOWED_ORGANIZATIONS
-    value: {{ default "false" .Values.github.login.allowed_organizations | quote }}
+    value: {{ default "" .Values.github.login.allowed_organizations | quote }}
 {{ end }}
 {{ end }}
 
@@ -221,6 +217,12 @@
 -
     name: INFRABOX_ROOT_URL
     value: {{ .Values.root_url }}
+-
+    name: INFRABOX_GENERAL_REPORT_ISSUE_URL
+    value: {{ .Values.general.report_issue_url }}
+-
+    name: INFRABOX_GENERAL_DOCKER_REGISTRY
+    value: {{ .Values.general.docker_registry }}
 {{ end }}
 
 {{ define "env_docker_registry" }}
@@ -247,8 +249,6 @@
     - name: cloudsql-instance-credentials
       mountPath: /secrets/cloudsql
       readOnly: true
-    - name: ssl-certs
-      mountPath: /etc/ssl/certs
     - name: cloudsql
       mountPath: /cloudsql
 {{ end }}

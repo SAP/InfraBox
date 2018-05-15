@@ -18,7 +18,8 @@ class Settings(Resource):
             'INFRABOX_GERRIT_ENABLED': os.environ['INFRABOX_GERRIT_ENABLED'] == 'true',
             'INFRABOX_ACCOUNT_SIGNUP_ENABLED': os.environ['INFRABOX_ACCOUNT_SIGNUP_ENABLED'] == 'true',
             'INFRABOX_ACCOUNT_LDAP_ENABLED': os.environ['INFRABOX_ACCOUNT_LDAP_ENABLED'] == 'true',
-            'INFRABOX_ROOT_URL': os.environ['INFRABOX_ROOT_URL']
+            'INFRABOX_ROOT_URL': os.environ['INFRABOX_ROOT_URL'],
+            'INFRABOX_GENERAL_REPORT_ISSUE_URL': os.environ['INFRABOX_GENERAL_REPORT_ISSUE_URL']
         }
 
         if github_enabled:

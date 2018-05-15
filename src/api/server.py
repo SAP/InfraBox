@@ -71,6 +71,7 @@ def main(): # pragma: no cover
 
     get_env('INFRABOX_JOB_MAX_OUTPUT_SIZE')
     get_env('INFRABOX_JOB_SECURITY_CONTEXT_CAPABILITIES_ENABLED')
+    get_env('INFRABOX_GENERAL_REPORT_ISSUE_URL')
 
     if get_env('INFRABOX_STORAGE_GCS_ENABLED') == 'true':
         get_env('GOOGLE_APPLICATION_CREDENTIALS')

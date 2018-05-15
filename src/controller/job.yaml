@@ -1,0 +1,9 @@
+apiVersion: infrabox.net/v1alpha1
+kind: Job 
+metadata:
+  name: test-job
+spec:
+  resources:
+    limits:
+      memory: 1024
+      cpu: 1
