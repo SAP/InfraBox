@@ -85,7 +85,9 @@ class Clone(Resource):
             output += self.execute(['git', 'config', 'remote.origin.url', clone_url], cwd=mount_repo_dir)
             output += self.execute(['git', 'config', 'remote.origin.fetch', '+refs/heads/*:refs/remotes/origin/*'],
                                    cwd=mount_repo_dir)
-            output += self.execute(['git', 'fetch', 'origin', commit], cwd=mount_repo_dir)
+
+            if not clone_all:
+                output += self.execute(['git', 'fetch', 'origin', commit], cwd=mount_repo_dir)
 
             cmd = ['git', 'checkout', '-qf', commit]
 
