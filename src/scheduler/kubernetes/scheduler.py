@@ -27,7 +27,7 @@ class Scheduler(object):
         elif self.args.loglevel == 'info':
             self.logger.setLevel(logging.INFO)
         else:
-            self.logger.setLevel(logging.INFO)
+            self.logger.setLevel(logging.WARN)
 
 
     def kube_delete_namespace(self, job_id):
@@ -431,7 +431,7 @@ class Scheduler(object):
 
             # Update state
             cursor.execute("""
-                UPDATE job SET state = 'error', console = %s, end_date = current_timestamp
+                UPDATE job SET state = 'error', console = %s, end_date = current_timestamp, message = 'Aborted due to timeout'
                 WHERE id = %s""", (output, job_id,))
 
             cursor.close()
@@ -511,7 +511,6 @@ class Scheduler(object):
             state = result[0][0]
             if state in ('queued', 'scheduled', 'running'):
                 status = j.get('status', {}).get('status', None)
-                self.logger.error(j)
 
                 if not status:
                     continue
