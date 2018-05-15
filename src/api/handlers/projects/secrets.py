@@ -1,10 +1,12 @@
+import re
+
 from flask import request, g, abort
 from flask_restplus import Resource, fields
-import re
 
 from pyinfrabox.utils import validate_uuid4
 from pyinfraboxutils.ibflask import auth_required, OK
 from pyinfraboxutils.ibrestplus import api
+from pyinfraboxutils.secrets import encrypt_secret
 from api.namespaces import project as ns
 
 secret_model = api.model('Secret', {
@@ -13,10 +15,9 @@ secret_model = api.model('Secret', {
 })
 
 add_secret_model = api.model('AddSecret', {
-    'name': fields.String(required=True),
-    'value': fields.String(required=True),
+    'name': fields.String(required=True, max_length=255),
+    'value': fields.String(required=True, max_length=1024),
 })
-
 
 @ns.route('/<project_id>/secrets/')
 class Secrets(Resource):
@@ -55,9 +56,11 @@ class Secrets(Resource):
         if r[0] > 0:
             abort(400, 'Secret with this name already exist.')
 
-        g.db.execute("""
+        value = encrypt_secret(b['value'])
+
+        g.db.execute('''
             INSERT INTO secret (project_id, name, value) VALUES(%s, %s, %s)
-        """, [project_id, b['name'], b['value']])
+        ''', [project_id, b['name'], value])
 
         g.db.commit()
 

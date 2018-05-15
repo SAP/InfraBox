@@ -72,7 +72,7 @@ class Section {
 export default class Job {
     constructor (id, name, cpu, memory, state,
             startDate, endDate, build, project,
-            dependencies, message) {
+            dependencies, message, definition) {
         this.id = id
         this.name = name
         this.cpu = cpu
@@ -92,6 +92,7 @@ export default class Job {
         this.currentSection = null
         this.linesProcessed = 0
         this.message = message
+        this.definition = definition
     }
 
     _getTime (d) {
@@ -153,14 +154,6 @@ export default class Job {
 
         if (this.currentSection) {
             this.currentSection.generateHtml()
-
-            if (this.state === 'failed' ||
-                this.state === 'finished' ||
-                this.state === 'error' ||
-                this.state === 'aborted' ||
-                this.state === 'skipped') {
-                this.currentSection.setEndTime(new Date())
-            }
         }
     }
 
@@ -288,7 +281,6 @@ export default class Job {
     restart () {
         return NewAPIService.get(`projects/${this.project.id}/jobs/${this.id}/restart`)
             .then((message) => {
-                console.log(message)
                 NotificationService.$emit('NOTIFICATION', new Notification(message, 'done'))
 
                 this.sections = []

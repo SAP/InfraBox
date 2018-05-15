@@ -1,8 +1,9 @@
 <template>
     <div>
-        <span v-if="end && start">{{ duration(end - start) }}</span>
+        <span v-if="start && end">{{ duration(end - start) }}</span>
         <md-tooltip v-if="end && start">{{ duration_minutes(end - start) }}</md-tooltip>
-        <span v-if="!end">still running</span>
+        <span v-if="start && !end">still running</span>
+        <span v-if="!start">not started yet</span>
     </div>
 </template>
 

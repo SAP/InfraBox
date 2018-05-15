@@ -5,11 +5,9 @@ For this guide you need:
 
 - A github account
 - A repository on github which you want to connect
-- [infraboxcli](https://github.com/InfraBox/cli) (pip install infraboxcli)
+- [infraboxcli](https://github.com/SAP/InfraBox-cli) (pip install infraboxcli)
 
 ## Connect github repository
-First login to the InfraBox dashboard [https://infrabox.ninja/](https://infrabox.ninja/dashboard/#/login) with your github account.
-
 After logging in you can click on the "+" sign at the bottom right corner of the dashboard. Select "github" and click on *continue*. Give your project a name and select the repository you want to connect and click *continue*. Select if the dashboard of your project should be accsible by everybody (public) or only by you and the projects collaborators (private) and click *finish*.
 
 That's it, your project has been connected to InfraBox. Every time you push to your repository a build on InfraBox will be triggered.
@@ -17,7 +15,7 @@ That's it, your project has been connected to InfraBox. Every time you push to y
 ## Trigger a first build
 If you have not yet configured any workflow which should be run on InfraBox follow these instructions.
 
-First clone your repository and cd into it. We can now use [infraboxcli](https://github.com/InfraBox/cli) to create a "hello world" workflow for your project.
+First clone your repository and cd into it. We can now use [infraboxcli](https://github.com/SAP/InfraBox-cli) to create a "hello world" workflow for your project.
 
     $ infrabox init
 
@@ -27,5 +25,4 @@ This create all the neccessary files for a simple workflow. Let's commit the fil
     $ git commit -m "first InfraBox workflow"
     $ git push origin master
 
-Open the [dashboard](https://infrabox.ninja/dashboard/#/) and watch your worklfow running.
-See the [documentation](https://infrabox.ninja/docs) for more examples on how to configure your builds.
+See the [documentation](https://github.com/SAP/InfraBox/docs/doc.md) for more examples on how to configure your builds.

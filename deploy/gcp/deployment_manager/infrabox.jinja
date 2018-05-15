@@ -143,7 +143,7 @@ resources:
           gcloud iam service-accounts keys create gcs_sa.json --iam-account {{ SA_NAME }}@{{ PROJECT }}.iam.gserviceaccount.com
 
           # InfraBox
-          git clone https://github.com/infrabox/infrabox /tmp/infrabox
+          git clone https://github.com/SAP/infrabox /tmp/infrabox
           cd /tmp/infrabox
           git checkout {{ properties['infraboxVersion'] }}
           ssh-keygen -N '' -t rsa -f id_rsa
@@ -159,7 +159,6 @@ resources:
           python /tmp/infrabox/deploy/install.py \\
             --version build_393 \\
             -o /tmp/infrabox-configuration \\
-            --platform kubernetes \\
             --general-rsa-public-key ./id_rsa.pem \\
             --general-rsa-private-key ./id_rsa \\
             --general-dont-check-certificates \\

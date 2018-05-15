@@ -6,7 +6,7 @@ RUN apk add --no-cache \
     py-requests \
     bash \
     pigz && \
-    pip install docker==2.0.1 && \
+    pip install docker==2.0.1 awscli && \
     pip install docker-compose future PyJWT && \
     apk del py-pip
 
@@ -23,4 +23,4 @@ ENV PYTHONPATH=/utils:/
 ENV PATH=/utils:$PATH
 
 RUN chmod +x /usr/local/bin/entrypoint.sh
-ENTRYPOINT /usr/local/bin/entrypoint.sh
+CMD /usr/local/bin/entrypoint.sh

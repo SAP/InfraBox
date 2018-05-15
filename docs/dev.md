@@ -1,7 +1,7 @@
 # Developer Guide
 You need these requirementes to be installed on your machine:
 
-- [infraboxcli](https://github.com/infrabox/cli)
+- [infraboxcli](https://github.com/SAP/infrabox-cli)
 - [docker](https://www.docker.com/)
 - python 2.7
 
@@ -71,5 +71,4 @@ Otherwise, you may want to explicitly specify your token within a command:
 See the service's READMEs for details:
 - [Storage](/infrabox/utils/storage/)
 - [API](/src/api/)
-- [Dashboard API](/src/dashboard_api/)
 - [Dashboard UI](/src/dashboard-client)
