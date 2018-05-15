@@ -836,7 +836,6 @@ class CreateJobs(Resource):
             # Create external git repo if necessary
             repo = job.get('repo', None)
             if repo:
-                repo['clone_all'] = False
                 repo = json.dumps(repo)
 
             # Handle build arguments
