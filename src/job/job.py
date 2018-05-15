@@ -370,15 +370,7 @@ class RunJob(Job):
         for f in files:
             c.collect("%s\n" % f, show=True)
             converted_result = self.convert_test_result(f)
-
-            r = requests.post("%s/testresult" % self.api_server,
-                              headers=self.get_headers(),
-                              verify=self.verify,
-                              files={"data": open(converted_result)}, timeout=10)
-
-            if r.status_code != 200:
-                c.collect("%s\n" % r.text, show=True)
-
+            self.post_file_to_api_server("/testresult", converted_result, filename='data')
             self.post_file_to_api_server("/archive", f, filename=f.replace(self.infrabox_upload_dir, ''))
 
     def upload_markdown_files(self):
@@ -391,13 +383,7 @@ class RunJob(Job):
             c.collect("%s\n" % f, show=True)
 
             file_name = os.path.basename(f)
-            r = requests.post("%s/markdown" % self.api_server,
-                              headers=self.get_headers(),
-                              verify=self.verify,
-                              files={file_name: open(f)}, timeout=10)
-
-            if r.status_code != 200:
-                c.collect("%s\n" % r.text, show=True)
+            self.post_file_to_api_server("/markdown", f, filename=file_name)
 
     def upload_markup_files(self):
         c = self.console
@@ -409,13 +395,7 @@ class RunJob(Job):
             c.collect("%s\n" % f, show=True)
 
             file_name = os.path.basename(f)
-            r = requests.post("%s/markup" % self.api_server,
-                              headers=self.get_headers(),
-                              verify=self.verify,
-                              files={file_name: open(f)}, timeout=10)
-
-            if r.status_code != 200:
-                c.collect("%s\n" % r.text, show=True)
+            self.post_file_to_api_server("/markup", f, filename=file_name)
 
     def upload_badge_files(self):
         c = self.console
@@ -428,13 +408,7 @@ class RunJob(Job):
             c.collect("%s\n" % f, show=True)
 
             file_name = os.path.basename(f)
-            r = requests.post("%s/badge" % self.api_server,
-                              headers=self.get_headers(),
-                              verify=self.verify,
-                              files={file_name: open(f)}, timeout=10)
-
-            if r.status_code != 200:
-                c.collect("%s\n" % r.text, show=True)
+            self.post_file_to_api_server("/badge", f, filename=file_name)
 
     def create_dynamic_jobs(self):
         c = self.console
@@ -1110,7 +1084,7 @@ class RunJob(Job):
                 c.execute(['rm', '-rf', new_repo_path])
                 os.makedirs(new_repo_path)
 
-                self.clone_repo(job['commit'], clone_url, None, None, False, sub_path)
+                self.clone_repo(job['commit'], clone_url, None, None, True, sub_path)
 
                 c.header("Parsing infrabox.json", show=True)
                 ib_file = job.get('infrabox_file', 'infrabox.json')
@@ -1126,7 +1100,8 @@ class RunJob(Job):
                 git_repo = {
                     "clone_url": job['clone_url'],
                     "commit": job['commit'],
-                    "infrabox_file": ib_file
+                    "infrabox_file": ib_file,
+                    "clone_all": True
                 }
 
                 new_infrabox_context = os.path.dirname(ib_path)
