@@ -578,6 +578,12 @@ func (c *Controller) deleteJob(job *jobv1alpha1.IBJob) error {
 		return err
 	}
 
+	err = c.jobclientset.CoreV1alpha1().IBJobs(job.Namespace).Delete(job.Name, metav1.NewDeleteOptions(0))
+
+	if err != nil {
+		glog.Warningf("%s/%s: Failed to delete IBJob: %s", err.Error())
+	}
+
 	glog.Infof("%s/%s: Successfully deleted job", job.Namespace, job.Name)
 	return nil
 }
@@ -769,7 +775,7 @@ func (c *Controller) createService(service *jobv1alpha1.IBJobService, job *jobv1
 			return false, err
 		}
 
-		request := rc.Post().Namespace(job.Namespace).Name("gkeclusters")
+		request := rc.Post().Namespace(job.Namespace).Name(resource.Name)
 		result := request.Body(bytes).Do()
 
 		if err := result.Error(); err != nil {
