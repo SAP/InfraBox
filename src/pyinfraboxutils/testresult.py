@@ -7,7 +7,10 @@ RESULT_MAPPING = {
 }
 
 def get_ms(val):
-    return int(float(val) * 1000)
+    try:
+        return int(float(val) * 1000)
+    except:
+        return 0
 
 class Parser(object):
     def __init__(self, i):
