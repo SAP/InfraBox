@@ -139,13 +139,6 @@ func (in *IBService) DeepCopyInto(out *IBService) {
 	out.TypeMeta = in.TypeMeta
 	in.ObjectMeta.DeepCopyInto(&out.ObjectMeta)
 	out.Status = in.Status
-	if in.Spec != nil {
-		in, out := &in.Spec, &out.Spec
-		*out = make(map[string]string, len(*in))
-		for key, val := range *in {
-			(*out)[key] = val
-		}
-	}
 	return
 }
 
