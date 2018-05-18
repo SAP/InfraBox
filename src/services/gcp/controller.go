@@ -388,6 +388,12 @@ func (c *Controller) deleteCluster(cluster *clusterv1alpha1.GKECluster) error {
 		return err
 	}
 
+	err = c.gkeclientset.GcpV1alpha1().GKEClusters(cluster.Namespace).Delete(cluster.Name, metav1.NewDeleteOptions(0))
+	if err != nil && errors.IsNotFound(err) {
+		runtime.HandleError(fmt.Errorf("%s/%s: Failed to cluster", cluster.Namespace, cluster.Name))
+		return err
+	}
+
 	return nil
 }
 

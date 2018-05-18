@@ -843,18 +843,6 @@ func (c *Controller) createServices(job *jobv1alpha1.IBJob) (bool, error) {
 }
 
 func (c *Controller) createBatchJob(job *jobv1alpha1.IBJob) error {
-	batch, err := c.k8sJobLister.Jobs(job.Namespace).Get(job.Name)
-
-	if err != nil {
-		if !errors.IsNotFound(err) {
-			return err
-		}
-	}
-
-	if batch != nil {
-		return nil
-	}
-
 	glog.Infof("%s/%s: Creating Batch Job", job.Namespace, job.Name)
 
 	keyPath := os.Getenv("INFRABOX_RSA_PRIVATE_KEY_PATH")
@@ -867,13 +855,13 @@ func (c *Controller) createBatchJob(job *jobv1alpha1.IBJob) error {
 
 	signBytes, err := ioutil.ReadFile(keyPath)
 	if err != nil {
-		runtime.HandleError(fmt.Errorf("%s/%s: Failed to creat token", job.Namespace, job.Name))
+		runtime.HandleError(fmt.Errorf("%s/%s: Failed to create token", job.Namespace, job.Name))
 		return err
 	}
 
 	signKey, err = jwt.ParseRSAPrivateKeyFromPEM(signBytes)
 	if err != nil {
-		runtime.HandleError(fmt.Errorf("%s/%s: Failed to creat token", job.Namespace, job.Name))
+		runtime.HandleError(fmt.Errorf("%s/%s: Failed to create token", job.Namespace, job.Name))
 		return err
 	}
 
@@ -893,12 +881,12 @@ func (c *Controller) createBatchJob(job *jobv1alpha1.IBJob) error {
 
 	_, err = c.kubeclientset.BatchV1().Jobs(job.Namespace).Create(c.newBatchJob(job, token))
 
-	if err != nil {
+	if err != nil && !errors.IsAlreadyExists(err) {
 		runtime.HandleError(fmt.Errorf("%s/%s: Failed to create job: %s", job.Namespace, job.Name, err.Error()))
 		return err
 	}
 
-	glog.Infof("%s/%s: Successfully created job", job.Namespace, job.Name)
+	glog.Infof("%s/%s: Successfully created batch job", job.Namespace, job.Name)
 	return nil
 }
 
