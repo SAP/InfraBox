@@ -261,6 +261,19 @@
     }, {
         "type": "docker",
         "build_context": "../..",
+        "name": "service-namespace",
+        "docker_file": "src/services/namespace/Dockerfile",
+        "resources": { "limits": { "cpu": 1, "memory": 2048 } },
+        "deployments": [{
+            "type": "docker-registry",
+            "host": "quay.io/infrabox",
+            "repository": "service-namespace",
+            "username": "infrabox+infrabox_ci",
+            "password": { "$secret": "QUAY_PASSWORD" }
+        }]
+    }, {
+        "type": "docker",
+        "build_context": "../..",
         "name": "static",
         "docker_file": "infrabox/deploy/static/Dockerfile",
         "resources": { "limits": { "cpu": 1, "memory": 512 } },

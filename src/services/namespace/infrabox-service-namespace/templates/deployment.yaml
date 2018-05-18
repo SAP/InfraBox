@@ -1,0 +1,29 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: {{ template "infrabox-service-namespace.fullname" . }}
+  labels:
+    app: {{ template "infrabox-service-namespace.name" . }}
+    chart: {{ template "infrabox-service-namespace.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ template "infrabox-service-namespace.name" . }}
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "infrabox-service-namespace.name" . }}
+        release: {{ .Release.Name }}
+    spec:
+      serviceAccountName: infrabox-service-namespace
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: "Always"
+          env:
+          - name: WATCH_NAMESPACE
+            value: infrabox-worker

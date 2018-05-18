@@ -43,3 +43,6 @@ src/controller/vendor
 src/services/gcp/pkg/client
 src/services/gcp/vendor
 src/services/gcp/gcp
+src/services/namespace/vendor
+src/services/namespace/namespace
+src/services/namespace/tmp/_output/
