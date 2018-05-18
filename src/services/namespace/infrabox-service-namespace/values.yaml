@@ -1,0 +1,5 @@
+replicaCount: 1
+
+image:
+  repository: quay.io/infrabox/service-namespace
+  tag: latest

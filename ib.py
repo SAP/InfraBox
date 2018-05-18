@@ -34,6 +34,7 @@ IMAGES = [
     {'name': 'db'},
     {'name': 'postgres'},
     {'name': 'service-gcp'},
+    {'name': 'service-namespace'},
 ]
 
 def execute(command, cwd=None, env=None, ignore_error=False, ignore_output=False):
