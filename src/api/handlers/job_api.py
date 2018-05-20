@@ -260,6 +260,15 @@ class Job(Resource):
 
                     dep['password'] = secret
                     data['deployments'].append(dep)
+                elif dep['type'] == 'gcr':
+                    service_account = dep['service_account']['$secret']
+                    secret = get_secret(service_account)
+
+                    if secret is None:
+                        abort(400, "Secret %s not found" % service_account)
+
+                    dep['service_account'] = secret
+                    data['deployments'].append(dep)
                 elif dep['type'] == 'ecr':
                     access_key_id_name = dep['access_key_id']['$secret']
                     secret = get_secret(access_key_id_name)

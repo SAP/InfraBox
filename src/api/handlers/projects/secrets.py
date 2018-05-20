@@ -15,7 +15,7 @@ secret_model = api.model('Secret', {
 
 add_secret_model = api.model('AddSecret', {
     'name': fields.String(required=True, max_length=255),
-    'value': fields.String(required=True, max_length=1024),
+    'value': fields.String(required=True, max_length=1024 * 128),
 })
 
 @ns.route('/<project_id>/secrets/')

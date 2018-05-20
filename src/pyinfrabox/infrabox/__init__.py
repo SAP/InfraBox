@@ -392,6 +392,19 @@ def parse_deployment_ecr(d, path):
     if 'tag' in d:
         check_text(d['tag'], path + ".tag")
 
+def parse_deployment_gcr(d, path):
+    check_allowed_properties(d, path, ("type", "service_account", "repository", "host", "tag"))
+    check_required_properties(d, path, ("type", "service_account", "repository", "host"))
+
+    check_text(d['host'], path + ".host")
+    check_text(d['repository'], path + ".repository")
+
+    parse_secret_ref(d['service_account'], path + ".service_account")
+
+    if 'tag' in d:
+        check_text(d['tag'], path + ".tag")
+
+
 def parse_registries(e, path):
     if not isinstance(e, list):
         raise ValidationError(path, "must be an array")
@@ -436,6 +449,8 @@ def parse_deployments(e, path):
             parse_deployment_docker_registry(elem, p)
         elif t == 'ecr':
             parse_deployment_ecr(elem, p)
+        elif t == 'gcr':
+            parse_deployment_gcr(elem, p)
         else:
             raise ValidationError(p, "type '%s' not supported" % t)
 
