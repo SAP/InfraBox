@@ -38,7 +38,7 @@
             <md-card-content>
                 <md-layout>
                     <md-layout md-flex-xsmall="100" md-flex-small="100" md-flex-medium="100" md-flex-large="100" md-flex-xlarge="100">
-                        <div v-if="!data.test.stack && !data.test.message" style="width: 100%; margin: 16px">
+                        <div style="width: 100%; margin: 16px">
                             <md-card class="clean-card">
                                 <md-card-header>
                                     <h2><i class="fa fa-fw fa-history"></i> Test history</h2>
@@ -46,13 +46,6 @@
                                 <md-card-content>
                                     <div id="chart-test-results" class="chart"></div>
                                 </md-card-content>
-                            </md-card>
-                        </div>
-                       <div v-if="!data.test.stack && !data.test.message" style="width: 100%; margin: 16px">
-                            <md-card class="clean-card">
-                                <md-card-header>
-                                    <h2><i class="fa fa-fw fa-check-circle-o"></i> There are no messages for this test at the moment.</h2>
-                                </md-card-header>
                             </md-card>
                         </div>
                         <div style="width: 100%; margin: 16px">
