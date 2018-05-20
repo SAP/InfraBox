@@ -54,11 +54,14 @@ The job type docker is one of the most important jobs. You can use it to run any
 |environment|false|object|{}|Can be used to set environment variables for the job. See Environment Variables for more details.|
 |build_arguments|false|object|{}|Can be used to set docker build arguments. See Build Arguments for more details.|
 |deployments|false|[Deployment Configuration](#deployments)|[]|Push your images to a registry|
-|security_context|false|[Security Context](#security_context)|[]|Configure security related options|
+|security_context|false|[Security Context](#security-context)|[]|Configure security related options|
 |repository|false|[Repository Configuration](#repository)|{}|Configure git repository options|
 
 ### Deployments
-The docker images which have been build can also be pushed to a docker registry by InfraBox. You would add a deployment to your job:
+The docker images which have been build can also be pushed to a docker registry by InfraBox.
+
+### Docker Registry
+You would add a deployment to your job:
 
 ```json
 {
@@ -68,6 +71,7 @@ The docker images which have been build can also be pushed to a docker registry 
         "type": "docker-registry",
         "host": "<my_registry>:5000",
         "repository": "repo-name",
+        "tag": "some optional tag",
         "username": "your_username",
         "password": { "$secret": "SECRET_NAME_FOR_YOUR_PASSWORD" }
     }]
@@ -81,8 +85,68 @@ Deployments are currently only supported for `docker` job types.
 |type|true|string||Has to be "docker-registry"|
 |host|true|string||Host of the registry. I.e. my-registry.com:5000|
 |repository|true|string||Name of the repository|
+|tag|false|string|build\_<NUMBER>|The of the image|
 |username|false|string||Username to be used with the registry|
 |password|false|[Secret](#secrets)||Secret containing the password|
+
+### ECR
+You would add a deployment to your job:
+
+```json
+{
+    "type": "docker",
+    ...
+    "deployments": [{
+        "type": "ecr",
+        "host": "<my_registry>",
+        "repository": "repo-name",
+        "tag": "some optional tag",
+        "region": "region",
+        "access_key_id": { "$secret": "SECRET_KEY_ID" },
+        "secret_access_key": { "$secret": "SECRET_ACCESS_KEY" }
+    }]
+}
+```
+
+Deployments are currently only supported for `docker` job types.
+
+| Name | Required | Type | Default | Description |
+|------|----------|------|---------|-------------|
+|type|true|string||Has to be "ecr"|
+|host|true|string||ECR endpoint|
+|repository|true|string||Name of the repository|
+|tag|false|string|build\_<NUMBER>|The of the image|
+|region|true|string||AWS Region|
+|access\_key\_id|true|[Secret](#secrets)||Secret containing the AWS `Access Key ID`|
+|secret\_access\_key|true|[Secret](#secrets)||Secret containing AWS `Secret Access Key`|
+
+### GCR
+You would add a deployment to your job:
+
+```json
+{
+    "type": "docker",
+    ...
+    "deployments": [{
+        "type": "gcr",
+        "host": "eu.gcr.io",
+        "repository": "<project-name>/<repo-name>",
+        "tag": "some optional tag",
+        "service_account": { "$secret": "GCP_SERVICE_ACCOUNT" },
+    }]
+}
+```
+
+Deployments are currently only supported for `docker` job types.
+
+| Name | Required | Type | Default | Description |
+|------|----------|------|---------|-------------|
+|type|true|string||Has to be "gcr"|
+|host|true|string||GCR endpoint i.e. us.gcr.io|
+|repository|true|string||Name of the repository|
+|tag|false|string|build\_<NUMBER>|The of the image|
+|region|true|string||AWS Region|
+|service\_account|true|[Secret](#secrets)||Secret containing the GCP `Service Account` with role `Storage Admin`|
 
 
 ### Build Arguments
@@ -144,7 +208,8 @@ You can also specify an already build image and run it as a job.
         "depends_on": ["other_job_name"],
         "environment": { ... },
         "security_context": { ... },
-        "repository": { ... }
+        "repository": { ... },
+        "registries": []
     }]
 }
 ```
@@ -164,7 +229,58 @@ You can also specify an already build image and run it as a job.
 |deployments|false|[Deployment Configuration](#deployments)|[]|Push your images to a registry|
 |security_context|false|[Security Context](#security_context)|[]|Configure security related options|
 |repository|false|[Repository Configuration](#repository)|{}|Configure git repository options|
+|registries|false|[Source Registry Configuration](#image-source-registry)|[]|Configure the source registries|
 
+### Image Source Registry
+If your images have to be pulled from a private registry you may configure the credentials for each job.
+
+#### Docker Registry
+```json
+{
+    "type": "docker",
+    ...
+    "registries": [{
+        "type": "docker-registry",
+        "host": "<my_registry>:5000",
+        "repository": "repo-name",
+        "username": "your_username",
+        "password": { "$secret": "SECRET_NAME_FOR_YOUR_PASSWORD" }
+    }]
+}
+```
+
+| Name | Required | Type | Default | Description |
+|------|----------|------|---------|-------------|
+|type|true|string||Has to be "docker-registry"|
+|host|true|string||Host of the registry. I.e. my-registry.com:5000|
+|repository|true|string||Name of the repository|
+|username|false|string||Username to be used with the registry|
+|password|false|[Secret](#secrets)||Secret containing the password|
+
+#### ECR
+```json
+{
+    "type": "docker",
+    ...
+    "registries": [{
+        "type": "ecr",
+        "host": "<my_registry>",
+        "repository": "repo-name",
+        "region": "region",
+        "access_key_id": { "$secret": "SECRET_KEY_ID" },
+        "secret_access_key": { "$secret": "SECRET_ACCESS_KEY" }
+    }]
+}
+```
+
+| Name | Required | Type | Default | Description |
+|------|----------|------|---------|-------------|
+|type|true|string||Has to be "ecr"|
+|host|true|string||ECR endpoint|
+|repository|true|string||Name of the repository|
+|region|true|string||AWS Region|
+|access\_key\_id|true|[Secret](#secrets)||Secret containing the AWS `Access Key ID`|
+|secret\_access\_key|true|[Secret](#secrets)||Secret containing AWS `Secret Access Key`|
 
 ## Job: Docker-Compose
 Sometimes you want to start multiple containers to test your application. For this InfraBox supports also docker-compose. You can specify a docker-compose.yml and InfraBox will start it as one job.
