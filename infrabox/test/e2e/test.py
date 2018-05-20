@@ -207,21 +207,18 @@ class Test(unittest.TestCase):
 
 
     def test_docker_compose_job(self):
-        #self.run_it('/infrabox/context/infrabox/test/e2e/tests/docker_compose_job')
-        #self.expect_job('test')
-        pass
+        self.run_it('/infrabox/context/infrabox/test/e2e/tests/docker_compose_job')
+        self.expect_job('test')
 
     def test_docker_job_archive(self):
         self.run_it('/infrabox/context/infrabox/test/e2e/tests/docker_job_archive')
         self.expect_job('test')
 
     def test_docker_compose_invalid_compose_file(self):
-        # TODO(Steffen): enabled again
-        pass
-        #self.run_it('/infrabox/context/infrabox/test/e2e/tests/docker_compose_invalid_compose_file')
-        #self.expect_job('Create Jobs',
-        #                state='failure',
-        #                message='version not found')
+        self.run_it('/infrabox/context/infrabox/test/e2e/tests/docker_compose_invalid_compose_file')
+        self.expect_job('Create Jobs',
+                        state='failure',
+                        message='version not found')
 
     def test_failed_job(self):
         self.run_it('/infrabox/context/infrabox/test/e2e/tests/failed_job')
@@ -288,7 +285,7 @@ def main():
 
         print "Server not yet ready"
 
-    time.sleep(30)
+    time.sleep(90)
 
     print "Starting tests"
     with open('results.xml', 'wb') as output:
