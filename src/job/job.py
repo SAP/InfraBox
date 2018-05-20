@@ -823,7 +823,7 @@ class RunJob(Job):
 
         try:
             c.header("Run container", show=True)
-            c.execute(cmd, show=True)
+            c.execute(cmd)
             c.execute(("docker", "commit", container_name, image_name))
         except Exception as e:
             try:
