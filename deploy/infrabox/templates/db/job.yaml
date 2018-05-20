@@ -36,7 +36,7 @@ spec:
                             key: password
                 volumeMounts:
                 {{ include "mounts_rsa_public" . | indent 16 }}
-
+                {{ include "mounts_rsa_private" . | indent 16 }}
             restartPolicy: OnFailure
             volumes:
                 {{ include "volumes_database" . | indent 16 }}
