@@ -141,9 +141,23 @@ class Job(object):
         self.post_api_server('stats', data=payload)
 
     def get_file_from_api_server(self, url, path):
-        r = requests.get("%s%s" % (self.api_server, url),
-                         headers=self.get_headers(),
-                         timeout=600, stream=True, verify=self.verify)
+        message = None
+
+        r = None
+        for _ in xrange(0, 5):
+            try:
+                message = None
+                r = requests.get("%s%s" % (self.api_server, url),
+                                 headers=self.get_headers(),
+                                 timeout=600, stream=True, verify=self.verify)
+            except Exception as e:
+                message = str(e)
+                time.sleep(5)
+                continue
+
+        if message:
+            raise Failure('Failed to download file: %s' % message)
+
         if r.status_code == 404:
             return
 
@@ -169,6 +183,7 @@ class Job(object):
             filename = os.path.basename(path)
 
         for _ in xrange(0, 5):
+            message = None
             files = {filename: open(path)}
             try:
                 r = requests.post("%s%s" % (self.api_server, url),

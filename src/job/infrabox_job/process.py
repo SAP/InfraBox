@@ -34,7 +34,7 @@ class ApiConsole(object):
         diff = datetime.now() - self.last_send
         seconds = diff.seconds + diff.microseconds / 1E6
 
-        if seconds < 1.0:
+        if seconds < 5.0:
             # we wait some more
             return
 
@@ -107,8 +107,8 @@ class ApiConsole(object):
                           headers=headers,
                           verify=self.verify,
                           json=payload).json()
+            self.output = []
         except Exception as e:
             print e
 
         self.last_send = datetime.now()
-        self.output = []
