@@ -113,6 +113,7 @@ def handle_job_update(conn, event):
     c.close()
 
     project_name = project['name']
+    project_id = project['id']
     job_state = job['state']
     job_name = job['name']
     commit_sha = build['commit_id']
@@ -145,6 +146,20 @@ def handle_job_update(conn, event):
                                                            build_restart_counter)
 
     c = conn.cursor()
+    c.execute('''
+        SELECT count(*)
+        FROM build
+        WHERE build_number = %s
+        AND restart_counter > %s
+        AND project_id = %s''', [build_number, build_restart_counter, project_id])
+    newer_builds = c.fetchone()[0]
+    c.close()
+
+    update_vote = True
+    if newer_builds > 0:
+        update_vote = False
+
+    c = conn.cursor()
     c.execute('''SELECT state, count(*) FROM job WHERE build_id = %s GROUP BY state''', [build_id])
     states = c.fetchall()
     c.close()
@@ -169,10 +184,12 @@ def handle_job_update(conn, event):
 
     if (job_name == 'Create Jobs' and vote == '0') or vote in ('-1', '+1'):
         logger.info('Setting InfraBox=%s for sha=%s', vote, commit_sha)
-        cmd = 'gerrit review --project %s -m "%s" --label InfraBox=%s %s' % (project_name,
-                                                                             message,
-                                                                             vote,
-                                                                             commit_sha)
+        cmd = 'gerrit review --project %s -m "%s" ' % (project_name, message)
+
+        if update_vote:
+            cmd += '--label InfraBox=%s ' % vote
+
+        cmd += commit_sha
         execute_ssh_cmd(client, cmd)
 
     client.close()
