@@ -465,27 +465,6 @@ Every job on InfraBox requires resource limits. So it can gurantee the resources
 |cpu|true|integer||Specify the number of CPUs to be used for the job. Value must be an integer|
 |memory|true|integer||Specify the number of MiB of RAM to be used for the job. Value must be an integer and at least 128|
 
-### Kubernetes Namespace
-InfraBox can provsion a Kubernetes namespace for your job. You may use it to deploy your application on a real Kubernetes cluster and run your end-to-end tests. To get a namespace add to your resource section:
-
-```json
-{
-    "version": 1,
-    "jobs": [{
-        ...
-        "resources": {
-            ...
-            "kubernetes": {
-                "limits": {
-                    "cpu": 1,
-                    "memory": 1024
-                }
-            }
-        }
-    }]
-}
-```
-
 ## Dependency Configuration
 To model dependencies between jobs you simply use `depends_on` in the job definition. As an example we create tree jobs `A`, `B` and `C`. `C` depends on `A` and `B`.
 
