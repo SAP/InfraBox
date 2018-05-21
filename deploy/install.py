@@ -203,6 +203,7 @@ class Kubernetes(Install):
             self.required_option('s3-bucket')
 
             self.set('storage.gcs.enabled', False)
+            self.set('storage.azure.enabled', False)
             self.set('storage.s3.enabled', True)
             self.set('storage.s3.region', args.s3_region)
             self.set('storage.s3.endpoint', args.s3_endpoint)
@@ -223,6 +224,7 @@ class Kubernetes(Install):
             self.check_file_exists(args.gcs_service_account_key_file)
 
             self.set('storage.s3.enabled', False)
+            self.set('storage.azure.enabled', False)
             self.set('storage.gcs.enabled', True)
             self.set('storage.gcs.bucket', args.gcs_bucket)
 
@@ -232,6 +234,19 @@ class Kubernetes(Install):
                 }
 
                 self.create_secret("infrabox-gcs", self.args.general_system_namespace, secret)
+        elif args.storage == 'azure':
+            self.required_option('azure-account-name')
+            self.required_option('azure-account-key')
+
+            self.set('storage.gcs.enabled', False)
+            self.set('storage.s3.enabled', False)
+            self.set('storage.azure.enabled', True)
+
+            secret = {
+                "account-name": args.azure_account_name,
+                "account-key": args.azure_account_key
+            }
+            self.create_secret("infrabox-azure-credentials", self.args.general_system_namespace, secret)
         else:
             raise Exception("unknown storage")
 
@@ -512,7 +527,7 @@ def main():
 
     # Storage configuration
     parser.add_argument('--storage',
-                        choices=['s3', 'gcs'],
+                        choices=['s3', 'gcs', 'azure'],
                         help='Which kind of storage you want to use')
 
     parser.add_argument('--s3-access-key')
@@ -525,6 +540,9 @@ def main():
 
     parser.add_argument('--gcs-service-account-key-file')
     parser.add_argument('--gcs-bucket')
+
+    parser.add_argument('--azure-account-name')
+    parser.add_argument('--azure-account-key')
 
     # Scheduler
     parser.add_argument('--scheduler-disabled', action='store_true', default=False)
