@@ -114,6 +114,35 @@
 {{ end }}
 {{ end }}
 
+{{ define "env_adl" }}
+-
+    name: INFRABOX_STORAGE_ADL_ENABLED
+    value: {{ .Values.storage.adl.enabled | quote }}
+{{ if .Values.storage.adl.enabled }}
+-
+    name: INFRABOX_STORAGE_ADL_BUCKET
+    value: {{ default "infrabox" .Values.storage.adl.bucket | quote }}
+-
+    name: INFRABOX_STORAGE_ADL_TENANT_ID
+    valueFrom:
+        secretKeyRef:
+            name: infrabox-adl-credentials
+            key: tenant-id
+-
+    name: INFRABOX_STORAGE_ADL_CLIENT_ID
+    valueFrom:
+        secretKeyRef:
+            name: infrabox-adl-credentials
+            key: client-id
+-
+    name: INFRABOX_STORAGE_ADL_CLIENT_SECRET
+    valueFrom:
+        secretKeyRef:
+            name: infrabox-adl-credentials
+            key: client-secret
+{{ end }}
+{{ end }}
+
 {{ define "env_github" }}
 -
     name: INFRABOX_GITHUB_ENABLED
