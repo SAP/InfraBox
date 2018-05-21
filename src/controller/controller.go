@@ -580,8 +580,8 @@ func (c *Controller) deleteJob(job *jobv1alpha1.IBJob) error {
 
 	err = c.jobclientset.CoreV1alpha1().IBJobs(job.Namespace).Delete(job.Name, metav1.NewDeleteOptions(0))
 
-	if err != nil {
-		glog.Warningf("%s/%s: Failed to delete IBJob: %s", err.Error())
+	if err != nil && !errors.IsNotFound(err) {
+		glog.Warningf("%s/%s: Failed to delete IBJob: %v", err)
 	}
 
 	glog.Infof("%s/%s: Successfully deleted job", job.Namespace, job.Name)
@@ -604,7 +604,8 @@ func (c *Controller) deleteService(job *jobv1alpha1.IBJob, service *jobv1alpha1.
 		return false, err
 	}
 
-	result := rc.Delete().Namespace(job.Namespace).Name(resource.Name).Do()
+	id, _ := service.Metadata.Labels["service.infrabox.net/id"]
+	result := rc.Delete().Namespace(job.Namespace).Name(resource.Name).SubResource(id).Do()
 
 	if err := result.Error(); err != nil {
 		runtime.HandleError(fmt.Errorf("%s/%s: Failed to delete service: %s", job.Namespace, job.Name, err.Error()))
@@ -924,8 +925,6 @@ func (c *Controller) createJob(job *jobv1alpha1.IBJob) error {
 }
 
 func (c *Controller) syncHandlerImpl(job jobv1alpha1.IBJob) error {
-	glog.Infof("%s/%s: Sync", job.Namespace, job.Name)
-
 	// Check wether we should delete the job
 	delTimestamp := job.GetDeletionTimestamp()
 	if delTimestamp != nil {
@@ -955,7 +954,6 @@ func (c *Controller) syncHandlerImpl(job jobv1alpha1.IBJob) error {
 		}
 	}
 
-	glog.Infof("%s/%s: Sync finished", job.Namespace, job.Name)
 	return nil
 }
 
