@@ -20,7 +20,7 @@ class CollaboratorsTest(ApiTestTemplate):
         r = TestClient.post('api/v1/projects/%s/collaborators' % self.project_id,
                             data=self.test_collaborator_data,
                             headers=TestClient.get_user_authorization(self.user_id))
-        self.assertEqual(r['message'], 'Successfully added user')
+        self.assertEqual(r['message'], 'Successfully added user.')
         self.assertEqual(r['status'], 200)
 
         # test unauthorized
@@ -54,7 +54,7 @@ class CollaboratorsTest(ApiTestTemplate):
                               % (self.project_id, self.collaborator_id),
                               headers=TestClient.get_user_authorization(self.user_id))
 
-        self.assertEqual(r['message'], 'Successfully removed user')
+        self.assertEqual(r['message'], 'Successfully removed user.')
         self.assertEqual(r['status'], 200)
 
         # check if database does not contain this collaborator anymore

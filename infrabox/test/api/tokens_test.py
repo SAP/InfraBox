@@ -20,7 +20,7 @@ class TokensTest(ApiTestTemplate):
         # test token creation
         r = TestClient.post('api/v1/projects/%s/tokens' % self.project_id, data=self.test_token_data,
                             headers=TestClient.get_user_authorization(self.user_id))
-        self.assertEqual(r['message'], 'Successfully added token')
+        self.assertEqual(r['message'], 'Successfully added token.')
         self.assertEqual(r['status'], 200)
 
         # test token receiving
@@ -47,7 +47,7 @@ class TokensTest(ApiTestTemplate):
         r = TestClient.delete('api/v1/projects/%s/tokens/%s' % (self.project_id, token_id),
                               headers=TestClient.get_user_authorization(self.user_id))
 
-        self.assertEqual(r['message'], 'Successfully deleted token')
+        self.assertEqual(r['message'], 'Successfully deleted token.')
         self.assertEqual(r['status'], 200)
 
         r = TestClient.execute_one("""SELECT count(*) FROM auth_token WHERE id = '%s'""" % token_id)

@@ -27,19 +27,19 @@ class SecretsTest(ApiTestTemplate):
         # test secret creation
         r = TestClient.post('api/v1/projects/%s/secrets/' % self.project_id, data=self.test_secret_data,
                             headers=TestClient.get_user_authorization(self.user_id))
-        self.assertEqual(r['message'], 'Successfully added secret')
+        self.assertEqual(r['message'], 'Successfully added secret.')
         self.assertEqual(r['status'], 200)
 
         # test invalid secret data handling
         for invalid_secret_data in self.invalid_test_secret_data:
             r = TestClient.post('api/v1/projects/%s/secrets/' % self.project_id, data=invalid_secret_data,
                                 headers=TestClient.get_user_authorization(self.user_id))
-            self.assertEqual(r['message'], 'Secret name must be not empty alphanumeric string')
+            self.assertEqual(r['message'], 'Secret name must be not empty alphanumeric string.')
 
         # test name already exist
         r = TestClient.post('api/v1/projects/%s/secrets/' % self.project_id, data=self.test_secret_data,
                             headers=TestClient.get_user_authorization(self.user_id))
-        self.assertEqual(r['message'], 'Secret with this name already exist')
+        self.assertEqual(r['message'], 'Secret with this name already exist.')
 
         # test secret receiving
         r = TestClient.get('api/v1/projects/%s/secrets' % self.project_id,
@@ -61,7 +61,7 @@ class SecretsTest(ApiTestTemplate):
         r = TestClient.delete('api/v1/projects/%s/secrets/%s' % (self.project_id, secret_id),
                               headers=TestClient.get_user_authorization(self.user_id))
 
-        self.assertEqual(r['message'], 'Successfully deleted secret')
+        self.assertEqual(r['message'], 'Successfully deleted secret.')
         self.assertEqual(r['status'], 200)
 
         r = TestClient.execute_one("""SELECT count(*) FROM secret WHERE id = %s""", [secret_id])

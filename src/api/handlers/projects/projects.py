@@ -5,6 +5,7 @@ from flask import g, abort, request
 from flask_restplus import Resource, fields
 
 from pyinfraboxutils import get_logger
+from pyinfrabox.utils import validate_uuid4
 from pyinfraboxutils.ibrestplus import api
 from pyinfraboxutils.ibflask import auth_required, OK
 
@@ -16,7 +17,8 @@ logger = get_logger('project')
 project_model = api.model('Project', {
     'id': fields.String(required=True),
     'name': fields.String(required=True),
-    'type': fields.String(required=True)
+    'type': fields.String(required=True),
+    'public': fields.String(required=True)
 })
 
 add_project_schema = {
@@ -38,13 +40,14 @@ class Projects(Resource):
     @auth_required(['user'], check_project_access=False)
     @api.marshal_list_with(project_model)
     def get(self):
-        projects = g.db.execute_many_dict('''
-            SELECT p.id, p.name, p.type FROM project p
+        projects = g.db.execute_many_dict("""
+            SELECT p.id, p.name, p.type, p.public
+            FROM project p
             INNER JOIN collaborator co
             ON co.project_id = p.id
             AND %s = co.user_id
             ORDER BY p.name
-        ''', [g.token['user']['id']])
+        """, [g.token['user']['id']])
 
         return projects
 
@@ -200,7 +203,7 @@ class ProjectName(Resource):
     @api.marshal_with(project_model)
     def get(self, project_name):
         project = g.db.execute_one_dict('''
-            SELECT id, name, type
+            SELECT id, name, type, public
             FROM project
             WHERE name = %s
         ''', [project_name])
@@ -218,7 +221,7 @@ class Project(Resource):
     @api.marshal_with(project_model)
     def get(self, project_id):
         project = g.db.execute_one_dict('''
-            SELECT p.id, p.name, p.type
+            SELECT p.id, p.name, p.type, p.public
             FROM project p
             WHERE id = %s
         ''', [project_id])
@@ -227,14 +230,15 @@ class Project(Resource):
 
     @auth_required(['user'], check_project_owner=True)
     def delete(self, project_id):
+        if not validate_uuid4(project_id):
+            abort(400, "Invalid project uuid.")
 
-        project = g.db.execute_one_dict('''
+        project = g.db.execute_one_dict("""
             DELETE FROM project WHERE id = %s RETURNING type
-        ''', [project_id])
+        """, [project_id])
 
         if not project:
-            abort(404)
-
+            abort(400, 'Project with such an id does not exist.')
 
         if project['type'] == 'github':
             repo = g.db.execute_one_dict('''
