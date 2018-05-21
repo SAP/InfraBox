@@ -49,7 +49,7 @@ spec:
                 volumeMounts:
             -
                 name: registry
-                image: registry:2.6
+                image: registry:2.6.2
                 imagePullPolicy: Always
                 env:
                 -
@@ -95,6 +95,26 @@ spec:
                         secretKeyRef:
                             name: infrabox-s3-credentials
                             key: secretKey
+                {{ end }}
+                {{ if .Values.storage.azure.enabled }}
+                -
+                    name: REGISTRY_STORAGE
+                    value: azure
+                -
+                    name: REGISTRY_STORAGE_AZURE_CONTAINER
+                    value: registry
+                -
+                    name: REGISTRY_STORAGE_AZURE_ACCOUNTNAME
+                    valueFrom:
+                        secretKeyRef:
+                            name: infrabox-azure-credentials
+                            key: account-name
+                -
+                    name: REGISTRY_STORAGE_AZURE_ACCOUNTKEY
+                    valueFrom:
+                        secretKeyRef:
+                            name: infrabox-azure-credentials
+                            key: account-key
                 {{ end }}
                 {{ if .Values.storage.gcs.enabled }}
                 -
