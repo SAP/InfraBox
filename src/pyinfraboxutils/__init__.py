@@ -4,7 +4,7 @@ import json
 import traceback
 
 def get_log_level():
-    l = os.environ.get('INFRABOX_LOG_LEVEL', 'info')
+    l = os.environ.get('INFRABOX_LOG_LEVEL', 'warning')
 
     if l == 'debug':
         return logging.DEBUG

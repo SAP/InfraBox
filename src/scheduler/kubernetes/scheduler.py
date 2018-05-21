@@ -22,14 +22,6 @@ class Scheduler(object):
         self.namespace = get_env("INFRABOX_GENERAL_WORKER_NAMESPACE")
         self.logger = get_logger("scheduler")
 
-        if self.args.loglevel == 'debug':
-            self.logger.setLevel(logging.DEBUG)
-        elif self.args.loglevel == 'info':
-            self.logger.setLevel(logging.INFO)
-        else:
-            self.logger.setLevel(logging.WARN)
-
-
     def kube_delete_namespace(self, job_id):
         h = {'Authorization': 'Bearer %s' % self.args.token}
         namespace_name = "ib-%s" % job_id
@@ -611,8 +603,6 @@ def main():
     parser = argparse.ArgumentParser(prog="scheduler.py")
     parser.add_argument("--docker-registry", required=True, type=str,
                         help="Host for the registry to use")
-    parser.add_argument("--loglevel", choices=['debug', 'info', 'warning'],
-                        help="Log level")
     parser.add_argument("--tag", required=True, type=str,
                         help="Image tag to use for internal images")
 

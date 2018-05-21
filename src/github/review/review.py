@@ -7,7 +7,6 @@ import psycopg2
 
 from pyinfraboxutils import get_logger, print_stackdriver, get_env
 from pyinfraboxutils.db import connect_db
-from pyinfraboxutils.leader import elect_leader, is_leader
 
 logger = get_logger("github")
 
@@ -32,15 +31,12 @@ def main(): # pragma: no cover
     conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
     logger.info("Connected to database")
 
-    elect_leader(conn, "github-review")
-
     curs = conn.cursor()
     curs.execute("LISTEN job_update;")
 
     logger.info("Waiting for job updates")
 
     while True:
-        is_leader(conn, "github-review")
         if select.select([conn], [], [], 5) != ([], [], []):
             conn.poll()
             while conn.notifies:
@@ -123,7 +119,7 @@ def handle_job_update(conn, event):
     ''', [project_id])
 
     if not token:
-        logger.info("No API token, not updating status")
+        logger.warn("No API token, not updating status")
         return False
 
     github_api_token = token[0]['github_api_token']
@@ -134,15 +130,15 @@ def handle_job_update(conn, event):
         WHERE id = %s
         AND project_id = %s
     ''', [commit_sha, project_id])[0]['github_status_url']
+    target_url = '%s/dashboard/#/project/%s/build/%s/%s/job/%s' % (dashboard_url,
+                                                                   project_name,
+                                                                   build_number,
+                                                                   build_restartCounter,
+                                                                   urllib.quote_plus(job_name).replace('+', '%20'))
 
     payload = {
         "state": state,
-        "target_url":  '%s/dashboard/#/project/%s/build/%s/%s/job/%s' %
-                       (dashboard_url,
-                        project_name,
-                        build_number,
-                        build_restartCounter,
-                        urllib.quote_plus(job_name).replace('+', '%20')),
+        "target_url": target_url,
         "description": "InfraBox",
         "context": "Job: %s" % job_name
     }
@@ -162,6 +158,7 @@ def handle_job_update(conn, event):
 
         if r.status_code != 201:
             logger.warn("Failed to update github status: %s", r.text)
+            logger.warn(github_status_url)
         else:
             logger.info("Successfully updated github status")
     except Exception as e:

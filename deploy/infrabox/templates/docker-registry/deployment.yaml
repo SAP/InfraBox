@@ -56,9 +56,6 @@ spec:
                     name: REGISTRY_HTTP_HOST
                     value: {{ .Values.docker_registry.url }}
                 -
-                    name: REGISTRY_LOG_LEVEL
-                    value: debug
-                -
                     name: REGISTRY_STORAGE_REDIRECT_DISABLE
                     value: "true"
                 {{ if .Values.storage.s3.enabled }}

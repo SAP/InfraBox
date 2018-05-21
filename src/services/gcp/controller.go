@@ -432,8 +432,6 @@ func (c *Controller) syncHandler(key string) error {
 }
 
 func (c *Controller) syncHandlerImpl(key string, cluster *clusterv1alpha1.GKECluster) error {
-	glog.Infof("%s: Start sync", key)
-
 	// Check wether we should delete the cluster
 	delTimestamp := cluster.GetDeletionTimestamp()
 	if delTimestamp != nil {
@@ -537,7 +535,6 @@ func (c *Controller) syncHandlerImpl(key string, cluster *clusterv1alpha1.GKEClu
 		}
 
 		if gkecluster.Status == "RUNNING" {
-			glog.Infof("%s: Cluster is ready", key)
 			err = c.createSecret(cluster, gkecluster)
 		}
 
@@ -549,7 +546,6 @@ func (c *Controller) syncHandlerImpl(key string, cluster *clusterv1alpha1.GKEClu
 		}
 	}
 
-	glog.Infof("%s: Finished sync", key)
 	return nil
 }
 
