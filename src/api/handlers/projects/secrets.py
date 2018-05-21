@@ -3,6 +3,7 @@ import re
 from flask import request, g, abort
 from flask_restplus import Resource, fields
 
+from pyinfrabox.utils import validate_uuid4
 from pyinfraboxutils.ibflask import auth_required, OK
 from pyinfraboxutils.ibrestplus import api
 from pyinfraboxutils.secrets import encrypt_secret
@@ -38,22 +39,22 @@ class Secrets(Resource):
         b = request.get_json()
 
         if not Secrets.name_pattern.match(b['name']):
-            abort(400, 'Secret name must be not empty alphanumeric string')
+            abort(400, 'Secret name must be not empty alphanumeric string.')
 
-        result = g.db.execute_one_dict('''
+        result = g.db.execute_one_dict("""
             SELECT COUNT(*) as cnt FROM secret WHERE project_id = %s
-        ''', [project_id])
+        """, [project_id])
 
         if result['cnt'] > 50:
-            abort(400, 'Too many secrets')
+            abort(400, 'Too many secrets.')
 
-        r = g.db.execute_one('''
+        r = g.db.execute_one("""
                     SELECT count(*) FROM secret
                     WHERE project_id = %s AND name = %s
-                ''', [project_id, b['name']])
+                """, [project_id, b['name']])
 
         if r[0] > 0:
-            abort(400, 'Secret with this name already exist')
+            abort(400, 'Secret with this name already exist.')
 
         value = encrypt_secret(b['value'])
 
@@ -63,16 +64,27 @@ class Secrets(Resource):
 
         g.db.commit()
 
-        return OK('Successfully added secret')
+        return OK('Successfully added secret.')
 
 
 @ns.route('/<project_id>/secrets/<secret_id>')
 class Secret(Resource):
     @auth_required(['user'])
     def delete(self, project_id, secret_id):
-        g.db.execute('''
+        if not validate_uuid4(secret_id):
+            abort(400, "Invalid secret uuid.")
+
+        num_secrets = g.db.execute_one("""
+            SELECT COUNT(*) FROM secret
+            WHERE project_id = %s and id = %s
+        """, [project_id, secret_id])[0]
+
+        if num_secrets == 0:
+            return abort(400, 'Such secret does not exist.')
+
+        g.db.execute("""
             DELETE FROM secret WHERE project_id = %s and id = %s
-        ''', [project_id, secret_id])
+        """, [project_id, secret_id])
         g.db.commit()
 
-        return OK('Successfully deleted secret')
+        return OK('Successfully deleted secret.')

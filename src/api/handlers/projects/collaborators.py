@@ -68,7 +68,7 @@ class Collaborators(Resource):
 
         g.db.commit()
 
-        return OK('Successfully added user')
+        return OK('Successfully added user.')
 
 
 @ns.route('/<project_id>/collaborators/<user_id>')
@@ -102,4 +102,4 @@ class Collaborator(Resource):
 
         g.db.commit()
 
-        return OK('Successfully removed user')
+        return OK('Successfully removed user.')

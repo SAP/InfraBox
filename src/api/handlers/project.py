@@ -60,11 +60,11 @@ class Project(Resource):
     @auth_required(['user', 'project'])
     @api.marshal_with(project_model)
     def get(self, project_id):
-        p = g.db.execute_one_dict('''
+        p = g.db.execute_one_dict("""
             SELECT name, id, type, public
             FROM project
             WHERE id = %s
-        ''', [project_id])
+        """, [project_id])
         return p
 
 @ns.route('/<project_id>/state.svg')
@@ -73,9 +73,9 @@ class State(Resource):
 
     @nocache
     def get(self, project_id):
-        p = g.db.execute_one_dict('''
+        p = g.db.execute_one_dict("""
             SELECT type FROM project WHERE id = %s
-        ''', [project_id])
+        """, [project_id])
 
         if not p:
             abort(404)
