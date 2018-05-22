@@ -232,6 +232,23 @@ class Kubernetes(Install):
                 }
 
                 self.create_secret("infrabox-gcs", self.args.general_system_namespace, secret)
+        elif args.storage == 'adl':
+            self.required_option('adl-tenant-id')
+            self.required_option('adl-client-id')
+            self.required_option('adl-client-secret')
+            self.required_option('adl-bucket')
+
+            self.set('storage.gcs.enabled', False)
+            self.set('storage.s3.enabled', False)
+            self.set('storage.adl.enabled', True)
+            self.set('storage.adl.bucket', args.adl_bucket)
+
+            secret = {
+                "client-id": args.adl_client_id,
+                "client-secret": args.adl_client_secret,
+                "tenant-id": args.adl_tenant_id
+            }
+            self.create_secret("infrabox-adl-credentials", self.args.general_system_namespace, secret)
         else:
             raise Exception("unknown storage")
 
@@ -512,7 +529,7 @@ def main():
 
     # Storage configuration
     parser.add_argument('--storage',
-                        choices=['s3', 'gcs'],
+                        choices=['s3', 'gcs', 'adl'],
                         help='Which kind of storage you want to use')
 
     parser.add_argument('--s3-access-key')
@@ -525,6 +542,11 @@ def main():
 
     parser.add_argument('--gcs-service-account-key-file')
     parser.add_argument('--gcs-bucket')
+
+    parser.add_argument('--adl-tenant-id')
+    parser.add_argument('--adl-client-id')
+    parser.add_argument('--adl-client-secret')
+    parser.add_argument('--adl-bucket', default='infrabox')
 
     # Scheduler
     parser.add_argument('--scheduler-disabled', action='store_true', default=False)

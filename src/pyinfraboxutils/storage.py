@@ -1,15 +1,18 @@
 #pylint: disable=too-few-public-methods
 import os
 import uuid
+import tempfile
 
 import boto3
 from google.cloud import storage as gcs
 from flask import after_this_request
+from azure.datalake.store import core, lib
 
 from pyinfraboxutils import get_env
 
 USE_S3 = get_env('INFRABOX_STORAGE_S3_ENABLED') == 'true'
 USE_GCS = get_env('INFRABOX_STORAGE_GCS_ENABLED') == 'true'
+USE_ADL = get_env('INFRABOX_STORAGE_ADL_ENABLED') == 'true'
 storage = None
 
 class S3(object):
@@ -170,10 +173,83 @@ class GCS(object):
 
         return path
 
+class ADL(object):
+    def __init__(self):
+        self.bucket = get_env('INFRABOX_STORAGE_ADL_BUCKET')
+
+    def upload_project(self, stream, key):
+        return self._upload(stream, 'upload/%s' % key)
+
+    def upload_cache(self, stream, key):
+        return self._upload(stream, 'cache/%s' % key)
+
+    def upload_output(self, stream, key):
+        return self._upload(stream, 'output/%s' % key)
+
+    def upload_archive(self, stream, key):
+        return self._upload(stream, 'archive/%s' % key)
+
+    def download_source(self, key):
+        return self._download('upload/%s' % key)
+
+    def download_output(self, key):
+        return self._download('output/%s' % key)
+
+    def download_archive(self, key):
+        return self._download('archive/%s' % key)
+
+    def download_cache(self, key):
+        return self._download('cache/%s' % key)
+
+    def delete_cache(self, key):
+        return self._delete('cache/%s' % key)
+
+    def _upload(self, stream, key):
+        client = self._get_client()
+        fd, path = tempfile.mkstemp()
+        with open(path, "w") as f:
+            f.write(stream.read())
+        client.put(filename=path,
+                    path=key)
+        os.close(fd)
+
+    def _delete(self, key):
+        client = self._get_client()
+        try:
+            client.remove(path=key)
+        except:
+            pass
+
+    def _download(self, key):
+        client = self._get_client()
+        path = '/tmp/%s_%s' % (uuid.uuid4(), key.replace('/', '_'))
+        try:
+            client.get(path=key,
+                        filename=path)
+        except:
+            return None
+
+        if 'g' in globals():
+            @after_this_request
+            def _remove_file(response):
+                if os.path.exists(path):
+                    os.remove(path)
+                return response
+
+        return path
+
+    def _get_client(self):
+        creds = lib.auth(tenant_id=get_env('INFRABOX_STORAGE_ADL_TENANT_ID'),
+                         client_id=get_env('INFRABOX_STORAGE_ADL_CLIENT_ID'),
+                         client_secret=get_env('INFRABOX_STORAGE_ADL_CLIENT_SECRET'))
+        return core.AzureDLFileSystem(creds, store_name=self.bucket)
+
 if USE_S3:
     storage = S3()
 elif USE_GCS:
     get_env('GOOGLE_APPLICATION_CREDENTIALS')
     storage = GCS()
+elif USE_ADL:
+    storage = ADL()
 else:
     raise Exception('Unhandled storage type')
