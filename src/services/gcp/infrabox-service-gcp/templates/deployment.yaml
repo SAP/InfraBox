@@ -23,7 +23,7 @@ spec:
       containers:
         - name: {{ .Chart.Name }}
           command: ["./gcp"]
-          args: ["-logtostderr", "-gcpserviceaccount", "/var/run/infrabox.net/gcp/service_account.json"]
+          args: ["-gcpserviceaccount", "/var/run/infrabox.net/gcp/service_account.json"]
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: "Always"
           resources:
@@ -31,6 +31,9 @@ spec:
           - name: service-account
             mountPath: "/var/run/infrabox.net/gcp"
             readOnly: true
+          env:
+          - name: WATCH_NAMESPACE
+            value: infrabox-worker
       volumes:
       - name: service-account
         secret:
