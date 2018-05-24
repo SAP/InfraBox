@@ -677,7 +677,7 @@ class CreateJobs(Resource):
 
                 if not target_cluster:
                     # use any cluster with label default
-                    cluster_selector = ['defaul']
+                    cluster_selector = ['default']
 
             if not target_cluster:
                 # find a cluster with the selector
