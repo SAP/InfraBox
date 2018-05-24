@@ -5,7 +5,7 @@ import copy
 import re
 
 def push_latest(tag):
-    r = r'^[0-9]\.[0-9]\.[0-9]$'
+    r = r'^[0-9]+\.[0-9]+\.[0-9]+$'
     match = re.match(r, tag)
 
     if match:
@@ -42,14 +42,13 @@ def main():
             new_dep_latest['tag'] = 'latest'
 
             new_deps.append(d)
+            new_deps.append(new_dep_dev)
 
             if tag:
                 new_deps.append(new_dep_tag)
 
                 if push_latest(tag):
                     new_deps.append(new_dep_latest)
-            else:
-                new_deps.append(new_dep_dev)
 
         j['deployments'] = new_deps
 
