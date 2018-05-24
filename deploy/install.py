@@ -477,7 +477,7 @@ def main():
 
     # Cluster
     parser.add_argument('--cluster-name', default='master')
-    parser.add_argument('--cluster-labels')
+    parser.add_argument('--cluster-labels', default='default')
 
     # Admin config
     parser.add_argument('--admin-email')
