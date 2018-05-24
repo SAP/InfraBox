@@ -38,7 +38,7 @@ class ApiTestTemplate(unittest.TestCase):
 
         TestClient.execute("""
                 INSERT INTO cluster (name, active, labels, root_url, nodes, cpu_capacity, memory_capacity)
-                VALUES ('master', true, '{master}', 'http://localhost:8080', 1, 10, 10000);
+                VALUES ('master', true, '{master,default}', 'http://localhost:8080', 1, 10, 10000);
             """)
 
         TestClient.execute("""
