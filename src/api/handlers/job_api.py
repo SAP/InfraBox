@@ -5,6 +5,7 @@ import time
 import uuid
 import copy
 import urllib
+import random
 from datetime import datetime
 
 import requests
@@ -653,7 +654,11 @@ class CreateJobs(Resource):
         clusters = g.db.execute_many_dict('''
             SELECT name, labels
             FROM cluster
+            WHERE active = true
         ''')
+
+        # Shuffle so we can assign the default clusters randomly
+        random.shuffle(clusters)
 
         assigned_clusters = {}
 
@@ -664,20 +669,23 @@ class CreateJobs(Resource):
             cluster_selector = j['cluster'].get('selector', None)
             target_cluster = None
 
-            # Find a cluster which matches the selector
-            if cluster_selector:
-                target_cluster = self.get_target_cluster(clusters, cluster_selector)
+            if not cluster_selector:
+                # use the parent cluster
+                for d in j.get('depends_on', []):
+                    target_cluster = assigned_clusters.get(d['job'], None)
+                    break
 
                 if not target_cluster:
-                    abort(400, 'Could not find a cluster which could satisfy the selector: %s' %
-                          json.dumps(cluster_selector))
+                    # use any cluster with label default
+                    cluster_selector = ['defaul']
 
-            # Use the same cluster as the parent if there's not selector
             if not target_cluster:
-                target_cluster = 'master'
-                for d in j.get('depends_on', []):
-                    target_cluster = assigned_clusters.get(d['job'], 'master')
-                    break
+                # find a cluster with the selector
+                target_cluster = self.get_target_cluster(clusters, cluster_selector)
+
+            if not target_cluster:
+                abort(400, 'Could not find a cluster which could satisfy the selector: %s' %
+                      json.dumps(cluster_selector))
 
             assigned_clusters[j['name']] = target_cluster
             j['cluster']['name'] = target_cluster

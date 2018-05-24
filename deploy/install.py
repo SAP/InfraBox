@@ -289,9 +289,6 @@ class Kubernetes(Install):
         self.set('account.signup.enabled', False)
 
     def setup_gerrit(self):
-        if not self.is_master():
-            return
-
         if not self.args.gerrit_enabled:
             return
 
@@ -305,6 +302,7 @@ class Kubernetes(Install):
         self.set('gerrit.username', self.args.gerrit_username)
         self.set('gerrit.review.enabled', self.args.gerrit_review_enabled)
         self.set('gerrit.review.tag', self.args.version)
+        self.set('gerrit.trigger.enabled', self.args.gerrit_trigger_enabled)
         self.set('gerrit.trigger.tag', self.args.version)
         self.set('gerrit.api.tag', self.args.version)
 
@@ -543,6 +541,7 @@ def main():
     parser.add_argument('--gerrit-username')
     parser.add_argument('--gerrit-private-key')
     parser.add_argument('--gerrit-review-enabled', action='store_true', default=False)
+    parser.add_argument('--gerrit-trigger-enabled', action='store_true', default=False)
 
     # Github
     parser.add_argument('--github-enabled', action='store_true', default=False)

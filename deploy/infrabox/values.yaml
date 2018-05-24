@@ -173,6 +173,8 @@ gerrit:
         tag: latest
 
     trigger:
+        enabled: false
+
         # name of the gerrit trigger image in your general.docker_registry
         # image: gerrit-trigger
 

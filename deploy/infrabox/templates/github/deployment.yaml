@@ -34,6 +34,10 @@ spec:
                 -
                     name: INFRABOX_VERSION
                     value: {{ required "github.trigger.tag is required" .Values.github.trigger.tag }}
+				resources:
+					requests:
+						memory: "256Mi"
+						cpu: "200m"
             -
                 name: github-review
                 image: {{ required "general.docker_registry is required" .Values.general.docker_registry }}/{{ default "github-review" .Values.github.review.image }}:{{ required "github.review.tag is required" .Values.github.review.tag }}
@@ -51,6 +55,10 @@ spec:
                 -
                     name: INFRABOX_ROOT_URL
                     value: {{ .Values.root_url }}
+				resources:
+					requests:
+						memory: "256Mi"
+						cpu: "200m"
             volumes:
                 {{ include "volumes_database" . | indent 16 }}
 {{ end }}

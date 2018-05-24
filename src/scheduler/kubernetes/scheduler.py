@@ -171,7 +171,7 @@ class Scheduler(object):
             return False
 
         rb = {
-            "kind": "RoleBinding",
+            "kind": "ClusterRoleBinding",
             "apiVersion": "rbac.authorization.k8s.io/v1beta1",
             "metadata": {
                 "name": namespace_name + '-discovery'
