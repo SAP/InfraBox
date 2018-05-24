@@ -63,7 +63,14 @@ func syncGKECluster(cr *v1alpha1.GKECluster) (*v1alpha1.GKEClusterStatus, error)
 	if gkecluster == nil {
 		name := "ib-" + cr.Name
 		args := []string{"container", "clusters",
-			"create", name, "--async", "--zone", "us-east1-b", "--enable-autorepair"}
+			"create", name, "--async", "--enable-autorepair"}
+
+	    args = append(args, "--zone")
+        if cr.Spec.Zone != "" {
+			args = append(args, cr.Spec.Zone)
+        } else {
+			args = append(args, "us-east1-b")
+        }
 
 		if cr.Spec.DiskSize != "" {
 			args = append(args, "--disk-size")
@@ -151,7 +158,7 @@ func deleteGKECluster(cr *v1alpha1.GKECluster) error {
 
 	if gkecluster != nil {
         // Cluster still exists, delete it
-        cmd := exec.Command("gcloud", "-q", "container", "clusters", "delete", "ib-"+cr.Name, "--async", "--zone", "us-east1-b")
+        cmd := exec.Command("gcloud", "-q", "container", "clusters", "delete", "ib-"+cr.Name, "--async", "--zone", cr.Spec.Zone)
         out, err := cmd.CombinedOutput()
 
         if err != nil {
