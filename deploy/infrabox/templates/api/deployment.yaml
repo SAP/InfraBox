@@ -37,6 +37,10 @@ spec:
                 - name: gerrit-ssh
                   mountPath: /tmp/gerrit
                   readOnly: true
+                resources:
+                    requests:
+                        memory: "256Mi"
+                        cpu: "200m"
             {{ end }}
             -
                 name: api
@@ -84,6 +88,10 @@ spec:
                 -
                     name: INFRABOX_ACCOUNT_SIGNUP_ENABLED
                     value: {{ .Values.account.signup.enabled | quote }}
+                resources:
+                    requests:
+                        memory: "1024Mi"
+                        cpu: "1000m"
             volumes:
                 {{ include "volumes_database" . | indent 16 }}
                 {{ include "volumes_rsa" . | indent 16 }}

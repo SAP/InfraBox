@@ -35,6 +35,10 @@ spec:
                 -
                     name: INFRABOX_VERSION
                     value: {{ required "controller.tag is required" .Values.controller.tag }}
+                resources:
+                    requests:
+                        memory: "256Mi"
+                        cpu: "200m"
                 volumeMounts:
                 -
                     mountPath: /etc/docker

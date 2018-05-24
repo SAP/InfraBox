@@ -6,3 +6,6 @@ To access gerrit InfraBox needs some credentials. You need the private key with 
     --gerrit-port <PORT>
     --gerrit-username <USERNAME>
     --gerrit-private-key <PATH_TO_PRIVATE_KEY_FILE>
+    --gerrit-review-enabled
+    --gerrit-trigger-enabled
+
