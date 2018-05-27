@@ -1241,36 +1241,3 @@ class Testresult(Resource):
 
         g.db.commit()
         return jsonify({})
-
-@ns.route("/setfinished")
-class SetFinished(Resource):
-
-    @job_token_required
-    def post(self):
-        job_id = g.token['job']['id']
-
-        state = request.json['state']
-        message = request.json.get('message', None)
-
-        # collect console output
-        lines = g.db.execute_many("""SELECT output FROM console WHERE job_id = %s
-                                     ORDER BY date""", [job_id])
-
-        output = ""
-        for l in lines:
-            output += l[0]
-
-        # Update state
-        g.db.execute("""
-        UPDATE job SET
-            state = %s,
-            console = %s,
-            end_date = current_timestamp,
-            message = %s
-        WHERE id = %s""", [state, output, message, job_id])
-
-        # remove form console table
-        g.db.execute("DELETE FROM console WHERE job_id = %s", [job_id])
-
-        g.db.commit()
-        return jsonify({})

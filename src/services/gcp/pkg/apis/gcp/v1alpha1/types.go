@@ -16,18 +16,18 @@ type GKECluster struct {
 }
 
 type GKEClusterSpec struct {
-	DiskSize        string `json:"diskSize,omitempty"`
-	MachineType     string `json:"machineType,omitempty"`
-	EnableNetworkPolicy string `json:"enableNetworkPolicy,omitempty"`
-	NumNodes        string `json:"numNodes,omitempty"`
-	Preemptible    string `json:"preemptible,omitempty"`
-	EnableAutoscaling string `json:"enableAutoscaling,omitempty"`
-	MaxNodes string `json:"maxNodes,omitempty"`
-	MinNodes string `json:"minNodes,omitempty"`
+	DiskSize                int32 `json:"diskSize,omitempty"`
+	MachineType             string `json:"machineType,omitempty"`
+	EnableNetworkPolicy     bool `json:"enableNetworkPolicy,omitempty"`
+	NumNodes                int32 `json:"numNodes,omitempty"`
+	Preemptible             bool `json:"preemptible,omitempty"`
+	EnableAutoscaling       bool `json:"enableAutoscaling,omitempty"`
+	MaxNodes                int32 `json:"maxNodes,omitempty"`
+	MinNodes                int32 `json:"minNodes,omitempty"`
 }
 
 type GKEClusterStatus struct {
-	Status string `json:"status"`
+	Status  string `json:"status"`
 	Message string `json:"message"`
 }
 

@@ -1,6 +1,7 @@
 #!/usr/bin/python
 #pylint: disable=too-many-lines,attribute-defined-outside-init,too-many-public-methods,too-many-locals
 import os
+import sys
 import shutil
 import time
 import json
@@ -268,7 +269,6 @@ class RunJob(Job):
                 f.write("started")
 
     def main(self):
-        self.update_status('running')
         self.load_data()
 
         # Show environment
@@ -1199,14 +1199,21 @@ def main():
     try:
         j = RunJob(console)
         j.main()
-        j.console.flush()
         j.console.header('Finished', show=True)
-        j.update_status('finished', message='Successfully finished')
+        j.console.flush()
+
+        with open('/dev/termination-log', 'w+') as out:
+            out.write('Job finished successfully')
+
     except Failure as e:
         j.console.header('Failure', show=True)
         j.console.collect(e.message, show=True)
         j.console.flush()
-        j.update_status('failure', message=e.message)
+
+        with open('/dev/termination-log', 'w+') as out:
+            out.write(e.message)
+
+        sys.exit(1)
     except:
         print_stackdriver()
         if j:
@@ -1214,10 +1221,15 @@ def main():
             msg = traceback.format_exc()
             j.console.collect(msg, show=True)
             j.console.flush()
-            j.update_status('error', message='An error occured')
+
+            with open('/dev/termination-log', 'w+') as out:
+                out.write(msg)
+
+            sys.exit(1)
 
 if __name__ == "__main__":
     try:
         main()
     except:
         print_stackdriver()
+        sys.exit(1)

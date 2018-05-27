@@ -12,6 +12,7 @@ spec:
             labels:
                 app: infrabox-controller
         spec:
+            terminationGracePeriodSeconds: 0
             {{ if .Values.general.rbac.enabled }}
             serviceAccountName: infrabox-scheduler
             {{ end }}
@@ -35,6 +36,9 @@ spec:
                 -
                     name: INFRABOX_VERSION
                     value: {{ required "controller.tag is required" .Values.controller.tag }}
+                -
+                    name: WATCH_NAMESPACE
+                    value: {{ default "infrabox-worker" .Values.general.worker_namespace }}
                 resources:
                     requests:
                         memory: "256Mi"

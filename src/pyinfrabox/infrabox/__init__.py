@@ -160,19 +160,6 @@ def parse_limits(d, path):
     if d['memory'] <= 255:
         raise ValidationError(path + ".memory", "must be greater than 255")
 
-def parse_kubernetes_limits(d, path):
-    check_allowed_properties(d, path, ("memory", "cpu"))
-    check_required_properties(d, path, ("memory", "cpu"))
-
-    check_number(d['cpu'], path + ".cpu")
-    check_number(d['memory'], path + ".memory")
-
-    if d['cpu'] <= 0:
-        raise ValidationError(path + ".cpu", "must be greater than 0")
-
-    if d['memory'] <= 255:
-        raise ValidationError(path + ".memory", "must be greater than 255")
-
 def parse_add_capabilities(d, path):
     check_string_array(d, path)
 
@@ -190,13 +177,6 @@ def parse_security_context(d, path):
 
     if 'privileged' in d:
         check_boolean(d['privileged'], path + ".privileged")
-
-def parse_service_spec(d, path):
-    if not isinstance(d, dict):
-        raise ValidationError(path, "must be an object")
-
-    for key, value in d.items():
-        check_text(value, path + "." + key)
 
 def parse_services(d, path):
     if not isinstance(d, list):
@@ -219,11 +199,8 @@ def parse_services(d, path):
 
         names.append(name)
 
-        if 'spec' in elem:
-            parse_service_spec(elem['spec'], p + ".spec")
-
 def parse_resources(d, path):
-    check_allowed_properties(d, path, ("limits", "kubernetes"))
+    check_allowed_properties(d, path, ("limits",))
     check_required_properties(d, path, ("limits",))
 
     parse_limits(d['limits'], path + ".limits")

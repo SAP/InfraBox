@@ -20,6 +20,12 @@
   version = "v1.1.0"
 
 [[projects]]
+  name = "github.com/dgrijalva/jwt-go"
+  packages = ["."]
+  revision = "06ea1031745cb8b3dab3f6a236daf2b0aa468b7e"
+  version = "v3.2.0"
+
+[[projects]]
   name = "github.com/emicklei/go-restful"
   packages = [
     ".",
@@ -104,8 +110,8 @@
     "compiler",
     "extensions"
   ]
-  revision = "ee43cbb60db7bd22502942cccbc39059117352ab"
-  version = "v0.1.0"
+  revision = "7c663266750e7d82587642f65e60bc4083f1f84e"
+  version = "v0.2.0"
 
 [[projects]]
   branch = "master"
@@ -173,18 +179,20 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/onrik/logrus"
+  packages = ["filename"]
+  revision = "9db917e87735094e75f37662738b3bebb96eedaa"
+
+[[projects]]
+  branch = "master"
   name = "github.com/operator-framework/operator-sdk"
   packages = [
     "pkg/k8sclient",
     "pkg/sdk",
-    "pkg/sdk/action",
-    "pkg/sdk/handler",
-    "pkg/sdk/informer",
-    "pkg/sdk/types",
     "pkg/util/k8sutil",
     "version"
   ]
-  revision = "8aeaff32fc9c9e8d27f0bf99b5105fe7db09548a"
+  revision = "ef94d7384ebb7385478ed8d1aa332cddfbd6c675"
 
 [[projects]]
   branch = "master"
@@ -214,7 +222,7 @@
   branch = "master"
   name = "golang.org/x/crypto"
   packages = ["ssh/terminal"]
-  revision = "1a580b3eff7814fc9b40602fd35256c63b50f491"
+  revision = "159ae71589f303f9fbfd7528413e0fe944b9c1cb"
 
 [[projects]]
   branch = "master"
@@ -226,7 +234,7 @@
     "http2/hpack",
     "idna"
   ]
-  revision = "2491c5de3490fced2f6cff376127c667efeed857"
+  revision = "dfa909b99c79129e1100513e5cd36307665e5723"
 
 [[projects]]
   branch = "master"
@@ -235,7 +243,7 @@
     "unix",
     "windows"
   ]
-  revision = "7c87d13f8e835d2fb3a70a2912c811ed0c1d241b"
+  revision = "d4cedef3467ee719ea35470faeefbc6d0fa18e4b"
 
 [[projects]]
   name = "golang.org/x/text"
@@ -414,11 +422,11 @@
   branch = "master"
   name = "k8s.io/kube-openapi"
   packages = ["pkg/common"]
-  revision = "b3f03f55328800731ce03a164b80973014ecd455"
+  revision = "41e43949ca69d04b66104069ed3ffd619b289b3d"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "e3e1c71f9a58b16fa8c4903c691aa7c8a09390566a4ebe4e7b9644c7250e003b"
+  inputs-digest = "411c20aaf5fe43d5d2965035af56cb023fb5495dbd593839a351b28996b4d3b8"
   solver-name = "gps-cdcl"
   solver-version = 1
