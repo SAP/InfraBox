@@ -1,6 +1,7 @@
 package stub
 
 import (
+    "strconv"
 	b64 "encoding/base64"
 	"encoding/json"
 	"github.com/sap/infrabox/src/services/gcp/pkg/apis/gcp/v1alpha1"
@@ -65,9 +66,9 @@ func syncGKECluster(cr *v1alpha1.GKECluster) (*v1alpha1.GKEClusterStatus, error)
 		args := []string{"container", "clusters",
 			"create", name, "--async", "--zone", "us-east1-b", "--enable-autorepair"}
 
-		if cr.Spec.DiskSize != "" {
+		if cr.Spec.DiskSize != 0 {
 			args = append(args, "--disk-size")
-			args = append(args, cr.Spec.DiskSize)
+			args = append(args, strconv.Itoa(int(cr.Spec.DiskSize)))
 		}
 
 		if cr.Spec.MachineType != "" {
@@ -75,30 +76,30 @@ func syncGKECluster(cr *v1alpha1.GKECluster) (*v1alpha1.GKEClusterStatus, error)
 			args = append(args, cr.Spec.MachineType)
 		}
 
-		if cr.Spec.EnableNetworkPolicy == "true" {
+		if cr.Spec.EnableNetworkPolicy {
 			args = append(args, "--enable-network-policy")
 		}
 
-		if cr.Spec.NumNodes != "" {
+		if cr.Spec.NumNodes != 0 {
 			args = append(args, "--num-nodes")
-			args = append(args, cr.Spec.NumNodes)
+			args = append(args, strconv.Itoa(int(cr.Spec.NumNodes)))
 		}
 
-		if cr.Spec.Preemptible == "true" {
+		if cr.Spec.Preemptible {
 			args = append(args, "--preemptible")
 		}
 
-		if cr.Spec.EnableAutoscaling == "true" {
+		if cr.Spec.EnableAutoscaling {
 			args = append(args, "--enable-autoscaling")
 
-			if cr.Spec.MaxNodes != "" {
+			if cr.Spec.MaxNodes != 0 {
 				args = append(args, "--max-nodes")
-				args = append(args, cr.Spec.MaxNodes)
+				args = append(args, strconv.Itoa(int(cr.Spec.MaxNodes)))
 			}
 
-			if cr.Spec.MinNodes != "" {
+			if cr.Spec.MinNodes != 0 {
 				args = append(args, "--min-nodes")
-				args = append(args, cr.Spec.MinNodes)
+				args = append(args, strconv.Itoa(int(cr.Spec.MinNodes)))
 			}
 		}
 

@@ -122,17 +122,6 @@ class Job(object):
 
             time.sleep(1)
 
-    def set_running(self):
-        self.post_api_server('setrunning')
-
-    def set_finished(self, state, message):
-        payload = {
-            'state': state,
-            'message': message
-        }
-
-        self.post_api_server('setfinished', data=payload)
-
     def post_stats(self, stat):
         payload = {
             "stats": stat
@@ -206,9 +195,3 @@ class Job(object):
                 return
 
         raise Failure('Failed to upload file: %s' % message)
-
-    def update_status(self, status, message=None):
-        if status == "running":
-            return self.set_running()
-
-        return self.set_finished(status, message)

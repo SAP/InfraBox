@@ -17,7 +17,7 @@ if [ ! -e /var/run/docker.sock ]; then
       sleep 1
 
       if [ $COUNTER -gt 60 ]; then
-        echo "Docker daemon not started"
+        echo "Docker daemon not started" > '/dev/termination-log'
         exit 1
       fi
     done
