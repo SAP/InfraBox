@@ -22,8 +22,6 @@ google-cloud = "*"
 bcrypt = "*"
 cryptography = "*"
 pycrypto = "*"
-azure-mgmt-resource = "*"
-azure-storage = "*"
 
 
 [requires]
