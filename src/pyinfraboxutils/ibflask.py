@@ -62,7 +62,7 @@ def get_token():
 
         return token
     else:
-        logger.warn('No auth header')
+        logger.info('No auth header')
         abort(401, 'Unauthorized')
 
 try:
