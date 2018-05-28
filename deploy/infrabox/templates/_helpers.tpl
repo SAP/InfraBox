@@ -114,26 +114,6 @@
 {{ end }}
 {{ end }}
 
-{{ define "env_azure" }}
--
-    name: INFRABOX_STORAGE_AZURE_ENABLED
-    value: {{ .Values.storage.azure.enabled | quote }}
-{{ if .Values.storage.azure.enabled }}
--
-    name: INFRABOX_STORAGE_AZURE_ACCOUNT_NAME
-    valueFrom:
-        secretKeyRef:
-            name: infrabox-azure-credentials
-            key: account-name
--
-    name: INFRABOX_STORAGE_AZURE_ACCOUNT_KEY
-    valueFrom:
-        secretKeyRef:
-            name: infrabox-azure-credentials
-            key: account-key
-{{ end }}
-{{ end }}
-
 {{ define "env_github" }}
 -
     name: INFRABOX_GITHUB_ENABLED
