@@ -151,38 +151,51 @@ class RunJob(Job):
         return result
 
     def clone_repo(self, commit, clone_url, branch, ref, clone_all, sub_path=None, submodules=True):
-        git_server = os.environ["INFRABOX_JOB_GIT_URL"]
+        c = self.console
+        mount_repo_dir = self.mount_repo_dir
 
-        while True:
+        if sub_path:
+            mount_repo_dir = os.path.join(mount_repo_dir, sub_path)
+
+        if os.environ['INFRABOX_GENERAL_DONT_CHECK_CERTIFICATES'] == 'true':
+            c.execute(('git', 'config', '--global', 'http.sslVerify', 'false'), show=True)
+
+        cmd = ['git', 'clone']
+
+        if not clone_all:
+            cmd += ['--depth=10']
+
+            if branch:
+                cmd += ['--single-branch', '-b', branch]
+
+        cmd += [clone_url, mount_repo_dir]
+
+        for _ in range(0, 3):
             try:
-                r = requests.get('%s/ping' % git_server, timeout=5)
+                c.execute(cmd, show=True)
+                break
+            except:
+                time.sleep(5)
 
-                if r.status_code == 200:
-                    break
-                else:
-                    self.console.collect(r.text, show=True)
-            except Exception as e:
-                print e
+        if ref:
+            cmd = ['git', 'fetch', '--depth=10', clone_url, ref]
+            c.execute(cmd, cwd=mount_repo_dir, show=True)
 
-            time.sleep(1)
+        c.execute(['git', 'config', 'remote.origin.url', clone_url], cwd=mount_repo_dir, show=True)
+        c.execute(['git', 'config', 'remote.origin.fetch', '+refs/heads/*:refs/remotes/origin/*'],
+                  cwd=mount_repo_dir, show=True)
 
-        d = {
-            'commit': commit,
-            'clone_url': clone_url,
-            'branch': branch,
-            'ref': ref,
-            'clone_all': clone_all,
-            'sub_path': sub_path,
-            'submodules': submodules
-        }
+        if not clone_all:
+            c.execute(['git', 'fetch', 'origin', commit], cwd=mount_repo_dir, show=True)
 
-        r = requests.post('%s/clone_repo' % git_server, json=d, timeout=1800)
+        cmd = ['git', 'checkout', '-qf', commit]
 
-        for l in r.text.split('\\n'):
-            self.console.collect(l, show=True)
+        c.execute(cmd, cwd=mount_repo_dir, show=True)
 
-        if r.status_code != 200:
-            raise Failure('Failed to clone repository')
+        if submodules:
+            c.execute(['git', 'submodule', 'init'], cwd=mount_repo_dir, show=True)
+            c.execute(['git', 'submodule', 'update'], cwd=mount_repo_dir, show=True)
+
 
     def get_source(self):
         c = self.console
@@ -1191,7 +1204,6 @@ def main():
     get_env('INFRABOX_LOCAL_CACHE_ENABLED')
     get_env('INFRABOX_JOB_MAX_OUTPUT_SIZE')
     get_env('INFRABOX_JOB_API_URL')
-    get_env('INFRABOX_JOB_GIT_URL')
     get_env('INFRABOX_JOB_MOUNT_DOCKER_SOCKET')
     console = ApiConsole()
 

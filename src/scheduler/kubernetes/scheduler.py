@@ -1,7 +1,6 @@
 import argparse
 import time
 import os
-from datetime import datetime
 
 import requests
 
@@ -305,8 +304,6 @@ class Scheduler(object):
             message = None
 
             s = j.get('status', {}).get('state', {})
-
-            self.logger.error(s)
 
             if s.get('running', None):
                 current_state = 'running'
