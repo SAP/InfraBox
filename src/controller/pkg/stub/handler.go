@@ -66,7 +66,7 @@ type Controller struct {
 
 func init() {
     logrus.AddHook(filename.NewHook())
-    logrus.SetLevel(logrus.WarnLevel)
+    // logrus.SetLevel(logrus.WarnLevel)
 }
 
 func (h *Controller) Handle(ctx context.Context, event sdk.Event) error {
@@ -90,7 +90,7 @@ func (h *Controller) Handle(ctx context.Context, event sdk.Event) error {
             err := h.syncJob(job, log)
 
             if job.Status.State.Terminated != nil {
-                log.Infof("job terminated, ignoring")
+                log.Info("job terminated, ignoring")
                 return nil
             }
 
@@ -158,10 +158,6 @@ func (c *Controller) newBatchJob(job *v1alpha1.IBJob, token string) *batchv1.Job
 			Value: c.rootURL + "/api/job",
 		},
 		corev1.EnvVar{
-			Name:  "INFRABOX_JOB_GIT_URL",
-			Value: "http://localhost:8080",
-		},
-		corev1.EnvVar{
 			Name:  "INFRABOX_SERVICE",
 			Value: "job",
 		},
@@ -221,19 +217,6 @@ func (c *Controller) newBatchJob(job *v1alpha1.IBJob, token string) *batchv1.Job
 		})
 	}
 
-	cloneEnv := []corev1.EnvVar{
-		corev1.EnvVar{
-			Name:  "INFRABOX_GENERAL_DONT_CHECK_CERTIFICATES",
-			Value: c.generalDontCheckCertificates,
-		},
-	}
-	cloneVolumeMounts := []corev1.VolumeMount{
-		corev1.VolumeMount{
-			MountPath: "/repo",
-			Name:      "repo",
-		},
-	}
-
 	if c.gerritEnabled == "true" {
 		gerritEnv := []corev1.EnvVar{
 			corev1.EnvVar{
@@ -251,9 +234,8 @@ func (c *Controller) newBatchJob(job *v1alpha1.IBJob, token string) *batchv1.Job
 		}
 
 		env = append(env, gerritEnv...)
-		cloneEnv = append(env, gerritEnv...)
 
-		cloneVolumeMounts = append(cloneVolumeMounts, corev1.VolumeMount{
+		volumeMounts = append(volumeMounts, corev1.VolumeMount{
 			Name:      "gerrit-ssh",
 			MountPath: "/tmp/gerrit/",
 		})
@@ -309,16 +291,8 @@ func (c *Controller) newBatchJob(job *v1alpha1.IBJob, token string) *batchv1.Job
 		VolumeMounts: volumeMounts,
 	}
 
-	gitJob := corev1.Container{
-		Name:            "git-clone",
-		ImagePullPolicy: "Always",
-		Image:           c.dockerRegistry + "/job-git:" + c.tag,
-		Env:             cloneEnv,
-		VolumeMounts:    cloneVolumeMounts,
-	}
-
 	containers := []corev1.Container{
-		gitJob, runJob,
+		runJob,
 	}
 
     var zero int32 = 0
@@ -719,12 +693,12 @@ func (c *Controller) createBatchJob(job *v1alpha1.IBJob, log *logrus.Entry) erro
 }
 
 func updateJobStatus(status v1alpha1.IBJobStatus, batch *batchv1.Job, pod *corev1.Pod) v1alpha1.IBJobStatus {
-	if len(pod.Status.ContainerStatuses) < 2 {
+	if len(pod.Status.ContainerStatuses) != 1 {
        status.State.Waiting = &v1alpha1.JobStateWaiting {
            Message: "Containers are being created",
        }
     } else {
-        s := pod.Status.ContainerStatuses[1].State
+        s := pod.Status.ContainerStatuses[0].State
 
         // Still waiting
         if s.Waiting != nil {
@@ -758,6 +732,8 @@ func updateJobStatus(status v1alpha1.IBJobStatus, batch *batchv1.Job, pod *corev
 }
 
 func (c *Controller) syncJob(job *v1alpha1.IBJob, log *logrus.Entry) error {
+    log.Info("Syncing job")
+
 	// First set finalizers so we don't forget to delete it later on
     if len(job.GetFinalizers()) == 0 {
         err := updateFinalizers(job, []string{"job.infrabox.net"}, log)
@@ -771,8 +747,12 @@ func (c *Controller) syncJob(job *v1alpha1.IBJob, log *logrus.Entry) error {
 	err := sdk.Get(batch)
 
 	if err != nil && !errors.IsNotFound(err) {
+		log.Errorf("Failed to get batch jobs: %s", err.Error())
 		return err
 	}
+
+    log.Errorf("%v", batch)
+    log.Errorf("%v", err)
 
 	// Create job if does not already exist
 	if err != nil && errors.IsNotFound(err) {
@@ -799,11 +779,12 @@ func (c *Controller) syncJob(job *v1alpha1.IBJob, log *logrus.Entry) error {
 			return err
 		}
 
-		log.Infof("Batch job created")
+		log.Info("Batch job created")
 
 		// Get job again so we can sync it
 		err = sdk.Get(batch)
 		if err != nil && !errors.IsNotFound(err) {
+			log.Errorf("Failed to get batch job: %s", err.Error())
 			return err
 		}
 	}
@@ -831,5 +812,6 @@ func (c *Controller) syncJob(job *v1alpha1.IBJob, log *logrus.Entry) error {
 		status = updateJobStatus(status, batch, &pod)
 	}
 
+    log.Info("Updating job status")
 	return updateStatus(job, &status, log)
 }
