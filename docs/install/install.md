@@ -130,6 +130,9 @@ To deploy InfraBox:
     cd /tmp/infrabox-configuration/infrabox
     helm install -n infrabox .
 
+    cd /tmp/infrabox-configuration/infrabox-function
+    helm install -n infrabox-function .
+
 After a few seconds you can open your browser and access `https://<YOUR_DOMAIN>`.
 
 [helm]: https://github.com/kubernetes/helm
