@@ -22,20 +22,7 @@ spec:
                 image: {{ required "general.docker_registry is required" .Values.general.docker_registry }}/{{ default "controller" .Values.controller.image }}:{{ required "controller.tag is required" .Values.controller.tag }}
                 imagePullPolicy: Always
                 env:
-                {{ include "env_gerrit" . | indent 16 }}
-                {{ include "env_local_cache" . | indent 16 }}
-                {{ include "env_job" . | indent 16 }}
                 {{ include "env_general" . | indent 16 }}
-                {{ include "env_kubernetes" . | indent 16 }}
-                -
-                    name: INFRABOX_ROOT_URL
-                    value: {{ required "root_url is required" .Values.root_url }}
-                -
-                    name: INFRABOX_SERVICE
-                    value: {{ default "controller" .Values.controller.image }}
-                -
-                    name: INFRABOX_VERSION
-                    value: {{ required "controller.tag is required" .Values.controller.tag }}
                 -
                     name: WATCH_NAMESPACE
                     value: {{ default "infrabox-worker" .Values.general.worker_namespace }}
@@ -43,14 +30,3 @@ spec:
                     requests:
                         memory: "256Mi"
                         cpu: "200m"
-                volumeMounts:
-                -
-                    mountPath: /etc/docker
-                    name: dockerd-config
-                {{ include "mounts_rsa_private" . | indent 16 }}
-            volumes:
-                {{ include "volumes_rsa" . | indent 16 }}
-                -
-                    name: dockerd-config
-                    configMap:
-                        name: infrabox-dockerd-config

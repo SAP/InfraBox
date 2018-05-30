@@ -8,15 +8,11 @@ from infrabox_job.process import Failure
 
 class Job(object):
     def __init__(self):
-        self.api_server = os.environ.get("INFRABOX_JOB_API_URL", None)
+        self.api_server = os.environ["INFRABOX_ROOT_URL"] + "/api/job"
         self.verify = True
 
         if os.environ.get('INFRABOX_GENERAL_DONT_CHECK_CERTIFICATES', 'false') == 'true':
             self.verify = False
-
-        if not self.api_server:
-            print "INFRABOX_JOB_API_URL not set"
-            sys.exit(1)
 
         self.job = None
         self.project = None
