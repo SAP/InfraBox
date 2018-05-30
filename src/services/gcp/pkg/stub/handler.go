@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"github.com/sap/infrabox/src/services/gcp/pkg/apis/gcp/v1alpha1"
 	"os/exec"
+    "github.com/satori/go.uuid"
 
 	"github.com/operator-framework/operator-sdk/pkg/sdk/action"
 	"github.com/operator-framework/operator-sdk/pkg/sdk/handler"
@@ -47,6 +48,9 @@ func syncGKECluster(cr *v1alpha1.GKECluster) (*v1alpha1.GKEClusterStatus, error)
     if len(finalizers) == 0 {
         cr.SetFinalizers([]string{"gcp.service.infrabox.net"})
         cr.Status.Status = "pending"
+        u := uuid.NewV4()
+
+        cr.Status.ClusterName = "ib-" + u.String()
         err := action.Update(cr)
         if err != nil {
             logrus.Errorf("Failed to set finalizers: %v", err)
@@ -55,16 +59,15 @@ func syncGKECluster(cr *v1alpha1.GKECluster) (*v1alpha1.GKEClusterStatus, error)
     }
 
 	// Get the GKE Cluster
-	gkecluster, err := getRemoteCluster(cr.Name)
+	gkecluster, err := getRemoteCluster(cr.Status.ClusterName)
 	if err != nil && !errors.IsNotFound(err) {
         logrus.Errorf("Could not get GKE Cluster: %v", err)
         return nil, err
 	}
 
 	if gkecluster == nil {
-		name := "ib-" + cr.Name
 		args := []string{"container", "clusters",
-			"create", name, "--async", "--zone", "us-east1-b", "--enable-autorepair"}
+			"create", cr.Status.ClusterName, "--async", "--zone", "us-east1-b", "--enable-autorepair"}
 
 		if cr.Spec.DiskSize != 0 {
 			args = append(args, "--disk-size")
@@ -112,7 +115,10 @@ func syncGKECluster(cr *v1alpha1.GKECluster) (*v1alpha1.GKEClusterStatus, error)
 			return nil, err
 		}
 
-        return newClusterStatus("pending", "Cluser is being created"), nil
+        status := cr.Status
+        status.Status = "pending"
+        status.Message = "Cluser is being created"
+        return &status, nil
 	} else {
 		if err != nil {
             logrus.Errorf("Failed to create secret: %v", err)
@@ -126,7 +132,10 @@ func syncGKECluster(cr *v1alpha1.GKECluster) (*v1alpha1.GKEClusterStatus, error)
                 return nil, err
             }
 
-            return newClusterStatus("ready", "Cluster ready"), nil
+            status := cr.Status
+            status.Status = "ready"
+            status.Message = "Cluster ready"
+            return &status, nil
 		}
 	}
 
@@ -144,7 +153,7 @@ func deleteGKECluster(cr *v1alpha1.GKECluster) error {
     }
 
 	// Get the GKE Cluster
-	gkecluster, err := getRemoteCluster(cr.Name)
+	gkecluster, err := getRemoteCluster(cr.Status.ClusterName)
 	if err != nil && !errors.IsNotFound(err) {
         logrus.Errorf("Failed to get GKE Cluster: %v", err)
         return err
@@ -152,7 +161,7 @@ func deleteGKECluster(cr *v1alpha1.GKECluster) error {
 
 	if gkecluster != nil {
         // Cluster still exists, delete it
-        cmd := exec.Command("gcloud", "-q", "container", "clusters", "delete", "ib-"+cr.Name, "--async", "--zone", "us-east1-b")
+        cmd := exec.Command("gcloud", "-q", "container", "clusters", "delete", cr.Status.ClusterName, "--async", "--zone", "us-east1-b")
         out, err := cmd.CombinedOutput()
 
         if err != nil {
@@ -235,7 +244,7 @@ func getLabels(cr *v1alpha1.GKECluster) map[string]string {
 
 func getRemoteCluster(name string) (*RemoteCluster, error) {
 	cmd := exec.Command("gcloud", "container", "clusters", "list",
-		"--filter", "name=ib-"+name, "--format", "json")
+		"--filter", "name=" + name, "--format", "json")
 
 	out, err := cmd.CombinedOutput()
 
@@ -258,13 +267,6 @@ func getRemoteCluster(name string) (*RemoteCluster, error) {
 	}
 
 	return &gkeclusters[0], nil
-}
-
-func newClusterStatus(status, message string) *v1alpha1.GKEClusterStatus {
-    return &v1alpha1.GKEClusterStatus {
-        Status: status,
-        Message: message,
-    }
 }
 
 func newSecret(cluster *v1alpha1.GKECluster, gke *RemoteCluster) *v1.Secret {

@@ -22,7 +22,6 @@ spec:
                 image: {{ required "general.docker_registry is required" .Values.general.docker_registry }}/{{ default "controller" .Values.controller.image }}:{{ required "controller.tag is required" .Values.controller.tag }}
                 imagePullPolicy: Always
                 env:
-                {{ include "env_general" . | indent 16 }}
                 -
                     name: WATCH_NAMESPACE
                     value: {{ default "infrabox-worker" .Values.general.worker_namespace }}

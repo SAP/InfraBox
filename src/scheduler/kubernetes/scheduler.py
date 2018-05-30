@@ -1,6 +1,7 @@
 import argparse
 import time
 import os
+from datetime import datetime
 
 import requests
 
@@ -10,12 +11,6 @@ import psycopg2.extensions
 from pyinfraboxutils import get_logger, get_env, print_stackdriver
 from pyinfraboxutils.db import connect_db
 from pyinfraboxutils.token import encode_job_token
-
-def gerrit_enabled():
-    return os.environ['INFRABOX_GERRIT_ENABLED'] == 'true'
-
-def use_host_docker_daemon():
-    return os.environ['INFRABOX_JOB_USE_HOST_DOCKER_DAEMON'] == 'true'
 
 class Scheduler(object):
     def __init__(self, conn, args):
@@ -318,6 +313,7 @@ class Scheduler(object):
             if j.get('status', None):
                 status = j['status']
                 s = status.get('status', "pending")
+                message = status.get('message', None)
 
                 self.logger.error(status)
 
@@ -340,6 +336,12 @@ class Scheduler(object):
                             current_state = 'failure'
 
                     delete_job = True
+
+                if s == "error":
+                    current_state = 'error'
+                    delete_job = True
+                    start_date = datetime.now()
+                    end_date = datetime.now()
 
                 start_date = status.get('startTime', None)
                 end_date = status.get('completionTime', None)
@@ -469,14 +471,6 @@ def main():
     get_env('INFRABOX_ROOT_URL')
     get_env('INFRABOX_GENERAL_DONT_CHECK_CERTIFICATES')
     get_env('INFRABOX_GENERAL_WORKER_NAMESPACE')
-    get_env('INFRABOX_JOB_MAX_OUTPUT_SIZE')
-    get_env('INFRABOX_JOB_MOUNT_DOCKER_SOCKET')
-    get_env('INFRABOX_JOB_SECURITY_CONTEXT_CAPABILITIES_ENABLED')
-
-    if get_env('INFRABOX_GERRIT_ENABLED') == 'true':
-        get_env('INFRABOX_GERRIT_USERNAME')
-        get_env('INFRABOX_GERRIT_HOSTNAME')
-        get_env('INFRABOX_GERRIT_PORT')
 
     # try to read from filesystem
     with open('/var/run/secrets/kubernetes.io/serviceaccount/token', 'r') as f:

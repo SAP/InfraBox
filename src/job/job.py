@@ -780,10 +780,6 @@ class RunJob(Job):
         # Mount context
         cmd += ['-v', '%s:/infrabox/context' % self._get_build_context_current_job()]
 
-        # Mount docker socket
-        if os.environ['INFRABOX_JOB_MOUNT_DOCKER_SOCKET'] == 'true':
-            cmd += ['-v', '/var/run/docker.sock:/var/run/docker.sock']
-
         # Add local cache
         if os.environ['INFRABOX_LOCAL_CACHE_ENABLED'] == 'true':
             cmd += ['-v', "/local-cache:/infrabox/local-cache"]
@@ -1203,7 +1199,6 @@ def main():
     get_env('INFRABOX_GENERAL_DONT_CHECK_CERTIFICATES')
     get_env('INFRABOX_LOCAL_CACHE_ENABLED')
     get_env('INFRABOX_JOB_MAX_OUTPUT_SIZE')
-    get_env('INFRABOX_JOB_MOUNT_DOCKER_SOCKET')
     console = ApiConsole()
 
     j = None

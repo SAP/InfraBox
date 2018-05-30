@@ -20,9 +20,3 @@ spec:
   steps:
   - functionName: infrabox-default-function
     name: run
-    volumes:
-    - name: data-dir
-      emptyDir: {}
-    volumeMounts:
-    - name: data-dir
-      mountPath: "/data"
