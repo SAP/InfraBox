@@ -1,0 +1,8 @@
+apiVersion: core.infrabox.net/v1alpha1
+kind: IBPipeline
+metadata:
+  name: infrabox-default-pipeline
+spec:
+  steps:
+  - functionName: infrabox-default-function
+    name: run

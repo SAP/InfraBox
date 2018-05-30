@@ -192,6 +192,10 @@ _installInfrabox() {
     helm install --namespace infrabox-system .
     popd
 
+    pushd $outdir/infrabox-function
+    helm install --namespace infrabox-system .
+    popd
+
     export INFRABOX_DATABASE_HOST=localhost
     export INFRABOX_DATABASE_DB=postgres
     export INFRABOX_DATABASE_USER=postgres

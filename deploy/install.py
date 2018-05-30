@@ -8,8 +8,6 @@ import base64
 import logging
 import yaml
 
-from Crypto.PublicKey import RSA
-
 logging.basicConfig(
     format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s',
     datefmt='%d-%m-%Y:%H:%M:%S',
@@ -439,6 +437,7 @@ class Kubernetes(Install):
 
         # Copy helm chart
         copy_files(self.args, 'infrabox')
+        copy_files(self.args, 'infrabox-function')
 
         # Load values
         values_path = os.path.join(self.args.o, 'infrabox', 'values.yaml')
@@ -474,6 +473,9 @@ class Kubernetes(Install):
             daemon_config_path = os.path.join(self.args.o, 'infrabox', 'config', 'docker', 'daemon.json')
             json.dump(daemon_config, open(daemon_config_path, 'w'))
 
+        self.config.dump(values_path)
+
+        values_path = os.path.join(self.args.o, 'infrabox-function', 'values.yaml')
         self.config.dump(values_path)
 
 def main():
