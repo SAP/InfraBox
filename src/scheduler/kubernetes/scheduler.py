@@ -9,6 +9,7 @@ import psycopg2.extensions
 
 from pyinfraboxutils import get_logger, get_env, print_stackdriver
 from pyinfraboxutils.db import connect_db
+from pyinfraboxutils.token import encode_job_token
 
 def gerrit_enabled():
     return os.environ['INFRABOX_GERRIT_ENABLED'] == 'true'
@@ -23,42 +24,53 @@ class Scheduler(object):
         self.namespace = get_env("INFRABOX_GENERAL_WORKER_NAMESPACE")
         self.logger = get_logger("scheduler")
 
-    def kube_delete_namespace(self, job_id):
-        h = {'Authorization': 'Bearer %s' % self.args.token}
-        namespace_name = "ib-%s" % job_id
-
-        # delete the namespace
-        p = {"gracePeriodSeconds": 0}
-        requests.delete(self.args.api_server + '/api/v1/namespaces/%s' % (namespace_name,),
-                        headers=h, params=p, timeout=10)
-
-
     def kube_delete_job(self, job_id):
         h = {'Authorization': 'Bearer %s' % self.args.token}
         requests.delete(self.args.api_server +
-                        '/apis/core.infrabox.net/v1alpha1/namespaces/%s/ibjobs/%s' % (self.namespace, job_id,),
+                        '/apis/core.infrabox.net/v1alpha1/namespaces/%s/ibpipelineinvocations/%s' % (self.namespace, job_id,),
                         headers=h, timeout=5)
 
     def kube_job(self, job_id, cpu, mem, services=None):
         h = {'Authorization': 'Bearer %s' % self.args.token}
+
+        env = [{
+            'name': 'INFRABOX_JOB_ID',
+            'value': job_id
+        }, {
+            'name': 'INFRABOX_JOB_TOKEN',
+            'value': encode_job_token(job_id).decode()
+        }, {
+            'name': 'INFRABOX_JOB_RESOURCES_LIMITS_MEMORY',
+            'value': str(mem)
+        }, {
+            'name': 'INFRABOX_JOB_RESOURCES_LIMITS_CPU',
+            'value': str(cpu)
+        }]
+
         job = {
             'apiVersion': 'core.infrabox.net/v1alpha1',
-            'kind': 'IBJob',
+            'kind': 'IBPipelineInvocation',
             'metadata': {
                 'name': job_id
             },
             'spec': {
-                'resources': {
-                    'limits': {
-                        'memory': '%sMi' % mem,
-                        'cpu': cpu
-                    }
-                },
+                'pipelineName': 'infrabox-default-pipeline',
                 'services': services,
+                'steps': {
+                    'run': {
+                        'resources': {
+                            'limits': {
+                                'memory': '%sMi' % mem,
+                                'cpu': cpu
+                            }
+                        },
+                        'env': env,
+                    }
+                }
             }
         }
 
-        r = requests.post(self.args.api_server + '/apis/core.infrabox.net/v1alpha1/namespaces/%s/ibjobs' % self.namespace,
+        r = requests.post(self.args.api_server + '/apis/core.infrabox.net/v1alpha1/namespaces/%s/ibpipelineinvocations' % self.namespace,
                           headers=h, json=job, timeout=10)
 
         if r.status_code != 201:
@@ -265,7 +277,7 @@ class Scheduler(object):
 
     def handle_orphaned_jobs(self):
         h = {'Authorization': 'Bearer %s' % self.args.token}
-        r = requests.get(self.args.api_server + '/apis/core.infrabox.net/v1alpha1/namespaces/%s/ibjobs' % self.namespace,
+        r = requests.get(self.args.api_server + '/apis/core.infrabox.net/v1alpha1/namespaces/%s/ibpipelineinvocations' % self.namespace,
                          headers=h,
                          timeout=10)
         data = r.json()
@@ -303,23 +315,34 @@ class Scheduler(object):
             current_state = 'scheduled'
             message = None
 
-            s = j.get('status', {}).get('state', {})
+            if j.get('status', None):
+                status = j['status']
+                s = status.get('status', "pending")
 
-            if s.get('running', None):
-                current_state = 'running'
-                start_date = s['running'].get('startTime', None)
-                end_date = s['running'].get('completionTime', None)
+                self.logger.error(status)
 
-            if s.get('terminated', None):
-                exit_code = s['terminated']['exitCode']
-                delete_job = True
+                if s == "pending":
+                    current_state = 'scheduled'
 
-                if exit_code == 0:
-                    current_state = 'finished'
-                else:
-                    current_state = 'failure'
+                if s == "running":
+                    current_state = 'running'
 
-                message = s['terminated'].get('message')
+                if s == "terminated":
+                    current_state = 'error'
+
+                    if 'stepStatuses' in status and status['stepStatuses']:
+                        stepStatus = status['stepStatuses'][-1]
+                        exit_code = stepStatus['State']['terminated']['exitCode']
+
+                        if exit_code == 0:
+                            current_state = 'finished'
+                        else:
+                            current_state = 'failure'
+
+                    delete_job = True
+
+                start_date = status.get('startTime', None)
+                end_date = status.get('completionTime', None)
 
             if last_state != current_state:
                 cursor = self.conn.cursor()

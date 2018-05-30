@@ -15,7 +15,7 @@ class ApiConsole(object):
         self.output = []
         self.last_send = datetime.now()
         self.is_finish = False
-        self.enable_logging = False
+        self.enable_logging = True
 
         self.verify = True
         if os.environ.get('INFRABOX_GENERAL_DONT_CHECK_CERTIFICATES', 'false') == 'true':
@@ -98,7 +98,7 @@ class ApiConsole(object):
                 "output": buf
             }
 
-            api_server = os.environ["INFRABOX_JOB_API_URL"]
+            api_server = os.environ["INFRABOX_ROOT_URL"] + "/api/job"
 
             headers = {
                 'Authorization': 'token ' + os.environ['INFRABOX_JOB_TOKEN']

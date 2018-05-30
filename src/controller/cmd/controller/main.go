@@ -22,14 +22,14 @@ func main() {
 	printVersion()
 
 	resource := "core.infrabox.net/v1alpha1"
-	kind := "IBJob"
 	namespace, err := k8sutil.GetWatchNamespace()
 	if err != nil {
 		logrus.Fatalf("Failed to get watch namespace: %v", err)
 	}
 	resyncPeriod := 5
-	logrus.Infof("Watching %s, %s, %s, %d", resource, kind, namespace, resyncPeriod)
-	sdk.Watch(resource, kind, namespace, resyncPeriod)
+	//sdk.Watch(resource, "Workflow", namespace, resyncPeriod)
+	sdk.Watch(resource, "IBPipelineInvocation", namespace, resyncPeriod)
+	sdk.Watch(resource, "IBFunctionInvocation", namespace, resyncPeriod)
 	sdk.Handle(stub.NewHandler())
 	sdk.Run(context.TODO())
 }

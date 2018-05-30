@@ -1,3 +1,3 @@
 apiVersion: core.infrabox.net/v1alpha1
-kind: IBJob
-projectName: controller
+kind: FunctionInvocation
+projectName: operator

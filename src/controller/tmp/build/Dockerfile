@@ -1,6 +1,5 @@
 FROM alpine:3.6
 
-RUN adduser -D controller
-USER controller
+ADD tmp/_output/bin/operator /usr/local/bin/operator
 
-ADD tmp/_output/bin/controller /usr/local/bin/controller
+CMD /usr/local/bin/operator

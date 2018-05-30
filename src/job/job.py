@@ -1203,7 +1203,6 @@ def main():
     get_env('INFRABOX_GENERAL_DONT_CHECK_CERTIFICATES')
     get_env('INFRABOX_LOCAL_CACHE_ENABLED')
     get_env('INFRABOX_JOB_MAX_OUTPUT_SIZE')
-    get_env('INFRABOX_JOB_API_URL')
     get_env('INFRABOX_JOB_MOUNT_DOCKER_SOCKET')
     console = ApiConsole()
 

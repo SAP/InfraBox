@@ -192,7 +192,7 @@
     "pkg/util/k8sutil",
     "version"
   ]
-  revision = "ef94d7384ebb7385478ed8d1aa332cddfbd6c675"
+  revision = "8a1704d319afaf123b67ab0b80ecb6e3c689328f"
 
 [[projects]]
   branch = "master"
@@ -222,7 +222,7 @@
   branch = "master"
   name = "golang.org/x/crypto"
   packages = ["ssh/terminal"]
-  revision = "159ae71589f303f9fbfd7528413e0fe944b9c1cb"
+  revision = "1a580b3eff7814fc9b40602fd35256c63b50f491"
 
 [[projects]]
   branch = "master"
@@ -234,7 +234,7 @@
     "http2/hpack",
     "idna"
   ]
-  revision = "dfa909b99c79129e1100513e5cd36307665e5723"
+  revision = "8e0cdda24ed423affc8f35c241e5e9b16180338e"
 
 [[projects]]
   branch = "master"
@@ -243,7 +243,7 @@
     "unix",
     "windows"
   ]
-  revision = "d4cedef3467ee719ea35470faeefbc6d0fa18e4b"
+  revision = "7f59abf37be6a6007f075af1bc7f16f137bc176b"
 
 [[projects]]
   name = "golang.org/x/text"
@@ -313,6 +313,12 @@
   ]
   revision = "acf347b865f29325eb61f4cd2df11e86e073a5ee"
   version = "kubernetes-1.9.3"
+
+[[projects]]
+  branch = "master"
+  name = "k8s.io/apiextensions-apiserver"
+  packages = ["pkg/apis/apiextensions"]
+  revision = "bd76ce7dd8e65e8c2197803a1e64869ca5905309"
 
 [[projects]]
   name = "k8s.io/apimachinery"
@@ -422,11 +428,11 @@
   branch = "master"
   name = "k8s.io/kube-openapi"
   packages = ["pkg/common"]
-  revision = "41e43949ca69d04b66104069ed3ffd619b289b3d"
+  revision = "67793630244cabba12e91ce1ec8d0d0b40802b56"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "411c20aaf5fe43d5d2965035af56cb023fb5495dbd593839a351b28996b4d3b8"
+  inputs-digest = "75d74fe48fc19e805a758b5d74ffa17a5537d021a5fad2c322fb25842ac5be0f"
   solver-name = "gps-cdcl"
   solver-version = 1
