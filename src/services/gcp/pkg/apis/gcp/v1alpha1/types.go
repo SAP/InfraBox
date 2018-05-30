@@ -27,8 +27,9 @@ type GKEClusterSpec struct {
 }
 
 type GKEClusterStatus struct {
-	Status  string `json:"status"`
-	Message string `json:"message"`
+	Status  string `json:"status,omitempty"`
+	Message string `json:"message,omitempty"`
+	ClusterName string `json:"clusterName,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

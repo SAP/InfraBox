@@ -274,27 +274,10 @@
 {{ end }}
 {{ end }}
 
-{{ define "env_local_cache" }}
--
-    name: INFRABOX_LOCAL_CACHE_ENABLED
-    value: {{ .Values.local_cache.enabled | quote }}
-{{ if .Values.local_cache.enabled }}
--
-    name: INFRABOX_LOCAL_CACHE_HOST_PATH
-    value: {{ default "/tmp/infrabox/local_cache" .Values.local_cache.host_path }}
-{{ end }}
-{{ end }}
-
 {{ define "env_job" }}
 -
     name: INFRABOX_JOB_MAX_OUTPUT_SIZE
     value: {{ default "104857600" .Values.job.max_output_size | quote }}
--
-    name: INFRABOX_JOB_MOUNT_DOCKER_SOCKET
-    value: {{ default "false" .Values.job.mount_docker_socket | quote }}
--
-    name: INFRABOX_JOB_USE_HOST_DOCKER_DAEMON
-    value: {{ default "false" .Values.job.use_host_docker_daemon | quote }}
 -
     name: INFRABOX_JOB_SECURITY_CONTEXT_CAPABILITIES_ENABLED
     value: {{ default "false" .Values.job.security_context.capabilities.enabled | quote }}

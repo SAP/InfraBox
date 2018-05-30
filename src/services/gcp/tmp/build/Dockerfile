@@ -1,6 +1,6 @@
 FROM alpine:3.6
 
-RUN adduser -D namespace
-USER namespace
+WORKDIR /app
+ADD tmp/_output/bin/gcp /app/gcp
 
-ADD tmp/_output/bin/namespace /usr/local/bin/namespace
+ENTRYPOINT ./gcp

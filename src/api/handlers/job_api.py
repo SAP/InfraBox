@@ -885,8 +885,6 @@ class CreateJobs(Resource):
                     if 'labels' not in s['metadata']:
                         s['metadata']['labels'] = {}
 
-                    s['metadata']['labels']['service.infrabox.net/id'] = str(uuid.uuid4())
-
             # Create job
             g.db.execute("""
                          INSERT INTO job (id, state, build_id, type, dockerfile, name,
