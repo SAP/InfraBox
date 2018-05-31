@@ -192,6 +192,8 @@ _installInfrabox() {
     helm install --namespace infrabox-system .
     popd
 
+    sleep 5
+
     pushd $outdir/infrabox-function
     helm install --namespace infrabox-system .
     popd
