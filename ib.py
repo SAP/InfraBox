@@ -22,6 +22,7 @@ IMAGES = [
     {'name': 'gerrit-review'},
     {'name': 'github-trigger'},
     {'name': 'github-review'},
+    {'name': 'collector'},
     {'name': 'job'},
     {'name': 'controller'},
     {'name': 'scheduler-kubernetes'},
