@@ -4,7 +4,6 @@ mkdir -p /data/infrabox
 mkdir -p ~/.ssh
 
 if [ ! -e /var/run/docker.sock ]; then
-    mkdir -p /etc/docker
     echo "Waiting for docker daemon to start up"
     # Start docker daemon
     dockerd-entrypoint.sh --storage-driver overlay --data-root /data/docker &
