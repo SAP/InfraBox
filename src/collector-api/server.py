@@ -59,7 +59,7 @@ def handle_entry(entry):
         with open(log_path, 'a+') as log_file:
             log_file.write(entry['log'])
 
-@api.route('/api/console')
+@api.route('/api/log')
 class Console(Resource):
     def post(self):
         entries = request.get_json()
@@ -100,19 +100,14 @@ class PodLog(Resource):
     def get(self, pod_id, container_name):
         p = os.path.join(os.path.join(storage_path), pod_id, container_name + '.log')
 
-        logger.error(p)
-
         if not p.startswith(storage_path):
-            logger.error('not start')
             abort(404)
 
         if not os.path.exists(p):
-            logger.error('exists')
             abort(404)
 
         with open(p) as f:
             d = f.read()
-            logger.error(d)
             return Response(d, mimetype='text/plain')
 
 def main(): # pragma: no cover

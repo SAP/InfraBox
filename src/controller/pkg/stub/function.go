@@ -33,8 +33,8 @@ type FunctionSpec struct {
 	Env             []corev1.EnvVar             `json:"env,omitempty" patchStrategy:"merge" patchMergeKey:"name" protobuf:"bytes,7,rep,name=env"`
 	Resources       corev1.ResourceRequirements `json:"resources,omitempty" protobuf:"bytes,8,opt,name=resources"`
 	SecurityContext *corev1.SecurityContext     `json:"securityContext,omitempty" protobuf:"bytes,15,opt,name=securityContext"`
-	VolumeMounts []corev1.VolumeMount         `json:"volumeMounts,omitempty" patchStrategy:"merge" patchMergeKey:"mountPath" protobuf:"bytes,9,rep,name=volumeMounts"`
-	Volumes      []corev1.Volume              `json:"volumes,omitempty" patchStrategy:"merge,retainKeys" patchMergeKey:"name" protobuf:"bytes,1,rep,name=volumes"`
+	VolumeMounts    []corev1.VolumeMount        `json:"volumeMounts,omitempty" patchStrategy:"merge" patchMergeKey:"mountPath" protobuf:"bytes,9,rep,name=volumeMounts"`
+	Volumes         []corev1.Volume             `json:"volumes,omitempty" patchStrategy:"merge,retainKeys" patchMergeKey:"name" protobuf:"bytes,1,rep,name=volumes"`
 }
 
 type FunctionValidation struct {
@@ -241,7 +241,7 @@ func (c *Controller) newBatchJob(fi *v1alpha1.IBFunctionInvocation, function *Fu
 		Resources:       function.Spec.Resources,
 		Env:             function.Spec.Env,
 		SecurityContext: function.Spec.SecurityContext,
-        VolumeMounts:    function.Spec.VolumeMounts,
+		VolumeMounts:    function.Spec.VolumeMounts,
 	}
 
 	job.VolumeMounts = append(job.VolumeMounts, fi.Spec.VolumeMounts...)
@@ -284,7 +284,7 @@ func (c *Controller) newBatchJob(fi *v1alpha1.IBFunctionInvocation, function *Fu
 					Containers:                    containers,
 					RestartPolicy:                 "Never",
 					TerminationGracePeriodSeconds: &zero64,
-                    Volumes:                       function.Spec.Volumes,
+					Volumes: function.Spec.Volumes,
 				},
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: map[string]string{

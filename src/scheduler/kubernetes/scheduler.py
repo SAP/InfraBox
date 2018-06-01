@@ -28,12 +28,14 @@ class Scheduler(object):
     def kube_job(self, job_id, cpu, mem, services=None):
         h = {'Authorization': 'Bearer %s' % self.args.token}
 
+        job_token = encode_job_token(job_id).decode()
+
         env = [{
             'name': 'INFRABOX_JOB_ID',
             'value': job_id
         }, {
             'name': 'INFRABOX_JOB_TOKEN',
-            'value': encode_job_token(job_id).decode()
+            'value': job_token
         }, {
             'name': 'INFRABOX_JOB_RESOURCES_LIMITS_MEMORY',
             'value': str(mem)
@@ -41,6 +43,17 @@ class Scheduler(object):
             'name': 'INFRABOX_JOB_RESOURCES_LIMITS_CPU',
             'value': str(cpu)
         }]
+
+        root_url = os.environ['INFRABOX_ROOT_URL']
+
+        if services:
+            for s in services:
+                if 'annotations' not in s['metadata']:
+                    s['metadata']['annotations'] = {}
+
+                s['metadata']['annotations']['infrabox.net/job-id'] = job_id
+                s['metadata']['annotations']['infrabox.net/job-token'] = job_token
+                s['metadata']['annotations']['infrabox.net/root-url'] = root_url
 
         job = {
             'apiVersion': 'core.infrabox.net/v1alpha1',
@@ -312,15 +325,15 @@ class Scheduler(object):
 
             if j.get('status', None):
                 status = j['status']
-                s = status.get('status', "pending")
+                s = status.get('state', "preparing")
                 message = status.get('message', None)
 
                 self.logger.error(status)
 
-                if s == "pending":
+                if s == "preparing":
                     current_state = 'scheduled'
 
-                if s == "running":
+                if s in ["running", "finalizing"]:
                     current_state = 'running'
 
                 if s == "terminated":

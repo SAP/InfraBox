@@ -2,18 +2,14 @@ package stub
 
 import (
 	"context"
-	//goerr "errors"
 	"github.com/sap/infrabox/src/controller/pkg/apis/core/v1alpha1"
 
 	"github.com/onrik/logrus/filename"
 	"github.com/operator-framework/operator-sdk/pkg/sdk"
 	"github.com/sirupsen/logrus"
 
-	"k8s.io/apimachinery/pkg/api/errors"
-	//metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	corev1 "k8s.io/api/core/v1"
-	//"k8s.io/apimachinery/pkg/runtime/schema"
-	//"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/api/errors"
 )
 
 func NewHandler() sdk.Handler {
@@ -27,45 +23,64 @@ func init() {
 
 type Controller struct{}
 
+func handleError(pi *v1alpha1.IBPipelineInvocation, err error) error {
+	if errors.IsConflict(err) {
+		// we just wait for the next update
+		return nil
+	}
+
+	pi.Status.State = "error"
+	pi.Status.Message = err.Error()
+	err = sdk.Update(pi)
+
+	if err != nil && errors.IsConflict(err) {
+		return err
+	}
+
+	return err
+}
+
 func (h *Controller) Handle(ctx context.Context, event sdk.Event) error {
 	switch o := event.Object.(type) {
 	case *v1alpha1.IBPipelineInvocation:
-		ns := o
+		pi := o
 		if event.Deleted {
 			return nil
 		}
 
 		log := logrus.WithFields(logrus.Fields{
-			"namespace": ns.Namespace,
-			"name":      ns.Name,
+			"namespace": pi.Namespace,
+			"name":      pi.Name,
 		})
 
-		delTimestamp := ns.GetDeletionTimestamp()
+		delTimestamp := pi.GetDeletionTimestamp()
 		if delTimestamp != nil {
-			return h.deletePipelineInvocation(ns, log)
-		} else {
-			if ns.Status.Status == "error" {
-				log.Info("pi terminated, ignoring")
-				return nil
+			return h.deletePipelineInvocation(pi, log)
+		}
+
+		if pi.Status.State == "error" || pi.Status.State == "terminated" {
+			log.Info("pi terminated, ignoring")
+			return nil
+		}
+
+		if pi.Status.State == "" || pi.Status.State == "preparing" {
+			err := h.preparePipelineInvocation(pi, log)
+			if err != nil {
+				return handleError(pi, err)
 			}
+		}
 
-			err := h.syncPipelineInvocation(ns, log)
-
-			if err == nil {
-				return nil
+		if pi.Status.State == "running" {
+			err := h.runPipelineInvocation(pi, log)
+			if err != nil {
+				return handleError(pi, err)
 			}
+		}
 
-			if errors.IsConflict(err) {
-				// we just wait for the next update
-				return nil
-			}
-
-			ns.Status.Status = "error"
-			ns.Status.Message = err.Error()
-			err = sdk.Update(ns)
-
-			if err != nil && errors.IsConflict(err) {
-				return err
+		if pi.Status.State == "finalizing" {
+			err := h.finalizePipelineInvocation(pi, log)
+			if err != nil {
+				return handleError(pi, err)
 			}
 		}
 	case *v1alpha1.IBFunctionInvocation:
