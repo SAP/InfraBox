@@ -2,8 +2,8 @@ package stub
 
 import (
 	goerr "errors"
-    "strconv"
 	"github.com/sap/infrabox/src/controller/pkg/apis/core/v1alpha1"
+	"strconv"
 
 	"github.com/operator-framework/operator-sdk/pkg/sdk"
 	"github.com/sirupsen/logrus"
@@ -18,14 +18,8 @@ import (
 )
 
 func (c *Controller) deletePipelineInvocation(cr *v1alpha1.IBPipelineInvocation, log *logrus.Entry) error {
-	err := c.deleteServices(cr, log)
-	if err != nil {
-		log.Errorf("Failed to delete services: %v", err)
-		return err
-	}
-
 	cr.SetFinalizers([]string{})
-	err = updateStatus(cr, log)
+	err := updateStatus(cr, log)
 	if err != nil {
 		logrus.Errorf("Failed to remove finalizers: %v", err)
 		return err
@@ -36,7 +30,7 @@ func (c *Controller) deletePipelineInvocation(cr *v1alpha1.IBPipelineInvocation,
 
 func (c *Controller) deleteService(pi *v1alpha1.IBPipelineInvocation, service *v1alpha1.IBPipelineService, log *logrus.Entry, index int) error {
 	log.Infof("Deleting Service")
-    id := pi.Name + "-" + strconv.Itoa(index)
+	id := pi.Name + "-" + strconv.Itoa(index)
 	resourceClient, _, err := k8sclient.GetResourceClient(service.APIVersion, service.Kind, pi.Namespace)
 	if err != nil {
 		log.Errorf("failed to get resource client: %v", err)
@@ -64,15 +58,50 @@ func (c *Controller) deleteServices(pi *v1alpha1.IBPipelineInvocation, log *logr
 			"service_kind":    s.Kind,
 		})
 		err := c.deleteService(pi, &s, l, index)
-
 		if err != nil {
-			return nil
+			return err
 		}
 
 		l.Info("Service deleted")
 	}
 
 	return nil
+}
+
+func (c *Controller) areServicesDeleted(pi *v1alpha1.IBPipelineInvocation, log *logrus.Entry) (bool, error) {
+	if pi.Spec.Services == nil {
+		return true, nil
+	}
+
+	log.Info("Delete additional services")
+	for index, s := range pi.Spec.Services {
+		id := pi.Name + "-" + strconv.Itoa(index)
+		resourceClient, _, err := k8sclient.GetResourceClient(s.APIVersion, s.Kind, pi.Namespace)
+		if err != nil {
+			log.Errorf("failed to get resource client: %v", err)
+			return false, err
+		}
+
+		service, err := resourceClient.Get(id, metav1.GetOptions{})
+		log.Errorf("%v", err)
+		log.Errorf("%v", service)
+
+		if err == nil {
+			// service still available
+			return false, err
+		}
+
+		if err != nil {
+			if errors.IsNotFound(err) {
+				// already deleted
+				continue
+			} else {
+				return false, err
+			}
+		}
+	}
+
+	return true, nil
 }
 
 func updateStatus(pi *v1alpha1.IBPipelineInvocation, log *logrus.Entry) error {
@@ -99,7 +128,39 @@ func updateStatus(pi *v1alpha1.IBPipelineInvocation, log *logrus.Entry) error {
 	return sdk.Get(pi)
 }
 
-func (c *Controller) syncFunctionInvocations(cr *v1alpha1.IBPipelineInvocation, log *logrus.Entry) error {
+func (c *Controller) preparePipelineInvocation(cr *v1alpha1.IBPipelineInvocation, log *logrus.Entry) error {
+	logrus.Info("Prepare")
+	cr.SetFinalizers([]string{"core.infrabox.net"})
+	cr.Status.State = "preparing"
+	cr.Status.Message = "Services are being created"
+	err := updateStatus(cr, log)
+
+	if err != nil {
+		log.Warnf("Failed to update status: %v", err)
+		return err
+	}
+
+	servicesCreated, err := c.createServices(cr, log)
+
+	if err != nil {
+		log.Errorf("Failed to create services: %s", err.Error())
+		return err
+	}
+
+	if servicesCreated {
+		log.Infof("Services are ready")
+		cr.Status.Message = ""
+		cr.Status.State = "running"
+	} else {
+		log.Infof("Services not yet ready")
+	}
+
+	log.Info("Updating state")
+	return updateStatus(cr, log)
+}
+
+func (c *Controller) runPipelineInvocation(cr *v1alpha1.IBPipelineInvocation, log *logrus.Entry) error {
+	logrus.Info("Run")
 	pipeline := newPipeline(cr)
 	err := sdk.Get(pipeline)
 
@@ -156,11 +217,11 @@ func (c *Controller) syncFunctionInvocations(cr *v1alpha1.IBPipelineInvocation, 
 
 	if firstState.Running != nil {
 		cr.Status.Message = ""
-		cr.Status.Status = "running"
+		cr.Status.State = "running"
 		cr.Status.StartTime = &firstState.Running.StartedAt
 	} else if firstState.Terminated != nil {
 		cr.Status.Message = ""
-		cr.Status.Status = "running"
+		cr.Status.State = "running"
 		cr.Status.StartTime = &firstState.Terminated.StartedAt
 	}
 
@@ -174,43 +235,35 @@ func (c *Controller) syncFunctionInvocations(cr *v1alpha1.IBPipelineInvocation, 
 
 	if allTerminated {
 		cr.Status.Message = ""
-		cr.Status.Status = "terminated"
+		cr.Status.State = "finalizing"
 		cr.Status.StartTime = &firstState.Terminated.StartedAt
 		cr.Status.CompletionTime = &cr.Status.StepStatuses[len(cr.Status.StepStatuses)-1].State.Terminated.FinishedAt
 	}
 
-	return nil
+	return updateStatus(cr, log)
 }
 
-func (c *Controller) syncPipelineInvocation(cr *v1alpha1.IBPipelineInvocation, log *logrus.Entry) error {
-	logrus.Info("Sync pipeline invocation")
+func (c *Controller) finalizePipelineInvocation(cr *v1alpha1.IBPipelineInvocation, log *logrus.Entry) error {
+	log.Info("Finalizing")
 
-	finalizers := cr.GetFinalizers()
-	if len(finalizers) == 0 {
-		cr.SetFinalizers([]string{"core.infrabox.net"})
-		cr.Status.Status = "pending"
-	}
-
-	servicesCreated, err := c.createServices(cr, log)
-
+	err := c.deleteServices(cr, log)
 	if err != nil {
-		log.Errorf("Failed to create services: %s", err.Error())
+		log.Errorf("Failed to delete services: %v", err)
 		return err
 	}
 
-	if servicesCreated {
-		log.Infof("Services are ready")
-		err = c.syncFunctionInvocations(cr, log)
-
-		if err != nil {
-			return err
-		}
-	} else {
-		log.Infof("Services not yet ready")
-		cr.Status.Message = "Services are being created"
+	allServicesDeleted, err := c.areServicesDeleted(cr, log)
+	if err != nil {
+		return err
 	}
 
-	log.Info("Updating state")
+	if !allServicesDeleted {
+		return nil
+	}
+
+	cr.Status.Message = ""
+	cr.Status.State = "terminated"
+
 	return updateStatus(cr, log)
 }
 
@@ -254,14 +307,15 @@ func (c *Controller) createService(service *v1alpha1.IBPipelineService, pi *v1al
 		return false, goerr.New("service not found")
 	}
 
-    id := pi.Name + "-" + strconv.Itoa(index)
+	id := pi.Name + "-" + strconv.Itoa(index)
 	newService := &unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"apiVersion": service.APIVersion,
 			"kind":       service.Kind,
 			"metadata": map[string]interface{}{
-				"name":      id,
-				"namespace": pi.Namespace,
+				"name":        id,
+				"namespace":   pi.Namespace,
+				"annotations": service.Metadata.Annotations,
 				"labels": map[string]string{
 					"service.infrabox.net/secret-name": id,
 				},
@@ -384,7 +438,7 @@ func newFunctionInvocation(pi *v1alpha1.IBPipelineInvocation,
 	}
 
 	for index, s := range pi.Spec.Services {
-        id := pi.Name + "-" + strconv.Itoa(index)
+		id := pi.Name + "-" + strconv.Itoa(index)
 
 		fi.Spec.Volumes = append(fi.Spec.Volumes, corev1.Volume{
 			Name: id,

@@ -27,8 +27,8 @@ type IBPipelineSpec struct {
 }
 
 type IBPipelineStep struct {
-	Name         string                       `json:"name"`
-	FunctionName string                       `json:"functionName"`
+	Name         string `json:"name"`
+	FunctionName string `json:"functionName"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -79,7 +79,7 @@ type IBPipelineInvocation struct {
 }
 
 type IBPipelineInvocationStatus struct {
-	Status         string                       `json:"status"`
+	State          string                       `json:"state"`
 	Message        string                       `json:"message"`
 	StartTime      *metav1.Time                 `json:"startTime,omitempty" protobuf:"bytes,2,opt,name=startTime"`
 	CompletionTime *metav1.Time                 `json:"completionTime,omitempty" protobuf:"bytes,3,opt,name=completionTime"`
@@ -99,8 +99,9 @@ type IBPipelineService struct {
 }
 
 type IBPipelineServiceMetadata struct {
-	Name   string            `json:"name"`
-	Labels map[string]string `json:"labels,omitempty"`
+	Name        string            `json:"name"`
+	Labels      map[string]string `json:"labels,omitempty"`
+	Annotations map[string]string `json:"annotations,omitempty"`
 }
 
 type IBPipelineInvocationStep struct {

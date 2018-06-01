@@ -8,7 +8,7 @@ RUN apt-get update -y && apt-get install -y python  python-pip python-flask && \
 
 ENV PYTHONPATH=/
 
-COPY src/collector /collector
+COPY src/collector-api /collector
 COPY src/pyinfraboxutils /pyinfraboxutils
 COPY src/pyinfrabox /pyinfrabox
 

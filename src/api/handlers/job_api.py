@@ -491,7 +491,7 @@ class Archive(Resource):
 
         g.db.commit()
 
-        return jsonify({})
+        return jsonify({"message": "File uploaded"})
 
 
 # TODO(steffen): check upload output sizes

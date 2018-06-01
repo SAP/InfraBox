@@ -12,7 +12,7 @@
                 <md-table-body>
                     <md-table-row v-for="a in job.archive" :key="a.filename">
                         <md-table-cell><a @click="job.downloadArchive(a.filename)">{{ a.filename }}</a></md-table-cell>
-                        <md-table-cell>{{ a.size / 1024 }} kb</md-table-cell>
+                        <md-table-cell>{{ Math.round(a.size / 1024) }} kb</md-table-cell>
                     </md-table-row>
                 </md-table-body>
             </md-table>
