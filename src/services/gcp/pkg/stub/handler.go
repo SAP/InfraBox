@@ -284,11 +284,10 @@ func getRemoteCluster(name string, log *logrus.Entry) (*RemoteCluster, error) {
 	cmd := exec.Command("gcloud", "container", "clusters", "list",
 		"--filter", "name="+name, "--format", "json")
 
-	out, err := cmd.CombinedOutput()
+	out, err := cmd.Output()
 
 	if err != nil {
-		log.Errorf("Cloud not list clusters: %v", err)
-		log.Error(string(out))
+		log.Errorf("Could not list clusters: %v", err)
 		return nil, err
 	}
 
@@ -296,7 +295,7 @@ func getRemoteCluster(name string, log *logrus.Entry) (*RemoteCluster, error) {
 	err = json.Unmarshal(out, &gkeclusters)
 
 	if err != nil {
-		log.Errorf("Cloud not parse cluster list: %v", err)
+		log.Errorf("Could not parse cluster list: %v", err)
 		return nil, err
 	}
 
