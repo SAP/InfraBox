@@ -27,8 +27,9 @@ spec:
         value: "unknown"
     volumeMounts:
     -
-        mountPath: /etc/docker
+        mountPath: /etc/docker/daemon.json
         name: dockerd-config
+        subPath: daemon.json
     -
         name: data-dir
         mountPath: "/data"
