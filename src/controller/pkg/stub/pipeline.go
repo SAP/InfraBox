@@ -156,7 +156,7 @@ func (c *Controller) preparePipelineInvocation(cr *v1alpha1.IBPipelineInvocation
 	if servicesCreated {
 		log.Infof("Services are ready")
 		cr.Status.Message = ""
-		cr.Status.State = "running"
+		cr.Status.State = "scheduling"
 	} else {
 		log.Infof("Services not yet ready")
 	}

@@ -70,7 +70,7 @@ func (h *Controller) Handle(ctx context.Context, event sdk.Event) error {
 			}
 		}
 
-		if pi.Status.State == "running" {
+		if pi.Status.State == "running" || pi.Status.State == "scheduling" {
 			err := h.runPipelineInvocation(pi, log)
 			if err != nil {
 				return handleError(pi, err)

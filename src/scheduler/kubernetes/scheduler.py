@@ -284,6 +284,8 @@ class Scheduler(object):
             cursor.close()
 
     def handle_orphaned_jobs(self):
+        self.logger.debug("Handling orphaned jobs")
+
         h = {'Authorization': 'Bearer %s' % self.args.token}
         r = requests.get(self.args.api_server + '/apis/core.infrabox.net/v1alpha1/namespaces/%s/ibpipelineinvocations' % self.namespace,
                          headers=h,
@@ -293,12 +295,10 @@ class Scheduler(object):
         if 'items' not in data:
             return
 
+        self.logger.debug("Found %s jobs" % len(data['items']))
+
         for j in data['items']:
             if 'metadata' not in j:
-                continue
-
-            if 'deletionTimestamp' in j['metadata']:
-                # Already marked for deletion
                 continue
 
             metadata = j['metadata']
@@ -328,7 +328,7 @@ class Scheduler(object):
                 s = status.get('state', "preparing")
                 message = status.get('message', None)
 
-                if s == "preparing":
+                if s in ["preparing", "scheduling"]:
                     current_state = 'scheduled'
 
                 if s in ["running", "finalizing"]:
@@ -357,13 +357,15 @@ class Scheduler(object):
                 start_date = status.get('startTime', None)
                 end_date = status.get('completionTime', None)
 
-            if last_state != current_state:
-                cursor = self.conn.cursor()
-                cursor.execute("""
-                    UPDATE job SET state = %s, start_date = %s, end_date = %s, message = %s
-                    WHERE id = %s
-                """, (current_state, start_date, end_date, message, job_id))
-                cursor.close()
+            if last_state == current_state:
+                continue
+
+            cursor = self.conn.cursor()
+            cursor.execute("""
+                UPDATE job SET state = %s, start_date = %s, end_date = %s, message = %s
+                WHERE id = %s
+            """, (current_state, start_date, end_date, message, job_id))
+            cursor.close()
 
             if delete_job:
                 # collect console output
