@@ -71,12 +71,17 @@ class Clone(Resource):
 
             cmd += [clone_url, mount_repo_dir]
 
+            exc = None
             for _ in range(0, 2):
+                exc = None
                 try:
                     output += self.execute(cmd)
                     break
-                except:
-                    pass
+                except Exception as e:
+                    exc = e
+
+            if exc:
+                raise exc
 
             if ref:
                 cmd = ['git', 'fetch', '--depth=10', clone_url, ref]
