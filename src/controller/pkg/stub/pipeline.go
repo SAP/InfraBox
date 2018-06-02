@@ -18,8 +18,14 @@ import (
 )
 
 func (c *Controller) deletePipelineInvocation(cr *v1alpha1.IBPipelineInvocation, log *logrus.Entry) error {
+	err := c.deleteServices(cr, log)
+	if err != nil {
+		log.Errorf("Failed to delete services: %v", err)
+		return err
+	}
+
 	cr.SetFinalizers([]string{})
-	err := updateStatus(cr, log)
+	err = updateStatus(cr, log)
 	if err != nil {
 		logrus.Errorf("Failed to remove finalizers: %v", err)
 		return err
