@@ -3,7 +3,7 @@ kind: IBFunction
 metadata:
     name: infrabox-default-function
 spec:
-    image: 192.168.1.31:5000/infrabox/job:latest
+    image: {{ required "general.docker_registry is required" .Values.general.docker_registry }}/{{ default "job" .Values.job.image }}:{{ required "job.tag is required" .Values.job.tag }}
     securityContext:
         privileged: true
     resources:

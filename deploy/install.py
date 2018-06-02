@@ -400,6 +400,7 @@ class Kubernetes(Install):
         self.set('job.security_context.capabilities.enabled',
                  self.args.job_security_context_capabilities_enabled)
 
+        self.set('job.tag', self.args.version)
         self.set('job.api.url', self.args.root_url + '/api/job')
         self.set('job.api.tag', self.args.version)
 
