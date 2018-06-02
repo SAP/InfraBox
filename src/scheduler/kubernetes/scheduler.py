@@ -328,8 +328,6 @@ class Scheduler(object):
                 s = status.get('state', "preparing")
                 message = status.get('message', None)
 
-                self.logger.error(status)
-
                 if s == "preparing":
                     current_state = 'scheduled'
 
@@ -459,6 +457,8 @@ class Scheduler(object):
         self.schedule()
 
     def run(self):
+        self.logger.info("Starting scheduler")
+
         while True:
             self.handle()
             time.sleep(2)
