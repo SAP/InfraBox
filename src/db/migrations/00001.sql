@@ -224,23 +224,6 @@ CREATE TABLE job_markup (
     type markup_type NOT NULL
 );
 
-
---
--- Name: job_stat; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE job_stat (
-    job_id uuid NOT NULL,
-    tests_added integer DEFAULT 0 NOT NULL,
-    tests_duration double precision NOT NULL,
-    tests_skipped integer DEFAULT 0 NOT NULL,
-    tests_failed integer DEFAULT 0 NOT NULL,
-    tests_error integer DEFAULT 0 NOT NULL,
-    tests_passed integer DEFAULT 0 NOT NULL,
-    project_id uuid NOT NULL
-);
-
-
 --
 -- Name: measurement; Type: TABLE; Schema: public; Owner: -
 --
@@ -429,15 +412,6 @@ ALTER TABLE ONLY job_markup
 
 ALTER TABLE ONLY job
     ADD CONSTRAINT job_pkey PRIMARY KEY (id);
-
-
---
--- Name: job_stat_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY job_stat
-    ADD CONSTRAINT job_stat_pkey PRIMARY KEY (job_id);
-
 
 --
 -- Name: project_pkey; Type: CONSTRAINT; Schema: public; Owner: -
