@@ -295,8 +295,6 @@ class Scheduler(object):
         if 'items' not in data:
             return
 
-        self.logger.debug("Found %s jobs" % len(data['items']))
-
         for j in data['items']:
             if 'metadata' not in j:
                 continue
@@ -345,6 +343,7 @@ class Scheduler(object):
                             current_state = 'finished'
                         else:
                             current_state = 'failure'
+                            message = stepStatus['State']['terminated']['message']
 
                     delete_job = True
 

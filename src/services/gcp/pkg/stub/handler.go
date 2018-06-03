@@ -90,13 +90,10 @@ func syncGKECluster(cr *v1alpha1.GKECluster, log *logrus.Entry) (*v1alpha1.GKECl
 
 	if gkecluster == nil {
 		args := []string{"container", "clusters",
-			"create", cr.Status.ClusterName, "--async", "--enable-autorepair"}
-
-	    args = append(args, "--zone")
-        if cr.Spec.Zone != "" {
-			args = append(args, cr.Spec.Zone)
-        } else {
-			args = append(args, "us-east1-b")
+			"create", cr.Status.ClusterName,
+            "--async",
+            "--enable-autorepair",
+            "--zone", cr.Spec.Zone,
         }
 
 		if cr.Spec.DiskSize != 0 {
@@ -138,7 +135,7 @@ func syncGKECluster(cr *v1alpha1.GKECluster, log *logrus.Entry) (*v1alpha1.GKECl
 
         if cr.Spec.ClusterVersion != "" {
             // find out the exact cluster version
-            version, err := getExactClusterVersion(cr.Spec.ClusterVersion, log)
+            version, err := getExactClusterVersion(cr, log)
 
             if err != nil {
                 return nil, err
@@ -304,15 +301,15 @@ type ServerConfig struct {
     ValidNodeVersions []string `json:"validNodeVersions"`
 }
 
-func getExactClusterVersion(version string, log *logrus.Entry) (string, error) {
-	cmd := exec.Command("gcloud", "container", "get-server-config", "--format", "json")
+func getExactClusterVersion(cr *v1alpha1.GKECluster, log *logrus.Entry) (string, error) {
+	cmd := exec.Command("gcloud", "container", "get-server-config",
+        "--format", "json",
+        "--zone", cr.Spec.Zone)
 
-	out, err := cmd.CombinedOutput()
+	out, err := cmd.Output()
 
 	if err != nil {
 		log.Errorf("Could not get server config: %v", err)
-        log.Error(string(out))
-
 		return "", err
 	}
 
@@ -325,12 +322,12 @@ func getExactClusterVersion(version string, log *logrus.Entry) (string, error) {
 	}
 
     for _, v := range(config.ValidMasterVersions) {
-        if strings.HasPrefix(v, version) {
+        if strings.HasPrefix(v, cr.Spec.ClusterVersion) {
             return v, nil
         }
     }
 
-    return "", fmt.Errorf("Could not find a valid cluster version match for %v", version)
+    return "", fmt.Errorf("Could not find a valid cluster version match for %v", cr.Spec.ClusterVersion)
 }
 
 

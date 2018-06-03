@@ -11,8 +11,12 @@ spec:
   scope: Namespaced
   validation:
     openAPIV3Schema:
+      required:
+      - spec
       properties:
         spec:
+          required:
+          - zone
           properties:
             diskSize:
               type: integer
@@ -33,3 +37,7 @@ spec:
             minNodes:
               type: integer
               minimum: 1
+            zone:
+              type: string
+            clusterVersion:
+              type: string
