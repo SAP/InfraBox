@@ -6,6 +6,7 @@ import (
 	"crypto/x509"
 	b64 "encoding/base64"
 	"encoding/json"
+    "strings"
 	"fmt"
 	"github.com/sap/infrabox/src/services/gcp/pkg/apis/gcp/v1alpha1"
 	"github.com/satori/go.uuid"
@@ -127,6 +128,17 @@ func syncGKECluster(cr *v1alpha1.GKECluster, log *logrus.Entry) (*v1alpha1.GKECl
 				args = append(args, strconv.Itoa(int(cr.Spec.MinNodes)))
 			}
 		}
+
+        if cr.Spec.ClusterVersion != "" {
+            // find out the exact cluster version
+            version, err := getExactClusterVersion(cr.Spec.ClusterVersion, log)
+
+            if err != nil {
+                return nil, err
+            }
+
+			args = append(args, "--cluster-version", version)
+        }
 
 		cmd := exec.Command("gcloud", args...)
 		out, err := cmd.CombinedOutput()
@@ -279,6 +291,41 @@ func (h *Handler) Handle(ctx types.Context, event types.Event) error {
 func getLabels(cr *v1alpha1.GKECluster) map[string]string {
 	return map[string]string{}
 }
+
+type ServerConfig struct {
+    ValidMasterVersions []string `json:"validMasterVersions"`
+    ValidNodeVersions []string `json:"validNodeVersions"`
+}
+
+func getExactClusterVersion(version string, log *logrus.Entry) (string, error) {
+	cmd := exec.Command("gcloud", "container", "get-server-config", "--format", "json")
+
+	out, err := cmd.CombinedOutput()
+
+	if err != nil {
+		log.Errorf("Could not get server config: %v", err)
+        log.Error(string(out))
+
+		return "", err
+	}
+
+	var config ServerConfig
+	err = json.Unmarshal(out, &config)
+
+	if err != nil {
+		log.Errorf("Could not parse cluster config: %v", err)
+		return "", err
+	}
+
+    for _, v := range(config.ValidMasterVersions) {
+        if strings.HasPrefix(v, version) {
+            return v, nil
+        }
+    }
+
+    return "", fmt.Errorf("Could not find a valid cluster version match for %v", version)
+}
+
 
 func getRemoteCluster(name string, log *logrus.Entry) (*RemoteCluster, error) {
 	cmd := exec.Command("gcloud", "container", "clusters", "list",
