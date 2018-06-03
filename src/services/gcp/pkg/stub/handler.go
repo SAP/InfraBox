@@ -6,7 +6,6 @@ import (
 	"crypto/x509"
 	b64 "encoding/base64"
 	"encoding/json"
-    "strings"
 	"fmt"
 	"github.com/sap/infrabox/src/services/gcp/pkg/apis/gcp/v1alpha1"
 	"github.com/satori/go.uuid"
@@ -15,6 +14,7 @@ import (
 	"net/http"
 	"os/exec"
 	"strconv"
+	"strings"
 
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/discovery/cached"
@@ -91,10 +91,10 @@ func syncGKECluster(cr *v1alpha1.GKECluster, log *logrus.Entry) (*v1alpha1.GKECl
 	if gkecluster == nil {
 		args := []string{"container", "clusters",
 			"create", cr.Status.ClusterName,
-            "--async",
-            "--enable-autorepair",
-            "--zone", cr.Spec.Zone,
-        }
+			"--async",
+			"--enable-autorepair",
+			"--zone", cr.Spec.Zone,
+		}
 
 		if cr.Spec.DiskSize != 0 {
 			args = append(args, "--disk-size")
@@ -133,16 +133,16 @@ func syncGKECluster(cr *v1alpha1.GKECluster, log *logrus.Entry) (*v1alpha1.GKECl
 			}
 		}
 
-        if cr.Spec.ClusterVersion != "" {
-            // find out the exact cluster version
-            version, err := getExactClusterVersion(cr, log)
+		if cr.Spec.ClusterVersion != "" {
+			// find out the exact cluster version
+			version, err := getExactClusterVersion(cr, log)
 
-            if err != nil {
-                return nil, err
-            }
+			if err != nil {
+				return nil, err
+			}
 
 			args = append(args, "--cluster-version", version)
-        }
+		}
 
 		cmd := exec.Command("gcloud", args...)
 		out, err := cmd.CombinedOutput()
@@ -210,7 +210,7 @@ func deleteGKECluster(cr *v1alpha1.GKECluster, log *logrus.Entry) error {
 		}
 
 		// Cluster still exists, delete it
-        cmd := exec.Command("gcloud", "-q", "container", "clusters", "delete", cr.Status.ClusterName, "--async", "--zone", cr.Spec.Zone)
+		cmd := exec.Command("gcloud", "-q", "container", "clusters", "delete", cr.Status.ClusterName, "--async", "--zone", cr.Spec.Zone)
 		out, err := cmd.CombinedOutput()
 
 		if err != nil {
@@ -297,14 +297,14 @@ func getLabels(cr *v1alpha1.GKECluster) map[string]string {
 }
 
 type ServerConfig struct {
-    ValidMasterVersions []string `json:"validMasterVersions"`
-    ValidNodeVersions []string `json:"validNodeVersions"`
+	ValidMasterVersions []string `json:"validMasterVersions"`
+	ValidNodeVersions   []string `json:"validNodeVersions"`
 }
 
 func getExactClusterVersion(cr *v1alpha1.GKECluster, log *logrus.Entry) (string, error) {
 	cmd := exec.Command("gcloud", "container", "get-server-config",
-        "--format", "json",
-        "--zone", cr.Spec.Zone)
+		"--format", "json",
+		"--zone", cr.Spec.Zone)
 
 	out, err := cmd.Output()
 
@@ -321,15 +321,14 @@ func getExactClusterVersion(cr *v1alpha1.GKECluster, log *logrus.Entry) (string,
 		return "", err
 	}
 
-    for _, v := range(config.ValidMasterVersions) {
-        if strings.HasPrefix(v, cr.Spec.ClusterVersion) {
-            return v, nil
-        }
-    }
+	for _, v := range config.ValidMasterVersions {
+		if strings.HasPrefix(v, cr.Spec.ClusterVersion) {
+			return v, nil
+		}
+	}
 
-    return "", fmt.Errorf("Could not find a valid cluster version match for %v", cr.Spec.ClusterVersion)
+	return "", fmt.Errorf("Could not find a valid cluster version match for %v", cr.Spec.ClusterVersion)
 }
-
 
 func getRemoteCluster(name string, log *logrus.Entry) (*RemoteCluster, error) {
 	cmd := exec.Command("gcloud", "container", "clusters", "list",
