@@ -1,6 +1,7 @@
 import json
 import hashlib
 import hmac
+from datetime import datetime
 
 import requests
 from requests.adapters import HTTPAdapter
@@ -322,6 +323,19 @@ class Trigger(object):
             "GITHUB_REPOSITORY_FULL_NAME": event['repository']['full_name']
         })
 
+
+        author_email = 'unknown'
+        author_login = 'unknown'
+        author_name = 'unknown'
+        author_date = None
+
+        if hc['commit'].get('author', None):
+            author = hc['commit']['author']
+            author_email = author.get('email', 'unkown')
+            author_login = author.get('login', 'unkown')
+            author_name = author.get('name', 'unkown')
+            author_date = author.get('date', datetime.now())
+
         if not result:
             result = self.execute('''
                 INSERT INTO "commit" (
@@ -336,8 +350,8 @@ class Trigger(object):
                     %s, %s, %s)
                 RETURNING id
             ''', [hc['sha'], hc['commit']['message'],
-                  repo_id, hc['commit']['author']['date'], hc['commit']['author']['name'],
-                  hc['commit']['author']['email'], hc['author']['login'],
+                  repo_id, author_date, author_name,
+                  author_email, author_login,
                   hc['commit']['committer']['name'],
                   hc['commit']['committer']['email'],
                   committer_login, hc['html_url'], project_id, branch, pr_id,

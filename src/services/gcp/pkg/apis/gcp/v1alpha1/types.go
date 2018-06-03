@@ -25,6 +25,7 @@ type GKEClusterSpec struct {
 	MaxNodes                int32 `json:"maxNodes,omitempty"`
 	MinNodes                int32 `json:"minNodes,omitempty"`
 	ClusterVersion          string `json:"clusterVersion,omitempty"`
+	Zone string `json:"zone"`
 }
 
 type GKEClusterStatus struct {
