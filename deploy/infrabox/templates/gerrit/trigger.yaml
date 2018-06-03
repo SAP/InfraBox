@@ -1,0 +1,46 @@
+{{ if .Values.gerrit.trigger.enabled }}
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+    name: infrabox-gerrit-trigger
+    namespace: {{ default "infrabox-system" .Values.general.system_namespace }}
+    labels:
+        app: infrabox-gerrit-trigger
+spec:
+    replicas: 1
+    template:
+        metadata:
+            labels:
+                app: infrabox-gerrit-trigger
+        spec:
+            {{- if .Values.gerrit.node_selector }}
+            nodeSelector:
+{{ toYaml .Values.gerrit.node_selector | indent 16 }}
+            {{- end }}
+            containers:
+            {{ include "containers_database" . | indent 12 }}
+            -
+                name: gerrit-trigger
+                image: {{ required "general.docker_registry is required" .Values.general.docker_registry }}/{{ default "gerrit-trigger" .Values.gerrit.trigger.image }}:{{ required "gerrit.trigger.tag is required" .Values.gerrit.trigger.tag }}
+                imagePullPolicy: Always
+                env:
+                {{ include "env_database" . | indent 16 }}
+                {{ include "env_gerrit" . | indent 16 }}
+                {{ include "env_general" . | indent 16 }}
+                -
+                    name: INFRABOX_SERVICE
+                    value: {{ default "gerrit-trigger" .Values.gerrit.trigger.image }}
+                -
+                    name: INFRABOX_VERSION
+                    value: {{ required "gerrit.trigger.tag is required" .Values.gerrit.trigger.tag }}
+                volumeMounts:
+                - name: gerrit-ssh
+                  mountPath: /tmp/gerrit
+                  readOnly: true
+            volumes:
+                {{ include "volumes_database" . | indent 16 }}
+                -
+                    name: gerrit-ssh
+                    secret:
+                        secretName: infrabox-gerrit-ssh
+{{ end }}
