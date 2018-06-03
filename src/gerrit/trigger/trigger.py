@@ -44,7 +44,7 @@ def main():
             try:
                 event = json.loads(line)
 
-                if event['type'] in ("patchset-created", "draft-published"):
+                if event['type'] in ("patchset-created", "draft-published", "change-merged"):
                     logger.info(json.dumps(event, indent=4))
                     handle_patchset_created(conn, event)
                     break
@@ -124,28 +124,47 @@ def handle_patchset_created_project(conn, event, project_id, project_name):
 
     env_vars = {
         "GERRIT_PATCHSET_UPLOADER_USERNAME": event['patchSet']['uploader']['username'],
-        "GERRIT_PATCHSET_UPLOADER_NAME": event['patchSet']['uploader'].get('name', None),
+        "GERRIT_PATCHSET_UPLOADER_NAME": event['patchSet']['uploader'].get('name', ""),
         "GERRIT_PATCHSET_UPLOADER_EMAIL": event['patchSet']['uploader']['email'],
         "GERRIT_PATCHSET_NUMBER": event['patchSet']['number'],
         "GERRIT_PATCHSET_REF": event['patchSet']['ref'],
-        "GERRIT_REFSPEC": event['patchSet']['ref'],
+        "GERRIT_PATCHSET_REFSPEC": event['patchSet']['ref'],
         "GERRIT_PATCHSET_REVISION": event['patchSet']['revision'],
+
         "GERRIT_CHANGE_STATUS": event['change']['status'],
         "GERRIT_CHANGE_URL": event['change']['url'],
         "GERRIT_CHANGE_COMMIT_MESSAGE": event['change']['commitMessage'],
         "GERRIT_CHANGE_NUMBER": event['change']['number'],
         "GERRIT_CHANGE_PROJECT": event['change']['project'],
-        "GERRIT_PROJECT": event['change']['project'],
         "GERRIT_CHANGE_BRANCH": event['change']['branch'],
         "GERRIT_CHANGE_ID": event['change']['id'],
         "GERRIT_CHANGE_SUBJECT": event['change']['subject'],
         "GERRIT_CHANGE_OWNER_USERNAME": event['change']['owner']['username'],
-        "GERRIT_CHANGE_OWNER_NAME": event['change']['owner'].get('name', None),
+        "GERRIT_CHANGE_OWNER_NAME": event['change']['owner'].get('name', ""),
         "GERRIT_CHANGE_OWNER_EMAIL": event['change']['owner']['email'],
-        "GERRIT_UPLOADER_USERNAME": event['uploader']['username'],
-        "GERRIT_UPLOADER_NAME": event['uploader'].get('name', None),
-        "GERRIT_UPLOADER_EMAIL": event['uploader']['email']
+        "GERRIT_CHNAGE_TOPIC": event['change'].get('topic', ""),
+
+        "GERRIT_EVENT_TYPE": event['type'],
+
+        # Jenkins compatibility
+        "GERRIT_PROJECT": event['change']['project'],
+        "GERRIT_BRANCH": event['change']['branch'],
+        "GERRIT_REFSPEC": event['patchSet']['ref'],
+        "GERRIT_TOPIC": event['change'].get('topic', ""),
+        "GERRIT_HOST": get_env('INFRABOX_GERRIT_HOST'),
+        "GERRIT_PORT": get_env('INFRABOX_GERRIT_PORT'),
     }
+
+    if event('uploader', None):
+        env_vars["GERRIT_UPLOADER_USERNAME"] = event['uploader']['username']
+        env_vars["GERRIT_UPLOADER_NAME"] = event['uploader'].get('name', "")
+        env_vars["GERRIT_UPLOADER_EMAIL"] = event['uploader']['email']
+
+    if event('submitter', None):
+        env_vars["GERRIT_SUBMITTER_USERNAME"] = event['submitter']['username']
+        env_vars["GERRIT_SUBMITTER_NAME"] = event['submitter'].get('name', "")
+        env_vars["GERRIT_SUBMITTER_EMAIL"] = event['submitter']['email']
+
 
     git_repo = {
         "commit": sha,
