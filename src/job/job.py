@@ -170,12 +170,18 @@ class RunJob(Job):
 
         cmd += [clone_url, mount_repo_dir]
 
+        exc = None
         for _ in range(0, 3):
+            exc = None
             try:
                 c.execute(cmd, show=True)
                 break
-            except:
+            except Exception as e:
+                exc = e
                 time.sleep(5)
+
+        if exc:
+            raise exc
 
         if ref:
             cmd = ['git', 'fetch', '--depth=10', clone_url, ref]
@@ -382,9 +388,14 @@ class RunJob(Job):
         files = self.get_files_in_dir(self.infrabox_testresult_dir, ending=".xml")
         for f in files:
             c.collect("%s\n" % f, show=True)
-            converted_result = self.convert_test_result(f)
-            self.post_file_to_api_server("/testresult", converted_result, filename='data')
             self.post_file_to_api_server("/archive", f, filename=f.replace(self.infrabox_upload_dir, ''))
+
+            try:
+                converted_result = self.convert_test_result(f)
+                self.post_file_to_api_server("/testresult", converted_result, filename='data')
+            except Exception as e:
+                self.console.collect("Failed to parse test result: %s \n" % e, show=True)
+
 
     def upload_markdown_files(self):
         c = self.console
