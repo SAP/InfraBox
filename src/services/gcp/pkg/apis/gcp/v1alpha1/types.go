@@ -16,20 +16,22 @@ type GKECluster struct {
 }
 
 type GKEClusterSpec struct {
-	DiskSize        string `json:"diskSize,omitempty"`
-	MachineType     string `json:"machineType,omitempty"`
-	EnableNetworkPolicy string `json:"enableNetworkPolicy,omitempty"`
-	NumNodes        string `json:"numNodes,omitempty"`
-	Preemptible    string `json:"preemptible,omitempty"`
-	EnableAutoscaling string `json:"enableAutoscaling,omitempty"`
-	MaxNodes string `json:"maxNodes,omitempty"`
-	MinNodes string `json:"minNodes,omitempty"`
-	Zone string `json:"zone"`
+	DiskSize            int32  `json:"diskSize,omitempty"`
+	MachineType         string `json:"machineType,omitempty"`
+	EnableNetworkPolicy bool   `json:"enableNetworkPolicy,omitempty"`
+	NumNodes            int32  `json:"numNodes,omitempty"`
+	Preemptible         bool   `json:"preemptible,omitempty"`
+	EnableAutoscaling   bool   `json:"enableAutoscaling,omitempty"`
+	MaxNodes            int32  `json:"maxNodes,omitempty"`
+	MinNodes            int32  `json:"minNodes,omitempty"`
+	ClusterVersion      string `json:"clusterVersion,omitempty"`
+	Zone                string `json:"zone"`
 }
 
 type GKEClusterStatus struct {
-	Status string `json:"status"`
-	Message string `json:"message"`
+	Status      string `json:"status,omitempty"`
+	Message     string `json:"message,omitempty"`
+	ClusterName string `json:"clusterName,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

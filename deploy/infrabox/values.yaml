@@ -193,11 +193,14 @@ gerrit:
     # port: 29418
 
 job:
+    # name of the job image in your general.docker_registry
+    # image: job
+
+    # Tag
+    tag: latest
+
     max_output_size: 104857600
 
-    # mount_docker_socket: false
-    # use_host_docker_daemon: false
-    #
     security_context:
         capabilities:
             enabled: false

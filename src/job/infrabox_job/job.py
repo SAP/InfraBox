@@ -8,15 +8,11 @@ from infrabox_job.process import Failure
 
 class Job(object):
     def __init__(self):
-        self.api_server = os.environ.get("INFRABOX_JOB_API_URL", None)
+        self.api_server = os.environ["INFRABOX_ROOT_URL"] + "/api/job"
         self.verify = True
 
         if os.environ.get('INFRABOX_GENERAL_DONT_CHECK_CERTIFICATES', 'false') == 'true':
             self.verify = False
-
-        if not self.api_server:
-            print "INFRABOX_JOB_API_URL not set"
-            sys.exit(1)
 
         self.job = None
         self.project = None
@@ -122,17 +118,6 @@ class Job(object):
 
             time.sleep(1)
 
-    def set_running(self):
-        self.post_api_server('setrunning')
-
-    def set_finished(self, state, message):
-        payload = {
-            'state': state,
-            'message': message
-        }
-
-        self.post_api_server('setfinished', data=payload)
-
     def post_stats(self, stat):
         payload = {
             "stats": stat
@@ -206,9 +191,3 @@ class Job(object):
                 return
 
         raise Failure('Failed to upload file: %s' % message)
-
-    def update_status(self, status, message=None):
-        if status == "running":
-            return self.set_running()
-
-        return self.set_finished(status, message)

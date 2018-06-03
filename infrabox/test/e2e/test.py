@@ -31,7 +31,6 @@ class Test(unittest.TestCase):
         cur.execute('''DELETE FROM source_upload''')
         cur.execute('''DELETE FROM build''')
         cur.execute('''DELETE FROM test_run''')
-        cur.execute('''DELETE FROM job_stat''')
         cur.execute('''DELETE FROM measurement''')
         cur.execute('''DELETE FROM test''')
         cur.execute('''DELETE FROM job_markup''')

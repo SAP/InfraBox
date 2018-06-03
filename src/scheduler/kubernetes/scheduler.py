@@ -1,19 +1,16 @@
-import logging
 import argparse
 import time
 import os
+from datetime import datetime
+
 import requests
+
 import psycopg2
 import psycopg2.extensions
 
 from pyinfraboxutils import get_logger, get_env, print_stackdriver
 from pyinfraboxutils.db import connect_db
-
-def gerrit_enabled():
-    return os.environ['INFRABOX_GERRIT_ENABLED'] == 'true'
-
-def use_host_docker_daemon():
-    return os.environ['INFRABOX_JOB_USE_HOST_DOCKER_DAEMON'] == 'true'
+from pyinfraboxutils.token import encode_job_token
 
 class Scheduler(object):
     def __init__(self, conn, args):
@@ -22,43 +19,66 @@ class Scheduler(object):
         self.namespace = get_env("INFRABOX_GENERAL_WORKER_NAMESPACE")
         self.logger = get_logger("scheduler")
 
-    def kube_delete_namespace(self, job_id):
-        h = {'Authorization': 'Bearer %s' % self.args.token}
-        namespace_name = "ib-%s" % job_id
-
-        # delete the namespace
-        p = {"gracePeriodSeconds": 0}
-        requests.delete(self.args.api_server + '/api/v1/namespaces/%s' % (namespace_name,),
-                        headers=h, params=p, timeout=10)
-
-
     def kube_delete_job(self, job_id):
         h = {'Authorization': 'Bearer %s' % self.args.token}
         requests.delete(self.args.api_server +
-                        '/apis/core.infrabox.net/v1alpha1/namespaces/%s/ibjobs/%s' % (self.namespace, job_id,),
+                        '/apis/core.infrabox.net/v1alpha1/namespaces/%s/ibpipelineinvocations/%s' % (self.namespace, job_id,),
                         headers=h, timeout=5)
 
-    def kube_job(self, job_id, cpu, mem, additional_env=None, services=None):
+    def kube_job(self, job_id, cpu, mem, services=None):
         h = {'Authorization': 'Bearer %s' % self.args.token}
+
+        job_token = encode_job_token(job_id).decode()
+
+        env = [{
+            'name': 'INFRABOX_JOB_ID',
+            'value': job_id
+        }, {
+            'name': 'INFRABOX_JOB_TOKEN',
+            'value': job_token
+        }, {
+            'name': 'INFRABOX_JOB_RESOURCES_LIMITS_MEMORY',
+            'value': str(mem)
+        }, {
+            'name': 'INFRABOX_JOB_RESOURCES_LIMITS_CPU',
+            'value': str(cpu)
+        }]
+
+        root_url = os.environ['INFRABOX_ROOT_URL']
+
+        if services:
+            for s in services:
+                if 'annotations' not in s['metadata']:
+                    s['metadata']['annotations'] = {}
+
+                s['metadata']['annotations']['infrabox.net/job-id'] = job_id
+                s['metadata']['annotations']['infrabox.net/job-token'] = job_token
+                s['metadata']['annotations']['infrabox.net/root-url'] = root_url
+
         job = {
             'apiVersion': 'core.infrabox.net/v1alpha1',
-            'kind': 'IBJob',
+            'kind': 'IBPipelineInvocation',
             'metadata': {
                 'name': job_id
             },
             'spec': {
-                'resources': {
-                    'limits': {
-                        'memory': '%sMi' % mem,
-                        'cpu': cpu
-                    }
-                },
-                'env': additional_env,
+                'pipelineName': 'infrabox-default-pipeline',
                 'services': services,
+                'steps': {
+                    'run': {
+                        'resources': {
+                            'limits': {
+                                'memory': '%sMi' % mem,
+                                'cpu': cpu
+                            }
+                        },
+                        'env': env,
+                    }
+                }
             }
         }
 
-        r = requests.post(self.args.api_server + '/apis/core.infrabox.net/v1alpha1/namespaces/%s/ibjobs' % self.namespace,
+        r = requests.post(self.args.api_server + '/apis/core.infrabox.net/v1alpha1/namespaces/%s/ibpipelineinvocations' % self.namespace,
                           headers=h, json=job, timeout=10)
 
         if r.status_code != 201:
@@ -68,154 +88,6 @@ class Scheduler(object):
 
         return True
 
-    def create_kube_namespace(self, job_id, _k8s_resources):
-        self.logger.info("Provisioning kubernetes namespace")
-        h = {'Authorization': 'Bearer %s' % self.args.token}
-
-        namespace_name = "ib-%s" % job_id
-        ns = {
-            "apiVersion": "v1",
-            "kind": "Namespace",
-            "metadata": {
-                "name": namespace_name,
-                "labels": {
-                    "infrabox-resource": "kubernetes",
-                    "infrabox-job-id": job_id,
-                }
-            }
-        }
-
-        r = requests.post(self.args.api_server + '/api/v1/namespaces',
-                          headers=h, json=ns, timeout=10)
-
-        if r.status_code != 201:
-            self.logger.warn("Failed to create Namespace: %s", r.text)
-            return False
-
-#        rq = {
-#            "apiVersion": "v1",
-#            "kind": "ResourceQuota",
-#            "metadata": {
-#                "name": "compute-resources",
-#                "namespace": namespace_name
-#            },
-#            "spec": {
-#                "hard": {
-#                    "limits.cpu": k8s_resources['limits']['cpu'],
-#                    "limits.memory": k8s_resources['limits']['memory']
-#                }
-#            }
-#        }
-#
-#        #r = requests.post(self.args.api_server + '/api/v1/namespaces/' + namespace_name + '/resourcequotas',
-#        #                  headers=h, json=rq, timeout=10)
-#
-#        if r.status_code != 201:
-#            self.logger.warn("Failed to create ResourceQuota: %s" % r.text)
-#            return False
-
-        role = {
-            'kind': 'Role',
-            'apiVersion': 'rbac.authorization.k8s.io/v1beta1',
-            'metadata': {
-                'name': 'infrabox',
-                'namespace': namespace_name
-            },
-            'rules': [{
-                'apiGroups': ['', 'extensions', 'apps', 'batch'],
-                'resources': ['*'],
-                'verbs': ['*']
-            }, {
-                'apiGroups': ['rbac.authorization.k8s.io'],
-                'resources': ['roles', 'rolebindings'],
-                'verbs': ['*']
-            }, {
-                'apiGroups': ['policy'],
-                'resources': ['poddisruptionbudgets'],
-                'verbs': ['*']
-            }]
-        }
-
-        r = requests.post(self.args.api_server +
-                          '/apis/rbac.authorization.k8s.io/v1beta1/namespaces/%s/roles' % namespace_name,
-                          headers=h, json=role, timeout=10)
-
-        if r.status_code != 201:
-            self.logger.warn("Failed to create Role: %s", r.text)
-            return False
-
-        rb = {
-            "kind": "RoleBinding",
-            "apiVersion": "rbac.authorization.k8s.io/v1beta1",
-            "metadata": {
-                "name": namespace_name
-            },
-            "subjects": [{
-                "kind": "ServiceAccount",
-                "name": "default",
-                "namespace": namespace_name
-            }],
-            "roleRef": {
-                "kind": "Role",
-                "name": "infrabox",
-                "apiGroup": "rbac.authorization.k8s.io"
-            }
-        }
-
-        r = requests.post(self.args.api_server +
-                          '/apis/rbac.authorization.k8s.io/v1beta1/namespaces/%s/rolebindings' % namespace_name,
-                          headers=h, json=rb, timeout=10)
-
-        if r.status_code != 201:
-            self.logger.warn("Failed to create RoleBinding: %s", r.text)
-            return False
-
-        rb = {
-            "kind": "ClusterRoleBinding",
-            "apiVersion": "rbac.authorization.k8s.io/v1beta1",
-            "metadata": {
-                "name": namespace_name + '-discovery'
-            },
-            "subjects": [{
-                "kind": "ServiceAccount",
-                "name": "default",
-                "namespace": namespace_name
-            }],
-            "roleRef": {
-                "kind": "ClusterRole",
-                "name": "system:discover",
-                "apiGroup": "rbac.authorization.k8s.io"
-            }
-        }
-
-        r = requests.post(self.args.api_server +
-                          '/apis/rbac.authorization.k8s.io/v1beta1/namespaces/%s/rolebindings' % namespace_name,
-                          headers=h, json=rb, timeout=10)
-
-        if r.status_code != 201:
-            self.logger.warn("Failed to create RoleBinding for discovery: %s", r.text)
-            return False
-
-        # find secret
-        r = requests.get(self.args.api_server + '/api/v1/namespaces/%s/secrets' % namespace_name,
-                         headers=h, timeout=5)
-
-        if r.status_code != 200:
-            self.logger.warn("Failed to get service account secret: %s", r.text)
-            return False
-
-        data = r.json()
-        secret = data['items'][0]
-
-        env = [
-            {"name": "INFRABOX_RESOURCES_KUBERNETES_CA_CRT", "value": secret['data']['ca.crt']},
-            {"name": "INFRABOX_RESOURCES_KUBERNETES_TOKEN", "value":  secret['data']['token']},
-            {"name": "INFRABOX_RESOURCES_KUBERNETES_NAMESPACE", "value": secret['data']['namespace']},
-            {"name": "INFRABOX_RESOURCES_KUBERNETES_MASTER_URL", "value": self.args.api_server}
-        ]
-
-        return env
-
     def schedule_job(self, job_id, cpu, memory):
         cursor = self.conn.cursor()
         cursor.execute('''
@@ -224,26 +96,9 @@ class Scheduler(object):
         j = cursor.fetchone()
         cursor.close()
 
-        resources = j[2]
         definition = j[3]
 
         cpu -= 0.2
-
-        additional_env = None
-        if resources and resources.get('kubernetes', None):
-            k8s = resources.get('kubernetes', None)
-            additional_env = self.create_kube_namespace(job_id, k8s)
-
-            if not additional_env:
-                self.logger.warn('Failed to create kubernetes namespace')
-                cursor = self.conn.cursor()
-                cursor.execute('''
-                    UPDATE job
-                    SET state = 'error', console = 'Failed to create kubernetes namespace'
-                    WHERE id = %s''', [job_id])
-                cursor.close()
-                return
-
         self.logger.info("Scheduling job to kubernetes")
 
         services = None
@@ -251,7 +106,7 @@ class Scheduler(object):
         if definition and 'services' in definition:
             services = definition['services']
 
-        if not self.kube_job(job_id, cpu, memory, additional_env=additional_env, services=services):
+        if not self.kube_job(job_id, cpu, memory, services=services):
             return
 
         cursor = self.conn.cursor()
@@ -428,49 +283,11 @@ class Scheduler(object):
 
             cursor.close()
 
-    def handle_orphaned_namespaces(self):
-        h = {'Authorization': 'Bearer %s' % self.args.token}
-        r = requests.get(self.args.api_server + '/api/v1/namespaces', headers=h, timeout=10)
-        data = r.json()
-
-        if 'items' not in data:
-            self.logger.warn('No data returned')
-            return
-
-        for j in data['items']:
-            metadata = j.get('metadata', None)
-            if not metadata:
-                continue
-
-            labels = metadata.get('labels', None)
-            if not labels:
-                continue
-
-            for key in labels:
-                if key != 'infrabox-job-id':
-                    continue
-
-                job_id = labels[key]
-
-                cursor = self.conn.cursor()
-                cursor.execute('''SELECT state FROM job where id = %s''', (job_id,))
-                result = cursor.fetchall()
-                cursor.close()
-
-                if len(result) != 1:
-                    continue
-
-                state = result[0][0]
-
-                if state in ('queued', 'scheduled', 'running'):
-                    continue
-
-                self.logger.info('Deleting orphaned namespace ib-%s', job_id)
-                self.kube_delete_namespace(job_id)
-
     def handle_orphaned_jobs(self):
+        self.logger.debug("Handling orphaned jobs")
+
         h = {'Authorization': 'Bearer %s' % self.args.token}
-        r = requests.get(self.args.api_server + '/apis/core.infrabox.net/v1alpha1/namespaces/%s/ibjobs' % self.namespace,
+        r = requests.get(self.args.api_server + '/apis/core.infrabox.net/v1alpha1/namespaces/%s/ibpipelineinvocations' % self.namespace,
                          headers=h,
                          timeout=10)
         data = r.json()
@@ -480,10 +297,6 @@ class Scheduler(object):
 
         for j in data['items']:
             if 'metadata' not in j:
-                continue
-
-            if 'deletionTimestamp' in j['metadata']:
-                # Already marked for deletion
                 continue
 
             metadata = j['metadata']
@@ -500,30 +313,82 @@ class Scheduler(object):
                 self.kube_delete_job(job_id)
                 continue
 
-            state = result[0][0]
-            if state in ('queued', 'scheduled', 'running'):
-                status = j.get('status', {}).get('status', None)
+            last_state = result[0][0]
 
-                if not status:
-                    continue
+            start_date = None
+            end_date = None
+            delete_job = False
+            current_state = 'scheduled'
+            message = None
 
-                if status == 'error':
-                    message = j['status']['message']
+            if j.get('status', None):
+                status = j['status']
+                s = status.get('state', "preparing")
+                message = status.get('message', None)
 
-                    if not message:
-                        message = "Internal Controller Error"
+                if s in ["preparing", "scheduling"]:
+                    current_state = 'scheduled'
 
-                    cursor = self.conn.cursor()
-                    cursor.execute("""
-                        UPDATE job SET state = 'error', message = %s, end_date = current_timestamp
-                        WHERE id = %s AND state IN ('scheduled', 'running', 'queued')
-                    """, (message, job_id,))
-                    cursor.close()
-                else:
-                    continue
+                if s in ["running", "finalizing"]:
+                    current_state = 'running'
 
-            self.logger.info('Deleting orphaned job %s', job_id)
-            self.kube_delete_job(job_id)
+                if s == "terminated":
+                    current_state = 'error'
+
+                    if 'stepStatuses' in status and status['stepStatuses']:
+                        stepStatus = status['stepStatuses'][-1]
+                        exit_code = stepStatus['State']['terminated']['exitCode']
+
+                        if exit_code == 0:
+                            current_state = 'finished'
+                        else:
+                            current_state = 'failure'
+                            message = stepStatus['State']['terminated']['message']
+
+                    delete_job = True
+
+                if s == "error":
+                    current_state = 'error'
+                    delete_job = True
+                    start_date = datetime.now()
+                    end_date = datetime.now()
+
+                start_date = status.get('startTime', None)
+                end_date = status.get('completionTime', None)
+
+            if last_state == current_state:
+                continue
+
+            cursor = self.conn.cursor()
+            cursor.execute("""
+                UPDATE job SET state = %s, start_date = %s, end_date = %s, message = %s
+                WHERE id = %s
+            """, (current_state, start_date, end_date, message, job_id))
+            cursor.close()
+
+            if delete_job:
+                # collect console output
+                cursor = self.conn.cursor()
+                cursor.execute("""
+                    SELECT output FROM console WHERE job_id = %s
+                    ORDER BY date
+                """, [job_id])
+                lines = cursor.fetchall()
+                cursor.close()
+
+                output = ""
+                for l in lines:
+                    output += l[0]
+
+                cursor = self.conn.cursor()
+                cursor.execute("""
+                    UPDATE job SET console = %s WHERE id = %s;
+                    DELETE FROM console WHERE job_id = %s;
+                """, [output, job_id, job_id])
+                cursor.close()
+
+                self.logger.info('Deleting job %s', job_id)
+                self.kube_delete_job(job_id)
 
     def update_cluster_state(self):
         cluster_name = os.environ['INFRABOX_CLUSTER_NAME']
@@ -582,7 +447,6 @@ class Scheduler(object):
             self.handle_timeouts()
             self.handle_aborts()
             self.handle_orphaned_jobs()
-            self.handle_orphaned_namespaces()
         except Exception as e:
             self.logger.exception(e)
 
@@ -594,6 +458,8 @@ class Scheduler(object):
         self.schedule()
 
     def run(self):
+        self.logger.info("Starting scheduler")
+
         while True:
             self.handle()
             time.sleep(2)
@@ -619,14 +485,6 @@ def main():
     get_env('INFRABOX_ROOT_URL')
     get_env('INFRABOX_GENERAL_DONT_CHECK_CERTIFICATES')
     get_env('INFRABOX_GENERAL_WORKER_NAMESPACE')
-    get_env('INFRABOX_JOB_MAX_OUTPUT_SIZE')
-    get_env('INFRABOX_JOB_MOUNT_DOCKER_SOCKET')
-    get_env('INFRABOX_JOB_SECURITY_CONTEXT_CAPABILITIES_ENABLED')
-
-    if get_env('INFRABOX_GERRIT_ENABLED') == 'true':
-        get_env('INFRABOX_GERRIT_USERNAME')
-        get_env('INFRABOX_GERRIT_HOSTNAME')
-        get_env('INFRABOX_GERRIT_PORT')
 
     # try to read from filesystem
     with open('/var/run/secrets/kubernetes.io/serviceaccount/token', 'r') as f:

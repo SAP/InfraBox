@@ -1,6 +1,7 @@
 #!/usr/bin/python
 #pylint: disable=too-many-lines,attribute-defined-outside-init,too-many-public-methods,too-many-locals
 import os
+import sys
 import shutil
 import time
 import json
@@ -150,38 +151,57 @@ class RunJob(Job):
         return result
 
     def clone_repo(self, commit, clone_url, branch, ref, clone_all, sub_path=None, submodules=True):
-        git_server = os.environ["INFRABOX_JOB_GIT_URL"]
+        c = self.console
+        mount_repo_dir = self.mount_repo_dir
 
-        while True:
+        if sub_path:
+            mount_repo_dir = os.path.join(mount_repo_dir, sub_path)
+
+        if os.environ['INFRABOX_GENERAL_DONT_CHECK_CERTIFICATES'] == 'true':
+            c.execute(('git', 'config', '--global', 'http.sslVerify', 'false'), show=True)
+
+        cmd = ['git', 'clone']
+
+        if not clone_all:
+            cmd += ['--depth=10']
+
+            if branch:
+                cmd += ['--single-branch', '-b', branch]
+
+        cmd += [clone_url, mount_repo_dir]
+
+        exc = None
+        for _ in range(0, 3):
+            exc = None
             try:
-                r = requests.get('%s/ping' % git_server, timeout=5)
-
-                if r.status_code == 200:
-                    break
-                else:
-                    self.console.collect(r.text, show=True)
+                c.execute(cmd, show=True)
+                break
             except Exception as e:
-                print e
+                exc = e
+                time.sleep(5)
 
-            time.sleep(1)
+        if exc:
+            raise exc
 
-        d = {
-            'commit': commit,
-            'clone_url': clone_url,
-            'branch': branch,
-            'ref': ref,
-            'clone_all': clone_all,
-            'sub_path': sub_path,
-            'submodules': submodules
-        }
+        if ref:
+            cmd = ['git', 'fetch', '--depth=10', clone_url, ref]
+            c.execute(cmd, cwd=mount_repo_dir, show=True)
 
-        r = requests.post('%s/clone_repo' % git_server, json=d, timeout=1800)
+        c.execute(['git', 'config', 'remote.origin.url', clone_url], cwd=mount_repo_dir, show=True)
+        c.execute(['git', 'config', 'remote.origin.fetch', '+refs/heads/*:refs/remotes/origin/*'],
+                  cwd=mount_repo_dir, show=True)
 
-        for l in r.text.split('\\n'):
-            self.console.collect(l, show=True)
+        if not clone_all:
+            c.execute(['git', 'fetch', 'origin', commit], cwd=mount_repo_dir, show=True)
 
-        if r.status_code != 200:
-            raise Failure('Failed to clone repository')
+        cmd = ['git', 'checkout', '-qf', commit]
+
+        c.execute(cmd, cwd=mount_repo_dir, show=True)
+
+        if submodules:
+            c.execute(['git', 'submodule', 'init'], cwd=mount_repo_dir, show=True)
+            c.execute(['git', 'submodule', 'update'], cwd=mount_repo_dir, show=True)
+
 
     def get_source(self):
         c = self.console
@@ -268,7 +288,6 @@ class RunJob(Job):
                 f.write("started")
 
     def main(self):
-        self.update_status('running')
         self.load_data()
 
         # Show environment
@@ -772,10 +791,6 @@ class RunJob(Job):
         # Mount context
         cmd += ['-v', '%s:/infrabox/context' % self._get_build_context_current_job()]
 
-        # Mount docker socket
-        if os.environ['INFRABOX_JOB_MOUNT_DOCKER_SOCKET'] == 'true':
-            cmd += ['-v', '/var/run/docker.sock:/var/run/docker.sock']
-
         # Add local cache
         if os.environ['INFRABOX_LOCAL_CACHE_ENABLED'] == 'true':
             cmd += ['-v', "/local-cache:/infrabox/local-cache"]
@@ -1195,23 +1210,27 @@ def main():
     get_env('INFRABOX_GENERAL_DONT_CHECK_CERTIFICATES')
     get_env('INFRABOX_LOCAL_CACHE_ENABLED')
     get_env('INFRABOX_JOB_MAX_OUTPUT_SIZE')
-    get_env('INFRABOX_JOB_API_URL')
-    get_env('INFRABOX_JOB_GIT_URL')
-    get_env('INFRABOX_JOB_MOUNT_DOCKER_SOCKET')
     console = ApiConsole()
 
     j = None
     try:
         j = RunJob(console)
         j.main()
-        j.console.flush()
         j.console.header('Finished', show=True)
-        j.update_status('finished', message='Successfully finished')
+        j.console.flush()
+
+        with open('/dev/termination-log', 'w+') as out:
+            out.write('Job finished successfully')
+
     except Failure as e:
         j.console.header('Failure', show=True)
         j.console.collect(e.message, show=True)
         j.console.flush()
-        j.update_status('failure', message=e.message)
+
+        with open('/dev/termination-log', 'w+') as out:
+            out.write(e.message)
+
+        sys.exit(1)
     except:
         print_stackdriver()
         if j:
@@ -1219,10 +1238,15 @@ def main():
             msg = traceback.format_exc()
             j.console.collect(msg, show=True)
             j.console.flush()
-            j.update_status('error', message='An error occured')
+
+            with open('/dev/termination-log', 'w+') as out:
+                out.write(msg)
+
+            sys.exit(1)
 
 if __name__ == "__main__":
     try:
         main()
     except:
         print_stackdriver()
+        sys.exit(1)

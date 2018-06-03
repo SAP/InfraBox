@@ -491,7 +491,7 @@ class Archive(Resource):
 
         g.db.commit()
 
-        return jsonify({})
+        return jsonify({"message": "File uploaded"})
 
 
 # TODO(steffen): check upload output sizes
@@ -885,8 +885,6 @@ class CreateJobs(Resource):
                     if 'labels' not in s['metadata']:
                         s['metadata']['labels'] = {}
 
-                    s['metadata']['labels']['service.infrabox.net/id'] = str(uuid.uuid4())
-
             # Create job
             g.db.execute("""
                          INSERT INTO job (id, state, build_id, type, dockerfile, name,
@@ -1126,11 +1124,6 @@ class Testresult(Resource):
         except ValidationError as e:
             abort(400, e.message)
 
-        testruns = g.db.execute_one("SELECT COUNT(*) as cnt FROM test_run WHERE job_id = %s", [job_id])
-
-        if testruns[0] > 0:
-            abort(400, "testrun already created")
-
         rows = g.db.execute_one("""
                 SELECT j.project_id, b.build_number
                 FROM job  j
@@ -1151,15 +1144,6 @@ class Testresult(Resource):
         missing_tests = []
         test_runs = []
         measurements = []
-
-        stats = {
-            "tests_added": 0,
-            "tests_duration": 0,
-            "tests_skipped": 0,
-            "tests_failed": 0,
-            "tests_error": 0,
-            "tests_passed": 0,
-        }
 
         tests = data['tests']
         for t in tests:
@@ -1186,20 +1170,10 @@ class Testresult(Resource):
                     test_id,
                     build_number
                 ))
-                stats['tests_added'] += 1
 
             # Track stats
             if t['status'] == 'fail' or t['status'] == 'failure':
                 t['status'] = 'failure'
-                stats['tests_failed'] += 1
-            elif t['status'] == 'ok':
-                stats['tests_passed'] += 1
-            elif t['status'] == 'skipped':
-                stats['tests_skipped'] += 1
-            elif t['status'] == 'error':
-                stats['tests_error'] += 1
-
-            stats['tests_duration'] += t['duration']
 
             # Create the corresponding test run
             test_run_id = str(uuid.uuid4())
@@ -1232,45 +1206,6 @@ class Testresult(Resource):
 
         insert(g.db.conn, ("id", "state", "job_id", "test_id", "duration",
                            "project_id", "message", "stack"), test_runs, 'test_run')
-
-        insert(g.db.conn, ("tests_added", "tests_duration", "tests_skipped", "tests_failed", "tests_error",
-                           "tests_passed", "job_id", "project_id"),
-               ((stats['tests_added'], stats['tests_duration'], stats['tests_skipped'],
-                 stats['tests_failed'], stats['tests_error'], stats['tests_passed'],
-                 job_id, project_id),), 'job_stat')
-
-        g.db.commit()
-        return jsonify({})
-
-@ns.route("/setfinished")
-class SetFinished(Resource):
-
-    @job_token_required
-    def post(self):
-        job_id = g.token['job']['id']
-
-        state = request.json['state']
-        message = request.json.get('message', None)
-
-        # collect console output
-        lines = g.db.execute_many("""SELECT output FROM console WHERE job_id = %s
-                                     ORDER BY date""", [job_id])
-
-        output = ""
-        for l in lines:
-            output += l[0]
-
-        # Update state
-        g.db.execute("""
-        UPDATE job SET
-            state = %s,
-            console = %s,
-            end_date = current_timestamp,
-            message = %s
-        WHERE id = %s""", [state, output, message, job_id])
-
-        # remove form console table
-        g.db.execute("DELETE FROM console WHERE job_id = %s", [job_id])
 
         g.db.commit()
         return jsonify({})

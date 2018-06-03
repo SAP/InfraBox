@@ -37,12 +37,12 @@ infrabox/test/github-review/results.xml
 src/pyinfrabox/.coverage
 src/pyinfrabox/coverage.xml
 src/pyinfrabox/results.xml
-src/controller/pkg/client
-src/controller/controller
-src/controller/vendor
 src/services/gcp/vendor
 src/services/gcp/gcp
 src/services/gcp/tmp/_output/
 src/services/namespace/vendor
 src/services/namespace/namespace
 src/services/namespace/tmp/_output/
+src/controller/vendor
+src/controller/namespace
+src/controller/tmp/_output/

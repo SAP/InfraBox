@@ -36,8 +36,8 @@ def v2():
 
         state = r[0][0]
 
-        if state != 'running':
-            logger.warn('job not running anymore')
+        if state not in ('scheduled', 'running'):
+            logger.warn('job not running anymore: %s' % token['job']['id'])
             abort(401, 'Unauthorized')
     else: # pragma: no cover
         logger.warn('unsupported token type: %s' % token['type'])
@@ -93,8 +93,8 @@ def v2_path(path):
         state = r[0]
         job_project_id = r[1]
 
-        if state != 'running':
-            logger.warn('job not running anymore')
+        if state not in ('scheduled', 'running'):
+            logger.warn('job not running anymore: %s' % token['job']['id'])
             abort(401, 'Unauthorized')
 
         if project_id != job_project_id:
