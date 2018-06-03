@@ -24,6 +24,7 @@ type GKEClusterSpec struct {
 	EnableAutoscaling       bool `json:"enableAutoscaling,omitempty"`
 	MaxNodes                int32 `json:"maxNodes,omitempty"`
 	MinNodes                int32 `json:"minNodes,omitempty"`
+	ClusterVersion          string `json:"clusterVersion,omitempty"`
 }
 
 type GKEClusterStatus struct {
