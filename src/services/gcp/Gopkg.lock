@@ -180,7 +180,6 @@
     "pkg/sdk/action",
     "pkg/sdk/handler",
     "pkg/sdk/informer",
-    "pkg/sdk/query",
     "pkg/sdk/types",
     "pkg/util/k8sutil",
     "version"
@@ -198,6 +197,12 @@
   packages = ["."]
   revision = "5f041e8faa004a95c88a202771f4cc3e991971e6"
   version = "v2.0.1"
+
+[[projects]]
+  name = "github.com/satori/go.uuid"
+  packages = ["."]
+  revision = "f58768cc1a7a7e77a3bd49e98cdd21419399b6a3"
+  version = "v1.2.0"
 
 [[projects]]
   name = "github.com/sirupsen/logrus"
@@ -420,6 +425,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "85f853467422a2f028a4ff971e358eb699389795cc9676ccca6ec415851ceedb"
+  inputs-digest = "ece2853603b3b547d6bda2e289470180fc9cb2a57080755b46a6850d71339310"
   solver-name = "gps-cdcl"
   solver-version = 1

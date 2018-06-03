@@ -107,6 +107,10 @@ export default class Job {
     }
 
     _addLines (lines) {
+        if (this.state === 'scheduled') {
+            this.state = 'running'
+        }
+
         for (let line of lines) {
             if (line === '') {
                 continue

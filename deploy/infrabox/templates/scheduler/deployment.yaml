@@ -39,6 +39,7 @@ spec:
             labels:
                 app: infrabox-scheduler
         spec:
+            terminationGracePeriodSeconds: 0
             {{ if .Values.general.rbac.enabled }}
             serviceAccountName: infrabox-scheduler
             {{ end }}
@@ -59,9 +60,6 @@ spec:
                 imagePullPolicy: Always
                 env:
                 {{ include "env_database" . | indent 16 }}
-                {{ include "env_gerrit" . | indent 16 }}
-                {{ include "env_local_cache" . | indent 16 }}
-                {{ include "env_job" . | indent 16 }}
                 {{ include "env_general" . | indent 16 }}
                 {{ include "env_kubernetes" . | indent 16 }}
                 -
@@ -80,15 +78,8 @@ spec:
                     name: INFRABOX_CLUSTER_LABELS
                     value: {{ .Values.cluster.labels }}
                 volumeMounts:
-                -
-                    mountPath: /etc/docker
-                    name: dockerd-config
                 {{ include "mounts_rsa_private" . | indent 16 }}
             volumes:
                 {{ include "volumes_database" . | indent 16 }}
                 {{ include "volumes_rsa" . | indent 16 }}
-                -
-                    name: dockerd-config
-                    configMap:
-                        name: infrabox-dockerd-config
 {{ end }}

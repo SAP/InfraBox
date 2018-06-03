@@ -261,17 +261,3 @@ class JobApiTest(ApiTestTemplate):
             row_dictionary = dict(zip(keys, received_row))
             self.assertTrue(all(item in testresult_data["tests"][i].items()
                                 for item in row_dictionary.items()))
-
-    def test_setfinished(self):
-        data = {
-            "state": "finished",
-            "message": "Job successfully finished"
-        }
-        r = TestClient.post(self.url_ns + '/setfinished', data, self.job_headers)
-        self.assertEqual(r, {})
-
-        r = TestClient.execute_one("""SELECT state, message, console FROM job
-                                       WHERE id = %s""", [self.job_id])
-        self.assertEqual(r["state"], data["state"])
-        self.assertEqual(r["message"], data["message"])
-        self.assertEqual(r["console"], "")

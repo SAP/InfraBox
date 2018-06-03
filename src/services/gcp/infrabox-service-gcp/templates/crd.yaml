@@ -9,3 +9,35 @@ spec:
     kind: GKECluster
     plural: gkeclusters
   scope: Namespaced
+  validation:
+    openAPIV3Schema:
+      required:
+      - spec
+      properties:
+        spec:
+          required:
+          - zone
+          properties:
+            diskSize:
+              type: integer
+              minimum: 10
+            machineType:
+              type: string
+            enableNetworkPolicy:
+              type: boolean
+            numNodes:
+              type: integer
+              minimum: 1
+            preemptible:
+              type: boolean
+            enableAutoscaling:
+              type: boolean
+            maxNodes:
+              type: integer
+            minNodes:
+              type: integer
+              minimum: 1
+            zone:
+              type: string
+            clusterVersion:
+              type: string

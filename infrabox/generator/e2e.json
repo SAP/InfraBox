@@ -20,8 +20,8 @@
             },
             "spec": {
                 "machineType": "n1-standard-4",
-                "numNodes": "2",
-                "preemptible": "false"
+                "numNodes": 2,
+                "preemptible": false
             }
         }]
     }]

@@ -15,7 +15,6 @@ class ApiTestTemplate(unittest.TestCase):
         TestClient.execute('TRUNCATE build')
         TestClient.execute('TRUNCATE console')
         TestClient.execute('TRUNCATE job')
-        TestClient.execute('TRUNCATE job_stat')
         TestClient.execute('TRUNCATE job_markup')
         TestClient.execute('TRUNCATE job_badge')
         TestClient.execute('TRUNCATE source_upload')
