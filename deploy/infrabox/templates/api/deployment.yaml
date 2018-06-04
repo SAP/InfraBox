@@ -39,6 +39,8 @@ spec:
                 {{ include "env_gcs" . | indent 16 }}
                 {{ include "env_s3" . | indent 16 }}
                 {{ include "env_azure" . | indent 16 }}
+                {{ include "env_swift" . | indent 16 }}
+                {{ include "env_job" . | indent 16 }}
                 {{ include "env_general" . | indent 16 }}
                 {{ include "env_github" . | indent 16 }}
                 {{ include "env_github_secrets" . | indent 16 }}
