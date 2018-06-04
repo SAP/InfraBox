@@ -25,6 +25,7 @@ services:
             - INFRABOX_DATABASE_PORT=5432
             - INFRABOX_STORAGE_GCS_ENABLED=false
             - INFRABOX_STORAGE_AZURE_ENABLED=false
+            - INFRABOX_STORAGE_SWIFT_ENABLED=false
             - INFRABOX_STORAGE_S3_ENABLED=true
             - INFRABOX_STORAGE_S3_BUCKET=infrabox
             - INFRABOX_STORAGE_S3_SECURE=false
