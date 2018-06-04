@@ -24,7 +24,7 @@ cryptography = "*"
 pycrypto = "*"
 azure-mgmt-resource = "*"
 azure-storage = "*"
-swiftclient = "*"
+python-swiftclient = "*"
 keystoneauth1 = "*"
 
 
