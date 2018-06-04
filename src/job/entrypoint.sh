@@ -23,10 +23,10 @@ else
     echo "Using host docker daemon socket"
 fi
 
-if [ -f /tmp/gerrit/id_rsa ]; then
+if [ -f /var/run/gerrit/id_rsa ]; then
     echo "Setting private key"
     eval `ssh-agent -s`
-    cp /tmp/gerrit/id_rsa ~/.ssh/id_rsa
+    cp /var/run/gerrit/id_rsa ~/.ssh/id_rsa
     chmod 600 ~/.ssh/id_rsa
     echo "StrictHostKeyChecking no" > ~/.ssh/config
     ssh-add ~/.ssh/id_rsa
