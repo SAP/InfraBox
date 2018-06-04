@@ -40,7 +40,7 @@ spec:
 {{ end }}
 {{ if .Values.gerrit.enabled }}
     -
-        mountPath: /tmp/gerrit
+        mountPath: /var/run/gerrit/
         name: gerrit-ssh
 {{ end }}
     volumes:
