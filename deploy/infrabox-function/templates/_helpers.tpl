@@ -206,6 +206,41 @@ https://{{- required "host is required" .Values.host -}}:{{- .Values.port -}}
 {{ end }}
 {{ end }}
 
+{{ define "env_swift" }}
+-
+    name: INFRABOX_STORAGE_SWIFT_ENABLED
+    value: {{ .Values.storage.swift.enabled | quote }}
+{{ if .Values.storage.swift.enabled }}
+-
+    name: INFRABOX_STORAGE_SWIFT_PROJECT_NAME
+    value: {{ .Values.storage.swift.project_name }}
+-
+    name: INFRABOX_STORAGE_SWIFT_PROJECT_DOMAIN_NAME
+    value: {{ .Values.storage.swift.project_domain_name }}
+-
+    name: INFRABOX_STORAGE_SWIFT_USER_DOMAIN_NAME
+    value: {{ .Values.storage.swift.user_domain_name }}
+-
+    name: INFRABOX_STORAGE_SWIFT_AUTH_URL
+    value: {{ .Values.storage.swift.auth_url }}
+-
+    name: INFRABOX_STORAGE_SWIFT_CONTAINER_NAME
+    value: {{ .Values.storage.swift.container_name }}
+-
+    name: INFRABOX_STORAGE_SWIFT_USERNAME
+    valueFrom:
+        secretKeyRef:
+            name: infrabox-swift-credentials
+            key: username
+-
+    name: INFRABOX_STORAGE_SWIFT_PASSWORD
+    valueFrom:
+        secretKeyRef:
+            name: infrabox-swift-credentials
+            key: password
+{{ end }}
+{{ end }}
+
 {{ define "env_github" }}
 -
     name: INFRABOX_GITHUB_ENABLED
