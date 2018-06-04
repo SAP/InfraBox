@@ -322,8 +322,8 @@ class SWIFT(object):
 
     def _get_client(self):
         auth = v3.Password(auth_url=self.auth_url,
-                           username=os.getenv('INFRABOX_STORAGE_SWIFT_AUTH_URL'),
-                           password=os.getenv('INFRABOX_STORAGE_SWIFT_AUTH_URL'),
+                           username=os.getenv('INFRABOX_STORAGE_SWIFT_USERNAME'),
+                           password=os.getenv('INFRABOX_STORAGE_SWIFT_PASSWORD'),
                            user_domain_name=self.user_domain_name,
                            project_name=self.project_name,
                            project_domain_name=self.project_domain_name)
