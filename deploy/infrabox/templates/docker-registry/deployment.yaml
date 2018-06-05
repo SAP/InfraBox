@@ -94,7 +94,10 @@ spec:
                     name: REGISTRY_STORAGE_SWIFT_DOMAIN
                     value: {{ .Values.storage.swift.project_domain_name }}
                 -
-                    name: REGISTRY_STORAGE_SWIFT_container
+                    name: REGISTRY_STORAGE_SWIFT_TENANT
+                    value: {{ .Values.storage.swift.project_name }}
+                -
+                    name: REGISTRY_STORAGE_SWIFT_CONTAINER
                     value: {{ .Values.storage.swift.container_name }}
                 -
                     name: REGISTRY_STORAGE_SWIFT_USERNAME
