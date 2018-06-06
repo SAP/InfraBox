@@ -7,7 +7,7 @@
     - [GCP Service](/src/services/gcp/README.md)
 
 ## Use InfraBox
-- [Job definition](/docs/dev.md)
+- [Job definition](/docs/doc.md)
 
 ## Extending InfraBox
 - [Custom Services](/docs/services/custom_services.md)
