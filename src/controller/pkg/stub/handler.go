@@ -18,7 +18,7 @@ func NewHandler() sdk.Handler {
 
 func init() {
 	logrus.AddHook(filename.NewHook())
-	// logrus.SetLevel(logrus.WarnLevel)
+	logrus.SetLevel(logrus.WarnLevel)
 }
 
 type Controller struct{}
@@ -33,8 +33,8 @@ func handleError(pi *v1alpha1.IBPipelineInvocation, err error) error {
 	pi.Status.Message = err.Error()
 	err = sdk.Update(pi)
 
-	if err != nil && errors.IsConflict(err) {
-		return err
+	if err != nil && (errors.IsConflict(err) || errors.IsNotFound(err)) {
+		return nil
 	}
 
 	return err
@@ -122,7 +122,7 @@ func (h *Controller) Handle(ctx context.Context, event sdk.Event) error {
 
 			err = sdk.Update(ns)
 
-			if err != nil && errors.IsConflict(err) {
+			if err != nil && !(errors.IsConflict(err) || errors.IsNotFound(err)) {
 				return err
 			}
 		}
