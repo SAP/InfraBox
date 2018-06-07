@@ -163,14 +163,14 @@ class Build(Resource):
             -- job
             j.id as job_id,
             j.state as job_state,
-            j.start_date as job_start_date,
+            to_char(j.start_date, 'YYYY-MM-DD HH24:MI:SS') as job_start_date,
             j.type as job_type,
-            j.end_date as job_end_date,
+            to_char(j.end_date, 'YYYY-MM-DD HH24:MI:SS') as job_end_date,
             j.name as job_name,
             j.memory as job_memory,
             j.cpu as job_cpu,
             j.dependencies as job_dependencies,
-            j.created_at as job_created_at,
+            to_char(j.created_at, 'YYYY-MM-DD HH24:MI:SS') as job_created_at,
             -- pull_request
             pr.title as pull_request_title,
             pr.url as pull_request_url
@@ -211,13 +211,13 @@ class Build(Resource):
                 'job': {
                     'id': j['job_id'],
                     'state': j['job_state'],
-                    'start_date': str(j['job_start_date']),
-                    'end_date': str(j['job_end_date']),
+                    'start_date': j['job_start_date'],
+                    'end_date': j['job_end_date'],
                     'name': j['job_name'],
                     'memory': j['job_memory'],
                     'cpu': j['job_cpu'],
                     'dependencies': j['job_dependencies'],
-                    'created_at': str(j['job_created_at'])
+                    'created_at': j['job_created_at']
                 }
             }
 
