@@ -79,6 +79,7 @@ def handle_patchset_created_project(conn, event, project_id, project_name):
     commit = result
 
     if not commit:
+        url = event['change']['url'] + "/" + event['patchSet']['number']
         c = conn.cursor()
         c.execute('''
             INSERT INTO "commit" (
@@ -94,7 +95,7 @@ def handle_patchset_created_project(conn, event, project_id, project_name):
                       repository_id, datetime.datetime.now(),
                       event['change']['owner'].get('name', 'unknown'),
                       '', event['change']['owner']['username'], '', '', '',
-                      event['change']['url'],
+                      url,
                       event['change']['branch'], project_id, None))
         result = c.fetchone()
         c.close()
