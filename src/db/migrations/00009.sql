@@ -1,4 +1,4 @@
-ALTER TABLE job ADD COLUMN cluster_name character varying DEFAULT 'master'::character varying;
+ALTER TABLE job ADD COLUMN cluster_name character varying;
 ALTER TABLE job ADD COLUMN archive jsonb[];
 
 CREATE TABLE cluster
