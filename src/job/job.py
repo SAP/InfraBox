@@ -225,9 +225,6 @@ class RunJob(Job):
 
             commit = repo['commit']
 
-            if self.job['type'] == 'create_job_matrix':
-                repo_submodules = False
-
             if not repo_clone:
                 return
 
