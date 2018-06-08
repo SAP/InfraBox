@@ -139,10 +139,13 @@ def parse_git(d, path):
         check_text(d['infrabox_file'], path + ".infrabox_file")
 
 def parse_workflow(d, path):
-    check_allowed_properties(d, path, ("type", "name", "infrabox_file", "depends_on"))
+    check_allowed_properties(d, path, ("type", "name", "infrabox_file", "depends_on", "repository"))
     check_required_properties(d, path, ("type", "name", "infrabox_file"))
     check_name(d['name'], path + ".name")
     check_text(d['infrabox_file'], path + ".infrabox_file")
+
+    if 'repository' in d:
+        parse_repository(d['repository'], path + ".repository")
 
     if 'depends_on' in d:
         parse_depends_on(d['depends_on'], path + ".depends_on")
@@ -296,7 +299,7 @@ def parse_docker(d, path):
 
 def parse_docker_compose(d, path):
     check_allowed_properties(d, path, ("type", "name", "docker_compose_file", "depends_on",
-                                       "environment", "resources", "cache", "timeout", "cluster"))
+                                       "environment", "resources", "cache", "timeout", "cluster", "repository"))
     check_required_properties(d, path, ("type", "name", "docker_compose_file", "resources"))
     check_name(d['name'], path + ".name")
     check_text(d['docker_compose_file'], path + ".docker_compose_file")
@@ -307,6 +310,9 @@ def parse_docker_compose(d, path):
 
     if 'timeout' in d:
         check_number(d['timeout'], path + ".timeout")
+
+    if 'repository' in d:
+        parse_repository(d['repository'], path + ".repository")
 
     if 'cache' in d:
         parse_cache(d['cache'], path + ".cache")

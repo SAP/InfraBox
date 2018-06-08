@@ -115,9 +115,7 @@ func (c *Controller) areServicesDeleted(pi *v1alpha1.IBPipelineInvocation, log *
 			return false, err
 		}
 
-		service, err := resourceClient.Get(id, metav1.GetOptions{})
-		log.Errorf("%v", err)
-		log.Errorf("%v", service)
+		_, err = resourceClient.Get(id, metav1.GetOptions{})
 
 		if err == nil {
 			// service still available
