@@ -152,16 +152,16 @@ def handle_patchset_created_project(conn, event, project_id, project_name):
         "GERRIT_BRANCH": event['change']['branch'],
         "GERRIT_REFSPEC": event['patchSet']['ref'],
         "GERRIT_TOPIC": event['change'].get('topic', ""),
-        "GERRIT_HOST": get_env('INFRABOX_GERRIT_HOST'),
+        "GERRIT_HOST": get_env('INFRABOX_GERRIT_HOSTNAME'),
         "GERRIT_PORT": get_env('INFRABOX_GERRIT_PORT'),
     }
 
-    if event('uploader', None):
+    if event.get('uploader', None):
         env_vars["GERRIT_UPLOADER_USERNAME"] = event['uploader']['username']
         env_vars["GERRIT_UPLOADER_NAME"] = event['uploader'].get('name', "")
         env_vars["GERRIT_UPLOADER_EMAIL"] = event['uploader']['email']
 
-    if event('submitter', None):
+    if event.get('submitter', None):
         env_vars["GERRIT_SUBMITTER_USERNAME"] = event['submitter']['username']
         env_vars["GERRIT_SUBMITTER_NAME"] = event['submitter'].get('name', "")
         env_vars["GERRIT_SUBMITTER_EMAIL"] = event['submitter']['email']
@@ -182,10 +182,10 @@ def handle_patchset_created_project(conn, event, project_id, project_name):
                                  project_id, build_only, dockerfile,
                                  cpu, memory, repo, env_var, cluster_name)
                 VALUES (gen_random_uuid(), 'queued', %s, 'create_job_matrix', 'Create Jobs',
-                        %s, false, '', 1, 1024, %s, %s, 'master')''', (build_id,
-                                                                       project_id,
-                                                                       json.dumps(git_repo),
-                                                                       json.dumps(env_vars)))
+                        %s, false, '', 1, 1024, %s, %s, null)''', (build_id,
+                                                                   project_id,
+                                                                   json.dumps(git_repo),
+                                                                   json.dumps(env_vars)))
 
 def handle_patchset_created(conn, event):
     conn.rollback()

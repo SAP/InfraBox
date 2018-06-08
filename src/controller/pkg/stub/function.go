@@ -228,6 +228,13 @@ func (c *Controller) deleteFunctionInvocation(cr *v1alpha1.IBFunctionInvocation,
 		return err
 	}
 
+    // Workaround for older K8s versions which don't properly gc
+	err = sdk.Delete(cr, sdk.WithDeleteOptions(metav1.NewDeleteOptions(0)))
+	if err != nil && !errors.IsNotFound(err) {
+		log.Errorf("Failed to delete function invocation: %v", err)
+		return err
+	}
+
 	return nil
 }
 

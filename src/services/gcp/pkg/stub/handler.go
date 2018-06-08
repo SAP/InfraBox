@@ -447,7 +447,6 @@ func uploadToArchive(cr *v1alpha1.GKECluster, log *logrus.Entry, data *[]byte, f
 		return err
 	}
 
-	log.Error(body)
 	req, err := http.NewRequest("POST", root_url+"/api/job/archive", body)
 
 	if err != nil {
@@ -457,7 +456,10 @@ func uploadToArchive(cr *v1alpha1.GKECluster, log *logrus.Entry, data *[]byte, f
 
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 	req.Header.Set("Authorization", "token "+job_token)
-	client := &http.Client{}
+    tr := &http.Transport{
+        TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+    }
+    client := &http.Client{Transport: tr}
 	response, err := client.Do(req)
 
 	if err != nil {

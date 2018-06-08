@@ -1,6 +1,7 @@
 import argparse
 import time
 import os
+import random
 from datetime import datetime
 
 import requests
@@ -213,6 +214,8 @@ class Scheduler(object):
             self.schedule_job(job_id, cpu, memory)
 
     def handle_aborts(self):
+        cluster_name = os.environ['INFRABOX_CLUSTER_NAME']
+
         cursor = self.conn.cursor()
         cursor.execute('''
             WITH all_aborts AS (
@@ -222,13 +225,14 @@ class Scheduler(object):
                 JOIN job j
                     ON all_aborts.job_id = j.id
                     AND j.state not in ('finished', 'failure', 'error', 'killed')
+                    AND cluster_name = %s
             ), jobs_not_started_yet AS (
                 UPDATE job SET state = 'killed'
                 WHERE id in (SELECT id FROM jobs_to_abort WHERE state in ('queued'))
             )
 
             SELECT id FROM jobs_to_abort WHERE state in ('scheduled', 'running', 'queued')
-        ''')
+        ''', [cluster_name])
 
         aborts = cursor.fetchall()
         cursor.close()
@@ -314,6 +318,9 @@ class Scheduler(object):
                 continue
 
             last_state = result[0][0]
+            if last_state in ('killed', 'finished', 'error', 'finished'):
+                self.kube_delete_job(job_id)
+                continue
 
             start_date = None
             end_date = None
@@ -343,7 +350,7 @@ class Scheduler(object):
                             current_state = 'finished'
                         else:
                             current_state = 'failure'
-                            message = stepStatus['State']['terminated']['message']
+                            message = stepStatus['State']['terminated'].get('message', "")
 
                     delete_job = True
 
@@ -389,6 +396,53 @@ class Scheduler(object):
 
                 self.logger.info('Deleting job %s', job_id)
                 self.kube_delete_job(job_id)
+
+    def get_default_cluster(self):
+        cursor = self.conn.cursor()
+        cursor.execute("""
+            SELECT name, labels
+            FROM cluster
+            WHERE active = true
+        """)
+        result = cursor.fetchall()
+        cursor.close()
+
+        random.shuffle(result)
+
+        for row in result:
+            cluster_name = row[0]
+            labels = row[1]
+
+            for l in labels:
+                if l == 'default':
+                    return cluster_name
+
+        return None
+
+    def assign_cluster(self):
+        cluster_name = self.get_default_cluster()
+
+        if not cluster_name:
+            self.logger.warn("No default cluster found, jobs will not be started")
+            return
+
+        cursor = self.conn.cursor()
+        cursor.execute("""
+            SELECT id
+            FROM job
+            WHERE cluster_name is null
+        """)
+        jobs = cursor.fetchall()
+        cursor.close()
+
+        for j in jobs:
+            cursor = self.conn.cursor()
+            cursor.execute("""
+                UPDATE job
+                SET cluster_name = %s
+                WHERE id = %s
+            """, [cluster_name, j[0]])
+            cursor.close()
 
     def update_cluster_state(self):
         cluster_name = os.environ['INFRABOX_CLUSTER_NAME']
@@ -449,6 +503,10 @@ class Scheduler(object):
             self.handle_orphaned_jobs()
         except Exception as e:
             self.logger.exception(e)
+
+        cluster_name = os.environ['INFRABOX_CLUSTER_NAME']
+        if cluster_name == 'master':
+            self.assign_cluster()
 
         if self._inactive():
             self.logger.info('Cluster set to inactive, sleeping...')

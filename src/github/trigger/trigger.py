@@ -132,7 +132,7 @@ class Trigger(object):
                              name, project_id, build_only,
                              dockerfile, cpu, memory, repo, env_var, cluster_name)
             VALUES (gen_random_uuid(), 'queued', %s, 'create_job_matrix',
-                    'Create Jobs', %s, false, '', 1, 1024, %s, %s, 'master')
+                    'Create Jobs', %s, false, '', 1, 1024, %s, %s, null)
         ''', [build_id, project_id, json.dumps(git_repo), env], fetch=False)
 
 

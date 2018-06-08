@@ -24,10 +24,37 @@ func (c *Controller) deletePipelineInvocation(cr *v1alpha1.IBPipelineInvocation,
 		return err
 	}
 
+	pipeline := newPipeline(cr)
+	err = sdk.Get(pipeline)
+
+	if err != nil {
+		logrus.Errorf("Pipeline not found: ", cr.Spec.PipelineName)
+		return err
+	}
+
+	for _, pipelineStep := range pipeline.Spec.Steps {
+		stepInvocation, _ := cr.Spec.Steps[pipelineStep.Name]
+		fi := newFunctionInvocation(cr, stepInvocation, &pipelineStep)
+        err = sdk.Delete(fi, sdk.WithDeleteOptions(metav1.NewDeleteOptions(0)))
+
+		if err != nil && !errors.IsNotFound(err) {
+			log.Errorf("Failed to create function invocation: %s", err.Error())
+			return err
+		}
+	}
+
+
 	cr.SetFinalizers([]string{})
 	err = updateStatus(cr, log)
 	if err != nil && !errors.IsNotFound(err) {
 		logrus.Errorf("Failed to remove finalizers: %v", err)
+		return err
+	}
+
+    // Workaround for older K8s versions which don't properly gc
+	err = sdk.Delete(cr, sdk.WithDeleteOptions(metav1.NewDeleteOptions(0)))
+	if err != nil && !errors.IsNotFound(err) {
+		log.Errorf("Failed to delete pipeline invocation: %v", err)
 		return err
 	}
 
