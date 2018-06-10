@@ -5,7 +5,7 @@ import urllib
 import requests
 import psycopg2
 
-from pyinfraboxutils import get_logger, print_stackdriver, get_env
+from pyinfraboxutils import get_logger, get_env
 from pyinfraboxutils.db import connect_db
 
 logger = get_logger("github")
@@ -18,14 +18,12 @@ def execute_sql(conn, stmt, params): # pragma: no cover
     return result
 
 def main(): # pragma: no cover
-    get_env('INFRABOX_SERVICE')
     get_env('INFRABOX_VERSION')
     get_env('INFRABOX_DATABASE_DB')
     get_env('INFRABOX_DATABASE_USER')
     get_env('INFRABOX_DATABASE_PASSWORD')
     get_env('INFRABOX_DATABASE_HOST')
     get_env('INFRABOX_DATABASE_PORT')
-    get_env('INFRABOX_ROOT_URL')
 
     conn = connect_db()
     conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
@@ -93,7 +91,6 @@ def handle_job_update(conn, event):
     build_id = build['id']
     build_number = build['build_number']
     build_restartCounter = build['restart_counter']
-    dashboard_url = get_env('INFRABOX_ROOT_URL')
 
     # determine github commit state
     state = 'success'
@@ -130,6 +127,13 @@ def handle_job_update(conn, event):
         WHERE id = %s
         AND project_id = %s
     ''', [commit_sha, project_id])[0]['github_status_url']
+
+    dashboard_url = execute_sql(conn, '''
+        SELECT root_url
+        FROM cluster
+        WHERE name = 'master'
+    ''', [])[0]['root_url']
+
     target_url = '%s/dashboard/#/project/%s/build/%s/%s/job/%s' % (dashboard_url,
                                                                    project_name,
                                                                    build_number,
@@ -168,7 +172,4 @@ def handle_job_update(conn, event):
     return True
 
 if __name__ == "__main__": # pragma: no cover
-    try:
-        main()
-    except:
-        print_stackdriver()
+    main()

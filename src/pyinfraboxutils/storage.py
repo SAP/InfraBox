@@ -28,6 +28,7 @@ class S3(object):
         self.url = url
 
         self.bucket = get_env('INFRABOX_STORAGE_S3_BUCKET')
+        self.create_buckets()
 
     def _upload(self, stream, key):
         client = self._get_client()

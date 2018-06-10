@@ -1,9 +1,10 @@
-{{ if .Values.gerrit.review.enabled }}
+{{ if eq .Values.cluster.name "master" }}
+{{ if .Values.gerrit.enabled }}
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
     name: infrabox-gerrit-review
-    namespace: {{ default "infrabox-system" .Values.general.system_namespace }}
+    namespace: {{ template "system_namespace" . }}
     labels:
         app: infrabox-gerrit-review
 spec:
@@ -13,37 +14,21 @@ spec:
             labels:
                 app: infrabox-gerrit-review
         spec:
-            {{- if .Values.gerrit.node_selector }}
-            nodeSelector:
-{{ toYaml .Values.gerrit.node_selector | indent 16 }}
-            {{- end }}
             containers:
             {{ include "containers_database" . | indent 12 }}
             -
                 name: gerrit-review
-                image: {{ required "general.docker_registry is required" .Values.general.docker_registry }}/{{ default "gerrit-review" .Values.gerrit.review.image }}:{{ required "gerrit.review.tag is required" .Values.gerrit.review.tag }}
+                image: {{ include "image_repository" . }}/gerrit-review:{{ include "image_tag"  . }}
                 imagePullPolicy: Always
                 env:
                 {{ include "env_database" . | indent 16 }}
                 {{ include "env_gerrit" . | indent 16 }}
                 {{ include "env_general" . | indent 16 }}
-                -
-                    name: INFRABOX_SERVICE
-                    value: {{ default "gerrit-review" .Values.gerrit.review.image }}
-                -
-                    name: INFRABOX_VERSION
-                    value: {{ required "gerrit.tag is required" .Values.gerrit.review.tag }}
-                -
-                    name: INFRABOX_ROOT_URL
-                    value: {{ .Values.root_url }}
+                {{ include "env_version" . | indent 16 }}
                 volumeMounts:
-                - name: gerrit-ssh
-                  mountPath: /tmp/gerrit
-                  readOnly: true
+                {{ include "mounts_gerrit" . | indent 16 }}
             volumes:
                 {{ include "volumes_database" . | indent 16 }}
-                -
-                    name: gerrit-ssh
-                    secret:
-                        secretName: infrabox-gerrit-ssh
+                {{ include "volumes_gerrit" . | indent 16 }}
+{{ end }}
 {{ end }}

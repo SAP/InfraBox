@@ -13,8 +13,17 @@ A .json file with the service account's credentials will be downloaded. Keep thi
 ## Create buckets
 InfraBox requires you to have one bucket created. As bucket names have to be globally unique you have to chose an available name for the bucket. You have to create them before installing InfraBox.
 
-When configuring the InfraBox installation with `install.py` use these options:
+When installing with `helm` later on set these options:
 
-    --storage gcs
-    --gcs-service-account-key-file <PATH_TO_THE_SERVICE_ACCOUNT_KEY_FILE>
-    --gcs-bucket <NAME>
+```yaml
+storage:
+    gcs:
+        # Enable google cloud storage
+        enabled: true
+
+        # Bucket name
+        bucket: # <REQUIRED>
+
+        # base64 encoded service account .json file
+        service_account: # <REQUIRED>
+```

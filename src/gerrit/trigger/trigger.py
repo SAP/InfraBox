@@ -5,13 +5,12 @@ import paramiko
 
 import psycopg2
 
-from pyinfraboxutils import get_logger, get_env, print_stackdriver
+from pyinfraboxutils import get_logger, get_env
 from pyinfraboxutils.db import connect_db
 
 logger = get_logger("gerrit")
 
 def main():
-    get_env('INFRABOX_SERVICE')
     get_env('INFRABOX_VERSION')
     get_env('INFRABOX_DATABASE_DB')
     get_env('INFRABOX_DATABASE_USER')
@@ -221,7 +220,4 @@ def handle_patchset_created(conn, event):
     conn.commit()
 
 if __name__ == "__main__":
-    try:
-        main()
-    except:
-        print_stackdriver()
+    main()

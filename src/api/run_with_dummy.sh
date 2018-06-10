@@ -12,7 +12,6 @@ export INFRABOX_DATABASE_PASSWORD=postgres
 
 # Service Config
 export INFRABOX_VERSION=local
-export INFRABOX_SERVICE=api
 export INFRABOX_LOG_LEVEL=debug
 export INFRABOX_ROOT_URL=http://localhost:8080
 export INFRABOX_JOB_MAX_OUTPUT_SIZE=99999999999

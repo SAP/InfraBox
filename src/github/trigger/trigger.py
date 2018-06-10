@@ -404,7 +404,6 @@ def ping():
     return res(200, "OK")
 
 def main():
-    get_env('INFRABOX_SERVICE')
     get_env('INFRABOX_VERSION')
     get_env('INFRABOX_DATABASE_DB')
     get_env('INFRABOX_DATABASE_USER')

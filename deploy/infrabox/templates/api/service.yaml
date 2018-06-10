@@ -1,9 +1,8 @@
-{{ if .Values.api.enabled }}
 kind: Service
 apiVersion: v1
 metadata:
     name: infrabox-api
-    namespace: {{ default "infrabox-system" .Values.general.system_namespace }}
+    namespace: {{ template "system_namespace" . }}
     labels:
         app: infrabox-api
 spec:
@@ -15,4 +14,3 @@ spec:
         protocol: TCP
         port: 8080
         targetPort: 8080
-{{ end }}

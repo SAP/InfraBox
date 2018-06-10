@@ -102,7 +102,6 @@ def get_commit():
     }
 
 def main():
-    get_env('INFRABOX_SERVICE')
     get_env('INFRABOX_VERSION')
     get_env('INFRABOX_GERRIT_PORT')
     get_env('INFRABOX_GERRIT_HOSTNAME')
