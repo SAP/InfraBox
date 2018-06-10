@@ -1,3 +1,27 @@
+{{- define "system_namespace" -}}
+{{- required "system_namespace is required" .Values.system_namespace -}}
+{{- end -}}
+
+{{- define "worker_namespace" -}}
+{{- required "worker_namespace is required" .Values.worker_namespace -}}
+{{- end -}}
+
+{{- define "root_url" -}}
+{{- if eq "443" (.Values.port | quote) -}}
+https://{{- required "host is required" .Values.host -}}
+{{- else -}}
+https://{{- required "host is required" .Values.host -}}:{{- .Values.port -}}
+{{- end -}}
+{{- end -}}
+
+{{- define "image_repository" -}}
+{{- required "image.repository is required" .Values.image.repository -}}
+{{- end -}}
+
+{{- define "image_tag" -}}
+{{- required "image.tag is required" .Values.image.tag -}}
+{{- end -}}
+
 {{ define "env_database" }}
 -
     name: INFRABOX_DATABASE_USER
@@ -11,22 +35,30 @@
         secretKeyRef:
             name: infrabox-postgres
             key: password
+{{ if .Values.database.postgres.enabled }}
 -
     name: INFRABOX_DATABASE_HOST
-    value: {{ default "localhost" .Values.storage.postgres.host | quote }}
+    value: {{ default "localhost" .Values.database.postgres.host | quote }}
 -
     name: INFRABOX_DATABASE_DB
-    value: {{ default "infrabox" .Values.storage.postgres.db | quote }}
+    value: {{ default "infrabox" .Values.database.postgres.db | quote }}
 -
     name: INFRABOX_DATABASE_PORT
-    value: {{ default 5432 .Values.storage.postgres.port | quote }}
+    value: {{ default 5432 .Values.database.postgres.port | quote }}
+{{ end }}
+{{ if .Values.database.cloudsql.enabled }}
 -
-    name: INFRABOX_STORAGE_CLOUDSQL_ENABLED
-    value: {{ .Values.storage.cloudsql.enabled | quote }}
-{{ if .Values.storage.cloudsql.enabled }}
+    name: INFRABOX_DATABASE_HOST
+    value: localhost
+-
+    name: INFRABOX_DATABASE_DB
+    value: {{ required "database.cloudsql.db is required" .Values.database.cloudsql.db | quote }}
+-
+    name: INFRABOX_DATABASE_PORT
+    value: "5432"
 -
     name: INFRABOX_STORAGE_CLOUDSQL_INSTANCE_CONNECTION_NAME
-    value: {{ .Values.storage.cloudsql.instance_connection_name }}
+    value: {{ .Values.database.cloudsql.instance_connection_name }}
 {{ end }}
 {{ end }}
 
@@ -53,8 +85,42 @@
     readOnly: true
 {{ end }}
 
+{{ define "mounts_gcs" }}
+{{ if .Values.storage.gcs.enabled }}
+-
+    name: gcs-service-account
+    mountPath: /etc/infrabox/gcs
+    readOnly: true
+{{ end }}
+{{ end }}
+
+{{ define "mounts_gerrit" }}
+-
+    name: gerrit-ssh
+    mountPath: /tmp/gerrit
+    readOnly: true
+{{ end }}
+
+{{ define "volumes_gerrit" }}
+{{ if .Values.gerrit.enabled }}
+-
+    name: gerrit-ssh
+    secret:
+        secretName: infrabox-gerrit-ssh
+{{ end }}
+{{ end }}
+
+{{ define "volumes_gcs" }}
+{{ if .Values.storage.gcs.enabled }}
+-
+    name: gcs-service-account
+    secret:
+        secretName: infrabox-gcs
+{{ end }}
+{{ end }}
+
 {{ define "volumes_database" }}
-{{ if .Values.storage.cloudsql.enabled }}
+{{ if .Values.database.cloudsql.enabled }}
 -
     name: cloudsql-instance-credentials
     secret:
@@ -63,6 +129,12 @@
     name: cloudsql
     emptyDir:
 {{ end }}
+{{ end }}
+
+{{ define "env_account" }}
+-
+    name: INFRABOX_ACCOUNT_SIGNUP_ENABLED
+    value: {{ .Values.account.signup.enabled | quote }}
 {{ end }}
 
 {{ define "env_gcs" }}
@@ -175,6 +247,11 @@
 {{ end }}
 
 {{ define "env_ldap" }}
+{{ if eq .Values.cluster.name "master" }}
+-
+    name: INFRABOX_ACCOUNT_LDAP_ENABLED
+    value: "false"
+{{ else }}
 -
     name: INFRABOX_ACCOUNT_LDAP_ENABLED
     value: {{ .Values.account.ldap.enabled | quote }}
@@ -197,6 +274,7 @@
         secretKeyRef:
             name: infrabox-ldap
             key: password
+{{ end }}
 {{ end }}
 {{ end }}
 
@@ -224,19 +302,34 @@
 {{ end }}
 {{ end }}
 
-{{ define "env_general" }}
+{{ define "env_version" }}
 -
-    name: INFRABOX_GENERAL_LOG_STACKDRIVER
-    value: {{ default "false" .Values.general.log.stackdriver | quote }}
+    name: INFRABOX_VERSION
+    value: {{ include "image_tag" . }}
+{{ end }}
+
+{{ define "env_cluster" }}
+-
+    name: INFRABOX_CLUSTER_NAME
+    value: {{ required "cluster.name is required" .Values.cluster.name }}
+-
+    name: INFRABOX_CLUSTER_LABELS
+    value: {{ .Values.cluster.labels }}
+{{ end }}
+
+{{ define "env_general" }}
 -
     name: INFRABOX_GENERAL_DONT_CHECK_CERTIFICATES
     value: {{ default "false" .Values.general.dont_check_certificates | quote }}
 -
     name: INFRABOX_GENERAL_WORKER_NAMESPACE
-    value: {{ default "infrabox-worker" .Values.general.worker_namespace }}
+    value: {{ template "worker_namespace" . }}
 -
     name: INFRABOX_ROOT_URL
-    value: {{ .Values.root_url }}
+    value: {{ template "root_url" . }}
+-
+    name: INFRABOX_VERSION
+    value: {{ template "image_tag" . }}
 -
     name: INFRABOX_GENERAL_REPORT_ISSUE_URL
     value: {{ .Values.general.report_issue_url }}
@@ -258,12 +351,12 @@
 {{ end }}
 
 {{ define "containers_database" }}
-{{ if .Values.storage.cloudsql.enabled }}
+{{ if .Values.database.cloudsql.enabled }}
 -
     image: gcr.io/cloudsql-docker/gce-proxy:1.09
     name: cloudsql-proxy
     command: ["/cloud_sql_proxy", "--dir=/cloudsql",
-              "-instances={{ .Values.storage.cloudsql.instance_connection_name }}=tcp:5432",
+              "-instances={{ .Values.database.cloudsql.instance_connection_name }}=tcp:5432",
               "-credential_file=/secrets/cloudsql/credentials.json"]
     volumeMounts:
     - name: cloudsql-instance-credentials
@@ -281,13 +374,4 @@
 -
     name: INFRABOX_JOB_SECURITY_CONTEXT_CAPABILITIES_ENABLED
     value: {{ default "false" .Values.job.security_context.capabilities.enabled | quote }}
-{{ end }}
-
-{{ define "env_kubernetes" }}
--
-    name: INFRABOX_KUBERNETES_MASTER_HOST
-    value: {{ default "kubernetes.default.svc.cluster.local" .Values.general.kubernetes_master_host }}
--
-    name: INFRABOX_KUBERNETES_MASTER_PORT
-    value: {{ default 443 .Values.general.kubernetes_master_port | quote }}
 {{ end }}

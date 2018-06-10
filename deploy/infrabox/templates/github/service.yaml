@@ -3,7 +3,7 @@ kind: Service
 apiVersion: v1
 metadata:
     name: infrabox-github-trigger
-    namespace: {{ default "infrabox-system" .Values.general.system_namespace }}
+    namespace: {{ template "system_namespace" . }}
     labels:
         app: infrabox-github-trigger
 spec:

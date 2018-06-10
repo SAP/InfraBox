@@ -3,7 +3,7 @@ apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
     name: infrabox
-    namespace: {{ default "infrabox-system" .Values.general.system_namespace }}
+    namespace: {{ template "system_namespace" . }}
     annotations:
         kubernetes.io/ingress.class: "nginx"
         nginx.ingress.kubernetes.io/proxy-body-size: "2048m"
@@ -13,20 +13,14 @@ metadata:
         nginx.ingress.kubernetes.io/affinity: "cookie"
         nginx.ingress.kubernetes.io/session-cookie-name: "route"
         nginx.ingress.kubernetes.io/session-cookie-hash: "sha1"
-        {{ if .Values.ingress.tls.enabled }}
-        ingress.kubernetes.io/force-ssl-redirect: {{ .Values.ingress.tls.force_redirect | quote }}
-        {{ else }}
-        nginx.ingress.kubernetes.io/ssl-redirect: "false"
-        {{- end }}
+        nginx.ingress.kubernetes.io/ssl-redirect: "true"
 spec:
     rules:
     -
-        {{ if .Values.ingress.tls.enabled }}
-        host: {{ .Values.ingress.tls.host }}
-        {{ end }}
+        host: {{ .Values.host }}
         http:
             paths:
-            {{ if .Values.static.enabled }}
+            {{ if eq .Values.cluster.name "master" }}
             -
                 path: /dashboard
                 backend:
@@ -38,6 +32,7 @@ spec:
                 backend:
                     serviceName: infrabox-api
                     servicePort: 8080
+            {{ if eq .Values.cluster.name "master" }}
             {{ if .Values.github.enabled }}
             -
                 path: /github/hook
@@ -50,22 +45,21 @@ spec:
                     serviceName: infrabox-api
                     servicePort: 8080
             {{ end }}
+            {{ end }}
             -
                 path: /v2
                 backend:
                     serviceName: infrabox-docker-registry
                     servicePort: 8080
-            {{ if .Values.static.enabled }}
+            {{ if eq .Values.cluster.name "master" }}
             -
                 path: /
                 backend:
                     serviceName: infrabox-static
                     servicePort: 80
             {{ end }}
-    {{ if .Values.ingress.tls.enabled }}
     tls:
         - hosts:
-            - {{ .Values.ingress.tls.host }}
+            - {{ .Values.host }}
           secretName: infrabox-tls-certs
-    {{ end }}
 {{ end }}

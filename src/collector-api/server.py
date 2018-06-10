@@ -10,7 +10,7 @@ from flask_restplus import Resource, Api
 import eventlet
 eventlet.monkey_patch()
 
-from pyinfraboxutils import get_env, print_stackdriver, get_logger
+from pyinfraboxutils import get_env, get_logger
 
 logger = get_logger('api')
 

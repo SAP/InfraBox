@@ -1,9 +1,8 @@
-{{ if .Values.docker_registry.enabled }}
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
     name: infrabox-docker-registry
-    namespace: {{ default "infrabox-system" .Values.general.system_namespace }}
+    namespace: {{ template "system_namespace" . }}
     labels:
         app: infrabox-docker-registry
 spec:
@@ -13,30 +12,21 @@ spec:
             labels:
                 app: infrabox-docker-registry
         spec:
-            {{- if .Values.docker_registry.node_selector }}
-            nodeSelector:
-{{ toYaml .Values.docker_registry.node_selector | indent 16 }}
-            {{- end }}
             containers:
             {{ include "containers_database" . | indent 12 }}
             -
                 name: auth
-                image: {{ .Values.general.docker_registry }}/{{ default "docker-registry-auth" .Values.docker_registry.auth_image }}:{{ .Values.docker_registry.auth_tag }}
+                image: {{ include "image_repository" . }}/docker-registry-auth:{{ include "image_tag"  . }}
                 imagePullPolicy: Always
                 env:
                 {{ include "env_database" . | indent 16 }}
                 {{ include "env_docker_registry" . | indent 16 }}
-                -
-                    name: INFRABOX_SERVICE
-                    value: {{ default "docker-registry-auth" .Values.docker_registry.auth_image }}
-                -
-                    name: INFRABOX_VERSION
-                    value: {{ .Values.docker_registry.auth_tag }}
+                {{ include "env_version" . | indent 16 }}
                 volumeMounts:
                 {{ include "mounts_rsa_public" . | indent 16 }}
             -
                 name: nginx
-                image: {{ .Values.general.docker_registry }}/{{ default "docker-registry-nginx" .Values.docker_registry.nginx_image }}:{{ .Values.docker_registry.nginx_tag }}
+                image: {{ include "image_repository" . }}/docker-registry-nginx:{{ include "image_tag"  . }}
                 imagePullPolicy: Always
                 env:
                 {{ include "env_docker_registry" . | indent 16 }}
@@ -54,7 +44,7 @@ spec:
                 env:
                 -
                     name: REGISTRY_HTTP_HOST
-                    value: {{ .Values.docker_registry.url }}
+                    value: {{ include "root_url" . }}
                 -
                     name: REGISTRY_STORAGE_REDIRECT_DISABLE
                     value: "true"
@@ -141,4 +131,3 @@ spec:
                     secret:
                         secretName: infrabox-gcs
                 {{ end }}
-{{ end }}

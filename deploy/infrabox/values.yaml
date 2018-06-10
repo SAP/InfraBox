@@ -1,236 +1,223 @@
+# Host on which InfraBox will be accessible (i.e. "infrabox.example.com")
+host: # <REQUIRED>
+
+port: 443
+
+# Namespace for system components
+system_namespace: infrabox-system
+
+# Namespace in which all jobs will be started
+worker_namespace: infrabox-worker
+
 general:
-    # hostname / IP of your kubernetes master
-    # kubernetes_master_host: kubernetes.default.svc.cluster.local
+    # Set it to true if certificates of your Github Enterprise the SSL
+    # certificate you are using for InfraBox itself are self signed.
+    dont_check_certificates: false
 
-    # port of your kubernetes master
-    # kubernetes_master_port: 443
+    report_issue_url: https://github.com/SAP/infrabox/issues
 
-    # Namespace for system components
-    # system_namespace: infrabox-system
-
-    # Namespace in which all jobs will be started
-    # worker_namespace: infrabox-worker
-
+image:
     # Address of the docker registry which contains
     # all the InfraBox images. It must be accessible
     # by all hosts which run your kubernetes cluster.
-    docker_registry: <REQUIRED>
+    repository: quay.io/infrabox
 
-    # Set it to true if certificates of your Github Enterprise the SSL
-    # certificate you are using for InfraBox itself are self signed.
-    # dont_check_certificates: false
+    tag: latest
 
-    log:
-        # If true the log output will be formatted for google's stackdriver
-        stackdriver: false
+cluster:
+    # Unique name of all clusters which are connected to the
+    # same postgresql database
+    name: master
 
-    rbac:
-        enabled: true
+    # Assigned labels
+    labels: default
 
-root_url: <REQUIRED>
+admin:
+    # Email of the admin account
+    email: # <REQUIRED>
+
+    # Password of the admin accounts
+    password: # <REQUIRED>
+
+    # Path to the private key file (i.e. "secrets/id_rsa")
+    private_key_file: # <REQUIRED>
+
+    # Path to the public key file (i.e. "secrets/id_rsa.pub")
+    public_key_file: # <REQUIRED>
 
 ingress:
-    enabled: true
-    tls:
-        acme: false
-        host: <REQUIRED>
-
-db:
-    # name of the db image in your general.docker_registry
-    # image: db
-
-    # Tag
-    tag: latest
-
-controller:
-    # name of the controller image in your general.docker_registry
-    # image: controller
-
-    # Tag
-    tag: latest
-
-scheduler:
+    # If enabled an Ingress will be created
     enabled: true
 
-    # name of the scheduler image in your general.docker_registry
-    # image: scheduler
-
-    # Tag
-    tag: latest
-
-    log:
-        level: info
-
+# Exactly one storage option has to be enabled
 storage:
-    migration:
-        enabled: true
-
     gcs:
+        # Enable google cloud storage
         enabled: false
 
         # Bucket name
-        bucket: infrabox
+        bucket: # <REQUIRED>
+
+        # Service account file path (i.e. "secrets/gcs_service_account.json")
+        service_account_file: # <REQUIRED>
 
     s3:
-        enabled: true
+        # Enabled S3
+        enabled: false
 
         # Region
-        region: <REQUIRED>
+        region: # <REQUIRED>
 
         # Regeion endpoint
-        endpoint: <REQUIRED>
+        endpoint: # <REQUIRED>
 
         # Region endpoint port
-        # port: 443
+        port: 443
 
         # If https should be used or not
-        # secure: true
+        secure: true
 
         # Bucket name
-        bucket: infrabox
+        bucket: # <REQUIRED>
 
-    cloudsql:
+        # AWS Access Key ID
+        access_key_id: # <REQUIRED>
+
+        # AWS Secret Access Key
+        secret_access_key: # <REQUIRED>
+
+    azure:
+        # Enable Azure
         enabled: false
+
+        # Account name
+        account_name: # <REQUIRED>
+
+        # Account key
+        account_key: # <REQUIRED>
+
+# PostgreSQL Database configuration. Use either Google's CloudSQL or any other PostgreSQL Database
+database:
+    cloudsql:
+        # Enable
+        enabled: false
+
+        # Database name
+        db: # <REQUIRED>
+
+        # Username
+        username: # <REQUIRED>
+
+        # Password
+        password: # <REQUIRED>
+
+        # The instance connection name
+        instance_connection_name: # <REQUIRED>
+
+        # Path to the service account (i.e. "secrets/cloudsql_service_account.json")
+        service_account_file: # <REQUIRED>
 
     postgres:
         enabled: true
 
         # Host of your postgres database
-        # Set this to localhost if you use GCS!
-        host: <REQUIRED>
+        host: # <REQUIRED>
 
         # Port of your postgres database
-        # Don't set this if you use GCS!
-        # port: 5432
+        port: 5432
 
         # Database name
-        # db: infrabox
+        db: # <REQUIRED>
 
-docker_registry:
-    enabled: true
+        # Username
+        username: # <REQUIRED>
 
-    url: <REQUIRED>
+        # Password
+        password: # <REQUIRED>
 
-    # name of the docker-registry auth image in your general.docker_registry
-    # auth_image: docker-registry-auth
-
-    # Tag
-    auth_tag: latest
-
-    # name of the docker-registry nginx image in your general.docker_registry
-    # nginx_image: docker-registry-nginx
-
-    # Tag
-    nginx_tag: latest
-
-static:
-    enabled: true
-
-    # name of the static image in your general.docker_registry
-    # image: static
-
-    # Tag
-    tag: latest
-
-api:
-    enabled: true
-
-    # name of the api image in your general.docker_registry
-    # image: api
-
-    # Tag
-    tag: latest
-
-    # URL on which the api will be reachable by your users
-    url: <REQUIRED>
-
-    log:
-        level: info
-
-        # If true prints output for stackdriver
-        stackdriver: false
-
-account:
-    signup:
-        enabled: true
-
-    ldap:
-        enabled: false
-
-        # url: <REQUIRED>
-        # base: <REQUIRED>
-
+# Gerrit configuration
 gerrit:
+    # Enable gerrit
     enabled: false
 
-    review:
+    # Gerrit Hostname
+    hostname: # <REQUIRED>
+
+    # Username
+    username: # <REQUIRED>
+
+    # Path to the private key file to be used for connecting to gerrit (i.e. "secrets/gerrit_id_rsa")
+    private_key_file: # <REQUIRED>
+
+    # Port
+    port: 29418
+
+# Github configuration
+github:
+    # Enable Github
+    enabled: false
+
+    # Client ID of you Github App
+    client_id: # <REQUIRED>
+
+    # Client Secret of your Github App
+    client_secret: # <REQUIRED>
+
+    # A secret for the webhooks
+    webhook_secret: # <REQUIRED>
+
+    login:
+        # If true then user can login with the Github account
         enabled: false
 
-        # name of the gerrit review image in your general.docker_registry
-        # image: gerrit-review
+        # Github Login URL, change it if you use Github Enterprise
+        url: https://github.com/login
 
-        # Tag
-        tag: latest
+        # If Github login is enabled you can limit access to users which belong to a certain set of
+        # Github Organizations. Comma separated list for Github Organizations (i.e. "Org1,Org2,Org3")
+        # If no organization is set everybody can login with its github ccount
+        allowed_organizations:
 
-    trigger:
+    # Github API URL
+    api_url: https://api.github.com
+
+# General Account configuration
+account:
+    signup:
+        # Enable users to signup with Email/Username/Password
         enabled: false
 
-        # name of the gerrit trigger image in your general.docker_registry
-        # image: gerrit-trigger
+    ldap:
+        # Enables LDAP, disables "account.signup.enabled"
+        enabled: false
 
-        # Tag
-        tag: latest
+        # DN
+        dn: # <REQUIRED>
 
-    api:
-        # name of the gerrit api image in your general.docker_registry
-        # image: gerrit-api
+        # Password
+        password: # <REQUIRED>
 
-        # Tag
-        tag: latest
+        # Base
+        base: # <REQUIRED>
 
-    # hostname: <REQUIRED>
-    # username: <REQUIRED>
-    # port: 29418
+        # URL
+        url: # <REQUIRED>
 
+api:
+    # Replicas for the API Server
+    replicas: 1
+
+local_cache:
+    # Enable a shared cache for all jobs running on the same machine
+    enabled: false
+
+    # Host path which will be available to all jobs at /infrabox/local-cache
+    host_path: /tmp/infrabox/local_cache
+
+# TODO
 job:
-    # name of the job image in your general.docker_registry
-    # image: job
-
-    # Tag
-    tag: latest
-
     max_output_size: 104857600
 
     security_context:
         capabilities:
             enabled: false
-
-local_cache:
-    enabled: false
-
-    # host_path: /tmp/infrabox/local_cache
-
-github:
-    enabled: false
-
-    trigger:
-        # image: github-trigger
-
-        tag: latest
-
-    review:
-        # image: review-api
-
-        tag: latest
-
-    login:
-        enabled: false
-
-        # Github Login URL
-        # url: https://github.com/login
-
-        # Comma separated list of github organizations
-        # allowed_organizations:
-
-    # Github API URL
-    # api_url: https://api.github.com

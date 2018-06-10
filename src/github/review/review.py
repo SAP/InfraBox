@@ -5,7 +5,7 @@ import urllib
 import requests
 import psycopg2
 
-from pyinfraboxutils import get_logger, print_stackdriver, get_env
+from pyinfraboxutils import get_logger, get_env
 from pyinfraboxutils.db import connect_db
 
 logger = get_logger("github")
@@ -18,7 +18,6 @@ def execute_sql(conn, stmt, params): # pragma: no cover
     return result
 
 def main(): # pragma: no cover
-    get_env('INFRABOX_SERVICE')
     get_env('INFRABOX_VERSION')
     get_env('INFRABOX_DATABASE_DB')
     get_env('INFRABOX_DATABASE_USER')
@@ -168,7 +167,4 @@ def handle_job_update(conn, event):
     return True
 
 if __name__ == "__main__": # pragma: no cover
-    try:
-        main()
-    except:
-        print_stackdriver()
+    main()

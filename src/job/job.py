@@ -20,7 +20,7 @@ from infrabox_job.job import Job
 
 from pyinfraboxutils.testresult import Parser as TestresultParser
 from pyinfraboxutils.coverage import Parser as CoverageParser
-from pyinfraboxutils import get_env, print_stackdriver
+from pyinfraboxutils import get_env
 from pyinfraboxutils import get_logger
 logger = get_logger('scheduler')
 
@@ -1201,7 +1201,6 @@ class RunJob(Job):
         return jobs
 
 def main():
-    get_env('INFRABOX_SERVICE')
     get_env('INFRABOX_VERSION')
     get_env('INFRABOX_ROOT_URL')
     get_env('INFRABOX_GENERAL_DONT_CHECK_CERTIFICATES')
@@ -1229,7 +1228,6 @@ def main():
 
         sys.exit(1)
     except:
-        print_stackdriver()
         if j:
             j.console.header('An error occured', show=True)
             msg = traceback.format_exc()
@@ -1239,11 +1237,7 @@ def main():
             with open('/dev/termination-log', 'w+') as out:
                 out.write(msg)
 
-            sys.exit(1)
+        sys.exit(1)
 
 if __name__ == "__main__":
-    try:
-        main()
-    except:
-        print_stackdriver()
-        sys.exit(1)
+    main()
