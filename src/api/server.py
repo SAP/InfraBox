@@ -12,7 +12,7 @@ import socketio
 from flask import request, abort, g, jsonify
 from flask_restplus import Resource
 
-from pyinfraboxutils import get_env, print_stackdriver, get_logger
+from pyinfraboxutils import get_env, get_logger
 
 from pyinfraboxutils.ibflask import get_token, is_collaborator
 from pyinfraboxutils.ibrestplus import api, app
@@ -61,7 +61,6 @@ class ClientManager(socketio.base_manager.BaseManager):
         return False
 
 def main(): # pragma: no cover
-    get_env('INFRABOX_SERVICE')
     get_env('INFRABOX_VERSION')
     get_env('INFRABOX_DATABASE_HOST')
     get_env('INFRABOX_DATABASE_USER')
@@ -256,8 +255,4 @@ def main(): # pragma: no cover
     sio.run(app, host='0.0.0.0', port=port)
 
 if __name__ == "__main__": # pragma: no cover
-    try:
-        main()
-    except:
-        print_stackdriver()
-        sys.exit(1)
+    main()

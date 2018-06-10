@@ -1,9 +1,9 @@
-{{ if .Values.storage.migration.enabled }}
+{{ if eq .Values.cluster.name "master" }}
 apiVersion: batch/v1
 kind: Job
 metadata:
     name: infrabox-db-migration
-    namespace: {{ default "infrabox-system" .Values.general.system_namespace }}
+    namespace: {{ template "system_namespace" . }}
 spec:
     template:
         metadata:
@@ -13,15 +13,10 @@ spec:
             {{ include "containers_database" . | indent 12 }}
             -
                 name: migrate
-                image: {{ .Values.general.docker_registry }}/{{ default "db" .Values.db.image }}:{{ .Values.db.tag }}
+                image: {{ include "image_repository" . }}/db:{{ include "image_tag" . }}
                 env:
                 {{ include "env_database" . | indent 16 }}
-                -
-                    name: INFRABOX_SERVICE
-                    value: {{ default "db" .Values.db.image }}
-                -
-                    name: INFRABOX_VERSION
-                    value: {{ .Values.db.tag }}
+                {{ include "env_version" . | indent 16 }}
                 -
                     name: INFRABOX_ADMIN_EMAIL
                     valueFrom:

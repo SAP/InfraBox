@@ -5,14 +5,13 @@ import urllib
 import psycopg2
 import paramiko
 
-from pyinfraboxutils import get_logger, get_env, print_stackdriver
+from pyinfraboxutils import get_logger, get_env
 from pyinfraboxutils.db import connect_db
 from pyinfraboxutils.leader import elect_leader, is_leader
 
 logger = get_logger("gerrit")
 
 def main():
-    get_env('INFRABOX_SERVICE')
     get_env('INFRABOX_VERSION')
     get_env('INFRABOX_DATABASE_DB')
     get_env('INFRABOX_DATABASE_USER')
@@ -195,7 +194,4 @@ def handle_job_update(conn, event):
     client.close()
 
 if __name__ == "__main__":
-    try:
-        main()
-    except:
-        print_stackdriver()
+    main()
