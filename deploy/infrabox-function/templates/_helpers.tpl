@@ -7,7 +7,7 @@
 {{- end -}}
 
 {{- define "root_url" -}}
-{{- if eq "443" (.Values.port | quote) -}}
+{{- if eq 443.0 .Values.port -}}
 https://{{- required "host is required" .Values.host -}}
 {{- else -}}
 https://{{- required "host is required" .Values.host -}}:{{- .Values.port -}}
