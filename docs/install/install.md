@@ -29,36 +29,44 @@ As soon as your cluster has been created click on connect and follow the instruc
 
 If you want to use the kubernetes dashboard you may have to give the service account more permissions:
 
-    kubectl create clusterrolebinding dashboard --clusterrole=cluster-admin --serviceaccount=kube-system:default
+```bash
+kubectl create clusterrolebinding dashboard --clusterrole=cluster-admin --serviceaccount=kube-system:default
+```
 
 ## Configure prerequisuites
 
 ### helm
 We use [helm][helm] to deploy the different components. To install helm into you kubernetes cluster run:
 
-    kubectl -n kube-system create sa tiller
-    kubectl create clusterrolebinding tiller --clusterrole cluster-admin --serviceaccount=kube-system:tiller
-    helm init --service-account tiller
+```bash
+kubectl -n kube-system create sa tiller
+kubectl create clusterrolebinding tiller --clusterrole cluster-admin --serviceaccount=kube-system:tiller
+helm init --service-account tiller
+```
 
 ### nginx ingress controller
 Currently InfraBox only supports an nginx-ingress controller. To add one to your cluster:
 
-    helm install \
-        -n nginx-ingress-controller \
-        --namespace kube-system \
-        --set rbac.create=true \
-        --set controller.service.loadBalancerIP="<INSERT_YOUR_EXTERNAL_IP_HERE>" \
-        --set controller.scope.enabled="true" \
-        --set controller.scope.namespace="infrabox-system" \
-        stable/nginx-ingress
+```bash
+helm install \
+    -n nginx-ingress-controller \
+    --namespace kube-system \
+    --set rbac.create=true \
+    --set controller.service.loadBalancerIP="<INSERT_YOUR_EXTERNAL_IP_HERE>" \
+    --set controller.scope.enabled="true" \
+    --set controller.scope.namespace="infrabox-system" \
+    stable/nginx-ingress
+```
 
 **Don't forget to add your external IP address, which you have created earlier, as loadBalancerIP**
 
 ### Create namespaces
 InfraBox seperates the control plane (dashboard, docker-registry, api server, etc) from the actual jobs. Create two namespaces:
 
-    kubectl create ns infrabox-system
-    kubectl create ns infrabox-worker
+```bash
+kubectl create ns infrabox-system
+kubectl create ns infrabox-worker
+```
 
 ### Create TLS certificate
 InfraBox requires a valid TLS certificate. It must be stored as a `Secret` with name `infrabox-tls-certs` in the `infrabox-system` namespace.
@@ -91,49 +99,44 @@ You can configure different ways of how your user can authenticate.
 - [Manual signup / login](/docs/install/configure/signup.md)
 
 ## Clone InfraBox repository
-If you have not already cloned the InfraBox repository do so with:
+If you have not already cloned the InfraBox repository and checkout the version you would like to install.
 
-    git clone https://github.com/SAP/infrabox /tmp/infrabox
+```bash
+git clone https://github.com/SAP/infrabox /tmp/infrabox
+cd /tmp/infrabox
+git checkout master
+```
 
 ## Generate RSA Key
 InfraBox uses a RSA key to sign certain information for security reasons. You need to generate a RSA key and keep it at a secure place
 
-    ssh-keygen -N '' -t rsa -f id_rsa
-    ssh-keygen -f id_rsa.pub -e -m pem > id_rsa.pem
+```bash
+mkdir /tmp/infrabox-config
+cd /tmp/infrabox-config
+ssh-keygen -N '' -t rsa -f id_rsa
+ssh-keygen -f id_rsa.pub -e -m pem > id_rsa.pem
+```
 
 ## Configure InfraBox
-InfraBox contains a python script to generate all the neccessary configuration files for you. You find it under _deploy/install.py_.
-To create a very basic configuration use:
 
-    python deploy/install.py \
-        -o /tmp/infrabox-configuration \
-        --general-rsa-public-key ./id_rsa.pem \
-        --general-rsa-private-key ./id_rsa \
-        --root-url https://<YOUR_DOMAIN_NAME> \
-        --admin-password <CHOSE_A_SECURE_PASSWORD> \
-        --admin-email <EMAIL_ADDRESS_OF_THE_ADMIN> \
-        <APPEND_POSTGRES_OPTIONS>
-        <APPEND_STORAGE_OPTIONS>
-        <APPEND_AUTHENICATION_OPTIONS>
+InfraBox uses `helm` for deploying. Create a `my_values.yaml` for your custom options:
 
-- **Set --root-url to your domain name**
-- **Set --admin-password**
-- **Set --admin-email**
-- **Append the postgres options**
-- **Append the storage options**
-- **Append the authentication options**
+```bash
+cat >my_values.yaml <<EOL
+admin:
+  private_key: $(base64 -w 0 ./id_rsa)
+  public_key: $(base64 -w 0 ./id_rsa.pem)
+EOL
+```
 
-This command generated the neccessary files in `/tmp/infrabox-configuration`.
+Add all the necessary configurations options as described in the earlier steps.
+If you forget some the installation will fail with some message like `a.b.c is required`.
+After you have prepared your `my_values.yaml` you may deploy InfraBox.
 
-### Deploy InfraBox
-To deploy InfraBox:
-
-    cd /tmp/infrabox-configuration/infrabox
-    helm install -n infrabox .
-
-    cd /tmp/infrabox-configuration/infrabox-function
-    helm install -n infrabox-function .
-
+```bash
+helm install --namespace infrabox-system -f my_values.yaml --wait /tmp/infrabox/deploy/infrabox
+helm install --namespace infrabox-system -f my_values.yaml --wait /tmp/infrabox/deploy/infrabox-function
+```
 After a few seconds you can open your browser and access `https://<YOUR_DOMAIN>`.
 
 [helm]: https://github.com/kubernetes/helm

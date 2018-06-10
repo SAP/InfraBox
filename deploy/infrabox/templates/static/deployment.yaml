@@ -1,13 +1,13 @@
-{{ if .Values.static.enabled }}
+{{ if eq .Values.cluster.name "master" }}
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
     name: infrabox-static
-    namespace: {{ default "infrabox-system" .Values.general.system_namespace }}
+    namespace: {{ template "system_namespace" . }}
     labels:
         app: infrabox-static
 spec:
-    replicas: {{ default 1 .Values.static.replicas }}
+    replicas: 1
     template:
         metadata:
             labels:
@@ -16,6 +16,6 @@ spec:
             containers:
             -
                 name: static
-                image: {{ .Values.general.docker_registry }}/{{ default "static" .Values.static.image }}:{{ .Values.static.tag }}
+                image: {{ include "image_repository" . }}/static:{{ include "image_tag" . }}
                 imagePullPolicy: Always
 {{ end }}

@@ -2,7 +2,7 @@ apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
     name: infrabox-controller
-    namespace: {{ default "infrabox-system" .Values.general.system_namespace }}
+    namespace: {{ template "system_namespace" . }}
     labels:
         app: infrabox-controller
 spec:
@@ -13,18 +13,16 @@ spec:
                 app: infrabox-controller
         spec:
             terminationGracePeriodSeconds: 0
-            {{ if .Values.general.rbac.enabled }}
-            serviceAccountName: infrabox-scheduler
-            {{ end }}
+            serviceAccountName: infrabox
             containers:
             -
                 name: controller
-                image: {{ required "general.docker_registry is required" .Values.general.docker_registry }}/{{ default "controller" .Values.controller.image }}:{{ required "controller.tag is required" .Values.controller.tag }}
+                image: {{ include "image_repository" . }}/controller:{{ include "image_tag" . }}
                 imagePullPolicy: Always
                 env:
                 -
                     name: WATCH_NAMESPACE
-                    value: {{ default "infrabox-worker" .Values.general.worker_namespace }}
+                    value: {{ template "worker_namespace" . }}
                 resources:
                     requests:
                         memory: "256Mi"

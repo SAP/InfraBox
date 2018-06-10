@@ -21,19 +21,6 @@ logging.basicConfig(
     level=logging.WARNING
 )
 
-def print_stackdriver():
-    if 'INFRABOX_GENERAL_LOG_STACKDRIVER' in os.environ and os.environ['INFRABOX_GENERAL_LOG_STACKDRIVER'] == 'true':
-        print(json.dumps({
-            "serviceContext": {
-                "service": os.environ.get('INFRABOX_SERVICE', 'unknown'),
-                "version": os.environ.get('INFRABOX_VERSION', 'unknown')
-            },
-            "message": traceback.format_exc(),
-            "severity": 'ERROR'
-        }))
-    else:
-        print(traceback.format_exc())
-
 def get_env(name):
     if name not in os.environ:
         raise Exception("%s not set" % name)

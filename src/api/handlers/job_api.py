@@ -934,6 +934,9 @@ class ConsoleUpdate(Resource):
 
         try:
             g.db.execute("INSERT INTO console (job_id, output) VALUES (%s, %s)", [job_id, output])
+            g.db.execute("""
+                UPDATE job SET state = 'running', start_date = current_timestamp
+                WHERE id = %s and state = 'scheduled'""", [job_id])
             g.db.commit()
         except:
             pass

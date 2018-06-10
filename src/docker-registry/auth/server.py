@@ -1,6 +1,6 @@
 from flask import request, g, abort, jsonify
 
-from pyinfraboxutils import get_env, print_stackdriver, get_logger
+from pyinfraboxutils import get_env, get_logger
 from pyinfraboxutils.ibflask import token_required, app
 
 logger = get_logger('docker-registry-auth')
@@ -108,7 +108,6 @@ def v2_path(path):
     return jsonify({'status': 200})
 
 def main(): # pragma: no cover
-    get_env('INFRABOX_SERVICE')
     get_env('INFRABOX_VERSION')
     get_env('INFRABOX_DATABASE_HOST')
     get_env('INFRABOX_DATABASE_USER')
@@ -121,7 +120,4 @@ def main(): # pragma: no cover
     http_server.serve_forever()
 
 if __name__ == "__main__": # pragma: no cover
-    try:
-        main()
-    except:
-        print_stackdriver()
+    main()

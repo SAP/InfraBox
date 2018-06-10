@@ -1,33 +1,8 @@
-{{ if .Values.scheduler.enabled }}
-
-{{ if .Values.general.rbac.enabled }}
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: infrabox-scheduler
-  namespace: {{ default "infrabox-system" .Values.general.system_namespace }}
----
-kind: ClusterRoleBinding
-apiVersion: rbac.authorization.k8s.io/v1beta1
-metadata:
-  name: infrabox-scheduler-{{ .Values.cluster.name }}
-  namespace: {{ default "infrabox-system" .Values.general.system_namespace }}
-subjects:
-- kind: ServiceAccount
-  name: infrabox-scheduler
-  namespace: {{ default "infrabox-system" .Values.general.system_namespace }}
-roleRef:
-  kind: ClusterRole
-  name: cluster-admin
-  apiGroup: rbac.authorization.k8s.io
----
-{{ end }}
-
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
     name: infrabox-scheduler
-    namespace: {{ default "infrabox-system" .Values.general.system_namespace }}
+    namespace: {{ template "system_namespace" . }}
     labels:
         app: infrabox-scheduler
 spec:
@@ -40,46 +15,26 @@ spec:
                 app: infrabox-scheduler
         spec:
             terminationGracePeriodSeconds: 0
-            {{ if .Values.general.rbac.enabled }}
-            serviceAccountName: infrabox-scheduler
-            {{ end }}
-            {{- if .Values.scheduler.node_selector }}
-            nodeSelector:
-{{ toYaml .Values.scheduler.node_selector | indent 16 }}
-            {{- end }}
+            serviceAccountName: infrabox
             containers:
             {{ include "containers_database" . | indent 12 }}
             -
                 name: scheduler
-                image: {{ required "general.docker_registry is required" .Values.general.docker_registry }}/{{ default "scheduler-kubernetes" .Values.scheduler.image }}:{{ required "scheduler.tag is required" .Values.scheduler.tag }}
-                args:
-                    - "--docker-registry"
-                    - "{{ .Values.general.docker_registry }}"
-                    - "--tag"
-                    - "{{ .Values.scheduler.tag }}"
+                image: {{ include "image_repository" . }}/scheduler-kubernetes:{{ include "image_tag" . }}
                 imagePullPolicy: Always
                 env:
                 {{ include "env_database" . | indent 16 }}
                 {{ include "env_general" . | indent 16 }}
-                {{ include "env_kubernetes" . | indent 16 }}
+                {{ include "env_version" . | indent 16 }}
+                {{ include "env_cluster" . | indent 16 }}
                 -
-                    name: INFRABOX_ROOT_URL
-                    value: {{ required "root_url is required" .Values.root_url }}
+                    name: INFRABOX_KUBERNETES_MASTER_HOST
+                    value: "kubernetes.default.svc.cluster.local"
                 -
-                    name: INFRABOX_SERVICE
-                    value: {{ default "scheduler" .Values.scheduler.image }}
-                -
-                    name: INFRABOX_VERSION
-                    value: {{ required "scheduler.tag is required" .Values.scheduler.tag }}
-                -
-                    name: INFRABOX_CLUSTER_NAME
-                    value: {{ required "cluster.name is required" .Values.cluster.name }}
-                -
-                    name: INFRABOX_CLUSTER_LABELS
-                    value: {{ .Values.cluster.labels }}
+                    name: INFRABOX_KUBERNETES_MASTER_PORT
+                    value: "443"
                 volumeMounts:
                 {{ include "mounts_rsa_private" . | indent 16 }}
             volumes:
                 {{ include "volumes_database" . | indent 16 }}
                 {{ include "volumes_rsa" . | indent 16 }}
-{{ end }}

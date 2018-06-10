@@ -14,7 +14,6 @@ services:
             context: ../..
             dockerfile: infrabox/test-registry/Dockerfile_auth
         environment:
-            - INFRABOX_SERVICE=registry-auth
             - INFRABOX_VERSION=testing
             - INFRABOX_DATABASE_USER=postgres
             - INFRABOX_DATABASE_PASSWORD=postgres

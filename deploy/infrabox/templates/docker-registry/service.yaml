@@ -1,9 +1,8 @@
-{{ if .Values.docker_registry.enabled }}
 kind: Service
 apiVersion: v1
 metadata:
     name: infrabox-docker-registry
-    namespace: {{ default "infrabox-system" .Values.general.system_namespace }}
+    namespace: {{ template "system_namespace" . }}
     labels:
         app: infrabox-docker-registry
 spec:
@@ -15,4 +14,3 @@ spec:
         protocol: TCP
         port: 8080
         targetPort: 8080
-{{ end }}

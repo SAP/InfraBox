@@ -5,14 +5,13 @@ import urllib
 import psycopg2
 import paramiko
 
-from pyinfraboxutils import get_logger, get_env, print_stackdriver
+from pyinfraboxutils import get_logger, get_env
 from pyinfraboxutils.db import connect_db
 from pyinfraboxutils.leader import elect_leader, is_leader
 
 logger = get_logger("gerrit")
 
 def main():
-    get_env('INFRABOX_SERVICE')
     get_env('INFRABOX_VERSION')
     get_env('INFRABOX_DATABASE_DB')
     get_env('INFRABOX_DATABASE_USER')
@@ -23,7 +22,6 @@ def main():
     get_env('INFRABOX_GERRIT_HOSTNAME')
     get_env('INFRABOX_GERRIT_USERNAME')
     get_env('INFRABOX_GERRIT_KEY_FILENAME')
-    get_env('INFRABOX_ROOT_URL')
 
     conn = connect_db()
     conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
@@ -128,7 +126,15 @@ def handle_job_update(conn, event):
     gerrit_hostname = get_env('INFRABOX_GERRIT_HOSTNAME')
     gerrit_username = get_env('INFRABOX_GERRIT_USERNAME')
     gerrit_key_filename = get_env('INFRABOX_GERRIT_KEY_FILENAME')
-    dashboard_url = get_env('INFRABOX_ROOT_URL')
+
+    c = conn.cursor()
+    c.execute('''
+        SELECT root_url
+        FROM cluster
+        WHERE name = 'master'
+    ''')
+    dashboard_url = c.fetchone()[0]
+    c.close()
 
     client = paramiko.SSHClient()
     client.load_system_host_keys()
@@ -195,7 +201,4 @@ def handle_job_update(conn, event):
     client.close()
 
 if __name__ == "__main__":
-    try:
-        main()
-    except:
-        print_stackdriver()
+    main()

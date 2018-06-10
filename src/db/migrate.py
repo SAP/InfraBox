@@ -2,7 +2,7 @@ import os
 import bcrypt
 import importlib
 
-from pyinfraboxutils import get_logger, get_env, print_stackdriver
+from pyinfraboxutils import get_logger, get_env
 from pyinfraboxutils.db import connect_db
 
 logger = get_logger("migrate")
@@ -118,7 +118,6 @@ def configure_admin(conn):
     conn.commit()
 
 def main():
-    get_env('INFRABOX_SERVICE')
     get_env('INFRABOX_VERSION')
     get_env('INFRABOX_DATABASE_DB')
     get_env('INFRABOX_DATABASE_USER')
@@ -134,7 +133,4 @@ def main():
     conn.close()
 
 if __name__ == "__main__":
-    try:
-        main()
-    except:
-        print_stackdriver()
+    main()

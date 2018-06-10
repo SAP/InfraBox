@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: infrabox
+  namespace: {{ template "system_namespace" . }}
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1beta1
+metadata:
+  name: infrabox-{{ .Values.cluster.name }}
+  namespace: {{ template "system_namespace" . }}
+subjects:
+- kind: ServiceAccount
+  name: infrabox
+  namespace: {{ template "system_namespace" . }}
+roleRef:
+  kind: ClusterRole
+  name: cluster-admin
+  apiGroup: rbac.authorization.k8s.io

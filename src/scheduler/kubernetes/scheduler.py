@@ -9,7 +9,7 @@ import requests
 import psycopg2
 import psycopg2.extensions
 
-from pyinfraboxutils import get_logger, get_env, print_stackdriver
+from pyinfraboxutils import get_logger, get_env
 from pyinfraboxutils.db import connect_db
 from pyinfraboxutils.token import encode_job_token
 
@@ -83,8 +83,7 @@ class Scheduler(object):
                           headers=h, json=job, timeout=10)
 
         if r.status_code != 201:
-            self.logger.info('API Server response')
-            self.logger.info(r.text)
+            self.logger.warn(r.text)
             return False
 
         return True
@@ -525,14 +524,8 @@ class Scheduler(object):
 def main():
     # Arguments
     parser = argparse.ArgumentParser(prog="scheduler.py")
-    parser.add_argument("--docker-registry", required=True, type=str,
-                        help="Host for the registry to use")
-    parser.add_argument("--tag", required=True, type=str,
-                        help="Image tag to use for internal images")
-
     args = parser.parse_args()
 
-    get_env('INFRABOX_SERVICE')
     get_env('INFRABOX_VERSION')
     get_env('INFRABOX_CLUSTER_NAME')
     get_env('INFRABOX_DATABASE_DB')
@@ -560,7 +553,4 @@ def main():
     scheduler.run()
 
 if __name__ == "__main__":
-    try:
-        main()
-    except:
-        print_stackdriver()
+    main()
