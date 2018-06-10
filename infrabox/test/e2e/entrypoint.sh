@@ -46,14 +46,6 @@ _getDependencies() {
     pushd /cli
     pip install -e .
     popd
-
-    echo "## Get minio client"
-    curl https://dl.minio.io/client/mc/release/linux-amd64/mc > /usr/bin/mc
-    chmod +x /usr/bin/mc
-}
-
-_getPodNameImpl() {
-    kubectl get pods -n $1 | grep $2 | grep Running | awk '{print $1}'
 }
 
 _getNginxIP() {
@@ -66,47 +58,21 @@ _getNginxIP() {
     echo $external_ip
 }
 
-_getPodName() {
-    pod_name=$(_getPodNameImpl $1 $2)
-
-    while true; do
-        if [ -n "$pod_name" ]; then
-           break
-        fi
-
-        sleep 1
-        pod_name=$(_getPodNameImpl $1 $2)
-    done
-    echo $pod_name
-}
-
 _initHelm() {
     echo "## init helm"
     kubectl -n kube-system create sa tiller
-    kubectl create clusterrolebinding tiller --clusterrole cluster-admin --serviceaccount=kube-system:tiller
-    helm init --service-account tiller
-
-    echo "## Wait for tiller to be ready"
-    # wait for tiller to be ready
-    tiller_pod=$(_getPodName "kube-system" "tiller")
-    sleep 20
+    kubectl create clusterrolebinding tiller \
+		--clusterrole cluster-admin \
+		--serviceaccount=kube-system:tiller
+    helm init --service-account tiller --wait
 }
 
 _installPostgres() {
     echo "## Install postgres"
-    kubectl run postgres --image=quay.io/infrabox/postgres:$IMAGE_TAG -n infrabox-system
-    kubectl expose -n infrabox-system deployment postgres --port 5432 --target-port 5432 --name infrabox-postgres
-
-    # Wait until postgres is ready
-    postgres_pod=$(_getPodName "infrabox-system" "postgres")
-    echo "Port forwarding to postgres: '$postgres_pod'"
-    kubectl port-forward -n infrabox-system $postgres_pod 5432 &
-
-    # Wait until postgres is ready
-    until psql -U postgres -h localhost -c '\l'; do
-        >&2 echo "Postgres is unavailable - sleeping"
-        sleep 1
-    done
+	helm install name postgres stable/postgresql \
+		--set imageTag=9.6.2,postgresPassword=postgres \
+		--wait \
+        --namespace infrabox-system
 }
 
 _installMinio() {
@@ -115,25 +81,8 @@ _installMinio() {
         --set serviceType=ClusterIP,replicas=1,persistence.enabled=false \
         -n infrabox-minio \
         --namespace infrabox-system \
+        --wait \
         stable/minio
-
-    # Wait until minio is ready
-    sleep 30
-
-    # init minio client
-    minio_pod=$(_getPodName "infrabox-system" "minio")
-    echo "Port forwarding to minio: '$minio_pod'"
-    kubectl get pod --all-namespaces
-    kubectl port-forward -n infrabox-system $minio_pod 9000 &
-
-    until mc config host add minio http://localhost:9000 AKIAIOSFODNN7EXAMPLE wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY S3v4;
-    do
-        echo "Waiting for minio to be ready"
-        sleep 3
-    done
-
-    # Create buckets
-    mc mb minio/infrabox
 }
 
 _installNginxIngress() {
@@ -142,8 +91,7 @@ _installNginxIngress() {
     helm install \
         -n nic \
         --namespace kube-system \
-        --set controller.config.proxy-body-size="0" \
-        --set controller.config.ssl-redirect='"false"' \
+        --wait \
         stable/nginx-ingress
 
     nginx_ip=$(_getNginxIP)
@@ -163,40 +111,44 @@ _installInfrabox() {
     cp id_rsa* /var/run/secrets/infrabox.net/rsa/
 
     echo "## Install infrabox"
-    outdir=/tmp/test
-    rm -rf $outdir
-    python /infrabox/context/deploy/install.py \
-        -o $outdir \
-        --general-dont-check-certificates \
-        --version $IMAGE_TAG \
-        --root-url https://$ROOT_URL \
-        --general-rsa-public-key ./id_rsa.pem \
-        --general-rsa-private-key ./id_rsa \
-        --admin-email admin@infrabox.net \
-        --admin-password admin \
-        --database postgres \
-        --postgres-host infrabox-postgres.infrabox-system \
-        --postgres-username postgres \
-        --postgres-password postgres \
-        --postgres-database postgres \
-        --storage s3 \
-        --s3-endpoint infrabox-minio.infrabox-system \
-        --s3-bucket infrabox \
-        --s3-secure false \
-        --s3-secret-key wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY \
-        --s3-access-key AKIAIOSFODNN7EXAMPLE \
-        --s3-region us-east-1 \
-        --s3-port 9000
 
-    pushd $outdir/infrabox
-    helm install --namespace infrabox-system .
-    popd
+	cd /infrabox/context/deploy/infrabox
 
-    sleep 5
+	cat >my_values.yaml <<EOL
+admin:
+  email: admin@admin.com
+  password: infrabox123
+  private_key: $(base64 -w 0 ./id_rsa)
+  public_key: $(base64 -w 0 ./id_rsa.pem)
+general:
+  dont_check_certificates: true
+database:
+  postgres:
+    db: postgres
+    enabled: true
+    host: postgres-postgresql.infrabox-system
+    password: postgres
+    username: postgres
+host: $ROOT_URL
+image:
+  tag: $IMAGE_TAG
+storage:
+  s3:
+    access_key_id: AKIAIOSFODNN7EXAMPLE
+    bucket: infrabox
+    enabled: true
+    endpoint: infrabox-minio.infrabox-system
+    port: '9000'
+    region: us-east1
+    secret_access_key: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+    secure: false
+EOL
 
-    pushd $outdir/infrabox-function
-    helm install --namespace infrabox-system .
-    popd
+    helm install --namespace infrabox-system -f my_values.yaml --wait .
+
+	cd ../infrabox-function
+
+    helm install --namespace infrabox-system -f ../infrabox/my_values --wait .
 
     export INFRABOX_DATABASE_HOST=localhost
     export INFRABOX_DATABASE_DB=postgres

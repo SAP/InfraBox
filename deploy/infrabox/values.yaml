@@ -39,11 +39,11 @@ admin:
     # Password of the admin accounts
     password: # <REQUIRED>
 
-    # Path to the private key file (i.e. "secrets/id_rsa")
-    private_key_file: # <REQUIRED>
+    # base64 encoded privated key
+    private_key: # <REQUIRED>
 
-    # Path to the public key file (i.e. "secrets/id_rsa.pub")
-    public_key_file: # <REQUIRED>
+    # base64 encoded public key
+    public_key: # <REQUIRED>
 
 ingress:
     # If enabled an Ingress will be created
@@ -58,8 +58,8 @@ storage:
         # Bucket name
         bucket: # <REQUIRED>
 
-        # Service account file path (i.e. "secrets/gcs_service_account.json")
-        service_account_file: # <REQUIRED>
+        # base64 encoded service account .json file
+        service_account: # <REQUIRED>
 
     s3:
         # Enabled S3
@@ -114,8 +114,8 @@ database:
         # The instance connection name
         instance_connection_name: # <REQUIRED>
 
-        # Path to the service account (i.e. "secrets/cloudsql_service_account.json")
-        service_account_file: # <REQUIRED>
+        # base64 encoded service account .json file
+        service_account: # <REQUIRED>
 
     postgres:
         enabled: true
@@ -146,8 +146,8 @@ gerrit:
     # Username
     username: # <REQUIRED>
 
-    # Path to the private key file to be used for connecting to gerrit (i.e. "secrets/gerrit_id_rsa")
-    private_key_file: # <REQUIRED>
+    # base64 encoded private key for connecting to gerrit
+    private_key: # <REQUIRED>
 
     # Port
     port: 29418

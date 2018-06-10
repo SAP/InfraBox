@@ -38,13 +38,13 @@ https://{{- required "host is required" .Values.host -}}:{{- .Values.port -}}
 {{ if .Values.database.postgres.enabled }}
 -
     name: INFRABOX_DATABASE_HOST
-    value: {{ default "localhost" .Values.database.postgres.host | quote }}
+    value: {{ required "database.postgres.host is required" .Values.database.postgres.host | quote }}
 -
     name: INFRABOX_DATABASE_DB
-    value: {{ default "infrabox" .Values.database.postgres.db | quote }}
+    value: {{ required "database.postgres.db is required" .Values.database.postgres.db | quote }}
 -
     name: INFRABOX_DATABASE_PORT
-    value: {{ default 5432 .Values.database.postgres.port | quote }}
+    value: {{ required "database.postgres.port is required" .Values.database.postgres.port | quote }}
 {{ end }}
 {{ if .Values.database.cloudsql.enabled }}
 -
