@@ -606,21 +606,6 @@ class OutputParent(Resource):
 
         return send_file(f)
 
-@ns.route("/setrunning")
-class SetRunning(Resource):
-
-    @job_token_required
-    def post(self):
-        job_id = g.token['job']['id']
-
-        g.db.execute("DELETE FROM console WHERE job_id = %s", (job_id,))
-        g.db.execute("""
-            UPDATE job SET state = 'running', start_date = current_timestamp
-            WHERE id = %s""", [job_id])
-        g.db.commit()
-
-        return jsonify({})
-
 def find_leaf_jobs(jobs):
     parent_jobs = {}
     leaf_jobs = []
