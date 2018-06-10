@@ -78,15 +78,6 @@ class JobApiTest(ApiTestTemplate):
                             content_type='multipart/form-data')
         self.assertEqual(r, {})
 
-    def test_setrunning(self):
-        r = TestClient.post(self.url_ns + '/setrunning', {}, self.job_headers)
-        self.assertEqual(r, {})
-
-        r = TestClient.execute_one("""SELECT state FROM job
-                                       WHERE id = %s""", [self.job_id])
-        job_state = r["state"]
-        self.assertEqual(job_state, 'running')
-
     def test_create_jobs(self):
         job_id = "6544af82-1c4f-5bb5-b1da-a54a0ced5e6f"
         data = { "jobs": [{
