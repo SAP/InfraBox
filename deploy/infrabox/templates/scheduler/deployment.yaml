@@ -15,9 +15,7 @@ spec:
                 app: infrabox-scheduler
         spec:
             terminationGracePeriodSeconds: 0
-            {{ if .Values.general.enabled }}
-            serviceAccountName: infrabox-scheduler
-            {{ end }}
+            serviceAccountName: infrabox
             containers:
             {{ include "containers_database" . | indent 12 }}
             -
