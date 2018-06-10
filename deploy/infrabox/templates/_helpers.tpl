@@ -366,12 +366,3 @@ https://{{- required "host is required" .Values.host -}}:{{- .Values.port -}}
       mountPath: /cloudsql
 {{ end }}
 {{ end }}
-
-{{ define "env_job" }}
--
-    name: INFRABOX_JOB_MAX_OUTPUT_SIZE
-    value: {{ default "104857600" .Values.job.max_output_size | quote }}
--
-    name: INFRABOX_JOB_SECURITY_CONTEXT_CAPABILITIES_ENABLED
-    value: {{ default "false" .Values.job.security_context.capabilities.enabled | quote }}
-{{ end }}

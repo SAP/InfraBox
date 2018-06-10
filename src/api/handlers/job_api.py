@@ -493,14 +493,9 @@ class Archive(Resource):
 
         return jsonify({"message": "File uploaded"})
 
-
-# TODO(steffen): check upload output sizes
-# max_output_size = os.environ['INFRABOX_JOB_MAX_OUTPUT_SIZE']
-
 output_upload_parser = api.parser()
 output_upload_parser.add_argument('output.tar.gz', location='files',
                                   type=FileStorage, required=True)
-
 
 @ns.route("/output")
 class Output(Resource):
@@ -685,16 +680,6 @@ class CreateJobs(Resource):
 
         if not jobs:
             return "No jobs"
-
-        # Check if capabilities are set and allowed
-        if get_env('INFRABOX_JOB_SECURITY_CONTEXT_CAPABILITIES_ENABLED') != 'true':
-            for job in jobs:
-                sc = job.get('security_context', None)
-                if not sc:
-                    continue
-
-                if sc.get('capabilities', None):
-                    abort(400, 'Capabilities are disabled')
 
         result = g.db.execute_one("SELECT env_var, build_id FROM job WHERE id = %s", [parent_job_id])
         base_env_var = result[0]

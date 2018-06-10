@@ -222,8 +222,6 @@ job:
     docker_daemon_config: |-
         {}
 
-    max_output_size: 104857600
-
     security_context:
         capabilities:
             enabled: false

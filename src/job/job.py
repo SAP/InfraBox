@@ -541,11 +541,7 @@ class RunJob(Job):
             self.compress(self.infrabox_output_dir, storage_output_tar)
             file_size = os.stat(storage_output_tar).st_size
 
-            max_output_size = os.environ['INFRABOX_JOB_MAX_OUTPUT_SIZE']
             c.collect("Output size: %s kb" % (file_size / 1024), show=True)
-            if file_size > max_output_size:
-                raise Failure("Output too large")
-
             self.post_file_to_api_server("/output", storage_output_tar)
         else:
             c.collect("Output is empty", show=True)
@@ -562,11 +558,7 @@ class RunJob(Job):
 
                 file_size = os.stat(storage_cache_tar).st_size
 
-                max_output_size = os.environ['INFRABOX_JOB_MAX_OUTPUT_SIZE']
                 c.collect("Output size: %s kb" % (file_size / 1024), show=True)
-                if file_size > max_output_size:
-                    raise Failure("Output too large")
-
                 self.post_file_to_api_server('/cache', storage_cache_tar)
             else:
                 c.collect("Cache is empty", show=True)
@@ -1205,7 +1197,6 @@ def main():
     get_env('INFRABOX_ROOT_URL')
     get_env('INFRABOX_GENERAL_DONT_CHECK_CERTIFICATES')
     get_env('INFRABOX_LOCAL_CACHE_ENABLED')
-    get_env('INFRABOX_JOB_MAX_OUTPUT_SIZE')
     console = ApiConsole()
 
     j = None

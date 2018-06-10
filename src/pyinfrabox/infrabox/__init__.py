@@ -163,20 +163,8 @@ def parse_limits(d, path):
     if d['memory'] <= 255:
         raise ValidationError(path + ".memory", "must be greater than 255")
 
-def parse_add_capabilities(d, path):
-    check_string_array(d, path)
-
-def parse_capabilities(d, path):
-    check_allowed_properties(d, path, ('add',))
-
-    if 'add' in d:
-        parse_add_capabilities(d['add'], path + '.add')
-
 def parse_security_context(d, path):
     check_allowed_properties(d, path, ('capabilities', 'privileged'))
-
-    if 'capabilities' in d:
-        parse_capabilities(d['capabilities'], path + '.capabilities')
 
     if 'privileged' in d:
         check_boolean(d['privileged'], path + ".privileged")
