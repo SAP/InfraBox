@@ -67,12 +67,41 @@ _initHelm() {
     helm init --service-account tiller --wait
 }
 
+_getPodNameImpl() {
+    kubectl get pods -n $1 | grep $2 | grep Running | awk '{print $1}'
+}
+
+_getPodName() {
+    pod_name=$(_getPodNameImpl $1 $2)
+
+    while true; do
+        if [ -n "$pod_name" ]; then
+           break
+        fi
+
+        sleep 1
+        pod_name=$(_getPodNameImpl $1 $2)
+    done
+    echo $pod_name
+}
+
 _installPostgres() {
     echo "## Install postgres"
 	helm install -n postgres stable/postgresql \
 		--set imageTag=9.6.2,postgresPassword=postgres \
 		--wait \
         --namespace infrabox-system
+
+    # Wait until postgres is ready
+    postgres_pod=$(_getPodName "infrabox-system" "postgres")
+    echo "Port forwarding to postgres: '$postgres_pod'"
+    kubectl port-forward -n infrabox-system $postgres_pod 5432 &
+
+    # Wait until postgres is ready
+    until psql -U postgres -h localhost -c '\l'; do
+        >&2 echo "Postgres is unavailable - sleeping"
+        sleep 1
+	done
 }
 
 _installMinio() {
