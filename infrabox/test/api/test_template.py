@@ -62,9 +62,9 @@ class ApiTestTemplate(unittest.TestCase):
 
         TestClient.execute("""
                 INSERT INTO job (id, state, build_id, type, name, project_id,
-                                build_only, dockerfile, cpu, memory)
+                                build_only, dockerfile, cpu, memory, cluster_name)
                 VALUES (%s, 'queued', %s, 'run_docker_compose',
-                        %s, %s, false, '', 1, 512);
+                        %s, %s, false, '', 1, 512, 'master');
             """, [self.job_id, self.build_id, self.job_name, self.project_id])
 
         TestClient.execute("""
