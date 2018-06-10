@@ -104,6 +104,8 @@ _installNginxIngress() {
 }
 
 _installInfrabox() {
+	cd /infrabox/context/deploy/infrabox
+
     ssh-keygen -N '' -t rsa -f id_rsa
     ssh-keygen -f id_rsa.pub -e -m pem > id_rsa.pem
 
@@ -111,8 +113,6 @@ _installInfrabox() {
     cp id_rsa* /var/run/secrets/infrabox.net/rsa/
 
     echo "## Install infrabox"
-
-	cd /infrabox/context/deploy/infrabox
 
 	cat >my_values.yaml <<EOL
 admin:
