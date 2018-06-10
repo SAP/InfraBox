@@ -1,7 +1,9 @@
 # Install Minio
 [Minio][minio] is S3 compatible storage. We use it as storage for the internal docker registry as well as for storing caches, input/outup.
 
-    $ helm install stable/minio --set serviceType=ClusterIP --namespace infrabox-system -n minio
+```bash
+    helm install stable/minio --set serviceType=ClusterIP --namespace infrabox-system -n minio
+```
 
 **This configuration is not for production use**
 

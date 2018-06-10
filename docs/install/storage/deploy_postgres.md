@@ -1,7 +1,9 @@
 # Deploy Postgres
 To install a PostgreSQL database in kubernetes simply run:
 
+```bash
     helm install -n postgres --namespace infrabox-system --set postgresPassword=qweasdzxc1,postgresUser=infrabox,postgresDatabase=infrabox stable/postgresql
+```
 
 **This is not meant for production**
 

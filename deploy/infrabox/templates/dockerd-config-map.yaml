@@ -5,8 +5,8 @@ metadata:
   namespace: {{ template "worker_namespace" . }}
 data:
 {{- if .Values.general.dont_check_certificates }}
-  daemon.json: {{ required "job.docker_daemon_config is required" .Values.job.docker_daemon_config | b64enc }}
+  daemon.json: {{ required "job.docker_daemon_config is required" .Values.job.docker_daemon_config }}
 {{- else -}}
-  daemon.json: {{ "{}" | b64enc }}
+  daemon.json: {{ "{}" }}
 {{- end }}
 
