@@ -99,10 +99,12 @@ You can configure different ways of how your user can authenticate.
 - [Manual signup / login](/docs/install/configure/signup.md)
 
 ## Clone InfraBox repository
-If you have not already cloned the InfraBox repository do so with:
+If you have not already cloned the InfraBox repository and checkout the version you would like to install.
 
 ```bash
 git clone https://github.com/SAP/infrabox /tmp/infrabox
+cd /tmp/infrabox
+git checkout master
 ```
 
 ## Generate RSA Key
@@ -129,7 +131,7 @@ EOL
 
 Add all the necessary configurations options as described in the earlier steps.
 If you forget some the installation will fail with some message like `a.b.c is required`.
-After you have prepared your `my_values.yaml` you may deploy infrabox.
+After you have prepared your `my_values.yaml` you may deploy InfraBox.
 
 ```bash
 helm install --namespace infrabox-system -f my_values.yaml --wait /tmp/infrabox/deploy/infrabox

@@ -39,7 +39,7 @@ admin:
     # Password of the admin accounts
     password: # <REQUIRED>
 
-    # base64 encoded privated key
+    # base64 encoded private key
     private_key: # <REQUIRED>
 
     # base64 encoded public key
@@ -118,7 +118,7 @@ database:
         service_account: # <REQUIRED>
 
     postgres:
-        enabled: true
+        enabled: false
 
         # Host of your postgres database
         host: # <REQUIRED>
@@ -214,8 +214,14 @@ local_cache:
     # Host path which will be available to all jobs at /infrabox/local-cache
     host_path: /tmp/infrabox/local_cache
 
-# TODO
 job:
+    # Configure the internal docker daemon. Content should be a valid json
+    # docker daemon config. It's required if you run with a self signed certificate
+    # for your domain. In this case you have to mark the internal registry as insecure.
+    # I.e.: {"insecure-registries": ["<HOST>"]}
+    docker_daemon_config: |-
+        {}
+
     max_output_size: 104857600
 
     security_context:

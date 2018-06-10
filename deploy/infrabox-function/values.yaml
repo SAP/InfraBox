@@ -39,7 +39,7 @@ admin:
     # Password of the admin accounts
     password: # <REQUIRED>
 
-    # base64 encoded privated key
+    # base64 encoded private key
     private_key: # <REQUIRED>
 
     # base64 encoded public key
@@ -215,11 +215,12 @@ local_cache:
     host_path: /tmp/infrabox/local_cache
 
 job:
-    # Configure the internal docker daemon. Content should be a json string containing
-    # the docker daemon config. It's required if you run with a self signed certificate
+    # Configure the internal docker daemon. Content should be a valid json
+    # docker daemon config. It's required if you run with a self signed certificate
     # for your domain. In this case you have to mark the internal registry as insecure.
-    # I.e.: '{"insecure-registries": ["<HOST>"]}'
-    docker_daemon_config:
+    # I.e.: {"insecure-registries": ["<HOST>"]}
+    docker_daemon_config: |-
+        {}
 
     max_output_size: 104857600
 
