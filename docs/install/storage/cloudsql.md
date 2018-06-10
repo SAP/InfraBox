@@ -1,10 +1,24 @@
 # Google SQL Postgres
 TODO link to create db...
 
-    --database cloudsql
-    --cloudsql-instance-connection-name <YOUR_INSTANCE_CONNECTION_NAME>
-    --cloudsql-proxy-service-account-key-file <ABSOLUTE_PATH_TO_PROXY_SERVICE_ACCOUNT_KEY_FILE_JSON>
-    --cloudsql-proxy-username <YOUR_PROXY_USERNAME>
-    --cloudsql-proxy-password <YOUR_PROXY_PASSWORD>
+```yaml
+database:
+    cloudsql:
+        # Enable
+        enabled: false
 
+        # Database name
+        db: # <REQUIRED>
 
+        # Username
+        username: # <REQUIRED>
+
+        # Password
+        password: # <REQUIRED>
+
+        # The instance connection name
+        instance_connection_name: # <REQUIRED>
+
+        # base64 encoded service account .json file
+        service_account: # <REQUIRED>
+```

@@ -5,12 +5,25 @@ To install a PostgreSQL database in kubernetes simply run:
 
 **This is not meant for production**
 
-When configuring the InfraBox installation with `install.py` use these options:
+When configuring the InfraBox installation with `helm` use these options:
 
-    --database postgres
-    --postgres-host postgres-postgresql.infrabox-system
-    --postgres-username infrabox
-    --postgres-database infrabox
-    --postgres-port 5432
-    --postgres-password qweasdzxc1
+```yaml
+database:
+    postgres:
+        enabled: true
 
+        # Host of your postgres database
+        host: postgres-postgresql.infrabox-system
+
+        # Port of your postgres database
+        port: 5432
+
+        # Database name
+        db: infrabox
+
+        # Username
+        username: infrabox
+
+        # Password
+        password: qweasdzxc1
+```

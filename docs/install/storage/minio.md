@@ -8,38 +8,32 @@
 If you want to setup minio for a production setup please read the minio guide how to do it.
 You may also use S3 directly or any other S3 API compatible storage. [See S3 configuration](configure/s3.md) for the configuration options.
 
-After minio has been started create a `Job` to initalize the minio bucket:
+When configuring InfraBox later with `helm` use these options:
 
-    apiVersion: batch/v1
-    kind: Job
-    metadata:
-        name: init-minio
-        namespace: infrabox-system
-    spec:
-        template:
-            metadata:
-                name: init-minio
-            spec:
-                containers:
-                -
-                    name: init-minio
-                    image: minio/mc
-                    command: ["/bin/sh", "-c"]
-                    args: ["mc config host add infrabox http://minio.infrabox-system:9000 AKIAIOSFODNN7EXAMPLE wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY S3v4 && mc mb infrabox/infrabox && mc ls infrabox"]
-                restartPolicy: Never
+```yaml
+storage:
+    s3:
+        # Enabled S3
+        enabled: true
 
-Save it to minio-init.yaml and run:
+        # Region
+        region: us-east-1
 
-    kubectl create -f minio-init.yaml
+        # Regeion endpoint
+        endpoint: minio.infrabox-system
 
+        # Region endpoint port
+        port: 9000
 
-When configuring InfraBox later with `install.py` use these options:
+        # If https should be used or not
+        secure: false
 
-    --storage s3
-    --s3-access-key AKIAIOSFODNN7EXAMPLE
-    --s3-secret-key wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
-    --s3-secure false
-    --s3-endpoint minio.infrabox-system
-    --s3-port 9000
-    --s3-region us-east-1
+        # Bucket name
+        bucket: infrabox
 
+        # AWS Access Key ID
+        access_key_id: AKIAIOSFODNN7EXAMPLE
+
+        # AWS Secret Access Key
+        secret_access_key: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+```

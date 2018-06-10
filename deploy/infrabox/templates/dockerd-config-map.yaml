@@ -4,4 +4,9 @@ metadata:
   name: infrabox-dockerd-config
   namespace: {{ template "worker_namespace" . }}
 data:
-{{ (.Files.Glob "config/docker/*").AsConfig | indent 2 }}
+{{- if .Values.general.dont_check_certificates }}
+  daemon.json: {{ required "job.docker_daemon_config is required" .Values.job.docker_daemon_config | b64enc }}
+{{- else -}}
+  daemon.json: {{ "{}" | b64enc }}
+{{- end }}
+
