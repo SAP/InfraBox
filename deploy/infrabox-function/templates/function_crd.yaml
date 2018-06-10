@@ -1,0 +1,59 @@
+apiVersion: core.infrabox.net/v1alpha1
+kind: IBFunction
+metadata:
+    name: infrabox-default-function
+spec:
+    image: {{ include "image_repository" . }}/job:{{ include "image_tag" . }}
+    securityContext:
+        privileged: true
+    resources:
+        limits:
+            cpu: 1000m
+        requests:
+            cpu: 1000m
+            memory: 1Gi
+    env:
+    {{ include "env_general" . | indent 4 }}
+    {{ include "env_job" . | indent 4 }}
+    {{ include "env_gerrit" . | indent 4 }}
+    -
+        name: INFRABOX_LOCAL_CACHE_ENABLED
+        value: {{ .Values.local_cache.enabled | quote }}
+    volumeMounts:
+    -
+        mountPath: /etc/docker/daemon.json
+        name: dockerd-config
+        subPath: daemon.json
+    -
+        name: data-dir
+        mountPath: "/data"
+{{ if .Values.local_cache.enabled }}
+    -
+        mountPath: /local-cache
+        name: local-cache
+{{ end }}
+{{ if .Values.gerrit.enabled }}
+    -
+        mountPath: /var/run/gerrit/
+        name: gerrit-ssh
+{{ end }}
+    volumes:
+    -
+        name: data-dir
+        emptyDir: {}
+    -
+        name: dockerd-config
+        configMap:
+            name: infrabox-dockerd-config
+{{ if .Values.local_cache.enabled }}
+    -
+        name: local-cache
+        hostPath:
+            Path: {{ default "/tmp/infrabox/local_cache" .Values.local_cache.host_path }}
+{{ end }}
+{{ if .Values.gerrit.enabled }}
+    -
+        name: gerrit-ssh
+        secret:
+            secretName: infrabox-gerrit-ssh
+{{ end }}
