@@ -14,7 +14,6 @@ spec:
             memory: 1Gi
     env:
     {{ include "env_general" . | indent 4 }}
-    {{ include "env_job" . | indent 4 }}
     {{ include "env_gerrit" . | indent 4 }}
     -
         name: INFRABOX_LOCAL_CACHE_ENABLED
