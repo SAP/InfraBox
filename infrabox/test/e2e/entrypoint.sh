@@ -143,10 +143,12 @@ _installInfrabox() {
 
     echo "## Install infrabox"
 
+    PW=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
+
 	cat >my_values.yaml <<EOL
 admin:
   email: admin@admin.com
-  password: infrabox123
+  password: $PW
   private_key: $(base64 -w 0 ./id_rsa)
   public_key: $(base64 -w 0 ./id_rsa.pem)
 general:

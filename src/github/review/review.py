@@ -92,12 +92,6 @@ def handle_job_update(conn, event):
     build_number = build['build_number']
     build_restartCounter = build['restart_counter']
 
-    dashboard_url = execute_sql(conn, '''
-        SELECT root_url
-        FROM cluster
-        WHERE name = 'master'
-    ''', [])[0]['root_url']
-
     # determine github commit state
     state = 'success'
     if job_state in ('scheduled', 'running', 'queued'):
@@ -133,6 +127,13 @@ def handle_job_update(conn, event):
         WHERE id = %s
         AND project_id = %s
     ''', [commit_sha, project_id])[0]['github_status_url']
+
+    dashboard_url = execute_sql(conn, '''
+        SELECT root_url
+        FROM cluster
+        WHERE name = 'master'
+    ''', [])[0]['root_url']
+
     target_url = '%s/dashboard/#/project/%s/build/%s/%s/job/%s' % (dashboard_url,
                                                                    project_name,
                                                                    build_number,

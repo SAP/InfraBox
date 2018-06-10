@@ -39,6 +39,10 @@ class TestIt(unittest.TestCase):
             'commit_id': 'sha'
         }
 
+        self.cluster_data = {
+            'root_url': 'GITHUB_URL'
+        }
+
         self.token_data = {
             'github_api_token': 'token'
         }
@@ -108,7 +112,8 @@ class TestIt(unittest.TestCase):
                       [self.project_data],
                       [self.build_data],
                       [self.token_data],
-                      [self.commit_data]]
+                      [self.commit_data],
+                      [self.cluster_data]]
 
         def side_effect(_1, _2, _3):
             return sql_result.pop(0)
@@ -136,7 +141,8 @@ class TestIt(unittest.TestCase):
                       [self.project_data],
                       [self.build_data],
                       [self.token_data],
-                      [self.commit_data]]
+                      [self.commit_data],
+                      [self.cluster_data]]
 
         def side_effect(_1, _2, _3):
             return sql_result.pop(0)
