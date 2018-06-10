@@ -2,7 +2,7 @@
     "version": 1,
     "jobs": [{
         "type": "docker",
-        "name": "e2e-k8s",
+        "name": "e2e-k8s-1-10",
         "docker_file": "infrabox/test/e2e/Dockerfile",
         "build_context": "../..",
         "build_only": false,
@@ -28,7 +28,7 @@
         }]
     }, {
         "type": "docker",
-        "name": "e2e-k8s",
+        "name": "e2e-k8s-1-9",
         "docker_file": "infrabox/test/e2e/Dockerfile",
         "build_context": "../..",
         "build_only": false,
