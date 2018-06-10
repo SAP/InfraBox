@@ -23,6 +23,7 @@ def main():
         deployments = json.load(dep)
 
     tag = os.environ.get('INFRABOX_GIT_TAG', None)
+    branch = os.environ.get('INFRABOX_GIT_BRANCH', None)
 
     # modify tags
     for j in deployments['jobs']:
@@ -34,15 +35,17 @@ def main():
 
         for d in deps:
             new_dep_tag = copy.deepcopy(d)
-            new_dep_dev = copy.deepcopy(d)
+            new_dep_master = copy.deepcopy(d)
             new_dep_latest = copy.deepcopy(d)
 
             new_dep_tag['tag'] = tag
-            new_dep_dev['tag'] = 'dev'
+            new_dep_master['tag'] = 'master'
             new_dep_latest['tag'] = 'latest'
 
             new_deps.append(d)
-            new_deps.append(new_dep_dev)
+
+            if branch == 'master':
+                new_deps.append(new_dep_master)
 
             if tag:
                 new_deps.append(new_dep_tag)
@@ -60,7 +63,6 @@ def main():
                 'data': False
             }
 
-    branch = os.environ.get('INFRABOX_GIT_BRANCH', None)
     if not branch:
         for j in deployments['jobs']:
             if 'deployments' in j:
