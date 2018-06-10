@@ -174,7 +174,8 @@ storage:
     secret_access_key: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
     secure: false
 job:
-    docker_daemon_config: '{"insecure-registries": ["$ROOT_URL"]}'
+    docker_daemon_config: |-
+        {"insecure-registries": ["$ROOT_URL"]}
 EOL
 
     helm install --namespace infrabox-system -f my_values.yaml --wait .
