@@ -69,7 +69,7 @@ _initHelm() {
 
 _installPostgres() {
     echo "## Install postgres"
-	helm install name postgres stable/postgresql \
+	helm install -n postgres stable/postgresql \
 		--set imageTag=9.6.2,postgresPassword=postgres \
 		--wait \
         --namespace infrabox-system

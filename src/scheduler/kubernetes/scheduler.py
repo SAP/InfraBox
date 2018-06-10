@@ -83,8 +83,7 @@ class Scheduler(object):
                           headers=h, json=job, timeout=10)
 
         if r.status_code != 201:
-            self.logger.info('API Server response')
-            self.logger.info(r.text)
+            self.logger.warn(r.text)
             return False
 
         return True

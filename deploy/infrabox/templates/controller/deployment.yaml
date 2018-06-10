@@ -17,7 +17,7 @@ spec:
             containers:
             -
                 name: controller
-                image: {{ include "image_repository" . }}/controller:{{ include "image_tag"  . }}
+                image: {{ include "image_repository" . }}/controller:{{ include "image_tag" . }}
                 imagePullPolicy: Always
                 env:
                 -
