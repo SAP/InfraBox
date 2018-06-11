@@ -83,6 +83,35 @@ spec:
                             name: infrabox-s3-credentials
                             key: secretKey
                 {{ end }}
+                {{ if .Values.storage.swift.enabled }}
+                -
+                    name: REGISTRY_STORAGE
+                    value: swift
+                -
+                    name: REGISTRY_STORAGE_SWIFT_AUTHURL
+                    value: {{ .Values.storage.swift.auth_url }}
+                -
+                    name: REGISTRY_STORAGE_SWIFT_DOMAIN
+                    value: {{ .Values.storage.swift.project_domain_name }}
+                -
+                    name: REGISTRY_STORAGE_SWIFT_TENANT
+                    value: {{ .Values.storage.swift.project_name }}
+                -
+                    name: REGISTRY_STORAGE_SWIFT_CONTAINER
+                    value: {{ .Values.storage.swift.container_name }}
+                -
+                    name: REGISTRY_STORAGE_SWIFT_USERNAME
+                    valueFrom:
+                        secretKeyRef:
+                            name: infrabox-swift-credentials
+                            key: username
+                -
+                    name: REGISTRY_STORAGE_SWIFT_PASSWORD
+                    valueFrom:
+                        secretKeyRef:
+                            name: infrabox-swift-credentials
+                            key: password
+                {{ end }}
                 {{ if .Values.storage.azure.enabled }}
                 -
                     name: REGISTRY_STORAGE

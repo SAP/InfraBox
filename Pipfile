@@ -24,6 +24,8 @@ cryptography = "*"
 pycrypto = "*"
 azure-mgmt-resource = "*"
 azure-storage = "*"
+python-swiftclient = "*"
+keystoneauth1 = "*"
 
 
 [requires]
