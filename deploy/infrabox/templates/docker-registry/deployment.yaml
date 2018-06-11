@@ -6,7 +6,7 @@ metadata:
     labels:
         app: infrabox-docker-registry
 spec:
-    replicas: 1
+    replicas: {{ required "docker_registry.replicas is required" .Values.docker_registry.replicas }}
     template:
         metadata:
             labels:
@@ -48,6 +48,9 @@ spec:
                 -
                     name: REGISTRY_STORAGE_REDIRECT_DISABLE
                     value: "true"
+                -
+                    name: REGISTRY_HTTP_SECRET
+                    value: {{ .Values.admin.private_key | sha256sum }}
                 {{ if .Values.storage.s3.enabled }}
                 -
                     name: REGISTRY_STORAGE

@@ -239,6 +239,10 @@ local_cache:
     # Host path which will be available to all jobs at /infrabox/local-cache
     host_path: /tmp/infrabox/local_cache
 
+docker_registry:
+    # Instances of the docker registry
+    replicas: 1
+
 job:
     # Configure the internal docker daemon. Content should be a valid json
     # docker daemon config. It's required if you run with a self signed certificate

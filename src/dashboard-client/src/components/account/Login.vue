@@ -74,7 +74,7 @@ export default {
         },
         password () {
             // eslint-disable-next-line
-            const pwRegex = /^.{5,20}$/
+            const pwRegex = /^.{5,100}$/
             this.pwValid = pwRegex.test(this.password)
         }
     },
