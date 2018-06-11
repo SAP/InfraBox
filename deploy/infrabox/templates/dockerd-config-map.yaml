@@ -5,4 +5,4 @@ metadata:
   namespace: {{ template "worker_namespace" . }}
 data:
   daemon.json: |-
-      {{ required "job.docker_daemon_config is required" .Values.job.docker_daemon_config }}
+{{ required "job.docker_daemon_config is required" .Values.job.docker_daemon_config | indent 4 }}
