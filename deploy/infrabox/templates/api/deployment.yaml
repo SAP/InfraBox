@@ -50,6 +50,18 @@ spec:
                 -
                     name: INFRABOX_GERRIT_ENABLED
                     value: {{ .Values.gerrit.enabled | quote }}
+                livenessProbe:
+                  httpGet:
+                    path: /ping
+                    port: 8080
+                  initialDelaySeconds: 3
+                  periodSeconds: 3
+                readinessProbe:
+                  httpGet:
+                    path: /ping
+                    port: 8080
+                  initialDelaySeconds: 3
+                  periodSeconds: 3
             volumes:
                 {{ include "volumes_database" . | indent 16 }}
                 {{ include "volumes_rsa" . | indent 16 }}

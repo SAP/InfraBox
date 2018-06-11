@@ -368,9 +368,6 @@ https://{{- required "host is required" .Values.host -}}:{{- .Values.port -}}
 -
     name: INFRABOX_GENERAL_REPORT_ISSUE_URL
     value: {{ .Values.general.report_issue_url }}
--
-    name: INFRABOX_GENERAL_DOCKER_REGISTRY
-    value: {{ .Values.general.docker_registry }}
 {{ end }}
 
 {{ define "env_docker_registry" }}
