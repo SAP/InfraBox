@@ -17,5 +17,6 @@ kubectl create -n infrabox-system secret tls infrabox-tls-certs --key /tmp/tls.k
 general:
     dont_check_certificates: false
 job:
-    docker_daemon_config: '{"insecure-registries": ["infrabox.example.com"]}'
+    docker_daemon_config: |-
+        {"insecure-registries": ["infrabox.example.com"]}
 ```
