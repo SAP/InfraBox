@@ -96,6 +96,31 @@ storage:
         # Account key
         account_key: # <REQUIRED>
 
+    swift:
+        # Enable Swift
+        enabled: false
+
+        # auth url
+        auth_url: # <REQUIRED>
+
+        #project domain name or tenant name
+        project_domain_name: # <REQUIRED>
+
+        #project name
+        project_name: # <REQUIRED>
+
+        #user domain name
+        user_domain_name: # <REQUIRED>
+
+        #swift container name
+        container_name: # <REQUIRED>
+
+        #username
+        username: # <REQUIRED>
+
+        #password
+        password: # <REQUIRED>
+
 # PostgreSQL Database configuration. Use either Google's CloudSQL or any other PostgreSQL Database
 database:
     cloudsql:
