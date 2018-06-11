@@ -69,7 +69,7 @@ spec:
                     value: http://{{ .Values.storage.s3.endpoint }}:{{ .Values.storage.s3.port }}
                 -
                     name: REGISTRY_STORAGE_S3_SECURE
-                    value: "true"
+                    value: {{ .Values.storage.s3.secure | quote }}
                 -
                     name: REGISTRY_STORAGE_S3_ACCESSKEY
                     valueFrom:

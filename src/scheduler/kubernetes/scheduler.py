@@ -332,7 +332,7 @@ class Scheduler(object):
                 s = status.get('state', "preparing")
                 message = status.get('message', None)
 
-                if s in ["preparing", "scheduling"]:
+                if s in ["preparing", "scheduling"] and current_state != "running":
                     current_state = 'scheduled'
 
                 if s in ["running", "finalizing"]:
