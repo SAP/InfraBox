@@ -154,6 +154,10 @@ class Projects(Resource):
             ''', [repo['name'], repo['html_url'], repo['clone_url'],
                   repo['id'], repo['private'], project_id, repo['owner']['login']])
 
+            insecure_ssl = "0"
+            if os.environ['INFRABOX_GENERAL_DONT_CHECK_CERTIFICATES'] == 'true':
+                insecure_ssl = "1"
+
             webhook_config = {
                 'name': "web",
                 'active': True,
@@ -163,7 +167,8 @@ class Projects(Resource):
                 'config': {
                     'url': os.environ['INFRABOX_ROOT_URL'] + '/github/hook',
                     'content_type': "json",
-                    'secret': os.environ['INFRABOX_GITHUB_WEBHOOK_SECRET']
+                    'secret': os.environ['INFRABOX_GITHUB_WEBHOOK_SECRET'],
+                    'insecure_ssl': insecure_ssl
                 }
             }
 
