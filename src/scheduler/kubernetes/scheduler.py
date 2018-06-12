@@ -534,7 +534,6 @@ def main():
     get_env('INFRABOX_DATABASE_HOST')
     get_env('INFRABOX_DATABASE_PORT')
     get_env('INFRABOX_ROOT_URL')
-    get_env('INFRABOX_GENERAL_DONT_CHECK_CERTIFICATES')
     get_env('INFRABOX_GENERAL_WORKER_NAMESPACE')
 
     # try to read from filesystem
