@@ -146,9 +146,9 @@ class Scheduler(object):
 
             cursor = self.conn.cursor()
             cursor.execute('''
-		SELECT id, state
-		FROM job
-		WHERE id IN (
+                SELECT id, state
+                FROM job
+                WHERE id IN (
                     SELECT (deps->>'job-id')::uuid
                     FROM job, jsonb_array_elements(job.dependencies) as deps
                     WHERE id = %s
@@ -239,20 +239,13 @@ class Scheduler(object):
         for abort in aborts:
             job_id = abort[0]
             self.kube_delete_job(job_id)
-
-            cursor = self.conn.cursor()
-            cursor.execute("SELECT output FROM console WHERE job_id = %s ORDER BY date", (job_id,))
-            lines = cursor.fetchall()
-
-            output = ""
-            for line in lines:
-                output += line[0]
+            self.upload_console(job_id)
 
             # Update state
+            cursor = self.conn.cursor()
             cursor.execute("""
-                UPDATE job SET state = 'killed', console = %s, end_date = current_timestamp
-                WHERE id = %s AND state IN ('scheduled', 'running', 'queued')""", (output, job_id,))
-
+                UPDATE job SET state = 'killed', end_date = current_timestamp
+                WHERE id = %s AND state IN ('scheduled', 'running', 'queued')""", (job_id,))
             cursor.close()
 
     def handle_timeouts(self):
@@ -268,23 +261,41 @@ class Scheduler(object):
         for abort in aborts:
             job_id = abort[0]
             self.kube_delete_job(job_id)
-
-            cursor = self.conn.cursor()
-            cursor.execute("SELECT output FROM console WHERE job_id = %s ORDER BY date", (job_id,))
-            lines = cursor.fetchall()
-
-            output = ""
-            for line in lines:
-                output += line[0]
-
-            output += "Aborted due to timeout"
+            self.upload_console(job_id)
 
             # Update state
+            cursor = self.conn.cursor()
             cursor.execute("""
-                UPDATE job SET state = 'error', console = %s, end_date = current_timestamp, message = 'Aborted due to timeout'
-                WHERE id = %s""", (output, job_id,))
+                UPDATE job SET state = 'error', end_date = current_timestamp, message = 'Aborted due to timeout'
+                WHERE id = %s""", (job_id,))
 
             cursor.close()
+
+    def upload_console(self, job_id):
+        cursor = self.conn.cursor()
+        cursor.execute("""
+            SELECT output FROM console WHERE job_id = %s
+            ORDER BY date
+        """, [job_id])
+        lines = cursor.fetchall()
+        cursor.close()
+
+        output = ""
+        for l in lines:
+            output += l[0]
+
+        cursor = self.conn.cursor()
+        cursor.execute("""
+            UPDATE job SET console = %s WHERE id = %s;
+            DELETE FROM console WHERE job_id = %s;
+        """, [output, job_id, job_id])
+        cursor.close()
+
+        cursor = self.conn.cursor()
+        cursor.execute("""
+            DELETE FROM console WHERE job_id = %s
+        """, [job_id])
+        cursor.close()
 
     def handle_orphaned_jobs(self):
         self.logger.debug("Handling orphaned jobs")
@@ -324,7 +335,7 @@ class Scheduler(object):
             start_date = None
             end_date = None
             delete_job = False
-            current_state = 'scheduled'
+            current_state = last_state
             message = None
 
             if j.get('status', None):
@@ -332,7 +343,7 @@ class Scheduler(object):
                 s = status.get('state', "preparing")
                 message = status.get('message', None)
 
-                if s in ["preparing", "scheduling"] and current_state != "running":
+                if s in ["preparing", "scheduling"] and last_state in ["queued", "scheduled"]:
                     current_state = 'scheduled'
 
                 if s in ["running", "finalizing"]:
@@ -373,26 +384,7 @@ class Scheduler(object):
             cursor.close()
 
             if delete_job:
-                # collect console output
-                cursor = self.conn.cursor()
-                cursor.execute("""
-                    SELECT output FROM console WHERE job_id = %s
-                    ORDER BY date
-                """, [job_id])
-                lines = cursor.fetchall()
-                cursor.close()
-
-                output = ""
-                for l in lines:
-                    output += l[0]
-
-                cursor = self.conn.cursor()
-                cursor.execute("""
-                    UPDATE job SET console = %s WHERE id = %s;
-                    DELETE FROM console WHERE job_id = %s;
-                """, [output, job_id, job_id])
-                cursor.close()
-
+                self.upload_console(job_id)
                 self.logger.info('Deleting job %s', job_id)
                 self.kube_delete_job(job_id)
 
