@@ -135,16 +135,25 @@ class Job(object):
                 r = requests.get("%s%s" % (self.api_server, url),
                                  headers=self.get_headers(),
                                  timeout=600, stream=True, verify=self.verify)
+
+                if r.status_code == 404:
+                    return
+
+                if r.status_code != 200:
+                    continue
+
+                with open(path, 'wb') as  f:
+                    for chunk in r.iter_content(chunk_size=1024):
+                        if chunk:
+                            f.write(chunk)
+
             except Exception as e:
                 message = str(e)
-                time.sleep(5)
+                time.sleep(10)
                 continue
 
         if message:
             raise Failure('Failed to download file: %s' % message)
-
-        if r.status_code == 404:
-            return
 
         if r.status_code != 200:
             msg = r.text
@@ -155,11 +164,6 @@ class Job(object):
                 pass
 
             raise Failure('Failed to download file: %s' % msg)
-
-        with open(path, 'wb') as  f:
-            for chunk in r.iter_content(chunk_size=1024):
-                if chunk:
-                    f.write(chunk)
 
     def post_file_to_api_server(self, url, path, filename=None):
         message = None
