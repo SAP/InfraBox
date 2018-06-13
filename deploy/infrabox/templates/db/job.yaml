@@ -9,6 +9,7 @@ spec:
         metadata:
             name: infrabox-db-migration
         spec:
+            {{ include "imagePullSecret" . | indent 8 }}
             containers:
             {{ include "containers_database" . | indent 12 }}
             -
