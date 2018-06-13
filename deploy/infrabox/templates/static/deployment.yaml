@@ -13,6 +13,7 @@ spec:
             labels:
                 app: infrabox-static
         spec:
+            {{ include "imagePullSecret" . | indent 8 }}
             containers:
             -
                 name: static

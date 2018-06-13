@@ -14,6 +14,7 @@ spec:
             labels:
                 app: infrabox-gerrit-review
         spec:
+            {{ include "imagePullSecret" . | indent 8 }}
             containers:
             {{ include "containers_database" . | indent 12 }}
             -
