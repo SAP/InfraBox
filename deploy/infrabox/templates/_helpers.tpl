@@ -399,9 +399,9 @@ https://{{- required "host is required" .Values.host -}}:{{- .Values.port -}}
 {{ end }}
 {{ end }}
 
-{{ define "dockerCredentials" }}
-{{ printf "{\"auths\": {\"%s\": {\"auth\": \"%s\"}}}" .Values.image.repository (printf "%s:%s" .Values.image.username .Values.image.password | b64enc) | b64enc }}
-{{ end }}
+{{- define "dockerCredentials" }}
+{{- printf "{\"auths\": {\"%s\": {\"auth\": \"%s\"}}}" .Values.image.repository (printf "%s:%s" .Values.image.username .Values.image.password | b64enc) | b64enc }}
+{{- end }}
 
 {{ define "imagePullSecret" }}
 {{ if .Values.image.private_repo }}
