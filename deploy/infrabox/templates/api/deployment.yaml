@@ -12,6 +12,7 @@ spec:
             labels:
                 app: infrabox-api
         spec:
+            {{ template "imagePullSecret" . }}
             containers:
             {{ include "containers_database" . | indent 12 }}
             {{ if .Values.gerrit.enabled }}
