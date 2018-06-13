@@ -3,6 +3,7 @@ kind: IBFunction
 metadata:
     name: infrabox-default-function
 spec:
+    {{ include "imagePullSecret" . }}
     image: {{ include "image_repository" . }}/job:{{ include "image_tag" . }}
     securityContext:
         privileged: true
