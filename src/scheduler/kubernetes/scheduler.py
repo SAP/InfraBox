@@ -421,13 +421,13 @@ class Scheduler(object):
             return
 
         cursor = self.conn.cursor()
+        cursor.execute("begin;")
         cursor.execute("""
             SELECT id
             FROM job
-            WHERE cluster_name is null
+            WHERE cluster_name is null FOR UPDATE
         """)
         jobs = cursor.fetchall()
-        cursor.close()
 
         for j in jobs:
             cursor = self.conn.cursor()
@@ -436,7 +436,8 @@ class Scheduler(object):
                 SET cluster_name = %s
                 WHERE id = %s
             """, [cluster_name, j[0]])
-            cursor.close()
+        cursor.execute("commit;")
+        cursor.close()
 
     def update_cluster_state(self):
         cluster_name = os.environ['INFRABOX_CLUSTER_NAME']
@@ -471,7 +472,7 @@ class Scheduler(object):
             INSERT INTO cluster (name, labels, root_url, nodes, cpu_capacity, memory_capacity, active)
             VALUES(%s, %s, %s, %s, %s, %s, true)
             ON CONFLICT (name) DO UPDATE
-            SET labels = %s, root_url = %s, nodes = %s, cpu_capacity = %s, memory_capacity = %s
+            SET active = TRUE, last_update = NOW(), labels = %s, root_url = %s, nodes = %s, cpu_capacity = %s, memory_capacity = %s
             WHERE cluster.name = %s """, [cluster_name, labels, root_url, nodes, cpu, memory, labels,
                                           root_url, nodes, cpu, memory, cluster_name])
         cursor.close()
@@ -499,13 +500,17 @@ class Scheduler(object):
             self.logger.exception(e)
 
         cluster_name = os.environ['INFRABOX_CLUSTER_NAME']
-        if cluster_name == 'master':
-            self.assign_cluster()
+        ha_mode = os.environ['INFRABOX_HA_ENABLED'] == "true"
 
         if self._inactive():
             self.logger.info('Cluster set to inactive, sleeping...')
             time.sleep(5)
             return
+
+        if ha_mode:
+            self.assign_cluster()
+        elif cluster_name == 'master':
+            self.assign_cluster()
 
         self.schedule()
 

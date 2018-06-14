@@ -409,3 +409,10 @@ https://{{- required "host is required" .Values.host -}}:{{- .Values.port -}}
     - name: infrabox-docker-credentials
 {{ end }}
 {{ end }}
+
+{{ define "env_ha" }}
+-
+    name: INFRABOX_HA_ENABLED
+    value: {{ .Values.ha.enabled | quote }}
+{{ end }}
+

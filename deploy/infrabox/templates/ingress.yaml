@@ -1,3 +1,20 @@
+{{ define "ing_dashboard" }}
+-
+    path: /dashboard
+    backend:
+        serviceName: infrabox-static
+        servicePort: 80
+{{ end }}
+
+{{ define "ing_root" }}
+-
+    path: /
+    backend:
+        serviceName: infrabox-static
+        servicePort: 80
+{{ end }}
+
+
 {{ if .Values.ingress.enabled }}
 apiVersion: extensions/v1beta1
 kind: Ingress
@@ -21,11 +38,12 @@ spec:
         http:
             paths:
             {{ if eq .Values.cluster.name "master" }}
-            -
-                path: /dashboard
-                backend:
-                    serviceName: infrabox-static
-                    servicePort: 80
+
+            {{ end }}
+            {{ if .Values.ha.enabled }}
+                {{ include "ing_dashboard" . | indent 12 }}
+            {{ else if eq .Values.cluster.name "master" }}
+                {{ include "ing_dashboard" . | indent 12 }}
             {{ end }}
             -
                 path: /api
@@ -51,12 +69,10 @@ spec:
                 backend:
                     serviceName: infrabox-docker-registry
                     servicePort: 8080
-            {{ if eq .Values.cluster.name "master" }}
-            -
-                path: /
-                backend:
-                    serviceName: infrabox-static
-                    servicePort: 80
+            {{ if .Values.ha.enabled }}
+                {{ include "ing_root" . | indent 12 }}
+            {{ else if eq .Values.cluster.name "master" }}
+                {{ include "ing_root" . | indent 12 }}
             {{ end }}
     tls:
         - hosts:

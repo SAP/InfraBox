@@ -31,6 +31,9 @@ image:
     password: #<required if use private_repo>
 
 
+ha:
+    enabled: false
+
 cluster:
     # Unique name of all clusters which are connected to the
     # same postgresql database

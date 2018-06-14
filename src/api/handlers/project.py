@@ -23,6 +23,14 @@ logger = get_logger('api')
 
 ns = api.namespace('api/v1/projects', description='Project related operations')
 
+enable_upload_forword = False
+
+if os.environ['INFRABOX_HA_ENABLED'] == 'true':
+    enable_upload_forword = True
+elif os.environ['INFRABOX_CLUSTER_NAME'] == 'master':
+    enable_upload_forword = True
+
+
 def nocache(view):
     @wraps(view)
     def no_cache(*args, **kwargs):
@@ -303,7 +311,7 @@ class UploadRemote(Resource):
         return OK('successfully uploaded data')
 
 
-if os.environ['INFRABOX_CLUSTER_NAME'] == 'master':
+if enable_upload_forword:
     @ns.route('/<project_id>/upload/')
     @ns.expect(upload_parser)
     class Upload(Resource):
@@ -332,8 +340,8 @@ if os.environ['INFRABOX_CLUSTER_NAME'] == 'master':
                 SELECT root_url
                 FROM cluster
                 WHERE active = true
-                AND name != 'master'
-            ''')
+                AND name != %s
+            ''', [os.environ['INFRABOX_CLUSTER_NAME']])
 
             for c in clusters:
                 stream.seek(0)
