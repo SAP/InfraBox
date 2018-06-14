@@ -24,6 +24,13 @@ image:
 
     tag: latest
 
+    private_repo: false
+
+    username: #<required if use private_repo>
+
+    password: #<required if use private_repo>
+
+
 cluster:
     # Unique name of all clusters which are connected to the
     # same postgresql database

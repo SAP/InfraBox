@@ -14,6 +14,7 @@ spec:
             labels:
                 app: infrabox-scheduler
         spec:
+            {{ include "imagePullSecret" . | indent 8 }}
             terminationGracePeriodSeconds: 0
             serviceAccountName: infrabox
             containers:
