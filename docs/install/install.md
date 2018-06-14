@@ -141,3 +141,7 @@ After a few seconds you can open your browser and access `https://<YOUR_DOMAIN>`
 
 [helm]: https://github.com/kubernetes/helm
 [minio]: https://www.minio.io/
+
+
+## HA mode
+You can deploy multi cluster with [HA mode](/docs/ha_mode.md)
