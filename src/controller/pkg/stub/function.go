@@ -27,15 +27,15 @@ type Function struct {
 }
 
 type FunctionSpec struct {
-	Image             string                      `json:"image,omitempty" protobuf:"bytes,2,opt,name=image"`
-	Command           []string                    `json:"command,omitempty" protobuf:"bytes,3,rep,name=command"`
-	Args              []string                    `json:"args,omitempty" protobuf:"bytes,4,rep,name=args"`
-	Env               []corev1.EnvVar             `json:"env,omitempty" patchStrategy:"merge" patchMergeKey:"name" protobuf:"bytes,7,rep,name=env"`
-	Resources         corev1.ResourceRequirements `json:"resources,omitempty" protobuf:"bytes,8,opt,name=resources"`
-	SecurityContext   *corev1.SecurityContext     `json:"securityContext,omitempty" protobuf:"bytes,15,opt,name=securityContext"`
-	VolumeMounts      []corev1.VolumeMount        `json:"volumeMounts,omitempty" patchStrategy:"merge" patchMergeKey:"mountPath" protobuf:"bytes,9,rep,name=volumeMounts"`
-	Volumes           []corev1.Volume             `json:"volumes,omitempty" patchStrategy:"merge,retainKeys" patchMergeKey:"name" protobuf:"bytes,1,rep,name=volumes"`
-    ImagePullSecrets  []corev1.ImagePullSecrets   `json:"imagePullSecrets,omitempty" patchStrategy:"merge" patchMergeKey:"name" protobuf:"bytes,15,rep,name=imagePullSecrets"`
+	Image             string                          `json:"image,omitempty" protobuf:"bytes,2,opt,name=image"`
+	Command           []string                        `json:"command,omitempty" protobuf:"bytes,3,rep,name=command"`
+	Args              []string                        `json:"args,omitempty" protobuf:"bytes,4,rep,name=args"`
+	Env               []corev1.EnvVar                 `json:"env,omitempty" patchStrategy:"merge" patchMergeKey:"name" protobuf:"bytes,7,rep,name=env"`
+	Resources         corev1.ResourceRequirements     `json:"resources,omitempty" protobuf:"bytes,8,opt,name=resources"`
+	SecurityContext   *corev1.SecurityContext         `json:"securityContext,omitempty" protobuf:"bytes,15,opt,name=securityContext"`
+	VolumeMounts      []corev1.VolumeMount            `json:"volumeMounts,omitempty" patchStrategy:"merge" patchMergeKey:"mountPath" protobuf:"bytes,9,rep,name=volumeMounts"`
+	Volumes           []corev1.Volume                 `json:"volumes,omitempty" patchStrategy:"merge,retainKeys" patchMergeKey:"name" protobuf:"bytes,1,rep,name=volumes"`
+    ImagePullSecrets  []corev1.LocalObjectReference   `json:"imagePullSecrets,omitempty" patchStrategy:"merge" patchMergeKey:"name" protobuf:"bytes,15,rep,name=imagePullSecrets"`
 }
 
 type FunctionValidation struct {
