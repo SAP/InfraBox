@@ -1,16 +1,16 @@
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-    name: infrabox-controller
+    name: infrabox-pipeline-controller
     namespace: {{ template "system_namespace" . }}
     labels:
-        app: infrabox-controller
+        app: infrabox-pipeline-controller
 spec:
     replicas: 1
     template:
         metadata:
             labels:
-                app: infrabox-controller
+                app: infrabox-pipeline-controller
         spec:
             terminationGracePeriodSeconds: 0
             serviceAccountName: infrabox
@@ -24,7 +24,36 @@ spec:
                 -
                     name: WATCH_NAMESPACE
                     value: {{ template "worker_namespace" . }}
-                resources:
-                    requests:
-                        memory: "256Mi"
-                        cpu: "200m"
+                -
+                    name: WATCH_KIND
+                    value: IBPipelineInvocation
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+    name: infrabox-function-controller
+    namespace: {{ template "system_namespace" . }}
+    labels:
+        app: infrabox-function-controller
+spec:
+    replicas: 1
+    template:
+        metadata:
+            labels:
+                app: infrabox-function-controller
+        spec:
+            terminationGracePeriodSeconds: 0
+            serviceAccountName: infrabox
+            {{ include "imagePullSecret" . | indent 8 }}
+            containers:
+            -
+                name: controller
+                image: {{ include "image_repository" . }}/controller:{{ include "image_tag" . }}
+                imagePullPolicy: Always
+                env:
+                -
+                    name: WATCH_NAMESPACE
+                    value: {{ template "worker_namespace" . }}
+                -
+                    name: WATCH_KIND
+                    value: IBFunctionInvocation
