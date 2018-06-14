@@ -129,9 +129,6 @@ class RunJob(Job):
 
             json.dump(o, out)
 
-    def flush(self):
-        self.console.flush()
-
     def compress(self, source, output):
         cmd = "tar -cf - --directory %s . | pv -L 500m | python -m snappy -c - %s" % (source, output)
         self.console.execute(cmd, cwd=source, show=True, shell=True, show_cmd=False)
@@ -1237,7 +1234,6 @@ def main():
         j = RunJob(console)
         j.main()
         j.console.header('Finished', show=True)
-        j.console.flush()
 
         with open('/dev/termination-log', 'w+') as out:
             out.write('Job finished successfully')
@@ -1245,7 +1241,6 @@ def main():
     except Failure as e:
         j.console.header('Failure', show=True)
         j.console.collect(e.message, show=True)
-        j.console.flush()
 
         with open('/dev/termination-log', 'w+') as out:
             out.write(e.message)
@@ -1256,7 +1251,6 @@ def main():
             j.console.header('An error occured', show=True)
             msg = traceback.format_exc()
             j.console.collect(msg, show=True)
-            j.console.flush()
 
             with open('/dev/termination-log', 'w+') as out:
                 out.write(msg)
