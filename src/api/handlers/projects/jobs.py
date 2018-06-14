@@ -88,6 +88,7 @@ class Jobs(Resource):
                 j.created_at::text as job_created_at,
                 j.message as job_message,
                 j.definition as job_definition,
+                j.cluster_name as job_cluster_name, 
                 j.node_name as job_node_name,
                 j.avg_cpu as job_avg_cpu,
                 -- pull_request
@@ -136,7 +137,8 @@ class Jobs(Resource):
                     'message': j['job_message'],
                     'definition': j['job_definition'],
                     'node_name': j['job_node_name'],
-                    'avg_cpu': j['job_avg_cpu']
+                    'avg_cpu': j['job_avg_cpu'],
+                    'cluster_name': j['job_cluster_name']
                 }
             }
 

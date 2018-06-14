@@ -197,6 +197,7 @@ class Job(object):
                     for chunk in r.iter_content(chunk_size=1024):
                         if chunk:
                             f.write(chunk)
+                return
 
                 return
             except Exception as e:
