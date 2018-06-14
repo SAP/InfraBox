@@ -37,6 +37,7 @@ services:
             - INFRABOX_ROOT_URL=localhost
             - CODECOV_TOKEN=$CODECOV_TOKEN
             - INFRABOX_CLUSTER_NAME=master
+            - INFRABOX_HA_ENABLED=false
             # Account
             - INFRABOX_ACCOUNT_SIGNUP_ENABLED=true
             - INFRABOX_ACCOUNT_LDAP_ENABLED=false

@@ -1,4 +1,4 @@
-{{ if eq .Values.cluster.name "master" }}
+{{ define "static_deployment" }}
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
@@ -20,3 +20,10 @@ spec:
                 image: {{ include "image_repository" . }}/static:{{ include "image_tag" . }}
                 imagePullPolicy: Always
 {{ end }}
+
+{{ if .Values.ha.enabled }}
+    {{ include "static_deployment" . }}
+{{ else if eq .Values.cluster.name "master" }}
+    {{ include "static_deployment" . }}
+{{ end }}
+

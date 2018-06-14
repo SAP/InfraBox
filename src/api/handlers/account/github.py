@@ -6,7 +6,7 @@ from flask import g, request, abort, redirect
 
 from flask_restplus import Resource
 
-from pyinfraboxutils import get_logger
+from pyinfraboxutils import get_logger, get_root_url
 from pyinfraboxutils.token import encode_user_token
 from pyinfraboxutils.ibflask import auth_required
 
@@ -16,10 +16,10 @@ logger = get_logger('github')
 
 GITHUB_CLIENT_ID = os.environ['INFRABOX_GITHUB_CLIENT_ID']
 GITHUB_CLIENT_SECRET = os.environ['INFRABOX_GITHUB_CLIENT_SECRET']
-GITHUB_CALLBACK_URL = os.environ['INFRABOX_ROOT_URL'] + "/github/auth/callback"
 GITHUB_AUTHORIZATION_URL = os.environ['INFRABOX_GITHUB_LOGIN_URL'] + "/oauth/authorize"
 GITHUB_TOKEN_URL = os.environ['INFRABOX_GITHUB_LOGIN_URL'] + "/oauth/access_token"
 GITHUB_USER_PROFILE_URL = os.environ['INFRABOX_GITHUB_API_URL'] + "/user"
+GITHUB_CALLBACK_URL = get_root_url('global') + "/github/auth/callback"
 
 # TODO(ib-steffen): move into DB
 states = {}
@@ -238,7 +238,7 @@ class Login(Resource):
         g.db.commit()
 
         token = encode_user_token(user_id)
-        url = os.environ['INFRABOX_ROOT_URL'] + '/dashboard/'
+        url = get_root_url('global') + '/dashboard/'
         logger.error(url)
         res = redirect(url)
         res.set_cookie('token', token)
