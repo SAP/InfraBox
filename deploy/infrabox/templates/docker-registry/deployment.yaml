@@ -12,6 +12,7 @@ spec:
             labels:
                 app: infrabox-docker-registry
         spec:
+            {{ include "imagePullSecret" . | indent 8 }}
             containers:
             {{ include "containers_database" . | indent 12 }}
             -
