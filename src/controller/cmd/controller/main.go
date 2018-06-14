@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"runtime"
+    "os"
 
 	stub "github.com/sap/infrabox/src/controller/pkg/stub"
 	sdk "github.com/operator-framework/operator-sdk/pkg/sdk"
@@ -26,10 +27,15 @@ func main() {
 	if err != nil {
 		logrus.Fatalf("Failed to get watch namespace: %v", err)
 	}
+
+    kind = os.Getenv("WATCH_KIND")
+
+    if len(kind) == 0 {
+		logrus.Fatalf("WATCH_KIND not set")
+    }
+
 	resyncPeriod := 5
-	//sdk.Watch(resource, "Workflow", namespace, resyncPeriod)
-	sdk.Watch(resource, "IBPipelineInvocation", namespace, resyncPeriod)
-	sdk.Watch(resource, "IBFunctionInvocation", namespace, resyncPeriod)
+	sdk.Watch(resource, kind, namespace, resyncPeriod)
 	sdk.Handle(stub.NewHandler())
 	sdk.Run(context.TODO())
 }
