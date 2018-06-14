@@ -880,6 +880,49 @@ class CreateJobs(Resource):
         g.db.commit()
         return "Successfully create jobs"
 
+@ns.route("/consoleupdate2")
+class ConsoleUpdate2(Resource):
+    def post(self):
+        records = request.json
+
+        data = {}
+        for r in records:
+            if r['kubernetes']['namespace_name'] != 'infrabox-worker':
+                continue
+
+            job_id = r['kubernetes']['labels']['job-name'][:-4]
+
+            a = float(r['date'])
+            date = datetime.fromtimestamp(float(a)).strftime("%H:%M:%S")
+            log = "%s|%s" % (date, r['log'])
+
+            if not data.get(job_id):
+                data[job_id] = ""
+
+            data[job_id] += log
+
+        for job_id, log in data.items():
+            r = g.db.execute_one("""
+                SELECT state
+                FROM job
+                WHERE id = %s
+            """, [job_id])
+
+            if not r:
+                continue
+
+            if r[0] not in ('scheduled', 'running'):
+                continue
+
+            g.db.execute("INSERT INTO console (job_id, output) VALUES (%s, %s)", [job_id, log])
+            g.db.execute("""
+                UPDATE job SET state = 'running', start_date = current_timestamp
+                WHERE id = %s and state = 'scheduled'""", [job_id])
+            g.db.commit()
+
+        return jsonify({})
+
+
 @ns.route("/consoleupdate")
 class ConsoleUpdate(Resource):
 
