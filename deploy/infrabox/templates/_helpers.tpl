@@ -360,6 +360,9 @@ https://{{- required "host is required" .Values.host -}}:{{- .Values.port -}}
     name: INFRABOX_GENERAL_WORKER_NAMESPACE
     value: {{ template "worker_namespace" . }}
 -
+    name: INFRABOX_GENERAL_SYSTEM_NAMESPACE
+    value: {{ template "system_namespace" . }}
+-
     name: INFRABOX_ROOT_URL
     value: {{ template "root_url" . }}
 -
@@ -368,6 +371,8 @@ https://{{- required "host is required" .Values.host -}}:{{- .Values.port -}}
 -
     name: INFRABOX_GENERAL_REPORT_ISSUE_URL
     value: {{ .Values.general.report_issue_url }}
+-   name: INFRABOX_LOG_LEVEL
+    value: {{ .Values.general.log_level }}
 {{ end }}
 
 {{ define "env_docker_registry" }}
@@ -414,5 +419,9 @@ https://{{- required "host is required" .Values.host -}}:{{- .Values.port -}}
 -
     name: INFRABOX_HA_ENABLED
     value: {{ .Values.ha.enabled | quote }}
+-   name: INFRABOX_HA_CHECK_INTERVAL
+    value: {{ .Values.ha.check_interval | quote }}
+-   name: INFRABOX_HA_ACTIVE_TIMEOUT
+    value: {{ .Values.ha.active_timeout | quote }}
 {{ end }}
 

@@ -340,6 +340,7 @@ if enable_upload_forword:
                 SELECT root_url
                 FROM cluster
                 WHERE active = true
+                AND enabled = true
                 AND name != %s
             ''', [os.environ['INFRABOX_CLUSTER_NAME']])
 
@@ -372,12 +373,18 @@ if enable_upload_forword:
                 VALUES (null, %s, %s, %s, %s)
             ''', [build_number, project_id, source_upload_id, build_id])
 
+            # create job matrix should be rescheduled if HA enabled
+            if os.environ['INFRABOX_HA_ENABLED'] == 'true':
+                job_cluster_name = None
+            else:
+                job_cluster_name = "master"
+
             g.db.execute('''
                 INSERT INTO job (id, state, build_id, type, name, project_id,
-                                 dockerfile, build_only, cpu, memory)
+                                 dockerfile, build_only, cpu, memory, cluster_name)
                 VALUES (gen_random_uuid(), 'queued', %s, 'create_job_matrix',
-                        'Create Jobs', %s, '', false, 1, 1024);
-            ''', [build_id, project_id])
+                        'Create Jobs', %s, '', false, 1, 1024, %s);
+            ''', [build_id, project_id, job_cluster_name])
 
             project_name = g.db.execute_one('''
                 SELECT name FROM project WHERE id = %s

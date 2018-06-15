@@ -16,6 +16,8 @@ general:
 
     report_issue_url: https://github.com/SAP/infrabox/issues
 
+    log_level: info
+
 image:
     # Address of the docker registry which contains
     # all the InfraBox images. It must be accessible
@@ -33,6 +35,12 @@ image:
 
 ha:
     enabled: false
+
+    check_interval: 10
+
+    active_timeout: 60
+
+    entry_host: #<required if use ha>
 
 cluster:
     # Unique name of all clusters which are connected to the

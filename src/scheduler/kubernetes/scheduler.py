@@ -396,7 +396,8 @@ class Scheduler(object):
         cursor.execute("""
             SELECT name, labels
             FROM cluster
-            WHERE active = true
+            WHERE active = true AND 
+                  enabled = true
         """)
         result = cursor.fetchall()
         cursor.close()
@@ -436,6 +437,8 @@ class Scheduler(object):
                 SET cluster_name = %s
                 WHERE id = %s
             """, [cluster_name, j[0]])
+            self.logger.info("assign job %s to cluster %s" % \
+                              (j[0], cluster_name))
         cursor.execute("commit;")
         cursor.close()
 
@@ -472,7 +475,7 @@ class Scheduler(object):
             INSERT INTO cluster (name, labels, root_url, nodes, cpu_capacity, memory_capacity, active)
             VALUES(%s, %s, %s, %s, %s, %s, true)
             ON CONFLICT (name) DO UPDATE
-            SET active = TRUE, last_update = NOW(), labels = %s, root_url = %s, nodes = %s, cpu_capacity = %s, memory_capacity = %s
+            SET last_update = NOW(), labels = %s, root_url = %s, nodes = %s, cpu_capacity = %s, memory_capacity = %s
             WHERE cluster.name = %s """, [cluster_name, labels, root_url, nodes, cpu, memory, labels,
                                           root_url, nodes, cpu, memory, cluster_name])
         cursor.close()
@@ -481,13 +484,13 @@ class Scheduler(object):
         cluster_name = os.environ['INFRABOX_CLUSTER_NAME']
         cursor = self.conn.cursor()
         cursor.execute("""
-            SELECT active
+            SELECT active, enabled
             FROM cluster
             WHERE name = %s """, [cluster_name])
-        active = cursor.fetchone()[0]
+        active, enabled = cursor.fetchone()
         cursor.close()
 
-        return not active
+        return not ( active and enabled)
 
     def handle(self):
         self.update_cluster_state()
@@ -503,7 +506,7 @@ class Scheduler(object):
         ha_mode = os.environ['INFRABOX_HA_ENABLED'] == "true"
 
         if self._inactive():
-            self.logger.info('Cluster set to inactive, sleeping...')
+            self.logger.info('Cluster set to inactive or disabled, sleeping...')
             time.sleep(5)
             return
 

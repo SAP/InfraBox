@@ -636,6 +636,7 @@ class CreateJobs(Resource):
             SELECT name, labels
             FROM cluster
             WHERE active = true
+            AND enabled = true
         ''')
 
         # Shuffle so we can assign the default clusters randomly
