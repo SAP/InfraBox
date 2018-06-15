@@ -131,12 +131,20 @@ class RunJob(Job):
         self.console.flush()
 
     def compress(self, source, output):
-        subprocess.check_call("tar cf - --directory %s . | pigz -n > %s" % (source, output), shell=True)
+        try:
+            subprocess.check_call("tar cf %s ." % output, cwd=source)
+        except subprocess.CalledProcessError as e:
+            self.console.collect(e.output)
+            raise
 
     def uncompress(self, source, output, c):
-        cmd = "pigz -dc %s | tar x -C %s" % (source, output)
-        c.collect(cmd, show=True)
-        subprocess.check_call(cmd, shell=True)
+        try:
+            cmd = "tar xf %s" % source
+            c.collect(cmd, show=True)
+            subprocess.check_call(cmd, cwd=output)
+        except subprocess.CalledProcessError as e:
+            self.console.collect(e.output)
+            raise
 
     def get_files_in_dir(self, d, ending=None):
         result = []
