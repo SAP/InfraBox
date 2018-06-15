@@ -13,8 +13,7 @@ RUN apk add --no-cache \
     bash \
     libc6-compat \
     openssh-client \
-    git \
-    pigz && \
+    git && \
     pip install docker==2.0.1 awscli && \
     pip install docker-compose==1.20.1 future PyJWT && \
     apk del py-pip && \
