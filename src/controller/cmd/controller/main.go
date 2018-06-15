@@ -28,7 +28,7 @@ func main() {
 		logrus.Fatalf("Failed to get watch namespace: %v", err)
 	}
 
-    kind = os.Getenv("WATCH_KIND")
+    kind := os.Getenv("WATCH_KIND")
 
     if len(kind) == 0 {
 		logrus.Fatalf("WATCH_KIND not set")
