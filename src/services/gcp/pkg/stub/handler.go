@@ -36,7 +36,6 @@ import (
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
-	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
@@ -787,6 +786,19 @@ func newCollectorDeployment() *appsv1.Deployment {
 	}
 }
 
+func newFluentBitConfig() *v1.ConfigMap{
+	return &appsv1.DaemonSet{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "ConfigMap",
+			APIVersion: "v1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "infrabox-collector-fluent-bit",
+			Namespace: "infrabox-collector",
+		},
+    }
+}
+
 func newCollectorDaemonSet() *appsv1.DaemonSet {
 	return &appsv1.DaemonSet{
 		TypeMeta: metav1.TypeMeta{
@@ -794,7 +806,7 @@ func newCollectorDaemonSet() *appsv1.DaemonSet {
 			APIVersion: "extensions/v1beta1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "infrabox-collector-fluentd",
+			Name:      "infrabox-collector-fluent-bit",
 			Namespace: "infrabox-collector",
 		},
 		Spec: appsv1.DaemonSetSpec{
@@ -806,17 +818,8 @@ func newCollectorDaemonSet() *appsv1.DaemonSet {
 				},
 				Spec: v1.PodSpec{
 					Containers: []v1.Container{{
-						Name:  "fluentd",
-						Image: "quay.io/infrabox/collector-fluentd",
-						Resources: v1.ResourceRequirements{
-							Limits: v1.ResourceList{
-								"memory": resource.MustParse("200Mi"),
-							},
-							Requests: v1.ResourceList{
-								"cpu":    resource.MustParse("100m"),
-								"memory": resource.MustParse("100Mi"),
-							},
-						},
+						Name:  "fluent-bit",
+						Image: "",
 						VolumeMounts: []v1.VolumeMount{{
 							Name:      "varlog",
 							MountPath: "/var/log",
@@ -824,6 +827,10 @@ func newCollectorDaemonSet() *appsv1.DaemonSet {
 							Name:      "varlibdockercontainers",
 							MountPath: "/var/lib/docker/containers",
 							ReadOnly:  true,
+						}, {
+							Name:      "config",
+							MountPath: "/fluent-bit/etc/fluent-bit.conf",
+							SubPath:   "fluent-bit.conf",
 						}},
 						Env: []v1.EnvVar{{
 							Name:  "INFRABOX_COLLECTOR_ENDPOINT",
@@ -842,6 +849,15 @@ func newCollectorDaemonSet() *appsv1.DaemonSet {
 						VolumeSource: v1.VolumeSource{
 							HostPath: &v1.HostPathVolumeSource{
 								Path: "/var/log",
+							},
+						},
+					}, {
+						Name: "config",
+						VolumeSource: v1.VolumeSource{
+							ConfigMap: &v1.ConfigMapVolumeSource{
+                                LocalObjectReference: v1.LocalObjectReference {
+                                    Name: "infrabox-fluent-bit",
+                                },
 							},
 						},
 					}},
