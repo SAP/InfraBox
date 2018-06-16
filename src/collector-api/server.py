@@ -38,7 +38,6 @@ def handle_entry(entry):
     if not os.path.exists(metadata_path):
         with open(metadata_path, 'w+') as metadata_file:
             md = {
-                'namespace_id': e['namespace_id'],
                 'namespace_name': e['namespace_name'],
                 'pod_id': e['pod_id'],
                 'pod_name': e['pod_name'],
@@ -62,7 +61,7 @@ def handle_entry(entry):
 @api.route('/api/log')
 class Console(Resource):
     def post(self):
-        entries = request.get_json()
+        entries = request.json
 
         for e in entries:
             handle_entry(e)

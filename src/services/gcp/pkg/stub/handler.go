@@ -455,10 +455,10 @@ func uploadToArchive(cr *v1alpha1.GKECluster, log *logrus.Entry, data *[]byte, f
 
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 	req.Header.Set("Authorization", "token "+job_token)
-    tr := &http.Transport{
-        TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-    }
-    client := &http.Client{Transport: tr}
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	client := &http.Client{Transport: tr}
 	response, err := client.Do(req)
 
 	if err != nil {
@@ -567,6 +567,12 @@ func injectCollector(cluster *RemoteCluster, log *logrus.Entry) error {
 	err = client.Create(newCollectorService(), log)
 	if err != nil && !errors.IsAlreadyExists(err) {
 		log.Errorf("Failed to create collector service: %v", err)
+		return err
+	}
+
+	err = client.Create(newFluentBitConfig(), log)
+	if err != nil && !errors.IsAlreadyExists(err) {
+		log.Errorf("Failed to create fluent bit config: %v", err)
 		return err
 	}
 
@@ -786,17 +792,20 @@ func newCollectorDeployment() *appsv1.Deployment {
 	}
 }
 
-func newFluentBitConfig() *v1.ConfigMap{
-	return &appsv1.DaemonSet{
+func newFluentBitConfig() *v1.ConfigMap {
+	return &v1.ConfigMap{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "ConfigMap",
 			APIVersion: "v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "infrabox-collector-fluent-bit",
+			Name:      "infrabox-fluent-bit",
 			Namespace: "infrabox-collector",
 		},
-    }
+		Data: map[string]string{
+			"fluent-bit.conf": fluentBitConfig,
+		},
+	}
 }
 
 func newCollectorDaemonSet() *appsv1.DaemonSet {
@@ -819,7 +828,7 @@ func newCollectorDaemonSet() *appsv1.DaemonSet {
 				Spec: v1.PodSpec{
 					Containers: []v1.Container{{
 						Name:  "fluent-bit",
-						Image: "",
+						Image: "fluent/fluent-bit:0.13",
 						VolumeMounts: []v1.VolumeMount{{
 							Name:      "varlog",
 							MountPath: "/var/log",
@@ -831,10 +840,6 @@ func newCollectorDaemonSet() *appsv1.DaemonSet {
 							Name:      "config",
 							MountPath: "/fluent-bit/etc/fluent-bit.conf",
 							SubPath:   "fluent-bit.conf",
-						}},
-						Env: []v1.EnvVar{{
-							Name:  "INFRABOX_COLLECTOR_ENDPOINT",
-							Value: "http://infrabox-collector-api.infrabox-collector/api/log",
 						}},
 					}},
 					Volumes: []v1.Volume{{
@@ -855,9 +860,9 @@ func newCollectorDaemonSet() *appsv1.DaemonSet {
 						Name: "config",
 						VolumeSource: v1.VolumeSource{
 							ConfigMap: &v1.ConfigMapVolumeSource{
-                                LocalObjectReference: v1.LocalObjectReference {
-                                    Name: "infrabox-fluent-bit",
-                                },
+								LocalObjectReference: v1.LocalObjectReference{
+									Name: "infrabox-fluent-bit",
+								},
 							},
 						},
 					}},
@@ -866,3 +871,34 @@ func newCollectorDaemonSet() *appsv1.DaemonSet {
 		},
 	}
 }
+
+const fluentBitConfig = `
+[SERVICE]
+    Flush        1
+    Daemon       Off
+    Log_Level    info
+    Parsers_File parsers.conf
+
+[INPUT]
+    Name             tail
+    Path             /var/log/containers/*.log
+    Parser           docker
+    Tag              kube.*
+    Refresh_Interval 5
+    Mem_Buf_Limit    5MB
+    Skip_Long_Lines  On
+
+[FILTER]
+    Name                kubernetes
+    Match               kube.*
+    Kube_URL            https://kubernetes.default
+    Kube_CA_File        /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+    Kube_Token_File     /var/run/secrets/kubernetes.io/serviceaccount/token
+
+[OUTPUT]
+    Name  http
+    Match *
+    Host infrabox-collector-api.infrabox-collector
+    Port 80
+    URI /api/log
+`
