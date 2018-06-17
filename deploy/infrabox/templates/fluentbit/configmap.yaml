@@ -1,0 +1,37 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: infrabox-fluent-bit
+  namespace: {{ template "system_namespace" . }}
+data:
+  fluent-bit.conf: |-
+    [SERVICE]
+        Flush        2
+        Daemon       Off
+        Log_Level    info
+        Parsers_File parsers.conf
+    [INPUT]
+        Name             tail
+        Path             /var/log/containers/*{{- template "worker_namespace" . -}}*.log
+        Parser           docker
+        Tag              kube.*
+        Refresh_Interval 5
+        Mem_Buf_Limit    5MB
+        Skip_Long_Lines  On
+    [FILTER]
+        Name                kubernetes
+        Match               kube.*
+        Kube_URL            https://kubernetes.default.svc.cluster.local:443
+        Kube_CA_File        /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        Kube_Token_File     /var/run/secrets/kubernetes.io/serviceaccount/token
+    [OUTPUT]
+        Name  http
+        Match *
+        Host {{ .Values.host }}
+        Port {{ .Values.port }}
+        URI /api/job/consoleupdate
+        Format json
+        tls On
+{{ if .Values.general.dont_check_certificates }}
+        tls.verify Off
+{{ end }}
