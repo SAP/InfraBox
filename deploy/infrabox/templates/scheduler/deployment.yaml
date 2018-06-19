@@ -30,7 +30,7 @@ spec:
                 {{ include "env_cluster" . | indent 16 }}
                 -
                     name: INFRABOX_KUBERNETES_MASTER_HOST
-                    value: "kubernetes.default.svc.cluster.local"
+                    value: "kubernetes.default"
                 -
                     name: INFRABOX_KUBERNETES_MASTER_PORT
                     value: "443"
