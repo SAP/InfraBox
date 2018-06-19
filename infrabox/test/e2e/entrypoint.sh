@@ -88,7 +88,7 @@ _getPodName() {
 _installPostgres() {
     echo "## Install postgres"
 	helm install -n postgres stable/postgresql \
-		--set imageTag=9.6.2,postgresPassword=postgres \
+		--set imageTag=9.6.2,postgresPassword=postgres,probes.readiness.periodSeconds=5 \
 		--wait \
         --namespace infrabox-system
 
