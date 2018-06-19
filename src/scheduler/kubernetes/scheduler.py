@@ -360,7 +360,10 @@ class Scheduler(object):
                             current_state = 'finished'
                         else:
                             current_state = 'failure'
-                            message = stepStatus['State']['terminated'].get('message', "")
+                            message = stepStatus['State']['terminated'].get('message', None)
+
+                            if not message:
+                                message = stepStatus['State']['terminated'].get('reason', '')
 
                     delete_job = True
 
