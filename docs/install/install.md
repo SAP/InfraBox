@@ -1,5 +1,7 @@
 # Install InfraBox
 
+![Install InfraBox](./install.gif)
+
 ## Quickstart on GKE
 If you want to get something up and running quickly you can use `infraboxcli` to install InfraBox on a GKE Cluster.
 
@@ -9,9 +11,9 @@ All you need ist:
 - [helm](https://github.com/kubernetes/helm) installed
 - [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/) installed
 - [git](https://git-scm.com/) installed
-- [infraboxcli](azur://github.com/sap/infrabox-cli)
+- [infraboxcli](https://github.com/sap/infrabox-cli)
 
-![Install InfraBox](./install.gif)
+Run `infrabox install` and follow the instructions.
 
 # Manual Installation
 You can run InfraBox on any Kubernetes Cluster (1.9 and 1.10 are supported at the moment).
