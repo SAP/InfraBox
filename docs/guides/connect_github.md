@@ -25,4 +25,4 @@ This create all the neccessary files for a simple workflow. Let's commit the fil
     $ git commit -m "first InfraBox workflow"
     $ git push origin master
 
-See the [documentation](https://github.com/SAP/InfraBox/docs/doc.md) for more examples on how to configure your builds.
+See the [documentation](/docs/doc.md) for more examples on how to configure your builds.
