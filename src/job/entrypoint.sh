@@ -1,6 +1,8 @@
 #!/bin/bash -e
 mkdir -p /data/docker
 mkdir -p /data/infrabox
+mkdir -p /data/tmp
+mkdir -p /data/repo
 mkdir -p ~/.ssh
 
 if [ ! -e /var/run/docker.sock ]; then

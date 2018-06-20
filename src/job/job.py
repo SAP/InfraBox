@@ -36,14 +36,14 @@ class RunJob(Job):
     def __init__(self, console):
         Job.__init__(self)
         self.console = console
-        self.storage_dir = '/tmp/storage'
+        self.storage_dir = '/data/tmp/storage'
 
         if os.path.exists(self.storage_dir):
             shutil.rmtree(self.storage_dir)
 
         os.makedirs(self.storage_dir)
 
-        self.mount_repo_dir = os.environ.get('INFRABOX_JOB_REPO_MOUNT_PATH', '/repo')
+        self.mount_repo_dir = '/data/repo'
         self.mount_data_dir = self.mount_repo_dir + '/.infrabox'
 
     def create_infrabox_directories(self):
@@ -51,7 +51,7 @@ class RunJob(Job):
             shutil.rmtree(self.mount_data_dir, ignore_errors=True)
 
         #
-        # /tmp/infrabox is mounted to the same path on the host
+        # /data/tmp/infrabox is mounted to the same path on the host
         # So we can use it to transfer data between the job and
         # the job.py container.
         #
