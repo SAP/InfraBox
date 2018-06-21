@@ -130,20 +130,12 @@ class RunJob(Job):
         self.console.flush()
 
     def compress(self, source, output):
-        try:
-            cmd = ["tar", "cf", output, "."]
-            subprocess.check_call(cmd, cwd=source)
-        except subprocess.CalledProcessError as e:
-            self.console.collect(e.output)
-            raise
+        cmd = "tar -cf - --directory %s . | pv -L 500m | python -m snappy -c - %s" % (source, output)
+        self.console.execute(cmd, cwd=source, show=True, shell=True, show_cmd=False)
 
     def uncompress(self, source, output):
-        try:
-            cmd = ["tar", "xf", source]
-            subprocess.check_call(cmd, cwd=output)
-        except subprocess.CalledProcessError as e:
-            self.console.collect(e.output)
-            raise
+        cmd = "python -m snappy -d %s - | tar -xf - -C %s" % (source, output)
+        self.console.execute(cmd, cwd=output, show=True, shell=True, show_cmd=False)
 
     def get_files_in_dir(self, d, ending=None):
         result = []
@@ -479,8 +471,9 @@ class RunJob(Job):
             storage_input_file_dir = os.path.join(storage_inputs_dir, dep['id'])
             os.makedirs(storage_input_file_dir)
 
-            storage_input_file_tar = os.path.join(storage_input_file_dir, 'output.tar.gz')
-            self.get_file_from_api_server('/output/%s' % dep['id'], storage_input_file_tar)
+            # Get files.json
+            storage_input_file_tar = os.path.join(storage_input_file_dir, 'output.tar.snappy')
+            self.get_file_from_api_server('/output/%s' % dep['id'], storage_input_file_tar, split=True)
 
             if os.path.isfile(storage_input_file_tar):
                 c.collect("output found for %s\n" % dep['name'], show=True)
@@ -498,7 +491,7 @@ class RunJob(Job):
         storage_cache_dir = os.path.join(self.storage_dir, 'cache')
         os.makedirs(storage_cache_dir)
 
-        storage_cache_tar = os.path.join(storage_cache_dir, 'cache.tar.gz')
+        storage_cache_tar = os.path.join(storage_cache_dir, 'cache.tar.snappy')
 
         c.collect("Syncing cache:", show=True)
         if not self.job['definition'].get('cache', {}).get('data', True):
@@ -544,12 +537,12 @@ class RunJob(Job):
             storage_output_dir = os.path.join(self.storage_dir, self.job['id'])
             os.makedirs(storage_output_dir)
 
-            storage_output_tar = os.path.join(storage_output_dir, 'output.tar.gz')
+            storage_output_tar = os.path.join(storage_output_dir, 'output.tar.snappy')
             self.compress(self.infrabox_output_dir, storage_output_tar)
             file_size = os.stat(storage_output_tar).st_size
 
             c.collect("Output size: %s kb" % (file_size / 1024), show=True)
-            self.post_file_to_api_server("/output", storage_output_tar)
+            self.post_file_to_api_server("/output", storage_output_tar, split=True)
         else:
             c.collect("Output is empty", show=True)
 

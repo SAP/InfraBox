@@ -1,7 +1,10 @@
 import os
 import sys
+import json
+import glob
 import copy
 import time
+import shutil
 import requests
 
 from infrabox_job.process import Failure
@@ -125,7 +128,33 @@ class Job(object):
 
         self.post_api_server('stats', data=payload)
 
-    def get_file_from_api_server(self, url, path):
+    def get_file_from_api_server(self, url, path, split=False):
+        if split:
+            if os.path.isfile('/tmp/output.json'):
+                os.remove('/tmp/output.json')
+
+            self._get_file_from_api_server(url + "?filename=output.json", '/tmp/output.json')
+
+            if not os.path.isfile('/tmp/output.json'):
+                return
+
+            with open('/tmp/output.json') as filelist:
+                files = json.load(filelist)
+
+            os.makedirs('/tmp/output/parts')
+
+            with open(path, 'w+b') as final:
+                for f in files:
+                    self._get_file_from_api_server(url + "?filename=" + f, '/tmp/output/parts/%s' % f)
+
+                    with open('/tmp/output/parts/%s' % f, 'rb') as part:
+                        shutil.copyfileobj(part, final, 1024*1024*10)
+
+                    os.remove('/tmp/output/parts/%s' % f)
+        else:
+            self._get_file_from_api_server(url, path)
+
+    def _get_file_from_api_server(self, url, path):
         message = None
 
         r = None
@@ -135,6 +164,10 @@ class Job(object):
                 r = requests.get("%s%s" % (self.api_server, url),
                                  headers=self.get_headers(),
                                  timeout=600, stream=True, verify=self.verify)
+
+                if r.status_code != 200:
+                    self.console.collect(str(r.status_code), show=True)
+                    self.console.collect(str(r.text), show=True)
 
                 if r.status_code == 404:
                     return
@@ -165,11 +198,30 @@ class Job(object):
 
             raise Failure('Failed to download file: %s' % msg)
 
-    def post_file_to_api_server(self, url, path, filename=None):
-        message = None
-
+    def post_file_to_api_server(self, url, path, filename=None, split=False):
         if not filename:
             filename = os.path.basename(path)
+
+        if split:
+            self.console.execute(["split", "-b", "64m", path, path + "-"], show=True)
+            files = glob.glob(path + "-*")
+
+            filenames = []
+            for f in files:
+                filenames.append(os.path.basename(f))
+
+            with open('/tmp/files.json', 'w') as out:
+                json.dump(filenames, out)
+
+            self._post_file_to_api_server(url, '/tmp/files.json', 'output.json')
+
+            for f in files:
+                self._post_file_to_api_server(url, f, os.path.basename(f))
+        else:
+            self._post_file_to_api_server(url, path, filename)
+
+    def _post_file_to_api_server(self, url, path, filename):
+        message = None
 
         for _ in xrange(0, 5):
             message = None

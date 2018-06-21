@@ -64,7 +64,7 @@ class Output(Resource):
     def get(self, project_id, job_id):
         g.release_db()
 
-        key = '%s.tar.gz' % job_id
+        key = '%s.tar.snappy' % job_id
         f = storage.download_output(key)
 
         if not f:
@@ -125,7 +125,7 @@ class Project(Resource):
             'url': root_url + \
                    '/api/v1/projects/' + project_id + \
                    '/jobs/' + job_id + '/output',
-            'format': 'tar.gz'
+            'format': 'tar.snappy'
         }
 
         # Dependencies
@@ -144,7 +144,7 @@ class Project(Resource):
                 'url': d['root_url'] + \
                        '/api/v1/projects/' + project_id + \
                        '/jobs/' + d['id'] + '/output',
-                'format': 'tar.gz'
+                'format': 'tar.snappy'
             }
 
             m['dependencies'].append(d)

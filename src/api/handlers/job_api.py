@@ -21,7 +21,6 @@ from pyinfrabox.markup import validate_markup
 from pyinfrabox.testresult import validate_result
 from pyinfrabox import ValidationError
 
-from pyinfraboxutils import get_env
 from pyinfraboxutils.token import encode_job_token
 from pyinfraboxutils.ibrestplus import api
 from pyinfraboxutils.ibflask import job_token_required, app
@@ -424,7 +423,7 @@ class Source(Resource):
         return send_file(f)
 
 cache_upload_parser = api.parser()
-cache_upload_parser.add_argument('cache.tar.gz', location='files',
+cache_upload_parser.add_argument('cache.tar.snappy', location='files',
                                  type=FileStorage, required=True)
 
 
@@ -436,7 +435,7 @@ class Cache(Resource):
         project_id = g.token['project']['id']
         job_name = g.token['job']['name']
 
-        template = 'project_%s_job_%s.tar.gz'
+        template = 'project_%s_job_%s.tar.snappy'
         key = template % (project_id, job_name)
         key = key.replace('/', '_')
 
@@ -455,13 +454,13 @@ class Cache(Resource):
         project_id = g.token['project']['id']
         job_name = g.token['job']['name']
 
-        template = 'project_%s_job_%s.tar.gz'
+        template = 'project_%s_job_%s.tar.snappy'
         key = template % (project_id, job_name)
         key = key.replace('/', '_')
 
         g.release_db()
 
-        storage.upload_cache(request.files['cache.tar.gz'].stream, key)
+        storage.upload_cache(request.files['cache.tar.snappy'].stream, key)
         return jsonify({})
 
 
@@ -493,77 +492,73 @@ class Archive(Resource):
 
         return jsonify({"message": "File uploaded"})
 
-output_upload_parser = api.parser()
-output_upload_parser.add_argument('output.tar.gz', location='files',
-                                  type=FileStorage, required=True)
-
 @ns.route("/output")
 class Output(Resource):
 
     @job_token_required
-    @ns.expect(output_upload_parser)
     def post(self):
         job_id = g.token['job']['id']
 
-        key = "%s.tar.gz" % job_id
-        key = key.replace('/', '_')
+        for f, _ in request.files.items():
+            key = "%s/%s" % (job_id, f)
+            app.logger.error(key)
 
-        stream = request.files['output.tar.gz'].stream
+            stream = request.files[f].stream
 
-        # determine all children
-        jobs = g.db.execute_many_dict('''
-            SELECT cluster_name, dependencies
-            FROM job
-            WHERE build_id = (SELECT build_id FROM job WHERE id = %s)
-            AND state = 'queued'
-        ''', [job_id])
+            # determine all children
+            jobs = g.db.execute_many_dict('''
+                SELECT cluster_name, dependencies
+                FROM job
+                WHERE build_id = (SELECT build_id FROM job WHERE id = %s)
+                AND state = 'queued'
+            ''', [job_id])
 
-        current_cluster = g.db.execute_one_dict('''
-            SELECT cluster_name
-            FROM job
-            WHERE id = %s
-        ''', [job_id])['cluster_name']
+            current_cluster = g.db.execute_one_dict('''
+                SELECT cluster_name
+                FROM job
+                WHERE id = %s
+            ''', [job_id])['cluster_name']
 
-        clusters = set()
+            clusters = set()
 
-        for j in jobs:
-            dependencies = j.get('dependencies', None)
+            for j in jobs:
+                dependencies = j.get('dependencies', None)
 
-            if not dependencies:
-                continue
-
-            for dep in dependencies:
-                if dep['job-id'] != job_id:
+                if not dependencies:
                     continue
 
-                clusters.add(j['cluster_name'])
+                for dep in dependencies:
+                    if dep['job-id'] != job_id:
+                        continue
 
-        clusters = g.db.execute_many_dict('''
-            SELECT root_url
-            FROM cluster
-            WHERE active = true
-            AND name = ANY (%s)
-            AND name != %s
-            AND name != %s
-        ''', [list(clusters), os.environ['INFRABOX_CLUSTER_NAME'], current_cluster])
+                    clusters.add(j['cluster_name'])
 
-        g.release_db()
+            clusters = g.db.execute_many_dict('''
+                SELECT root_url
+                FROM cluster
+                WHERE active = true
+                AND name = ANY (%s)
+                AND name != %s
+                AND name != %s
+            ''', [list(clusters), os.environ['INFRABOX_CLUSTER_NAME'], current_cluster])
 
-        storage.upload_output(stream, key)
+            g.release_db()
 
-        for c in clusters:
-            stream.seek(0)
-            url = '%s/api/job/output' % c['root_url']
-            files = {'output.tar.gz': stream}
-            token = encode_job_token(job_id)
-            headers = {'Authorization': 'bearer ' + token}
-            r = requests.post(url, files=files, headers=headers, timeout=120, verify=False)
+            storage.upload_output(stream, key)
 
-            if r.status_code != 200:
-                app.logger.error(r.text)
-                abort(500, "Failed to upload data")
+            for c in clusters:
+                stream.seek(0)
+                url = '%s/api/job/output' % c['root_url']
+                files = {'output.tar.snappy': stream}
+                token = encode_job_token(job_id)
+                headers = {'Authorization': 'bearer ' + token}
+                r = requests.post(url, files=files, headers=headers, timeout=120, verify=False)
 
-        return jsonify({})
+                if r.status_code != 200:
+                    app.logger.error(r.text)
+                    abort(500, "Failed to upload data")
+
+            return jsonify({})
 
 @ns.route("/output/<parent_job_id>")
 class OutputParent(Resource):
@@ -574,6 +569,11 @@ class OutputParent(Resource):
 
         if not validate_uuid4(parent_job_id):
             abort(400, "Invalid uuid")
+
+        filename = request.args.get('filename', None)
+
+        if not filename:
+            abort(400, "Invalid filename")
 
         dependencies = g.db.execute_one('''
             SELECT dependencies
@@ -590,8 +590,9 @@ class OutputParent(Resource):
         if not is_valid_dependency:
             abort(404, "Job not found")
 
-        key = "%s.tar.gz" % parent_job_id
-        key = key.replace('/', '_')
+        key = "%s/%s" % (parent_job_id, filename)
+
+        app.logger.error(key)
 
         g.release_db()
         f = storage.download_output(key)

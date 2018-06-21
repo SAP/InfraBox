@@ -48,12 +48,12 @@ class JobApiTest(ApiTestTemplate):
         self.assertEqual(response_size, file_size)
 
     def test_cache(self):
-        filename = 'cache.tar.gz'
+        filename = 'cache.tar.snappy'
 
         file_path = getcwd() + '/' + filename
 
         test_data = open(file_path, 'rb')
-        files = { 'cache.tar.gz': test_data }
+        files = { 'cache.tar.snappy': test_data }
 
         r = TestClient.post(self.url_ns + '/cache', data=files, headers=self.job_headers,
                             content_type='multipart/form-data')
@@ -67,12 +67,12 @@ class JobApiTest(ApiTestTemplate):
         self.assertEqual(received_cache_size, actual_cache_size)
 
     def test_output(self):
-        filename = 'output.tar.gz'
+        filename = 'output.tar.snappy'
 
         file_path = getcwd() + '/' + filename
 
         test_data = open(file_path, 'rb')
-        files = { 'output.tar.gz': test_data }
+        files = { 'output.tar.snappy': test_data }
 
         r = TestClient.post(self.url_ns + '/output', data=files, headers=self.job_headers,
                             content_type='multipart/form-data')
