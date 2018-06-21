@@ -12,7 +12,7 @@ class Clusters(Resource):
     def get(self):
         clusters = g.db.execute_many_dict('''
             SELECT name, nodes, memory_capacity, cpu_capacity,
-                active, labels
+                active, labels, enabled
             FROM cluster
             ORDER BY name
         ''')

@@ -34,6 +34,11 @@ add_project_schema = {
 
 add_project_model = ns.schema_model('AddProject', add_project_schema)
 
+if os.environ['INFRABOX_HA_ENABLED'] == 'true':
+    webhook_root_url = os.environ['INFRABOX_HA_ROOT_URL']
+else:
+    webhook_root_url = os.environ['INFRABOX_ROOT_URL']
+
 @ns.route('/')
 class Projects(Resource):
 
@@ -165,7 +170,7 @@ class Projects(Resource):
                     "create", "delete", "public", "pull_request", "push"
                 ],
                 'config': {
-                    'url': os.environ['INFRABOX_ROOT_URL'] + '/github/hook',
+                    'url': webhook_root_url + '/github/hook',
                     'content_type': "json",
                     'secret': os.environ['INFRABOX_GITHUB_WEBHOOK_SECRET'],
                     'insecure_ssl': insecure_ssl

@@ -14,6 +14,19 @@
         servicePort: 80
 {{ end }}
 
+{{ define "ing_github"}}
+-
+    path: /github/hook
+    backend:
+        serviceName: infrabox-github-trigger
+        servicePort: 8080
+-
+    path: /github/auth
+    backend:
+        serviceName: infrabox-api
+        servicePort: 8080
+{{ end }}
+
 
 {{ if .Values.ingress.enabled }}
 apiVersion: extensions/v1beta1
@@ -37,9 +50,6 @@ spec:
         host: {{ .Values.host }}
         http:
             paths:
-            {{ if eq .Values.cluster.name "master" }}
-
-            {{ end }}
             {{ if .Values.ha.enabled }}
                 {{ include "ing_dashboard" . | indent 12 }}
             {{ else if eq .Values.cluster.name "master" }}
@@ -50,18 +60,11 @@ spec:
                 backend:
                     serviceName: infrabox-api
                     servicePort: 8080
-            {{ if eq .Values.cluster.name "master" }}
             {{ if .Values.github.enabled }}
-            -
-                path: /github/hook
-                backend:
-                    serviceName: infrabox-github-trigger
-                    servicePort: 8080
-            -
-                path: /github/auth
-                backend:
-                    serviceName: infrabox-api
-                    servicePort: 8080
+            {{ if .Values.ha.enabled }}
+                {{ include "ing_github" . | indent 12 }}
+            {{ else if eq .Values.cluster.name "master" }}
+                {{ include "ing_github" . | indent 12 }}
             {{ end }}
             {{ end }}
             -

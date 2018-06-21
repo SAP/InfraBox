@@ -42,6 +42,8 @@ ha:
 
     entry_host: #<required if use ha>
 
+    entry_port: 443
+
 cluster:
     # Unique name of all clusters which are connected to the
     # same postgresql database
