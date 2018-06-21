@@ -62,7 +62,7 @@
                 </md-list-item>
 
                 <md-list-item class="navi-link">
-                    <a href="https://github.com/SAP/infrabox/docs"
+                    <a href="https://github.com/SAP/infrabox/tree/master/docs"
                        class="md-list-item-container md-button"
                        target="_blank" @click="toggleLeftSidenav()">
                         <md-icon><i class="fa fa-book fa-fw"></i></md-icon>
