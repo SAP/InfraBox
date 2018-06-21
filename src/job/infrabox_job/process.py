@@ -40,11 +40,11 @@ class ApiConsole(object):
 
         self.flush()
 
-    def execute(self, command, cwd=None, show=False, env=None, background=False, ignore_error=False, show_cmd=True):
+    def execute(self, command, cwd=None, shell=False, show=False, env=None, background=False, ignore_error=False, show_cmd=True):
         if show_cmd:
             self.collect(' '.join(command) + '\n', show=show)
 
-        process = subprocess.Popen(command, shell=False,
+        process = subprocess.Popen(command, shell=shell,
                                    stdout=subprocess.PIPE,
                                    stderr=subprocess.STDOUT,
                                    cwd=cwd, env=env, universal_newlines=True)
