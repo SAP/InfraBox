@@ -141,6 +141,9 @@ class Job(object):
             with open('/tmp/output.json') as filelist:
                 files = json.load(filelist)
 
+            if os.path.exists('/tmp/output'):
+                shutil.rmtree('/tmp/output')
+
             os.makedirs('/tmp/output/parts')
 
             with open(path, 'w+b') as final:
@@ -151,6 +154,8 @@ class Job(object):
                         shutil.copyfileobj(part, final, 1024*1024*10)
 
                     os.remove('/tmp/output/parts/%s' % f)
+
+            shutil.rmtree('/tmp/output')
         else:
             self._get_file_from_api_server(url, path)
 
@@ -164,10 +169,6 @@ class Job(object):
                 r = requests.get("%s%s" % (self.api_server, url),
                                  headers=self.get_headers(),
                                  timeout=600, stream=True, verify=self.verify)
-
-                if r.status_code != 200:
-                    self.console.collect(str(r.status_code), show=True)
-                    self.console.collect(str(r.text), show=True)
 
                 if r.status_code == 404:
                     return
