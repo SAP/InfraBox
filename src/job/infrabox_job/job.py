@@ -160,6 +160,8 @@ class Job(object):
             self._get_file_from_api_server(url, path)
 
     def _get_file_from_api_server(self, url, path):
+        self.console.collect('Downloading %s' % path, show=True)
+
         message = None
 
         r = None
@@ -206,6 +208,7 @@ class Job(object):
         if split:
             self.console.execute(["split", "-b", "64m", path, path + "-"], show=True)
             files = glob.glob(path + "-*")
+            files.sort()
 
             filenames = []
             for f in files:
@@ -222,6 +225,8 @@ class Job(object):
             self._post_file_to_api_server(url, path, filename)
 
     def _post_file_to_api_server(self, url, path, filename):
+        self.console.collect('Uploading %s' % path, show=True)
+
         message = None
 
         for _ in xrange(0, 5):

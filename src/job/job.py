@@ -712,7 +712,7 @@ class RunJob(Job):
         build_context = os.path.join(self.mount_repo_dir, build_context)
 
         if not build_context.startswith(self.mount_repo_dir):
-            raise Failure('Invalid build_context')
+            raise Failure('Invalid build_context: %s' % build_context)
 
         return os.path.normpath(build_context)
 
