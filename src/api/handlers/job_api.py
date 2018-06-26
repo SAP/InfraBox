@@ -537,6 +537,7 @@ class Output(Resource):
                 SELECT root_url
                 FROM cluster
                 WHERE active = true
+                AND enabled = true
                 AND name = ANY (%s)
                 AND name != %s
                 AND name != %s
