@@ -23,6 +23,7 @@ src/dashboard-client/node_modules
 .infrabox*
 *.iml
 .idea
+.python-version
 src/api/run.sh
 src/dashboard_api/run.sh
 infrabox/test/api/.coverage

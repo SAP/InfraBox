@@ -22,6 +22,7 @@
                             <md-table-head>CPU Usage</md-table-head>
                             <md-table-head>Labels</md-table-head>
                             <md-table-head>Active</md-table-head>
+                            <md-table-head>Enabled</md-table-head>
                         </md-table-row>
                     </md-table-header>
                     <md-table-body>
@@ -47,6 +48,9 @@
                             </md-table-cell>
                             <md-table-cell>
                                 {{ c.active }}
+                            </md-table-cell>
+                            <md-table-cell>
+                                {{ c.enabled }}
                             </md-table-cell>
                         </md-table-row>
                     </md-table-body>

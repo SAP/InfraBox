@@ -1,4 +1,4 @@
-{{ if eq .Values.cluster.name "master" }}
+{{ define "db_job" }}
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -37,4 +37,10 @@ spec:
             volumes:
                 {{ include "volumes_database" . | indent 16 }}
                 {{ include "volumes_rsa" . | indent 16 }}
+{{ end }}
+
+{{ if .Values.ha.enabled }}
+    {{ include "db_job" . }}
+{{ else if eq .Values.cluster.name "master" }}
+    {{ include "db_job" . }}
 {{ end }}

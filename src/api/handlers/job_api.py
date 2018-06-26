@@ -537,6 +537,7 @@ class Output(Resource):
                 SELECT root_url
                 FROM cluster
                 WHERE active = true
+                AND enabled = true
                 AND name = ANY (%s)
                 AND name != %s
                 AND name != %s
@@ -636,6 +637,7 @@ class CreateJobs(Resource):
             SELECT name, labels
             FROM cluster
             WHERE active = true
+            AND enabled = true
         ''')
 
         # Shuffle so we can assign the default clusters randomly

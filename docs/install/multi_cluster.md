@@ -85,3 +85,6 @@ You can follow these rules to still use the multi cluster feature even if you ca
 2. Use `cluster.selector` in your job definitions
 3. A Parent job should always be run on a cluster which can access the child jobs cluster to be able to forward the output.
 
+
+
+You can deploy multi cluster with [HA mode](/docs/ha_mode.md)

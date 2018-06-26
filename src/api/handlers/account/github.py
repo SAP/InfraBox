@@ -14,12 +14,19 @@ from api.namespaces import github, github_auth
 
 logger = get_logger('github')
 
+ha_mode = os.environ['INFRABOX_HA_ENABLED'] == 'true'
+
+if ha_mode:
+    root_url = os.environ['INFRABOX_HA_ROOT_URL']
+else:
+    root_url = os.environ['INFRABOX_ROOT_URL']
+
 GITHUB_CLIENT_ID = os.environ['INFRABOX_GITHUB_CLIENT_ID']
 GITHUB_CLIENT_SECRET = os.environ['INFRABOX_GITHUB_CLIENT_SECRET']
-GITHUB_CALLBACK_URL = os.environ['INFRABOX_ROOT_URL'] + "/github/auth/callback"
 GITHUB_AUTHORIZATION_URL = os.environ['INFRABOX_GITHUB_LOGIN_URL'] + "/oauth/authorize"
 GITHUB_TOKEN_URL = os.environ['INFRABOX_GITHUB_LOGIN_URL'] + "/oauth/access_token"
 GITHUB_USER_PROFILE_URL = os.environ['INFRABOX_GITHUB_API_URL'] + "/user"
+GITHUB_CALLBACK_URL = root_url + "/github/auth/callback"
 
 # TODO(ib-steffen): move into DB
 states = {}
@@ -238,7 +245,7 @@ class Login(Resource):
         g.db.commit()
 
         token = encode_user_token(user_id)
-        url = os.environ['INFRABOX_ROOT_URL'] + '/dashboard/'
+        url = root_url + '/dashboard/'
         logger.error(url)
         res = redirect(url)
         res.set_cookie('token', token)

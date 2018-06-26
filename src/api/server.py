@@ -27,8 +27,21 @@ import listeners.job
 logger = get_logger('api')
 
 @app.route('/ping')
+@app.route('/api/ping')
 def ping():
     return jsonify({'status': 200})
+
+@app.route('/api/status')
+def status():
+    cluster_name = get_env("INFRABOX_CLUSTER_NAME")
+    status = g.db.execute_one_dict("""
+                SELECT active, enabled
+                FROM cluster
+                WHERE name = %s
+            """, [cluster_name])
+    if not status['active'] or not status['enabled']:
+        return jsonify(status), 503
+    return jsonify({'status': "active"})
 
 class ClientManager(socketio.base_manager.BaseManager):
     def __init__(self):
