@@ -1,0 +1,263 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": "-- Grafana --",
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "description": "A detailed list of the jobs of the inspected build. This page is not intended to be accessed directly but through the Project Inspector dashboard, in order to properly set the build identifier.",
+  "editable": true,
+  "gnetId": null,
+  "graphTooltip": 0,
+  "iteration": 1528977346708,
+  "links": [],
+  "panels": [
+    {
+      "columns": [],
+      "datasource": "infrabox",
+      "description": "A list of all the jobs of the inspected build.",
+      "fontSize": "100%",
+      "gridPos": {
+        "h": 22,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 2,
+      "links": [],
+      "pageSize": null,
+      "scroll": true,
+      "showHeader": true,
+      "sort": {
+        "col": 0,
+        "desc": true
+      },
+      "styles": [
+        {
+          "$$hashKey": "object:139",
+          "alias": "Project",
+          "colorMode": null,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 2,
+          "mappingType": 1,
+          "pattern": "p_name",
+          "thresholds": [],
+          "type": "string",
+          "unit": "short"
+        },
+        {
+          "$$hashKey": "object:140",
+          "alias": "Build Number",
+          "colorMode": null,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 2,
+          "mappingType": 1,
+          "pattern": "build_number",
+          "thresholds": [],
+          "type": "string",
+          "unit": "locale"
+        },
+        {
+          "$$hashKey": "object:141",
+          "alias": "Restarts",
+          "colorMode": null,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 0,
+          "mappingType": 1,
+          "pattern": "restart_counter",
+          "thresholds": [],
+          "type": "number",
+          "unit": "locale"
+        },
+        {
+          "$$hashKey": "object:142",
+          "alias": "Job name",
+          "colorMode": null,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 2,
+          "link": true,
+          "linkTargetBlank": true,
+          "linkTooltip": "Open Job Inspector",
+          "linkUrl": "d/EivX9TIiz/job-inspector?orgId=1&var-id=${__cell_6}",
+          "mappingType": 1,
+          "pattern": "j_name",
+          "thresholds": [],
+          "type": "string",
+          "unit": "short"
+        },
+        {
+          "$$hashKey": "object:143",
+          "alias": "Allocated memory",
+          "colorMode": null,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 2,
+          "link": false,
+          "mappingType": 1,
+          "pattern": "memory",
+          "thresholds": [],
+          "type": "number",
+          "unit": "decmbytes"
+        },
+        {
+          "$$hashKey": "object:144",
+          "alias": "Allocated cores",
+          "colorMode": null,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 0,
+          "mappingType": 1,
+          "pattern": "cpu",
+          "thresholds": [],
+          "type": "string",
+          "unit": "locale"
+        },
+        {
+          "$$hashKey": "object:145",
+          "alias": "Job ID",
+          "colorMode": null,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 2,
+          "link": true,
+          "linkTargetBlank": true,
+          "linkTooltip": "Open Job Inspector",
+          "linkUrl": "d/EivX9TIiz/job-inspector?orgId=1&var-id=${__cell}",
+          "mappingType": 1,
+          "pattern": "id",
+          "thresholds": [],
+          "type": "string",
+          "unit": "short"
+        }
+      ],
+      "targets": [
+        {
+          "$$hashKey": "object:126",
+          "alias": "",
+          "format": "table",
+          "hide": false,
+          "rawSql": "select p.name as p_name, b.build_number, b.restart_counter, j.name as j_name, j.memory, j.cpu , j.id \nfrom project p, build b, job j \nwhere p.id = j.project_id AND b.id = j.build_id AND b.id = '[[bid]]'",
+          "refId": "A"
+        }
+      ],
+      "title": "Job list",
+      "transform": "table",
+      "type": "table"
+    }
+  ],
+  "schemaVersion": 16,
+  "style": "dark",
+  "tags": [],
+  "templating": {
+    "list": [
+      {
+        "allValue": null,
+        "current": {
+          "text": "0006fa7e-b193-4dd2-a746-6c6be16f7d8c",
+          "value": "0006fa7e-b193-4dd2-a746-6c6be16f7d8c"
+        },
+        "hide": 2,
+        "includeAll": false,
+        "label": "",
+        "multi": false,
+        "name": "bid",
+        "options": [
+          {
+            "selected": true,
+            "text": "0006fa7e-b193-4dd2-a746-6c6be16f7d8c",
+            "value": "0006fa7e-b193-4dd2-a746-6c6be16f7d8c"
+          },
+          {
+            "selected": false,
+            "text": "0009ad79-6814-44c4-b33b-66326af7e849",
+            "value": "0009ad79-6814-44c4-b33b-66326af7e849"
+          },
+          {
+            "selected": false,
+            "text": "00225b05-6417-49d6-846a-6aab6a105695",
+            "value": "00225b05-6417-49d6-846a-6aab6a105695"
+          },
+          {
+            "selected": false,
+            "text": "005d6f95-68d7-41d3-88a9-8c323eb66f4f",
+            "value": "005d6f95-68d7-41d3-88a9-8c323eb66f4f"
+          }
+        ],
+        "query": "0006fa7e-b193-4dd2-a746-6c6be16f7d8c,0009ad79-6814-44c4-b33b-66326af7e849,00225b05-6417-49d6-846a-6aab6a105695,005d6f95-68d7-41d3-88a9-8c323eb66f4f",
+        "type": "custom"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ],
+    "time_options": [
+      "5m",
+      "15m",
+      "1h",
+      "6h",
+      "12h",
+      "24h",
+      "2d",
+      "7d",
+      "30d"
+    ]
+  },
+  "timezone": "",
+  "title": "Build Inspector",
+  "uid": "ieOb3TSiz",
+  "version": 1
+}
