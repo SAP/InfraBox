@@ -1,4 +1,4 @@
-{{ if eq .Values.cluster.name "master" }}
+{{ define "gerrit_deployment" }}
 {{ if .Values.gerrit.enabled }}
 apiVersion: extensions/v1beta1
 kind: Deployment
@@ -33,4 +33,10 @@ spec:
                 {{ include "volumes_database" . | indent 16 }}
                 {{ include "volumes_gerrit" . | indent 16 }}
 {{ end }}
+{{ end }}
+
+{{ if .Values.ha.enabled }}
+    {{ include "gerrit_deployment" . }}
+{{ else if eq .Values.cluster.name "master" }}
+    {{ include "gerrit_deployment" . }}
 {{ end }}

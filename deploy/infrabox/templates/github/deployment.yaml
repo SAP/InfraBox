@@ -51,7 +51,7 @@ spec:
 {{ end }}
 {{ end }}
 
-{{ if .Values.github.enabled }}
+{{ if .Values.ha.enabled }}
     {{ include "github_deployment" . }}
 {{ else if eq .Values.cluster.name "master" }}
     {{ include "github_deployment" . }}
