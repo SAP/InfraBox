@@ -1,0 +1,1107 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "$$hashKey": "object:87",
+        "builtIn": 1,
+        "datasource": "-- Grafana --",
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "description": "This dashboard offers a more detailed inspection of the selected project.",
+  "editable": true,
+  "gnetId": null,
+  "graphTooltip": 0,
+  "id": 2,
+  "iteration": 1529672685877,
+  "links": [],
+  "panels": [
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 25,
+      "panels": [],
+      "title": "General Information",
+      "type": "row"
+    },
+    {
+      "columns": [],
+      "datasource": "infrabox",
+      "fontSize": "100%",
+      "gridPos": {
+        "h": 5,
+        "w": 12,
+        "x": 0,
+        "y": 1
+      },
+      "id": 10,
+      "links": [],
+      "pageSize": null,
+      "scroll": true,
+      "showHeader": true,
+      "sort": {
+        "col": 0,
+        "desc": true
+      },
+      "styles": [
+        {
+          "alias": "NAME",
+          "colorMode": null,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 2,
+          "mappingType": 1,
+          "pattern": "name",
+          "thresholds": [],
+          "type": "string",
+          "unit": "short"
+        },
+        {
+          "alias": "ID",
+          "colorMode": null,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 2,
+          "mappingType": 1,
+          "pattern": "id",
+          "thresholds": [],
+          "type": "string",
+          "unit": "short"
+        },
+        {
+          "alias": "Visibility",
+          "colorMode": null,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 2,
+          "mappingType": 1,
+          "pattern": "public",
+          "thresholds": [],
+          "type": "string",
+          "unit": "short",
+          "valueMaps": [
+            {
+              "text": "PUBLIC",
+              "value": "1.0"
+            },
+            {
+              "text": "PRIVATE",
+              "value": "0"
+            }
+          ]
+        },
+        {
+          "alias": "Build on push",
+          "colorMode": null,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 2,
+          "mappingType": 1,
+          "pattern": "build_on_push",
+          "thresholds": [],
+          "type": "string",
+          "unit": "short",
+          "valueMaps": [
+            {
+              "text": "TRUE",
+              "value": "1.0"
+            },
+            {
+              "text": "FALSE",
+              "value": "0"
+            }
+          ]
+        },
+        {
+          "alias": "Build on trigger",
+          "colorMode": null,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 2,
+          "mappingType": 1,
+          "pattern": "build_on_trigger",
+          "thresholds": [],
+          "type": "string",
+          "unit": "short",
+          "valueMaps": [
+            {
+              "text": "TRUE",
+              "value": "1.0"
+            },
+            {
+              "text": "FALSE",
+              "value": "0"
+            }
+          ]
+        },
+        {
+          "alias": "Collaborators",
+          "colorMode": null,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 0,
+          "mappingType": 1,
+          "pattern": "count",
+          "thresholds": [],
+          "type": "number",
+          "unit": "short"
+        }
+      ],
+      "targets": [
+        {
+          "$$hashKey": "object:462",
+          "alias": "",
+          "format": "table",
+          "hide": false,
+          "rawSql": "Select '[[pname]]' as name, p.id as id, p.public as public, p.build_on_push as build_on_push, p.build_on_trigger as build_on_trigger, count(c.user_id)\nfrom project p LEFT OUTER JOIN collaborator c\nON  c.project_id = p.id\nWHERE name = '[[pname]]'\nGROUP BY id",
+          "refId": "A"
+        }
+      ],
+      "title": "Project Informations",
+      "transform": "table",
+      "type": "table"
+    },
+    {
+      "cacheTimeout": null,
+      "colorBackground": false,
+      "colorValue": true,
+      "colors": [
+        "#d44a3a",
+        "rgba(237, 129, 40, 0.89)",
+        "#299c46"
+      ],
+      "datasource": "infrabox",
+      "decimals": 2,
+      "description": "Success rate for all the jobs of the project.\n\n(TR) means that the data is computed only for  jobs which end date are in the specified time range. The default time range is the last week",
+      "format": "percentunit",
+      "gauge": {
+        "maxValue": 1,
+        "minValue": 0,
+        "show": false,
+        "thresholdLabels": false,
+        "thresholdMarkers": false
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 3,
+        "x": 12,
+        "y": 1
+      },
+      "hideTimeOverride": true,
+      "id": 27,
+      "interval": null,
+      "links": [],
+      "mappingType": 1,
+      "mappingTypes": [
+        {
+          "name": "value to text",
+          "value": 1
+        },
+        {
+          "name": "range to text",
+          "value": 2
+        }
+      ],
+      "maxDataPoints": 100,
+      "nullPointMode": "connected",
+      "nullText": null,
+      "postfix": "",
+      "postfixFontSize": "50%",
+      "prefix": "",
+      "prefixFontSize": "80%",
+      "rangeMaps": [
+        {
+          "from": "null",
+          "text": "N/A",
+          "to": "null"
+        }
+      ],
+      "sparkline": {
+        "fillColor": "rgba(31, 118, 189, 0.18)",
+        "full": false,
+        "lineColor": "rgb(31, 120, 193)",
+        "show": false
+      },
+      "tableColumn": "success_rate_7d",
+      "targets": [
+        {
+          "$$hashKey": "object:553",
+          "alias": "",
+          "format": "table",
+          "hide": false,
+          "rawSql": "SELECT \n  CASE\n\t  count(j.id) filter (where j.state NOT IN ('running', 'scheduled', 'queued'))\n  WHEN\n\t  0\n  THEN\n\t\tNULL\n  ELSE \n\t\t(count(j.id) filter (where j.state = 'finished'))::float / (count(j.id) filter (where j.state NOT IN ('running', 'scheduled', 'queued')))::float\n  END as success_rate_7d\nFROM job j\nWHERE $__timeFilter(j.end_date) AND j.project_id = (select id from project where name = '[[pname]]')",
+          "refId": "A"
+        }
+      ],
+      "thresholds": "0.8,0.9",
+      "title": "Jobs Success Rate (TR)",
+      "type": "singlestat",
+      "valueFontSize": "100%",
+      "valueMaps": [
+        {
+          "op": "=",
+          "text": "N/A",
+          "value": "null"
+        }
+      ],
+      "valueName": "avg"
+    },
+    {
+      "cacheTimeout": null,
+      "colorBackground": false,
+      "colorValue": true,
+      "colors": [
+        "#d44a3a",
+        "rgba(237, 129, 40, 0.89)",
+        "#299c46"
+      ],
+      "datasource": "infrabox",
+      "decimals": 2,
+      "description": "Average of the Success Rate of each build of the project.\n\n(TR) means that the data is computed only for  jobs which end date are in the specified time range. The default time range is the last week",
+      "format": "percentunit",
+      "gauge": {
+        "maxValue": 1,
+        "minValue": 0,
+        "show": false,
+        "thresholdLabels": false,
+        "thresholdMarkers": false
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 3,
+        "x": 15,
+        "y": 1
+      },
+      "hideTimeOverride": true,
+      "id": 28,
+      "interval": null,
+      "links": [],
+      "mappingType": 1,
+      "mappingTypes": [
+        {
+          "name": "value to text",
+          "value": 1
+        },
+        {
+          "name": "range to text",
+          "value": 2
+        }
+      ],
+      "maxDataPoints": 100,
+      "nullPointMode": "connected",
+      "nullText": null,
+      "postfix": "",
+      "postfixFontSize": "50%",
+      "prefix": "",
+      "prefixFontSize": "80%",
+      "rangeMaps": [
+        {
+          "from": "null",
+          "text": "N/A",
+          "to": "null"
+        }
+      ],
+      "sparkline": {
+        "fillColor": "rgba(31, 118, 189, 0.18)",
+        "full": false,
+        "lineColor": "rgb(31, 120, 193)",
+        "show": false
+      },
+      "tableColumn": "avg",
+      "targets": [
+        {
+          "$$hashKey": "object:684",
+          "alias": "",
+          "format": "table",
+          "hide": false,
+          "rawSql": "SELECT AVG(foo.success_rate_7d) FROM (\nSELECT \n  CASE\n\t  count(j.id) filter (where j.state NOT IN ('running', 'scheduled', 'queued'))\n  WHEN\n\t  0\n  THEN\n\t\tNULL\n  ELSE \n\t\t(count(j.id) filter (where j.state = 'finished'))::float / (count(j.id) filter (where j.state NOT IN ('running', 'scheduled', 'queued')))::float\n  END as success_rate_7d\nFROM job j\nWHERE $__timeFilter(j.end_date) AND j.project_id = (select id from project where name = '[[pname]]')\nGROUP BY build_id) as foo",
+          "refId": "A"
+        }
+      ],
+      "thresholds": "0.8,0.9",
+      "title": "AVG Build Success Rate (TR)",
+      "type": "singlestat",
+      "valueFontSize": "100%",
+      "valueMaps": [
+        {
+          "op": "=",
+          "text": "N/A",
+          "value": "null"
+        }
+      ],
+      "valueName": "avg"
+    },
+    {
+      "cacheTimeout": null,
+      "colorBackground": false,
+      "colorValue": false,
+      "colors": [
+        "#299c46",
+        "rgba(237, 129, 40, 0.89)",
+        "#d44a3a"
+      ],
+      "datasource": "infrabox",
+      "description": "The number of builds of this project which have jobs with their end date in the specified time range (TR).\nThe default time range is the last week",
+      "format": "none",
+      "gauge": {
+        "maxValue": 100,
+        "minValue": 0,
+        "show": false,
+        "thresholdLabels": false,
+        "thresholdMarkers": true
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 3,
+        "x": 18,
+        "y": 1
+      },
+      "hideTimeOverride": true,
+      "id": 30,
+      "interval": null,
+      "links": [],
+      "mappingType": 1,
+      "mappingTypes": [
+        {
+          "name": "value to text",
+          "value": 1
+        },
+        {
+          "name": "range to text",
+          "value": 2
+        }
+      ],
+      "maxDataPoints": 100,
+      "nullPointMode": "connected",
+      "nullText": null,
+      "postfix": "",
+      "postfixFontSize": "50%",
+      "prefix": "",
+      "prefixFontSize": "50%",
+      "rangeMaps": [
+        {
+          "from": "null",
+          "text": "N/A",
+          "to": "null"
+        }
+      ],
+      "sparkline": {
+        "fillColor": "rgba(31, 118, 189, 0.18)",
+        "full": false,
+        "lineColor": "rgb(31, 120, 193)",
+        "show": false
+      },
+      "tableColumn": "count",
+      "targets": [
+        {
+          "$$hashKey": "object:731",
+          "alias": "",
+          "format": "table",
+          "hide": false,
+          "rawSql": "SELECT count(DISTINCT build_id)\nFROM job\nWHERE project_id = (select id from project where name = '[[pname]]') AND $__timeFilter(end_date) AND state NOT IN ('running', 'scheduled', 'queued')",
+          "refId": "A"
+        }
+      ],
+      "thresholds": "",
+      "title": "Builds over time range (TR)",
+      "type": "singlestat",
+      "valueFontSize": "80%",
+      "valueMaps": [
+        {
+          "op": "=",
+          "text": "N/A",
+          "value": "null"
+        }
+      ],
+      "valueName": "avg"
+    },
+    {
+      "columns": [],
+      "datasource": "infrabox",
+      "fontSize": "100%",
+      "gridPos": {
+        "h": 5,
+        "w": 3,
+        "x": 21,
+        "y": 1
+      },
+      "id": 19,
+      "links": [],
+      "pageSize": null,
+      "repeat": null,
+      "repeatDirection": "v",
+      "scroll": true,
+      "showHeader": true,
+      "sort": {
+        "col": 0,
+        "desc": true
+      },
+      "styles": [
+        {
+          "alias": "Running jobs",
+          "colorMode": null,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 0,
+          "mappingType": 1,
+          "pattern": "jobs",
+          "thresholds": [],
+          "type": "number",
+          "unit": "short"
+        },
+        {
+          "alias": "Cluster name",
+          "colorMode": null,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 2,
+          "mappingType": 1,
+          "pattern": "cluster",
+          "thresholds": [],
+          "type": "string",
+          "unit": "short"
+        }
+      ],
+      "targets": [
+        {
+          "$$hashKey": "object:810",
+          "alias": "",
+          "format": "table",
+          "hide": false,
+          "rawSql": "SELECT c.name as cluster, count(j.id) as jobs\nFROM cluster c LEFT OUTER JOIN job j \nON j.state = 'running' ANd j.cluster_name = c.name AND j.project_id = (select id from project where name = '[[pname]]')\nGROUP BY c.name",
+          "refId": "A"
+        }
+      ],
+      "title": "Project's running jobs",
+      "transform": "table",
+      "type": "table"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 6
+      },
+      "id": 12,
+      "panels": [],
+      "repeat": null,
+      "title": "Ressource use by this project",
+      "type": "row"
+    },
+    {
+      "cacheTimeout": null,
+      "colorBackground": false,
+      "colorValue": true,
+      "colors": [
+        "#299c46",
+        "rgba(237, 129, 40, 0.89)",
+        "#d44a3a"
+      ],
+      "datasource": "infrabox",
+      "description": "Proportion of the allocated memory for the running jobs of this project among the total cluster capacity.\n\n\nIf All clusters are inspected, we simply compute the sum.",
+      "format": "percentunit",
+      "gauge": {
+        "maxValue": 1,
+        "minValue": 0,
+        "show": false,
+        "thresholdLabels": false,
+        "thresholdMarkers": true
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 2,
+        "x": 0,
+        "y": 7
+      },
+      "id": 17,
+      "interval": null,
+      "links": [],
+      "mappingType": 1,
+      "mappingTypes": [
+        {
+          "name": "value to text",
+          "value": 1
+        },
+        {
+          "name": "range to text",
+          "value": 2
+        }
+      ],
+      "maxDataPoints": 100,
+      "nullPointMode": "connected",
+      "nullText": null,
+      "postfix": "",
+      "postfixFontSize": "50%",
+      "prefix": "",
+      "prefixFontSize": "80%",
+      "rangeMaps": [
+        {
+          "from": "null",
+          "text": "N/A",
+          "to": "null"
+        }
+      ],
+      "sparkline": {
+        "fillColor": "rgba(31, 118, 189, 0.18)",
+        "full": false,
+        "lineColor": "rgb(31, 120, 193)",
+        "show": false
+      },
+      "tableColumn": "?column?",
+      "targets": [
+        {
+          "$$hashKey": "object:873",
+          "alias": "",
+          "format": "table",
+          "hide": false,
+          "rawSql": "SELECT \tCASE (\n\t\tSELECT count(id)\n\t\tFROM job\n\t\tWHERE project_id = (select id from project where name = '[[pname]]') AND state = 'running' and cluster_name LIKE [[cluster]])\n\tWHEN 0 THEN 0\n\tELSE (\n\t\tSELECT DISTINCT SUM(j.memory)::float / ((SELECT DISTINCT CASE [[cluster]] WHEN '%' THEN (SELECT sum(memory_capacity) from cluster) ELSE c.memory_capacity END)/1024)\n\t\tFROM job j, cluster c\n\t\tWHERE j.project_id = (select id from project where name = '[[pname]]') AND j.cluster_name LIKE [[cluster]] AND c.name LIKE [[cluster]] AND j.state = 'running'\n\t\tGROUP BY c.name\n\t)\nEND",
+          "refId": "A"
+        }
+      ],
+      "thresholds": "0.8,0.95",
+      "title": "Cluster RAM use",
+      "type": "singlestat",
+      "valueFontSize": "80%",
+      "valueMaps": [],
+      "valueName": "avg"
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "prometheus",
+      "fill": 1,
+      "gridPos": {
+        "h": 5,
+        "w": 22,
+        "x": 2,
+        "y": 7
+      },
+      "id": 21,
+      "interval": "5s",
+      "legend": {
+        "alignAsTable": true,
+        "avg": true,
+        "current": false,
+        "max": true,
+        "min": true,
+        "show": true,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": true,
+      "targets": [
+        {
+          "$$hashKey": "object:995",
+          "alias": "",
+          "expr": "rsc_current_count{project=\"[[pname]]\", cluster=\"[[cluster]]\", rsc=\"mem\"}",
+          "format": "time_series",
+          "hide": false,
+          "interval": "",
+          "intervalFactor": 1,
+          "legendFormat": "Allocated memory",
+          "rawSql": "",
+          "refId": "A"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Cluster's memory use - Over time",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "decmbytes",
+          "label": "",
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "decimals": null,
+          "format": "short",
+          "label": "",
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "cacheTimeout": null,
+      "colorBackground": false,
+      "colorValue": true,
+      "colors": [
+        "#299c46",
+        "rgba(237, 129, 40, 0.89)",
+        "#d44a3a"
+      ],
+      "datasource": "infrabox",
+      "description": "Proportion of the allocated cores for the running jobs of this project among the total cluster capacity.\n\n\nIf All clusters are inspected, we simply compute the sum.",
+      "format": "percentunit",
+      "gauge": {
+        "maxValue": 1,
+        "minValue": 0,
+        "show": false,
+        "thresholdLabels": false,
+        "thresholdMarkers": true
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 2,
+        "x": 0,
+        "y": 12
+      },
+      "id": 14,
+      "interval": null,
+      "links": [],
+      "mappingType": 1,
+      "mappingTypes": [
+        {
+          "name": "value to text",
+          "value": 1
+        },
+        {
+          "name": "range to text",
+          "value": 2
+        }
+      ],
+      "maxDataPoints": 100,
+      "nullPointMode": "connected",
+      "nullText": null,
+      "postfix": "",
+      "postfixFontSize": "50%",
+      "prefix": "",
+      "prefixFontSize": "80%",
+      "rangeMaps": [
+        {
+          "from": "null",
+          "text": "N/A",
+          "to": "null"
+        }
+      ],
+      "sparkline": {
+        "fillColor": "rgba(31, 118, 189, 0.18)",
+        "full": false,
+        "lineColor": "rgb(31, 120, 193)",
+        "show": false
+      },
+      "tableColumn": "?column?",
+      "targets": [
+        {
+          "$$hashKey": "object:931",
+          "alias": "",
+          "format": "table",
+          "hide": false,
+          "rawSql": "SELECT \tCASE (\n\t\tSELECT count(id)\n\t\tFROM job\n\t\tWHERE project_id = (select id from project where name = '[[pname]]') AND state = 'running' and cluster_name LIKE [[cluster]])\n\tWHEN 0 THEN 0\n\tELSE (\n\t\tSELECT DISTINCT SUM(j.cpu)::float / (SELECT DISTINCT CASE [[cluster]] WHEN '%' THEN (SELECT sum(cpu_capacity) from cluster) ELSE c.cpu_capacity END)\n\t\tFROM job j, cluster c\n\t\tWHERE j.project_id = (select id from project where name = '[[pname]]') AND j.cluster_name LIKE [[cluster]] AND c.name LIKE [[cluster]] AND j.state = 'running'\n\t\tGROUP BY c.name\n\t)\nEND",
+          "refId": "A"
+        }
+      ],
+      "thresholds": "0.8,0.95",
+      "title": "Cluster CPU use",
+      "type": "singlestat",
+      "valueFontSize": "80%",
+      "valueMaps": [],
+      "valueName": "avg"
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "prometheus",
+      "fill": 1,
+      "gridPos": {
+        "h": 5,
+        "w": 22,
+        "x": 2,
+        "y": 12
+      },
+      "id": 23,
+      "legend": {
+        "alignAsTable": true,
+        "avg": true,
+        "current": false,
+        "max": true,
+        "min": true,
+        "rightSide": false,
+        "show": true,
+        "sideWidth": null,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": true,
+      "targets": [
+        {
+          "$$hashKey": "object:1059",
+          "alias": "",
+          "expr": "rsc_current_count{project=\"[[pname]]\", cluster=\"[[cluster]]\", rsc=\"cpu\"}",
+          "format": "time_series",
+          "hide": false,
+          "intervalFactor": 1,
+          "legendFormat": "Allocated cores",
+          "rawSql": "rsc_current_count{project=\"[[pname]]\", cluster=\"[[cluster]]\", rsc=\"cpu\"}",
+          "refId": "A"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Cluster's CPU use - Over time",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "decimals": 0,
+          "format": "short",
+          "label": "Cores",
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 17
+      },
+      "id": 32,
+      "panels": [],
+      "title": "Builds Overview",
+      "type": "row"
+    },
+    {
+      "columns": [],
+      "datasource": "infrabox",
+      "description": "List all the builds of this project.\n\n\nThe success rate is computed over a specific time range (TR) as the proportion of 'finished' jobs among ended jobs (ie : not queued, scheduled or running).\n\nThe default time range is the last week.",
+      "fontSize": "100%",
+      "gridPos": {
+        "h": 12,
+        "w": 24,
+        "x": 0,
+        "y": 18
+      },
+      "id": 34,
+      "links": [],
+      "pageSize": null,
+      "scroll": true,
+      "showHeader": true,
+      "sort": {
+        "col": 1,
+        "desc": true
+      },
+      "styles": [
+        {
+          "$$hashKey": "object:364",
+          "alias": "Project name",
+          "colorMode": null,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 2,
+          "mappingType": 1,
+          "pattern": "pname",
+          "thresholds": [],
+          "type": "string",
+          "unit": "short"
+        },
+        {
+          "$$hashKey": "object:365",
+          "alias": "Build Number",
+          "colorMode": null,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 0,
+          "link": true,
+          "linkTargetBlank": true,
+          "linkTooltip": "Open Build Inspector",
+          "linkUrl": "d/ieOb3TSiz/build-inspector?orgId=1&var-bid=${__cell_4}",
+          "mappingType": 1,
+          "pattern": "build_number",
+          "thresholds": [],
+          "type": "number",
+          "unit": "none"
+        },
+        {
+          "$$hashKey": "object:366",
+          "alias": "Restarts",
+          "colorMode": null,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 0,
+          "mappingType": 1,
+          "pattern": "restart_counter",
+          "thresholds": [],
+          "type": "number",
+          "unit": "none"
+        },
+        {
+          "$$hashKey": "object:367",
+          "alias": "Success Rate (TR)",
+          "colorMode": "value",
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 2,
+          "mappingType": 1,
+          "pattern": "sr",
+          "thresholds": [
+            "0.8",
+            "0.9"
+          ],
+          "type": "number",
+          "unit": "percentunit"
+        },
+        {
+          "$$hashKey": "object:414",
+          "alias": "Build ID",
+          "colorMode": null,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 2,
+          "link": true,
+          "linkTargetBlank": true,
+          "linkTooltip": "Open Build Inspector",
+          "linkUrl": "d/ieOb3TSiz/build-inspector?orgId=1&var-bid=${__cell}",
+          "mappingType": 1,
+          "pattern": "id",
+          "thresholds": [],
+          "type": "string",
+          "unit": "short"
+        }
+      ],
+      "targets": [
+        {
+          "$$hashKey": "object:351",
+          "alias": "",
+          "format": "table",
+          "hide": false,
+          "rawSql": "SELECT pinfo.name as pname, b.build_number, b.restart_counter, sr.sr, b.id\nFROM  (SELECT id, build_number, restart_counter FROM build WHERE project_id = (select id from project where name = '[[pname]]')) b\nLEFT OUTER JOIN (SELECT build_id,\n  CASE\n\t  count(j.id) filter (where j.state NOT IN ('running', 'scheduled', 'queued'))\n  WHEN\n\t  0\n  THEN\n\t\tNULL\n  ELSE \n\t\t(count(j.id) filter (where j.state = 'finished'))::float / (count(j.id) filter (where j.state NOT IN ('running', 'scheduled', 'queued')))::float\n  END as sr\n  FROM job j\n  WHERE j.project_id = (select id from project where name = '[[pname]]') AND $__timeFilter(j.end_date)\n  GROUP BY build_id) sr\nON sr.build_id = b.id\nLEFT JOIN (SELECT name FROM project WHERE  name = '[[pname]]') pinfo ON true\n",
+          "refId": "A"
+        }
+      ],
+      "title": "Build List",
+      "transform": "table",
+      "type": "table"
+    }
+  ],
+  "refresh": false,
+  "schemaVersion": 16,
+  "style": "dark",
+  "tags": [],
+  "templating": {
+    "list": [
+      {
+        "allValue": null,
+        "current": {
+          "text": "hanalite-releasepack",
+          "value": "hanalite-releasepack"
+        },
+        "datasource": "infrabox",
+        "hide": 0,
+        "includeAll": false,
+        "label": "Project Name",
+        "multi": false,
+        "name": "pname",
+        "options": [],
+        "query": "select distinct name from project order by name",
+        "refresh": 1,
+        "regex": "",
+        "sort": 0,
+        "tagValuesQuery": "",
+        "tags": [],
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
+      },
+      {
+        "allValue": "'%'",
+        "current": {
+          "tags": [],
+          "text": "calico",
+          "value": "calico"
+        },
+        "datasource": "infrabox",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Inspected cluster",
+        "multi": false,
+        "name": "cluster",
+        "options": [],
+        "query": "select name from cluster",
+        "refresh": 1,
+        "regex": "",
+        "sort": 0,
+        "tagValuesQuery": "",
+        "tags": [],
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
+      }
+    ]
+  },
+  "time": {
+    "from": "now-7d",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ],
+    "time_options": [
+      "5m",
+      "15m",
+      "1h",
+      "6h",
+      "12h",
+      "24h",
+      "2d",
+      "7d",
+      "30d"
+    ]
+  },
+  "timezone": "",
+  "title": "Project Inspector",
+  "uid": "ZfQaeJSiz",
+  "version": 1
+}
