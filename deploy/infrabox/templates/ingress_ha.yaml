@@ -57,6 +57,6 @@ spec:
     tls:
         - hosts:
             - {{ .Values.ha.entry_host }}
-          secretName: infrabox-tls-certs
+          secretName: infrabox-ha-tls-certs
 {{ end }}
 {{ end }}
