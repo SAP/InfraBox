@@ -282,7 +282,7 @@ https://{{- required "host is required" .Values.host -}}:{{- .Values.port -}}
 {{ end }}
 
 {{ define "env_ldap" }}
-{{ if eq .Values.cluster.name "master" }}
+{{ if ne .Values.cluster.name "master" }}
 -
     name: INFRABOX_ACCOUNT_LDAP_ENABLED
     value: "false"
