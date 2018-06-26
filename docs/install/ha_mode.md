@@ -19,10 +19,11 @@ ha:
 ## Enable HA mode
 set `ha.enabled = true` to enable ha mode
 
-HA mode makes every cluster accessable, we need to set a fixed entrypoint by setting
+HA mode makes every cluster accessable, we need to set a fixed entrypoint by setting`entry_host, entry_port` and create tls secret named `infrabox-ha-tls-certs`
 
-`entry_host, entry_port`
-
+```bash
+kubectl create -n infrabox-system secret tls infrabox-ha-tls-certs --key <PATH_TO_KEY>.key --cert <PATH_TO_CRT>.crt
+```
 
 ## Configure HA mode
 
