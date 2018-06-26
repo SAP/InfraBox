@@ -127,14 +127,19 @@ def handle_job_update(conn, event):
     gerrit_username = get_env('INFRABOX_GERRIT_USERNAME')
     gerrit_key_filename = get_env('INFRABOX_GERRIT_KEY_FILENAME')
 
-    c = conn.cursor()
-    c.execute('''
-        SELECT root_url
-        FROM cluster
-        WHERE name = 'master'
-    ''')
-    dashboard_url = c.fetchone()[0]
-    c.close()
+    ha_mode = get_env('INFRABOX_HA_ENABLED') == 'true'
+
+    if ha_mode:
+        dashboard_url = get_env('INFRABOX_HA_ROOT_URL')
+    else:
+        c = conn.cursor()
+        c.execute('''
+                SELECT root_url
+                FROM cluster
+                WHERE name = 'master'
+            ''')
+        dashboard_url = c.fetchone()[0]
+        c.close()
 
     client = paramiko.SSHClient()
     client.load_system_host_keys()
