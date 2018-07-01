@@ -1,0 +1,14 @@
+{{ if .Values.monitoring.enabled }}
+kind: Service
+apiVersion: v1
+metadata:
+  name: infrabox-metrics
+  labels:
+    app: infrabox-metrics
+spec:
+  selector:
+    app: infrabox-metrics
+  ports:
+  - name: web
+    port: 8080
+{{ end }}

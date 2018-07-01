@@ -1,17 +1,12 @@
 #!/usr/bin/env python
 import sys
-import threading
 import time
-from http.server import HTTPServer
+import os
 
-import prometheus_client
 import psycopg2
-import random
-import socket
-from subprocess import run
-from pyinfraboxutils import get_logger, get_env
+from pyinfraboxutils import get_env
 from pyinfraboxutils.db import connect_db
-from prometheus_client import Gauge, start_http_server, core
+from prometheus_client import Gauge, start_http_server
 
 
 # A little python web server which collect datas overtime from the PostgreSQL Infrabox database
@@ -109,7 +104,7 @@ def main():
     get_env('INFRABOX_DATABASE_PASSWORD')
     get_env('INFRABOX_DATABASE_HOST')
     get_env('INFRABOX_DATABASE_PORT')
-    server_port = get_env('PYMETRICSERV_PORT')
+    server_port = os.environ.get('INFRABOX_PORT', 8080)
 
     # Copied from review.py, could be changed over time
     conn = connect_db()
@@ -133,13 +128,6 @@ def main():
         # experimental value
         time.sleep(1.5)
 
-
-
 if __name__ == '__main__':
     running = True
     main()
-
-
-
-
-

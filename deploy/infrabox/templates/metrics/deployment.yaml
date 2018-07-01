@@ -1,39 +1,30 @@
+{{ if .Values.monitoring.enabled }}
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-    name: infrabox-scheduler
+    name: infrabox-metrics
     namespace: {{ template "system_namespace" . }}
     labels:
-        app: infrabox-scheduler
+        app: infrabox-metrics
 spec:
     replicas: 1
     template:
         metadata:
             labels:
-                app: infrabox-scheduler
+                app: infrabox-metrics
         spec:
             {{ include "imagePullSecret" . | indent 8 }}
             terminationGracePeriodSeconds: 0
-            serviceAccountName: infrabox
             containers:
             {{ include "containers_database" . | indent 12 }}
             -
-                name: scheduler
-                image: {{ include "image_repository" . }}/scheduler-kubernetes:{{ include "image_tag" . }}
+                name: metrics
+                image: {{ include "image_repository" . }}/metrics:{{ include "image_tag" . }}
                 imagePullPolicy: Always
                 env:
                 {{ include "env_database" . | indent 16 }}
                 {{ include "env_general" . | indent 16 }}
                 {{ include "env_version" . | indent 16 }}
-                {{ include "env_cluster" . | indent 16 }}
-                -
-                    name: INFRABOX_KUBERNETES_MASTER_HOST
-                    value: "kubernetes.default"
-                -
-                    name: INFRABOX_KUBERNETES_MASTER_PORT
-                    value: "443"
-                volumeMounts:
-                {{ include "mounts_rsa_private" . | indent 16 }}
             volumes:
                 {{ include "volumes_database" . | indent 16 }}
-                {{ include "volumes_rsa" . | indent 16 }}
+{{ end }}
