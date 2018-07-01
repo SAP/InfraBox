@@ -1,0 +1,68 @@
+{{ if .Values.monitoring.enabled }}
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+    name: infrabox-grafana
+    namespace: {{ template "system_namespace" . }}
+    labels:
+        app: infrabox-grafana
+spec:
+    replicas: 1
+    template:
+        metadata:
+            labels:
+                app: infrabox-grafana
+        spec:
+            terminationGracePeriodSeconds: 0
+            containers:
+            {{ include "containers_database" . | indent 12 }}
+            -
+                name: grafana
+                image: grafana/grafana:5.1.4
+                imagePullPolicy: Always
+                env:
+                {{ include "env_database" . | indent 16 }}
+                -
+                    name: GF_SECURITY_ADMIN_PASSWORD
+                    value: {{ .Values.admin.password }}
+                -
+                    name: GF_AUTH_ANONYMOUS_ENABLED
+                    value: "false"
+                -
+                    name: GF_AUTH_ANONYMOUS_ORG_NAME
+                    value: "Main Org."
+                -
+                    name: GF_AUTH_ANONYMOUS_ORG_ROLE
+                    value: Viewer
+                -
+                    name: GF_SERVER_ROOT_URL
+                    value: {{ include "root_url" . }}/grafana
+                volumeMounts:
+                -
+                    name: dashboards
+                    mountPath: /etc/grafana/provisioning/dashboards
+                -
+                    name: datasources
+                    mountPath: /etc/grafana/provisioning/datasources
+            -
+                name: nginx
+                image: nginx
+                volumeMounts:
+                -
+                    name: nginx-config
+                    mountPath: /etc/nginx/conf.d
+            volumes:
+                {{ include "volumes_database" . | indent 16 }}
+                -
+                    name: nginx-config
+                    configMap:
+                        name: infrabox-grafana
+                -
+                    name: dashboards
+                    configMap:
+                        name: infrabox-grafana-dashboards
+                -
+                    name: datasources
+                    configMap:
+                        name: infrabox-grafana-datasources
+{{ end }}

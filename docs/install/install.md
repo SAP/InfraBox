@@ -92,6 +92,11 @@ You can configure different ways of how your user can authenticate.
 - [GitHub (Use this if you want to connect your GitHub repositories)](/docs/install/configure/github.md)
 - [Manual signup / login](/docs/install/configure/signup.md)
 
+### Configure Monitoring
+You may optionally configure Grafana/Prometheus monitoring.
+
+- [Configure Monitoring](/docs/install/configure/monitoring.md)
+
 ## Clone InfraBox repository
 If you have not already cloned the InfraBox repository and checkout the version you would like to install.
 
