@@ -1,0 +1,14 @@
+{{ if .Values.monitoring.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: Prometheus
+metadata:
+  name: infrabox
+spec:
+  serviceAccountName: infrabox
+  serviceMonitorSelector:
+    matchLabels:
+      app: infrabox
+  resources:
+    requests:
+      memory: 400Mi
+{{ end }}
