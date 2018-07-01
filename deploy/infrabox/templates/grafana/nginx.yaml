@@ -1,0 +1,18 @@
+{{ if .Values.monitoring.enabled }}
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: infrabox-grafana
+  namespace: {{ template "system_namespace" . }}
+data:
+  default.conf: |-
+    server {
+      listen 80;
+      root /usr/share/nginx/www;
+      index index.html index.htm;
+
+      location /grafana/ {
+       proxy_pass http://localhost:3000/;
+      }
+    }
+{{ end }}

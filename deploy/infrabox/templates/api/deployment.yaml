@@ -55,14 +55,16 @@ spec:
                   httpGet:
                     path: /ping
                     port: 8080
-                  initialDelaySeconds: 3
-                  periodSeconds: 3
+                  initialDelaySeconds: 5
+                  periodSeconds: 5
+                  timeoutSeconds: 5
                 readinessProbe:
                   httpGet:
                     path: /ping
                     port: 8080
-                  initialDelaySeconds: 3
-                  periodSeconds: 3
+                  initialDelaySeconds: 5
+                  periodSeconds: 5
+                  timeoutSeconds: 5
             volumes:
                 {{ include "volumes_database" . | indent 16 }}
                 {{ include "volumes_rsa" . | indent 16 }}

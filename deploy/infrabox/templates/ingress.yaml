@@ -51,6 +51,13 @@ spec:
                 backend:
                     serviceName: infrabox-docker-registry
                     servicePort: 8080
+            {{ if .Values.monitoring.enabled }}
+            -
+                path: /grafana
+                backend:
+                    serviceName: infrabox-grafana
+                    servicePort: 80
+            {{ end }}
             {{ if eq .Values.cluster.name "master" }}
             -
                 path: /

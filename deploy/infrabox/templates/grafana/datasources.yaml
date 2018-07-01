@@ -1,0 +1,46 @@
+{{ if .Values.monitoring.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+    namespace: {{ template "system_namespace" . }}
+    name: infrabox-grafana-datasources
+data:
+  datasources.yaml: |-
+    apiVersion: 1
+
+    datasources:
+     - name: infrabox
+       type: postgres
+       access: proxy
+       orgId: 1
+       basicAuth: false
+       isDefault: true
+       jsonData:
+           sslmode: disable
+       version: 1
+       editable: true
+
+    {{ if .Values.database.postgres.enabled }}
+       database: {{ .Values.database.postgres.db }}
+       url: {{ .Values.database.postgres.host }}:{{ .Values.database.postgres.port }}
+       secureJsonData:
+            password: {{ .Values.database.postgres.password }}
+            user: {{ .Values.database.postgres.username }}
+    {{ end }}
+
+    {{ if .Values.database.cloudsql.enabled }}
+       database: {{ .Values.database.cloudsql.db }}
+       url: localhost:5432
+       secureJsonData:
+            password: {{ .Values.database.cloudsql.password }}
+            user: {{ .Values.database.cloudsql.username }}
+    {{ end }}
+
+     - name: prometheus
+       type: prometheus
+       access: proxy
+       orgId: 1
+       url: http://prometheus.{{ template "system_namespace" . }}:9090
+       version: 1
+       editable: true
+{{ end }}
