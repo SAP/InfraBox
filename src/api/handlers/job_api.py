@@ -328,25 +328,30 @@ class Job(Resource):
                 else:
                     abort(400, "Unknown deployment type")
 
+        root_url = g.db.execute_one('''
+            SELECT root_url
+            FROM cluster
+            WHERE name = 'master'
+        ''', [])[0]
 
         # Default env vars
         project_name = urllib.quote_plus(data['project']['name']).replace('+', '%20')
         job_name = urllib.quote_plus(data['job']['name']).replace('+', '%20')
-        build_url = "%s/dashboard/#/project/%s/build/%s/%s" % (os.environ['INFRABOX_ROOT_URL'],
+        build_url = "%s/dashboard/#/project/%s/build/%s/%s" % (root_url,
                                                                project_name,
                                                                data['build']['build_number'],
                                                                data['build']['restart_counter'])
-        job_url = "%s/dashboard/#/project/%s/build/%s/%s/job/%s" % (os.environ['INFRABOX_ROOT_URL'],
+        job_url = "%s/dashboard/#/project/%s/build/%s/%s/job/%s" % (root_url,
                                                                     project_name,
                                                                     data['build']['build_number'],
                                                                     data['build']['restart_counter'],
                                                                     job_name)
 
-        job_api_url = "%s/api/v1/projects/%s/jobs/%s" % (os.environ['INFRABOX_ROOT_URL'],
+        job_api_url = "%s/api/v1/projects/%s/jobs/%s" % (root_url,
                                                          data['project']['id'],
                                                          data['job']['id'])
 
-        build_api_url = "%s/api/v1/projects/%s/builds/%s" % (os.environ['INFRABOX_ROOT_URL'],
+        build_api_url = "%s/api/v1/projects/%s/builds/%s" % (root_url,
                                                              data['project']['id'],
                                                              data['build']['id'])
 
