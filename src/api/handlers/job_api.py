@@ -506,7 +506,6 @@ class Output(Resource):
 
         for f, _ in request.files.items():
             key = "%s/%s" % (job_id, f)
-            app.logger.error(key)
 
             stream = request.files[f].stream
 
