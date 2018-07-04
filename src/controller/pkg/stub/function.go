@@ -163,6 +163,7 @@ func (c *Controller) syncFunctionInvocation(cr *v1alpha1.IBFunctionInvocation, l
 		pod := pods.Items[0]
 		if len(pod.Status.ContainerStatuses) != 0 {
 			cr.Status.State = pod.Status.ContainerStatuses[0].State
+            cr.Status.NodeName = pod.Spec.NodeName
 			log.Info("Updating job status")
 			return sdk.Update(cr)
 		}

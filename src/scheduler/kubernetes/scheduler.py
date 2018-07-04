@@ -337,6 +337,7 @@ class Scheduler(object):
             delete_job = False
             current_state = last_state
             message = None
+            node_name = None
 
             if j.get('status', None):
                 status = j['status']
@@ -355,6 +356,7 @@ class Scheduler(object):
                     if 'stepStatuses' in status and status['stepStatuses']:
                         stepStatus = status['stepStatuses'][-1]
                         exit_code = stepStatus['State']['terminated']['exitCode']
+                        node_name = stepStatus.get('nodeName', None)
 
                         if exit_code == 0:
                             current_state = 'finished'
@@ -381,9 +383,14 @@ class Scheduler(object):
 
             cursor = self.conn.cursor()
             cursor.execute("""
-                UPDATE job SET state = %s, start_date = %s, end_date = %s, message = %s
+                UPDATE job SET
+                    state = %s,
+                    start_date = %s,
+                    end_date = %s,
+                    message = %s,
+                    node_name = %s
                 WHERE id = %s
-            """, (current_state, start_date, end_date, message, job_id))
+            """, (current_state, start_date, end_date, message, node_name, job_id))
             cursor.close()
 
             if delete_job:
