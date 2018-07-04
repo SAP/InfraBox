@@ -320,7 +320,7 @@ def parse_wait(d, path):
         parse_depends_on(d['depends_on'], path + ".depends_on")
 
 def parse_deployment_docker_registry(d, path):
-    check_allowed_properties(d, path, ("type", "host", "repository", "username", "password", "tag"))
+    check_allowed_properties(d, path, ("type", "host", "repository", "username", "password", "tag", "target"))
     check_required_properties(d, path, ("type", "host", "repository"))
     check_text(d['host'], path + ".host")
     check_text(d['repository'], path + ".repository")
@@ -330,6 +330,9 @@ def parse_deployment_docker_registry(d, path):
 
     if 'tag' in d:
         check_text(d['tag'], path + ".tag")
+
+    if 'target' in d:
+        check_text(d['target'], path + ".target")
 
     if 'password' in d:
         parse_secret_ref(d['password'], path + ".password")
@@ -351,7 +354,7 @@ def parse_registry_ecr(d, path):
 
 def parse_deployment_ecr(d, path):
     check_allowed_properties(d, path, ("type", "access_key_id", "secret_access_key",
-                                       "region", "repository", "host", "tag"))
+                                       "region", "repository", "host", "tag", "target"))
     check_required_properties(d, path, ("type", "access_key_id", "secret_access_key", "region", "repository", "host"))
 
     check_text(d['host'], path + ".host")
@@ -363,8 +366,11 @@ def parse_deployment_ecr(d, path):
     if 'tag' in d:
         check_text(d['tag'], path + ".tag")
 
+    if 'target' in d:
+        check_text(d['target'], path + ".target")
+
 def parse_deployment_gcr(d, path):
-    check_allowed_properties(d, path, ("type", "service_account", "repository", "host", "tag"))
+    check_allowed_properties(d, path, ("type", "service_account", "repository", "host", "tag", "target"))
     check_required_properties(d, path, ("type", "service_account", "repository", "host"))
 
     check_text(d['host'], path + ".host")
@@ -375,6 +381,8 @@ def parse_deployment_gcr(d, path):
     if 'tag' in d:
         check_text(d['tag'], path + ".tag")
 
+    if 'target' in d:
+        check_text(d['target'], path + ".target")
 
 def parse_registries(e, path):
     if not isinstance(e, list):

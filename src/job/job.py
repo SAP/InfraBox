@@ -713,7 +713,18 @@ class RunJob(Job):
 
         return os.path.normpath(build_context)
 
-    def deploy_container(self, image_name):
+    def deploy_image(self, image_name, dep):
+        c = self.console
+        tag = dep.get('tag', 'build_%s' % self.build['build_number'])
+        dep_image_name = dep['host'] + '/' + dep['repository'] + ":" + tag
+        c.execute(['docker', 'tag', image_name, dep_image_name], show=True)
+
+        self._login_registry(dep)
+        c.execute(['docker', 'push', dep_image_name], show=True)
+        self._logout_registry(dep)
+
+
+    def deploy_images(self, image_name):
         c = self.console
         if not self.deployments:
             return
@@ -721,13 +732,7 @@ class RunJob(Job):
         c.header("Deploying", show=True)
 
         for dep in self.deployments:
-            tag = dep.get('tag', 'build_%s' % self.build['build_number'])
-            dep_image_name = dep['host'] + '/' + dep['repository'] + ":" + tag
-            c.execute(['docker', 'tag', image_name, dep_image_name], show=True)
-
-            self._login_registry(dep)
-            c.execute(['docker', 'push', dep_image_name], show=True)
-            self._logout_registry(dep)
+            self.deploy_image(image_name, dep)
 
     def login_docker_registry(self):
         c = self.console
@@ -870,7 +875,7 @@ class RunJob(Job):
                 pass
 
 
-    def build_docker_container(self, image_name, cache_image):
+    def build_docker_container(self, image_name, cache_image, target=None):
         c = self.console
 
         self._login_source_registries()
@@ -893,6 +898,9 @@ class RunJob(Job):
 
             cmd += ['--build-arg', 'INFRABOX_BUILD_NUMBER=%s' % self.build['build_number']]
 
+            if target:
+                cmd += ['--target', target]
+
             cwd = self._get_build_context_current_job()
             c.execute(cmd, cwd=cwd, show=True)
             self.cache_docker_image(image_name, cache_image)
@@ -908,7 +916,7 @@ class RunJob(Job):
         self.run_docker_container(image_name)
         self._logout_source_registries()
 
-        self.deploy_container(image_name)
+        self.deploy_images(image_name)
 
         c.header("Finalize", show=True)
         self.push_container(image_name)
@@ -964,12 +972,17 @@ class RunJob(Job):
         image_name_build = image_name + ':build_%s' % self.build['build_number']
         image_name_latest = image_name + ':latest'
 
-        self.build_docker_container(image_name_build, image_name_latest)
-
-        if not self.job['build_only']:
+        if self.job['build_only']:
+            if self.deployments:
+                for d in self.deployments:
+                    self.build_docker_container(image_name_build, image_name_latest, d.get('target', None))
+                    self.deploy_image(image_name_build, d)
+            else:
+                self.build_docker_container(image_name_build, image_name_latest, target=None)
+        else:
+            self.build_docker_container(image_name_build, image_name_latest)
             self.run_docker_container(image_name_build)
-
-        self.deploy_container(image_name_build)
+            self.deploy_images(image_name_build)
 
         c.header("Finalize", show=True)
         self.push_container(image_name_build)
