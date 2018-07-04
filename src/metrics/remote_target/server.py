@@ -68,8 +68,6 @@ class MetricManager:
         labels = tuple(parsed_metric.samples[0][1].keys())
         new_metric = ScrapedGauge(parsed_metric.name, labels)
         self.metrics[parsed_metric.name] = new_metric
-        if parsed_metric.name == "process_virtual_memory_bytes":
-            pass
         return new_metric
 
 
