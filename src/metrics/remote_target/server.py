@@ -51,8 +51,8 @@ class MetricManager:
         Analyze the parsed labels and values and update the
         corresponding metric
 
-        :param metric:
-        :param parsed_metric:
+        :param metric:          The Gauge object we identified
+        :param parsed_metric:   The structure which contains sample datas
         :return:
         """
         for sample in parsed_metric.samples:
@@ -62,7 +62,7 @@ class MetricManager:
         """
         Analyze the parsed metric to create a proper metric
 
-        :param parsed_metric:
+        :param parsed_metric:   The structure which contains sample datas
         :return:
         """
         labels = tuple(parsed_metric.samples[0][1].keys())
