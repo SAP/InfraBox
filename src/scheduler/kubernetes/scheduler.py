@@ -356,7 +356,6 @@ class Scheduler(object):
                     if 'stepStatuses' in status and status['stepStatuses']:
                         stepStatus = status['stepStatuses'][-1]
                         exit_code = stepStatus['State']['terminated']['exitCode']
-                        node_name = stepStatus.get('nodeName', None)
 
                         if exit_code == 0:
                             current_state = 'finished'
@@ -374,6 +373,10 @@ class Scheduler(object):
                     delete_job = True
                     start_date = datetime.now()
                     end_date = datetime.now()
+
+                if 'stepStatuses' in status and status['stepStatuses']:
+                    stepStatus = status['stepStatuses'][-1]
+                    node_name = stepStatus.get('nodeName', None)
 
                 start_date = status.get('startTime', None)
                 end_date = status.get('completionTime', None)
