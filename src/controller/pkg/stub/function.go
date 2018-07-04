@@ -176,6 +176,8 @@ func (c *Controller) syncFunctionInvocation(cr *v1alpha1.IBFunctionInvocation, l
 				},
 			}
 
+			log.Errorf("%+v\n", pod)
+
 			log.Info("Updating job status")
 			return sdk.Update(cr)
 		}
