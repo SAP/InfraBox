@@ -85,6 +85,7 @@ class Jobs(Resource):
                 j.created_at::text as job_created_at,
                 j.message as job_message,
                 j.definition as job_definition,
+                j.node_name as job_node_name,
                 -- pull_request
                 pr.title as pull_request_title,
                 pr.url as pull_request_url
@@ -131,7 +132,8 @@ class Jobs(Resource):
                     'dependencies': j['job_dependencies'],
                     'created_at': j['job_created_at'],
                     'message': j['job_message'],
-                    'definition': j['job_definition']
+                    'definition': j['job_definition'],
+                    'node_name': j['job_node_name'],
                 }
             }
 

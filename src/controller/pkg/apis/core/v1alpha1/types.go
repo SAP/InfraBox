@@ -129,6 +129,7 @@ type IBFunctionInvocation struct {
 
 type IBFunctionInvocationStatus struct {
 	State corev1.ContainerState
+    NodeName string `json:"nodeName,omitempty" protobuf:"bytes,10,opt,name=nodeName"`
 }
 
 type IBFunctionInvocationSpec struct {

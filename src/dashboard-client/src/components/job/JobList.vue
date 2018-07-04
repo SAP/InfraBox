@@ -10,6 +10,7 @@
                         <md-table-head>Duration</md-table-head>
                         <md-table-head>Resources</md-table-head>
                         <md-table-head>Cluster</md-table-head>
+                        <md-table-head>Node</md-table-head>
                     </md-table-row>
                 </md-table-header>
 
@@ -35,6 +36,7 @@
                         <md-table-cell><div>{{ j.cpu }} CPU / {{ j.memory }} GiB </div></md-table-cell>
                         <md-table-cell v-if="j.definition">{{ j.definition.cluster.name }}</md-table-cell>
                         <md-table-cell v-if="!j.definition">master</md-table-cell>
+                        <md-table-cell>{{ j.nodeName }}</md-table-cell>
                     </md-table-row>
                 </md-table-body>
             </md-table>
