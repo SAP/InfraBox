@@ -779,7 +779,7 @@
           }
         ],
         "query": "select distinct name from cluster",
-        "refresh": 0,
+        "refresh": 1,
         "regex": "",
         "sort": 0,
         "tagValuesQuery": "",
