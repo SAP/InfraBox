@@ -356,14 +356,14 @@ class Trigger(object):
                   hc['commit']['committer']['email'],
                   committer_login, hc['html_url'], project_id, branch, pr_id,
                   event['pull_request']['statuses_url']])
-            commit_id = result[0][0]
 
-            build_id = self.create_build(commit_id, project_id)
-            self.create_job(event['pull_request']['head']['sha'],
-                            event['pull_request']['head']['repo']['clone_url'],
-                            build_id, project_id, github_repo_private, branch, env=env, fork=is_fork)
+        commit_id = result[0][0]
+        build_id = self.create_build(commit_id, project_id)
+        self.create_job(event['pull_request']['head']['sha'],
+                        event['pull_request']['head']['repo']['clone_url'],
+                        build_id, project_id, github_repo_private, branch, env=env, fork=is_fork)
 
-            self.conn.commit()
+        self.conn.commit()
 
         return res(200, 'ok')
 

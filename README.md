@@ -16,7 +16,7 @@ Some of InfraBox' features are:
 - [and many more, see our examples](https://github.com/SAP/infrabox-examples)
 
 ## Want to see it in action?
-InfraBox is built on InfraBox. See all the builds [here](https://infrabox.ninja/dashboard/#/project/infrabox).
+InfraBox is built on InfraBox. See all the builds [here](https://infrabox.ninja/dashboard/#/project/sap-infrabox).
 
 ## Documentation
 All our documentation can be found [here](docs/README.md). You can also look at our [example repository](https://github.com/SAP/infrabox-examples) on how to make use of the different features InfraBox provides.

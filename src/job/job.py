@@ -112,10 +112,7 @@ class RunJob(Job):
                 "build": {
                     "id": self.build['id'],
                     "number": self.build['build_number'],
-                    "url": os.environ['INFRABOX_ROOT_URL'] \
-                           + '/dashboard/#/project/' + self.project['name'] \
-                           + '/build/' + str(self.build['build_number']) \
-                           + '/' + str(self.build['restart_counter'])
+                    "url": self.env_vars['INFRABOX_BUILD_URL']
                 }
             }
 
