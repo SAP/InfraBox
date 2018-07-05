@@ -22,17 +22,21 @@ class ScrapedGauge:
         self.labels = tuple(labels[:])
         self._gauge = Gauge(name, "A identified metric found during scraping the /federate web page", list(self.labels))
 
-    def update(self, label_values, value):
-        self._gauge.labels(* self._label_value_iterator(label_values)).set(value)
+    def update(self, label_values, value, prefix):
+        self._gauge.labels(* self._label_value_iterator(label_values, prefix)).set(value)
 
-    def _label_value_iterator(self, label_values):
+    def _label_value_iterator(self, label_values, prefix):
         for label in self.labels:
-            yield label_values.get(label)
+            if label != "instance":
+                yield label_values.get(label)
+            else:
+                yield prefix + label_values.get(label)
 
 
 class MetricManager:
-    def __init__(self):
+    def __init__(self, prefix):
         self.metrics = dict()
+        self.prefix = prefix + ":"
 
     def process(self, parsed_metric):
         """
@@ -41,29 +45,27 @@ class MetricManager:
         """
         metric = self.metrics.get(parsed_metric.name)
         if metric:
-            MetricManager._update(metric, parsed_metric)
+            self._update(metric, parsed_metric)
         else:
-            MetricManager._update(self._create(parsed_metric), parsed_metric)
+            self._update(self._create(parsed_metric), parsed_metric)
 
-    @staticmethod
-    def _update(metric, parsed_metric):
+    def _update(self, metric, parsed_metric):
         """
         Analyze the parsed labels and values and update the
         corresponding metric
 
         :param metric:          The Gauge object we identified
         :param parsed_metric:   The structure which contains sample datas
-        :return:
         """
         for sample in parsed_metric.samples:
-            metric.update(sample[1], sample[2])
+            metric.update(sample[1], sample[2], self.prefix)
 
     def _create(self, parsed_metric):
         """
         Analyze the parsed metric to create a proper metric
 
         :param parsed_metric:   The structure which contains sample datas
-        :return:
+        :return:                The newly created metric
         """
         labels = tuple(parsed_metric.samples[0][1].keys())
         new_metric = ScrapedGauge(parsed_metric.name, labels)
@@ -99,6 +101,7 @@ def main():
     # getting the env variables
     server_port = os.environ.get('INFRABOX_PORT', 8044)
     distant_prom_addr = os.environ.get('DISTANT_PROM_ADDR', "http://localhost:9090")
+    instance_prefix = os.environ.get('INSTANCE_LABEL_PREFIX', "distant")
 
     url_to_scrape = distant_prom_addr + '''/federate?match[]={__name__=~"..*"}'''
 
@@ -118,14 +121,13 @@ def main():
         "process_cpu_seconds",
         'process_cpu_seconds_total')
 
-    metric_manager = MetricManager()
+    metric_manager = MetricManager(instance_prefix)
     while running:
         response = requests.get(url_to_scrape)
         families = parser.text_string_to_metric_families(response.content.decode("utf-8"))
         for family in families:
             if family.name not in skipped_metrics:
                 metric_manager.process(family)
-
 
         time.sleep(1.9)
 
