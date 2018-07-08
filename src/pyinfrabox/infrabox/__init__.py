@@ -200,6 +200,7 @@ def parse_docker_image(d, path):
     check_allowed_properties(d, path, ("type", "name", "image", "depends_on", "resources",
                                        "environment", "timeout", "security_context",
                                        "build_context", "cache", "repository", "command",
+                                       "deployments", "run",
                                        "cluster", "registries", "services"))
     check_required_properties(d, path, ("type", "name", "image", "resources"))
     check_name(d['name'], path + ".name")
@@ -238,6 +239,12 @@ def parse_docker_image(d, path):
 
     if 'build_context' in d:
         check_text(d['build_context'], path + ".build_context")
+
+    if 'deployments' in d:
+        parse_deployments(d['deployments'], path + ".deployments")
+
+    if 'run' in d:
+        check_boolean(d['run'], path + ".run")
 
 def parse_docker(d, path):
     check_allowed_properties(d, path, ("type", "name", "docker_file", "depends_on", "resources",

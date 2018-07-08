@@ -875,7 +875,7 @@ class RunJob(Job):
                 pass
 
 
-    def build_docker_container(self, image_name, cache_image, target=None):
+    def build_docker_image(self, image_name, cache_image, target=None):
         c = self.console
 
         self._login_source_registries()
@@ -887,10 +887,13 @@ class RunJob(Job):
                                                         self.job['dockerfile']))
 
             cmd = ['docker', 'build',
-                   '--cache-from', cache_image,
                    '-t', image_name,
                    '-f', docker_file,
                    '.']
+
+            # Memory limit
+            memory_limit = os.environ['INFRABOX_JOB_RESOURCES_LIMITS_MEMORY']
+            cmd += ['-m', '%sm' % memory_limit]
 
             if 'build_arguments' in self.job and self.job['build_arguments']:
                 for name, value in self.job['build_arguments'].iteritems():
@@ -900,6 +903,8 @@ class RunJob(Job):
 
             if target:
                 cmd += ['--target', target]
+            else:
+                cmd += ['--cache-from', cache_image]
 
             cwd = self._get_build_context_current_job()
             c.execute(cmd, cwd=cwd, show=True)
@@ -912,9 +917,10 @@ class RunJob(Job):
     def run_job_docker_image(self, c):
         image_name = self.job['definition']['image'].replace('$INFRABOX_BUILD_NUMBER', str(self.build['build_number']))
 
-        self._login_source_registries()
-        self.run_docker_container(image_name)
-        self._logout_source_registries()
+        if self.job.get('run', True):
+            self._login_source_registries()
+            self.run_docker_container(image_name)
+            self._logout_source_registries()
 
         self.deploy_images(image_name)
 
@@ -975,12 +981,14 @@ class RunJob(Job):
         if self.job['build_only']:
             if self.deployments:
                 for d in self.deployments:
-                    self.build_docker_container(image_name_build, image_name_latest, d.get('target', None))
+                    self.build_docker_image(image_name_build, image_name_latest, d.get('target', None))
+
+                    c.header("Deploying", show=True)
                     self.deploy_image(image_name_build, d)
             else:
-                self.build_docker_container(image_name_build, image_name_latest, target=None)
+                self.build_docker_image(image_name_build, image_name_latest, target=None)
         else:
-            self.build_docker_container(image_name_build, image_name_latest)
+            self.build_docker_image(image_name_build, image_name_latest)
             self.run_docker_container(image_name_build)
             self.deploy_images(image_name_build)
 
