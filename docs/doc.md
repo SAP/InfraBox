@@ -212,10 +212,12 @@ You can also specify an already build image and run it as a job.
         "cache": { ... },
         "timeout": 3600,
         "depends_on": ["other_job_name"],
+        "deployments": [ ... ],
         "environment": { ... },
         "security_context": { ... },
         "repository": { ... },
-        "registries": []
+        "registries": [],
+        "run": true
     }]
 }
 ```
@@ -236,6 +238,7 @@ You can also specify an already build image and run it as a job.
 |security_context|false|[Security Context](#security_context)|[]|Configure security related options|
 |repository|false|[Repository Configuration](#repository)|{}|Configure git repository options|
 |registries|false|[Source Registry Configuration](#image-source-registry)|[]|Configure the source registries|
+|run|false|boolean|true|Set to false if you have a deployment configured and only want to push an image but not execute it|
 
 ### Image Source Registry
 If your images have to be pulled from a private registry you may configure the credentials for each job.
@@ -399,8 +402,7 @@ InfraBox can cache custom data and images for you. This can significantly speed 
         ...
         "cache": {
             "data": true,
-            "image": false,
-            "after_image": false
+            "image": false
         }
     }]
 }
@@ -410,7 +412,6 @@ InfraBox can cache custom data and images for you. This can significantly speed 
 |------|----------|------|---------|-------------|
 |data|false|boolean|`true`|If set to false the content of /infrabox/cache will not be restored|
 |image|false|boolean|`false`|If set to true the images of each job will be cached in an internal registry.|
-|after_image|false|boolean|`false`|If set to true InfraBox will run a `docker commit` after the `docker run` and upload the image. Set this to true if you want to later download the image and run it locally with `infrabox pull`.|
 
 Sometimes it's useful to keep some data from one run of a container to the next one. Maybe you have a nodejs project and don't want to install your dependencies every time. For such uses cases InfraBox mounts the directory `/infrabox/cache` into every container. Everything which you store in this directory will be available at the same place in the next run. So for your nodejs project you could simply copy your node_modules directory in there.
 
