@@ -745,26 +745,6 @@ class RunJob(Job):
         c = self.console
         c.execute(['docker', 'logout', get_registry_name()], show=False)
 
-    def push_container(self, image_name):
-        c = self.console
-
-        cache_after_image = self.job['definition'].get('cache', {}).get('after_image', False)
-
-        if not cache_after_image:
-            return
-
-        c.collect("Uploading after image to docker registry", show=True)
-
-        try:
-            if self.job['build_only']:
-                c.collect("Not pushing container, because build_only is set.\n", show=True)
-            else:
-                self.login_docker_registry()
-                c.execute(['docker', 'push', image_name], show=True)
-                self.logout_docker_registry()
-        except Exception as e:
-            raise Failure(e.__str__())
-
     def run_docker_container(self, image_name):
         c = self.console
         collector = StatsCollector()
@@ -855,14 +835,6 @@ class RunJob(Job):
                 logger.exception(ex)
                 raise Failure("Could not get exit code of container")
 
-            try:
-                c.execute(("docker", "commit", container_name, image_name))
-                c.header("Finalize", show=True)
-                self.push_container(image_name)
-            except Exception as ex:
-                logger.exception(ex)
-                raise Failure("Could not commit and push container")
-
             logger.exception(e)
             raise Failure("Container run exited with error (exit code=%s)" % exit_code)
 
@@ -923,9 +895,7 @@ class RunJob(Job):
             self._logout_source_registries()
 
         self.deploy_images(image_name)
-
         c.header("Finalize", show=True)
-        self.push_container(image_name)
 
     def _login_registry(self, reg):
         c = self.console
@@ -978,22 +948,17 @@ class RunJob(Job):
         image_name_build = image_name + ':build_%s' % self.build['build_number']
         image_name_latest = image_name + ':latest'
 
-        if self.job['build_only']:
-            if self.deployments:
-                for d in self.deployments:
-                    self.build_docker_image(image_name_build, image_name_latest, d.get('target', None))
+        if self.deployments:
+            for d in self.deployments:
+                self.build_docker_image(image_name_build, image_name_latest, d.get('target', None))
+                c.header("Deploying", show=True)
+                self.deploy_image(image_name_build, d)
 
-                    c.header("Deploying", show=True)
-                    self.deploy_image(image_name_build, d)
-            else:
-                self.build_docker_image(image_name_build, image_name_latest, target=None)
-        else:
+        if not self.job.get('build_only', True):
             self.build_docker_image(image_name_build, image_name_latest)
             self.run_docker_container(image_name_build)
-            self.deploy_images(image_name_build)
 
         c.header("Finalize", show=True)
-        self.push_container(image_name_build)
 
     def get_cached_image(self, image_name_latest):
         c = self.console

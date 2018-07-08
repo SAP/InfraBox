@@ -110,16 +110,13 @@ def parse_environment(e, path):
                 raise ValidationError(p, "must be a string or object")
 
 def parse_cache(d, path):
-    check_allowed_properties(d, path, ("data", "image", "after_image"))
+    check_allowed_properties(d, path, ("data", "image"))
 
     if 'data' in d:
         check_boolean(d['data'], path + ".data")
 
     if 'image' in d:
         check_boolean(d['image'], path + ".image")
-
-    if 'after_image' in d:
-        check_boolean(d['after_image'], path + ".after_image")
 
 def parse_git(d, path):
     check_allowed_properties(d, path, ("type", "name", "commit", "clone_url",
