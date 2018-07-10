@@ -356,6 +356,9 @@ class Trigger(object):
                   hc['commit']['committer']['email'],
                   committer_login, hc['html_url'], project_id, branch, pr_id,
                   event['pull_request']['statuses_url']])
+        else:
+            if event['action'] == 'opened':
+                return res(200, 'build already triggered')
 
         commit_id = result[0][0]
         build_id = self.create_build(commit_id, project_id)

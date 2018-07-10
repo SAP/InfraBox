@@ -110,16 +110,13 @@ def parse_environment(e, path):
                 raise ValidationError(p, "must be a string or object")
 
 def parse_cache(d, path):
-    check_allowed_properties(d, path, ("data", "image", "after_image"))
+    check_allowed_properties(d, path, ("data", "image"))
 
     if 'data' in d:
         check_boolean(d['data'], path + ".data")
 
     if 'image' in d:
         check_boolean(d['image'], path + ".image")
-
-    if 'after_image' in d:
-        check_boolean(d['after_image'], path + ".after_image")
 
 def parse_git(d, path):
     check_allowed_properties(d, path, ("type", "name", "commit", "clone_url",
@@ -200,6 +197,7 @@ def parse_docker_image(d, path):
     check_allowed_properties(d, path, ("type", "name", "image", "depends_on", "resources",
                                        "environment", "timeout", "security_context",
                                        "build_context", "cache", "repository", "command",
+                                       "deployments", "run",
                                        "cluster", "registries", "services"))
     check_required_properties(d, path, ("type", "name", "image", "resources"))
     check_name(d['name'], path + ".name")
@@ -238,6 +236,12 @@ def parse_docker_image(d, path):
 
     if 'build_context' in d:
         check_text(d['build_context'], path + ".build_context")
+
+    if 'deployments' in d:
+        parse_deployments(d['deployments'], path + ".deployments")
+
+    if 'run' in d:
+        check_boolean(d['run'], path + ".run")
 
 def parse_docker(d, path):
     check_allowed_properties(d, path, ("type", "name", "docker_file", "depends_on", "resources",
@@ -320,7 +324,7 @@ def parse_wait(d, path):
         parse_depends_on(d['depends_on'], path + ".depends_on")
 
 def parse_deployment_docker_registry(d, path):
-    check_allowed_properties(d, path, ("type", "host", "repository", "username", "password", "tag"))
+    check_allowed_properties(d, path, ("type", "host", "repository", "username", "password", "tag", "target"))
     check_required_properties(d, path, ("type", "host", "repository"))
     check_text(d['host'], path + ".host")
     check_text(d['repository'], path + ".repository")
@@ -330,6 +334,9 @@ def parse_deployment_docker_registry(d, path):
 
     if 'tag' in d:
         check_text(d['tag'], path + ".tag")
+
+    if 'target' in d:
+        check_text(d['target'], path + ".target")
 
     if 'password' in d:
         parse_secret_ref(d['password'], path + ".password")
@@ -351,7 +358,7 @@ def parse_registry_ecr(d, path):
 
 def parse_deployment_ecr(d, path):
     check_allowed_properties(d, path, ("type", "access_key_id", "secret_access_key",
-                                       "region", "repository", "host", "tag"))
+                                       "region", "repository", "host", "tag", "target"))
     check_required_properties(d, path, ("type", "access_key_id", "secret_access_key", "region", "repository", "host"))
 
     check_text(d['host'], path + ".host")
@@ -363,8 +370,11 @@ def parse_deployment_ecr(d, path):
     if 'tag' in d:
         check_text(d['tag'], path + ".tag")
 
+    if 'target' in d:
+        check_text(d['target'], path + ".target")
+
 def parse_deployment_gcr(d, path):
-    check_allowed_properties(d, path, ("type", "service_account", "repository", "host", "tag"))
+    check_allowed_properties(d, path, ("type", "service_account", "repository", "host", "tag", "target"))
     check_required_properties(d, path, ("type", "service_account", "repository", "host"))
 
     check_text(d['host'], path + ".host")
@@ -375,6 +385,8 @@ def parse_deployment_gcr(d, path):
     if 'tag' in d:
         check_text(d['tag'], path + ".tag")
 
+    if 'target' in d:
+        check_text(d['target'], path + ".target")
 
 def parse_registries(e, path):
     if not isinstance(e, list):
