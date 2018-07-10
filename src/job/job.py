@@ -713,7 +713,18 @@ class RunJob(Job):
 
         return os.path.normpath(build_context)
 
-    def deploy_container(self, image_name):
+    def deploy_image(self, image_name, dep):
+        c = self.console
+        tag = dep.get('tag', 'build_%s' % self.build['build_number'])
+        dep_image_name = dep['host'] + '/' + dep['repository'] + ":" + tag
+        c.execute(['docker', 'tag', image_name, dep_image_name], show=True)
+
+        self._login_registry(dep)
+        c.execute(['docker', 'push', dep_image_name], show=True)
+        self._logout_registry(dep)
+
+
+    def deploy_images(self, image_name):
         c = self.console
         if not self.deployments:
             return
@@ -721,13 +732,7 @@ class RunJob(Job):
         c.header("Deploying", show=True)
 
         for dep in self.deployments:
-            tag = dep.get('tag', 'build_%s' % self.build['build_number'])
-            dep_image_name = dep['host'] + '/' + dep['repository'] + ":" + tag
-            c.execute(['docker', 'tag', image_name, dep_image_name], show=True)
-
-            self._login_registry(dep)
-            c.execute(['docker', 'push', dep_image_name], show=True)
-            self._logout_registry(dep)
+            self.deploy_image(image_name, dep)
 
     def login_docker_registry(self):
         c = self.console
@@ -739,26 +744,6 @@ class RunJob(Job):
     def logout_docker_registry(self):
         c = self.console
         c.execute(['docker', 'logout', get_registry_name()], show=False)
-
-    def push_container(self, image_name):
-        c = self.console
-
-        cache_after_image = self.job['definition'].get('cache', {}).get('after_image', False)
-
-        if not cache_after_image:
-            return
-
-        c.collect("Uploading after image to docker registry", show=True)
-
-        try:
-            if self.job['build_only']:
-                c.collect("Not pushing container, because build_only is set.\n", show=True)
-            else:
-                self.login_docker_registry()
-                c.execute(['docker', 'push', image_name], show=True)
-                self.logout_docker_registry()
-        except Exception as e:
-            raise Failure(e.__str__())
 
     def run_docker_container(self, image_name):
         c = self.console
@@ -850,14 +835,6 @@ class RunJob(Job):
                 logger.exception(ex)
                 raise Failure("Could not get exit code of container")
 
-            try:
-                c.execute(("docker", "commit", container_name, image_name))
-                c.header("Finalize", show=True)
-                self.push_container(image_name)
-            except Exception as ex:
-                logger.exception(ex)
-                raise Failure("Could not commit and push container")
-
             logger.exception(e)
             raise Failure("Container run exited with error (exit code=%s)" % exit_code)
 
@@ -870,7 +847,7 @@ class RunJob(Job):
                 pass
 
 
-    def build_docker_container(self, image_name, cache_image):
+    def build_docker_image(self, image_name, cache_image, target=None):
         c = self.console
 
         self._login_source_registries()
@@ -882,16 +859,24 @@ class RunJob(Job):
                                                         self.job['dockerfile']))
 
             cmd = ['docker', 'build',
-                   '--cache-from', cache_image,
                    '-t', image_name,
                    '-f', docker_file,
                    '.']
+
+            # Memory limit
+            memory_limit = os.environ['INFRABOX_JOB_RESOURCES_LIMITS_MEMORY']
+            cmd += ['-m', '%sm' % memory_limit]
 
             if 'build_arguments' in self.job and self.job['build_arguments']:
                 for name, value in self.job['build_arguments'].iteritems():
                     cmd += ['--build-arg', '%s=%s' % (name, value)]
 
             cmd += ['--build-arg', 'INFRABOX_BUILD_NUMBER=%s' % self.build['build_number']]
+
+            if target:
+                cmd += ['--target', target]
+            else:
+                cmd += ['--cache-from', cache_image]
 
             cwd = self._get_build_context_current_job()
             c.execute(cmd, cwd=cwd, show=True)
@@ -904,14 +889,13 @@ class RunJob(Job):
     def run_job_docker_image(self, c):
         image_name = self.job['definition']['image'].replace('$INFRABOX_BUILD_NUMBER', str(self.build['build_number']))
 
-        self._login_source_registries()
-        self.run_docker_container(image_name)
-        self._logout_source_registries()
+        if self.job.get('run', True):
+            self._login_source_registries()
+            self.run_docker_container(image_name)
+            self._logout_source_registries()
 
-        self.deploy_container(image_name)
-
+        self.deploy_images(image_name)
         c.header("Finalize", show=True)
-        self.push_container(image_name)
 
     def _login_registry(self, reg):
         c = self.console
@@ -964,15 +948,17 @@ class RunJob(Job):
         image_name_build = image_name + ':build_%s' % self.build['build_number']
         image_name_latest = image_name + ':latest'
 
-        self.build_docker_container(image_name_build, image_name_latest)
+        if self.deployments:
+            for d in self.deployments:
+                self.build_docker_image(image_name_build, image_name_latest, d.get('target', None))
+                c.header("Deploying", show=True)
+                self.deploy_image(image_name_build, d)
 
-        if not self.job['build_only']:
+        if not self.job.get('build_only', True):
+            self.build_docker_image(image_name_build, image_name_latest)
             self.run_docker_container(image_name_build)
 
-        self.deploy_container(image_name_build)
-
         c.header("Finalize", show=True)
-        self.push_container(image_name_build)
 
     def get_cached_image(self, image_name_latest):
         c = self.console

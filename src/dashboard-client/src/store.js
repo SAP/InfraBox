@@ -131,7 +131,8 @@ function handleJobUpdate (state, event) {
             project,
             d.dependencies,
             d.message,
-            d.definition
+            d.definition,
+            d.node_name
         )
         build.jobs.push(job)
         state.jobs[d.id] = job
@@ -139,6 +140,7 @@ function handleJobUpdate (state, event) {
         job.state = d.state
         job.startDate = startDate
         job.endDate = endDate
+        job.nodeName = d.node_name
 
         if (d.message) {
             job.message = d.message

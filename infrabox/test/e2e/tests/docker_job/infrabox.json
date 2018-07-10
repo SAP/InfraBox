@@ -8,8 +8,7 @@
         "resources": { "limits": { "cpu": 1, "memory": 1024 } },
         "cache": {
             "image": true,
-            "data": true,
-            "after_image": true
+            "data": true
         }
     }]
 }
