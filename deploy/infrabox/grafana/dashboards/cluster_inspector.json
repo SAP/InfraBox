@@ -753,11 +753,6 @@
     "list": [
       {
         "allValue": null,
-        "current": {
-          "tags": [],
-          "text": "eu-de-2",
-          "value": "eu-de-2"
-        },
         "datasource": "infrabox",
         "hide": 0,
         "includeAll": false,

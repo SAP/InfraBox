@@ -190,40 +190,23 @@
   "templating": {
     "list": [
       {
-        "allValue": null,
-        "current": {
-          "text": "0006fa7e-b193-4dd2-a746-6c6be16f7d8c",
-          "value": "0006fa7e-b193-4dd2-a746-6c6be16f7d8c"
-        },
+	"allValue": null,
+        "datasource": "infrabox",
         "hide": 2,
         "includeAll": false,
         "label": "",
         "multi": false,
         "name": "bid",
-        "options": [
-          {
-            "selected": true,
-            "text": "0006fa7e-b193-4dd2-a746-6c6be16f7d8c",
-            "value": "0006fa7e-b193-4dd2-a746-6c6be16f7d8c"
-          },
-          {
-            "selected": false,
-            "text": "0009ad79-6814-44c4-b33b-66326af7e849",
-            "value": "0009ad79-6814-44c4-b33b-66326af7e849"
-          },
-          {
-            "selected": false,
-            "text": "00225b05-6417-49d6-846a-6aab6a105695",
-            "value": "00225b05-6417-49d6-846a-6aab6a105695"
-          },
-          {
-            "selected": false,
-            "text": "005d6f95-68d7-41d3-88a9-8c323eb66f4f",
-            "value": "005d6f95-68d7-41d3-88a9-8c323eb66f4f"
-          }
-        ],
-        "query": "0006fa7e-b193-4dd2-a746-6c6be16f7d8c,0009ad79-6814-44c4-b33b-66326af7e849,00225b05-6417-49d6-846a-6aab6a105695,005d6f95-68d7-41d3-88a9-8c323eb66f4f",
-        "type": "custom"
+        "options": [],
+        "query": "SELECT id FROM build LIMIT 1",
+        "refresh": 1,
+        "regex": "",
+        "sort": 0,
+        "tagValuesQuery": "",
+        "tags": [],
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
       }
     ]
   },
