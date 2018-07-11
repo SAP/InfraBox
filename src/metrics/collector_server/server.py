@@ -165,7 +165,7 @@ def main():
     get_env('INFRABOX_DATABASE_PASSWORD')
     get_env('INFRABOX_DATABASE_HOST')
     get_env('INFRABOX_DATABASE_PORT')
-    server_port = os.environ.get('INFRABOX_PORT', 8043)
+    server_port = os.environ.get('INFRABOX_PORT', 8080)
 
     # Copied from review.py, could be changed over time
     conn = connect_db()

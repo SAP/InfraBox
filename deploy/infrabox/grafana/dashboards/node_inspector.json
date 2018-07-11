@@ -849,10 +849,6 @@
     "list": [
       {
         "allValue": null,
-        "current": {
-          "text": "k8s-ib-ha-worker-002",
-          "value": "k8s-ib-ha-worker-002"
-        },
         "datasource": "infrabox",
         "hide": 0,
         "includeAll": false,
