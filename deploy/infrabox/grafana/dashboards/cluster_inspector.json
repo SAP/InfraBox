@@ -17,8 +17,8 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "id": 3,
-  "iteration": 1529658438657,
+  "id": 4,
+  "iteration": 1531295137023,
   "links": [],
   "panels": [
     {
@@ -158,7 +158,7 @@
       "targets": [
         {
           "$$hashKey": "object:3933",
-          "expr": "job_current_count{cluster='[[cluster]]'}",
+          "expr": "job_active_current_count{cluster='[[cluster]]'}",
           "format": "time_series",
           "hide": false,
           "instant": false,
@@ -753,33 +753,15 @@
     "list": [
       {
         "allValue": null,
-        "current": {
-          "tags": [],
-          "text": "calico",
-          "value": "calico"
-        },
         "datasource": "infrabox",
         "hide": 0,
         "includeAll": false,
         "label": "Inspected Cluster",
         "multi": false,
         "name": "cluster",
-        "options": [
-          {
-            "$$hashKey": "object:3892",
-            "selected": true,
-            "text": "calico",
-            "value": "calico"
-          },
-          {
-            "$$hashKey": "object:3893",
-            "selected": false,
-            "text": "master",
-            "value": "master"
-          }
-        ],
+        "options": [],
         "query": "select distinct name from cluster",
-        "refresh": 0,
+        "refresh": 1,
         "regex": "",
         "sort": 0,
         "tagValuesQuery": "",
