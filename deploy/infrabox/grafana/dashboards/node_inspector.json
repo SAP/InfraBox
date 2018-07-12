@@ -856,7 +856,7 @@
         "multi": false,
         "name": "node_name",
         "options": [],
-        "query": "select distinct node_name from job",
+        "query": "select distinct node_name from job where node_name is not null",
         "refresh": 1,
         "regex": "",
         "sort": 1,
