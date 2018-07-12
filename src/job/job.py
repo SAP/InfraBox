@@ -736,7 +736,10 @@ class RunJob(Job):
         c.header("Deploying", show=True)
 
         for dep in self.deployments:
-            self.deploy_image(image_name, dep)
+            target = dep.get('target', None)
+
+            if not target:
+                self.deploy_image(image_name, dep)
 
     def login_docker_registry(self):
         c = self.console
@@ -838,6 +841,13 @@ class RunJob(Job):
             except Exception as ex:
                 logger.exception(ex)
                 raise Failure("Could not get exit code of container")
+
+            try:
+                c.execute(("docker", "commit", container_name, image_name))
+                c.header("Finalize", show=True)
+            except Exception as ex:
+                logger.exception(ex)
+                raise Failure("Could not commit and push container")
 
             logger.exception(e)
             raise Failure("Container run exited with error (exit code=%s)" % exit_code)
@@ -954,13 +964,19 @@ class RunJob(Job):
 
         if self.deployments:
             for d in self.deployments:
-                self.build_docker_image(image_name_build, image_name_latest, d.get('target', None))
+                target = d.get('target', None)
+
+                if not target and not self.job.get('build_only', True):
+                    continue
+
+                self.build_docker_image(image_name_build, image_name_latest, target=target)
                 c.header("Deploying", show=True)
                 self.deploy_image(image_name_build, d)
 
         if not self.job.get('build_only', True):
             self.build_docker_image(image_name_build, image_name_latest)
             self.run_docker_container(image_name_build)
+            self.deploy_images(image_name_build)
 
         c.header("Finalize", show=True)
 

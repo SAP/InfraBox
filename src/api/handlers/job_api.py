@@ -596,8 +596,6 @@ class OutputParent(Resource):
 
         key = "%s/%s" % (parent_job_id, filename)
 
-        app.logger.error(key)
-
         g.release_db()
         f = storage.download_output(key)
 
