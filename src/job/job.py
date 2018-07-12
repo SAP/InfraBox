@@ -597,6 +597,9 @@ class RunJob(Job):
             service_badge_dir = os.path.join(self.infrabox_badge_dir, service)
             makedirs(service_badge_dir)
 
+            service_archive_dir = os.path.join(self.infrabox_archive_dir, service)
+            makedirs(service_archive_dir)
+
             service_volumes = [
                 "%s:/infrabox/cache" % service_cache_dir,
                 "%s:/infrabox/inputs" % self.infrabox_inputs_dir,
@@ -606,6 +609,7 @@ class RunJob(Job):
                 "%s:/infrabox/upload/markup" % service_markup_dir,
                 "%s:/infrabox/upload/badge" % service_badge_dir,
                 "%s:/infrabox/upload/coverage" % service_coverage_dir,
+                "%s:/infrabox/upload/archive" % service_archive_dir,
             ]
 
             for v in compose_file_content['services'][service].get('volumes', []):
