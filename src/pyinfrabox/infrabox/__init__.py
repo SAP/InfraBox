@@ -247,7 +247,7 @@ def parse_docker(d, path):
     check_allowed_properties(d, path, ("type", "name", "docker_file", "depends_on", "resources",
                                        "build_only", "environment",
                                        "build_arguments", "deployments", "timeout", "security_context",
-                                       "build_context", "cache", "repository", "cluster", "services"))
+                                       "build_context", "cache", "repository", "cluster", "services", "registries"))
     check_required_properties(d, path, ("type", "name", "docker_file", "resources"))
     check_name(d['name'], path + ".name")
     check_text(d['docker_file'], path + ".docker_file")
@@ -288,6 +288,9 @@ def parse_docker(d, path):
 
     if 'build_context' in d:
         check_text(d['build_context'], path + ".build_context")
+
+    if 'registries' in d:
+        parse_registries(d['registries'], path + '.registries')
 
 def parse_docker_compose(d, path):
     check_allowed_properties(d, path, ("type", "name", "docker_compose_file", "depends_on",
