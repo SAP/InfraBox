@@ -35,7 +35,8 @@ The job type docker is one of the most important jobs. You can use it to run any
         "build_arguments": { ... },
         "deployments": [ ... ],
         "security_context": { ... },
-        "repository": { ... }
+        "repository": { ... },
+        "registries": []
     }]
 }
 ```
@@ -56,6 +57,7 @@ The job type docker is one of the most important jobs. You can use it to run any
 |deployments|false|[Deployment Configuration](#deployments)|[]|Push your images to a registry|
 |security_context|false|[Security Context](#security-context)|[]|Configure security related options|
 |repository|false|[Repository Configuration](#repository)|{}|Configure git repository options|
+|registries|false|[Source Registry Configuration](#image-source-registry)|[]|Configure the source registries|
 
 ### Deployments
 The docker images which have been build can also be pushed to a docker registry by InfraBox.
