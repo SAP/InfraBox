@@ -1,0 +1,20 @@
+ # config file version
+apiVersion: 1
+
+
+ # list of datasources to insert/update depending
+ # on what's available in the datbase
+datasources:
+
+   # The second prometheus server which scrape from the python bridge servers
+ - name: prometheus
+   # <string, required> datasource type. Required
+   type: prometheus
+   # <string, required> access mode. direct or proxy. Required
+   access: proxy
+   # <int> org id. will default to orgId 1 if not specified
+   orgId: 1
+   # <string> url
+   url: http://IP:port
+   version: 1
+   editable: true

@@ -6,13 +6,13 @@ ARG GF_INSTALL_PLUGINS=""
 
 ##Setting up the DB
 #We paste our own DB configuration
-COPY src/grafana/datasources/datasources.yaml etc/grafana/provisioning/datasources/
+COPY src/grafana/local/datasources/datasources.yaml etc/grafana/provisioning/datasources/
 
 ### Pre installing our dashboards
 #We copy our sample.yaml to tell where to search for our dashboards
-COPY src/grafana/dashboards/dashboards.yaml /etc/grafana/provisioning/dashboards/
+COPY src/grafana/local/dashboards/dashboards.yaml /etc/grafana/provisioning/dashboards/
 #We copy our dashboards in the repertory we tell to search for
-COPY src/grafana/dashboards/*.json /var/lib/grafana/dashboards/
+COPY src/grafana/local/dashboards/*.json /var/lib/grafana/dashboards/
 
 
 
