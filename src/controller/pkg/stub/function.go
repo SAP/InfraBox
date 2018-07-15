@@ -167,7 +167,7 @@ func (c *Controller) syncFunctionInvocation(cr *v1alpha1.IBFunctionInvocation, l
 			log.Info("Updating job status")
 
 			if cr.Status.State.Terminated != nil {
-				if cr.Status.State.Terminated.Message == "Error" {
+				if cr.Status.State.Terminated.Reason == "Error" {
 					log.Errorf("%+v\n", pod)
 				}
 			}

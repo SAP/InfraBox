@@ -903,7 +903,7 @@ class RunJob(Job):
     def run_job_docker_image(self, c):
         image_name = self.job['definition']['image'].replace('$INFRABOX_BUILD_NUMBER', str(self.build['build_number']))
 
-        if self.job.get('run', True):
+        if self.job.get('definition', {}).get('run', True):
             self._login_source_registries()
             self.run_docker_container(image_name)
             self._logout_source_registries()
