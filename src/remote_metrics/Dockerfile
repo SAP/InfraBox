@@ -2,9 +2,9 @@ FROM python:3
 
 RUN pip install prometheus_client requests
 
-COPY src/metrics/remote_target remote_target/
+COPY src/remote_metrics remote_metrics/
 
 
 ENV PYTHONPATH=/
 
-CMD /remote_target/server.py
+CMD /remote_metrics/server.py
