@@ -366,7 +366,15 @@ class Scheduler(object):
                             if not message:
                                 message = stepStatus['State']['terminated'].get('reason', 'Unknown Error')
 
+                    if not message and current_state != 'finished':
+                        import json
+                        self.logger.error(json.dumps(status, indent=4))
+
                     delete_job = True
+
+                if message == 'Error':
+                    import json
+                    self.logger.error(json.dumps(status, indent=4))
 
                 if s == "error":
                     current_state = 'error'
@@ -376,7 +384,11 @@ class Scheduler(object):
 
                 if 'stepStatuses' in status and status['stepStatuses']:
                     stepStatus = status['stepStatuses'][-1]
-                    node_name = stepStatus.get('nodeName', None)
+                    nn = stepStatus.get('nodeName', None)
+
+                    if nn:
+                        # don't overwrite existing node name with none
+                        node_name = nn
 
                 start_date = status.get('startTime', None)
                 end_date = status.get('completionTime', None)
@@ -448,6 +460,7 @@ class Scheduler(object):
             """, [cluster_name, j[0]])
             cursor.close()
 
+
     def update_cluster_state(self):
         cluster_name = os.environ['INFRABOX_CLUSTER_NAME']
         labels = []
@@ -470,6 +483,13 @@ class Scheduler(object):
         items = data.get('items', [])
 
         for i in items:
+            metadata = i.get('metadata', {})
+            l = metadata.get('labels', {})
+            master = l.get('node-role.kubernetes.io/master', "false")
+
+            if master == "true":
+                continue
+
             nodes += 1
             cpu += int(i['status']['capacity']['cpu'])
             mem = i['status']['capacity']['memory']

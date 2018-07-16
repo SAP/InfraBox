@@ -63,12 +63,6 @@ def main():
                 'data': False
             }
 
-    if not branch:
-        for j in deployments['jobs']:
-            if 'deployments' in j:
-                del j['deployments']
-
-
     with open('/infrabox/output/deployments.json', 'w') as out:
         json.dump(deployments, out)
 

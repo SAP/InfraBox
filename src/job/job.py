@@ -597,6 +597,9 @@ class RunJob(Job):
             service_badge_dir = os.path.join(self.infrabox_badge_dir, service)
             makedirs(service_badge_dir)
 
+            service_archive_dir = os.path.join(self.infrabox_archive_dir, service)
+            makedirs(service_archive_dir)
+
             service_volumes = [
                 "%s:/infrabox/cache" % service_cache_dir,
                 "%s:/infrabox/inputs" % self.infrabox_inputs_dir,
@@ -606,6 +609,7 @@ class RunJob(Job):
                 "%s:/infrabox/upload/markup" % service_markup_dir,
                 "%s:/infrabox/upload/badge" % service_badge_dir,
                 "%s:/infrabox/upload/coverage" % service_coverage_dir,
+                "%s:/infrabox/upload/archive" % service_archive_dir,
             ]
 
             for v in compose_file_content['services'][service].get('volumes', []):
@@ -732,7 +736,10 @@ class RunJob(Job):
         c.header("Deploying", show=True)
 
         for dep in self.deployments:
-            self.deploy_image(image_name, dep)
+            target = dep.get('target', None)
+
+            if not target:
+                self.deploy_image(image_name, dep)
 
     def login_docker_registry(self):
         c = self.console
@@ -835,6 +842,13 @@ class RunJob(Job):
                 logger.exception(ex)
                 raise Failure("Could not get exit code of container")
 
+            try:
+                c.execute(("docker", "commit", container_name, image_name))
+                c.header("Finalize", show=True)
+            except Exception as ex:
+                logger.exception(ex)
+                raise Failure("Could not commit and push container")
+
             logger.exception(e)
             raise Failure("Container run exited with error (exit code=%s)" % exit_code)
 
@@ -889,7 +903,7 @@ class RunJob(Job):
     def run_job_docker_image(self, c):
         image_name = self.job['definition']['image'].replace('$INFRABOX_BUILD_NUMBER', str(self.build['build_number']))
 
-        if self.job.get('run', True):
+        if self.job.get('definition', {}).get('run', True):
             self._login_source_registries()
             self.run_docker_container(image_name)
             self._logout_source_registries()
@@ -950,13 +964,19 @@ class RunJob(Job):
 
         if self.deployments:
             for d in self.deployments:
-                self.build_docker_image(image_name_build, image_name_latest, d.get('target', None))
+                target = d.get('target', None)
+
+                if not target and not self.job.get('build_only', True):
+                    continue
+
+                self.build_docker_image(image_name_build, image_name_latest, target=target)
                 c.header("Deploying", show=True)
                 self.deploy_image(image_name_build, d)
 
         if not self.job.get('build_only', True):
             self.build_docker_image(image_name_build, image_name_latest)
             self.run_docker_container(image_name_build)
+            self.deploy_images(image_name_build)
 
         c.header("Finalize", show=True)
 
