@@ -21,7 +21,7 @@ def execute_sql(conn, stmt, params):
 
 
 class AllocatedRscGauge:
-    def __init__(self, name):
+    def __init__(self, name, conn):
         self._gauge = Gauge(name, "A gauge of allocated ressources of running jobs over time", ['cluster', 'rsc', 'project'])
         self._request_per_cluster = "SELECT foo.cluster_name, (SELECT name FROM project WHERE id= foo.project_id), " \
                                 "foo.mem, foo.cpu FROM (SELECT cluster_name, project_id, sum(memory) as mem, " \
@@ -33,27 +33,24 @@ class AllocatedRscGauge:
                                 "FROM job "\
                                 "WHERE state='running' GROUP BY project_id) as foo"
 
-        self._request_possible_cluster = "SELECT DISTINCT name FROM cluster"
-        self._request_possible_projects = "SELECT DISTINCT name FROM project"
+        self._request_possible_cluster = "SELECT DISTINCT name FROM cluster ORDER BY name"
+        self._request_possible_projects = "SELECT DISTINCT name FROM project ORDER BY name"
         self._possible_combination = None
         self._possible_cluster = None
         self._possible_project = None
-        self._count_to_request = 0
+        self._count_to_update = 10
+        self._create_combination_dict(conn)
 
-    def update(self, conn):
-        per_cluster = execute_sql(conn, self._request_per_cluster, None)
-        total = execute_sql(conn, self._request_total, None)
-        self._reset_possible_combination(conn)
-        self._set_values(per_cluster, total)
+    def _create_combination_dict(self, conn):
+        """
+        Completely rewrite the combination dict based on the occurrences of the request results without any
+        data loss checks made on old cluster or project occurrences.
+        """
+        self._possible_cluster = execute_sql(conn, self._request_possible_cluster, None)
+        self._possible_cluster.append(["'%'"])
+        self._possible_project = execute_sql(conn, self._request_possible_projects, None)
 
-    def _reset_possible_combination(self, conn):
         self._possible_combination = dict()
-        if self._count_to_request == 0:
-            self._possible_cluster = execute_sql(conn, self._request_possible_cluster, None)
-            self._possible_cluster.append(["'%'"])
-            self._possible_project = execute_sql(conn, self._request_possible_projects, None)
-            self._count_to_request = 10
-
         for cluster in self._possible_cluster:
             if cluster[0]:
                 project_dict = dict()
@@ -62,7 +59,65 @@ class AllocatedRscGauge:
                         project_dict[project[0]] = True
                 self._possible_combination[cluster[0]] = project_dict
 
-        self._count_to_request -= 1
+    def _update_combination_dict(self, conn):
+        """
+        Check if the dict must be updated with new values and updates it if necessary.
+        To do so we overwrite old values as well as the new ones => check before.
+
+        IT DOES NOT set old values to True (the existence test among list is not efficient),
+        we still need to reset all the values by calling _reset_combination_dict
+        """
+        tmp_possible_cluster = execute_sql(conn, self._request_possible_cluster, None)
+        tmp_possible_cluster.append(["'%'"])
+        tmp_possible_project = execute_sql(conn, self._request_possible_projects, None)
+
+        if AllocatedRscGauge._different_instance_list(self._possible_cluster, tmp_possible_cluster) or \
+                AllocatedRscGauge._different_instance_list(self._possible_project, tmp_possible_project):
+            print("=== DICT UPDATE - AVOIDABLE COST ===")
+            for cluster in self._possible_cluster:
+                if cluster[0]:
+                    project_dict = self._possible_combination.get(cluster[0])
+                    if not project_dict:
+                        project_dict = dict()
+                        self._possible_combination[cluster[0]] = project_dict
+                    for project in self._possible_project:
+                        if project[0]:
+                            project_dict[project[0]] = True
+
+    def _reset_combination_dict(self):
+        """
+        Set all the occurrences of the combination dict to True in order to detect which values to set to 0
+        because they are missing in the request result
+        """
+        for project_dict in self._possible_combination.values():
+            for project_name in project_dict.keys():
+                project_dict[project_name] = True
+
+    @staticmethod
+    def _different_instance_list(first, second):
+        """
+        Return True if the given contains a difference in there occurrences.
+        Used to detect if we should update the combination dictionary.
+        Example : a new project or a new cluster appeared in the DB
+        """
+        length = len(first)
+        if length != len(second):
+            return True
+        else:
+            for i in range(length):
+                if first[i][0] != second[i][0]:
+                    return True
+        return False
+
+    def update(self, conn):
+        per_cluster = execute_sql(conn, self._request_per_cluster, None)
+        total = execute_sql(conn, self._request_total, None)
+        if self._count_to_update == 0:
+            self._update_combination_dict(conn)
+            self._count_to_update = 10
+        self._reset_combination_dict()
+        self._set_values(per_cluster, total)
+        self._count_to_update -= 1
 
     def _set_values(self, per_cluster, total):
         for row in per_cluster:
@@ -82,10 +137,17 @@ class AllocatedRscGauge:
             self._gauge.labels(rsc="cpu", cluster="'%'", project=row[0]).set(row[2])
 
         for cluster, project_dict in self._possible_combination.items():
+            to_delete = []
             for project, not_used in project_dict.items():
                 if not_used:
+                    to_delete.append(project)
                     self._gauge.labels(rsc="mem", cluster=cluster, project=project).set(0)
                     self._gauge.labels(rsc="cpu", cluster=cluster, project=project).set(0)
+
+            # Maybe it was the last occurrence ever of this datas. We delete it in order to keep the combination dict
+            # as small as possible (would be running for entire weeks maybe)
+            for maybe_last_occurrence in to_delete:
+                del project_dict[maybe_last_occurrence]
 
 
 class AllJobNodeGauge:
@@ -216,7 +278,7 @@ def main():
         return 1
 
     active_job_gauge = ActiveJobClusterGauge('job_active_current_count')
-    rsc_gauge = AllocatedRscGauge('rsc_current_count')
+    rsc_gauge = AllocatedRscGauge('rsc_current_count', conn)
     all_job_gauge = AllJobNodeGauge('job_all_node_count')
 
     while running:
