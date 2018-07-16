@@ -311,7 +311,7 @@ class ArchiveDownload(Resource):
             logger.error(key)
             abort(404)
 
-        return send_file(f, attachment_filename=os.path.basename(f))
+        return send_file(f, as_attachment=True, attachment_filename=os.path.basename(f))
 
 
 @ns.route('/<project_id>/jobs/<job_id>/archive')

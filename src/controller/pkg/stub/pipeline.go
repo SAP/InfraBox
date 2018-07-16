@@ -47,7 +47,6 @@ func (c *Controller) deletePipelineInvocation(cr *v1alpha1.IBPipelineInvocation,
 	cr.SetFinalizers([]string{})
 	err = updateStatus(cr, log)
 	if err != nil && !errors.IsNotFound(err) {
-		logrus.Errorf("Failed to remove finalizers: %v", err)
 		return err
 	}
 

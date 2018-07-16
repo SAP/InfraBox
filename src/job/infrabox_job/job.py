@@ -93,18 +93,25 @@ class Job(object):
             "jobs": jobs,
         }
 
-        r = requests.post("%s/create_jobs" % self.api_server,
-                          headers=self.get_headers(),
-                          json=payload, timeout=60, verify=self.verify)
+        while True:
+            r = requests.post("%s/create_jobs" % self.api_server,
+                              headers=self.get_headers(),
+                              json=payload, timeout=60, verify=self.verify)
 
-        if r.status_code != 200:
-            msg = r.text
-            try:
-                msg = r.json()['message']
-            except:
-                pass
+            if r.status_code == 200:
+                return
 
-            raise Failure(msg)
+            if r.status_code == 400:
+                msg = r.text
+                try:
+                    msg = r.json()['message']
+                except:
+                    pass
+
+                raise Failure(msg)
+
+            self.console.collect('Failed to connect to API, retrying.', show=True)
+            time.sleep(3)
 
     def post_api_server(self, endpoint, data=None):
         while True:
@@ -119,6 +126,7 @@ class Job(object):
             except Exception as e:
                 print e
 
+            self.console.collect('Failed to connect to API, retrying.', show=True)
             time.sleep(1)
 
     def post_stats(self, stat):
@@ -165,7 +173,7 @@ class Job(object):
         message = None
 
         r = None
-        for _ in xrange(0, 5):
+        for _ in xrange(0, 20):
             try:
                 message = None
                 r = requests.get("%s%s" % (self.api_server, url),
@@ -176,6 +184,8 @@ class Job(object):
                     return
 
                 if r.status_code != 200:
+                    self.console.collect('Failed to download file (%s), retrying' % r.status_code, show=True)
+                    time.sleep(10)
                     continue
 
                 with open(path, 'wb') as  f:
@@ -185,6 +195,7 @@ class Job(object):
 
             except Exception as e:
                 message = str(e)
+                self.console.collect('Failed to download file (%s), retrying' % message, show=True)
                 time.sleep(10)
                 continue
 
@@ -199,7 +210,7 @@ class Job(object):
             except:
                 pass
 
-            raise Failure('Failed to download file: %s' % msg)
+            raise Failure('Failed to download file(%s): %s' % (r.status_code, msg))
 
     def post_file_to_api_server(self, url, path, filename=None, split=False):
         if not filename:
