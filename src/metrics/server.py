@@ -33,24 +33,64 @@ class AllocatedRscGauge:
                                 "FROM job "\
                                 "WHERE state='running' GROUP BY project_id) as foo"
 
+        self._request_possible_cluster = "SELECT DISTINCT name FROM cluster"
+        self._request_possible_projects = "SELECT DISTINCT name FROM project"
+        self._possible_combination = None
+        self._possible_cluster = None
+        self._possible_project = None
+        self._count_to_request = 0
+
     def update(self, conn):
         per_cluster = execute_sql(conn, self._request_per_cluster, None)
         total = execute_sql(conn, self._request_total, None)
+        self._reset_possible_combination(conn)
         self._set_values(per_cluster, total)
+
+    def _reset_possible_combination(self, conn):
+        self._possible_combination = dict()
+        if self._count_to_request == 0:
+            self._possible_cluster = execute_sql(conn, self._request_possible_cluster, None)
+            self._possible_cluster.append(["'%'"])
+            self._possible_project = execute_sql(conn, self._request_possible_projects, None)
+            self._count_to_request = 10
+
+        for cluster in self._possible_cluster:
+            if cluster[0]:
+                project_dict = dict()
+                for project in self._possible_project:
+                    if project[0]:
+                        project_dict[project[0]] = True
+                self._possible_combination[cluster[0]] = project_dict
+
+        self._count_to_request -= 1
 
     def _set_values(self, per_cluster, total):
         for row in per_cluster:
+            project_dict = self._possible_combination.get(row[0])
+            if project_dict and project_dict.get(row[1]):
+                project_dict[row[1]] = False
+
             self._gauge.labels(rsc="mem", cluster=row[0], project=row[1]).set(row[2])
             self._gauge.labels(rsc="cpu", cluster=row[0], project=row[1]).set(row[3])
 
         for row in total:
+            project_dict = self._possible_combination.get("'%'")
+            if project_dict and project_dict.get(row[0]):
+                project_dict[row[0]] = False
+
             self._gauge.labels(rsc="mem", cluster="'%'", project=row[0]).set(row[1])
             self._gauge.labels(rsc="cpu", cluster="'%'", project=row[0]).set(row[2])
+
+        for cluster, project_dict in self._possible_combination.items():
+            for project, not_used in project_dict.items():
+                if not_used:
+                    self._gauge.labels(rsc="mem", cluster=cluster, project=project).set(0)
+                    self._gauge.labels(rsc="cpu", cluster=cluster, project=project).set(0)
 
 
 class AllJobNodeGauge:
     def __init__(self, name):
-        self._gauge = Gauge(name, "A gauge of current ammount of active jobs",
+        self._gauge = Gauge(name, "A gauge of current ammount of all jobs",
                               ['state', 'node'])
 
         self._request_possible_states = "SELECT distinct state FROM job"
@@ -62,8 +102,8 @@ class AllJobNodeGauge:
 
         self._possible_combination = dict()
         self._count_to_reset_nodes = 0
-        self._possible_nodes = dict()
-        self._possibles_states = dict()
+        self._possible_nodes = None
+        self._possibles_states = None
 
     def update(self, conn):
         self._reset_used_combination(conn)
