@@ -208,7 +208,6 @@ class AllJobNodeGauge:
                     self._gauge.labels(node=node, state=state).set(0)
 
 
-
 class ActiveJobClusterGauge:
     def __init__(self, name):
         self._gauge = Gauge(name, "A gauge of current ammount of active jobs per cluster",
@@ -283,15 +282,18 @@ def main():
 
     while running:
         try:
+            old_time = time.time()
             active_job_gauge.update(conn)
             rsc_gauge.update(conn)
             all_job_gauge.update(conn)
+            new_time = time.time()
+            print(new_time - old_time)
         except psycopg2.OperationalError:
             # the db connection closed unexpectedly
             conn = connect_db()
             conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
         # experimental value
-        time.sleep(1.5)
+        time.sleep(1.3)
 
 
 if __name__ == '__main__':
