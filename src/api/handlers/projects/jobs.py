@@ -1,6 +1,8 @@
 import json
 import os
 
+import requests
+
 from flask import g, abort, Response, send_file, request
 from flask_restplus import Resource
 
@@ -8,6 +10,7 @@ from pyinfraboxutils import get_logger
 from pyinfraboxutils.ibflask import auth_required, OK
 from pyinfraboxutils.storage import storage
 from api.namespaces import project as ns
+from pyinfraboxutils.token import encode_user_token
 
 logger = get_logger('api')
 
@@ -299,20 +302,50 @@ class ArchiveDownload(Resource):
 
     @auth_required(['user'], allow_if_public=True)
     def get(self, project_id, job_id):
-        f = request.args.get('filename', None)
+        filename = request.args.get('filename', None)
 
-        if not f:
+        if not filename:
             abort(404)
 
-        key = '%s/%s' % (job_id, f)
-        f = storage.download_archive(key)
+        result = g.db.execute_one_dict('''
+                    SELECT cluster_name
+                    FROM job
+                    WHERE   id = %s
+                        AND project_id = %s
+                ''', [job_id, project_id])
+
+        if not result or not result['cluster_name']:
+            abort(404)
+
+        job_cluster = result['cluster_name']
+        key = '%s/%s' % (job_id, filename)
+
+        if os.environ['INFRABOX_CLUSTER_NAME'] == job_cluster:
+            f = storage.download_archive(key)
+        else:
+            c = g.db.execute_one_dict('''
+                                SELECT *
+                                FROM cluster
+                                WHERE name=%s
+                            ''', [job_cluster])
+            url = '%s/api/v1/projects/%s/jobs/%s/archive/download?filename=%s' % (c['root_url'], project_id, job_id, filename)
+            try:
+                token = encode_user_token(g.token['user']['id'])
+            except AttributeError:
+                #public project has no token here.
+                token = ""
+            headers = {'Authorization': 'bearer ' + token}
+            logger.info('get archive %s from %s', [filename, url])
+
+            # TODO(ib-steffen): allow custom ca bundles
+            r = requests.get(url,headers=headers, timeout=120, verify=False, stream=True)
+            f = r.raw
 
         if not f:
             logger.error(key)
             abort(404)
 
-        return send_file(f, as_attachment=True, attachment_filename=os.path.basename(f))
-
+        return send_file(f, as_attachment=True, attachment_filename=os.path.basename(filename))
 
 @ns.route('/<project_id>/jobs/<job_id>/archive')
 class Archive(Resource):
