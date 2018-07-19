@@ -9,6 +9,7 @@ import subprocess
 import uuid
 import base64
 import traceback
+import urllib3
 
 from pyinfrabox.infrabox import validate_json
 from pyinfrabox.docker_compose import create_from
@@ -21,6 +22,8 @@ from pyinfraboxutils.testresult import Parser as TestresultParser
 from pyinfraboxutils.coverage import Parser as CoverageParser
 from pyinfraboxutils import get_env
 from pyinfraboxutils import get_logger
+
+urllib3.disable_warnings()
 logger = get_logger('scheduler')
 
 def makedirs(path):
