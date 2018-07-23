@@ -1024,10 +1024,6 @@
     "list": [
       {
         "allValue": null,
-        "current": {
-          "text": "hanalite-releasepack",
-          "value": "hanalite-releasepack"
-        },
         "datasource": "infrabox",
         "hide": 0,
         "includeAll": false,
@@ -1047,11 +1043,6 @@
       },
       {
         "allValue": "'%'",
-        "current": {
-          "tags": [],
-          "text": "calico",
-          "value": "calico"
-        },
         "datasource": "infrabox",
         "hide": 0,
         "includeAll": true,

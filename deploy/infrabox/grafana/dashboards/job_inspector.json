@@ -480,24 +480,22 @@
     "list": [
       {
         "allValue": null,
-        "current": {
-          "text": "7ee5fa36-deca-4e32-9cb8-a8ee64ca92db",
-          "value": "7ee5fa36-deca-4e32-9cb8-a8ee64ca92db"
-        },
+        "datasource": "infrabox",
         "hide": 2,
         "includeAll": false,
         "label": "",
         "multi": false,
         "name": "id",
-        "options": [
-          {
-            "selected": true,
-            "text": "7ee5fa36-deca-4e32-9cb8-a8ee64ca92db",
-            "value": "7ee5fa36-deca-4e32-9cb8-a8ee64ca92db"
-          }
-        ],
-        "query": "7ee5fa36-deca-4e32-9cb8-a8ee64ca92db",
-        "type": "custom"
+        "options": [],
+        "query": "SELECT id FROM job LIMIT 1",
+        "refresh": 1,
+        "regex": "",
+        "sort": 0,
+        "tagValuesQuery": "",
+        "tags": [],
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
       }
     ]
   },

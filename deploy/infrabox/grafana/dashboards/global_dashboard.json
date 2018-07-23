@@ -16,7 +16,7 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "id": 1,
+  "id": 2,
   "links": [],
   "panels": [
     {
@@ -556,7 +556,7 @@
       "targets": [
         {
           "$$hashKey": "object:1147",
-          "expr": "sum(job_current_count) by(state)",
+          "expr": "job_active_current_count{cluster=\"'%'\"}",
           "format": "time_series",
           "hide": false,
           "interval": "",
