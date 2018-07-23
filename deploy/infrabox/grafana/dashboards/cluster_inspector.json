@@ -17,8 +17,8 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "id": 3,
-  "iteration": 1529658438657,
+  "id": 2,
+  "iteration": 1531746409662,
   "links": [],
   "panels": [
     {
@@ -31,6 +31,102 @@
       "id": 2,
       "title": "Basic Information",
       "type": "row"
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "prometheus",
+      "decimals": null,
+      "description": "Amount of jobs of different states over time among the inspected cluster.",
+      "fill": 1,
+      "gridPos": {
+        "h": 7,
+        "w": 16,
+        "x": 0,
+        "y": 1
+      },
+      "id": 23,
+      "interval": "5s",
+      "legend": {
+        "alignAsTable": true,
+        "avg": true,
+        "current": true,
+        "max": true,
+        "min": true,
+        "rightSide": true,
+        "show": true,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "$$hashKey": "object:3933",
+          "expr": "job_active_current_count{cluster='[[cluster]]'}",
+          "format": "time_series",
+          "hide": false,
+          "instant": false,
+          "interval": "5s",
+          "intervalFactor": 1,
+          "legendFormat": "{{state}}",
+          "refId": "B"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Job Count",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "$$hashKey": "object:3961",
+          "decimals": 0,
+          "format": "short",
+          "label": "Jobs",
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "$$hashKey": "object:3962",
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     },
     {
       "cacheTimeout": null,
@@ -53,8 +149,8 @@
       },
       "gridPos": {
         "h": 7,
-        "w": 3,
-        "x": 0,
+        "w": 2,
+        "x": 16,
         "y": 1
       },
       "id": 6,
@@ -116,100 +212,77 @@
       "valueName": "avg"
     },
     {
-      "aliasColors": {},
-      "bars": false,
-      "dashLength": 10,
-      "dashes": false,
-      "datasource": "prometheus",
-      "decimals": null,
-      "description": "Amount of jobs of different states over time among the inspected cluster.",
-      "fill": 1,
+      "columns": [],
+      "datasource": "infrabox",
+      "description": "List of the node_name referenced by the job table for this cluster.\n\nIf the Node has never been associated to any job, it can't be seen.",
+      "fontSize": "100%",
       "gridPos": {
         "h": 7,
-        "w": 21,
-        "x": 3,
+        "w": 6,
+        "x": 18,
         "y": 1
       },
-      "id": 23,
-      "interval": "5s",
-      "legend": {
-        "alignAsTable": true,
-        "avg": true,
-        "current": true,
-        "max": true,
-        "min": true,
-        "rightSide": true,
-        "show": true,
-        "total": false,
-        "values": true
-      },
-      "lines": true,
-      "linewidth": 1,
+      "id": 25,
       "links": [],
-      "nullPointMode": "null",
-      "percentage": false,
-      "pointradius": 5,
-      "points": false,
-      "renderer": "flot",
-      "seriesOverrides": [],
-      "spaceLength": 10,
-      "stack": false,
-      "steppedLine": false,
-      "targets": [
-        {
-          "$$hashKey": "object:3933",
-          "expr": "job_current_count{cluster='[[cluster]]'}",
-          "format": "time_series",
-          "hide": false,
-          "instant": false,
-          "interval": "5s",
-          "intervalFactor": 1,
-          "legendFormat": "{{state}}",
-          "refId": "B"
-        }
-      ],
-      "thresholds": [],
-      "timeFrom": null,
-      "timeShift": null,
-      "title": "Job Count",
-      "tooltip": {
-        "shared": true,
-        "sort": 0,
-        "value_type": "individual"
+      "pageSize": null,
+      "scroll": true,
+      "showHeader": true,
+      "sort": {
+        "col": 0,
+        "desc": true
       },
-      "type": "graph",
-      "xaxis": {
-        "buckets": null,
-        "mode": "time",
-        "name": null,
-        "show": true,
-        "values": []
-      },
-      "yaxes": [
+      "styles": [
         {
-          "$$hashKey": "object:3961",
-          "decimals": 0,
-          "format": "short",
-          "label": "Jobs",
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
+          "$$hashKey": "object:535",
+          "alias": "Node",
+          "colorMode": null,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 2,
+          "link": true,
+          "linkTooltip": "Inspect",
+          "linkUrl": "d/09c0DMdiz/node-inspector?orgId=1&var-node_name=${__cell}",
+          "mappingType": 1,
+          "pattern": "node_name",
+          "thresholds": [],
+          "type": "string",
+          "unit": "short"
         },
         {
-          "$$hashKey": "object:3962",
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
+          "$$hashKey": "object:565",
+          "alias": "Running Jobs",
+          "colorMode": null,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 0,
+          "mappingType": 1,
+          "pattern": "count",
+          "thresholds": [],
+          "type": "number",
+          "unit": "short"
         }
       ],
-      "yaxis": {
-        "align": false,
-        "alignLevel": null
-      }
+      "targets": [
+        {
+          "$$hashKey": "object:282",
+          "alias": "",
+          "format": "table",
+          "hide": false,
+          "rawSql": "SELECT node_name, count(id) FILTER(WHERE state = 'running') FROM job WHERE node_name is not null AND cluster_name = '[[cluster]]' GROUP BY node_name",
+          "refId": "A"
+        }
+      ],
+      "title": "Node List",
+      "transform": "table",
+      "type": "table"
     },
     {
       "collapsed": false,
@@ -753,33 +826,15 @@
     "list": [
       {
         "allValue": null,
-        "current": {
-          "tags": [],
-          "text": "calico",
-          "value": "calico"
-        },
         "datasource": "infrabox",
         "hide": 0,
         "includeAll": false,
         "label": "Inspected Cluster",
         "multi": false,
         "name": "cluster",
-        "options": [
-          {
-            "$$hashKey": "object:3892",
-            "selected": true,
-            "text": "calico",
-            "value": "calico"
-          },
-          {
-            "$$hashKey": "object:3893",
-            "selected": false,
-            "text": "master",
-            "value": "master"
-          }
-        ],
+        "options": [],
         "query": "select distinct name from cluster",
-        "refresh": 0,
+        "refresh": 1,
         "regex": "",
         "sort": 0,
         "tagValuesQuery": "",
