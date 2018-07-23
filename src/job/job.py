@@ -250,6 +250,7 @@ class RunJob(Job):
             raise Exception('Unknown project type')
 
         c.execute(['chmod', '-R', 'a+rwX', self.mount_repo_dir])
+        c.execute(['ls', '-alh', self.mount_repo_dir], show=True)
 
     def main_create_jobs(self):
         c = self.console
@@ -755,6 +756,11 @@ class RunJob(Job):
         c = self.console
         c.execute(['docker', 'logout', get_registry_name()], show=False)
 
+    def run_docker_pull(self, image_name):
+        c = self.console
+        cmd = ['docker', 'pull', image_name]
+        c.execute(cmd, show=True, show_cmd=False)
+
     def run_docker_container(self, image_name):
         c = self.console
         collector = StatsCollector()
@@ -871,7 +877,7 @@ class RunJob(Job):
 
         try:
             c.header("Build image", show=True)
-            self.get_cached_image(cache_image)
+            cache_from = self.get_cached_image(cache_image)
             docker_file = os.path.normpath(os.path.join(self._get_build_context_current_job(),
                                                         self.job['dockerfile']))
 
@@ -892,7 +898,7 @@ class RunJob(Job):
 
             if target:
                 cmd += ['--target', target]
-            else:
+            elif cache_from:
                 cmd += ['--cache-from', cache_image]
 
             cwd = self._get_build_context_current_job()
@@ -909,6 +915,10 @@ class RunJob(Job):
         if self.job.get('definition', {}).get('run', True):
             self._login_source_registries()
             self.run_docker_container(image_name)
+            self._logout_source_registries()
+        else:
+            self._login_source_registries()
+            self.run_docker_pull(image_name)
             self._logout_source_registries()
 
         self.deploy_images(image_name)
@@ -988,13 +998,14 @@ class RunJob(Job):
 
         if not self.job['definition'].get('cache', {}).get('image', False):
             c.collect("Not pulling cached image, because cache.image has been set to false", show=True)
-            return
+            return False
 
         c.collect("Get cached image %s" % image_name_latest, show=True)
 
         self.login_docker_registry()
         c.execute(['docker', 'pull', image_name_latest], show=True, ignore_error=True)
         self.logout_docker_registry()
+        return True
 
     def cache_docker_image(self, image_name_build, image_name_latest):
         c = self.console
