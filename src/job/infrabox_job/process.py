@@ -22,7 +22,6 @@ class ApiConsole(object):
             self.verify = False
 
     def collect(self, line, show=False):
-        line = line.encode("utf-8")
         if self.enable_logging:
             sys.stdout.write(line)
             sys.stdout.flush()
