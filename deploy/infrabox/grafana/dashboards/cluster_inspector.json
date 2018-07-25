@@ -17,8 +17,8 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "id": 2,
-  "iteration": 1531746409662,
+  "id": 8,
+  "iteration": 1532504110540,
   "links": [],
   "panels": [
     {
@@ -55,7 +55,7 @@
         "current": true,
         "max": true,
         "min": true,
-        "rightSide": true,
+        "rightSide": false,
         "show": true,
         "total": false,
         "values": true
@@ -214,7 +214,7 @@
     {
       "columns": [],
       "datasource": "infrabox",
-      "description": "List of the node_name referenced by the job table for this cluster.\n\nIf the Node has never been associated to any job, it can't be seen.",
+      "description": "List of the node_name referenced by the job table for this cluster.\n\nThis table only shows Node with active job (ie running, queued, scheduled)",
       "fontSize": "100%",
       "gridPos": {
         "h": 7,
@@ -275,8 +275,8 @@
           "$$hashKey": "object:282",
           "alias": "",
           "format": "table",
-          "hide": false,
-          "rawSql": "SELECT node_name, count(id) FILTER(WHERE state = 'running') FROM job WHERE node_name is not null AND cluster_name = '[[cluster]]' GROUP BY node_name",
+          "hide": true,
+          "rawSql": "SELECT node_name, count(id) FILTER(WHERE state = 'running') FROM job WHERE node_name is not null AND cluster_name = '[[cluster]]' AND state IN ('running', 'scheduled', 'queued') GROUP BY node_name",
           "refId": "A"
         }
       ],
