@@ -193,6 +193,7 @@ class Job(object):
                         if chunk:
                             f.write(chunk)
 
+                return
             except Exception as e:
                 message = str(e)
                 self.console.collect('Failed to download file (%s), retrying' % message, show=True)
