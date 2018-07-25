@@ -3,6 +3,7 @@ apiVersion: monitoring.coreos.com/v1
 kind: Prometheus
 metadata:
   name: infrabox
+  namespace: {{ template "system_namespace" . }}
 spec:
   serviceAccountName: infrabox
   serviceMonitorSelector:

@@ -3,6 +3,7 @@ kind: Service
 apiVersion: v1
 metadata:
   name: infrabox-metrics
+  namespace: {{ template "system_namespace" . }}
   labels:
     app: infrabox-metrics
 spec:
