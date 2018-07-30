@@ -13,7 +13,7 @@ If you want to run jobs on InfraBox you have to create a file called `infrabox.j
 | Name | Required | Type | Description |
 |------|----------|------|-------------|
 |version|true|number|Currently only valid value is 1.|
-|jobs|true|array of job definitions|A list of the actual jobs to run. It can be either<ul><li>[docker](#job-docker)</li><li>[docker-compose](#docker-compose)</li><li>[git](#job-git)</li><li>[workflow](#job-workflow)</li></ul>|
+|jobs|true|array of job definitions|A list of the actual jobs to run. It can be either<ul><li>[docker](#job-docker)</li><li>[docker-compose](#job-docker-compose)</li><li>[git](#job-git)</li><li>[workflow](#job-workflow)</li></ul>|
 
 ## Job: Docker
 The job type docker is one of the most important jobs. You can use it to run any Docker container you like.
@@ -579,7 +579,7 @@ This feature is extremely useful for bigger projects. Maybe you don't want to ru
 InfraBox can store secret values for you, so you don't have to store passwords or other secret values in your repository. Login to the InfraBox Dashboard, select your project and go to the Settings tab. There you can create a secret with a name and value. You can use the secrets as:
 
 - [Environment Variable](#environment-variables)
-- [Docker Registry Passwird](#deployments)
+- [Docker Registry Password](#docker-registry)
 
 # Archive
 Sometimes it's helpful to store some files for later access. Every file you write to `/infrabox/upload/archive` will later be accessible in the Dashboard for the job.
