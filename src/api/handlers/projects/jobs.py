@@ -419,7 +419,7 @@ class Testruns(Resource):
     @auth_required(['user'], allow_if_public=True)
     def get(self, project_id, job_id):
         result = g.db.execute_many_dict('''
-            SELECT tr.state, t.name, t.suite, tr.duration, t.build_number, tr.message, tr.stack
+            SELECT tr.state, t.name, t.suite, tr.duration, t.build_number, tr.message, tr.stack, tr.timestamp
             FROM test t
             INNER JOIN test_run tr
                 ON t.id = tr.test_id
