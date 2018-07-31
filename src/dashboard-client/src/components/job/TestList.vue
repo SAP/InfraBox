@@ -8,6 +8,7 @@
                         <md-table-head md-sort-by="suite">Suite</md-table-head>
                         <md-table-head md-sort-by="duration">Duration</md-table-head>
                         <md-table-head md-sort-by="result">Result</md-table-head>
+                        <md-table-head md-sort-by="result">Timestamp</md-table-head>
                     </md-table-row>
                 </md-table-header>
 
@@ -21,6 +22,7 @@
                         <md-table-cell>{{ t.suite }}</md-table-cell>
                         <md-table-cell>{{ t.duration }} ms</md-table-cell>
                         <md-table-cell><ib-state :state="t.state"></ib-state></md-table-cell>
+                        <md-table-cell>{{ t.timestamp }}</md-table-cell>
                     </md-table-row>
                 </md-table-body>
             </md-table>
