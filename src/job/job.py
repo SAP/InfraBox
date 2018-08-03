@@ -503,7 +503,7 @@ class RunJob(Job):
             if os.path.isfile(storage_cache_tar):
                 c.collect("Unpacking cache", show=True)
                 try:
-                    c.execute(['time', 'tar', '-zxf', storage_cache_tar, '-C', self.infrabox_cache_dir], show=True)
+                    self.uncompress(storage_cache_tar, self.infrabox_cache_dir)
                 except:
                     c.collect("Failed to unpack cache\n", show=True)
                 os.remove(storage_cache_tar)
