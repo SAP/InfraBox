@@ -555,7 +555,7 @@ class JobCacheClear(Resource):
         if not job:
             abort(404)
 
-        key = 'project_%s_branch_%s_job_%s.tar.gz' % (project_id, job['branch'], job['name'])
+        key = 'project_%s_job_%s.tar.snappy' % (project_id, job['name'])
         storage.delete_cache(key)
 
         return OK('Cleared cache')
