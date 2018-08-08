@@ -11,7 +11,10 @@ from pyinfraboxutils import get_env, get_logger
 from pyinfraboxutils.ibbottle import InfraBoxPostgresPlugin
 from pyinfraboxutils.db import connect_db
 
+import bottle
 from bottle import post, run, request, response, install, get
+
+bottle.BaseRequest.MEMFILE_MAX = 10 * 1024 * 1024
 
 logger = get_logger("github")
 
