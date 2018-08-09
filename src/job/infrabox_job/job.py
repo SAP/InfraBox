@@ -94,9 +94,14 @@ class Job(object):
         }
 
         while True:
-            r = requests.post("%s/create_jobs" % self.api_server,
-                              headers=self.get_headers(),
-                              json=payload, timeout=60, verify=self.verify)
+            try:
+                r = requests.post("%s/create_jobs" % self.api_server,
+                                  headers=self.get_headers(),
+                                  json=payload, timeout=300, verify=self.verify)
+            except:
+                self.console.collect('Failed to connect to API, retrying.', show=True)
+                time.sleep(3)
+                continue
 
             if r.status_code == 200:
                 return

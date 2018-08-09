@@ -286,6 +286,9 @@ class RunJob(Job):
 
     def main(self):
         self.load_data()
+        # Date
+        self.console.collect("Date:\n", show=True)
+        self.console.execute(['date'], show=True, show_cmd=False)
 
         # Show environment
         self.console.collect("Environment:\n", show=True)
