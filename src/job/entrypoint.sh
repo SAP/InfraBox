@@ -13,7 +13,7 @@ if [ ! -e /var/run/docker.sock ]; then
     echo "Waiting for docker daemon to start up"
 
     # Start docker daemon
-    dockerd-entrypoint.sh --storage-driver overlay --data-root /data/docker &
+    nohup dockerd-entrypoint.sh --storage-driver overlay --data-root /data/docker > /tmp/dockerd.log &
 
     # Wait until daemon is ready
     COUNTER=0
@@ -23,6 +23,7 @@ if [ ! -e /var/run/docker.sock ]; then
 
       if [ $COUNTER -gt 60 ]; then
         echo "Docker daemon not started" > '/dev/termination-log'
+        cat /tmp/dockerd.log >> /dev/termination-log
         exit 1
       fi
     done
