@@ -90,7 +90,7 @@ Deployments are currently only supported for `docker` job types.
 |type|true|string||Has to be "docker-registry"|
 |host|true|string||Host of the registry. I.e. my-registry.com:5000|
 |repository|true|string||Name of the repository|
-|tag|false|string|build\_<NUMBER>|The of the image|
+|tag|false|string|build\_\<NUMBER>|The tag of the image|
 |target|false|string||When building a Dockerfile with multiple build stages `target` can be used to specify an intermediate build stage by name as a final stage for the resulting image which should be deployed|
 |username|false|string||Username to be used with the registry|
 |password|false|[Secret](#secrets)||Secret containing the password|
@@ -122,7 +122,7 @@ Deployments are currently only supported for `docker` job types.
 |type|true|string||Has to be "ecr"|
 |host|true|string||ECR endpoint|
 |repository|true|string||Name of the repository|
-|tag|false|string|build\_<NUMBER>|The of the image|
+|tag|false|string|build\_\<NUMBER>|The tag of the image|
 |target|false|string||When building a Dockerfile with multiple build stages `target` can be used to specify an intermediate build stage by name as a final stage for the resulting image which should be deployed|
 |region|true|string||AWS Region|
 |access\_key\_id|true|[Secret](#secrets)||Secret containing the AWS `Access Key ID`|
@@ -153,7 +153,7 @@ Deployments are currently only supported for `docker` job types.
 |type|true|string||Has to be "gcr"|
 |host|true|string||GCR endpoint i.e. us.gcr.io|
 |repository|true|string||Name of the repository|
-|tag|false|string|build\_<NUMBER>|The of the image|
+|tag|false|string|build\_\<NUMBER>|The tag of the image|
 |target|false|string||When building a Dockerfile with multiple build stages `target` can be used to specify an intermediate build stage by name as a final stage for the resulting image which should be deployed|
 |region|true|string||AWS Region|
 |service\_account|true|[Secret](#secrets)||Secret containing the GCP `Service Account` with role `Storage Admin`|
