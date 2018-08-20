@@ -124,7 +124,7 @@ class BuildCacheClear(Resource):
         ''', [build_id, project_id])
 
         for j in jobs:
-            key = 'project_%s_branch_%s_job_%s.tar.gz' % (project_id, j['branch'], j['name'])
+            key = 'project_%s_job_%s.tar.snappy' % (project_id, j['name'])
             storage.delete_cache(key)
 
         return OK('Cleared cache')

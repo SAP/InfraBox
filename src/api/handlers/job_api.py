@@ -1,7 +1,6 @@
 #pylint: disable=too-many-lines,too-few-public-methods,too-many-locals,too-many-statements,too-many-branches
 import os
 import json
-import time
 import uuid
 import copy
 import urllib
@@ -873,9 +872,6 @@ class CreateJobs(Resource):
                                repo, env_var_refs, env_vars,
                                build_arguments, deployments, limits_cpu, limits_memory, timeout,
                                resources, json.dumps(job), job['cluster']['name']])
-
-            # to make sure the get picked up in the right order by the scheduler
-            time.sleep(0.1)
 
         g.db.commit()
         return "Successfully create jobs"
