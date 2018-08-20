@@ -1,6 +1,6 @@
 FROM docker:17.12.1-ce-dind
 
-ENV CLOUD_SDK_VERSION 198.0.0
+ENV CLOUD_SDK_VERSION 210.0.0
 ENV PATH /google-cloud-sdk/bin:$PATH
 
 RUN apk add --no-cache \
