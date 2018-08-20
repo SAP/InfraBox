@@ -7,8 +7,8 @@
                         <md-table-head md-sort-by="name">Test</md-table-head>
                         <md-table-head md-sort-by="suite">Suite</md-table-head>
                         <md-table-head md-sort-by="duration">Duration</md-table-head>
-                        <md-table-head md-sort-by="result">Result</md-table-head>
-                        <md-table-head md-sort-by="result">Timestamp</md-table-head>
+                        <md-table-head md-sort-by="state">Result</md-table-head>
+                        <md-table-head md-sort-by="timestamp">Timestamp</md-table-head>
                     </md-table-row>
                 </md-table-header>
 
