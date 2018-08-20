@@ -286,6 +286,9 @@ class RunJob(Job):
 
     def main(self):
         self.load_data()
+        # Date
+        self.console.collect("Date:\n", show=True)
+        self.console.execute(['date'], show=True, show_cmd=False)
 
         # Show environment
         self.console.collect("Environment:\n", show=True)
@@ -503,7 +506,7 @@ class RunJob(Job):
             if os.path.isfile(storage_cache_tar):
                 c.collect("Unpacking cache", show=True)
                 try:
-                    c.execute(['time', 'tar', '-zxf', storage_cache_tar, '-C', self.infrabox_cache_dir], show=True)
+                    self.uncompress(storage_cache_tar, self.infrabox_cache_dir)
                 except:
                     c.collect("Failed to unpack cache\n", show=True)
                 os.remove(storage_cache_tar)

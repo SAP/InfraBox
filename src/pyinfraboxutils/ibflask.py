@@ -186,7 +186,6 @@ def job_token_required(f):
 
         job_state = r[0]
         if job_state not in ('queued', 'running', 'scheduled'):
-            logger.warn('job not in an active state')
             abort(401, 'Unauthorized')
 
 
@@ -213,7 +212,6 @@ def validate_job_token(token):
 
     job_state = r[0]
     if job_state not in ('queued', 'running', 'scheduled'):
-        logger.warn('job not in an active state')
         abort(401, 'Unauthorized')
 
 
