@@ -138,6 +138,20 @@ class Trigger(object):
                     'Create Jobs', %s, false, '', 1, 1024, %s, %s, null)
         ''', [build_id, project_id, json.dumps(git_repo), env], fetch=False)
 
+    def has_active_build(self, commit_id, project_id):
+        result = self.execute('''
+            SELECT count(*)
+            FROM job
+            JOIN build ON job.build_id = build.id
+            JOIN "commit" ON build.commit_id = "commit".id and build.project_id = commit.project_id
+            WHERE "commit".id = %s AND commit.project_id = %s AND job.state IN ('running', 'queued', 'scheduled')
+            GROUP BY job.state
+        ''', [commit_id, project_id])
+
+        if result:
+            return True
+
+        return False
 
     def create_push(self, c, repository, branch, tag):
         if not c['distinct']:
@@ -161,6 +175,9 @@ class Trigger(object):
         ''', [c['id'], project_id])
 
         commit_id = c['id']
+
+        if self.has_active_build(commit_id, project_id):
+            return
 
         if not result:
             status_url = repository['statuses_url'].format(sha=c['id'])
@@ -364,6 +381,10 @@ class Trigger(object):
                 return res(200, 'build already triggered')
 
         commit_id = result[0][0]
+
+        if self.has_active_build(commit_id, project_id):
+            return res(200, 'build already triggered')
+
         build_id = self.create_build(commit_id, project_id)
         self.create_job(event['pull_request']['head']['sha'],
                         event['pull_request']['head']['repo']['clone_url'],
