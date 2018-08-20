@@ -10,7 +10,6 @@ First start `postgres` and `minio` with some [dummy data](/infrabox/test/utils/s
 ```bash
 ./ib.py services start storage
 ./ib.py services start api
-./ib.py services start dashboard_api
 ```
 
 To run the UI you have to allow cross origin requests. For chrome first close all instances of it and run it as:
