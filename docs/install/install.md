@@ -19,7 +19,7 @@ Run `infrabox install` and follow the instructions.
 You can run InfraBox on any Kubernetes Cluster (1.9 and 1.10 are supported at the moment).
 
 ## Prerequisites
-- [helm][helm]
+- [helm][helm] (at least 2.10)
 - [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
 - a domain with access to the DNS configuration (i.e. `infrabox.example.com`)
 
@@ -132,9 +132,10 @@ Add all the necessary configurations options as described in the earlier steps.
 If you forget some the installation will fail with some message like `a.b.c is required`.
 After you have prepared your `my_values.yaml` you may deploy InfraBox.
 
+**IMPORTANT: This requires at least helm 2.10**
+
 ```bash
 helm install --namespace infrabox-system -f my_values.yaml --wait /tmp/infrabox/deploy/infrabox
-helm install --namespace infrabox-system -f my_values.yaml --wait /tmp/infrabox/deploy/infrabox-function
 ```
 After a few seconds you can open your browser and access `https://<YOUR_DOMAIN>`.
 
