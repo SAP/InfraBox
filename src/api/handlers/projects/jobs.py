@@ -240,7 +240,7 @@ class JobRestart(Resource):
             if j['id'] not in restart_jobs:
                 continue
 
-            if j['state'] not in restart_states and j['state'] != 'skipped':
+            if j['state'] not in restart_states and j['state'] not in ('skipped', 'queued'):
                 abort(400, 'Some children jobs are still running')
 
         for j in restart_jobs:
