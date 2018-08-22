@@ -97,7 +97,7 @@ class GC(object):
         # project has been deleted
         tables = [
             'auth_token', 'build', 'collaborator', 'commit',
-            'job', 'job_badge', 'job_markup', 'job_stat', 'measurement',
+            'job', 'job_badge', 'job_markup', 'measurement',
             'pull_request', 'repository', 'secret', 'source_upload', 'test',
             'test_run'
         ]
