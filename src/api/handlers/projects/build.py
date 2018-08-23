@@ -3,6 +3,7 @@ import json
 from flask import g, abort
 from flask_restplus import Resource
 
+from pyinfraboxutils import get_logger
 from pyinfraboxutils.ibflask import auth_required, OK
 from pyinfraboxutils.storage import storage
 from api.namespaces import project as ns
@@ -22,7 +23,6 @@ def restart_build(project_id, build_id):
 
     if not build:
         abort(404)
-
 
     result = g.db.execute_one_dict('''
         SELECT max(restart_counter) as restart_counter
@@ -46,12 +46,14 @@ def restart_build(project_id, build_id):
     new_build_id = result['id']
 
     job = g.db.execute_one_dict('''
-           SELECT repo, env_var, definition FROM job
+           SELECT repo, env_var, definition, type, timeout FROM job
            WHERE project_id = %s
            AND name = 'Create Jobs'
            AND build_id = %s
     ''', [project_id, build_id])
 
+    job_type = job['type']
+    job_timeout = job['timeout']
     env_var = job['env_var']
     if env_var:
         env_var = json.dumps(env_var)
@@ -66,10 +68,10 @@ def restart_build(project_id, build_id):
 
     g.db.execute('''
         INSERT INTO job (id, state, build_id, type,
-            name, cpu, memory, project_id, build_only, dockerfile, repo, env_var, definition, cluster_name)
-        VALUES (gen_random_uuid(), 'queued', %s, 'create_job_matrix',
-                'Create Jobs', 1, 1024, %s, false, '', %s, %s, %s, null);
-    ''', [new_build_id, project_id, repo, env_var, definition])
+            name, cpu, memory, project_id, build_only, dockerfile, repo, env_var, definition, cluster_name, timeout)
+        VALUES (gen_random_uuid(), 'queued', %s, %s,
+                'Create Jobs', 1, 1024, %s, false, '', %s, %s, %s, null, %s);
+    ''', [new_build_id, job_type, project_id, repo, env_var, definition, job_timeout])
     g.db.commit()
 
     return OK('Restarted', {'build': {'id': new_build_id, 'restartCounter': restart_counter}})

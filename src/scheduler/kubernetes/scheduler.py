@@ -2,6 +2,8 @@ import argparse
 import time
 import os
 import random
+import uuid
+import json
 from datetime import datetime
 
 import requests
@@ -23,8 +25,53 @@ class Scheduler(object):
     def kube_delete_job(self, job_id):
         h = {'Authorization': 'Bearer %s' % self.args.token}
         requests.delete(self.args.api_server +
-                        '/apis/core.infrabox.net/v1alpha1/namespaces/%s/ibpipelineinvocations/%s' % (self.namespace, job_id,),
+                        '/apis/core.infrabox.net/v1alpha1/namespaces/%s/ibpipelineinvocations/%s' %
+                        (self.namespace, job_id,),
                         headers=h, timeout=5)
+
+    def kube_delete_knative_build(self, job_id):
+        h = {'Authorization': 'Bearer %s' % self.args.token}
+        r = requests.get(self.args.api_server + '/apis/build.knative.dev/v1alpha1/namespaces/%s/builds?labelSelector=id.job.infrabox.net=%s' %
+                         (self.namespace, job_id),
+                         headers=h,
+                         timeout=10)
+        data = r.json()
+
+        if 'items' not in data:
+            return
+
+        for j in data['items']:
+            if 'metadata' not in j:
+                continue
+
+            name = j['metadata']['name']
+            requests.delete(self.args.api_server +
+                            '/apis/build.knative.dev/v1alpha1/namespaces/%s/builds/%s' % (self.namespace, name,),
+                            headers=h, timeout=5)
+
+    def kube_patch_build(self, name, job_id):
+        h = {
+            'Authorization': 'Bearer %s' % self.args.token,
+            'Content-Type': 'application/json-patch+json'
+        }
+        p = [{"op": "add", "path": "/metadata/labels/id.job.infrabox.net", "value": job_id}]
+
+        requests.patch(self.args.api_server +
+                       '/apis/build.knative.dev/v1alpha1/namespaces/%s/builds/%s' %
+                       (self.namespace, name,),
+                       data=json.dumps(p), headers=h, timeout=5)
+
+    def kube_patch_pod(self, name, job_id):
+        h = {
+            'Authorization': 'Bearer %s' % self.args.token,
+            'Content-Type': 'application/json-patch+json'
+        }
+        p = [{"op": "add", "path": "/metadata/labels/id.job.infrabox.net", "value": job_id}]
+
+        requests.patch(self.args.api_server +
+                       '/api/v1/namespaces/%s/pods/%s' %
+                       (self.namespace, name,),
+                       data=json.dumps(p), headers=h, timeout=5)
 
     def kube_job(self, job_id, cpu, mem, services=None):
         h = {'Authorization': 'Bearer %s' % self.args.token}
@@ -87,6 +134,50 @@ class Scheduler(object):
             return False
 
         return True
+
+    def schedule_knative_build(self, job_id):
+        cursor = self.conn.cursor()
+        cursor.execute('''
+            SELECT j.type, build_id, resources, definition FROM job j WHERE j.id = %s
+        ''', (job_id,))
+        j = cursor.fetchone()
+        cursor.close()
+
+        definition = j[3]
+        cr = definition['build-crd']
+
+        if 'metadata' not in cr:
+            cr['metadata'] = {}
+
+        if 'labels' not in cr['metadata']:
+            cr['metadata']['labels'] = {}
+
+        if 'annotations' not in cr['metadata']:
+            cr['metadata']['annotations'] = {}
+
+        cr['metadata']['annotations']['infrabox.net/project-name'] = 'knative'
+
+        cr['metadata']['labels']['id.job.infrabox.net'] = job_id
+        cr['metadata']['namespace'] = self.namespace
+        cr['metadata']['name'] = job_id
+
+        h = {'Authorization': 'Bearer %s' % self.args.token}
+        r = requests.post(self.args.api_server + '/apis/build.knative.dev/v1alpha1/namespaces/%s/builds' % self.namespace,
+                          headers=h, json=cr, timeout=10)
+
+        if r.status_code != 201:
+            self.logger.warn(r.text)
+            return False
+
+        cursor = self.conn.cursor()
+        cursor.execute("UPDATE job SET state = 'running' WHERE id = %s", [job_id])
+        cursor.close()
+
+        self.logger.info("Finished scheduling job")
+        self.logger.info("")
+
+        return True
+
 
     def schedule_job(self, job_id, cpu, memory):
         cursor = self.conn.cursor()
@@ -210,7 +301,10 @@ class Scheduler(object):
                 cursor.close()
                 continue
 
-            self.schedule_job(job_id, cpu, memory)
+            if job_type == "knative_build":
+                self.schedule_knative_build(job_id)
+            else:
+                self.schedule_job(job_id, cpu, memory)
 
     def handle_aborts(self):
         cluster_name = os.environ['INFRABOX_CLUSTER_NAME']
@@ -220,7 +314,7 @@ class Scheduler(object):
             WITH all_aborts AS (
                 DELETE FROM "abort" RETURNING job_id
             ), jobs_to_abort AS (
-                SELECT j.id, j.state FROM all_aborts
+                SELECT j.id, j.state, j.type FROM all_aborts
                 JOIN job j
                     ON all_aborts.job_id = j.id
                     AND j.state not in ('finished', 'failure', 'error', 'killed')
@@ -230,7 +324,7 @@ class Scheduler(object):
                 WHERE id in (SELECT id FROM jobs_to_abort WHERE state in ('queued'))
             )
 
-            SELECT id FROM jobs_to_abort WHERE state in ('scheduled', 'running', 'queued')
+            SELECT id, type FROM jobs_to_abort WHERE state in ('scheduled', 'running', 'queued')
         ''', [cluster_name])
 
         aborts = cursor.fetchall()
@@ -238,7 +332,13 @@ class Scheduler(object):
 
         for abort in aborts:
             job_id = abort[0]
-            self.kube_delete_job(job_id)
+            job_type = abort[1]
+
+            if job_type == 'knative_build':
+                self.kube_delete_knative_build(job_id)
+            else:
+                self.kube_delete_job(job_id)
+
             self.upload_console(job_id)
 
             # Update state
@@ -251,7 +351,7 @@ class Scheduler(object):
     def handle_timeouts(self):
         cursor = self.conn.cursor()
         cursor.execute('''
-            SELECT j.id FROM job j
+            SELECT j.id, type FROM job j
             WHERE j.start_date < (NOW() - (j.timeout * INTERVAL '1' SECOND))
             AND j.state = 'running'
         ''')
@@ -260,7 +360,13 @@ class Scheduler(object):
 
         for abort in aborts:
             job_id = abort[0]
-            self.kube_delete_job(job_id)
+            job_type = abort[1]
+
+            if job_type == 'knative_build':
+                self.kube_delete_knative_build(job_id)
+            else:
+                self.kube_delete_job(job_id)
+
             self.upload_console(job_id)
 
             # Update state
@@ -296,6 +402,184 @@ class Scheduler(object):
             DELETE FROM console WHERE job_id = %s
         """, [job_id])
         cursor.close()
+
+    def handle_knative_build(self):
+        self.logger.debug("Handling knative build")
+
+        h = {'Authorization': 'Bearer %s' % self.args.token}
+        r = requests.get(self.args.api_server + '/apis/build.knative.dev/v1alpha1/namespaces/%s/builds' %
+                         self.namespace,
+                         headers=h,
+                         timeout=10)
+        data = r.json()
+
+        if 'items' not in data:
+            return
+
+        for j in data['items']:
+            if 'metadata' not in j:
+                continue
+
+            metadata = j['metadata']
+            status = j['status']
+            name = metadata['name']
+            labels = metadata.get('labels', {})
+            annos = metadata.get('annotations', {})
+            t = annos.get('infrabox.net/timeout', 3600)
+            timeout = 3600
+
+            try:
+                timeout = int(t)
+            except:
+                pass
+
+            project_name = annos.get('infrabox.net/project-name', None)
+
+            if not project_name:
+                continue
+
+            job_id = labels.get('id.job.infrabox.net', None)
+
+            if not job_id:
+                job_id = str(uuid.uuid4())
+                self.kube_patch_build(name, job_id)
+
+                cursor = self.conn.cursor()
+                cursor.execute('''
+                    SELECT id
+                    FROM project
+                    WHERE name = %s
+                ''', (project_name,))
+                result = cursor.fetchall()
+                cursor.close()
+
+                if not result:
+                    continue
+
+                project_id = result[0][0]
+
+                cursor = self.conn.cursor()
+                cursor.execute('''
+                    SELECT max(build_number) + 1 AS build_no
+                    FROM build AS b
+                    WHERE b.project_id = %s
+                ''', (project_id,))
+                result = cursor.fetchone()
+                cursor.close()
+
+                build_no = result[0]
+
+                if not build_no:
+                    build_no = 1
+
+                cursor = self.conn.cursor()
+                cursor.execute('''
+                    INSERT INTO build (build_number, project_id)
+                    VALUES (%s, %s)
+                    RETURNING id
+                ''', (build_no, project_id,))
+                result = cursor.fetchone()
+                cursor.close()
+
+                build_id = result[0]
+
+                crd = {
+                    'kind': j['kind'],
+                    'apiVersion': j['apiVersion'],
+                    'metadata': {
+                        'labels': labels,
+                        'annotations': annos
+                    },
+                    'spec': j['spec']
+                }
+
+                if 'id.job.infrabox.net' in labels:
+                    del crd['metadata']['labels']['id.job.infrabox.net']
+
+                if 'kubectl.kubernetes.io/last-applied-configuration' in annos:
+                    del crd['metadata']['annotations']['kubectl.kubernetes.io/last-applied-configuration']
+
+                definition = {
+                    'name': 'knative',
+                    'type': 'knative',
+                    'build-crd': crd
+                }
+
+                cursor = self.conn.cursor()
+                cursor.execute('''
+                    INSERT INTO job (
+                        id, state, build_id, type, name,
+                         project_id, build_only, dockerfile,
+                         cpu, memory, repo, env_var, cluster_name,
+                         timeout, definition
+                    )
+                    VALUES (%s, 'running', %s, 'knative_build', 'Create Jobs',
+                            %s, false, '', 1, 1024, null, null, null, %s, %s)''', (job_id,
+                                                                                   build_id,
+                                                                                   project_id,
+                                                                                   timeout,
+                                                                                   json.dumps(definition)
+                                                                                  ))
+                cursor.close()
+            else:
+                cursor = self.conn.cursor()
+                cursor.execute('''SELECT state FROM job where id = %s''', (job_id,))
+                result = cursor.fetchall()
+                cursor.close()
+
+                if not result:
+                    self.logger.info('Deleting orphaned job %s', job_id)
+                    self.kube_delete_job(job_id)
+                    continue
+
+                last_state = result[0][0]
+                if last_state in ('killed', 'finished', 'error', 'finished'):
+                    self.kube_delete_job(job_id)
+                    continue
+
+            pod_name = status.get('cluster', {}).get('podName', None)
+            if pod_name:
+                self.kube_patch_pod(pod_name, job_id)
+
+            current_state = 'running'
+            start_date = status.get('startTime', None)
+            end_date = status.get('completionTime', None)
+
+            message = None
+            node_name = None
+            delete_job = False
+
+            conditions = status.get('conditions', [])
+            if conditions:
+                c = conditions[0]
+
+                if c['state'] == 'Succeeded' and end_date:
+                    message = c.get('message', None)
+                    if c['status'] == 'False':
+                        current_state = 'failure'
+                    else:
+                        current_state = 'finished'
+
+                    delete_job = True
+
+            self.logger.error(conditions)
+
+            cursor = self.conn.cursor()
+            cursor.execute("""
+                UPDATE job SET
+                    state = %s,
+                    start_date = %s,
+                    end_date = %s,
+                    message = %s,
+                    node_name = %s
+                WHERE id = %s
+            """, (current_state, start_date, end_date, message, node_name, job_id))
+            cursor.close()
+
+            if delete_job:
+                self.upload_console(job_id)
+                self.logger.info('Deleting job %s', name)
+                self.kube_delete_knative_build(job_id)
 
     def handle_orphaned_jobs(self):
         self.logger.debug("Handling orphaned jobs")
@@ -367,13 +651,11 @@ class Scheduler(object):
                                 message = stepStatus['State']['terminated'].get('reason', 'Unknown Error')
 
                     if not message and current_state != 'finished':
-                        import json
                         self.logger.error(json.dumps(status, indent=4))
 
                     delete_job = True
 
                 if message == 'Error':
-                    import json
                     self.logger.error(json.dumps(status, indent=4))
 
                 if s == "error":
@@ -525,6 +807,7 @@ class Scheduler(object):
             self.handle_timeouts()
             self.handle_aborts()
             self.handle_orphaned_jobs()
+            self.handle_knative_build()
         except Exception as e:
             self.logger.exception(e)
 

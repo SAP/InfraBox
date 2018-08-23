@@ -809,6 +809,9 @@ class CreateJobs(Resource):
             elif job_type == "docker-compose":
                 f = job['docker_compose_file']
                 t = 'run_docker_compose'
+            elif job_type == "knative-build":
+                f = None
+                t = 'knative_build'
             elif job_type == "wait":
                 f = None
                 t = 'wait'
@@ -890,7 +893,12 @@ class ConsoleUpdate(Resource):
             if 'kubernetes' not in r:
                 continue
 
-            job_id = r['kubernetes']['labels']['job-name'][:-4]
+            labels = r['kubernetes']['labels']
+
+            job_id = labels.get('id.job.infrabox.net', None)
+
+            if not job_id:
+                continue
 
             a = float(r['date'])
             date = datetime.fromtimestamp(float(a)).strftime("%H:%M:%S")

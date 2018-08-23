@@ -292,6 +292,14 @@ def parse_docker(d, path):
     if 'registries' in d:
         parse_registries(d['registries'], path + '.registries')
 
+def parse_knative(d, path):
+    check_allowed_properties(d, path, ("type", "name", "build-crd", "depends_on"))
+    check_required_properties(d, path, ("type", "name", "build-crd"))
+    check_name(d['name'], path + ".name")
+
+    if 'depends_on' in d:
+        parse_depends_on(d['depends_on'], path + ".depends_on")
+
 def parse_docker_compose(d, path):
     check_allowed_properties(d, path, ("type", "name", "docker_compose_file", "depends_on",
                                        "environment", "resources", "cache", "timeout", "cluster", "repository"))
@@ -466,6 +474,8 @@ def parse_jobs(e, path):
             parse_docker_image(elem, p)
         elif t == 'docker-compose':
             parse_docker_compose(elem, p)
+        elif t == 'knative-build':
+            parse_knative(elem, p)
         else:
             raise ValidationError(p, "type '%s' not supported" % t)
 
