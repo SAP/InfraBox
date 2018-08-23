@@ -284,7 +284,7 @@ def main():
 
         print "Server not yet ready"
 
-    time.sleep(90)
+    time.sleep(600)
 
     print "Starting tests"
     with open('results.xml', 'wb') as output:
