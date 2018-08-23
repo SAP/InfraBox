@@ -6,6 +6,7 @@ import re
 import time
 import json
 import requests
+import urllib3
 
 import xmlrunner
 
@@ -173,9 +174,9 @@ class Test(unittest.TestCase):
 
         self._print_job_logs()
 
-    def test_docker_job(self):
-        self.run_it('/infrabox/context/infrabox/test/e2e/tests/docker_job')
-        self.expect_job('test')
+    #def test_docker_job(self):
+    #    self.run_it('/infrabox/context/infrabox/test/e2e/tests/docker_job')
+    #    self.expect_job('test')
 
     def test_docker_multiple_jobs(self):
         self.run_it('/infrabox/context/infrabox/test/e2e/tests/docker_multiple_jobs')
@@ -265,6 +266,8 @@ class Test(unittest.TestCase):
 def main():
     root_url = os.environ['INFRABOX_ROOT_URL']
 
+    urllib3.disable_warnings()
+
     print "Connecting to DB"
     connect_db() # Wait for DB
 
@@ -284,7 +287,7 @@ def main():
 
         print "Server not yet ready"
 
-    time.sleep(600)
+    time.sleep(90)
 
     print "Starting tests"
     with open('results.xml', 'wb') as output:
