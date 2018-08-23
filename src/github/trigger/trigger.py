@@ -176,6 +176,11 @@ class Trigger(object):
 
         commit_id = c['id']
 
+        if tag:
+            self.execute('''
+                UPDATE "commit" SET tag = %s WHERE id = %s AND project_id = %s
+            ''', [tag, c['id'], project_id], fetch=False)
+
         if self.has_active_build(commit_id, project_id):
             return
 
@@ -208,12 +213,6 @@ class Trigger(object):
                   project_id,
                   tag,
                   status_url])
-
-        if tag:
-            self.execute('''
-                UPDATE "commit" SET tag = %s WHERE id = %s AND project_id = %s
-            ''', [tag, c['id'], project_id], fetch=False)
-
 
         build_id = self.create_build(commit_id, project_id)
         self.create_job(c['id'], repository['clone_url'], build_id,
