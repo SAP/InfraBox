@@ -93,6 +93,7 @@ func syncGKECluster(cr *v1alpha1.GKECluster, log *logrus.Entry) (*v1alpha1.GKECl
 			"create", cr.Status.ClusterName,
 			"--async",
 			"--enable-autorepair",
+            "--scopes=gke-default,storage-rw",
 			"--zone", cr.Spec.Zone,
 		}
 
