@@ -35,7 +35,7 @@ func main() {
     }
 
 	resyncPeriod := 5
-	sdk.Watch(resource, kind, namespace, resyncPeriod)
+	sdk.Watch(resource, kind, namespace, resyncPeriod, sdk.WithNumWorkers(5))
 	sdk.Handle(stub.NewHandler())
 	sdk.Run(context.TODO())
 }
