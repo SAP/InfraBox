@@ -77,8 +77,27 @@ def handle_patchset_created_project(conn, event, project_id, project_name):
     c.close()
     commit = result
 
+    url = event['change']['url']
+
+    # Abort all running builds for the same change
+    c = conn.cursor()
+    c.execute('''
+        INSERT INTO abort
+        SELECT j.id
+        FROM job j
+        JOIN build b
+        ON b.id = j.build_id
+        JOIN commit c
+        ON b.commit_id = c.id
+        AND b.project_id = c.project_id
+        WHERE
+            c.url = %s AND
+            j.state in ('queued', 'scheduled', 'running')
+    ''', [url])
+    c.close()
+    conn.commit()
+
     if not commit:
-        url = event['change']['url'] + "/" + event['patchSet']['number']
         c = conn.cursor()
         c.execute('''
             INSERT INTO "commit" (
