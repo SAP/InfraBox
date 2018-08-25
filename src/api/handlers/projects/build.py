@@ -23,7 +23,6 @@ def restart_build(project_id, build_id):
     if not build:
         abort(404)
 
-
     result = g.db.execute_one_dict('''
         SELECT max(restart_counter) as restart_counter
         FROM build
@@ -128,6 +127,36 @@ class BuildCacheClear(Resource):
             storage.delete_cache(key)
 
         return OK('Cleared cache')
+
+@ns.route('/<project_id>/builds/<build_number>/<build_restart_counter>/state')
+class BuildStatus(Resource):
+
+    @auth_required(['user', 'project'], allow_if_public=True)
+    def get(self, project_id, build_number, build_restart_counter):
+        states = g.db.execute_many_dict('''
+            SELECT state
+            FROM job j
+            JOIN build b
+            ON j.build_id = b.id
+            WHERE   p.id = %s
+            AND b.build_number = %s
+            AND b.restart_counter = %s
+            GROUP BY j.state
+        ''', [project_id, build_number, build_restart_counter])
+
+        state = 'finished'
+
+        for s in states:
+            if s['state'] in ('running', 'queued', 'scheduled'):
+                state = 'runing'
+                break
+            elif s['state'] in ('error', 'failure', 'killed'):
+                state = s['state']
+                break
+
+        return {
+            'state': state
+        }
 
 @ns.route('/<project_id>/builds/<build_number>/<build_restart_counter>')
 class Build(Resource):
