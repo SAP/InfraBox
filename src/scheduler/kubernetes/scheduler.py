@@ -22,9 +22,22 @@ class Scheduler(object):
 
     def kube_delete_job(self, job_id):
         h = {'Authorization': 'Bearer %s' % self.args.token}
-        requests.delete(self.args.api_server +
-                        '/apis/core.infrabox.net/v1alpha1/namespaces/%s/ibpipelineinvocations/%s' % (self.namespace, job_id,),
-                        headers=h, timeout=5)
+
+        url = '%s/apis/core.infrabox.net/v1alpha1/namespaces/%s/ibpipelineinvocations/%s' % (self.args.api_server,
+                                                                                             self.namespace,
+                                                                                             job_id)
+
+        try:
+            r = requests.get(url, headers=h, timeout=5)
+            job = r.json()
+
+            if job['metadata'].get('deletionTimestamp', None):
+                # Already marked for deletion, don't delete again to not for an update in the controller
+                return
+
+            requests.delete(url, headers=h, timeout=5)
+        except:
+            pass
 
     def kube_job(self, job_id, cpu, mem, services=None):
         h = {'Authorization': 'Bearer %s' % self.args.token}
