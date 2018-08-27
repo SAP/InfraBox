@@ -927,10 +927,13 @@ class Stats(Resource):
                 c += 1
                 s += v['cpu']
 
-        avg_cpu = round(s/c/100, 2)
+        avg_cpu = None
+
+        if c:
+            avg_cpu = round(s/c/100, 2)
 
         try:
-            g.db.execute("UPDATE job SET stats = %s, avg_cpu %s WHERE id = %s", [json.dumps(stats), job_id, avg_cpu])
+            g.db.execute("UPDATE job SET stats = %s, avg_cpu = %s WHERE id = %s", [json.dumps(stats), avg_cpu, job_id])
             g.db.commit()
         except:
             pass
