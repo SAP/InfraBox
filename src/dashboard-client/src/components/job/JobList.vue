@@ -9,6 +9,7 @@
                         <md-table-head md-sort-by="startDate">Started</md-table-head>
                         <md-table-head md-sort-by="duration">Duration</md-table-head>
                         <md-table-head md-sort-by="cpu">CPU</md-table-head>
+                        <md-table-head md-sort-by="avgCpu">Avg. CPU Usage</md-table-head>
                         <md-table-head md-sort-by="memory">Memory</md-table-head>
                         <md-table-head md-sort-by="cluster">Cluster</md-table-head>
                         <md-table-head md-sort-by="nodeName">Node</md-table-head>
@@ -35,6 +36,8 @@
                             <ib-duration :start="j.startDate" :end="j.endDate"></ib-duration>
                         </md-table-cell>
                         <md-table-cell><div>{{ j.cpu }} CPU</div></md-table-cell>
+                        <md-table-cell v-if="j.avgCpu"><div>{{ j.avgCpu }} CPU</div></md-table-cell>
+                        <md-table-cell v-if="!j.avgCpu"><div>N/A</div></md-table-cell>
                         <md-table-cell><div>{{ j.memory }} GiB </div></md-table-cell>
                         <md-table-cell v-if="j.definition">{{ j.definition.cluster.name }}</md-table-cell>
                         <md-table-cell v-if="!j.definition"></md-table-cell>

@@ -91,6 +91,7 @@ class Jobs(Resource):
                 j.message as job_message,
                 j.definition as job_definition,
                 j.node_name as job_node_name,
+                j.avg_cpu as job_avg_cpu,
                 -- pull_request
                 pr.title as pull_request_title,
                 pr.url as pull_request_url
@@ -139,6 +140,7 @@ class Jobs(Resource):
                     'message': j['job_message'],
                     'definition': j['job_definition'],
                     'node_name': j['job_node_name'],
+                    'avg_cpu': j['job_avg_cpu']
                 }
             }
 
