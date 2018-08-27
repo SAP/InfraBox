@@ -1,6 +1,8 @@
 import json
 import os
 
+from io import BytesIO
+
 import requests
 
 from flask import g, abort, Response, send_file, request
@@ -338,8 +340,9 @@ class ArchiveDownload(Resource):
             logger.info('get archive %s from %s', [filename, url])
 
             # TODO(ib-steffen): allow custom ca bundles
-            r = requests.get(url,headers=headers, timeout=120, verify=False, stream=True)
-            f = r.raw
+            r = requests.get(url,headers=headers, timeout=120, verify=False)
+            f = BytesIO(r.content)
+            f.seek(0)
 
         if not f:
             logger.error(key)
