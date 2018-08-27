@@ -20,7 +20,7 @@
                             </router-link>
                         </md-table-cell>
                         <md-table-cell>{{ t.suite }}</md-table-cell>
-                        <md-table-cell>{{ t.duration }} ms</md-table-cell>
+                        <md-table-cell>{{ convert(t.duration) }}</md-table-cell>
                         <md-table-cell><ib-state :state="t.state"></ib-state></md-table-cell>
                         <md-table-cell>{{ t.timestamp }}</md-table-cell>
                     </md-table-row>
@@ -41,6 +41,7 @@
 
 <script>
 import _ from 'underscore'
+import moment from 'moment'
 
 export default {
     name: 'TestList',
@@ -84,6 +85,9 @@ export default {
             }
 
             this.onPagination({ size: this.size, page: this.page })
+        },
+        convert (duration) {
+            return moment.utc(duration).format('mm:ss.SSS')
         }
     }
 }
