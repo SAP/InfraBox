@@ -12,6 +12,7 @@ export default class Test {
         this.history = null
         this.duration = opts.duration
         this.job = job
+        this.timestamp = opts.timestamp
     }
 
     loadHistory () {
