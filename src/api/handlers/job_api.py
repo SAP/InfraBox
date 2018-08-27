@@ -920,9 +920,17 @@ class Stats(Resource):
         job_id = g.token['job']['id']
 
         stats = request.json['stats']
+        s = 0
+        c = 0
+        for _, values in stats.items():
+            for v in values:
+                c += 1
+                s += v['cpu']
+
+        avg_cpu = round(s/c/100, 2)
 
         try:
-            g.db.execute("UPDATE job SET stats = %s WHERE id = %s", [json.dumps(stats), job_id])
+            g.db.execute("UPDATE job SET stats = %s, avg_cpu %s WHERE id = %s", [json.dumps(stats), job_id, avg_cpu])
             g.db.commit()
         except:
             pass
