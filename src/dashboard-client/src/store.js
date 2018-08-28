@@ -62,6 +62,11 @@ function findJob (build, jobId) {
     return null
 }
 
+function toDate (s) {
+    let a = s.split(/[^0-9]/)
+    return new Date(a[0], a[1] - 1, a[1], a[3], a[4], a[5])
+}
+
 function handleJobUpdate (state, event) {
     const project = findProject(state, event.data.project.id)
 
@@ -111,11 +116,11 @@ function handleJobUpdate (state, event) {
     let endDate = null
 
     if (d.start_date) {
-        startDate = new Date(d.start_date.split('+')[0])
+        startDate = toDate(d.start_date)
     }
 
     if (d.end_date) {
-        endDate = new Date(d.end_date.split('+')[0])
+        endDate = toDate(d.end_date)
     }
 
     if (!job) {
