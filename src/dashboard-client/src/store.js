@@ -132,7 +132,8 @@ function handleJobUpdate (state, event) {
             d.dependencies,
             d.message,
             d.definition,
-            d.node_name
+            d.node_name,
+            d.avg_cpu
         )
         build.jobs.push(job)
         state.jobs[d.id] = job
