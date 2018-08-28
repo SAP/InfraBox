@@ -200,6 +200,11 @@ class Build(Resource):
             j.cpu as job_cpu,
             j.dependencies as job_dependencies,
             to_char(j.created_at, 'YYYY-MM-DD HH24:MI:SS') as job_created_at,
+            j.message as job_message,
+            j.definition as job_definition,
+            j.node_name as job_node_name,
+            j.avg_cpu as job_avg_cpu,
+
             -- pull_request
             pr.title as pull_request_title,
             pr.url as pull_request_url
@@ -246,7 +251,11 @@ class Build(Resource):
                     'memory': j['job_memory'],
                     'cpu': j['job_cpu'],
                     'dependencies': j['job_dependencies'],
-                    'created_at': j['job_created_at']
+                    'created_at': j['job_created_at'],
+                    'message': j['job_message'],
+                    'definition': j['job_definition'],
+                    'node_name': j['job_node_name'],
+                    'avg_cpu': j['job_avg_cpu']
                 }
             }
 
