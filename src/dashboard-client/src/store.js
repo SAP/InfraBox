@@ -142,6 +142,7 @@ function handleJobUpdate (state, event) {
         job.startDate = startDate
         job.endDate = endDate
         job.nodeName = d.node_name
+        job.avgCpu = d.avg_cpu
 
         if (d.message) {
             job.message = d.message
