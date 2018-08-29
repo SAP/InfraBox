@@ -10,6 +10,7 @@ import uuid
 import base64
 import traceback
 import urllib3
+import yaml
 
 from pyinfrabox.infrabox import validate_json
 from pyinfrabox.docker_compose import create_from
@@ -17,6 +18,7 @@ from pyinfrabox.docker_compose import create_from
 from infrabox_job.stats import StatsCollector
 from infrabox_job.process import ApiConsole, Failure
 from infrabox_job.job import Job
+from infrabox_job import find_infrabox_file
 
 from pyinfraboxutils.testresult import Parser as TestresultParser
 from pyinfraboxutils.coverage import Parser as CoverageParser
@@ -255,12 +257,12 @@ class RunJob(Job):
     def main_create_jobs(self):
         c = self.console
 
-        ib_json = os.path.join(self.mount_repo_dir, 'infrabox.json')
-        if not os.path.isfile(ib_json):
-            raise Failure("infrabox.json not found")
+        ib_file = find_infrabox_file(self.mount_repo_dir)
+        if not ib_file:
+            raise Failure("infrabox file not found")
 
-        c.header("Parsing infrabox.json", show=True)
-        data = self.parse_infrabox_json(ib_json)
+        c.header("Parsing infrabox file", show=True)
+        data = self.parse_infrabox_file(ib_file)
         self.check_file_exist(data, self.mount_repo_dir)
 
         c.header("Creating jobs", show=True)
@@ -436,15 +438,16 @@ class RunJob(Job):
 
     def create_dynamic_jobs(self):
         c = self.console
-        infrabox_json_path = os.path.join(self.infrabox_output_dir, 'infrabox.json')
-        infrabox_context = os.path.dirname(infrabox_json_path)
 
-        if os.path.exists(infrabox_json_path):
+        ib_file = find_infrabox_file(self.infrabox_output_dir)
+
+        if ib_file:
+            infrabox_context = os.path.dirname(ib_file)
             c.header("Creating jobs", show=True)
-            data = self.parse_infrabox_json(infrabox_json_path)
+            data = self.parse_infrabox_file(ib_file)
             self.check_file_exist(data, infrabox_context)
             jobs = self.get_job_list(data, c, self.job['repo'],
-                                     infrabox_paths={infrabox_json_path: True},
+                                     infrabox_paths={ib_file: True},
                                      infrabox_context=infrabox_context)
             c.collect(json.dumps(jobs, indent=4), show=True)
 
@@ -1021,12 +1024,17 @@ class RunJob(Job):
         finally:
             self.logout_docker_registry()
 
-    def parse_infrabox_json(self, path):
+    def parse_infrabox_file(self, path):
         with open(path, 'r') as f:
             data = None
             try:
                 data = json.load(f)
                 self.console.collect(json.dumps(data, indent=4), show=True)
+            except ValueError:
+                f.seek(0)
+                data = yaml.load(f)
+                self.console.collect(yaml.dump(data, default_flow_style=False), show=True)
+            try:
                 validate_json(data)
             except Exception as e:
                 raise Failure(e.__str__())
@@ -1113,16 +1121,20 @@ class RunJob(Job):
 
                 self.clone_repo(job['commit'], clone_url, None, None, True, sub_path)
 
-                c.header("Parsing infrabox.json", show=True)
-                ib_file = job.get('infrabox_file', 'infrabox.json')
-                ib_path = os.path.join(new_repo_path, ib_file)
+                c.header("Parsing infrabox file", show=True)
+                ib_file = job.get('infrabox_file', None)
+                if not ib_file:
+                    ib_path = find_infrabox_file(new_repo_path)
+
+                if not ib_path:
+                    raise Failure("infrabox file not found in %s" % new_repo_path)
 
                 if ib_path in infrabox_paths:
                     raise Failure("Recursive include detected")
 
                 infrabox_paths[ib_path] = True
                 c.collect("file: %s" % ib_path)
-                yml = self.parse_infrabox_json(ib_path)
+                yml = self.parse_infrabox_file(ib_path)
 
                 git_repo = {
                     "clone_url": job['clone_url'],
@@ -1145,7 +1157,7 @@ class RunJob(Job):
                 del infrabox_paths[ib_path]
 
             if job['type'] == 'workflow':
-                c.header("Parsing infrabox.json", show=True)
+                c.header("Parsing infrabox file", show=True)
                 p = os.path.join(infrabox_context, job['infrabox_file'])
                 c.collect("file: %s\n" % p)
 
@@ -1154,7 +1166,7 @@ class RunJob(Job):
 
                 infrabox_paths[p] = True
 
-                yml = self.parse_infrabox_json(p)
+                yml = self.parse_infrabox_file(p)
                 new_infrabox_context = os.path.dirname(p)
                 self.check_file_exist(yml, new_infrabox_context)
 
