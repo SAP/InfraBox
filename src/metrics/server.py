@@ -282,10 +282,9 @@ def main():
 
     while running:
         try:
-            old_time = time.time()
             active_job_gauge.update(conn)
             rsc_gauge.update(conn)
-            all_job_gauge(conn)
+            all_job_gauge.update(conn)
         except psycopg2.OperationalError:
             # the db connection closed unexpectedly
             conn = connect_db()
