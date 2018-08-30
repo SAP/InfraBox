@@ -138,7 +138,7 @@ class BuildStatus(Resource):
             FROM job j
             JOIN build b
             ON j.build_id = b.id
-            WHERE   p.id = %s
+            WHERE b.project_id = %s
             AND b.build_number = %s
             AND b.restart_counter = %s
             GROUP BY j.state
