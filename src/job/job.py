@@ -266,7 +266,7 @@ class RunJob(Job):
         self.check_file_exist(data, self.mount_repo_dir)
 
         c.header("Creating jobs", show=True)
-        jobs = self.get_job_list(data, c, self.job['repo'], infrabox_paths={ib_json: True})
+        jobs = self.get_job_list(data, c, self.job['repo'], infrabox_paths={ib_file: True})
 
         if jobs:
             self.create_jobs(jobs)
