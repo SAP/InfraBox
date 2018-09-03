@@ -263,6 +263,10 @@ class Test(unittest.TestCase):
         self.run_it('/infrabox/context/infrabox/test/e2e/tests/docker_insecure_env')
         self.expect_job('test')
 
+    def test_infrabox_yaml(self):
+        self.run_it('/infrabox/context/infrabox/test/e2e/tests/infrabox_yaml')
+        self.expect_job('hello-world')
+
 def main():
     root_url = os.environ['INFRABOX_ROOT_URL']
 
