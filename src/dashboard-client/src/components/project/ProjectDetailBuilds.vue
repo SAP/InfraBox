@@ -8,7 +8,6 @@
     </div>
 </template>
 
-
 <script>
 import store from '../../store'
 import ProjectService from '../../services/ProjectService'
@@ -37,6 +36,3 @@ export default {
     }
 }
 </script>
-
-<style scoped>
-</style>

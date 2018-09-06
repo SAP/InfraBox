@@ -111,13 +111,13 @@ class JobApiTest(ApiTestTemplate):
         self.assertEqual(r["output"], data["output"])
 
     def test_stats(self):
-        data = { "stats": "finished" }
+        data = { "stats": {}}
         r = TestClient.post(self.url_ns + '/stats', data=data, headers=self.job_headers)
         self.assertEqual(r, {})
 
         r = TestClient.execute_one("""SELECT stats FROM job
                                        WHERE id = %s""", [self.job_id])
-        self.assertEqual(r["stats"], "\"%s\"" % data["stats"])
+        self.assertEqual(r["stats"], '%s' % data["stats"])
 
     def test_markup(self):
         markup_data = {

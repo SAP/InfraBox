@@ -72,7 +72,7 @@ class Section {
 export default class Job {
     constructor (id, name, cpu, memory, state,
             startDate, endDate, build, project,
-            dependencies, message, definition, nodeName) {
+            dependencies, message, definition, nodeName, avgCpu) {
         this.id = id
         this.name = name
         this.cpu = cpu
@@ -94,6 +94,7 @@ export default class Job {
         this.message = message
         this.definition = definition
         this.nodeName = nodeName
+        this.avgCpu = avgCpu
     }
 
     _getTime (d) {
@@ -258,6 +259,10 @@ export default class Job {
     downloadArchive (filename) {
         const url = `projects/${this.project.id}/jobs/${this.id}/archive/download?filename=${filename}`
         NewAPIService.openAPIUrl(url)
+            .catch((err) => {
+                NotificationService.$emit('NOTIFICATION', new Notification('It seems the archived file was deleted from the server'))
+                console.log(err)
+            })
     }
 
     listenConsole () {

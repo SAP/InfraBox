@@ -62,6 +62,11 @@ function findJob (build, jobId) {
     return null
 }
 
+function toDate (s) {
+    let a = s.split(/[^0-9]/)
+    return new Date(a[0], a[1] - 1, a[1], a[3], a[4], a[5])
+}
+
 function handleJobUpdate (state, event) {
     const project = findProject(state, event.data.project.id)
 
@@ -111,11 +116,11 @@ function handleJobUpdate (state, event) {
     let endDate = null
 
     if (d.start_date) {
-        startDate = new Date(d.start_date.split('+')[0])
+        startDate = toDate(d.start_date)
     }
 
     if (d.end_date) {
-        endDate = new Date(d.end_date.split('+')[0])
+        endDate = toDate(d.end_date)
     }
 
     if (!job) {
@@ -132,7 +137,8 @@ function handleJobUpdate (state, event) {
             d.dependencies,
             d.message,
             d.definition,
-            d.node_name
+            d.node_name,
+            d.avg_cpu
         )
         build.jobs.push(job)
         state.jobs[d.id] = job
@@ -141,6 +147,7 @@ function handleJobUpdate (state, event) {
         job.startDate = startDate
         job.endDate = endDate
         job.nodeName = d.node_name
+        job.avgCpu = d.avg_cpu
 
         if (d.message) {
             job.message = d.message
