@@ -1,6 +1,8 @@
 import json
 import os
 
+from io import BytesIO
+
 import requests
 
 from flask import g, abort, Response, send_file, request
@@ -89,6 +91,7 @@ class Jobs(Resource):
                 j.message as job_message,
                 j.definition as job_definition,
                 j.node_name as job_node_name,
+                j.avg_cpu as job_avg_cpu,
                 -- pull_request
                 pr.title as pull_request_title,
                 pr.url as pull_request_url
@@ -137,6 +140,7 @@ class Jobs(Resource):
                     'message': j['job_message'],
                     'definition': j['job_definition'],
                     'node_name': j['job_node_name'],
+                    'avg_cpu': j['job_avg_cpu']
                 }
             }
 
@@ -240,7 +244,7 @@ class JobRestart(Resource):
             if j['id'] not in restart_jobs:
                 continue
 
-            if j['state'] not in restart_states and j['state'] != 'skipped':
+            if j['state'] not in restart_states and j['state'] not in ('skipped', 'queued'):
                 abort(400, 'Some children jobs are still running')
 
         for j in restart_jobs:
@@ -338,8 +342,9 @@ class ArchiveDownload(Resource):
             logger.info('get archive %s from %s', [filename, url])
 
             # TODO(ib-steffen): allow custom ca bundles
-            r = requests.get(url,headers=headers, timeout=120, verify=False, stream=True)
-            f = r.raw
+            r = requests.get(url,headers=headers, timeout=120, verify=False)
+            f = BytesIO(r.content)
+            f.seek(0)
 
         if not f:
             logger.error(key)

@@ -7,8 +7,8 @@
                         <md-table-head md-sort-by="name">Test</md-table-head>
                         <md-table-head md-sort-by="suite">Suite</md-table-head>
                         <md-table-head md-sort-by="duration">Duration</md-table-head>
-                        <md-table-head md-sort-by="result">Result</md-table-head>
-                        <md-table-head md-sort-by="result">Timestamp</md-table-head>
+                        <md-table-head md-sort-by="state">Result</md-table-head>
+                        <md-table-head md-sort-by="timestamp">Timestamp</md-table-head>
                     </md-table-row>
                 </md-table-header>
 
@@ -20,7 +20,7 @@
                             </router-link>
                         </md-table-cell>
                         <md-table-cell>{{ t.suite }}</md-table-cell>
-                        <md-table-cell>{{ t.duration }} ms</md-table-cell>
+                        <md-table-cell>{{ convert(t.duration) }}</md-table-cell>
                         <md-table-cell><ib-state :state="t.state"></ib-state></md-table-cell>
                         <md-table-cell>{{ t.timestamp }}</md-table-cell>
                     </md-table-row>
@@ -41,6 +41,7 @@
 
 <script>
 import _ from 'underscore'
+import moment from 'moment'
 
 export default {
     name: 'TestList',
@@ -84,6 +85,9 @@ export default {
             }
 
             this.onPagination({ size: this.size, page: this.page })
+        },
+        convert (duration) {
+            return moment.utc(duration).format('mm:ss.SSS')
         }
     }
 }

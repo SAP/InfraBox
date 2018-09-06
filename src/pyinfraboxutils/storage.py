@@ -91,7 +91,7 @@ class S3(object):
         except:
             return None
 
-        path = '/tmp/%s_%s' % (uuid.uuid4(), key.replace('/', '_'))
+        path = '/tmp/%s' % uuid.uuid4()
         with open(path, 'w+') as f:
             f.write(result['Body'].read())
 
@@ -165,7 +165,7 @@ class GCS(object):
         if not blob:
             return None
 
-        path = '/tmp/%s_%s' % (uuid.uuid4(), key.replace('/', '_'))
+        path = '/tmp/%s' % uuid.uuid4()
         with open(path, 'w+') as f:
             blob.download_to_file(f)
 
@@ -226,7 +226,7 @@ class AZURE(object):
 
     def _download(self, key):
         client = self._get_client()
-        path = '/tmp/%s_%s' % (uuid.uuid4(), key.replace('/', '_'))
+        path = '/tmp/%s' % uuid.uuid4()
         try:
             client.get_blob_to_path(container_name=self.container,
                                     blob_name=key,
@@ -245,7 +245,7 @@ class AZURE(object):
 
     def _get_client(self):
         client = BlockBlobService(account_name=get_env('INFRABOX_STORAGE_AZURE_ACCOUNT_NAME'),
-                         account_key=get_env('INFRABOX_STORAGE_AZURE_ACCOUNT_KEY'))
+                                  account_key=get_env('INFRABOX_STORAGE_AZURE_ACCOUNT_KEY'))
         return client
 
 class SWIFT(object):
@@ -303,7 +303,7 @@ class SWIFT(object):
 
     def _download(self, key):
         client = self._get_client()
-        path = '/tmp/%s_%s' % (uuid.uuid4(), key.replace('/', '_'))
+        path = '/tmp/%s' % uuid.uuid4()
         try:
             _, contents = client.get_object(self.container, key)
             with open(path, 'w') as f:

@@ -180,10 +180,6 @@ EOL
 
     helm install --namespace infrabox-system -f my_values.yaml --wait .
 
-	cd ../infrabox-function
-
-    helm install --namespace infrabox-system -f ../infrabox/my_values.yaml --wait .
-
     export INFRABOX_DATABASE_HOST=localhost
     export INFRABOX_DATABASE_DB=postgres
     export INFRABOX_DATABASE_USER=postgres
