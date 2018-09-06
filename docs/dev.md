@@ -53,7 +53,7 @@ It also takes the `--registry`, `--tag` and `--filter` options like `images buil
 During development you may want to start several services separately to test your changes. You can start services like this:
 
 ```bash
-./ib.py service start <service_name>
+./ib.py services start <service_name>
 ```
 
 ## Generate Changelog
