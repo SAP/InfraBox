@@ -71,17 +71,20 @@ class Collaborators(Resource):
         """, [user['id'], project_id])[0]
 
         if num_collaborators != 0:
-            return OK('Specified user is already a collaborator.')
-
-        g.db.execute(
-            """
-            INSERT INTO collaborator (project_id, user_id, role)
-            VALUES(%s, %s, %s) ON CONFLICT DO NOTHING
-        """, [project_id, user['id'], userrole])
-
+            g.db.execute(
+                """
+                UPDATE collaborator SET role=%s
+                WHERE project_id=%s AND user_id=%s
+            """, [userrole, project_id, user['id']])
+        else:
+            g.db.execute(
+                """
+                INSERT INTO collaborator (project_id, user_id, role)
+                VALUES(%s, %s, %s) ON CONFLICT DO NOTHING
+            """, [project_id, user['id'], userrole])
         g.db.commit()
 
-        return OK('Successfully added user.')
+        return OK('Successfully applied role to user.')
 
 
 @ns.route('/<project_id>/collaborators/<user_id>')
