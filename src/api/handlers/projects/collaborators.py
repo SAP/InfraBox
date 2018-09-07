@@ -11,11 +11,13 @@ collaborator_model = api.model('Collaborator', {
     'id': fields.String(required=False),
     'email': fields.String(required=False),
     'avatar_url': fields.String(required=False),
-    'username': fields.String(required=False)
+    'username': fields.String(required=False),
+    'role': fields.String(required=False)
 })
 
 add_collaborator_model = api.model('AddCollaborator', {
-    'username': fields.String(required=True)
+    'username': fields.String(required=True),
+    'role': fields.String(required=False)
 })
 
 
@@ -27,7 +29,7 @@ class Collaborators(Resource):
     def get(self, project_id):
         p = g.db.execute_many_dict(
             """
-            SELECT u.name, u.id, u.email, u.avatar_url, u.username FROM "user" u
+            SELECT u.name, u.id, u.email, u.avatar_url, u.username, co.role FROM "user" u
             INNER JOIN collaborator co
                 ON co.user_id = u.id
                 AND co.project_id = %s
@@ -40,6 +42,7 @@ class Collaborators(Resource):
     def post(self, project_id):
         b = request.get_json()
         username = b['username']
+        userrole = b['role'] if 'role' in b else 'Developer'
 
         user = g.db.execute_one_dict(
             """
@@ -49,6 +52,16 @@ class Collaborators(Resource):
 
         if not user:
             abort(400, "User not found.")
+
+        roles = g.db.execute_many(
+            """
+            SELECT unnest(enum_range(NULL::user_role))
+        """)
+
+        print(roles)
+
+        if [userrole] not in roles:
+            abort(400, "Role unknown.")
 
         num_collaborators = g.db.execute_one(
             """
@@ -62,9 +75,9 @@ class Collaborators(Resource):
 
         g.db.execute(
             """
-            INSERT INTO collaborator (project_id, user_id)
-            VALUES(%s, %s) ON CONFLICT DO NOTHING
-        """, [project_id, user['id']])
+            INSERT INTO collaborator (project_id, user_id, role)
+            VALUES(%s, %s, %s) ON CONFLICT DO NOTHING
+        """, [project_id, user['id'], userrole])
 
         g.db.commit()
 
