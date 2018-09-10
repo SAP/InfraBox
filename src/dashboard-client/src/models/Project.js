@@ -101,9 +101,21 @@ export default class Project {
         })
     }
 
-    addCollaborator (username) {
-        const d = { username: username }
+    addCollaborator (username, role) {
+        const d = { username: username, role: role }
         return NewAPIService.post(`projects/${this.id}/collaborators`, d)
+        .then((response) => {
+            NotificationService.$emit('NOTIFICATION', new Notification(response))
+            this._reloadCollaborators()
+        })
+        .catch((err) => {
+            NotificationService.$emit('NOTIFICATION', new Notification(err))
+        })
+    }
+
+    updateCollaborator (co) {
+        const d = { role: co.role }
+        return NewAPIService.put(`projects/${this.id}/collaborators/${co.id}`, d)
         .then((response) => {
             NotificationService.$emit('NOTIFICATION', new Notification(response))
             this._reloadCollaborators()
