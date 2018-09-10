@@ -86,6 +86,15 @@ class Collaborators(Resource):
 
         return OK('Successfully added user.')
 
+@ns.route('/<project_id>/collaborators/roles')
+class CollaboratorRoles(Resource):
+    @auth_required(['user'])
+    def get(self, project_id):
+        roles = g.db.execute_many(
+            """
+            SELECT unnest(enum_range(NULL::user_role))
+        """)
+        return [role[0] for role in roles]
 
 @ns.route('/<project_id>/collaborators/<uuid:user_id>')
 class Collaborator(Resource):
