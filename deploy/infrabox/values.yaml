@@ -258,10 +258,6 @@ job:
     docker_daemon_config: |-
         {}
 
-    security_context:
-        capabilities:
-            enabled: false
-
 monitoring:
     # Enable InfraBox Monitoring. Requires prometheus-operator to be available.
     enabled: false
