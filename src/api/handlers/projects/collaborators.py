@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from flask import request, g, abort
 from flask_restplus import Resource, fields
 
@@ -85,14 +87,15 @@ class Collaborators(Resource):
         return OK('Successfully added user.')
 
 
-@ns.route('/<project_id>/collaborators/<user_id>')
+@ns.route('/<project_id>/collaborators/<uuid:user_id>')
 class Collaborator(Resource):
-    
+
     @auth_required(['user'], check_project_owner=True)
     @api.expect(change_collaborator_model)
     def put(self, project_id, user_id):
+
         # Prevent owner from degrading himself
-        if user_id == g.token['user']['id']:
+        if user_id.hex == UUID(g.token['user']['id']).hex:
             abort(400, "You are not allowed to change your own role.")
 
         # Ensure that user is already a collaborator
@@ -101,7 +104,7 @@ class Collaborator(Resource):
             SELECT COUNT(*) FROM collaborator
             WHERE user_id = %s
             AND project_id = %s
-        """, [user_id, project_id])[0]
+        """, [str(user_id), project_id])[0]
         if num_collaborators == 0:
             abort(400, 'Specified user is not in collaborators list.')
 
@@ -123,7 +126,7 @@ class Collaborator(Resource):
             SET role = %s
             WHERE user_id = %s
             AND project_id = %s
-        """, [userrole, user_id, project_id])
+        """, [userrole, str(user_id), project_id])
 
         g.db.commit()
         return OK('Successfully changed user role.')
@@ -133,7 +136,7 @@ class Collaborator(Resource):
     def delete(self, project_id, user_id):
         owner_id = g.token['user']['id']
 
-        if user_id == owner_id:
+        if user_id.hex == UUID(owner_id).hex:
             abort(400, "It's not allowed to delete the owner of the project from collaborators.")
 
         num_collaborators = g.db.execute_one(
@@ -141,7 +144,7 @@ class Collaborator(Resource):
             SELECT COUNT(*) FROM collaborator
             WHERE user_id = %s
             AND project_id = %s
-        """, [user_id, project_id])[0]
+        """, [str(user_id), project_id])[0]
 
         # Give some warning if the specified user has been already removed
         # from the collaborators or has been never added there before
@@ -153,7 +156,7 @@ class Collaborator(Resource):
             DELETE FROM collaborator
             WHERE user_id = %s
             AND project_id = %s
-        """, [user_id, project_id])
+        """, [str(user_id), project_id])
 
         g.db.commit()
 
