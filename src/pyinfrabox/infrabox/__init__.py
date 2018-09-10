@@ -161,7 +161,7 @@ def parse_limits(d, path):
         raise ValidationError(path + ".memory", "must be greater than 255")
 
 def parse_security_context(d, path):
-    check_allowed_properties(d, path, ('capabilities', 'privileged'))
+    check_allowed_properties(d, path, ('privileged',))
 
     if 'privileged' in d:
         check_boolean(d['privileged'], path + ".privileged")
