@@ -20,6 +20,10 @@ add_collaborator_model = api.model('AddCollaborator', {
     'role': fields.String(required=False)
 })
 
+change_collaborator_model = api.model('AddCollaborator', {
+    'role': fields.String(required=True)
+})
+
 
 @ns.route('/<project_id>/collaborators/')
 class Collaborators(Resource):
@@ -58,8 +62,6 @@ class Collaborators(Resource):
             SELECT unnest(enum_range(NULL::user_role))
         """)
 
-        print(roles)
-
         if [userrole] not in roles:
             abort(400, "Role unknown.")
 
@@ -71,24 +73,61 @@ class Collaborators(Resource):
         """, [user['id'], project_id])[0]
 
         if num_collaborators != 0:
-            g.db.execute(
-                """
-                UPDATE collaborator SET role=%s
-                WHERE project_id=%s AND user_id=%s
-            """, [userrole, project_id, user['id']])
-        else:
-            g.db.execute(
-                """
-                INSERT INTO collaborator (project_id, user_id, role)
-                VALUES(%s, %s, %s) ON CONFLICT DO NOTHING
-            """, [project_id, user['id'], userrole])
+            return OK('Specified user is already a collaborator.')
+
+        g.db.execute(
+            """
+            INSERT INTO collaborator (project_id, user_id, role)
+            VALUES(%s, %s, %s) ON CONFLICT DO NOTHING
+        """, [project_id, user['id'], userrole])
         g.db.commit()
 
-        return OK('Successfully applied role to user.')
+        return OK('Successfully added user.')
 
 
 @ns.route('/<project_id>/collaborators/<user_id>')
 class Collaborator(Resource):
+    
+    @auth_required(['user'], check_project_owner=True)
+    @api.expect(change_collaborator_model)
+    def put(self, project_id, user_id):
+        # Prevent owner from degrading himself
+        if user_id == g.token['user']['id']:
+            abort(400, "You are not allowed to change your own role.")
+
+        # Ensure that user is already a collaborator
+        num_collaborators = g.db.execute_one(
+            """
+            SELECT COUNT(*) FROM collaborator
+            WHERE user_id = %s
+            AND project_id = %s
+        """, [user_id, project_id])[0]
+        if num_collaborators == 0:
+            abort(400, 'Specified user is not in collaborators list.')
+
+        b = request.get_json()
+        userrole = b['role']
+
+        # Ensure that role is valid
+        roles = g.db.execute_many(
+            """
+            SELECT unnest(enum_range(NULL::user_role))
+        """)
+        if [userrole] not in roles:
+            abort(400, "Role unknown.")
+
+        # Do update
+        g.db.execute(
+            """
+            UPDATE collaborator
+            SET role = %s
+            WHERE user_id = %s
+            AND project_id = %s
+        """, [userrole, user_id, project_id])
+
+        g.db.commit()
+        return OK('Successfully changed user role.')
+
 
     @auth_required(['user'], check_project_owner=True)
     def delete(self, project_id, user_id):
