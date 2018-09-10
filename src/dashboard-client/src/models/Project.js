@@ -15,6 +15,7 @@ export default class Project {
         this.type = type
         this.secrets = null
         this.collaborators = null
+        this.roles = null
         this.tokens = null
         this.numQueuedJobs = 0
         this.numScheduledJobs = 0
@@ -163,6 +164,24 @@ export default class Project {
         return NewAPIService.get(`projects/${this.id}/secrets`)
             .then((secrets) => {
                 store.commit('setSecrets', { project: this, secrets: secrets })
+            })
+            .catch((err) => {
+                NotificationService.$emit('NOTIFICATION', new Notification(err))
+            })
+    }
+
+    _loadRoles () {
+        if (this.roles) {
+            return
+        }
+
+        this._reloadRoles()
+    }
+
+    _reloadRoles () {
+        return NewAPIService.get(`projects/${this.id}/collaborators/roles`)
+            .then((roles) => {
+                store.commit('setRoles', { project: this, roles: roles })
             })
             .catch((err) => {
                 NotificationService.$emit('NOTIFICATION', new Notification(err))
