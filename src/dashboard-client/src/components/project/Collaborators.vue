@@ -22,6 +22,17 @@
                                     </md-input-container>
                                 </span>
                             </div>
+                            
+                            <div class="md-list-text-container">
+                                <span>
+                                    <md-input-container>
+                                        <label for="role">Role</label>
+                                        <md-select name="role_select" id="role_select" v-model="role">
+                                            <md-option v-for="r in roles" :value=r class="bg-white">{{r}}</md-option>
+                                        </md-select>
+                                    </md-input-container>
+                                </span>
+                            </div>
 
                             <md-button class="md-icon-button md-list-action" @click="addCollaborator()">
                                 <md-icon md-theme="running" class="md-primary">add_circle</md-icon>
@@ -37,6 +48,18 @@
                             <div class="md-list-text-container">
                                 <span>{{ co.username }}</span>
                                 <span>{{ co.email }}</span>
+                            </div>
+
+                            <div class="md-list-text-container">
+                                <span></span>
+                                <span>
+                                    <md-input-container>
+                                        <label for="role">Role</label>
+                                        <md-select name="role_select" id="role_select" v-model="co.role" @change="project.updateCollaborator(co)">
+                                            <md-option v-for="r in roles" :value=r class="bg-white">{{r}}</md-option>
+                                        </md-select>
+                                    </md-input-container>
+                                </span>
                             </div>
 
                             <md-button class="md-icon-button md-list-action" @click="project.removeCollaborator(co)">
@@ -55,7 +78,9 @@ export default {
     props: ['project'],
     data: () => {
         return {
-            'username': ''
+            'username': '',
+            'role': '',
+            'roles': ['Developer', 'Owner', 'Administratror']
         }
     },
     created () {
@@ -63,8 +88,9 @@ export default {
     },
     methods: {
         addCollaborator () {
-            this.project.addCollaborator(this.username)
+            this.project.addCollaborator(this.username, this.role)
             this.username = ''
+            this.role = ''
         }
     }
 }
