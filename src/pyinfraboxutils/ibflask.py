@@ -28,19 +28,19 @@ def get_token():
                 decoded = base64.b64decode(auth)
             except:
                 logger.warn('could not base64 decode auth header')
-                abort(401, 'Unauthorized')
+                return None
 
             s = decoded.split('infrabox:')
 
             if len(s) != 2:
                 logger.warn('Invalid auth header format')
-                abort(401, 'Unauthorized')
+                return None
 
             try:
                 token = decode(s[1])
             except Exception as e:
                 logger.exception(e)
-                abort(401, 'Unauthorized')
+                return None
 
             return token
         elif auth.startswith("token ") or auth.startswith("bearer "):
@@ -50,24 +50,30 @@ def get_token():
                 token = decode(token.encode('utf8'))
             except Exception as e:
                 logger.exception(e)
-                abort(401, 'Unauthorized')
+                return None
 
             return token
         else:
             logger.warn('Invalid auth header format')
-            abort(401, 'Unauthorized')
+            return None
     elif cookie:
         token = cookie
         try:
             token = decode(token.encode('utf8'))
         except Exception as e:
             logger.exception(e)
-            abort(401, 'Unauthorized')
+            return None
 
         return token
     else:
         logger.info('No auth header')
+        return None
+
+def require_token():
+    token = get_token()
+    if token == None:
         abort(401, 'Unauthorized')
+    return token
 
 try:
     #pylint: disable=ungrouped-imports,wrong-import-position
@@ -81,7 +87,7 @@ try:
         input = json.dumps({
             "method": request.method,
             "path": request.path.strip().split("/")[1:]
-        #    "token": get_token()
+        #    "token": require_token()
         })
             
         rsp = requests.post(os.environ['INFRABOX_OPA_HOST']+"/v1/data/httpapi/authz", data=input)
@@ -105,7 +111,7 @@ except:
         input = jsonify({
             "method": request.method,
             "path": request.path.strip().split("/")[1:]
-        #    "token": get_token()
+        #    "token": require_token()
         })
         print(input)
 
@@ -158,7 +164,7 @@ def OK(message, data=None):
 def token_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        g.token = get_token()
+        g.token = require_token()
         return f(*args, **kwargs)
 
     return decorated_function
@@ -188,7 +194,7 @@ def check_job_belongs_to_project(f):
 def job_token_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        token = get_token()
+        token = require_token()
 
         if token['type'] != 'job':
             logger.warn('token type is not job but "%s"', token['type'])
@@ -350,7 +356,7 @@ def auth_required(types,
                 if is_public(project_id, project_name):
                     return f(*args, **kwargs)
 
-            token = get_token()
+            token = require_token()
             token_type = token['type']
             g.token = token
 
