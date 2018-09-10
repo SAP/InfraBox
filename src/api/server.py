@@ -14,7 +14,7 @@ from flask_restplus import Resource
 
 from pyinfraboxutils import get_env, get_logger
 
-from pyinfraboxutils.ibflask import get_token, is_collaborator
+from pyinfraboxutils.ibflask import require_token, is_collaborator
 from pyinfraboxutils.ibrestplus import api, app
 from pyinfraboxutils import dbpool
 
@@ -108,7 +108,7 @@ def main(): # pragma: no cover
                 ''', [project_id])
 
             if not p['public']:
-                token = get_token()
+                token = require_token()
                 if token['type'] == 'user':
                     user_id = token['user']['id']
                     collaborator = is_collaborator(user_id, project_id, db=conn)
@@ -128,7 +128,7 @@ def main(): # pragma: no cover
     @sio.on('listen:build')
     def __listen_build(build_id):
         logger.debug('listen:build for %s', build_id)
-        token = get_token()
+        token = require_token()
 
         if not build_id:
             logger.debug('build_id not set')
@@ -165,7 +165,7 @@ def main(): # pragma: no cover
     @sio.on('listen:console')
     def __listen_console(job_id):
         logger.debug('listen:console for %s', job_id)
-        token = get_token()
+        token = require_token()
 
         if not job_id:
             logger.debug('job_id not set')
@@ -228,7 +228,7 @@ def main(): # pragma: no cover
                 return flask_socketio.disconnect()
 
             if not u['public']:
-                token = get_token()
+                token = require_token()
                 if token['type'] == 'user':
                     user_id = token['user']['id']
                     collaborator = is_collaborator(user_id, u['project_id'], db=conn)
