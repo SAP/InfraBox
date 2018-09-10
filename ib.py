@@ -149,6 +149,10 @@ def services_start(args):
         p = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'src', 'api')
         run = os.path.join(p, 'run_with_dummy.sh')
         execute(['bash', run], cwd=p)
+    elif args.service_name == 'opa':
+        p = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'src', 'openpolicyagent')
+        run = os.path.join(['docker', 'run', '-ti', '--rm', '-p', '8181:8181', 'openpolicyagent/opa:0.9.1', 'run', '--server', '--log-level=debug'])
+        execute(run)
     elif args.service_name == 'dashboard-client':
         p = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'src', 'dashboard-client')
         execute(['npm', 'run', 'dev'], cwd=p)
