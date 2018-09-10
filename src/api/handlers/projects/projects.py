@@ -137,8 +137,8 @@ class Projects(Resource):
         project_id = project['id']
 
         g.db.execute('''
-            INSERT INTO collaborator (user_id, project_id, owner)
-            VALUES (%s, %s, true)
+            INSERT INTO collaborator (user_id, project_id, owner, role)
+            VALUES (%s, %s, true, "Owner")
         ''', [user_id, project_id])
 
 
