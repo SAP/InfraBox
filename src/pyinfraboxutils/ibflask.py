@@ -71,7 +71,7 @@ def get_token():
 
 def require_token():
     token = get_token()
-    if token == None:
+    if token is None:
         abort(401, 'Unauthorized')
     return token
 
@@ -84,14 +84,16 @@ try:
     def before_request():
         g.db = dbpool.get()
 
+        token = get_token()
+
         input = json.dumps({
             "method": request.method,
-            "path": request.path.strip().split("/")[1:]
-        #    "token": require_token()
+            "path": request.path.strip().split("/")[1:-1]
         })
             
         rsp = requests.post(os.environ['INFRABOX_OPA_HOST']+"/v1/data/httpapi/authz", data=input)
-        rspp = rsp
+        logger.info(input)
+        logger.info(rsp)
 
         def release_db():
             db = getattr(g, 'db', None)
