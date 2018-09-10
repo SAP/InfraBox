@@ -28,7 +28,7 @@
                                     <md-input-container>
                                         <label for="role">Role</label>
                                         <md-select name="role_select" id="role_select" v-model="role">
-                                            <md-option v-for="r in roles" :value=r class="bg-white">{{r}}</md-option>
+                                            <md-option v-for="r in roles" :value=r :key="r" class="bg-white">{{r}}</md-option>
                                         </md-select>
                                     </md-input-container>
                                 </span>
@@ -51,12 +51,11 @@
                             </div>
 
                             <div class="md-list-text-container">
-                                <span></span>
+                                <span> </span>
                                 <span>
                                     <md-input-container>
-                                        <label for="role">Role</label>
-                                        <md-select name="role_select" id="role_select" v-model="co.role" @change="project.updateCollaborator(co)">
-                                            <md-option v-for="r in roles" :value=r class="bg-white">{{r}}</md-option>
+                                        <md-select name="role_select" id="role_select" v-model="co.role" @change="updateCollaborator(co)">
+                                            <md-option v-for="r in roles" :value=r :key="r" class="bg-white">{{r}}</md-option>
                                         </md-select>
                                     </md-input-container>
                                 </span>
@@ -80,7 +79,7 @@ export default {
         return {
             'username': '',
             'role': '',
-            'roles': ['Developer', 'Owner', 'Administratror']
+            'roles': ['Developer', 'Owner', 'Administrator']
         }
     },
     created () {
@@ -91,6 +90,11 @@ export default {
             this.project.addCollaborator(this.username, this.role)
             this.username = ''
             this.role = ''
+        },
+        updateCollaborator (co) {
+            if (this.project) {
+                this.project.updateCollaborator(co)
+            }
         }
     }
 }
