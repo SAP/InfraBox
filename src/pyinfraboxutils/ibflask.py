@@ -1,4 +1,8 @@
 import base64
+import requests
+import os
+import json
+
 from functools import wraps
 
 from flask import Flask, g, jsonify, request, abort
@@ -74,6 +78,15 @@ try:
     def before_request():
         g.db = dbpool.get()
 
+        input = json.dumps({
+            "method": request.method,
+            "path": request.path.strip().split("/")[1:]
+        #    "token": get_token()
+        })
+            
+        rsp = requests.post(os.environ['INFRABOX_OPA_HOST']+"/v1/data/httpapi/authz", data=input)
+        rspp = rsp
+
         def release_db():
             db = getattr(g, 'db', None)
             if not db:
@@ -88,6 +101,13 @@ except:
     @app.before_request
     def before_request():
         g.db = DB(connect_db())
+
+        input = jsonify({
+            "method": request.method,
+            "path": request.path.strip().split("/")[1:]
+        #    "token": get_token()
+        })
+        print(input)
 
         def release_db():
             db = getattr(g, 'db', None)
