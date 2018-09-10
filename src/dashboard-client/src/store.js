@@ -195,6 +195,12 @@ function setCollaborators (state, data) {
     project.collaborators = collaborators
 }
 
+function setRoles (state, data) {
+    const project = data.project
+    const roles = data.roles
+    project.roles = roles
+}
+
 function setTokens (state, data) {
     const project = data.project
     const tokens = data.tokens
@@ -297,6 +303,7 @@ const mutations = {
     addJobs,
     setSecrets,
     setCollaborators,
+    setRoles,
     setTokens,
     handleJobUpdate,
     setUser,
