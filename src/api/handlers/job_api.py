@@ -837,11 +837,6 @@ class CreateJobs(Resource):
             if 'env_var_refs' in job:
                 env_var_refs = json.dumps(job['env_var_refs'])
 
-            # Handle resources
-            resources = None
-            if 'resources' in job:
-                resources = json.dumps(job['resources'])
-
             if 'services' in job:
                 for s in job['services']:
                     if 'labels' not in s['metadata']:
@@ -853,15 +848,15 @@ class CreateJobs(Resource):
                              project_id, dependencies,
                              created_at, repo,
                              env_var_ref, env_var, build_arg, deployment,
-                             resources, definition, cluster_name)
+                             definition, cluster_name)
                          VALUES (%s, 'queued', %s, %s, %s, %s, %s, %s, %s, %s,
-                                 %s, %s, %s, %s, %s, %s, %s);
+                                 %s, %s, %s, %s, %s, %s);
                          """, [job_id, build_id, t, f, name,
                                project_id,
                                json.dumps(depends_on), datetime.now(),
                                repo, env_var_refs, env_vars,
                                build_arguments, deployments,
-                               resources, json.dumps(job), job['cluster']['name']])
+                               json.dumps(job), job['cluster']['name']])
 
         g.db.commit()
         return "Successfully create jobs"
