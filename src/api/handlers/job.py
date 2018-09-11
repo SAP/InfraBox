@@ -46,7 +46,9 @@ class Job(Resource):
     def get(self, project_id, job_id):
         job = g.db.execute_one_dict('''
             SELECT id, state, start_date, build_id, end_date, name,
-                cpu, memory, build_arg, env_var, dockerfile as docker_file,
+                definition#>'{resources,limits,cpu}' as cpu,
+                definition#>'{resources,limits,memory}' as memory,
+                build_arg, env_var, dockerfile as docker_file,
                 dependencies as depends_on
             FROM job
             WHERE project_id = %s
@@ -79,7 +81,10 @@ class Project(Resource):
     @check_job_belongs_to_project
     def get(self, project_id, job_id):
         result = g.db.execute_one_dict('''
-            SELECT j.name, j.start_date, j.end_date, j.cpu, memory, j.state, j.id, b.build_number, j.env_var, j.env_var_ref, c.root_url
+            SELECT j.name, j.start_date, j.end_date,
+                   definition#>'{resources,limits,cpu}' as cpu,
+                   definition#>'{resources,limits,memory}' as memory,
+                   j.state, j.id, b.build_number, j.env_var, j.env_var_ref, c.root_url
             FROM job j
             JOIN build b
                 ON b.id = j.build_id

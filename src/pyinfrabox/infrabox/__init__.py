@@ -151,11 +151,11 @@ def parse_limits(d, path):
     check_allowed_properties(d, path, ("memory", "cpu"))
     check_required_properties(d, path, ("memory", "cpu"))
 
-    check_number(d['cpu'], path + ".cpu")
+    check_int_or_float(d['cpu'], path + ".cpu")
     check_number(d['memory'], path + ".memory")
 
-    if d['cpu'] <= 0:
-        raise ValidationError(path + ".cpu", "must be greater than 0")
+    if d['cpu'] <= 0.3:
+        raise ValidationError(path + ".cpu", "must be greater than 0.3")
 
     if d['memory'] <= 255:
         raise ValidationError(path + ".memory", "must be greater than 255")

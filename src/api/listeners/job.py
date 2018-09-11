@@ -18,7 +18,7 @@ def __handle_event(event, socketio):
         job = db.execute_one_dict('''
             SELECT id, state, to_char(start_date, 'YYYY-MM-DD HH24:MI:SS') start_date, type, dockerfile,
                    to_char(end_date, 'YYYY-MM-DD HH24:MI:SS') end_date,
-                   name, cpu, memory, dependencies, to_char(created_at, 'YYYY-MM-DD HH24:MI:SS') created_at, message,
+                   name, dependencies, to_char(created_at, 'YYYY-MM-DD HH24:MI:SS') created_at, message,
                    project_id, build_id, node_name, avg_cpu, definition
             FROM job
             WHERE id = %s

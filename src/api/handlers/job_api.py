@@ -72,8 +72,8 @@ class Job(Resource):
                 null,
                 j.env_var,
                 j.env_var_ref,
-                j.cpu,
-                j.memory,
+                null,
+                null,
                 u.id,
                 j.build_arg,
                 j.deployment,
@@ -102,8 +102,8 @@ class Job(Resource):
             "type": r[13],
             "repo": r[16],
             "state": r[18],
-            "cpu": r[22],
-            "memory": r[23],
+            "cpu": r[29]['resources']['limits']['cpu'],
+            "memory": r[29]['resources']['limits']['memory'],
             "build_arguments": r[25],
             "security_context": r[27],
             "definition": r[29]
@@ -814,13 +814,7 @@ class CreateJobs(Resource):
             else:
                 abort(400, "Unknown job type: %s" % job_type)
 
-            limits_cpu = 1
-            limits_memory = 1024
             timeout = job.get('timeout', 3600)
-
-            if 'resources' in job and 'limits' in job['resources']:
-                limits_cpu = job['resources']['limits']['cpu']
-                limits_memory = job['resources']['limits']['memory']
 
             # Create external git repo if necessary
             repo = job.get('repo', None)
@@ -862,15 +856,15 @@ class CreateJobs(Resource):
                          INSERT INTO job (id, state, build_id, type, dockerfile, name,
                              project_id, dependencies, build_only,
                              created_at, repo,
-                             env_var_ref, env_var, build_arg, deployment, cpu, memory,
+                             env_var_ref, env_var, build_arg, deployment,
                              timeout, resources, definition, cluster_name)
                          VALUES (%s, 'queued', %s, %s, %s, %s, %s, %s, %s, %s, %s,
-                                 %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
+                                 %s, %s, %s, %s, %s, %s, %s, %s);
                          """, [job_id, build_id, t, f, name,
                                project_id,
                                json.dumps(depends_on), build_only, datetime.now(),
                                repo, env_var_refs, env_vars,
-                               build_arguments, deployments, limits_cpu, limits_memory, timeout,
+                               build_arguments, deployments, timeout,
                                resources, json.dumps(job), job['cluster']['name']])
 
         g.db.commit()

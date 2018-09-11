@@ -65,9 +65,9 @@ def restart_build(project_id, build_id):
 
     g.db.execute('''
         INSERT INTO job (id, state, build_id, type,
-            name, cpu, memory, project_id, build_only, dockerfile, repo, env_var, definition, cluster_name)
+            name, project_id, build_only, dockerfile, repo, env_var, definition, cluster_name)
         VALUES (gen_random_uuid(), 'queued', %s, 'create_job_matrix',
-                'Create Jobs', 1, 1024, %s, false, '', %s, %s, %s, null);
+                'Create Jobs', %s, false, '', %s, %s, %s, null);
     ''', [new_build_id, project_id, repo, env_var, definition])
     g.db.commit()
 
@@ -196,8 +196,6 @@ class Build(Resource):
             j.type as job_type,
             to_char(j.end_date, 'YYYY-MM-DD HH24:MI:SS') as job_end_date,
             j.name as job_name,
-            j.memory as job_memory,
-            j.cpu as job_cpu,
             j.dependencies as job_dependencies,
             to_char(j.created_at, 'YYYY-MM-DD HH24:MI:SS') as job_created_at,
             j.message as job_message,
@@ -248,8 +246,8 @@ class Build(Resource):
                     'start_date': j['job_start_date'],
                     'end_date': j['job_end_date'],
                     'name': j['job_name'],
-                    'memory': j['job_memory'],
-                    'cpu': j['job_cpu'],
+                    'memory': j['job_definition']['resources']['limits']['memory'],
+                    'cpu': j['job_definition']['resources']['limits']['cpu'],
                     'dependencies': j['job_dependencies'],
                     'created_at': j['job_created_at'],
                     'message': j['job_message'],
