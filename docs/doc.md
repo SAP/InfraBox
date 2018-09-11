@@ -463,7 +463,7 @@ Every job on InfraBox requires resource limits. So it can gurantee the resources
         ...
         "resources": {
             "limits": {
-                "cpu": 1,
+                "cpu": 0.5,
                 "memory": 1024
             },
         }
@@ -473,7 +473,7 @@ Every job on InfraBox requires resource limits. So it can gurantee the resources
 
 | Name | Required | Type | Default | Description |
 |------|----------|------|---------|-------------|
-|cpu|true|integer||Specify the number of CPUs to be used for the job. Value must be an integer|
+|cpu|true|float||Specify the number of CPUs to be used for the job|
 |memory|true|integer||Specify the number of MiB of RAM to be used for the job. Value must be an integer and at least 128|
 
 ## Dependency Configuration

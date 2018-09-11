@@ -62,7 +62,7 @@ class Job(Resource):
                 b.build_number,
                 u.github_api_token,
                 u.username,
-                j.build_only,
+                null,
                 j.type,
                 null,
                 null,
@@ -98,7 +98,7 @@ class Job(Resource):
             "id": job_id,
             "name": r[0],
             "dockerfile": r[2],
-            "build_only": r[12],
+            "build_only": r[29].get('build_only', True),
             "type": r[13],
             "repo": r[16],
             "state": r[18],
@@ -790,7 +790,6 @@ class CreateJobs(Resource):
             job_type = job["type"]
             job_id = job['id']
 
-            build_only = job.get("build_only", True)
             depends_on = job.get("depends_on", [])
 
             if depends_on:
@@ -854,15 +853,15 @@ class CreateJobs(Resource):
             # Create job
             g.db.execute("""
                          INSERT INTO job (id, state, build_id, type, dockerfile, name,
-                             project_id, dependencies, build_only,
+                             project_id, dependencies,
                              created_at, repo,
                              env_var_ref, env_var, build_arg, deployment,
                              timeout, resources, definition, cluster_name)
-                         VALUES (%s, 'queued', %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                         VALUES (%s, 'queued', %s, %s, %s, %s, %s, %s, %s, %s,
                                  %s, %s, %s, %s, %s, %s, %s, %s);
                          """, [job_id, build_id, t, f, name,
                                project_id,
-                               json.dumps(depends_on), build_only, datetime.now(),
+                               json.dumps(depends_on), datetime.now(),
                                repo, env_var_refs, env_vars,
                                build_arguments, deployments, timeout,
                                resources, json.dumps(job), job['cluster']['name']])
