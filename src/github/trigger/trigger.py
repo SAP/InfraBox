@@ -141,10 +141,10 @@ class Trigger(object):
 
         self.execute('''
             INSERT INTO job (id, state, build_id, type,
-                             name, project_id, build_only,
+                             name, project_id,
                              dockerfile, repo, env_var, cluster_name, definition)
             VALUES (gen_random_uuid(), 'queued', %s, 'create_job_matrix',
-                    'Create Jobs', %s, false, '', %s, %s, null, %s)
+                    'Create Jobs', %s, '', %s, %s, null, %s)
         ''', [build_id, project_id, json.dumps(git_repo), env, json.dumps(definition)], fetch=False)
 
     def has_active_build(self, commit_id, project_id):
