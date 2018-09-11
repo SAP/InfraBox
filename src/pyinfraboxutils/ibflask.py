@@ -84,16 +84,19 @@ try:
     def before_request():
         g.db = dbpool.get()
 
-        token = get_token()
+        # token = get_token()
 
-        input = json.dumps({
-            "method": request.method,
-            "path": request.path.strip().split("/")[1:-1]
+        input_data = json.dumps({
+            "input": {
+                "method": request.method,
+                "path": request.path.strip().split("/")[1:-1]
+            }
         })
             
-        rsp = requests.post(os.environ['INFRABOX_OPA_HOST']+"/v1/data/httpapi/authz", data=input)
-        logger.info(input)
-        logger.info(rsp)
+        rsp = requests.post(os.environ['INFRABOX_OPA_HOST']+"/v1/data/httpapi/authz?explain=full", data=input_data)
+        logger.info(input_data)
+        r = rsp.content
+        logger.info(r)
 
         def release_db():
             db = getattr(g, 'db', None)
