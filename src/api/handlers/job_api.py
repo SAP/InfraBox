@@ -813,8 +813,6 @@ class CreateJobs(Resource):
             else:
                 abort(400, "Unknown job type: %s" % job_type)
 
-            timeout = job.get('timeout', 3600)
-
             # Create external git repo if necessary
             repo = job.get('repo', None)
             if repo:
@@ -856,14 +854,14 @@ class CreateJobs(Resource):
                              project_id, dependencies,
                              created_at, repo,
                              env_var_ref, env_var, build_arg, deployment,
-                             timeout, resources, definition, cluster_name)
+                             resources, definition, cluster_name)
                          VALUES (%s, 'queued', %s, %s, %s, %s, %s, %s, %s, %s,
-                                 %s, %s, %s, %s, %s, %s, %s, %s);
+                                 %s, %s, %s, %s, %s, %s, %s);
                          """, [job_id, build_id, t, f, name,
                                project_id,
                                json.dumps(depends_on), datetime.now(),
                                repo, env_var_refs, env_vars,
-                               build_arguments, deployments, timeout,
+                               build_arguments, deployments,
                                resources, json.dumps(job), job['cluster']['name']])
 
         g.db.commit()
