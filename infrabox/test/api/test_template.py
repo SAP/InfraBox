@@ -1,4 +1,5 @@
 import unittest
+import json
 
 from temp_tools import TestClient
 
@@ -60,12 +61,22 @@ class ApiTestTemplate(unittest.TestCase):
                 VALUES (%s, 'testrepo', 'url', 'clone_url', 0, %s, true);
             """, [self.repo_id, self.project_id])
 
+        definition = {
+            'build_only': True,
+            'resources': {
+                'limits': {
+                    'cpu': 1,
+                    'memory': 512
+                }
+            }
+        }
+
         TestClient.execute("""
                 INSERT INTO job (id, state, build_id, type, name, project_id,
-                                build_only, dockerfile, cpu, memory, cluster_name)
+                                dockerfile, cluster_name, definition)
                 VALUES (%s, 'queued', %s, 'run_docker_compose',
-                        %s, %s, false, '', 1, 512, 'master');
-            """, [self.job_id, self.build_id, self.job_name, self.project_id])
+                        %s, %s, '', 'master', %s);
+            """, [self.job_id, self.build_id, self.job_name, self.project_id, json.dumps(definition)])
 
         TestClient.execute("""
                 INSERT INTO build (id, project_id, build_number, commit_id, source_upload_id)
