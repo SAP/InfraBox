@@ -196,6 +196,7 @@ def handle_patchset_created_project(conn, event, project_id, project_name):
     }
 
     definition = {
+        'build_only': False,
         'resources': {
             'limits': {
                 'cpu': 0.5,
