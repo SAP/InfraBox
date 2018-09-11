@@ -812,6 +812,7 @@ class RunJob(Job):
         cmd += ['--tmpfs', '/infrabox/tmpfs']
 
         # Privileged
+        security_context = self.job['definition'].get('security_context', {})
         privileged = security_context.get('privileged', False)
         if privileged:
             cmd += ['--privileged']

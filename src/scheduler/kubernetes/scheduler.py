@@ -133,7 +133,7 @@ class Scheduler(object):
         # find jobs
         cursor = self.conn.cursor()
         cursor.execute('''
-            SELECT j.id, j.cpu, j.type, j.memory, j.dependencies
+            SELECT j.id, j.type, j.dependencies, j.definition
             FROM job j
             WHERE j.state = 'queued' and cluster_name = %s
             ORDER BY j.created_at
@@ -148,10 +148,12 @@ class Scheduler(object):
         # check dependecies
         for j in jobs:
             job_id = j[0]
-            cpu = j[1]
-            job_type = j[2]
-            memory = j[3]
-            dependencies = j[4]
+            job_type = j[1]
+            dependencies = j[2]
+            definition = j[3]
+
+            memory = definition['resources']['limits']['memory']
+            cpu = definition['resources']['limits']['cpu']
 
             self.logger.info("")
             self.logger.info("Starting to schedule job: %s", job_id)

@@ -1,9 +1,19 @@
+import os
+import errno
 import uuid
 
 from builtins import int, range, str
 from past.builtins import basestring
 
 from pyinfrabox import ValidationError
+
+try:
+    #python2
+    from urlparse import urlparse
+except:
+    #python3
+    from urllib.parse import urlparse
+
 
 def check_text(t, path, allowEmpty=False):
     if not isinstance(t, basestring):
@@ -46,11 +56,26 @@ def check_boolean(d, path):
 
 def check_number(d, path):
     if not isinstance(d, int):
-        raise ValidationError(path, "must be a number")
+        raise ValidationError(path, "must be a integer")
+
+def check_int_or_float(d, path):
+    if not isinstance(d, float) and not isinstance(d, int):
+        raise ValidationError(path, "must be a float")
 
 def check_color(d, path):
     if d not in ("red", "green", "blue", "yellow", "orange", "white", "black", "grey"):
         raise ValidationError(path, "not a valid value")
+
+def get_remote_url(url):
+    parsed_url = urlparse(url)
+    return parsed_url.scheme + '://' + parsed_url.netloc
+
+def validate_url(url):
+    try:
+        result = urlparse(url)
+        return result.scheme and result.netloc
+    except:
+        return False
 
 def validate_uuid4(uuid_string):
     try:

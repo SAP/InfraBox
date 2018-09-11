@@ -23,13 +23,20 @@ def execute_sql(conn, stmt, params):
 class AllocatedRscGauge:
     def __init__(self, name, conn):
         self._gauge = Gauge(name, "A gauge of allocated ressources of running jobs over time", ['cluster', 'rsc', 'project'])
-        self._request_per_cluster = "SELECT foo.cluster_name, (SELECT name FROM project WHERE id= foo.project_id), " \
-                                "foo.mem, foo.cpu FROM (SELECT cluster_name, project_id, sum(memory) as mem, " \
-                                "sum(cpu) as cpu FROM job "\
-                                "WHERE state='running' GROUP BY cluster_name, project_id) as foo"
+        self._request_per_cluster = '''
+            SELECT foo.cluster_name,
+                   (SELECT name FROM project WHERE id= foo.project_id),
+                   foo.mem, foo.cpu
+            FROM (
+                    SELECT cluster_name, project_id, sum(definition#>'{resources,limits,memory}') as mem,
+                    sum(definition#>'{resources,limits,cpu}') as cpu FROM job
+                    WHERE state='running'
+                    GROUP BY cluster_name, project_id
+                 ) as foo
+        '''
 
         self._request_total = "SELECT (SELECT name FROM project WHERE id = foo.project_id), foo.mem, foo.cpu " \
-                             "FROM (SELECT project_id, sum(memory) as mem, sum(cpu) as cpu "\
+                             "FROM (SELECT project_id, sum(definition#>'{resources,limits,memory}') as mem, sum(definition#>'{resources,limits,cpu}') as cpu "\
                                 "FROM job "\
                                 "WHERE state='running' GROUP BY project_id) as foo"
 

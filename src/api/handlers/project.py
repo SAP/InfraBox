@@ -1,6 +1,7 @@
 import uuid
 import urllib
 import os
+import json
 
 from datetime import datetime
 from functools import wraps, update_wrapper
@@ -364,12 +365,21 @@ if os.environ['INFRABOX_CLUSTER_NAME'] == 'master':
                 VALUES (null, %s, %s, %s, %s)
             ''', [build_number, project_id, source_upload_id, build_id])
 
+            definition = {
+                'resources': {
+                    'limits': {
+                        'cpu': 0.5,
+                        'memory': 1024
+                    }
+                }
+            }
+
             g.db.execute('''
                 INSERT INTO job (id, state, build_id, type, name, project_id,
-                                 dockerfile, build_only, cpu, memory)
+                                 dockerfile, build_only, definition)
                 VALUES (gen_random_uuid(), 'queued', %s, 'create_job_matrix',
-                        'Create Jobs', %s, '', false, 1, 1024);
-            ''', [build_id, project_id])
+                        'Create Jobs', %s, '', false, %s);
+            ''', [build_id, project_id, json.dumps(definition)])
 
             project_name = g.db.execute_one('''
                 SELECT name FROM project WHERE id = %s

@@ -195,15 +195,25 @@ def handle_patchset_created_project(conn, event, project_id, project_name):
         "event": event['change']['branch']
     }
 
+    definition = {
+        'resources': {
+            'limits': {
+                'cpu': 0.5,
+                'memory': 1024
+            }
+        }
+    }
+
     c = conn.cursor()
     c.execute('''INSERT INTO job (id, state, build_id, type, name,
                                  project_id, build_only, dockerfile,
-                                 cpu, memory, repo, env_var, cluster_name)
+                                 repo, env_var, cluster_name, definition)
                 VALUES (gen_random_uuid(), 'queued', %s, 'create_job_matrix', 'Create Jobs',
-                        %s, false, '', 1, 1024, %s, %s, null)''', (build_id,
-                                                                   project_id,
-                                                                   json.dumps(git_repo),
-                                                                   json.dumps(env_vars)))
+                        %s, false, '', %s, %s, null, %s)''', (build_id,
+                                                              project_id,
+                                                              json.dumps(git_repo),
+                                                              json.dumps(env_vars),
+                                                              json.dumps(definition)))
 
 def handle_patchset_created(conn, event):
     conn.rollback()
