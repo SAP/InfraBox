@@ -51,7 +51,9 @@ class Jobs(Resource):
     def get(self, project_id, build_id):
         jobs = g.db.execute_many_dict('''
             SELECT id, state, start_date, build_id, end_date, name, type,
-                cpu, memory, build_arg, env_var, message, dockerfile as docker_file,
+                definition#>'{resources,limits,cpu}' as cpu,
+                definition#>'{resources,limits,memory}' as memory,
+                build_arg, env_var, message, dockerfile as docker_file,
                 dependencies as depends_on
             FROM job
             WHERE project_id = %s

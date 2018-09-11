@@ -296,28 +296,6 @@ class TestDockerCompose(unittest.TestCase):
         d['jobs'][0]['build_arguments'] = {}
         validate_json(d)
 
-    def test_kubernetes_limits(self):
-        d = {
-            "version": 1,
-            "jobs": [{
-                "type": "docker",
-                "name": "test",
-                "docker_file": "Dockerfile",
-                "resources": {
-                    "limits": {
-                        "cpu": 1, "memory": 1024
-                    },
-                    "kubernetes": {
-                        "limits": {
-                            "cpu": 1, "memory": 1024
-                        }
-                    }
-                }
-            }]
-        }
-
-        validate_json(d)
-
     def test_valid(self):
         d = {
             "version": 1,
