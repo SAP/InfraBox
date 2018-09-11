@@ -104,12 +104,12 @@ class Scheduler(object):
     def schedule_job(self, job_id, cpu, memory):
         cursor = self.conn.cursor()
         cursor.execute('''
-            SELECT j.type, build_id, resources, definition FROM job j WHERE j.id = %s
+            SELECT definition FROM job j WHERE j.id = %s
         ''', (job_id,))
         j = cursor.fetchone()
         cursor.close()
 
-        definition = j[3]
+        definition = j[0]
 
         cpu -= 0.2
         self.logger.info("Scheduling job to kubernetes")
