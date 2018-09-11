@@ -131,6 +131,7 @@ class Trigger(object):
         }
 
         definition = {
+            'build_only': False,
             'resources': {
                 'limits': {
                     'cpu': 0.5,

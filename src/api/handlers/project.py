@@ -366,6 +366,7 @@ if os.environ['INFRABOX_CLUSTER_NAME'] == 'master':
             ''', [build_number, project_id, source_upload_id, build_id])
 
             definition = {
+                'build_only': False,
                 'resources': {
                     'limits': {
                         'cpu': 0.5,
