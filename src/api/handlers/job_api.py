@@ -77,7 +77,7 @@ class Job(Resource):
                 u.id,
                 j.build_arg,
                 j.deployment,
-                j.security_context,
+                null,
                 b.restart_counter,
                 j.definition
             FROM job j
@@ -105,7 +105,6 @@ class Job(Resource):
             "cpu": r[29]['resources']['limits']['cpu'],
             "memory": r[29]['resources']['limits']['memory'],
             "build_arguments": r[25],
-            "security_context": r[27],
             "definition": r[29]
         }
 
