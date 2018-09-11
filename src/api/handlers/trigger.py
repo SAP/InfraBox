@@ -178,6 +178,7 @@ def create_git_job(commit, build_no, project_id, repo, project_type, env):
             env_var[e['name']] = e['value']
 
     definition = {
+        'build_only': False,
         'resources': {
             'limits': {
                 'memory': 1024,
@@ -223,6 +224,7 @@ def create_upload_job(project_id, build_no, env):
             env_var[e['name']] = e['value']
 
     definition = {
+        'build_only': False,
         'resources': {
             'limits': {
                 'memory': 1024,
