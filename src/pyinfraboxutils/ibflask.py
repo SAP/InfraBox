@@ -1,13 +1,12 @@
 import base64
 import requests
-import os
 import json
 
 from functools import wraps
 
 from flask import Flask, g, jsonify, request, abort
 
-from pyinfraboxutils import get_logger
+from pyinfraboxutils import get_logger, get_env
 from pyinfraboxutils.db import DB, connect_db
 from pyinfraboxutils.token import decode
 
@@ -122,7 +121,7 @@ def check_request_authorization():
             }
         })
             
-        rsp = requests.post(os.environ['INFRABOX_OPA_HOST']+"/v1/data/httpapi/authz", data=input_data)
+        rsp = requests.post(get_env('INFRABOX_OPA_HOST')+"/v1/data/httpapi/authz", data=input_data)
         logger.info(input_data)
         rsp_dict = rsp.json()
         logger.info(rsp_dict)
