@@ -8,6 +8,7 @@ from pyinfraboxutils import get_logger
 from pyinfrabox.utils import validate_uuid4
 from pyinfraboxutils.ibrestplus import api
 from pyinfraboxutils.ibflask import auth_required, OK
+from pyinfraboxutils.ibopa import opa_push_project_data, opa_push_collaborator_data
 
 from api.namespaces import project as ns
 
@@ -199,6 +200,10 @@ class Projects(Resource):
 
         g.db.commit()
 
+        # Open Policy Agent
+        opa_push_project_data()
+        opa_push_collaborator_data()
+
         return OK('Project added')
 
 @ns.route('/name/<project_name>')
@@ -285,5 +290,9 @@ class Project(Resource):
         ''', [project_id])
 
         g.db.commit()
+
+        # Open Policy Agent
+        opa_push_project_data()
+        opa_push_collaborator_data()
 
         return OK('deleted project')

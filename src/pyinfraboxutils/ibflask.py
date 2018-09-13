@@ -83,7 +83,7 @@ try:
     def before_request():
         g.db = dbpool.get()
 
-        check_request_authorization()
+        # check_request_authorization()
 
     def release_db():
         db = getattr(g, 'db', None)
@@ -100,7 +100,7 @@ except:
     def before_request():
         g.db = DB(connect_db())
 
-        check_request_authorization()
+        # check_request_authorization()
 
         def release_db():
             db = getattr(g, 'db', None)

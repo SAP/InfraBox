@@ -5,6 +5,7 @@ from flask_restplus import Resource, fields
 
 from pyinfraboxutils.ibflask import auth_required, OK
 from pyinfraboxutils.ibrestplus import api
+from pyinfraboxutils.ibopa import opa_push_collaborator_data, opa_push_project_data
 
 from api.namespaces import project as ns
 
@@ -84,6 +85,8 @@ class Collaborators(Resource):
         """, [project_id, user['id'], userrole])
         g.db.commit()
 
+        opa_push_collaborator_data()
+
         return OK('Successfully added user.')
 
 @ns.route('/<project_id>/collaborators/roles')
@@ -94,6 +97,10 @@ class CollaboratorRoles(Resource):
             """
             SELECT unnest(enum_range(NULL::user_role))
         """)
+
+        opa_push_collaborator_data()
+        opa_push_project_data()
+
         return [role[0] for role in roles]
 
 @ns.route('/<project_id>/collaborators/<uuid:user_id>')
@@ -138,6 +145,9 @@ class Collaborator(Resource):
         """, [userrole, str(user_id), project_id])
 
         g.db.commit()
+
+        opa_push_collaborator_data()
+        
         return OK('Successfully changed user role.')
 
 
@@ -168,5 +178,7 @@ class Collaborator(Resource):
         """, [str(user_id), project_id])
 
         g.db.commit()
+
+        opa_push_collaborator_data()
 
         return OK('Successfully removed user.')
