@@ -84,41 +84,24 @@ try:
     def before_request():
         g.db = dbpool.get()
 
-        # token = get_token()
+        check_request_authorization()
 
-        input_data = json.dumps({
-            "input": {
-                "method": request.method,
-                "path": request.path.strip().split("/")[1:-1]
-            }
-        })
-            
-        rsp = requests.post(os.environ['INFRABOX_OPA_HOST']+"/v1/data/httpapi/authz?explain=full", data=input_data)
-        logger.info(input_data)
-        r = rsp.content
-        logger.info(r)
+    def release_db():
+        db = getattr(g, 'db', None)
+        if not db:
+            return
 
-        def release_db():
-            db = getattr(g, 'db', None)
-            if not db:
-                return
+        dbpool.put(db)
+        g.db = None
 
-            dbpool.put(db)
-            g.db = None
-
-        g.release_db = release_db
+    g.release_db = release_db
 
 except:
     @app.before_request
     def before_request():
         g.db = DB(connect_db())
 
-        input = jsonify({
-            "method": request.method,
-            "path": request.path.strip().split("/")[1:]
-        #    "token": require_token()
-        })
-        print(input)
+        check_request_authorization()
 
         def release_db():
             db = getattr(g, 'db', None)
@@ -129,6 +112,26 @@ except:
             g.db = None
 
         g.release_db = release_db
+
+def check_request_authorization():
+    try:
+        input_data = json.dumps({
+            "input": {
+                "method": request.method,
+                "path": request.path.strip().split("/")[1:-1]
+            }
+        })
+            
+        rsp = requests.post(os.environ['INFRABOX_OPA_HOST']+"/v1/data/httpapi/authz", data=input_data)
+        logger.info(input_data)
+        rsp_dict = rsp.json()
+        logger.info(rsp_dict)
+
+        if not ("result" in rsp_dict and rsp_dict["result"]["allow"] is True):
+            abort(401, 'Unauthorized')
+    except requests.exceptions.RequestException:
+        abort(500, 'Authorization failed')
+
 
 @app.teardown_request
 def teardown_request(_):

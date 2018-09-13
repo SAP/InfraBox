@@ -335,6 +335,7 @@ class Trigger(object):
         branch = event['pull_request']['head']['ref']
 
         env = json.dumps({
+            "GITHUB_PULL_REQUEST_NUMBER": event['pull_request']['number'],
             "GITHUB_PULL_REQUEST_BASE_LABEL": event['pull_request']['base']['label'],
             "GITHUB_PULL_REQUEST_BASE_REF": event['pull_request']['base']['ref'],
             "GITHUB_PULL_REQUEST_BASE_SHA": event['pull_request']['base']['sha'],
