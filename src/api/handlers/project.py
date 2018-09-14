@@ -377,9 +377,9 @@ if os.environ['INFRABOX_CLUSTER_NAME'] == 'master':
 
             g.db.execute('''
                 INSERT INTO job (id, state, build_id, type, name, project_id,
-                                 dockerfile, build_only, definition)
+                                 dockerfile, definition)
                 VALUES (gen_random_uuid(), 'queued', %s, 'create_job_matrix',
-                        'Create Jobs', %s, '', false, %s);
+                        'Create Jobs', %s, '', %s);
             ''', [build_id, project_id, json.dumps(definition)])
 
             project_name = g.db.execute_one('''
