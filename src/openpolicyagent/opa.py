@@ -15,8 +15,13 @@ def upload_policies(policy_url):
         file_name = get_filename(p)
         f_data = open(p, 'rb')
         url = policy_url+file_name[:-5]
-        print(url)
-        requests.put(url, data=f_data)
+        print("Pushing " + file_name + " to " + url)
+        try:
+            rsp = requests.put(url, data=f_data)
+            print("Pushed " + file_name + " to " + url)
+        except requests.exceptions.RequestException as e:
+            print("Failed pushing " + file_name + " to " + url)
+            print(e)
 
 def get_files():
     dir_path = os.path.dirname(os.path.realpath(__file__))
