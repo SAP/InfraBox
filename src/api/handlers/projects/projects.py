@@ -201,8 +201,8 @@ class Projects(Resource):
         g.db.commit()
 
         # Open Policy Agent
-        opa_push_project_data()
-        opa_push_collaborator_data()
+        opa_push_project_data(g.db)
+        opa_push_collaborator_data(g.db)
 
         return OK('Project added')
 
@@ -292,7 +292,7 @@ class Project(Resource):
         g.db.commit()
 
         # Open Policy Agent
-        opa_push_project_data()
-        opa_push_collaborator_data()
+        opa_push_project_data(g.db)
+        opa_push_collaborator_data(g.db)
 
         return OK('deleted project')

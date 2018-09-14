@@ -1,12 +1,11 @@
 import json
 import requests
 
-from pyinfraboxutils import get_logger, dbpool, get_env
+from pyinfraboxutils import get_logger, get_env
 
 
 logger = get_logger('OPA')
-def opa_push_collaborator_data():
-    db = dbpool.get()
+def opa_push_collaborator_data(db):
     collaborators = db.execute_many_dict(
         """
         SELECT user_id, project_id, role FROM collaborator
@@ -15,8 +14,7 @@ def opa_push_collaborator_data():
     requests.put(get_collaborator_data_destination(), data=payload, headers={"Content-Type" : "application/json"})
     logger.info("Pushed updated collaborator data to OpenPolicyAgent: " + payload)
 
-def opa_push_project_data():
-    db = dbpool.get()
+def opa_push_project_data(db):
     projects = db.execute_many_dict(
         """
         SELECT id, public FROM project

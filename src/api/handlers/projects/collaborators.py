@@ -85,7 +85,7 @@ class Collaborators(Resource):
         """, [project_id, user['id'], userrole])
         g.db.commit()
 
-        opa_push_collaborator_data()
+        opa_push_collaborator_data(g.db)
 
         return OK('Successfully added user.')
 
@@ -98,8 +98,8 @@ class CollaboratorRoles(Resource):
             SELECT unnest(enum_range(NULL::user_role))
         """)
 
-        opa_push_collaborator_data()
-        opa_push_project_data()
+        opa_push_collaborator_data(g.db)
+        opa_push_project_data(g.db)
 
         return [role[0] for role in roles]
 
@@ -146,7 +146,7 @@ class Collaborator(Resource):
 
         g.db.commit()
 
-        opa_push_collaborator_data()
+        opa_push_collaborator_data(g.db)
         
         return OK('Successfully changed user role.')
 
@@ -179,6 +179,6 @@ class Collaborator(Resource):
 
         g.db.commit()
 
-        opa_push_collaborator_data()
+        opa_push_collaborator_data(g.db)
 
         return OK('Successfully removed user.')
