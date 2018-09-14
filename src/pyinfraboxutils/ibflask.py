@@ -85,15 +85,15 @@ try:
 
         # check_request_authorization()
 
-    def release_db():
-        db = getattr(g, 'db', None)
-        if not db:
-            return
+        def release_db():
+            db = getattr(g, 'db', None)
+            if not db:
+                return
 
-        dbpool.put(db)
-        g.db = None
+            dbpool.put(db)
+            g.db = None
 
-    g.release_db = release_db
+        g.release_db = release_db
 
 except:
     @app.before_request
@@ -114,20 +114,26 @@ except:
 
 def check_request_authorization():
     try:
-        input_data = json.dumps({
+
+        token = get_token()
+
+        input_data = {
             "input": {
                 "method": request.method,
-                "path": request.path.strip().split("/")[1:-1]
+                "path": request.path.strip().split("/")[1:-1],
             }
-        })
-            
-        rsp = requests.post(get_env('INFRABOX_OPA_HOST')+"/v1/data/httpapi/authz", data=input_data)
-        logger.info(input_data)
+        }
+
+        if token is not None and "user" in token and "id" in token["user"]:
+            input_data["input"]["user"] = token["user"]["id"]
+                
+        rsp = requests.post(get_env('INFRABOX_OPA_HOST')+"/v1/data/httpapi/authz", data=json.dumps(input_data))
         rsp_dict = rsp.json()
         logger.info(rsp_dict)
 
         if not ("result" in rsp_dict and rsp_dict["result"]["allow"] is True):
-            abort(401, 'Unauthorized')
+            print("Nooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo")
+            #abort(401, 'Unauthorized')
     except requests.exceptions.RequestException:
         abort(500, 'Authorization failed')
 
