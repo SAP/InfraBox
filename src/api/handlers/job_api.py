@@ -96,11 +96,11 @@ class Job(Resource):
 
         limits = {}
         definition = r[29]
-        build_only = False
+        build_only = True
 
         if definition:
             limits = definition['resources']['limits']
-            build_only = definition.get('build_only', False)
+            build_only = definition.get('build_only', True)
 
         data['job'] = {
             "id": job_id,
