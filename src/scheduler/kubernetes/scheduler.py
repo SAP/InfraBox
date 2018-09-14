@@ -152,8 +152,12 @@ class Scheduler(object):
             dependencies = j[2]
             definition = j[3]
 
-            memory = definition['resources']['limits']['memory']
-            cpu = definition['resources']['limits']['cpu']
+            limits = {}
+            if definition:
+                limits = definition['resources']['limits']
+
+            memory = limits.get('memory', 1024)
+            cpu = limits.get('cpu', 1)
 
             self.logger.info("")
             self.logger.info("Starting to schedule job: %s", job_id)
