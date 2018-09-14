@@ -94,16 +94,24 @@ class Job(Resource):
             WHERE j.id = %s
         ''', [job_id])
 
+        limits = {}
+        definition = r[29]
+        build_only = False
+
+        if definition:
+            limits = definition['resources']['limits']
+            build_only = definition.get('build_only', False)
+
         data['job'] = {
             "id": job_id,
             "name": r[0],
             "dockerfile": r[2],
-            "build_only": r[29].get('build_only', True),
+            "build_only": build_only,
             "type": r[13],
             "repo": r[16],
             "state": r[18],
-            "cpu": r[29]['resources']['limits']['cpu'],
-            "memory": r[29]['resources']['limits']['memory'],
+            "cpu": limits.get('cpu', 1),
+            "memory": limits.get('memory', 1024),
             "build_arguments": r[25],
             "definition": r[29]
         }
