@@ -154,7 +154,7 @@ class Scheduler(object):
 
             limits = {}
             if definition:
-                limits = definition['resources']['limits']
+                limits = definition.get('resources', {}).get('limits', {})
 
             memory = limits.get('memory', 1024)
             cpu = limits.get('cpu', 1)
