@@ -468,22 +468,11 @@ class Scheduler(object):
 
         cursor = self.conn.cursor()
         cursor.execute("""
-            SELECT id
-            FROM job
+            UPDATE job
+            SET cluster_name = %s
             WHERE cluster_name is null
-        """)
-        jobs = cursor.fetchall()
+        """, [cluster_name])
         cursor.close()
-
-        for j in jobs:
-            cursor = self.conn.cursor()
-            cursor.execute("""
-                UPDATE job
-                SET cluster_name = %s
-                WHERE id = %s
-            """, [cluster_name, j[0]])
-            cursor.close()
-
 
     def update_cluster_state(self):
         cluster_name = os.environ['INFRABOX_CLUSTER_NAME']
