@@ -18,7 +18,7 @@ func NewHandler() sdk.Handler {
 
 func init() {
 	logrus.AddHook(filename.NewHook())
-	logrus.SetLevel(logrus.WarnLevel)
+	logrus.SetLevel(logrus.InfoLevel)
     logrus.SetFormatter(&logrus.JSONFormatter{})
 }
 
