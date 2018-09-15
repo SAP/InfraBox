@@ -64,7 +64,7 @@ function findJob (build, jobId) {
 
 function toDate (s) {
     let a = s.split(/[^0-9]/)
-    return new Date(a[0], a[1] - 1, a[1], a[3], a[4], a[5])
+    return new Date(a[0], a[1] - 1, a[2], a[3], a[4], a[5])
 }
 
 function handleJobUpdate (state, event) {
