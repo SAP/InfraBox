@@ -521,6 +521,45 @@ class Badges(Resource):
 
         return result
 
+def compact(s):
+    logger.error(len(s))
+    c = int(len(s) / 100)
+
+    if c <= 1:
+        return s
+
+    result = []
+
+    while True:
+        if not s:
+            break
+
+        r = {
+            'mem': 0.0,
+            'cpu': 0.0,
+            'date': 0
+        }
+
+        count = 1
+        for count in range(1, c + 1):
+            if not s:
+                break
+
+            l = s.pop()
+            r['mem'] += l['mem']
+            r['cpu'] += l['cpu']
+            r['date'] += l['date']
+
+
+        r['mem'] = r['mem'] / count
+        r['cpu'] = r['cpu'] / count
+        r['date'] = r['date'] / count
+        result.append(r)
+
+    logger.error(len(result))
+
+    return result
+
 @ns.route('/<project_id>/jobs/<job_id>/stats')
 class Stats(Resource):
 
@@ -539,7 +578,13 @@ class Stats(Resource):
         if not result['stats']:
             return {}
 
-        return json.loads(result['stats'])
+        stats = json.loads(result['stats'])
+
+        r = {}
+        for j in stats:
+            r[j] = compact(stats[j])
+
+        return r
 
 @ns.route('/<project_id>/jobs/<job_id>/cache/clear')
 class JobCacheClear(Resource):
