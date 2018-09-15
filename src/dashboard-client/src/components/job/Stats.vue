@@ -77,7 +77,7 @@ export default {
                                 date: {
                                     label: 'Time',
                                     format: (x) => {
-                                        return (x + ' s')
+                                        return (x)
                                     }
                                 }
                             }
