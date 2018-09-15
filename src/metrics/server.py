@@ -28,15 +28,15 @@ class AllocatedRscGauge:
                    (SELECT name FROM project WHERE id= foo.project_id),
                    foo.mem, foo.cpu
             FROM (
-                    SELECT cluster_name, project_id, sum(definition#>'{resources,limits,memory}') as mem,
-                    sum(definition#>'{resources,limits,cpu}') as cpu FROM job
+                    SELECT cluster_name, project_id, sum(definition#>'{resources,limits,memory}'::integer) as mem,
+                    sum(definition#>'{resources,limits,cpu}'::decimal) as cpu FROM job
                     WHERE state='running'
                     GROUP BY cluster_name, project_id
                  ) as foo
         '''
 
         self._request_total = "SELECT (SELECT name FROM project WHERE id = foo.project_id), foo.mem, foo.cpu " \
-                             "FROM (SELECT project_id, sum(definition#>'{resources,limits,memory}') as mem, sum(definition#>'{resources,limits,cpu}') as cpu "\
+                                "FROM (SELECT project_id, sum(definition#>'{resources,limits,memory}'::integer) as mem, sum(definition#>'{resources,limits,cpu}'::decimal) as cpu "\
                                 "FROM job "\
                                 "WHERE state='running' GROUP BY project_id) as foo"
 
