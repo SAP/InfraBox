@@ -65,9 +65,9 @@ def restart_build(project_id, build_id):
 
     g.db.execute('''
         INSERT INTO job (id, state, build_id, type,
-            name, project_id, build_only, dockerfile, repo, env_var, definition, cluster_name)
+            name, project_id, dockerfile, repo, env_var, definition, cluster_name)
         VALUES (gen_random_uuid(), 'queued', %s, 'create_job_matrix',
-                'Create Jobs', %s, false, '', %s, %s, %s, null);
+                'Create Jobs', %s, '', %s, %s, %s, null);
     ''', [new_build_id, project_id, repo, env_var, definition])
     g.db.commit()
 
