@@ -32,42 +32,11 @@ allow {
 
 # job_api.py
 
-# Allow GET access to /api/job/job for valid job tokens
+# Allow GET access to /api/job/* for valid job tokens
 allow {
     http_api.method = "GET"
-    http_api.path = ["api", "job", "job"]
-    http_api.token.type = "job"
-    http_api.token.job.state = ["queued", "running", "scheduled"][_]
-}
-
-# Allow GET access to /api/job/source for valid job tokens
-allow {
-    http_api.method = "GET"
-    http_api.path = ["api", "job", "source"]
-    http_api.token.type = "job"
-    http_api.token.job.state = ["queued", "running", "scheduled"][_]
-}
-
-# Allow GET and POST access to /api/job/cache for valid job tokens
-allow {
-    http_api.method = ["GET", "POST"][_]
-    http_api.path = ["api", "job", "cache"]
-    http_api.token.type = "job"
-    http_api.token.job.state = ["queued", "running", "scheduled"][_]
-}
-
-# Allow POST access to /api/job/archive for valid job tokens
-allow {
-    http_api.method = "POST"
-    http_api.path = ["api", "job", "archive"]
-    http_api.token.type = "job"
-    http_api.token.job.state = ["queued", "running", "scheduled"][_]
-}
-
-# Allow POST access to /api/job/output for valid job tokens
-allow {
-    http_api.method = "POST"
-    http_api.path = ["api", "job", "output"]
+    http_api.path = ["api", "job", suffix]
+    suffix = ["job", "source, cache"][_]
     http_api.token.type = "job"
     http_api.token.job.state = ["queued", "running", "scheduled"][_]
 }
@@ -80,50 +49,11 @@ allow {
     http_api.token.job.state = ["queued", "running", "scheduled"][_]
 }
 
-# Allow POST access to /api/job/create_jobs for valid job tokens
+# Allow POST access to /api/job/* for valid job tokens
 allow {
     http_api.method = "POST"
-    http_api.path = ["api", "job", "create_jobs"]
-    http_api.token.type = "job"
-    http_api.token.job.state = ["queued", "running", "scheduled"][_]
-}
-
-# Allow POST access to /api/job/consoleupdate for valid job tokens
-allow {
-    http_api.method = "POST"
-    http_api.path = ["api", "job", "consoleupdate"]
-    http_api.token.type = "job"
-    http_api.token.job.state = ["queued", "running", "scheduled"][_]
-}
-
-# Allow POST access to /api/job/stats for valid job tokens
-allow {
-    http_api.method = "POST"
-    http_api.path = ["api", "job", "stats"]
-    http_api.token.type = "job"
-    http_api.token.job.state = ["queued", "running", "scheduled"][_]
-}
-
-# Allow POST access to /api/job/markup for valid job tokens
-allow {
-    http_api.method = "POST"
-    http_api.path = ["api", "job", "markup"]
-    http_api.token.type = "job"
-    http_api.token.job.state = ["queued", "running", "scheduled"][_]
-}
-
-# Allow POST access to /api/job/badge for valid job tokens
-allow {
-    http_api.method = "POST"
-    http_api.path = ["api", "job", "badge"]
-    http_api.token.type = "job"
-    http_api.token.job.state = ["queued", "running", "scheduled"][_]
-}
-
-# Allow POST access to /api/job/testresult for valid job tokens
-allow {
-    http_api.method = "POST"
-    http_api.path = ["api", "job", "testresult"]
+    http_api.path = ["api", "job", suffix]
+    suffix = ["cache", "archive", "output", "create_jobs", "consoleupdate", "stats", "markup", "badge", "testresult"][_]
     http_api.token.type = "job"
     http_api.token.job.state = ["queued", "running", "scheduled"][_]
 }
