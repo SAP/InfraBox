@@ -36,7 +36,7 @@ allow {
 allow {
     api.method = "GET"
     api.path = ["api", "job", suffix]
-    suffix = ["job", "source, cache"][_]
+    suffix = ["job", "source", "cache"][_]
     api.token.type = "job"
     api.token.job.state = ["queued", "running", "scheduled"][_]
 }
