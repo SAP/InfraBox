@@ -5,6 +5,9 @@ import input as api
 
 # job.py
 
+
+job_state = {"queued", "running", "scheduled"}
+
 # Allow GET access to api/v1/projects/<project_id>/jobs/<job_id> for project tokens
 allow {
     api.method = "GET"
@@ -36,9 +39,10 @@ allow {
 allow {
     api.method = "GET"
     api.path = ["api", "job", suffix]
-    suffix = ["job", "source", "cache"][_]
+    job_suffix := {"job", "source", "cache"}
+    suffix = job_suffix[_]
     api.token.type = "job"
-    api.token.job.state = ["queued", "running", "scheduled"][_]
+    api.token.job.state = job_state[_]
 }
 
 # Allow GET access to /api/job/output/<parent_job> for valid job tokens
@@ -46,14 +50,15 @@ allow {
     api.method = "GET"
     api.path = ["api", "job", "output", _]
     api.token.type = "job"
-    api.token.job.state = ["queued", "running", "scheduled"][_]
+    api.token.job.state = job_state[_]
 }
 
 # Allow POST access to /api/job/* for valid job tokens
 allow {
     api.method = "POST"
     api.path = ["api", "job", suffix]
-    suffix = ["cache", "archive", "output", "create_jobs", "consoleupdate", "stats", "markup", "badge", "testresult"][_]
+    job_suffix := {"cache", "archive", "output", "create_jobs", "consoleupdate", "stats", "markup", "badge", "testresult"}
+    suffix = job_suffix[_]
     api.token.type = "job"
-    api.token.job.state = ["queued", "running", "scheduled"][_]
+    api.token.job.state = job_state[_]
 }
