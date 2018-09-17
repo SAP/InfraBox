@@ -114,18 +114,22 @@ except:
 
 def check_request_authorization():
     try:
-        token = get_token()
+        g.token = get_token()
 
         # Enrich job token
-        if token is not None and "type" in token and token["type"] == "job":
-            token = enrich_job_token(token)
+        if g.token is not None and "type" in g.token and g.token["type"] == "job":
+            g.token = enrich_job_token(g.token)
+
+        # Legacy
+        elif g.token is not None and "type" in g.token and g.token["type"] == "project-token":
+                g.token.type = 'project'
 
         # Assemble Input Data for Open Policy Agent
         opa_input = {
             "input": {
                 "method": request.method,
                 "path": request.path.strip().split("/")[1:-1],
-                "token": token
+                "token": g.token
             }
         }    
         logger.info("OPA Request: " + json.dumps(opa_input))  
