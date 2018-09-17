@@ -1,45 +1,63 @@
 package infrabox
 
-# HTTP API request
-import input as http_api
+import input as api
 
-u_id = user_id[http_api]
+import data.infrabox.collaborators.collaborators
+import data.infrabox.projects.projects
+import data.infrabox.roles
 
-allow {
-    http_api.method = "GET"
-    http_api.path = ["api", "v1", "projects", "re"]
-    user_valid(token)
+project_owner([user, project]){
+    collaborators[i].project_id = project
+    collaborators[i].user_id = user
+    roles[collaborators[i].role] >= 3
+}
+
+project_collaborator([user, project]) {
+    collaborators[i].project_id = project
+    collaborators[i].user_id = user
+}
+
+project_public(project){
+    projects[i].id = project
+    projects[i].public = true
 }
 
 allow {
-    http_api.method = "POST"
-    http_api.path = ["api", "v1", "projects", "re"]
-    user_valid(token)
+    api.method = "GET"
+    api.path = ["api", "v1", "projects"]
+    api.token.type = "user"
 }
 
 allow {
-    http_api.method = "GET"
-    http_api.path = ["api", "v1", "projects", "name", project_name]
-    user_valid(token)
+    api.method = "POST"
+    api.path = ["api", "v1", "projects",]
+    api.token.type = "user"
 }
 
 allow {
-    http_api.method = "GET"
-    http_api.path = ["api", "v1", "projects", project]
-    user_valid(token)
-    project_collaborator([u_id, project])
+    api.method = "GET"
+    api.path = ["api", "v1", "projects", "name", project_name]
+    api.token.type = "user"
+}
+
+allow {
+    api.method = "GET"
+    api.path = ["api", "v1", "projects", project]
+    api.token.type = "user"
+    project_collaborator([api.token.user_id, project])
 }
 allow {
-    http_api.method = "GET"
-    http_api.path = ["api", "v1", "projects", project]
-    user_valid(token)
+    api.method = "GET"
+    api.path = ["api", "v1", "projects", project]
+    api.token.type = "user"
     project_public(project)
 }
 
 allow {
-    http_api.method = "DELETE"
-    http_api.path = ["api", "v1", "projects", project]
-    user_valid(token)
-    project_owner(u_id, project])
+    api.method = "DELETE"
+    api.path = ["api", "v1", "projects", project]
+    api.token.type = "user"
+    project_owner([api.token.user_id, project])
 }
+
 
