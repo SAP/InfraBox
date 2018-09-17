@@ -4,6 +4,6 @@ SCRIPTPATH="$( cd "$(dirname "$0")" ; pwd -P )"
 export PYTHONPATH=$PYTHONPATH:$SCRIPTPATH/..
 echo $PYTHONPATH
 
-export INFRABOX_OPA_HOST=http://wdfl33986622b.emea.global.corp.sap:8181
+export INFRABOX_OPA_HOST=http://localhost:8181
 
 python opa.py
