@@ -522,7 +522,6 @@ class Badges(Resource):
         return result
 
 def compact(s):
-    logger.error(len(s))
     c = int(len(s) / 100)
 
     if c <= 1:
@@ -555,8 +554,6 @@ def compact(s):
         r['cpu'] = r['cpu'] / count
         r['date'] = r['date'] / count
         result.append(r)
-
-    logger.error(len(result))
 
     return result
 

@@ -457,7 +457,7 @@
           "alias": "",
           "format": "table",
           "hide": false,
-          "rawSql": "SELECT sum(j.memory)::float*100 / (SELECT memory_capacity/1024 FROM cluster WHERE name ='[[cluster]]') as percentage\nFROM job j\nWHERE j.cluster_name = '[[cluster]]' AND j.state = 'running'",
+          "rawSql": "SELECT sum((j.definition#>>'{resources,limits,memory}')::float)*100 / (SELECT memory_capacity/1024 FROM cluster WHERE name ='[[cluster]]') as percentage\nFROM job j\nWHERE j.cluster_name = '[[cluster]]' AND j.state = 'running'",
           "refId": "A"
         }
       ],
@@ -717,7 +717,7 @@
           "alias": "",
           "format": "table",
           "hide": false,
-          "rawSql": "SELECT sum(j.cpu)::float*100 / (SELECT cpu_capacity FROM cluster WHERE name = '[[cluster]]') as percentage\nFROM job j\nWHERE j.cluster_name = '[[cluster]]' AND j.state = 'running'",
+          "rawSql": "SELECT sum((j.definition#>>'{resources,limits,cpu}')::float)*100 / (SELECT cpu_capacity FROM cluster WHERE name = '[[cluster]]') as percentage\nFROM job j\nWHERE j.cluster_name = '[[cluster]]' AND j.state = 'running'",
           "refId": "A"
         }
       ],
@@ -818,7 +818,7 @@
       "valueName": "avg"
     }
   ],
-  "refresh": false,
+  "refresh": "5s",
   "schemaVersion": 16,
   "style": "dark",
   "tags": [],
