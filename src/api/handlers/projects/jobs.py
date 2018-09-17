@@ -84,8 +84,6 @@ class Jobs(Resource):
                 j.type as job_type,
                 j.end_date::text as job_end_date,
                 j.name as job_name,
-                j.cpu as job_cpu,
-                j.memory as job_memory,
                 j.dependencies as job_dependencies,
                 j.created_at::text as job_created_at,
                 j.message as job_message,
@@ -113,6 +111,10 @@ class Jobs(Resource):
 
         result = []
         for j in jobs:
+            limits = {}
+            if j['job_definition']:
+                limits = j['job_definition'].get('resources', {}).get('limits', {})
+
             o = {
                 'build': {
                     'id': j['build_id'],
@@ -133,8 +135,8 @@ class Jobs(Resource):
                     'start_date': j['job_start_date'],
                     'end_date': j['job_end_date'],
                     'name': j['job_name'],
-                    'cpu': j['job_cpu'],
-                    'memory': j['job_memory'],
+                    'cpu': limits.get('cpu', 1),
+                    'memory': limits.get('memory', 1024),
                     'dependencies': j['job_dependencies'],
                     'created_at': j['job_created_at'],
                     'message': j['job_message'],
@@ -519,6 +521,45 @@ class Badges(Resource):
 
         return result
 
+def compact(s):
+    logger.error(len(s))
+    c = int(len(s) / 100)
+
+    if c <= 1:
+        return s
+
+    result = []
+
+    while True:
+        if not s:
+            break
+
+        r = {
+            'mem': 0.0,
+            'cpu': 0.0,
+            'date': 0
+        }
+
+        count = 1
+        for count in range(1, c + 1):
+            if not s:
+                break
+
+            l = s.pop()
+            r['mem'] += l['mem']
+            r['cpu'] += l['cpu']
+            r['date'] += l['date']
+
+
+        r['mem'] = r['mem'] / count
+        r['cpu'] = r['cpu'] / count
+        r['date'] = r['date'] / count
+        result.append(r)
+
+    logger.error(len(result))
+
+    return result
+
 @ns.route('/<project_id>/jobs/<job_id>/stats')
 class Stats(Resource):
 
@@ -537,7 +578,13 @@ class Stats(Resource):
         if not result['stats']:
             return {}
 
-        return json.loads(result['stats'])
+        stats = json.loads(result['stats'])
+
+        r = {}
+        for j in stats:
+            r[j] = compact(stats[j])
+
+        return r
 
 @ns.route('/<project_id>/jobs/<job_id>/cache/clear')
 class JobCacheClear(Resource):

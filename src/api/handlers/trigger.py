@@ -177,12 +177,22 @@ def create_git_job(commit, build_no, project_id, repo, project_type, env):
         for e in env:
             env_var[e['name']] = e['value']
 
+    definition = {
+        'build_only': False,
+        'resources': {
+            'limits': {
+                'memory': 1024,
+                'cpu': 0.5
+            }
+        }
+    }
+
     g.db.execute('''
         INSERT INTO job (id, state, build_id, type, name, project_id,
-                         build_only, dockerfile, cpu, memory, repo, env_var, cluster_name)
+                         dockerfile, repo, env_var, cluster_name, definition)
         VALUES (gen_random_uuid(), 'queued', %s, 'create_job_matrix',
-                'Create Jobs', %s, false, '', 1, 1024, %s, %s, 'master')
-    ''', [build['id'], project_id, json.dumps(git_repo), json.dumps(env_var)])
+                'Create Jobs', %s, '', %s, %s, 'master', %s)
+    ''', [build['id'], project_id, json.dumps(git_repo), json.dumps(env_var), json.dumps(definition)])
 
     return (build['id'], build['build_number'])
 
@@ -213,12 +223,22 @@ def create_upload_job(project_id, build_no, env):
         for e in env:
             env_var[e['name']] = e['value']
 
+    definition = {
+        'build_only': False,
+        'resources': {
+            'limits': {
+                'memory': 1024,
+                'cpu': 0.5
+            }
+        }
+    }
+
     g.db.execute('''
         INSERT INTO job (id, state, build_id, type, name, project_id,
-                         build_only, dockerfile, cpu, memory, env_var)
+                         dockerfile, env_var, definition)
         VALUES (gen_random_uuid(), 'queued', %s, 'create_job_matrix',
-                'Create Jobs', %s, false, '', 1, 1024, %s)
-    ''', [build['id'], project_id, json.dumps(env_var)])
+                'Create Jobs', %s, '', %s, %s)
+    ''', [build['id'], project_id, json.dumps(env_var), json.dumps(definition)])
 
     return (build['id'], build['build_number'])
 

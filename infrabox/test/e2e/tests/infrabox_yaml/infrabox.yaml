@@ -1,0 +1,10 @@
+version: 1
+jobs:
+- type: docker
+  name: hello-world
+  resources:
+    limits:
+      cpu: 1
+      memory: 1024
+  build_only: false
+  docker_file: Dockerfile

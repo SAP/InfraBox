@@ -104,12 +104,12 @@ class Scheduler(object):
     def schedule_job(self, job_id, cpu, memory):
         cursor = self.conn.cursor()
         cursor.execute('''
-            SELECT j.type, build_id, resources, definition FROM job j WHERE j.id = %s
+            SELECT definition FROM job j WHERE j.id = %s
         ''', (job_id,))
         j = cursor.fetchone()
         cursor.close()
 
-        definition = j[3]
+        definition = j[0]
 
         cpu -= 0.2
         self.logger.info("Scheduling job to kubernetes")
@@ -133,7 +133,7 @@ class Scheduler(object):
         # find jobs
         cursor = self.conn.cursor()
         cursor.execute('''
-            SELECT j.id, j.cpu, j.type, j.memory, j.dependencies
+            SELECT j.id, j.type, j.dependencies, j.definition
             FROM job j
             WHERE j.state = 'queued' and cluster_name = %s
             ORDER BY j.created_at
@@ -148,10 +148,16 @@ class Scheduler(object):
         # check dependecies
         for j in jobs:
             job_id = j[0]
-            cpu = j[1]
-            job_type = j[2]
-            memory = j[3]
-            dependencies = j[4]
+            job_type = j[1]
+            dependencies = j[2]
+            definition = j[3]
+
+            limits = {}
+            if definition:
+                limits = definition.get('resources', {}).get('limits', {})
+
+            memory = limits.get('memory', 1024)
+            cpu = limits.get('cpu', 1)
 
             self.logger.info("")
             self.logger.info("Starting to schedule job: %s", job_id)
@@ -265,7 +271,12 @@ class Scheduler(object):
         cursor = self.conn.cursor()
         cursor.execute('''
             SELECT j.id FROM job j
-            WHERE j.start_date < (NOW() - (j.timeout * INTERVAL '1' SECOND))
+            WHERE j.start_date < (NOW() - (CASE
+                                           WHEN j.definition->>'timeout' is not null THEN (j.definition->>'timeout')::integer * INTERVAL '1' SECOND
+                                           ELSE INTERVAL '3600' SECOND
+                                           END
+                                          )
+                                 )
             AND j.state = 'running'
         ''')
         aborts = cursor.fetchall()
@@ -457,22 +468,11 @@ class Scheduler(object):
 
         cursor = self.conn.cursor()
         cursor.execute("""
-            SELECT id
-            FROM job
+            UPDATE job
+            SET cluster_name = %s
             WHERE cluster_name is null
-        """)
-        jobs = cursor.fetchall()
+        """, [cluster_name])
         cursor.close()
-
-        for j in jobs:
-            cursor = self.conn.cursor()
-            cursor.execute("""
-                UPDATE job
-                SET cluster_name = %s
-                WHERE id = %s
-            """, [cluster_name, j[0]])
-            cursor.close()
-
 
     def update_cluster_state(self):
         cluster_name = os.environ['INFRABOX_CLUSTER_NAME']

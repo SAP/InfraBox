@@ -62,7 +62,7 @@ class Job(Resource):
                 b.build_number,
                 u.github_api_token,
                 u.username,
-                j.build_only,
+                null,
                 j.type,
                 null,
                 null,
@@ -72,12 +72,12 @@ class Job(Resource):
                 null,
                 j.env_var,
                 j.env_var_ref,
-                j.cpu,
-                j.memory,
+                null,
+                null,
                 u.id,
                 j.build_arg,
                 j.deployment,
-                j.security_context,
+                null,
                 b.restart_counter,
                 j.definition
             FROM job j
@@ -94,18 +94,25 @@ class Job(Resource):
             WHERE j.id = %s
         ''', [job_id])
 
+        limits = {}
+        definition = r[29]
+        build_only = True
+
+        if definition:
+            limits = definition['resources']['limits']
+            build_only = definition.get('build_only', True)
+
         data['job'] = {
             "id": job_id,
             "name": r[0],
             "dockerfile": r[2],
-            "build_only": r[12],
+            "build_only": build_only,
             "type": r[13],
             "repo": r[16],
             "state": r[18],
-            "cpu": r[22],
-            "memory": r[23],
+            "cpu": limits.get('cpu', 1),
+            "memory": limits.get('memory', 1024),
             "build_arguments": r[25],
-            "security_context": r[27],
             "definition": r[29]
         }
 
@@ -790,7 +797,6 @@ class CreateJobs(Resource):
             job_type = job["type"]
             job_id = job['id']
 
-            build_only = job.get("build_only", True)
             depends_on = job.get("depends_on", [])
 
             if depends_on:
@@ -813,14 +819,6 @@ class CreateJobs(Resource):
                 t = 'wait'
             else:
                 abort(400, "Unknown job type: %s" % job_type)
-
-            limits_cpu = 1
-            limits_memory = 1024
-            timeout = job.get('timeout', 3600)
-
-            if 'resources' in job and 'limits' in job['resources']:
-                limits_cpu = job['resources']['limits']['cpu']
-                limits_memory = job['resources']['limits']['memory']
 
             # Create external git repo if necessary
             repo = job.get('repo', None)
@@ -847,11 +845,6 @@ class CreateJobs(Resource):
             if 'env_var_refs' in job:
                 env_var_refs = json.dumps(job['env_var_refs'])
 
-            # Handle resources
-            resources = None
-            if 'resources' in job:
-                resources = json.dumps(job['resources'])
-
             if 'services' in job:
                 for s in job['services']:
                     if 'labels' not in s['metadata']:
@@ -860,18 +853,18 @@ class CreateJobs(Resource):
             # Create job
             g.db.execute("""
                          INSERT INTO job (id, state, build_id, type, dockerfile, name,
-                             project_id, dependencies, build_only,
+                             project_id, dependencies,
                              created_at, repo,
-                             env_var_ref, env_var, build_arg, deployment, cpu, memory,
-                             timeout, resources, definition, cluster_name)
-                         VALUES (%s, 'queued', %s, %s, %s, %s, %s, %s, %s, %s, %s,
-                                 %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
+                             env_var_ref, env_var, build_arg, deployment,
+                             definition, cluster_name)
+                         VALUES (%s, 'queued', %s, %s, %s, %s, %s, %s, %s, %s,
+                                 %s, %s, %s, %s, %s, %s);
                          """, [job_id, build_id, t, f, name,
                                project_id,
-                               json.dumps(depends_on), build_only, datetime.now(),
+                               json.dumps(depends_on), datetime.now(),
                                repo, env_var_refs, env_vars,
-                               build_arguments, deployments, limits_cpu, limits_memory, timeout,
-                               resources, json.dumps(job), job['cluster']['name']])
+                               build_arguments, deployments,
+                               json.dumps(job), job['cluster']['name']])
 
         g.db.commit()
         return "Successfully create jobs"

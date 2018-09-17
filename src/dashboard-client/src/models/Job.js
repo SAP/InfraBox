@@ -237,7 +237,7 @@ export default class Job {
 
                     let i = 0
                     for (const o of values[n]) {
-                        stat.values.push({ cpu: o.cpu, date: i, mem: o.mem })
+                        stat.values.push({ cpu: Math.round(o.cpu), date: i, mem: Math.round(o.mem) })
                         ++i
                     }
 

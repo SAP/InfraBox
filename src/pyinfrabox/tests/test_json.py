@@ -296,54 +296,6 @@ class TestDockerCompose(unittest.TestCase):
         d['jobs'][0]['build_arguments'] = {}
         validate_json(d)
 
-    def test_security_context(self):
-        d = {
-            "version": 1,
-            "jobs": [{
-                "type": "docker",
-                "name": "test",
-                "docker_file": "Dockerfile",
-                "resources": {"limits": {"cpu": 1, "memory": 1024}},
-                "security_context": []
-            }]
-        }
-
-        self.raises_expect(d, "#jobs[0].security_context: must be an object")
-
-        d['jobs'][0]['security_context'] = {'capabilities': []}
-        self.raises_expect(d, "#jobs[0].security_context.capabilities: must be an object")
-
-        d['jobs'][0]['security_context'] = {'capabilities': {'add': {}}}
-        self.raises_expect(d, "#jobs[0].security_context.capabilities.add: must be an array")
-
-        d['jobs'][0]['security_context'] = {'capabilities': {'add': [123]}}
-        self.raises_expect(d, "#jobs[0].security_context.capabilities.add[0]: is not a string")
-
-        d['jobs'][0]['security_context'] = {'capabilities': {'add': ['CAP']}}
-        validate_json(d)
-
-    def test_kubernetes_limits(self):
-        d = {
-            "version": 1,
-            "jobs": [{
-                "type": "docker",
-                "name": "test",
-                "docker_file": "Dockerfile",
-                "resources": {
-                    "limits": {
-                        "cpu": 1, "memory": 1024
-                    },
-                    "kubernetes": {
-                        "limits": {
-                            "cpu": 1, "memory": 1024
-                        }
-                    }
-                }
-            }]
-        }
-
-        validate_json(d)
-
     def test_valid(self):
         d = {
             "version": 1,
