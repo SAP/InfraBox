@@ -114,17 +114,16 @@ except:
 
 def check_request_authorization():
     try:
-        token = get_token()
+        
 
         input_data = {
             "input": {
                 "method": request.method,
                 "path": request.path.strip().split("/")[1:-1],
+                "token": get_token()
             }
         }
 
-        if token is not None and "user" in token and "id" in token["user"]:
-            input_data["input"]["user"] = token["user"]["id"]
                 
         logger.info(input_data)        
         rsp = requests.post(get_env('INFRABOX_OPA_HOST')+"/v1/data/infrabox/", data=json.dumps(input_data))
@@ -132,7 +131,7 @@ def check_request_authorization():
         logger.info(rsp.content)
 
 
-        if not ("result" in rsp_dict and "allow" in rsp_dict["result"] and rsp_dict["result"]["allow"] is True):
+        if not ("result" in rsp_dict and rsp_dict["result"] is True):
             print("Nooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo")
             #abort(401, 'Unauthorized')
     except requests.exceptions.RequestException:
