@@ -8,7 +8,7 @@ import input as http_api
 allow {
     http_api.method = "GET"
     http_api.path = ["github", "auth", "connect"]
-    # Login required
+    http_api.token.type = "user"
 }
 
 # GitHub Namespace
@@ -16,5 +16,5 @@ allow {
 allow {
     http_api.method = "GET"
     http_api.path = ["api", "v1", "github", "repos"]
-    # Login required
+    http_api.token.type = "user"
 }
