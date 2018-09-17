@@ -114,27 +114,40 @@ except:
 
 def check_request_authorization():
     try:
-        
+        g.token = get_token()
 
-        input_data = {
+        # Enrich job token
+        if g.token is not None and "type" in g.token and g.token["type"] == "job":
+            g.token = enrich_job_token(g.token)
+
+        # Legacy
+        elif g.token is not None and "type" in g.token and g.token["type"] == "project-token":
+                g.token.type = 'project'
+
+        # Assemble Input Data for Open Policy Agent
+        opa_input = {
             "input": {
                 "method": request.method,
                 "path": request.path.strip().split("/")[1:-1],
-                "token": get_token()
+                "token": g.token
             }
-        }
+        }    
+        logger.info("OPA Request: " + json.dumps(opa_input))  
 
-                
-        logger.info(input_data)        
-        rsp = requests.post(get_env('INFRABOX_OPA_HOST')+"/v1/data/infrabox/", data=json.dumps(input_data))
+        # Send request to Open Policy Agent and evaluate response      
+        rsp = requests.post(get_env('INFRABOX_OPA_HOST') + "/v1/data/infrabox/", data=json.dumps(opa_input))
         rsp_dict = rsp.json()
-        logger.info(rsp.content)
-
+        logger.info("OPA Response: " + rsp.content)
 
         if not ("result" in rsp_dict and rsp_dict["result"] is True):
-            print("Nooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo")
+            logger.info("Unauthorized request.")
             #abort(401, 'Unauthorized')
-    except requests.exceptions.RequestException:
+
+    except LookupError as e:
+        logger.info(e)
+        abort(401, 'Unauthorized')
+    except requests.exceptions.RequestException as e:
+        logger.info(e)
         abort(500, 'Authorization failed')
 
 
@@ -259,6 +272,23 @@ def validate_job_token(token):
     token['project'] = {}
     token['project']['id'] = r[1]
     g.token = token
+
+def enrich_job_token(token):
+    job_id = token['job']['id']
+    r = g.db.execute_one('''
+        SELECT state, project_id, name
+        FROM job
+        WHERE id = %s''', [job_id])
+
+    if not r:
+        raise LookupError('job not found')
+
+
+    token['job']['state'] = r[0]
+    token['job']['name'] = r[2]
+    token['project'] = {}
+    token['project']['id'] = r[1]
+    return token
 
 def is_collaborator(user_id, project_id, db=None):
     if not db:
