@@ -38,9 +38,9 @@
                         <md-table-cell><div>{{ j.cpu }} CPU</div></md-table-cell>
                         <md-table-cell v-if="j.avgCpu"><div>{{ j.avgCpu }} CPU</div></md-table-cell>
                         <md-table-cell v-if="!j.avgCpu"><div>N/A</div></md-table-cell>
-                        <md-table-cell><div>{{ j.memory }} GiB </div></md-table-cell>
-                        <md-table-cell v-if="j.definition">{{ j.definition.cluster.name }}</md-table-cell>
-                        <md-table-cell v-if="!j.definition"></md-table-cell>
+                        <md-table-cell><div>{{ j.memory }} MiB </div></md-table-cell>
+                        <md-table-cell v-if="j.definition && j.definition.cluster">{{ j.definition.cluster.name }}</md-table-cell>
+                        <md-table-cell v-if="!j.definition || !j.definition.cluster"></md-table-cell>
                         <md-table-cell>{{ j.nodeName }}</md-table-cell>
                     </md-table-row>
                 </md-table-body>

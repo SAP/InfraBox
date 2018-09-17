@@ -130,13 +130,23 @@ class Trigger(object):
             "fork": fork
         }
 
+        definition = {
+            'build_only': False,
+            'resources': {
+                'limits': {
+                    'cpu': 0.5,
+                    'memory': 1024
+                }
+            }
+        }
+
         self.execute('''
             INSERT INTO job (id, state, build_id, type,
-                             name, project_id, build_only,
-                             dockerfile, cpu, memory, repo, env_var, cluster_name)
+                             name, project_id,
+                             dockerfile, repo, env_var, cluster_name, definition)
             VALUES (gen_random_uuid(), 'queued', %s, 'create_job_matrix',
-                    'Create Jobs', %s, false, '', 1, 1024, %s, %s, null)
-        ''', [build_id, project_id, json.dumps(git_repo), env], fetch=False)
+                    'Create Jobs', %s, '', %s, %s, null, %s)
+        ''', [build_id, project_id, json.dumps(git_repo), env, json.dumps(definition)], fetch=False)
 
     def has_active_build(self, commit_id, project_id):
         result = self.execute('''

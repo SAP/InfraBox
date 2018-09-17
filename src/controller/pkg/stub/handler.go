@@ -18,7 +18,8 @@ func NewHandler() sdk.Handler {
 
 func init() {
 	logrus.AddHook(filename.NewHook())
-	logrus.SetLevel(logrus.WarnLevel)
+	logrus.SetLevel(logrus.InfoLevel)
+    logrus.SetFormatter(&logrus.JSONFormatter{})
 }
 
 type Controller struct{}
@@ -52,6 +53,9 @@ func (h *Controller) Handle(ctx context.Context, event sdk.Event) error {
 			"namespace": pi.Namespace,
 			"name":      pi.Name,
 		})
+
+		log.Info("Start Handle")
+        defer log.Info("End Handle")
 
 		delTimestamp := pi.GetDeletionTimestamp()
 		if delTimestamp != nil {
@@ -93,6 +97,9 @@ func (h *Controller) Handle(ctx context.Context, event sdk.Event) error {
 			"namespace": ns.Namespace,
 			"name":      ns.Name,
 		})
+
+		log.Info("Start Handle")
+        defer log.Info("End Handle")
 
 		delTimestamp := ns.GetDeletionTimestamp()
 		if delTimestamp != nil {
