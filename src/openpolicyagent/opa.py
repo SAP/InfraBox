@@ -18,9 +18,13 @@ def upload_policies(policy_url):
         print("Pushing " + file_name + " to " + url)
         try:
             rsp = requests.put(url, data=f_data)
-            print("Pushed " + file_name + " to " + url)
+            if rsp:
+                print("Pushed " + file_name + " to " + url + " (Status " + str(rsp.status_code) + ")")
+            else:
+                print("Failed pushing " + file_name + " to " + url + " (Status " + str(rsp.status_code) + "):")
+                print rsp.content
         except requests.exceptions.RequestException as e:
-            print("Failed pushing " + file_name + " to " + url)
+            print("Failed pushing " + file_name + " to " + url + ":")
             print(e)
 
 def get_files():
