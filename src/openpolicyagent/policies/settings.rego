@@ -1,10 +1,10 @@
 package infrabox
 
 # HTTP API request
-import input as http_api
+import input as api
 
 # Allow GET access to /api/v1/settings for anyone
 allow {
-    http_api.method = "GET"
-    http_api.path = ["api", "v1", "settings"]
+    api.method = "GET"
+    api.path = ["api", "v1", "settings"]
 }

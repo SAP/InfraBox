@@ -1,14 +1,14 @@
 package infrabox
 
 # HTTP API request
-import input as http_api
+import input as api
 
 allow {
-    http_api.method = "POST"
-    http_api.path = ["api", "v1", "account", "login"]
+    api.method = "POST"
+    api.path = ["api", "v1", "account", "login"]
 }
 
 allow {
-    http_api.method = "POST"
-    http_api.path = ["api", "v1", "account", "register"]
+    api.method = "POST"
+    api.path = ["api", "v1", "account", "register"]
 }
