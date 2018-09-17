@@ -1,24 +1,45 @@
 package infrabox
 
-import data.infrabox.collaborators.collaborators
-import data.infrabox.projects.projects
-
 # HTTP API request
 import input as http_api
 
-project_owner[[user, project]]{
-    collaborators[i].project_id = project
-    collaborators[i].user_id = user
-    collaborators[i].role = "Owner"
+u_id = user_id[http_api]
+
+allow {
+    http_api.method = "GET"
+    http_api.path = ["api", "v1", "projects", "re"]
+    user_valid(token)
 }
 
-project_collaborator[[user, project]]{
-    collaborators[i].project_id = project
-    collaborators[i].user_id = user
+allow {
+    http_api.method = "POST"
+    http_api.path = ["api", "v1", "projects", "re"]
+    user_valid(token)
+}
+
+allow {
+    http_api.method = "GET"
+    http_api.path = ["api", "v1", "projects", "name", project_name]
+    user_valid(token)
+}
+
+allow {
+    http_api.method = "GET"
+    http_api.path = ["api", "v1", "projects", project]
+    user_valid(token)
+    project_collaborator([u_id, project])
+}
+allow {
+    http_api.method = "GET"
+    http_api.path = ["api", "v1", "projects", project]
+    user_valid(token)
+    project_public(project)
 }
 
 allow {
     http_api.method = "DELETE"
     http_api.path = ["api", "v1", "projects", project]
-    project_owner[[http_api.user, project]]
+    user_valid(token)
+    project_owner(u_id, project])
 }
+
