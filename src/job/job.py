@@ -1125,6 +1125,8 @@ class RunJob(Job):
                 ib_file = job.get('infrabox_file', None)
                 if not ib_file:
                     ib_path = find_infrabox_file(new_repo_path)
+                else:
+                    ib_path = os.path.join(new_repo_path, ib_file)
 
                 if not ib_path:
                     raise Failure("infrabox file not found in %s" % new_repo_path)
