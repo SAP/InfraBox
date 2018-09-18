@@ -3,6 +3,8 @@ import uuid
 import os
 import sys
 
+import urllib3
+
 import eventlet
 eventlet.monkey_patch()
 
@@ -84,6 +86,8 @@ def main(): # pragma: no cover
                                   path='/api/v1/socket.io',
                                   async_mode='eventlet',
                                   client_manager=client_manager)
+
+    urllib3.disable_warnings()
 
     @sio.on('listen:jobs')
     def __listen_jobs(project_id):
