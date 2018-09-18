@@ -6,7 +6,7 @@ import input as api
 # Allow administrators access to everything
 allow {
     api.token.type = "user"
-    api.token.user_id = "00000000-0000-0000-0000-000000000000"
+    api.token.user.id = "00000000-0000-0000-0000-000000000000"
 }
 
 # Allow GET access to /api/v1/admin/clusters for users logged in

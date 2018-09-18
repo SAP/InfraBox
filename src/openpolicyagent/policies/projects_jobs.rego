@@ -20,7 +20,7 @@ allow {
     api.method = "GET"
     api.path = ["api", "v1", "projects", project_id, "jobs"]
     api.token.type = "user"
-    project_jobs_collaborator([api.token.user_id, project_id])
+    project_jobs_collaborator([api.token.user.id, project_id])
 }
 
 # Allow GET /api/v1/projects/<id>/jobs if project is public
@@ -36,7 +36,7 @@ allow {
     api.method = "GET"
     api.path = ["api", "v1", "projects", project_id, "jobs", _, "restart"]
     api.token.type = "user"
-    project_jobs_collaborator([api.token.user_id, project_id])
+    project_jobs_collaborator([api.token.user.id, project_id])
 }
 
 # Allow GET /api/v1/projects/<project_id>/jobs/<job_id>/abort for collaborators
@@ -44,7 +44,7 @@ allow {
     api.method = "GET"
     api.path = ["api", "v1", "projects", project_id, "jobs", _, "abort"]
     api.token.type = "user"
-    project_jobs_collaborator([api.token.user_id, project_id])
+    project_jobs_collaborator([api.token.user.id, project_id])
 }
 
 # Allow GET /api/v1/projects/<project_id>/jobs/<job_id>/testresults for collaborators
@@ -52,7 +52,7 @@ allow {
     api.method = "GET"
     api.path = ["api", "v1", "projects", project_id, "jobs", _, "testresults"]
     api.token.type = "user"
-    project_jobs_collaborator([api.token.user_id, project_id])
+    project_jobs_collaborator([api.token.user.id, project_id])
 }
 
 # Allow GET /api/v1/projects/<project_id>/jobs/<job_id>/testresults if project is public
@@ -68,7 +68,7 @@ allow {
     api.method = "GET"
     api.path = ["api", "v1", "projects", project_id, "jobs", _, "tabs"]
     api.token.type = "user"
-    project_jobs_collaborator([api.token.user_id, project_id])
+    project_jobs_collaborator([api.token.user.id, project_id])
 }
 
 # Allow GET /api/v1/projects/<project_id>/jobs/<job_id>/tabs if project is public
@@ -84,7 +84,7 @@ allow {
     api.method = "GET"
     api.path = ["api", "v1", "projects", project_id, "jobs", _, "archive"]
     api.token.type = "user"
-    project_jobs_collaborator([api.token.user_id, project_id])
+    project_jobs_collaborator([api.token.user.id, project_id])
 }
 
 # Allow GET /api/v1/projects/<project_id>/jobs/<job_id>/archive if project is public
@@ -100,7 +100,7 @@ allow {
     api.method = "GET"
     api.path = ["api", "v1", "projects", project_id, "jobs", _, "archive", "download"]
     api.token.type = "user"
-    project_jobs_collaborator([api.token.user_id, project_id])
+    project_jobs_collaborator([api.token.user.id, project_id])
 }
 
 # Allow GET /api/v1/projects/<project_id>/jobs/<job_id>/archive/download if project is public
@@ -116,7 +116,7 @@ allow {
     api.method = "GET"
     api.path = ["api", "v1", "projects", project_id, "jobs", _, "console"]
     api.token.type = "user"
-    project_jobs_collaborator([api.token.user_id, project_id])
+    project_jobs_collaborator([api.token.user.id, project_id])
 }
 
 # Allow GET /api/v1/projects/<project_id>/jobs/<job_id>/console if project is public
@@ -132,7 +132,7 @@ allow {
     api.method = "GET"
     api.path = ["api", "v1", "projects", project_id, "jobs", _, "output"]
     api.token.type = "user"
-    project_jobs_collaborator([api.token.user_id, project_id])
+    project_jobs_collaborator([api.token.user.id, project_id])
 }
 
 # Allow GET /api/v1/projects/<project_id>/jobs/<job_id>/output if project is public
@@ -148,7 +148,7 @@ allow {
     api.method = "GET"
     api.path = ["api", "v1", "projects", project_id, "jobs", _, "testruns"]
     api.token.type = "user"
-    project_jobs_collaborator([api.token.user_id, project_id])
+    project_jobs_collaborator([api.token.user.id, project_id])
 }
 
 # Allow GET /api/v1/projects/<project_id>/jobs/<job_id>/testruns if project is public
@@ -164,7 +164,7 @@ allow {
     api.method = "GET"
     api.path = ["api", "v1", "projects", project_id, "jobs", _, "tests", "history"]
     api.token.type = "user"
-    project_jobs_collaborator([api.token.user_id, project_id])
+    project_jobs_collaborator([api.token.user.id, project_id])
 }
 
 # Allow GET /api/v1/projects/<project_id>/jobs/<job_id>/tests/history if project is public
@@ -180,7 +180,7 @@ allow {
     api.method = "GET"
     api.path = ["api", "v1", "projects", project_id, "jobs", _, "badges"]
     api.token.type = "user"
-    project_jobs_collaborator([api.token.user_id, project_id])
+    project_jobs_collaborator([api.token.user.id, project_id])
 }
 
 # Allow GET /api/v1/projects/<project_id>/jobs/<job_id>/badges if project is public
@@ -196,7 +196,7 @@ allow {
     api.method = "GET"
     api.path = ["api", "v1", "projects", project_id, "jobs", _, "stats"]
     api.token.type = "user"
-    project_jobs_collaborator([api.token.user_id, project_id])
+    project_jobs_collaborator([api.token.user.id, project_id])
 }
 
 # Allow GET /api/v1/projects/<project_id>/jobs/<job_id>/stats if project is public
@@ -212,5 +212,5 @@ allow {
     api.method = "GET"
     api.path = ["api", "v1", "projects", project_id, "jobs", _, "cache", "clear"]
     api.token.type = "user"
-    project_jobs_collaborator([api.token.user_id, project_id])
+    project_jobs_collaborator([api.token.user.id, project_id])
 }

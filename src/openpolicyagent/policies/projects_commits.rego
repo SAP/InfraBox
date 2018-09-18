@@ -20,7 +20,7 @@ allow {
     api.method = "GET"
     api.path = ["api", "v1", "projects", project_id, "commits", _]
     api.token.type = "user"
-    project_commits_collaborator([api.token.user_id, project_id])
+    project_commits_collaborator([api.token.user.id, project_id])
 }
 
 # Allow GET /api/v1/projects/<id>/commits/<id> if project is public

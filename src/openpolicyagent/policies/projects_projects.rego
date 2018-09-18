@@ -44,7 +44,7 @@ allow {
     api.method = "GET"
     api.path = ["api", "v1", "projects", project]
     api.token.type = "user"
-    projects_projects_collaborator([api.token.user_id, project])
+    projects_projects_collaborator([api.token.user.id, project])
 }
 allow {
     api.method = "GET"
@@ -57,7 +57,7 @@ allow {
     api.method = "DELETE"
     api.path = ["api", "v1", "projects", project]
     api.token.type = "user"
-    projects_projects_owner([api.token.user_id, project])
+    projects_projects_owner([api.token.user.id, project])
 }
 
 

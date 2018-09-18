@@ -28,7 +28,7 @@ allow {
     api.path = ["api", "v1", "projects", project_id]
 
     api.token.type = "user"
-    project_collaborator([api.token.user_id, project_id])
+    project_collaborator([api.token.user.id, project_id])
 }
 
 # Allow GET access to /api/v1/projects/<project_id> for project tokens
@@ -37,7 +37,7 @@ allow {
     api.path = ["api", "v1", "projects", project_id]
 
     api.token.type = "project"
-    api.token.project_id = project_id
+    api.token.project.id = project_id
 }
 
 # Allow GET access to /api/v1/projects/<project_id>/(state.svg|tests.svg|badges.svg) for collaborators
@@ -49,7 +49,7 @@ allow {
     svg_image = svg_images[_]
 
     api.token.type = "user"
-    project_collaborator([api.token.user_id, project_id])
+    project_collaborator([api.token.user.id, project_id])
 }
 
 # Allow GET access to /api/v1/projects/<project_id>/(state.svg|tests.svg|badges.svg) if project is public
@@ -72,7 +72,7 @@ allow {
     svg_image = svg_images[_]
 
     api.token.type = "project"
-    api.token.project_id = project_id
+    api.token.project.id = project_id
 }
 
 # Allow POST access to /api/v1/projects/<project_id>/upload/<build_id>/ for project tokens
@@ -81,5 +81,5 @@ allow {
     api.path = ["api", "v1", "projects", project_id, "upload", _]
 
     api.token.type = "project"
-    api.token.project_id = project_id
+    api.token.project.id = project_id
 }
