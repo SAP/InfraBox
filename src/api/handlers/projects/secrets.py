@@ -4,7 +4,7 @@ from flask import request, g, abort
 from flask_restplus import Resource, fields
 
 from pyinfrabox.utils import validate_uuid4
-from pyinfraboxutils.ibflask import auth_required, OK
+from pyinfraboxutils.ibflask import OK
 from pyinfraboxutils.ibrestplus import api
 from pyinfraboxutils.secrets import encrypt_secret
 from api.namespaces import project as ns
@@ -24,7 +24,6 @@ class Secrets(Resource):
 
     name_pattern = re.compile('^[a-zA-Z0-9_]+$')
 
-    @auth_required(['user'])
     @api.marshal_list_with(secret_model)
     def get(self, project_id):
         p = g.db.execute_many_dict('''
@@ -33,7 +32,6 @@ class Secrets(Resource):
         ''', [project_id])
         return p
 
-    @auth_required(['user'])
     @api.expect(add_secret_model)
     def post(self, project_id):
         b = request.get_json()
@@ -69,7 +67,6 @@ class Secrets(Resource):
 
 @ns.route('/<project_id>/secrets/<secret_id>')
 class Secret(Resource):
-    @auth_required(['user'])
     def delete(self, project_id, secret_id):
         if not validate_uuid4(secret_id):
             abort(400, "Invalid secret uuid.")

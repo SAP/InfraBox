@@ -6,7 +6,7 @@ import requests
 from flask_restplus import Resource, fields
 from flask import abort, request, g
 
-from pyinfraboxutils.ibflask import auth_required, OK
+from pyinfraboxutils.ibflask import OK
 from pyinfraboxutils.ibrestplus import api
 from project import ns
 
@@ -256,7 +256,6 @@ trigger_model = api.model('Trigger', {
 @ns.route('/<project_id>/trigger')
 class Trigger(Resource):
 
-    @auth_required(['user', 'project'])
     @api.expect(trigger_model)
     def post(self, project_id):
         body = request.get_json()

@@ -9,7 +9,7 @@ from flask import g, abort, Response, send_file, request
 from flask_restplus import Resource
 
 from pyinfraboxutils import get_logger
-from pyinfraboxutils.ibflask import auth_required, OK
+from pyinfraboxutils.ibflask import OK
 from pyinfraboxutils.storage import storage
 from api.namespaces import project as ns
 from pyinfraboxutils.token import encode_user_token
@@ -19,7 +19,6 @@ logger = get_logger('api')
 @ns.route('/<project_id>/jobs/')
 class Jobs(Resource):
 
-    @auth_required(['user'], allow_if_public=True)
     def get(self, project_id):
         jobs = g.db.execute_many_dict('''
             WITH github_builds AS (
@@ -188,7 +187,6 @@ class Jobs(Resource):
 @ns.route('/<project_id>/jobs/<job_id>/restart')
 class JobRestart(Resource):
 
-    @auth_required(['user'])
     def get(self, project_id, job_id):
 
         job = g.db.execute_one_dict('''
@@ -262,7 +260,6 @@ class JobRestart(Resource):
 @ns.route('/<project_id>/jobs/<job_id>/abort')
 class JobAbort(Resource):
 
-    @auth_required(['user'])
     #pylint: disable=unused-argument
     def get(self, project_id, job_id):
         g.db.execute('''
@@ -275,7 +272,6 @@ class JobAbort(Resource):
 @ns.route('/<project_id>/jobs/<job_id>/testresults')
 class Testresults(Resource):
 
-    @auth_required(['user'], allow_if_public=True)
     def get(self, project_id, job_id):
         result = g.db.execute_many_dict('''
             SELECT tr.state, t.name, t.suite, tr.duration, t.build_number, tr.message, tr.stack
@@ -292,7 +288,6 @@ class Testresults(Resource):
 @ns.route('/<project_id>/jobs/<job_id>/tabs')
 class Tabs(Resource):
 
-    @auth_required(['user'], allow_if_public=True)
     def get(self, project_id, job_id):
         result = g.db.execute_many_dict('''
             SELECT name, data, type
@@ -306,7 +301,6 @@ class Tabs(Resource):
 @ns.route('/<project_id>/jobs/<job_id>/archive/download')
 class ArchiveDownload(Resource):
 
-    @auth_required(['user'], allow_if_public=True)
     def get(self, project_id, job_id):
         filename = request.args.get('filename', None)
 
@@ -357,7 +351,6 @@ class ArchiveDownload(Resource):
 @ns.route('/<project_id>/jobs/<job_id>/archive')
 class Archive(Resource):
 
-    @auth_required(['user'], allow_if_public=True)
     def get(self, project_id, job_id):
         result = g.db.execute_one_dict('''
             SELECT archive
@@ -375,7 +368,6 @@ class Archive(Resource):
 @ns.route('/<project_id>/jobs/<job_id>/console')
 class Console(Resource):
 
-    @auth_required(['user'], allow_if_public=True)
     def get(self, project_id, job_id):
         result = g.db.execute_one_dict('''
             SELECT console
@@ -407,7 +399,6 @@ class Console(Resource):
 @ns.route('/<project_id>/jobs/<job_id>/output')
 class Output(Resource):
 
-    @auth_required(['user'], allow_if_public=True)
     #pylint: disable=unused-argument
     def get(self, project_id, job_id):
         g.release_db()
@@ -423,7 +414,6 @@ class Output(Resource):
 @ns.route('/<project_id>/jobs/<job_id>/testruns')
 class Testruns(Resource):
 
-    @auth_required(['user'], allow_if_public=True)
     def get(self, project_id, job_id):
         result = g.db.execute_many_dict('''
             SELECT tr.state, t.name, t.suite, tr.duration, t.build_number, tr.message, tr.stack, to_char(tr.timestamp, 'YYYY-MM-DD HH24:MI:SS') as timestamp
@@ -440,7 +430,6 @@ class Testruns(Resource):
 @ns.route('/<project_id>/jobs/<job_id>/tests/history')
 class TestHistory(Resource):
 
-    @auth_required(['user'], allow_if_public=True)
     def get(self, project_id, job_id):
 
         test = request.args.get('test', None)
@@ -510,7 +499,6 @@ class TestHistory(Resource):
 @ns.route('/<project_id>/jobs/<job_id>/badges')
 class Badges(Resource):
 
-    @auth_required(['user'], allow_if_public=True)
     def get(self, project_id, job_id):
         result = g.db.execute_many_dict('''
             SELECT subject, status, color
@@ -560,7 +548,6 @@ def compact(s):
 @ns.route('/<project_id>/jobs/<job_id>/stats')
 class Stats(Resource):
 
-    @auth_required(['user'], allow_if_public=True)
     def get(self, project_id, job_id):
         result = g.db.execute_one_dict('''
             SELECT stats
@@ -586,7 +573,6 @@ class Stats(Resource):
 @ns.route('/<project_id>/jobs/<job_id>/cache/clear')
 class JobCacheClear(Resource):
 
-    @auth_required(['user'])
     def get(self, project_id, job_id):
         job = g.db.execute_one_dict('''
             SELECT j.name, branch from job j
