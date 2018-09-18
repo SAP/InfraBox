@@ -475,7 +475,8 @@ class Scheduler(object):
             WHERE cluster_name is null FOR UPDATE
         """, [cluster_name])
 
-        for j in jobs:
+        jobs = cursor.fetchall()
+
         for j in jobs:
             cursor = self.conn.cursor()
             cursor.execute("""
