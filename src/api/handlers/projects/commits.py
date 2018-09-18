@@ -5,7 +5,7 @@ from pyinfraboxutils.ibflask import auth_required
 from api.namespaces import project as ns
 
 @ns.route('/<project_id>/commits/<commit_id>')
-class Copmmit(Resource):
+class Commit(Resource):
 
     @auth_required(['user'], allow_if_public=True)
     def get(self, project_id, commit_id):
