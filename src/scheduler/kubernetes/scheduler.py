@@ -472,20 +472,9 @@ class Scheduler(object):
         cursor.execute("""
             UPDATE job
             SET cluster_name = %s
-            WHERE cluster_name is null FOR UPDATE
+            WHERE cluster_name is null
         """, [cluster_name])
 
-        jobs = cursor.fetchall()
-
-        for j in jobs:
-            cursor = self.conn.cursor()
-            cursor.execute("""
-                UPDATE job
-                SET cluster_name = %s
-                WHERE id = %s
-            """, [cluster_name, j[0]])
-            self.logger.info("assign job %s to cluster %s" % \
-                              (j[0], cluster_name))
         cursor.execute("commit;")
         cursor.close()
 
