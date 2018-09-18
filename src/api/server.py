@@ -18,6 +18,7 @@ from pyinfraboxutils import get_env, get_logger
 
 from pyinfraboxutils.ibflask import require_token, is_collaborator
 from pyinfraboxutils.ibrestplus import api, app
+from pyinfraboxutils.ibopa import opa_push_data
 from pyinfraboxutils import dbpool
 
 import handlers
@@ -251,6 +252,9 @@ def main(): # pragma: no cover
     logger.info('Starting DB listeners')
     sio.start_background_task(listeners.job.listen, sio)
     sio.start_background_task(listeners.console.listen, sio, client_manager)
+
+    logger.info('Pushing database data to Open Policy Agent')
+    opa_push_data()
 
     port = int(os.environ.get('INFRABOX_PORT', 8080))
     logger.info('Starting Server on port %s', port)
