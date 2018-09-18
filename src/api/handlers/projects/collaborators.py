@@ -3,7 +3,7 @@ from uuid import UUID
 from flask import request, g, abort
 from flask_restplus import Resource, fields
 
-from pyinfraboxutils.ibflask import auth_required, OK
+from pyinfraboxutils.ibflask import OK
 from pyinfraboxutils.ibrestplus import api
 from pyinfraboxutils.ibopa import opa_push_collaborator_data, opa_push_project_data
 
@@ -31,7 +31,6 @@ change_collaborator_model = api.model('AddCollaborator', {
 @ns.route('/<project_id>/collaborators/')
 class Collaborators(Resource):
 
-    @auth_required(['user'])
     @api.marshal_list_with(collaborator_model)
     def get(self, project_id):
         p = g.db.execute_many_dict(
@@ -44,7 +43,6 @@ class Collaborators(Resource):
 
         return p
 
-    @auth_required(['user'], check_project_owner=True)
     @api.expect(add_collaborator_model)
     def post(self, project_id):
         b = request.get_json()
@@ -91,7 +89,6 @@ class Collaborators(Resource):
 
 @ns.route('/<project_id>/collaborators/roles')
 class CollaboratorRoles(Resource):
-    @auth_required(['user'])
     def get(self, project_id):
         roles = g.db.execute_many(
             """
@@ -106,7 +103,6 @@ class CollaboratorRoles(Resource):
 @ns.route('/<project_id>/collaborators/<uuid:user_id>')
 class Collaborator(Resource):
 
-    @auth_required(['user'], check_project_owner=True)
     @api.expect(change_collaborator_model)
     def put(self, project_id, user_id):
 
@@ -151,7 +147,6 @@ class Collaborator(Resource):
         return OK('Successfully changed user role.')
 
 
-    @auth_required(['user'], check_project_owner=True)
     def delete(self, project_id, user_id):
         owner_id = g.token['user']['id']
 

@@ -2,7 +2,7 @@ from flask import request, g, abort
 from flask_restplus import Resource, fields
 
 from pyinfrabox.utils import validate_uuid4
-from pyinfraboxutils.ibflask import auth_required, OK
+from pyinfraboxutils.ibflask import OK
 from pyinfraboxutils.ibrestplus import api
 from pyinfraboxutils.token import encode_project_token
 from api.namespaces import project as ns
@@ -17,7 +17,6 @@ project_token_model = api.model('ProjectToken', {
 @ns.route('/<project_id>/tokens')
 class Tokens(Resource):
 
-    @auth_required(['user'])
     @api.marshal_list_with(project_token_model)
     def get(self, project_id):
         p = g.db.execute_many_dict('''
@@ -28,7 +27,6 @@ class Tokens(Resource):
         return p
 
 
-    @auth_required(['user'])
     @api.expect(project_token_model)
     def post(self, project_id):
         b = request.get_json()
@@ -56,7 +54,6 @@ class Tokens(Resource):
 @ns.route('/<project_id>/tokens/<token_id>')
 class Token(Resource):
 
-    @auth_required(['user'])
     def delete(self, project_id, token_id):
         if not validate_uuid4(token_id):
             abort(400, "Invalid project-token uuid.")

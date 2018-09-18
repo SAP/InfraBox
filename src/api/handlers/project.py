@@ -15,7 +15,7 @@ from werkzeug.datastructures import FileStorage
 
 from pyinfraboxutils import get_logger
 
-from pyinfraboxutils.ibflask import auth_required, OK
+from pyinfraboxutils.ibflask import OK
 from pyinfraboxutils.ibrestplus import api
 from pyinfraboxutils.storage import storage
 from pyinfraboxutils.token import encode_project_token
@@ -58,7 +58,6 @@ project_model = api.model('ProjectModel', {
 @ns.route('/<project_id>')
 class Project(Resource):
 
-    @auth_required(['user', 'project'])
     @api.marshal_with(project_model)
     def get(self, project_id):
         p = g.db.execute_one_dict("""
@@ -282,7 +281,6 @@ upload_parser.add_argument('project.zip', location='files',
 @ns.expect(upload_parser)
 class UploadRemote(Resource):
 
-    @auth_required(['project'])
     def post(self, project_id, build_id):
         project = g.db.execute_one_dict('''
             SELECT type
@@ -309,7 +307,6 @@ if os.environ['INFRABOX_CLUSTER_NAME'] == 'master':
     @ns.expect(upload_parser)
     class Upload(Resource):
 
-        @auth_required(['project'])
         def post(self, project_id):
             project = g.db.execute_one_dict('''
                 SELECT type
