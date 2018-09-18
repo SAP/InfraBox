@@ -141,7 +141,7 @@ def check_request_authorization():
 
         if not ("result" in rsp_dict and rsp_dict["result"] is True):
             logger.info("Unauthorized request.")
-            #abort(401, 'Unauthorized')
+            abort(401, 'Unauthorized')
 
     except LookupError as e:
         logger.info(e)
@@ -217,8 +217,6 @@ def check_job_belongs_to_project(f):
         return f(*args, **kwargs)
     return decorated_function
 
-
-def validate_job_token(token):
     job_id = token['job']['id']
     r = g.db.execute_one('''
         SELECT state, project_id, name
@@ -271,82 +269,3 @@ def is_collaborator(user_id, project_id, db=None):
     ''', [user_id, project_id])
 
     return u
-
-def is_public(project_id, project_name):
-    if project_id:
-        p = g.db.execute_one_dict('''
-            SELECT public
-            FROM project
-            WHERE id = %s
-        ''', [project_id])
-
-        if not p:
-            abort(404, 'Project not found')
-
-        if p['public']:
-            return True
-    elif project_name:
-        p = g.db.execute_one_dict('''
-            SELECT public
-            FROM project
-            WHERE name = %s
-        ''', [project_name])
-
-        if not p:
-            abort(404, 'Project not found')
-
-        if p['public']:
-            return True
-    else:
-        logger.warn('no project_id or project_name')
-        abort(401, 'Unauthorized')
-
-    return False
-
-
-def validate_user_token(token, check_project_access, project_id, check_project_owner):
-    u = g.db.execute_one('''
-        SELECT id FROM "user" WHERE id = %s
-    ''', [token['user']['id']])
-
-    if not u:
-        logger.warn('user not found')
-        abort(401, 'Unauthorized')
-
-    if check_project_access:
-        if not project_id:
-            logger.warn('no project id')
-            abort(401, 'Unauthorized')
-
-        u = is_collaborator(token['user']['id'], project_id)
-
-        if not u:
-            logger.warn('user has no access to project')
-            abort(401, 'Unauthorized')
-
-    if check_project_owner:
-        if not project_id:
-            logger.warn('no project id')
-            abort(401, 'Unauthorized')
-
-        u = g.db.execute_many('''
-            SELECT co.*
-            FROM collaborator co
-            INNER JOIN "user" u
-                ON u.id = co.user_id
-                AND u.id = %s
-                AND co.project_id = %s
-                AND co.owner = true
-        ''', [token['user']['id'], project_id])
-
-        if not u:
-            logger.warn('user has no access to project')
-            abort(401, 'Unauthorized')
-
-def validate_project_token(token, check_project_access, project_id):
-    if not check_project_access:
-        return
-
-    if project_id != token['project']['id']:
-        logger.warn('token not valid for project')
-        abort(401, 'Unauthorized')
