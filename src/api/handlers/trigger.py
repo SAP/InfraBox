@@ -119,7 +119,7 @@ def create_github_commit(project_id, repo_id, branch_or_sha):
         SELECT github_api_token FROM "user" u
         INNER JOIN collaborator co
             ON co.user_id = u.id
-            AND co.owner = true
+            AND co.role = 'Owner'
         INNER JOIN project p
             ON co.project_id = p.id
         INNER JOIN repository r

@@ -42,8 +42,8 @@ class ApiTestTemplate(unittest.TestCase):
             """)
 
         TestClient.execute("""
-                INSERT INTO collaborator (user_id, project_id, owner)
-                VALUES (%s, %s, true);
+                INSERT INTO collaborator (user_id, project_id, role)
+                VALUES (%s, %s, 'Owner');
             """, [self.user_id, self.project_id])
 
         TestClient.execute("""

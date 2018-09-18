@@ -85,7 +85,7 @@ class Job(Resource):
                 AND j.project_id = b.project_id
             INNER JOIN collaborator co
                 ON co.project_id = j.project_id
-                AND co.owner = true
+                AND co.role = 'Owner'
             INNER JOIN "user" u
                 ON co.user_id = u.id
             INNER JOIN project p
@@ -691,7 +691,7 @@ class CreateJobs(Resource):
             SELECT co.user_id, b.build_number, j.project_id FROM collaborator co
             INNER JOIN job j
                 ON j.project_id = co.project_id
-                AND co.owner = true
+                AND co.role = 'Owner'
                 AND j.id = %s
             INNER JOIN build b
                 ON b.id = j.build_id
