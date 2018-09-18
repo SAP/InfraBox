@@ -13,33 +13,33 @@ allow {
     api.method = "GET"
     api.path = ["api", "v1", "projects", project, "builds", _, "restart"]
     api.token.type = "user"
-    build_collaborator([api.token.user_id, project])
+    build_collaborator([api.token.user.id, project])
 }
 
 allow {
     api.method = "GET"
     api.path = ["api", "v1", "projects", project, "builds", _, "abort"]
     api.token.type = "user"
-    build_collaborator([api.token.user_id, project])
+    build_collaborator([api.token.user.id, project])
 }
 
 allow {
     api.method = "GET"
     api.path = ["api", "v1", "projects", project, "builds", _, "cache", "clear"]
     api.token.type = "user"
-    build_collaborator([api.token.user_id, project])
+    build_collaborator([api.token.user.id, project])
 }
 
 allow {
     api.method = "GET"
     api.path = ["api", "v1", "projects", project, "builds", _, _, "state"]
     api.token.type = "user"
-    build_collaborator([api.token.user_id, project])
+    build_collaborator([api.token.user.id, project])
 }
 
 allow {
     api.method = "GET"
     api.path = ["api", "v1", "projects", project, "builds", _, _]
     api.token.type = "user"
-    build_collaborator([api.token.user_id, project])
+    build_collaborator([api.token.user.id, project])
 }
