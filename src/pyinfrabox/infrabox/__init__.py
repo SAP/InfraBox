@@ -13,13 +13,16 @@ def check_name(n, path):
         raise ValidationError(path, "'%s' not a valid value" % n)
 
 def parse_repository(d, path):
-    check_allowed_properties(d, path, ('clone', 'submodules'))
+    check_allowed_properties(d, path, ('clone', 'submodules', 'full_history'))
 
     if 'clone' in d:
         check_boolean(d['clone'], path + ".clone")
 
     if 'submodules' in d:
         check_boolean(d['submodules'], path + ".submodules")
+
+    if 'full_history' in d:
+        check_boolean(d['full_history'], path + ".full_history")
 
 def parse_cluster(d, path):
     check_allowed_properties(d, path, ('selector',))

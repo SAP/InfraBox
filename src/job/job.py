@@ -212,7 +212,7 @@ class RunJob(Job):
             clone_url = repo['clone_url']
             branch = repo.get('branch', None)
             private = repo.get('github_private_repo', False)
-            clone_all = repo.get('clone_all', False)
+            clone_all = repo.get('full_history', False)
             ref = repo.get('ref', None)
 
             definition = self.job['definition']
