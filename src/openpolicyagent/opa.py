@@ -39,7 +39,7 @@ def get_filename(path):
     return tail or ntpath.basename(head)
 
 def main():
-    upload_policies('/v1/policies/infrabox/api/' % get_env('INFRABOX_OPA_HOST'))
+    upload_policies('%s/v1/policies/infrabox/api/' % get_env('INFRABOX_OPA_HOST'))
 
 if __name__ == "__main__": # pragma: no cover
     main()
