@@ -59,8 +59,8 @@ class Test(TestCase):
                         VALUES(%s, 'test token', %s, true, true)''', (self.token, self.project_id,))
         cur.execute('''INSERT INTO project(name, type, id)
                         VALUES('test', 'upload', %s)''', (self.project_id,))
-        cur.execute('''INSERT INTO collaborator(project_id, user_id)
-                        VALUES(%s, %s)''', (self.project_id, self.user_id,))
+        cur.execute('''INSERT INTO collaborator(project_id, user_id, role)
+                        VALUES(%s, %s, 'Owner')''', (self.project_id, self.user_id))
 
 
     def tearDown(self):

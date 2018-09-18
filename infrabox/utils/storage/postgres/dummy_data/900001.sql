@@ -12,8 +12,8 @@ VALUES('00000000-0000-0000-0000-000000000000', 1, 'avatar', 'name1', 'user1@emai
 INSERT INTO project(name, type, id)
 VALUES('upload1', 'upload', '00000000-0000-0000-0000-000000000001');
 
-INSERT INTO collaborator(project_id, user_id, owner, role)
-VALUES('00000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000000', true, 'Owner');
+INSERT INTO collaborator(project_id, user_id, role)
+VALUES('00000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000000', 'Owner');
 
 INSERT INTO auth_token(project_id, id, description, scope_push, scope_pull)
 VALUES('00000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000002', 'asd', true, true);

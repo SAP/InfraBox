@@ -6,3 +6,5 @@ CREATE TYPE user_role AS ENUM (
 
 ALTER TABLE collaborator ADD COLUMN role user_role DEFAULT 'Developer' NOT NULL;
 UPDATE collaborator SET role = 'Owner' WHERE owner = true;
+
+ALTER TABLE collaborator DROP COLUMN owner CASCADE;
