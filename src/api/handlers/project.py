@@ -388,7 +388,7 @@ if enable_upload_forword:
                 INSERT INTO job (id, state, build_id, type, name, project_id,
                                  dockerfile, definition, cluster_name)
                 VALUES (gen_random_uuid(), 'queued', %s, 'create_job_matrix',
-                        'Create Jobs', %s, '', %s);
+                        'Create Jobs', %s, '', %s, %s);
             ''', [build_id, project_id, json.dumps(definition), None])
 
             project_name = g.db.execute_one('''
