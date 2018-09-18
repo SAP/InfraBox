@@ -9,6 +9,7 @@ from flask import Flask, g, jsonify, request, abort
 from pyinfraboxutils import get_logger, get_env
 from pyinfraboxutils.db import DB, connect_db
 from pyinfraboxutils.token import decode
+from pyinfraboxutils.ibopa import opa_do_auth
 
 app = Flask(__name__)
 app.url_map.strict_slashes = False
@@ -160,14 +161,10 @@ def check_request_authorization():
                 "token": g.token
             }
         }    
-        logger.debug("OPA Request: %s", json.dumps(opa_input))  
+        
+        is_authorized = opa_do_auth(opa_input)
 
-        # Send request to Open Policy Agent and evaluate response      
-        rsp = requests.post("%s/v1/data/infrabox/allow" % get_env('INFRABOX_OPA_HOST'), data=json.dumps(opa_input))
-        rsp_dict = rsp.json()
-        logger.debug("OPA Response: %s", rsp.content)
-
-        if not ("result" in rsp_dict and rsp_dict["result"] is True):
+        if not is_authorized:
             logger.info("Rejected unauthorized request")
             abort(401, 'Unauthorized')
 
