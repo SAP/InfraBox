@@ -7,6 +7,6 @@ roles = {"Developer": 1, "Administrator": 2, "Owner": 3}
 
 allow {
     api.method = "GET"
-    api.path = ["api", "v1", "users"]
+    api.path = ["api", "v1", "user"]
     api.token.type = "user"
 }
