@@ -156,7 +156,7 @@ def check_request_authorization():
         opa_input = {
             "input": {
                 "method": request.method,
-                "path": request.path.strip().split("/")[1:-1],
+                "path": get_path_array(request.path),
                 "token": g.token
             }
         }    
@@ -250,3 +250,9 @@ def is_collaborator(user_id, project_id, db=None):
     ''', [user_id, project_id])
 
     return u
+
+def get_path_array(path):
+    pathstring = path.strip()
+    if (pathstring[-1] == "/"):
+        pathstring = pathstring[:-1]
+    return pathstring.split("/")[1:]
