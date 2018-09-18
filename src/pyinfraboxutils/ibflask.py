@@ -160,19 +160,19 @@ def check_request_authorization():
                 "token": g.token
             }
         }    
-        logger.info("OPA Request: " + json.dumps(opa_input))  
+        logger.debug("OPA Request: %s", json.dumps(opa_input))  
 
         # Send request to Open Policy Agent and evaluate response      
-        rsp = requests.post(get_env('INFRABOX_OPA_HOST') + "/v1/data/infrabox/allow", data=json.dumps(opa_input))
+        rsp = requests.post("%s/v1/data/infrabox/allow" % get_env('INFRABOX_OPA_HOST'), data=json.dumps(opa_input))
         rsp_dict = rsp.json()
-        logger.info("OPA Response: " + rsp.content)
+        logger.debug("OPA Response: %s", rsp.content)
 
         if not ("result" in rsp_dict and rsp_dict["result"] is True):
-            logger.info("Unauthorized request.")
+            logger.info("Rejected unauthorized request")
             abort(401, 'Unauthorized')
 
     except requests.exceptions.RequestException as e:
-        logger.info(e)
+        logger.error(e)
         abort(500, 'Authorization failed')
 
 def token_required(f):
