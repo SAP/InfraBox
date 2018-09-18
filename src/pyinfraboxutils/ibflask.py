@@ -217,39 +217,6 @@ def check_job_belongs_to_project(f):
         return f(*args, **kwargs)
     return decorated_function
 
-def job_token_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        token = require_token()
-
-        if token['type'] != 'job':
-            logger.warn('token type is not job but "%s"', token['type'])
-            abort(401, 'Unauthorized')
-
-        job_id = token['job']['id']
-        r = g.db.execute_one('''
-            SELECT state, project_id, name
-            FROM job
-            WHERE id = %s''', [job_id])
-
-        if not r:
-            logger.warn('job not found')
-            abort(401, 'Unauthorized')
-
-        job_state = r[0]
-        if job_state not in ('queued', 'running', 'scheduled'):
-            abort(401, 'Unauthorized')
-
-
-        token['job']['state'] = r[0]
-        token['job']['name'] = r[2]
-        token['project'] = {}
-        token['project']['id'] = r[1]
-        g.token = token
-
-        return f(*args, **kwargs)
-
-    return decorated_function
 
 def validate_job_token(token):
     job_id = token['job']['id']
