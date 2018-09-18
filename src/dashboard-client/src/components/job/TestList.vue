@@ -55,7 +55,7 @@ export default {
     },
     created () {
         this.job.loadTests().then(() => {
-            this.job.tests = _.sortBy(this.job.tests, (j) => { return j['name'] })
+            this.job.tests = _.sortBy(this.job.tests, (j) => { return j['state'] })
             this.onPagination({ size: this.size, page: this.page })
         })
     },
