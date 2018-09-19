@@ -55,7 +55,7 @@
                                 <span>
                                     <md-input-container>
                                         <md-select name="role_select" id="role_select" v-model="co.role" @change="updateCollaborator(co)">
-                                            <md-option v-for="r in project.roles" :value=r :key="r" class="bg-white">{{r}}</md-option>
+                                            <md-option ref="roleOption" v-for="r in project.roles" :value=r :key="r" class="bg-white">{{r}}</md-option>
                                         </md-select>
                                     </md-input-container>
                                 </span>
@@ -78,12 +78,19 @@ export default {
     data: () => {
         return {
             'username': '',
-            'role': ''
+            'role': '',
+            'finishInit': false
         }
     },
     created () {
+        console.log('created')
         this.project._loadRoles()
         this.project._loadCollaborators()
+    },
+    updated () {
+        if (this.$refs.roleOption != null) {
+            this.finishInit = true
+        }
     },
     methods: {
         addCollaborator () {
@@ -92,7 +99,7 @@ export default {
             this.role = ''
         },
         updateCollaborator (co) {
-            if (this.project) {
+            if (this.project && this.project.collaborators && this.finishInit) {
                 this.project.updateCollaborator(co)
             }
         }
