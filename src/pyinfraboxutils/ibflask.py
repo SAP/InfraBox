@@ -1,12 +1,12 @@
 import base64
-import json
-import requests
 
 from functools import wraps
 
+import requests
+
 from flask import Flask, g, jsonify, request, abort
 
-from pyinfraboxutils import get_logger, get_env
+from pyinfraboxutils import get_logger
 from pyinfraboxutils.db import DB, connect_db
 from pyinfraboxutils.token import decode
 from pyinfraboxutils.ibopa import opa_do_auth
@@ -158,7 +158,7 @@ def check_request_authorization():
 
         if "X-Original-Method" in request.headers:
             opa_input["original_method"] = request.headers["X-Original-Method"]
-        
+
         is_authorized = opa_do_auth(opa_input)
 
         if not is_authorized:
@@ -203,7 +203,7 @@ def check_job_belongs_to_project(f):
 
 def normalize_token(token):
     # DB access if called by socket.io
-    if not "db" in g:
+    if "db" not in g:
         g.db = dbpool.get()
         release_after = True
     else:
@@ -216,7 +216,7 @@ def normalize_token(token):
         if token["type"] == "job":
             try:
                 return enrich_job_token(token)
-            except LookupError as e:
+            except:
                 logger.exception()
                 return None
         # Legacy
@@ -232,7 +232,7 @@ def normalize_token(token):
         if token["type"] == "project":
             if not validate_project_token(token):
                 return None
-                
+
         return token
     finally:
         if release_after:
@@ -277,6 +277,7 @@ def validate_project_token(token):
 
 def get_path_array(path):
     pathstring = path.strip()
-    if (pathstring[-1] == "/"):
+    if pathstring[-1] == "/":
         pathstring = pathstring[:-1]
     return pathstring.split("/")[1:]
+    
