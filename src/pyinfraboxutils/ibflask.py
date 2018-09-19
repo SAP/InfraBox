@@ -243,8 +243,9 @@ def normalize_token(token):
 
 def enrich_job_token(token):
     if not ("job" in token and "id" in token["job"] and validate_uuid4(token["job"]["id"])):
-        job_id = token["job"]["id"]
         raise LookupError('invalid job id')
+    
+    job_id = token["job"]["id"]
 
     r = g.db.execute_one('''
         SELECT state, project_id, name
