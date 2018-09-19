@@ -219,7 +219,7 @@ def normalize_token(token):
             try:
                 return enrich_job_token(token)
             except:
-                logger.exception()
+                logger.exception("Enrichment of job token failed")
                 return None
         # Legacy
         if token["type"] == "project-token":

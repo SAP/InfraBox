@@ -138,7 +138,7 @@ def main(): # pragma: no cover
                 logger.debug('build does not belong to project')
                 return flask_socketio.disconnect()
         except:
-            logger.exception()
+            logger.exception("Exception occured")
             return flask_socketio.disconnect()
         finally:
             dbpool.put(conn)
@@ -177,7 +177,7 @@ def main(): # pragma: no cover
                 logger.debug('job does not belong to project')
                 return flask_socketio.disconnect()
         except:
-            logger.exception()
+            logger.exception("Exception occured")
             return flask_socketio.disconnect()
         finally:
             dbpool.put(conn)
@@ -216,7 +216,7 @@ def main(): # pragma: no cover
                 return flask_socketio.disconnect()
 
         except:
-            logger.exception()
+            logger.exception("Exception occured")
             return flask_socketio.disconnect()
         finally:
             dbpool.put(conn)
