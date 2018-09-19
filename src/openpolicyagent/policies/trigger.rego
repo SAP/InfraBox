@@ -28,6 +28,5 @@ allow {
     api.path = ["api", "v1", "projects", project_id, "trigger"]
     api.token.type = "project"
     api.token.project.id = project_id
-    projects[_].id = api.token.project.id
 }
 
