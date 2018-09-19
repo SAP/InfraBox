@@ -38,6 +38,7 @@ allow {
 
     api.token.type = "project"
     api.token.project.id = project_id
+    projects[_].id = project_id
 }
 
 # Allow GET access to /api/v1/projects/<project_id>/(state.svg|tests.svg|badges.svg) for collaborators
@@ -73,6 +74,7 @@ allow {
 
     api.token.type = "project"
     api.token.project.id = project_id
+    projects[_].id = api.token.project.id
 }
 
 # Allow POST access to /api/v1/projects/<project_id>/upload/<build_id>/ for project tokens
@@ -82,4 +84,5 @@ allow {
 
     api.token.type = "project"
     api.token.project.id = project_id
+    projects[_].id = api.token.project.id
 }

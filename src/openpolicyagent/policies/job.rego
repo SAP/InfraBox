@@ -14,6 +14,7 @@ allow {
     api.path = ["api", "v1", "projects", project_id, "jobs", _]
     api.token.type = "project"
     api.token.project.id = project_id
+    projects[_].id = api.token.project.id
 }
 
 # Allow GET access to api/v1/projects/<project_id>/jobs/<job_id>/output for project tokens
@@ -22,6 +23,7 @@ allow {
     api.path = ["api", "v1", "projects", project_id, "jobs", _, "output"]
     api.token.type = "project"
     api.token.project.id = project_id
+    projects[_].id = api.token.project.id
 }
 
 # Allow GET access to api/v1/projects/<project_id>/jobs/<job_id>/manifest for project tokens
@@ -30,6 +32,7 @@ allow {
     api.path = ["api", "v1", "projects", project_id, "jobs", _, "manifest"]
     api.token.type = "project"
     api.token.project.id = project_id
+    projects[_].id = api.token.project.id
 }
 
 

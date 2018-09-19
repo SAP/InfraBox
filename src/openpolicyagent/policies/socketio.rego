@@ -6,12 +6,6 @@ import data.infrabox.collaborators.collaborators
 import data.infrabox.projects.projects
 import data.infrabox.roles
 
-socketio_project_owner([user, project]){
-    collaborators[i].project_id = project
-    collaborators[i].user_id = user
-    roles[collaborators[i].role] >= 3
-}
-
 socketio_project_collaborator([user, project]) {
     collaborators[i].project_id = project
     collaborators[i].user_id = user
