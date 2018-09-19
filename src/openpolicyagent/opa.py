@@ -1,11 +1,14 @@
 import os
 import ntpath
 import requests
-
 import eventlet
-eventlet.monkey_patch()
 
 from pyinfraboxutils import get_env
+
+
+eventlet.monkey_patch()
+
+
 
 def upload_policies(policy_url):
     files = get_files()
@@ -14,17 +17,16 @@ def upload_policies(policy_url):
         file_name = get_filename(p)
         f_data = open(p, 'rb')
         url = policy_url+file_name[:-5]
-        print("Pushing " + file_name + " to " + url)
         try:
             rsp = requests.put(url, data=f_data)
             if rsp:
-                print("Pushed " + file_name + " to " + url + " (Status " + str(rsp.status_code) + ")")
+                print "Pushed %s to %s (Status %s)" % (file_name, url, str(rsp.status_code))
             else:
-                print("Failed pushing " + file_name + " to " + url + " (Status " + str(rsp.status_code) + "):")
+                print "Failed pushing %s to %s (Status %s):" % (file_name, url, str(rsp.status_code))
                 print rsp.content
         except requests.exceptions.RequestException as e:
-            print("Failed pushing " + file_name + " to " + url + ":")
-            print(e)
+            print "Failed pushing %s to %s:" % (file_name, url)
+            print e
 
 def get_files():
     dir_path = os.path.dirname(os.path.realpath(__file__))
