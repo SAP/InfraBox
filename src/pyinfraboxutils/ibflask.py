@@ -145,12 +145,6 @@ def get_token():
         logger.info('No auth header')
         return None
 
-def require_token():
-    token = get_token()
-    if token is None:
-        abort(401, 'Unauthorized')
-    return token
-
 def check_request_authorization():
     try:
         # Assemble Input Data for Open Policy Agent
@@ -175,7 +169,9 @@ def check_request_authorization():
 def token_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        g.token = require_token()
+        g.token = normalize_token(get_token())
+        if g.token is None:
+            abort(401, 'Unauthorized')
         return f(*args, **kwargs)
 
     return decorated_function
@@ -232,21 +228,6 @@ def enrich_job_token(token):
     token['project'] = {}
     token['project']['id'] = r[1]
     return token
-
-def is_collaborator(user_id, project_id, db=None):
-    if not db:
-        db = g.db
-
-    u = db.execute_many('''
-        SELECT co.*
-        FROM collaborator co
-        INNER JOIN "user" u
-            ON u.id = co.user_id
-            AND u.id = %s
-            AND co.project_id = %s
-    ''', [user_id, project_id])
-
-    return u
 
 def get_path_array(path):
     pathstring = path.strip()

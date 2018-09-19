@@ -16,9 +16,9 @@ from flask_restplus import Resource
 
 from pyinfraboxutils import get_env, get_logger
 
-from pyinfraboxutils.ibflask import require_token, is_collaborator
+from pyinfraboxutils.ibflask import get_token, normalize_token
 from pyinfraboxutils.ibrestplus import api, app
-from pyinfraboxutils.ibopa import opa_push_all
+from pyinfraboxutils.ibopa import opa_push_all, opa_do_auth
 from pyinfraboxutils import dbpool
 
 import handlers
@@ -26,6 +26,8 @@ import settings
 
 import listeners.console
 import listeners.job
+
+from requests.exceptions import RequestException
 
 logger = get_logger('api')
 
@@ -98,42 +100,14 @@ def main(): # pragma: no cover
             logger.debug('project_id not set')
             return flask_socketio.disconnect()
 
-        try:
-            uuid.UUID(project_id)
-        except:
-            logger.debug('project_id not a uuid')
+        if not sio_is_authorized(["listen:jobs", project_id]):
             return flask_socketio.disconnect()
-
-        conn = dbpool.get()
-        try:
-            p = conn.execute_one_dict('''
-                    SELECT public
-                    FROM project
-                    WHERE id = %s
-                ''', [project_id])
-
-            if not p['public']:
-                token = require_token()
-                if token['type'] == 'user':
-                    user_id = token['user']['id']
-                    collaborator = is_collaborator(user_id, project_id, db=conn)
-
-                    if not collaborator:
-                        logger.warn('not a collaborator')
-                        return flask_socketio.disconnect()
-                else:
-                    logger.debug('only user token allowed')
-                    return flask_socketio.disconnect()
-
-        finally:
-            dbpool.put(conn)
 
         flask_socketio.join_room(project_id)
 
     @sio.on('listen:build')
     def __listen_build(build_id):
         logger.debug('listen:build for %s', build_id)
-        token = require_token()
 
         if not build_id:
             logger.debug('build_id not set')
@@ -145,11 +119,12 @@ def main(): # pragma: no cover
             logger.debug('build_id not a uuid')
             return flask_socketio.disconnect()
 
-        conn = dbpool.get()
+        if not sio_is_authorized(['listen:build', build_id]):
+            return flask_socketio.disconnect()
+
         try:
-            if token['type'] not in ('project', 'project-token'):
-                logger.debug('only project token allowed')
-                return flask_socketio.disconnect()
+            conn = dbpool.get()
+            token = normalize_token(get_token())
 
             project_id = token['project']['id']
 
@@ -162,6 +137,9 @@ def main(): # pragma: no cover
             if not build:
                 logger.debug('build does not belong to project')
                 return flask_socketio.disconnect()
+        except:
+            logger.exception()
+            return flask_socketio.disconnect()
         finally:
             dbpool.put(conn)
 
@@ -170,7 +148,6 @@ def main(): # pragma: no cover
     @sio.on('listen:console')
     def __listen_console(job_id):
         logger.debug('listen:console for %s', job_id)
-        token = require_token()
 
         if not job_id:
             logger.debug('job_id not set')
@@ -182,12 +159,12 @@ def main(): # pragma: no cover
             logger.debug('job_id not a uuid')
             return flask_socketio.disconnect()
 
+        if not sio_is_authorized(['listen:console', job_id]):
+            return flask_socketio.disconnect()
+
+        token = normalize_token(get_token())
         conn = dbpool.get()
         try:
-            if token['type'] not in ('project', 'project-token'):
-                logger.debug('only project token allowed')
-                return flask_socketio.disconnect()
-
             project_id = token['project']['id']
 
             build = conn.execute_one('''
@@ -199,6 +176,9 @@ def main(): # pragma: no cover
             if not build:
                 logger.debug('job does not belong to project')
                 return flask_socketio.disconnect()
+        except:
+            logger.exception()
+            return flask_socketio.disconnect()
         finally:
             dbpool.put(conn)
 
@@ -206,7 +186,7 @@ def main(): # pragma: no cover
 
     @sio.on('listen:dashboard-console')
     def __listen_dashboard_console(job_id):
-        logger.debug('listen:console for %s', job_id)
+        logger.debug('listen:dashboard-console for %s', job_id)
 
         if not job_id:
             logger.debug('job_id not set')
@@ -232,22 +212,36 @@ def main(): # pragma: no cover
                 logger.warn('job not found')
                 return flask_socketio.disconnect()
 
-            if not u['public']:
-                token = require_token()
-                if token['type'] == 'user':
-                    user_id = token['user']['id']
-                    collaborator = is_collaborator(user_id, u['project_id'], db=conn)
+            if not sio_is_authorized(['listen:dashboard-console', u['project_id'], job_id]):
+                return flask_socketio.disconnect()
 
-                    if not collaborator:
-                        logger.warn('not a collaborator')
-                        return flask_socketio.disconnect()
-                else:
-                    logger.debug('only user token allowed')
-                    return flask_socketio.disconnect()
+        except:
+            logger.exception()
+            return flask_socketio.disconnect()
         finally:
             dbpool.put(conn)
 
         flask_socketio.join_room(job_id)
+
+    def sio_is_authorized(path):
+        # Assemble Input Data for Open Policy Agent
+        opa_input = {
+            "input": {
+                "method": "WS",
+                "path": path,
+                "token": normalize_token(get_token())
+            }
+        }
+        try:
+            authorized = opa_do_auth(opa_input)
+            if not authorized:
+                logger.warn("Unauthorized socket.io access attempt")
+                return False
+            return True
+        except RequestException as e:
+            logger.error(e)
+            return False
+
 
     logger.info('Starting DB listeners')
     sio.start_background_task(listeners.job.listen, sio)
