@@ -61,7 +61,7 @@ def execute(command, cwd=None, env=None, ignore_error=False, ignore_output=False
         if ignore_output:
             continue
 
-        print(line.rstrip())
+        print line.rstrip()
 
     process.wait()
 
@@ -150,7 +150,8 @@ def services_start(args):
         run = os.path.join(p, 'run_with_dummy.sh')
         execute(['bash', run], cwd=p)
     elif args.service_name == 'opa':
-        run = ['docker', 'run', '-ti', '--rm', '-p', '8181:8181', 'openpolicyagent/opa:0.9.1', 'run', '--server', '--log-level=debug']
+        run = ['docker', 'run', '-ti', '--rm', '-p', '8181:8181',
+               'openpolicyagent/opa:0.9.1', 'run', '--server', '--log-level=debug']
         execute(run)
     elif args.service_name == 'dashboard-client':
         p = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'src', 'dashboard-client')

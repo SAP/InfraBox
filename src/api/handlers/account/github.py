@@ -240,4 +240,3 @@ class Login(Resource):
         res = redirect(url)
         res.set_cookie('token', token)
         return res
-
