@@ -6,6 +6,8 @@ import requests
 
 from flask import Flask, g, jsonify, request, abort
 
+from pyinfrabox.utils import validate_uuid4
+
 from pyinfraboxutils import get_logger
 from pyinfraboxutils.db import DB, connect_db
 from pyinfraboxutils.token import decode
@@ -241,6 +243,9 @@ def normalize_token(token):
 
 def enrich_job_token(token):
     job_id = token['job']['id']
+    if not validate_uuid4(job_id):
+        raise LookupError('invalid job id')
+
     r = g.db.execute_one('''
         SELECT state, project_id, name
         FROM job
@@ -257,6 +262,9 @@ def enrich_job_token(token):
     return token
 
 def validate_user_token(token):
+    if not validate_uuid4(token['user']['id']):
+        return False
+
     u = g.db.execute_one('''
         SELECT id FROM "user" WHERE id = %s
     ''', [token['user']['id']])
@@ -266,6 +274,9 @@ def validate_user_token(token):
     return True
 
 def validate_project_token(token):
+    if not validate_uuid4(token['project']['id']):
+        return False
+
     r = g.db.execute_one('''
         SELECT id FROM auth_token
         WHERE id = %s AND project_id = %s
