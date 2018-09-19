@@ -48,7 +48,7 @@ def handle_job_update_retry(conn, update):
             handle_job_update(conn, update)
             return
         except:
-            logger.exception()
+            logger.exception("Exception occured")
 
     logger.error('Failed to set review multiple times. Restarting')
 
