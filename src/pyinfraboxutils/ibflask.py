@@ -199,18 +199,42 @@ def check_job_belongs_to_project(f):
     return decorated_function
 
 def normalize_token(token):
-    # Enrich job token
-    if token is not None and "type" in token and token["type"] == "job":
-        try:
-            return enrich_job_token(token)
-        except LookupError as e:
-            logger.info(e)
-            abort(401, 'Unauthorized')
-    # Legacy
-    if token is not None and "type" in token and token["type"] == "project-token":
-        g.token.type = 'project'
+    # DB access if called by socket.io
+    if not "db" in g:
+        g.db = dbpool.get()
+        release_after = True
+    else:
+        release_after = False
 
-    return token
+    try:
+        # Enrich job token
+        if token is None or not "type" in token:
+            return token
+        if token["type"] == "job":
+            try:
+                return enrich_job_token(token)
+            except LookupError as e:
+                logger.exception()
+                return None
+        # Legacy
+        if token["type"] == "project-token":
+            token["type"] = 'project'
+
+        # Validate user token
+        if token["type"] == "user":
+            if not validate_user_token(token):
+                return None
+
+        # Validate project_token
+        if token["type"] == "project":
+            if not validate_project_token(token):
+                return None
+                
+        return token
+    finally:
+        if release_after:
+            dbpool.put(g.db)
+            g.db = None
 
 def enrich_job_token(token):
     job_id = token['job']['id']
@@ -228,6 +252,25 @@ def enrich_job_token(token):
     token['project'] = {}
     token['project']['id'] = r[1]
     return token
+
+def validate_user_token(token):
+    u = g.db.execute_one('''
+        SELECT id FROM "user" WHERE id = %s
+    ''', [token['user']['id']])
+    if not u:
+        logger.warn('user not found')
+        return False
+    return True
+
+def validate_project_token(token):
+    r = g.db.execute_one('''
+        SELECT id FROM auth_token
+        WHERE id = %s AND project_id = %s
+    ''', (token['id'], token['project']['id'],))
+    if not r:
+        logger.warn('project token not valid')
+        return False
+    return True
 
 def get_path_array(path):
     pathstring = path.strip()
