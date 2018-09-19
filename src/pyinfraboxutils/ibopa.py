@@ -29,9 +29,10 @@ def opa_push_data(destination_url, json_payload):
         if rsp:
             logger.debug("Pushed data to %s (Status %s):%s", destination_url, str(rsp.status_code), json_payload)
         else:
-            logger.error("Failed pushing data to %s (Status %s): Req.: %s; Resp.: %s", destination_url, str(rsp.status_code), json_payload, rsp.content)
+            logger.error("Failed pushing data to %s (Status %s): Req.: %s; Resp.: %s",
+                         destination_url, str(rsp.status_code), json_payload, rsp.content)
     except requests.exceptions.RequestException as e:
-        logger.exception("Failed pushing data to %s: %s; Req.: %s", destination_url, e, json_payload) 
+        logger.exception("Failed pushing data to %s: %s; Req.: %s", destination_url, e, json_payload)
 
 def opa_push_collaborator_data(db):
     collaborators = db.execute_many_dict(

@@ -13,6 +13,7 @@ import socketio
 
 from flask import request, abort, g, jsonify
 from flask_restplus import Resource
+from requests.exceptions import RequestException
 
 from pyinfraboxutils import get_env, get_logger
 
@@ -27,7 +28,6 @@ import settings
 import listeners.console
 import listeners.job
 
-from requests.exceptions import RequestException
 
 logger = get_logger('api')
 

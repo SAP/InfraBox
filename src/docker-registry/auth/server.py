@@ -1,4 +1,4 @@
-from flask import request, g, abort, jsonify
+from flask import jsonify
 
 from pyinfraboxutils import get_env, get_logger
 from pyinfraboxutils.ibflask import token_required, app
@@ -51,11 +51,11 @@ def v2():
 @token_required
 def v2_path(path):
     # p = path.split('/')
-    method = dict(request.headers).get('X-Original-Method', None)
+    # method = dict(request.headers).get('X-Original-Method', None)
 
-    if not method:
-        logger.warn('no x-original-method header')
-        abort(401, 'Unauthorized')
+    # if not method:
+    #     logger.warn('no x-original-method header')
+    #     abort(401, 'Unauthorized')
 
     # if len(p) < 2:
     #     logger.warn('invalid repo')
