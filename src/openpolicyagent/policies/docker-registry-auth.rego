@@ -25,7 +25,7 @@ allow {
 
 # Allow access to /v2/path
 allow {
-    api.method = "GET"
+    api.original_method = "GET"
     api.path = ["v2", project_id]
     count(project_id, project_id_length)
     project_id_length >= 2
@@ -36,6 +36,7 @@ allow {
 }
 
 allow {
+    api.original_method
     api.path = ["v2", project_id]
     count(project_id, project_id_length)
     project_id_length >= 2
