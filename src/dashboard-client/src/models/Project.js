@@ -123,6 +123,7 @@ export default class Project {
         })
         .catch((err) => {
             NotificationService.$emit('NOTIFICATION', new Notification(err))
+            this._reloadCollaborators()
         })
     }
 
