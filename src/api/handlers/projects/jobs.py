@@ -110,10 +110,6 @@ class Jobs(Resource):
 
         result = []
         for j in jobs:
-            limits = {}
-            if j['job_definition']:
-                limits = j['job_definition'].get('resources', {}).get('limits', {})
-
             o = {
                 'build': {
                     'id': j['build_id'],
@@ -134,8 +130,6 @@ class Jobs(Resource):
                     'start_date': j['job_start_date'],
                     'end_date': j['job_end_date'],
                     'name': j['job_name'],
-                    'cpu': limits.get('cpu', 1),
-                    'memory': limits.get('memory', 1024),
                     'dependencies': j['job_dependencies'],
                     'created_at': j['job_created_at'],
                     'message': j['job_message'],
