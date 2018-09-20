@@ -127,8 +127,6 @@ function handleJobUpdate (state, event) {
         const job = new Job(
             d.id,
             d.name,
-            d.cpu,
-            d.memory,
             d.state,
             startDate,
             endDate,
