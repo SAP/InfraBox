@@ -5,23 +5,19 @@ from pyinfraboxutils import get_logger, get_env, dbpool
 
 logger = get_logger('OPA')
 
-OPA_AUTH_URL = "%s/v1/data/infrabox/allow" % get_env('INFRABOX_OPA_HOST')
-COLLABORATOR_DATA_DEST_URL = "%s/v1/data/infrabox/collaborators" % get_env("INFRABOX_OPA_HOST")
-PROJECT_DATA_DEST_URL = "%s/v1/data/infrabox/projects" % get_env("INFRABOX_OPA_HOST")
+OPA_AUTH_URL = "http://%s:%s/v1/data/infrabox/allow" % (get_env('INFRABOX_OPA_HOST'), get_env('INFRABOX_OPA_PORT'))
+COLLABORATOR_DATA_DEST_URL = "http://%s:%s/v1/data/infrabox/collaborators" % (get_env('INFRABOX_OPA_HOST'), get_env('INFRABOX_OPA_PORT'))
+PROJECT_DATA_DEST_URL = "http://%s:%s/v1/data/infrabox/projects" % (get_env('INFRABOX_OPA_HOST'), get_env('INFRABOX_OPA_PORT'))
 
 def opa_do_auth(input_dict):
     # Send request to Open Policy Agent and evaluate response
     payload = json.dumps(input_dict)
     logger.debug("Sending OPA Request: %s", payload)
-    try:
-        rsp = requests.post(OPA_AUTH_URL, data=json.dumps(input_dict))
-        rsp_dict = rsp.json()
-        logger.debug("OPA Response: %s", rsp.content)
+    rsp = requests.post(OPA_AUTH_URL, data=json.dumps(input_dict))
+    rsp_dict = rsp.json()
+    logger.debug("OPA Response: %s", rsp.content)
 
-        return "result" in rsp_dict and rsp_dict["result"] is True
-
-    except requests.exceptions.RequestException as e:
-        raise e
+    return "result" in rsp_dict and rsp_dict["result"] is True
 
 def opa_push_data(destination_url, json_payload):
     try:
@@ -53,5 +49,8 @@ def opa_push_project_data(db):
 
 def opa_push_all():
     db = dbpool.get()
-    opa_push_collaborator_data(db)
-    opa_push_project_data(db)
+    try:
+        opa_push_collaborator_data(db)
+        opa_push_project_data(db)
+    finally:
+        dbpool.put(db)
