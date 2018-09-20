@@ -171,15 +171,15 @@ def check_request_authorization():
         logger.error(e)
         abort(500, 'Authorization failed')
 
-def token_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        g.token = normalize_token(get_token())
-        if g.token is None:
-            abort(401, 'Unauthorized')
-        return f(*args, **kwargs)
+# def token_required(f):
+#     @wraps(f)
+#     def decorated_function(*args, **kwargs):
+#         g.token = normalize_token(get_token())
+#         if g.token is None:
+#             abort(401, 'Unauthorized')
+#         return f(*args, **kwargs)
 
-    return decorated_function
+#     return decorated_function
 
 def check_job_belongs_to_project(f):
     @wraps(f)

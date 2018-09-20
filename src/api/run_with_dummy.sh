@@ -14,6 +14,10 @@ export INFRABOX_DATABASE_HOST=localhost
 export INFRABOX_DATABASE_USER=postgres
 export INFRABOX_DATABASE_PASSWORD=postgres
 
+# InfraBox
+export INFRABOX_OPA_HOST=localhost
+export INFRABOX_OPA_PORT=8181
+
 # Service Config
 export INFRABOX_VERSION=local
 export INFRABOX_LOG_LEVEL=debug

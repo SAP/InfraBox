@@ -11,7 +11,6 @@ def ping():
 
 @app.route('/v2/') # prevent 301 redirects
 @app.route('/v2')
-@token_required
 def v2():
     # Replaced - see authorization in src/opa/policies/docker-registry-auth.rego
     # token = g.token
@@ -48,7 +47,6 @@ def v2():
 
 @app.route('/v2/<path:path>/') # prevent 301 redirects
 @app.route('/v2/<path:path>')
-@token_required
 def v2_path(path):
     # p = path.split('/')
     # method = dict(request.headers).get('X-Original-Method', None)
