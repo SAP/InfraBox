@@ -2,6 +2,7 @@ package stub
 
 import (
 	"context"
+    "time"
 	"github.com/sap/infrabox/src/controller/pkg/apis/core/v1alpha1"
 
 	"github.com/onrik/logrus/filename"
@@ -19,7 +20,9 @@ func NewHandler() sdk.Handler {
 func init() {
 	logrus.AddHook(filename.NewHook())
 	logrus.SetLevel(logrus.InfoLevel)
-    logrus.SetFormatter(&logrus.JSONFormatter{})
+    logrus.SetFormatter(&logrus.JSONFormatter{
+        TimestampFormat: time.RFC3339Nano,
+    })
 }
 
 type Controller struct{}
@@ -41,6 +44,11 @@ func handleError(pi *v1alpha1.IBPipelineInvocation, err error) error {
 	return err
 }
 
+func trackTime(start time.Time, log *logrus.Entry) {
+    elapsed := time.Since(start)
+    log.Infof("Handle tooke %s", elapsed)
+}
+
 func (h *Controller) Handle(ctx context.Context, event sdk.Event) error {
 	switch o := event.Object.(type) {
 	case *v1alpha1.IBPipelineInvocation:
@@ -54,8 +62,7 @@ func (h *Controller) Handle(ctx context.Context, event sdk.Event) error {
 			"name":      pi.Name,
 		})
 
-		log.Info("Start Handle")
-        defer log.Info("End Handle")
+        defer trackTime(time.Now(), log)
 
 		delTimestamp := pi.GetDeletionTimestamp()
 		if delTimestamp != nil {
@@ -63,7 +70,7 @@ func (h *Controller) Handle(ctx context.Context, event sdk.Event) error {
 		}
 
 		if pi.Status.State == "error" || pi.Status.State == "terminated" {
-			log.Info("pi terminated, ignoring")
+			log.Debug("pi terminated, ignoring")
 			return nil
 		}
 
@@ -98,8 +105,7 @@ func (h *Controller) Handle(ctx context.Context, event sdk.Event) error {
 			"name":      ns.Name,
 		})
 
-		log.Info("Start Handle")
-        defer log.Info("End Handle")
+        defer trackTime(time.Now(), log)
 
 		delTimestamp := ns.GetDeletionTimestamp()
 		if delTimestamp != nil {
@@ -108,7 +114,7 @@ func (h *Controller) Handle(ctx context.Context, event sdk.Event) error {
 			err := h.syncFunctionInvocation(ns, log)
 
 			if ns.Status.State.Terminated != nil {
-				log.Info("function terminated, ignoring")
+				log.Debug("function terminated, ignoring")
 				return nil
 			}
 

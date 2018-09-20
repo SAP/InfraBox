@@ -61,7 +61,7 @@ func (c *Controller) deletePipelineInvocation(cr *v1alpha1.IBPipelineInvocation,
 }
 
 func (c *Controller) deleteService(pi *v1alpha1.IBPipelineInvocation, service *v1alpha1.IBPipelineService, log *logrus.Entry, index int) error {
-	log.Infof("Deleting Service")
+	log.Debugf("Deleting Service")
 	id := pi.Name + "-" + strconv.Itoa(index)
 	resourceClient, _, err := k8sclient.GetResourceClient(service.APIVersion, service.Kind, pi.Namespace)
 	if err != nil {
@@ -83,7 +83,7 @@ func (c *Controller) deleteServices(pi *v1alpha1.IBPipelineInvocation, log *logr
 		return nil
 	}
 
-	log.Info("Delete additional services")
+	log.Debug("Delete additional services")
 	for index, s := range pi.Spec.Services {
 		l := log.WithFields(logrus.Fields{
 			"service_version": s.APIVersion,
@@ -94,7 +94,7 @@ func (c *Controller) deleteServices(pi *v1alpha1.IBPipelineInvocation, log *logr
 			return err
 		}
 
-		l.Info("Service deleted")
+		l.Debug("Service deleted")
 	}
 
 	return nil
@@ -105,7 +105,7 @@ func (c *Controller) areServicesDeleted(pi *v1alpha1.IBPipelineInvocation, log *
 		return true, nil
 	}
 
-	log.Info("Delete additional services")
+	log.Debug("Delete additional services")
 	for index, s := range pi.Spec.Services {
 		id := pi.Name + "-" + strconv.Itoa(index)
 		resourceClient, _, err := k8sclient.GetResourceClient(s.APIVersion, s.Kind, pi.Namespace)
@@ -159,7 +159,7 @@ func updateStatus(pi *v1alpha1.IBPipelineInvocation, log *logrus.Entry) error {
 }
 
 func (c *Controller) preparePipelineInvocation(cr *v1alpha1.IBPipelineInvocation, log *logrus.Entry) error {
-	logrus.Info("Prepare")
+	logrus.Debug("Prepare")
 	cr.SetFinalizers([]string{"core.infrabox.net"})
 	cr.Status.State = "preparing"
 	cr.Status.Message = "Services are being created"
@@ -178,19 +178,19 @@ func (c *Controller) preparePipelineInvocation(cr *v1alpha1.IBPipelineInvocation
 	}
 
 	if servicesCreated {
-		log.Infof("Services are ready")
+		log.Debugf("Services are ready")
 		cr.Status.Message = ""
 		cr.Status.State = "scheduling"
 	} else {
-		log.Infof("Services not yet ready")
+		log.Debugf("Services not yet ready")
 	}
 
-	log.Info("Updating state")
+	log.Debug("Updating state")
 	return updateStatus(cr, log)
 }
 
 func (c *Controller) runPipelineInvocation(cr *v1alpha1.IBPipelineInvocation, log *logrus.Entry) error {
-	logrus.Info("Run")
+	logrus.Debug("Run")
 	pipeline := newPipeline(cr)
 	err := sdk.Get(pipeline)
 
@@ -216,7 +216,7 @@ func (c *Controller) runPipelineInvocation(cr *v1alpha1.IBPipelineInvocation, lo
 
 		if status.State.Terminated != nil {
 			// step already finished
-			log.Info("Step already finished")
+			log.Debug("Step already finished")
 			continue
 		}
 
@@ -274,7 +274,7 @@ func (c *Controller) runPipelineInvocation(cr *v1alpha1.IBPipelineInvocation, lo
 }
 
 func (c *Controller) finalizePipelineInvocation(cr *v1alpha1.IBPipelineInvocation, log *logrus.Entry) error {
-	log.Info("Finalizing")
+	log.Debug("Finalizing")
 
 	err := c.deleteServices(cr, log)
 	if err != nil {
@@ -366,7 +366,7 @@ func (c *Controller) createService(service *v1alpha1.IBPipelineService, pi *v1al
 		return false, err
 	}
 
-	log.Infof("Service %s/%s created", service.APIVersion, service.Kind)
+	log.Debugf("Service %s/%s created", service.APIVersion, service.Kind)
 
 	s, err := resourceClient.Get(id, metav1.GetOptions{})
 	if err != nil {
@@ -399,11 +399,11 @@ func (c *Controller) createService(service *v1alpha1.IBPipelineService, pi *v1al
 
 func (c *Controller) createServices(pi *v1alpha1.IBPipelineInvocation, log *logrus.Entry) (bool, error) {
 	if pi.Spec.Services == nil {
-		log.Info("No services specified")
+		log.Debug("No services specified")
 		return true, nil
 	}
 
-	log.Info("Creating additional services")
+	log.Debug("Creating additional services")
 
 	ready := true
 	for index, s := range pi.Spec.Services {
@@ -420,10 +420,10 @@ func (c *Controller) createServices(pi *v1alpha1.IBPipelineInvocation, log *logr
 		}
 
 		if r {
-			l.Info("Service ready")
+			l.Debug("Service ready")
 		} else {
 			ready = false
-			l.Infof("Service not yet ready")
+			l.Debugf("Service not yet ready")
 		}
 	}
 
