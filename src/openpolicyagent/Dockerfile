@@ -1,4 +1,6 @@
 FROM openpolicyagent/opa:0.9.1
 
-EXPOSE 8181/tcp
+COPY src/openpolicyagent/policies /policies
+WORKDIR /policies
+
 CMD ["run", "--server", "--log-level=debug"]
