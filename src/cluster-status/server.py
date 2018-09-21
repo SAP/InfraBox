@@ -5,6 +5,10 @@ from pyinfraboxutils.ibflask import app
 
 logger = get_logger('state')
 
+@app.route('/')
+def ping():
+    return jsonify({})
+
 @app.route('/<cluster_name>')
 def s(cluster_name):
     status = g.db.execute_one_dict("""
@@ -12,6 +16,10 @@ def s(cluster_name):
                 FROM cluster
                 WHERE name = %s
             """, [cluster_name])
+
+
+    if not status:
+        return jsonify({}), 404
 
     if not status['active'] or not status['enabled']:
         return jsonify(status), 503
