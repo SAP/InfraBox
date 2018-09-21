@@ -1,0 +1,15 @@
+kind: Service
+cluster-stateVersion: v1
+metadata:
+    name: infrabox-cluster-state
+    labels:
+        app: infrabox-cluster-state
+spec:
+    selector:
+        app: infrabox-cluster-state
+    ports:
+    -
+        name: http-web
+        protocol: TCP
+        port: 8080
+        targetPort: 8080
