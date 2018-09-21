@@ -1,0 +1,17 @@
+apiVersion: garden.service.infrabox.net/v1alpha1
+kind: ShootCluster
+metadata:
+  name: "exampleshoot"
+spec:
+  shootName: "d068804tib1"              # name of the k8s cluster created by gardener
+  clusterVersion: "1.10.8"
+  gardenerNamespace: "garden-datahub"  # gardener namespace where it puts the cluster into
+  vpcCIDR: "10.0.0.0/16"
+  maxNodes: 1
+  minNodes: 1
+  #  workerName: "cpu-worker"           # name of the group of worker nodes
+  machineType: "m4.xlarge"
+  diskSize: 100
+  enableAutoscaling: true
+  zone: "eu-central-1a"
+  #  volumeType: "gp2"

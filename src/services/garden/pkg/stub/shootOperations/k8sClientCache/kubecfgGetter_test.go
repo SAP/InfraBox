@@ -1,0 +1,66 @@
+package k8sClientCache
+
+import (
+	"testing"
+
+	"k8s.io/client-go/kubernetes/fake"
+
+	"github.com/sap/infrabox/src/services/garden/pkg/stub/shootOperations/common"
+	"github.com/sap/infrabox/src/services/garden/pkg/stub/shootOperations/common/testUtils"
+	"github.com/sap/infrabox/src/services/garden/pkg/stub/shootOperations/utils"
+)
+
+func TestStaticKubecfgGetter_Get(t *testing.T) {
+	g := NewStaticKubecfgGetter("foo")
+	if s, _ := g.Get(nil); s != "foo" {
+		t.Fatal("expected 'foo'")
+	}
+}
+
+func TestSecretGetter_OnNilInjput_GetReturnsErr(t *testing.T) {
+	cfgGetter := NewSecretKubecfgGetter(nil)
+
+	if _, err := cfgGetter.Get(nil); err == nil {
+		t.Fatal("expected an error")
+	}
+}
+
+func TestSecretGetter_OnNonexistingSecret_ReturnsError(t *testing.T) {
+	m := testUtils.NewSdkMockBackedByFake(t, fake.NewSimpleClientset())
+	cfgGetter := NewSecretKubecfgGetter(m)
+
+	if _, err := cfgGetter.Get(utils.CreateShootCluster()); err == nil {
+		t.Fatal("expected an error")
+	}
+}
+
+func TestSecretGetter_OnNonexistingEntryInSecret_ReturnsError(t *testing.T) {
+	m := testUtils.NewSdkMockBackedByFake(t, fake.NewSimpleClientset())
+	cfgGetter := NewSecretKubecfgGetter(m)
+
+	dhInfra := utils.CreateShootCluster()
+	s := utils.NewSecret(dhInfra)
+	m.Create(s)
+
+	if _, err := cfgGetter.Get(dhInfra); err == nil {
+		t.Fatal("expected an error")
+	}
+}
+
+func TestSecretGetter_OnExistingEntryInSecret_ReturnsSecretAndNoError(t *testing.T) {
+	m := testUtils.NewSdkMockBackedByFake(t, fake.NewSimpleClientset())
+	cfgGetter := NewSecretKubecfgGetter(m)
+
+	dhInfra := utils.CreateShootCluster()
+	s := utils.NewSecret(dhInfra)
+	cfgData := "foodata"
+	s.Data[common.KeyGardenKubectlInSecret] = []byte(cfgData)
+
+	m.Create(s)
+
+	if cfg, err := cfgGetter.Get(dhInfra); err != nil {
+		t.Fatal("expected an error")
+	} else if cfgData != cfg {
+		t.Fatal("returned cfg is wrong")
+	}
+}
