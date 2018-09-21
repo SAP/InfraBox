@@ -9,7 +9,7 @@ spec:
         http:
             paths:
             -
-                path: /
+                path: /*
                 backend:
                     serviceName: infrabox-cluster-state
                     servicePort: 8080
