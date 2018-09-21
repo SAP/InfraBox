@@ -563,7 +563,31 @@
                 {
                     "type": "docker-registry",
                     "host": "quay.io/infrabox",
-                    "repository": "static",
+                    "repository": "checker",
+                    "username": "infrabox+infrabox_ci",
+                    "password": {
+                        "$secret": "QUAY_PASSWORD"
+                    }
+                }
+            ]
+        },
+        {
+            "type": "docker",
+            "build_context": "../..",
+            "name": "cluster-state",
+            "docker_file": "src/cluster-state/Dockerfile",
+            "build_only": true,
+            "resources": {
+                "limits": {
+                    "cpu": 1,
+                    "memory": 1024
+                }
+            },
+            "deployments": [
+                {
+                    "type": "docker-registry",
+                    "host": "quay.io/infrabox",
+                    "repository": "cluster-state",
                     "username": "infrabox+infrabox_ci",
                     "password": {
                         "$secret": "QUAY_PASSWORD"
@@ -571,5 +595,6 @@
                 }
             ]
         }
+
     ]
 }
