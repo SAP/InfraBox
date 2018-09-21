@@ -2,6 +2,7 @@
 import uuid
 import os
 import sys
+import daemon
 
 import urllib3
 
@@ -19,7 +20,7 @@ from pyinfraboxutils import get_env, get_logger
 
 from pyinfraboxutils.ibflask import get_token, normalize_token
 from pyinfraboxutils.ibrestplus import api, app
-from pyinfraboxutils.ibopa import opa_push_all, opa_do_auth
+from pyinfraboxutils.ibopa import opa_push_all, opa_do_auth, opa_push_loop
 from pyinfraboxutils import dbpool
 
 import handlers
@@ -247,8 +248,10 @@ def main(): # pragma: no cover
     sio.start_background_task(listeners.job.listen, sio)
     sio.start_background_task(listeners.console.listen, sio, client_manager)
 
-    logger.info('Pushing database data to Open Policy Agent')
-    opa_push_all()
+    logger.info('Start pushing database data repeatedly to Open Policy Agent')
+    
+    opa_push_loop(1)
+    
 
     port = int(os.environ.get('INFRABOX_PORT', 8080))
     logger.info('Starting Server on port %s', port)
