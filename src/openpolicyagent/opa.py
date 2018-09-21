@@ -8,8 +8,6 @@ from pyinfraboxutils import get_env
 
 eventlet.monkey_patch()
 
-
-
 def upload_policies(policy_url):
     files = get_files()
 
@@ -41,7 +39,7 @@ def get_filename(path):
     return tail or ntpath.basename(head)
 
 def main():
-    upload_policies('%s/v1/policies/infrabox/api/' % get_env('INFRABOX_OPA_HOST'))
+    upload_policies('http://%s:%s/v1/policies/infrabox/api/' % (get_env('INFRABOX_OPA_HOST'), get_env('INFRABOX_OPA_PORT')))
 
 if __name__ == "__main__": # pragma: no cover
     main()
