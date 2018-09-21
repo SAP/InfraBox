@@ -1,12 +1,12 @@
 kind: Service
-cluster-stateVersion: v1
+cluster-statusVersion: v1
 metadata:
-    name: infrabox-cluster-state
+    name: infrabox-cluster-status
     labels:
-        app: infrabox-cluster-state
+        app: infrabox-cluster-status
 spec:
     selector:
-        app: infrabox-cluster-state
+        app: infrabox-cluster-status
     type: NodePort
     ports:
     -
