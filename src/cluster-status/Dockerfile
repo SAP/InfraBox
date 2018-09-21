@@ -1,13 +1,14 @@
-FROM alpine:3.6
+FROM debian:9.4-slim
 
-RUN apk add --no-cache py2-flask py2-psycopg2 py2-jwt py2-cryptography py2-gevent
+RUN apt-get update -y && apt-get install -y python python-psycopg2 python-pip python-flask && \
+    pip install eventlet PyJWT && \
+    apt-get remove -y python-pip && \
+    apt-get autoremove -y && \
+    rm -rf /var/lib/apt/lists/*
 
 COPY src/cluster-status/server.py /server.py
 COPY src/pyinfraboxutils /pyinfraboxutils
 
 ENV PYTHONPATH=/
-
-RUN adduser -S state
-USER state
 
 CMD python /server.py

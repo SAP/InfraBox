@@ -1,5 +1,9 @@
 from flask import g, jsonify
 
+import eventlet
+from eventlet import wsgi
+eventlet.monkey_patch()
+
 from pyinfraboxutils import get_env, get_logger
 from pyinfraboxutils.ibflask import app
 
@@ -33,9 +37,7 @@ def main(): # pragma: no cover
     get_env('INFRABOX_DATABASE_PORT')
     get_env('INFRABOX_DATABASE_DB')
 
-    from gevent.wsgi import WSGIServer
-    http_server = WSGIServer(('', 8080), app, log=logger)
-    http_server.serve_forever()
+    wsgi.server(eventlet.listen(('0.0.0.0', 8080)), app)
 
 if __name__ == "__main__": # pragma: no cover
     main()
