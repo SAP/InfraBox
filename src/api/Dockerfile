@@ -9,6 +9,7 @@ RUN apt-get update -y && apt-get install -y python python-psycopg2 python-pip py
 ENV PYTHONPATH=/
 
 COPY src/api /api
+COPY src/openpolicyagent /openpolicyagent
 COPY src/pyinfraboxutils /pyinfraboxutils
 COPY src/pyinfrabox /pyinfrabox
 
