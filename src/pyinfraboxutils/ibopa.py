@@ -1,6 +1,9 @@
 import json
 import requests
 
+import threading
+import time
+
 from pyinfraboxutils import get_logger, get_env, dbpool
 
 logger = get_logger('OPA')
@@ -8,6 +11,8 @@ logger = get_logger('OPA')
 OPA_AUTH_URL = "http://%s:%s/v1/data/infrabox/allow" % (get_env('INFRABOX_OPA_HOST'), get_env('INFRABOX_OPA_PORT'))
 COLLABORATOR_DATA_DEST_URL = "http://%s:%s/v1/data/infrabox/collaborators" % (get_env('INFRABOX_OPA_HOST'), get_env('INFRABOX_OPA_PORT'))
 PROJECT_DATA_DEST_URL = "http://%s:%s/v1/data/infrabox/projects" % (get_env('INFRABOX_OPA_HOST'), get_env('INFRABOX_OPA_PORT'))
+
+exit_flag = 0
 
 def opa_do_auth(input_dict):
     # Send request to Open Policy Agent and evaluate response
@@ -54,3 +59,25 @@ def opa_push_all():
         opa_push_project_data(db)
     finally:
         dbpool.put(db)
+
+def opa_push_loop(delay):
+    other_loop( )
+    # opa_push_all()
+    # thread =  threading.Timer(delay, opa_push_loop, args=[delay])
+    # thread.setDaemon(True)
+    # thread.start()
+
+def other_loop():
+    class OPA_Push_Thread(threading.Thread):
+        stopped = False
+        def run(self):
+            while not self.stopped:
+                opa_push_all()
+                time.sleep(2)
+        def join(self, timeout=None):
+            self.stopped = True
+            threading.Thread.join(self, timeout)
+            
+    thread = OPA_Push_Thread()
+    thread.setDaemon(True)
+    thread.start()

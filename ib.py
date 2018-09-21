@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import argparse
 import os
+import time
 import re
 import subprocess
 import logging
@@ -40,10 +41,12 @@ IMAGES = [
     {'name': 'metrics'},
 ]
 
+process = None
 def execute(command, cwd=None, env=None, ignore_error=False, ignore_output=False):
     if env is None:
         env = os.environ
 
+    global process
     process = subprocess.Popen(command,
                                shell=False,
                                stdout=subprocess.PIPE,
@@ -53,6 +56,7 @@ def execute(command, cwd=None, env=None, ignore_error=False, ignore_output=False
                                universal_newlines=True)
 
     # Poll process for new output until finished
+    print "running"
     while True:
         line = process.stdout.readline()
         if not line:
@@ -68,9 +72,21 @@ def execute(command, cwd=None, env=None, ignore_error=False, ignore_output=False
     if ignore_error:
         return
 
+    process = None
+
     exitCode = process.returncode
     if exitCode != 0:
         raise Exception(exitCode)
+
+def cleanup():
+    for s in range(5):
+        if process.poll() == None:
+            time.sleep(1)
+            
+        process.kill()
+
+import atexit
+atexit.register(cleanup)
 
 def _build_image(image, args):
     if image.get('executed', False):
