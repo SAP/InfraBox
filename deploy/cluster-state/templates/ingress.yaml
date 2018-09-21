@@ -11,5 +11,5 @@ spec:
             -
                 path: /*
                 backend:
-                    serviceName: infrabox-cluster-state
+                    serviceName: infrabox-cluster-status
                     servicePort: 8080

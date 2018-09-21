@@ -1,22 +1,22 @@
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-    name: infrabox-cluster-state
+    name: infrabox-cluster-status
     labels:
-        app: infrabox-cluster-state
+        app: infrabox-cluster-status
 spec:
     replicas: 1
     template:
         metadata:
             labels:
-                app: infrabox-cluster-state
+                app: infrabox-cluster-status
         spec:
             terminationGracePeriodSeconds: 0
             containers:
             {{ include "containers_database" . | indent 12 }}
             -
-                name: cluster-state
-                image: {{ include "image_repository" . }}/cluster-state:{{ include "image_tag" . }}
+                name: cluster-status
+                image: {{ include "image_repository" . }}/cluster-status:{{ include "image_tag" . }}
                 imagePullPolicy: Always
                 env:
                 {{ include "env_database" . | indent 16 }}
