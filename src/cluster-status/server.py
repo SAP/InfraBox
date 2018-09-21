@@ -5,16 +5,20 @@ from pyinfraboxutils.ibflask import app
 
 logger = get_logger('state')
 
-@app.route('/')
-def state():
-    r = g.db.execute_many_dict('''
-        SELECT * FROM cluster
-    ''')
+@app.route('/<cluster_name>')
+def s(cluster_name):
+    status = g.db.execute_one_dict("""
+                SELECT active, enabled
+                FROM cluster
+                WHERE name = %s
+            """, [cluster_name])
 
-    return jsonify(r)
+    if not status['active'] or not status['enabled']:
+        return jsonify(status), 503
+
+    return jsonify({'status': "active"})
 
 def main(): # pragma: no cover
-    get_env('INFRABOX_VERSION')
     get_env('INFRABOX_DATABASE_HOST')
     get_env('INFRABOX_DATABASE_USER')
     get_env('INFRABOX_DATABASE_PASSWORD')
