@@ -574,7 +574,7 @@
         {
             "type": "docker",
             "build_context": "../..",
-            "name": "cluster-state",
+            "name": "cluster-status",
             "docker_file": "src/cluster-status/Dockerfile",
             "build_only": true,
             "resources": {
