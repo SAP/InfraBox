@@ -6,7 +6,7 @@ import requests
 
 from flask import Flask, g, jsonify, request, abort
 
-from pyinfrabox.utils import validate_uuid4
+from pyinfrabox.utils import validate_uuid
 
 from pyinfraboxutils import get_logger, get_env
 from pyinfraboxutils.db import DB, connect_db
@@ -244,7 +244,7 @@ def normalize_token(token):
             g.db = None
 
 def enrich_job_token(token):
-    if not ("job" in token and "id" in token["job"] and validate_uuid4(token["job"]["id"])):
+    if not ("job" in token and "id" in token["job"] and validate_uuid(token["job"]["id"])):
         raise LookupError('invalid job id')
     
     job_id = token["job"]["id"]
@@ -265,7 +265,7 @@ def enrich_job_token(token):
     return token
 
 def validate_user_token(token):
-    if not ("user" in token and "id" in token["user"] and validate_uuid4(token['user']['id'])):
+    if not ("user" in token and "id" in token["user"] and validate_uuid(token['user']['id'])):
         return False
 
     u = g.db.execute_one('''
@@ -277,8 +277,8 @@ def validate_user_token(token):
     return True
 
 def validate_project_token(token):
-    if not ("project" in token and "id" in token['project'] and validate_uuid4(token['project']['id'])
-            and "id" in token and validate_uuid4(token['id'])):
+    if not ("project" in token and "id" in token['project'] and validate_uuid(token['project']['id'])
+            and "id" in token and validate_uuid(token['id'])):
         return False
 
     r = g.db.execute_one('''
