@@ -360,6 +360,9 @@ https://{{- required "host is required" .Values.host -}}:{{- .Values.port -}}
     name: INFRABOX_GENERAL_WORKER_NAMESPACE
     value: {{ template "worker_namespace" . }}
 -
+    name: INFRABOX_GENERAL_SYSTEM_NAMESPACE
+    value: {{ template "system_namespace" . }}
+-
     name: INFRABOX_ROOT_URL
     value: {{ template "root_url" . }}
 -
@@ -368,6 +371,8 @@ https://{{- required "host is required" .Values.host -}}:{{- .Values.port -}}
 -
     name: INFRABOX_GENERAL_REPORT_ISSUE_URL
     value: {{ .Values.general.report_issue_url }}
+-   name: INFRABOX_LOG_LEVEL
+    value: {{ .Values.general.log_level }}
 {{ end }}
 
 {{ define "env_docker_registry" }}
@@ -409,3 +414,26 @@ https://{{- required "host is required" .Values.host -}}:{{- .Values.port -}}
     - name: infrabox-docker-credentials
 {{ end }}
 {{ end }}
+
+{{- define "ha_global_url" -}}
+{{- if eq 443.0 .Values.ha.global_port -}}
+https://{{- .Values.ha.global_host -}}
+{{- else -}}
+https://{{- .Values.ha.global_host -}}:{{- .Values.ha.global_port -}}
+{{- end -}}
+{{- end -}}
+
+{{ define "env_ha" }}
+-
+    name: INFRABOX_HA_ENABLED
+    value: {{ .Values.ha.enabled | quote }}
+{{ if .Values.ha.enabled }}
+-   name: INFRABOX_HA_CHECK_INTERVAL
+    value: {{ .Values.ha.check_interval | quote }}
+-   name: INFRABOX_HA_ACTIVE_TIMEOUT
+    value: {{ .Values.ha.active_timeout | quote }}
+-   name: INFRABOX_HA_GLOBAL_URL
+    value: {{ template "ha_global_url" . }}
+{{ end }}
+{{ end }}
+

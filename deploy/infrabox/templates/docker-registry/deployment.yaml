@@ -91,6 +91,8 @@ spec:
                 -
                     name: REGISTRY_STORAGE
                     value: swift
+                -   name: REGISTRY_HEALTH_STORAGEDRIVER_ENABLED
+                    value: false
                 -
                     name: REGISTRY_STORAGE_SWIFT_AUTHURL
                     value: {{ .Values.storage.swift.auth_url }}

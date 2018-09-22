@@ -39,6 +39,8 @@ IMAGES = [
     {'name': 'service-gcp'},
     {'name': 'service-namespace'},
     {'name': 'metrics'},
+    {'name': 'checker'},
+    {'name': 'cluster-status'},
 ]
 
 process = None

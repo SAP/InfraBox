@@ -14,7 +14,7 @@ from flask_restplus import Resource
 
 from werkzeug.datastructures import FileStorage
 
-from pyinfrabox.utils import validate_uuid4
+from pyinfrabox.utils import validate_uuid
 from pyinfrabox.badge import validate_badge
 from pyinfrabox.markup import validate_markup
 from pyinfrabox.testresult import validate_result
@@ -25,6 +25,7 @@ from pyinfraboxutils.ibrestplus import api
 from pyinfraboxutils.ibflask import app
 from pyinfraboxutils.storage import storage
 from pyinfraboxutils.secrets import decrypt_secret
+from pyinfraboxutils import get_root_url
 
 ns = api.namespace('api/job',
                    description='Job runtime related operations')
@@ -333,11 +334,7 @@ class Job(Resource):
                 else:
                     abort(400, "Unknown deployment type")
 
-        root_url = g.db.execute_one('''
-            SELECT root_url
-            FROM cluster
-            WHERE name = 'master'
-        ''', [])[0]
+        root_url = get_root_url("global")
 
         # Default env vars
         project_name = urllib.quote_plus(data['project']['name']).replace('+', '%20')
@@ -384,7 +381,7 @@ class Job(Resource):
 
         if env_vars:
             for name, value in env_vars.iteritems():
-                data['env_vars'][name] = value
+                data['env_vars'][name] = str(value)
 
         if env_var_refs:
             for name, value in env_var_refs.iteritems():
@@ -541,6 +538,7 @@ class Output(Resource):
                 SELECT root_url
                 FROM cluster
                 WHERE active = true
+                AND enabled = true
                 AND name = ANY (%s)
                 AND name != %s
                 AND name != %s
@@ -570,7 +568,7 @@ class OutputParent(Resource):
     def get(self, parent_job_id):
         job_id = g.token['job']['id']
 
-        if not validate_uuid4(parent_job_id):
+        if not validate_uuid(parent_job_id):
             abort(400, "Invalid uuid")
 
         filename = request.args.get('filename', None)
@@ -637,6 +635,7 @@ class CreateJobs(Resource):
             SELECT name, labels
             FROM cluster
             WHERE active = true
+            AND enabled = true
         ''')
 
         # Shuffle so we can assign the default clusters randomly

@@ -1,7 +1,7 @@
 from flask import request, g, abort
 from flask_restplus import Resource, fields
 
-from pyinfrabox.utils import validate_uuid4
+rom pyinfrabox.utils import validate_uuid
 from pyinfraboxutils.ibflask import OK
 from pyinfraboxutils.ibrestplus import api
 from pyinfraboxutils.token import encode_project_token
@@ -55,7 +55,7 @@ class Tokens(Resource):
 class Token(Resource):
 
     def delete(self, project_id, token_id):
-        if not validate_uuid4(token_id):
+        if not validate_uuid(token_id):
             abort(400, "Invalid project-token uuid.")
 
         num_tokens = g.db.execute_one("""

@@ -4,8 +4,8 @@ import requests
 from flask import g, abort, request
 from flask_restplus import Resource, fields
 
-from pyinfraboxutils import get_logger
-from pyinfrabox.utils import validate_uuid4
+from pyinfraboxutils import get_logger, get_root_url
+from pyinfrabox.utils import validate_uuid
 from pyinfraboxutils.ibrestplus import api
 from pyinfraboxutils.ibflask import OK
 from pyinfraboxutils.ibopa import opa_push_project_data, opa_push_collaborator_data
@@ -164,7 +164,7 @@ class Projects(Resource):
                     "create", "delete", "public", "pull_request", "push"
                 ],
                 'config': {
-                    'url': os.environ['INFRABOX_ROOT_URL'] + '/github/hook',
+                    'url': get_root_url('global') + '/github/hook',
                     'content_type': "json",
                     'secret': os.environ['INFRABOX_GITHUB_WEBHOOK_SECRET'],
                     'insecure_ssl': insecure_ssl
@@ -235,7 +235,7 @@ class Project(Resource):
         return project
 
     def delete(self, project_id):
-        if not validate_uuid4(project_id):
+        if not validate_uuid(project_id):
             abort(400, "Invalid project uuid.")
 
         project = g.db.execute_one_dict("""
