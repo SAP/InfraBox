@@ -60,24 +60,18 @@ def opa_push_all():
     finally:
         dbpool.put(db)
 
-def opa_push_loop(delay):
-    other_loop( )
-    # opa_push_all()
-    # thread =  threading.Timer(delay, opa_push_loop, args=[delay])
-    # thread.setDaemon(True)
-    # thread.start()
-
-def other_loop():
+def opa_start_push_loop():
     class OPA_Push_Thread(threading.Thread):
         stopped = False
+        push_interval = float(get_env('INFRABOX_OPA_PUSH_INTERVAL'))
         def run(self):
             while not self.stopped:
                 opa_push_all()
-                time.sleep(2)
+                time.sleep(self.push_interval)
         def join(self, timeout=None):
             self.stopped = True
             threading.Thread.join(self, timeout)
             
     thread = OPA_Push_Thread()
-    thread.setDaemon(True)
+    thread.daemon = True
     thread.start()

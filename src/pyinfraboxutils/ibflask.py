@@ -11,7 +11,7 @@ from pyinfrabox.utils import validate_uuid
 from pyinfraboxutils import get_logger, get_env
 from pyinfraboxutils.db import DB, connect_db
 from pyinfraboxutils.token import decode
-from pyinfraboxutils.ibopa import opa_do_auth, opa_push_all
+from pyinfraboxutils.ibopa import opa_do_auth
 
 app = Flask(__name__)
 app.url_map.strict_slashes = False
@@ -26,8 +26,6 @@ try:
     @app.before_request
     def before_request():
         g.db = dbpool.get()
-        logger.info('Pushing database data to Open Policy Agent')
-        opa_push_all()
 
         g.token = normalize_token(get_token())
         check_request_authorization()

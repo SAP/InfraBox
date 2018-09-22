@@ -8,7 +8,6 @@ from pyinfraboxutils import get_logger, get_root_url
 from pyinfrabox.utils import validate_uuid
 from pyinfraboxutils.ibrestplus import api
 from pyinfraboxutils.ibflask import OK
-from pyinfraboxutils.ibopa import opa_push_project_data, opa_push_collaborator_data
 
 from api.namespaces import project as ns
 
@@ -198,9 +197,7 @@ class Projects(Resource):
 
         g.db.commit()
 
-        # Open Policy Agent
-        opa_push_project_data(g.db)
-        opa_push_collaborator_data(g.db)
+        # Updated collaborator and project data will be pushed with next push cycle to Open Policy Agent
 
         return OK('Project added')
 
@@ -286,8 +283,6 @@ class Project(Resource):
 
         g.db.commit()
 
-        # Open Policy Agent
-        opa_push_project_data(g.db)
-        opa_push_collaborator_data(g.db)
+        # Updated collaborator and project data will be pushed with next push cycle to Open Policy Agent
 
         return OK('deleted project')
