@@ -3,7 +3,8 @@ import re
 from flask import request, g, abort
 from flask_restplus import Resource, fields
 
-from pyinfrabox.utils import validate_uuid4
+
+from pyinfrabox.utils import validate_uuid
 from pyinfraboxutils.ibflask import OK
 from pyinfraboxutils.ibrestplus import api
 from pyinfraboxutils.secrets import encrypt_secret
@@ -68,7 +69,7 @@ class Secrets(Resource):
 @ns.route('/<project_id>/secrets/<secret_id>')
 class Secret(Resource):
     def delete(self, project_id, secret_id):
-        if not validate_uuid4(secret_id):
+        if not validate_uuid(secret_id):
             abort(400, "Invalid secret uuid.")
 
         num_secrets = g.db.execute_one("""

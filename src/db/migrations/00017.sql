@@ -1,10 +1,2 @@
-CREATE TYPE user_role AS ENUM (
-    'Developer',
-    'Administrator',
-    'Owner'
-);
-
-ALTER TABLE collaborator ADD COLUMN role user_role DEFAULT 'Developer' NOT NULL;
-UPDATE collaborator SET role = 'Owner' WHERE owner = true;
-
-ALTER TABLE collaborator DROP COLUMN owner CASCADE;
+ALTER TABLE cluster ADD COLUMN last_update TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now();
+ALTER TABLE cluster ADD COLUMN enabled BOOLEAN NOT NULL DEFAULT TRUE;

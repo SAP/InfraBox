@@ -43,7 +43,7 @@ type FunctionValidation struct {
 }
 
 func getFunction(name string, log *logrus.Entry) (*Function, error) {
-	logrus.Infof("Get function: %s", name)
+	logrus.Debugf("Get function: %s", name)
 
 	resourceClient, _, err := k8sclient.GetResourceClient("core.infrabox.net/v1alpha1", "IBFunction", "")
 	if err != nil {
@@ -80,7 +80,7 @@ func validateFunctionInvocation(cr *v1alpha1.IBFunctionInvocation) error {
 }
 
 func (c *Controller) syncFunctionInvocation(cr *v1alpha1.IBFunctionInvocation, log *logrus.Entry) error {
-	logrus.Info("Sync function invocation")
+	logrus.Debug("Sync function invocation")
 
 	finalizers := cr.GetFinalizers()
 
@@ -132,7 +132,7 @@ func (c *Controller) syncFunctionInvocation(cr *v1alpha1.IBFunctionInvocation, l
 			return err
 		}
 
-		log.Info("Batch job created")
+		log.Debug("Batch job created")
 
 		// Get job again so we can sync it
 		err = sdk.Get(batch)
@@ -164,7 +164,7 @@ func (c *Controller) syncFunctionInvocation(cr *v1alpha1.IBFunctionInvocation, l
 		if len(pod.Status.ContainerStatuses) != 0 {
 			cr.Status.State = pod.Status.ContainerStatuses[0].State
 			cr.Status.NodeName = pod.Spec.NodeName
-			log.Info("Updating job status")
+			log.Debug("Updating job status")
 			return sdk.Update(cr)
 		}
 
@@ -177,7 +177,7 @@ func (c *Controller) syncFunctionInvocation(cr *v1alpha1.IBFunctionInvocation, l
 				},
 			}
 
-			log.Info("Updating job status")
+			log.Debug("Updating job status")
 			return sdk.Update(cr)
 		}
 	}
@@ -186,9 +186,9 @@ func (c *Controller) syncFunctionInvocation(cr *v1alpha1.IBFunctionInvocation, l
 }
 
 func (c *Controller) createBatchJob(fi *v1alpha1.IBFunctionInvocation, function *Function, log *logrus.Entry) error {
-	log.Infof("Creating Batch Job")
+	log.Debugf("Creating Batch Job")
 
-	log.Infof("Successfully created batch job")
+	log.Debugf("Successfully created batch job")
 	return nil
 }
 
@@ -211,7 +211,7 @@ func (c *Controller) deletePods(fi *v1alpha1.IBFunctionInvocation, log *logrus.E
 	}
 
 	for _, pod := range pods.Items {
-		log.Infof("Deleting pod")
+		log.Debug("Deleting pod")
 
 		err := sdk.Delete(&pod, sdk.WithDeleteOptions(metav1.NewDeleteOptions(0)))
 		if err != nil && !errors.IsNotFound(err) {

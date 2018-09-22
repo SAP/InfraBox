@@ -24,7 +24,7 @@ All our documentation can be found [here](docs/README.md). You can also look at 
 ## How to obtain support
 If you need help please post your questions to [Stack Overflow](https://stackoverflow.com/questions/tagged/infrabox).
 In case you found a bug please open a [Github Issue](https://github.com/SAP/infrabox/issues).
-Follow us on Twitter: [@Infra_Box](https://twitter.com/Infra_Box) or have look at our Slack channel [infrabox.slack.com](https://infrabox.slack.com/).
+Follow us on Twitter: [@Infra_Box](https://twitter.com/Infra_Box) or have look at our Slack channel [infrabox.slack.com](https://join.slack.com/t/infrabox/shared_invite/enQtNDM5OTUzNzg4NjU3LWFiNWY1MDYyZTA3MmUxNWNmZjgwNWEzZTI0NGYzN2U5OTFjYjQyNTBmNWE0NTYzOGJlOTdmZWI3NmQ3OTQ0MDA).
 
 ## Contribute
 Any contribution is highly appreciated. See our [developer's documentation](docs/dev.md) for details.

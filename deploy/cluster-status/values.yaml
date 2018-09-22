@@ -1,0 +1,46 @@
+# Host on which InfraBox will be accessible (i.e. "infrabox.example.com")
+host: # <REQUIRED>
+
+image:
+    repository: quay.io/infrabox
+
+    tag: latest
+
+# PostgreSQL Database configuration. Use either Google's CloudSQL or any other PostgreSQL Database
+database:
+    cloudsql:
+        # Enable
+        enabled: false
+
+        # Database name
+        db: # <REQUIRED>
+
+        # Username
+        username: # <REQUIRED>
+
+        # Password
+        password: # <REQUIRED>
+
+        # The instance connection name
+        instance_connection_name: # <REQUIRED>
+
+        # base64 encoded service account .json file
+        service_account: # <REQUIRED>
+
+    postgres:
+        enabled: false
+
+        # Host of your postgres database
+        host: # <REQUIRED>
+
+        # Port of your postgres database
+        port: 5432
+
+        # Database name
+        db: # <REQUIRED>
+
+        # Username
+        username: # <REQUIRED>
+
+        # Password
+        password: # <REQUIRED>
