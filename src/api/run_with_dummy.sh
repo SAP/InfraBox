@@ -14,9 +14,10 @@ export INFRABOX_DATABASE_HOST=localhost
 export INFRABOX_DATABASE_USER=postgres
 export INFRABOX_DATABASE_PASSWORD=postgres
 
-# InfraBox
+# Open Policy Agent (OPA)
 export INFRABOX_OPA_HOST=localhost
 export INFRABOX_OPA_PORT=8181
+export INFRABOX_OPA_PUSH_INTERVAL=60
 
 # Service Config
 export INFRABOX_VERSION=local
