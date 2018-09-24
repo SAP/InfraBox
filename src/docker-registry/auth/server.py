@@ -13,13 +13,13 @@ def ping():
 @app.route('/v2/') # prevent 301 redirects
 @app.route('/v2')
 def v2():
-    # Authorization in src/opa/policies/docker-registry-auth.rego
+    # Authorization in src/openpolicyagent/policies/docker-registry-auth.rego
     return jsonify({'status': 200})
 
 @app.route('/v2/<path:path>/') # prevent 301 redirects
 @app.route('/v2/<path:path>')
 def v2_path(path):
-    # Authorization in src/opa/policies/docker-registry-auth.rego
+    # Authorization in src/openpolicyagent/policies/docker-registry-auth.rego
 
     return jsonify({'status': 200})
 

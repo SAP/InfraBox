@@ -73,6 +73,6 @@ Otherwise, you may want to explicitly specify your token within a command:
 
 See the service's READMEs for details:
 - [Storage](/infrabox/utils/storage/)
-- [OpenPolicy Agent](/src/openpolicyagent)
+- [Open Policy Agent](/src/openpolicyagent)
 - [API](/src/api/)
 - [Dashboard UI](/src/dashboard-client)
