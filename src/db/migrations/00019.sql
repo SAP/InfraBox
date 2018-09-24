@@ -1,4 +1,4 @@
-REATE TYPE user_role AS ENUM (
+CREATE TYPE user_role AS ENUM (
     'Developer',
     'Administrator',
     'Owner'

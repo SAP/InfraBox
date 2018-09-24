@@ -2,7 +2,6 @@
 import uuid
 import os
 import sys
-import daemon
 
 import urllib3
 

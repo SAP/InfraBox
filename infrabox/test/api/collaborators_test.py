@@ -43,6 +43,8 @@ class CollaboratorsTest(ApiTestTemplate):
                            VALUES (%s, %s, 'Developer')
                            """, [self.collaborator_id, self.project_id])
 
+        TestClient.opa_push()
+
         # make sure collaborator's insertion is successful
         r = TestClient.execute_one("""
                                    SELECT count(*) FROM collaborator WHERE user_id = %s
