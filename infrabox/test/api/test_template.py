@@ -3,7 +3,6 @@ import json
 
 from temp_tools import TestClient
 
-
 class ApiTestTemplate(unittest.TestCase):
     # TODO optimize setup for each test
 
@@ -21,12 +20,14 @@ class ApiTestTemplate(unittest.TestCase):
         TestClient.execute('TRUNCATE source_upload')
         TestClient.execute('TRUNCATE secret')
         TestClient.execute('TRUNCATE cluster')
+        TestClient.execute('TRUNCATE auth_token')
 
         self.project_id = '1514af82-3c4f-4bb5-b1da-a89a0ced5e6f'
         self.user_id = '2514af82-3c4f-4bb5-b1da-a89a0ced5e6f'
         self.repo_id = '3514af82-3c4f-4bb5-b1da-a89a0ced5e6f'
         self.build_id = '4514af82-3c4f-4bb5-b1da-a89a0ced5e6f'
         self.job_id = '1454af82-4c4f-4bb5-b1da-a54a0ced5e6f'
+        self.token_id = '2bbc6c34-11dd-448c-a678-7209a071b12a'
         self.job_name = 'test_job_name1'
         self.sha = 'd670460b4b4aece5915caf5c68d12f560a9fe3e4'
         self.author_name = 'author_name1'
@@ -55,6 +56,11 @@ class ApiTestTemplate(unittest.TestCase):
                 INSERT INTO project(id, name, type)
                 VALUES (%s, 'testproject', 'upload');
             """, [self.project_id])
+
+        TestClient.execute('''
+            INSERT INTO auth_token (id, description, scope_push, scope_pull, project_id)
+            VALUES (%s, 'PToken', True, True, %s)
+        ''', [self.token_id, self.project_id])
 
         TestClient.execute("""
                 INSERT INTO repository(id, name, html_url, clone_url, github_id, project_id, private)
@@ -89,3 +95,7 @@ class ApiTestTemplate(unittest.TestCase):
                 VALUES (%s, %s, now(), %s, %s, %s, %s, %s, 'url1', 'branch1');
             """, [self.sha, self.repo_id, self.project_id,
                   self.author_name, self.author_email, self.author_name, self.author_email])
+
+        TestClient.opa_push()
+
+

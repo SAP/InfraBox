@@ -43,3 +43,24 @@ allow {
     api.token.type = "user"
     build_collaborator([api.token.user.id, project])
 }
+
+allow {
+    api.method = "GET"
+    api.path = ["api", "v1", "projects", project, "builds"]
+    api.token.type = "project"
+    api.token.project.id = project
+}
+
+allow {
+    api.method = "GET"
+    api.path = ["api", "v1", "projects", project, "builds", _]
+    api.token.type = "project"
+    api.token.project.id = project
+}
+
+allow {
+    api.method = "GET"
+    api.path = ["api", "v1", "projects", project, "builds", _, "jobs"]
+    api.token.type = "project"
+    api.token.project.id = project
+}
