@@ -27,6 +27,5 @@ allow {
 allow {
     api.method = "GET"
     api.path = ["api", "v1", "projects", project_id, "commits", _]
-    api.token.type = "user"
     project_commits_public(project_id)
 }
