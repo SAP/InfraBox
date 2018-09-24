@@ -1,7 +1,8 @@
 from flask import jsonify
 
 from pyinfraboxutils import get_env, get_logger
-from pyinfraboxutils.ibflask import token_required, app
+from pyinfraboxutils.ibflask import app
+from pyinfraboxutils.ibopa import opa_push_all
 
 logger = get_logger('docker-registry-auth')
 
@@ -29,6 +30,8 @@ def main(): # pragma: no cover
     get_env('INFRABOX_DATABASE_PASSWORD')
     get_env('INFRABOX_DATABASE_PORT')
     get_env('INFRABOX_DATABASE_DB')
+    get_env('INFRABOX_OPA_HOST')
+    get_env('INFRABOX_OPA_PORT')
 
     from gevent.wsgi import WSGIServer
     http_server = WSGIServer(('', 8081), app, log=logger)
