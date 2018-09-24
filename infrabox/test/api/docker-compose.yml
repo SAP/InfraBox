@@ -41,12 +41,13 @@ services:
             - INFRABOX_STORAGE_S3_PORT=9000
             - GOOGLE_APPLICATION_CREDENTIALS=
             - INFRABOX_ROOT_URL=localhost
-            - INFRABOX_OPA_HOST=opa
-            - INFRABOX_OPA_PORT=8181
-            - INFRABOX_OPA_PUSH_INTERVAL=30
             - CODECOV_TOKEN=$CODECOV_TOKEN
             - INFRABOX_CLUSTER_NAME=master
             - INFRABOX_HA_ENABLED=false
+            # Open Policy Agent (OPA)
+            - INFRABOX_OPA_HOST=opa
+            - INFRABOX_OPA_PORT=8181
+            - INFRABOX_OPA_PUSH_INTERVAL=30
             # Account
             - INFRABOX_ACCOUNT_SIGNUP_ENABLED=true
             - INFRABOX_ACCOUNT_LDAP_ENABLED=false
