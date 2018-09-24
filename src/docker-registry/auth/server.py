@@ -12,97 +12,13 @@ def ping():
 @app.route('/v2/') # prevent 301 redirects
 @app.route('/v2')
 def v2():
-    # Replaced - see authorization in src/opa/policies/docker-registry-auth.rego
-    # token = g.token
-    # if token['type'] == 'project':
-    #     r = g.db.execute_many('''
-    #         SELECT id FROM auth_token
-    #         WHERE id = %s AND project_id = %s
-    #     ''', (token['id'], token['project']['id'],))
-
-    #     if len(r) != 1:
-    #         logger.warn('project not found')
-    #         abort(401, 'Unauthorized')
-
-    # elif token['type'] == 'job':
-    #     r = g.db.execute_many('''
-    #         SELECT state FROM job
-    #         WHERE id = %s
-    #     ''', (token['job']['id'],))
-
-    #     if len(r) != 1:
-    #         logger.warn('job not found')
-    #         abort(401, 'Unauthorized')
-
-    #     state = r[0][0]
-
-    #     if state not in ('scheduled', 'running'):
-    #         logger.warn('job not running anymore: %s' % token['job']['id'])
-    #         abort(401, 'Unauthorized')
-    # else: # pragma: no cover
-    #     logger.warn('unsupported token type: %s' % token['type'])
-    #     abort(401, 'Unauthorized')
-
+    # Authorization in src/opa/policies/docker-registry-auth.rego
     return jsonify({'status': 200})
 
 @app.route('/v2/<path:path>/') # prevent 301 redirects
 @app.route('/v2/<path:path>')
 def v2_path(path):
-    # p = path.split('/')
-    # method = dict(request.headers).get('X-Original-Method', None)
-
-    # if not method:
-    #     logger.warn('no x-original-method header')
-    #     abort(401, 'Unauthorized')
-
-    # if len(p) < 2:
-    #     logger.warn('invalid repo')
-    #     abort(401, 'Unauthorized')
-
-    # project_id = p[0]
-    # token = g.token
-
-    # if token['type'] == 'project':
-    #     if method != 'GET':
-    #         logger.warn('%s not allowed with project token', request.method)
-    #         abort(401, 'Unauthorized')
-
-    #     if project_id != token['project']['id']:
-    #         logger.warn('token is not valid for project')
-    #         abort(401, 'Unauthorized')
-
-    #     r = g.db.execute_many('''
-    #         SELECT * FROM auth_token
-    #         WHERE id = %s AND project_id = %s
-    #     ''', (token['id'], token['project']['id']))
-
-    #     if len(r) != 1:
-    #         logger.warn('project not found')
-    #         abort(401, 'Unauthorized')
-    # elif token['type'] == 'job':
-    #     r = g.db.execute_one('''
-    #         SELECT state, project_id FROM job
-    #         WHERE id = %s
-    #     ''', (token['job']['id'],))
-
-    #     if not r:
-    #         logger.warn('job not found')
-    #         abort(401, 'Unauthorized')
-
-    #     state = r[0]
-    #     job_project_id = r[1]
-
-    #     if state not in ('scheduled', 'running'):
-    #         logger.warn('job not running anymore: %s' % token['job']['id'])
-    #         abort(401, 'Unauthorized')
-
-    #     if project_id != job_project_id:
-    #         logger.warn('job does not belong to project')
-    #         abort(401, 'Unauthorized')
-
-    # else: # pragma: no cover
-    #     logger.warn('unsupported token type')
-    #     abort(401, 'Unauthorized')
+    # Authorization in src/opa/policies/docker-registry-auth.rego
 
     return jsonify({'status': 200})
 
