@@ -73,8 +73,8 @@ class Test(unittest.TestCase):
         try:
             return result.json()[0]
         except:
-            print "Get build failed: "
-            print result.text
+            print("Get build failed: ")
+            print(result.text)
             raise
 
     def _get_jobs(self):
@@ -85,8 +85,8 @@ class Test(unittest.TestCase):
         try:
             return jobs.json()
         except:
-            print "Get jobs failed: "
-            print jobs
+            print("Get jobs failed: ")
+            print(jobs)
             raise
 
     def _wait_build(self):
@@ -116,7 +116,7 @@ class Test(unittest.TestCase):
             ansi_escape = re.compile(r'\x1B\[[0-?]*[ -/]*[@-~]')
             logs = ansi_escape.sub('', r.text)
 
-            print logs
+            print(logs)
 
     def _get_job(self, job_name):
         jobs = self._get_jobs()
@@ -169,7 +169,7 @@ class Test(unittest.TestCase):
                 break
             except subprocess.CalledProcessError as e:
                 output = e.output
-                print output
+                print(output)
                 time.sleep(5)
 
         self._print_job_logs()
@@ -272,10 +272,10 @@ def main():
 
     urllib3.disable_warnings()
 
-    print "Connecting to DB"
+    print("Connecting to DB")
     connect_db() # Wait for DB
 
-    print "ROOT_URL: %s" % root_url
+    print("ROOT_URL: %s" % root_url)
     while True:
         time.sleep(1)
         r = None
@@ -285,15 +285,15 @@ def main():
             if r.status_code in (200, 404):
                 break
 
-            print r.text
+            print(r.text)
         except Exception as e:
-            print e
+            print(e)
 
-        print "Server not yet ready"
+        print("Server not yet ready")
 
     time.sleep(90)
 
-    print "Starting tests"
+    print("Starting tests")
     with open('results.xml', 'wb') as output:
         unittest.main(testRunner=xmlrunner.XMLTestRunner(output=output), buffer=False)
 
