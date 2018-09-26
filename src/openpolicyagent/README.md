@@ -12,11 +12,6 @@ The Open Policy Agent server can be started isolated by running:
 
 By default the service will be listening on port `8181`.
 
-Note that the service will come with no policies loaded. To upload the policies in `/src/openpolicyagent/policies` to the running OPA service, execute:
-
-``` bash
-./ib.py opa init
-```
 
 The built docker image will come with these policy files preloaded.
 

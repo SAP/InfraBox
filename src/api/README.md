@@ -20,9 +20,6 @@ Then start `opa` and push the policies too `opa`:
 ```bash
 ./ib.py services start opa
 ```
-```bash
-./ib.py opa init
-```
 
 Now start the API:
 
