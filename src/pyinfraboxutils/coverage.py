@@ -24,7 +24,7 @@ class Parser(object):
         data = e.findall('./project/metrics/file')
 
         for d in data:
-            print d
+            print(d)
             f = File(d.get('name'))
             metrics = d.find('metrics')
 

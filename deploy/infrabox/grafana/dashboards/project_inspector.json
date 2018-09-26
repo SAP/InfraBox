@@ -598,7 +598,7 @@
           "alias": "",
           "format": "table",
           "hide": false,
-          "rawSql": "SELECT \tCASE (\n\t\tSELECT count(id)\n\t\tFROM job\n\t\tWHERE project_id = (select id from project where name = '[[pname]]') AND state = 'running' and cluster_name LIKE [[cluster]])\n\tWHEN 0 THEN 0\n\tELSE (\n\t\tSELECT DISTINCT SUM(j.memory)::float / ((SELECT DISTINCT CASE [[cluster]] WHEN '%' THEN (SELECT sum(memory_capacity) from cluster) ELSE c.memory_capacity END)/1024)\n\t\tFROM job j, cluster c\n\t\tWHERE j.project_id = (select id from project where name = '[[pname]]') AND j.cluster_name LIKE [[cluster]] AND c.name LIKE [[cluster]] AND j.state = 'running'\n\t\tGROUP BY c.name\n\t)\nEND",
+          "rawSql": "SELECT \tCASE (\n\t\tSELECT count(id)\n\t\tFROM job\n\t\tWHERE project_id = (select id from project where name = '[[pname]]') AND state = 'running' and cluster_name LIKE [[cluster]])\n\tWHEN 0 THEN 0\n\tELSE (\n\t\tSELECT DISTINCT SUM((j.definition#>>'{resources,limits,memory}')::float) / ((SELECT DISTINCT CASE [[cluster]] WHEN '%' THEN (SELECT sum(memory_capacity) from cluster) ELSE c.memory_capacity END)/1024)\n\t\tFROM job j, cluster c\n\t\tWHERE j.project_id = (select id from project where name = '[[pname]]') AND j.cluster_name LIKE [[cluster]] AND c.name LIKE [[cluster]] AND j.state = 'running'\n\t\tGROUP BY c.name\n\t)\nEND",
           "refId": "A"
         }
       ],
@@ -767,7 +767,7 @@
           "alias": "",
           "format": "table",
           "hide": false,
-          "rawSql": "SELECT \tCASE (\n\t\tSELECT count(id)\n\t\tFROM job\n\t\tWHERE project_id = (select id from project where name = '[[pname]]') AND state = 'running' and cluster_name LIKE [[cluster]])\n\tWHEN 0 THEN 0\n\tELSE (\n\t\tSELECT DISTINCT SUM(j.cpu)::float / (SELECT DISTINCT CASE [[cluster]] WHEN '%' THEN (SELECT sum(cpu_capacity) from cluster) ELSE c.cpu_capacity END)\n\t\tFROM job j, cluster c\n\t\tWHERE j.project_id = (select id from project where name = '[[pname]]') AND j.cluster_name LIKE [[cluster]] AND c.name LIKE [[cluster]] AND j.state = 'running'\n\t\tGROUP BY c.name\n\t)\nEND",
+          "rawSql": "SELECT \tCASE (\n\t\tSELECT count(id)\n\t\tFROM job\n\t\tWHERE project_id = (select id from project where name = '[[pname]]') AND state = 'running' and cluster_name LIKE [[cluster]])\n\tWHEN 0 THEN 0\n\tELSE (\n\t\tSELECT DISTINCT SUM((j.definition#>>'{resources,limits,cpu}')::float) / (SELECT DISTINCT CASE [[cluster]] WHEN '%' THEN (SELECT sum(cpu_capacity) from cluster) ELSE c.cpu_capacity END)\n\t\tFROM job j, cluster c\n\t\tWHERE j.project_id = (select id from project where name = '[[pname]]') AND j.cluster_name LIKE [[cluster]] AND c.name LIKE [[cluster]] AND j.state = 'running'\n\t\tGROUP BY c.name\n\t)\nEND",
           "refId": "A"
         }
       ],

@@ -6,7 +6,6 @@ import data.infrabox.projects.projects
 
 # Allow GET access to /ping for all
 allow {
-    api.method = "GET"
     api.path = ["ping"]
 }
 

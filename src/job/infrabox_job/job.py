@@ -59,7 +59,7 @@ class Job(object):
             except Failure:
                 raise
             except Exception as e:
-                print e
+                print(e)
 
         data = r.json()
         self.job = data['job']
@@ -129,7 +129,7 @@ class Job(object):
                 if r.status_code == 200:
                     return
             except Exception as e:
-                print e
+                print(e)
 
             self.console.collect('Failed to connect to API, retrying.', show=True)
             time.sleep(1)

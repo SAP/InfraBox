@@ -27,7 +27,6 @@ allow {
 allow {
     api.method = "GET"
     api.path = ["api", "v1", "projects", project_id, "jobs"]
-    api.token.type = "user"
     project_jobs_public(project_id)
 }
 
@@ -59,7 +58,6 @@ allow {
 allow {
     api.method = "GET"
     api.path = ["api", "v1", "projects", project_id, "jobs", _, "testresults"]
-    api.token.type = "user"
     project_jobs_public(project_id)
 }
 
@@ -75,7 +73,6 @@ allow {
 allow {
     api.method = "GET"
     api.path = ["api", "v1", "projects", project_id, "jobs", _, "tabs"]
-    api.token.type = "user"
     project_jobs_public(project_id)
 }
 
@@ -91,7 +88,6 @@ allow {
 allow {
     api.method = "GET"
     api.path = ["api", "v1", "projects", project_id, "jobs", _, "archive"]
-    api.token.type = "user"
     project_jobs_public(project_id)
 }
 
@@ -107,7 +103,6 @@ allow {
 allow {
     api.method = "GET"
     api.path = ["api", "v1", "projects", project_id, "jobs", _, "archive", "download"]
-    api.token.type = "user"
     project_jobs_public(project_id)
 }
 
@@ -123,7 +118,6 @@ allow {
 allow {
     api.method = "GET"
     api.path = ["api", "v1", "projects", project_id, "jobs", _, "console"]
-    api.token.type = "user"
     project_jobs_public(project_id)
 }
 
@@ -139,7 +133,6 @@ allow {
 allow {
     api.method = "GET"
     api.path = ["api", "v1", "projects", project_id, "jobs", _, "output"]
-    api.token.type = "user"
     project_jobs_public(project_id)
 }
 
@@ -155,7 +148,6 @@ allow {
 allow {
     api.method = "GET"
     api.path = ["api", "v1", "projects", project_id, "jobs", _, "testruns"]
-    api.token.type = "user"
     project_jobs_public(project_id)
 }
 
@@ -171,7 +163,6 @@ allow {
 allow {
     api.method = "GET"
     api.path = ["api", "v1", "projects", project_id, "jobs", _, "tests", "history"]
-    api.token.type = "user"
     project_jobs_public(project_id)
 }
 
@@ -187,7 +178,6 @@ allow {
 allow {
     api.method = "GET"
     api.path = ["api", "v1", "projects", project_id, "jobs", _, "badges"]
-    api.token.type = "user"
     project_jobs_public(project_id)
 }
 
@@ -203,7 +193,6 @@ allow {
 allow {
     api.method = "GET"
     api.path = ["api", "v1", "projects", project_id, "jobs", _, "stats"]
-    api.token.type = "user"
     project_jobs_public(project_id)
 }
 
