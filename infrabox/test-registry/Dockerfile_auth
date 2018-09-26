@@ -1,7 +1,6 @@
 FROM alpine:3.6
 
-RUN apk add --no-cache py2-flask py2-psycopg2 py2-jwt py2-cryptography py2-gevent py2-requests py-future py2-pip && \
-    pip install eventlet
+RUN apk add --no-cache py2-flask py2-psycopg2 py2-jwt py2-cryptography py2-gevent py2-requests py-future py2-pip
 ENV PYTHONPATH=/
 
 COPY src/docker-registry/auth/server.py /server.py

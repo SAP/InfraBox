@@ -159,7 +159,7 @@ def check_request_authorization():
         }
 
         if "X-Original-Method" in request.headers:
-            opa_input["original_method"] = request.headers["X-Original-Method"]
+            opa_input["input"]["original_method"] = request.headers["X-Original-Method"]
 
         is_authorized = opa_do_auth(opa_input)
 

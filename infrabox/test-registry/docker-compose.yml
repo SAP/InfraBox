@@ -12,7 +12,7 @@ services:
     opa:
         build:
             context: ../..
-            dockerfile: ./src/openpolicyagent/Dockerfile
+            dockerfile: src/openpolicyagent/Dockerfile
     docker_auth:
         build:
             context: ../..

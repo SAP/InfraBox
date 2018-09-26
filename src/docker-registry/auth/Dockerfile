@@ -4,6 +4,7 @@ RUN apk add --no-cache py2-flask py2-psycopg2 py2-jwt py2-cryptography py2-geven
 
 COPY src/docker-registry/auth/server.py /server.py
 COPY src/pyinfraboxutils /pyinfraboxutils
+COPY src/pyinfrabox /pyinfrabox
 
 ENV PYTHONPATH=/
 

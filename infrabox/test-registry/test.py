@@ -6,7 +6,9 @@ import psycopg2
 import psycopg2.extensions
 import requests
 
+from pyinfraboxutils.db import DB
 from pyinfraboxutils.token import encode_project_token
+from pyinfraboxutils.ibopa import opa_push_project_data, opa_push_collaborator_data
 
 conn = psycopg2.connect(dbname=os.environ['INFRABOX_DATABASE_DB'],
                         host=os.environ['INFRABOX_DATABASE_HOST'],
@@ -55,12 +57,18 @@ class Test(TestCase):
 
     def setUp(self):
         cur = conn.cursor()
+        cur.execute('TRUNCATE auth_token')
+        cur.execute('TRUNCATE project')
+        cur.execute('TRUNCATE collaborator')
         cur.execute('''INSERT INTO auth_token (id, description, project_id, scope_push, scope_pull)
                         VALUES(%s, 'test token', %s, true, true)''', (self.token, self.project_id,))
         cur.execute('''INSERT INTO project(name, type, id)
                         VALUES('test', 'upload', %s)''', (self.project_id,))
         cur.execute('''INSERT INTO collaborator(project_id, user_id, role)
                         VALUES(%s, %s, 'Owner')''', (self.project_id, self.user_id))
+        db = DB(conn)
+        opa_push_project_data(db)
+        opa_push_collaborator_data(db)
 
 
     def tearDown(self):

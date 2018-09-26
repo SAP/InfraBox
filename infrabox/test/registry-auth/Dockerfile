@@ -1,6 +1,6 @@
 FROM alpine:3.6
 
-RUN apk add --no-cache python py2-psycopg2 py2-pip gcc openssl libffi-dev python2-dev musl-dev py2-flask git openssl-dev && \
+RUN apk add --no-cache python py2-psycopg2 py2-pip gcc openssl libffi-dev python2-dev musl-dev py2-flask git openssl-dev py-future && \
     pip install bcrypt PyJWT jsonschema coverage xmlrunner cryptography codecov && \
     apk del gcc python2-dev musl-dev openssl-dev libffi-dev
 
