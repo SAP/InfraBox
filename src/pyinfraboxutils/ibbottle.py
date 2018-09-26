@@ -44,10 +44,10 @@ class InfraBoxPostgresPlugin(object):
                 except HTTPResponse, e:
                     raise
                 except psycopg2.OperationalError:
-                    print "Operational Error. Retrying."
+                    print("Operational Error. Retrying.")
                     continue
                 except psycopg2.DatabaseError:
-                    print "Database Error. Retrying."
+                    print("Database Error. Retrying.")
                     continue
                 finally:
                     try:

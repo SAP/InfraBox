@@ -63,7 +63,7 @@ def execute(command, cwd=None, env=None, ignore_error=False, ignore_output=False
         if ignore_output:
             continue
 
-        print line.rstrip()
+        print(line.rstrip())
 
     process.wait()
 
@@ -114,7 +114,7 @@ def images_push(args):
         elif args.type == 'gcr':
             execute(['gcloud', 'docker', '--', 'push', image_name])
         else:
-            print 'invalid type'
+            print('invalid type')
             sys.exit(1)
 
 def _setup_rsa_keys():
@@ -159,7 +159,7 @@ def services_start(args):
         p = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'src', 'dashboard-client')
         execute(['npm', 'run', 'dev'], cwd=p)
     else:
-        print "Unknown service"
+        print("Unknown service")
         sys.exit(1)
 
 def services_rm(args):
@@ -167,7 +167,7 @@ def services_rm(args):
         execute(['docker-compose', 'rm', '-f'],
                 cwd=os.path.join(os.path.dirname(os.path.realpath(__file__)), 'infrabox', 'utils', 'storage'))
     else:
-        print "Unknown service"
+        print("Unknown service")
         sys.exit(1)
 
 def services_kill(args):
@@ -175,7 +175,7 @@ def services_kill(args):
         execute(['docker-compose', 'kill'],
                 cwd=os.path.join(os.path.dirname(os.path.realpath(__file__)), 'infrabox', 'utils', 'storage'))
     else:
-        print "Unknown service"
+        print("Unknown service")
         sys.exit(1)
 
 def changelog_create(args):

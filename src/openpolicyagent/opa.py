@@ -15,13 +15,13 @@ def upload_policies(policy_url):
         try:
             rsp = requests.put(url, data=f_data)
             if rsp:
-                print "Pushed %s to %s (Status %s)" % (file_name, url, str(rsp.status_code))
+                print("Pushed %s to %s (Status %s)" % (file_name, url, str(rsp.status_code)))
             else:
-                print "Failed pushing %s to %s (Status %s):" % (file_name, url, str(rsp.status_code))
-                print rsp.content
+                print("Failed pushing %s to %s (Status %s):" % (file_name, url, str(rsp.status_code)))
+                print(rsp.content)
         except requests.exceptions.RequestException as e:
-            print "Failed pushing %s to %s:" % (file_name, url)
-            print e
+            print("Failed pushing %s to %s:" % (file_name, url))
+            print(e)
 
 def get_files():
     dir_path = os.path.dirname(os.path.realpath(__file__))

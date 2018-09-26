@@ -49,7 +49,6 @@ allow {
 allow {
     api.method = "GET"
     api.path = ["api", "v1", "projects", project]
-    api.token.type = "user"
     projects_projects_public(project)
 }
 
