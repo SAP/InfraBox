@@ -25,9 +25,10 @@ allow {
 # Allow access to /v2/path
 allow {
     api.original_method = "GET"
-    api.path = ["v2", project_id]
-    count(project_id, project_id_length)
-    project_id_length >= 2
+    api.path[0] = "v2"
+    api.path[1] = project_id
+    count(api.path, path_length)
+    path_length >= 3
 
     api.token.type = "project"
     api.token.project.id = project_id
@@ -36,9 +37,10 @@ allow {
 
 allow {
     api.original_method
-    api.path = ["v2", project_id]
-    count(project_id, project_id_length)
-    project_id_length >= 2
+    api.path[0] = "v2"
+    api.path[1] = project_id
+    count(api.path, path_length)
+    path_length >= 3
 
     api.token.type = "job"
     states := ["scheduled", "running"]
