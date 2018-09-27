@@ -634,6 +634,10 @@ class RunJob(Job):
                 if service_build_context:
                     build_context = os.path.join(os.path.dirname(compose_file), service_build_context)
                     service_volumes += ['%s:/infrabox/context' % build_context]
+                else:
+                    service_volumes += ['%s:/infrabox/context' % self.mount_repo_dir]
+            else:
+                service_volumes += ['%s:/infrabox/context' % self.mount_repo_dir]
 
             if os.environ['INFRABOX_LOCAL_CACHE_ENABLED'] == 'true':
                 service_volumes.append("/local-cache:/infrabox/local-cache")
