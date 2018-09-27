@@ -4,12 +4,17 @@ import base64
 from auth import server
 import xmlrunner
 import psycopg2
+import psycopg2.extensions
 
 from pyinfraboxutils.ibopa import opa_push_project_data
-from pyinfraboxutils.db import connect_db, DB
+from pyinfraboxutils.db import  DB, connect_db
 from pyinfraboxutils.token import encode_project_token
 
+conn = connect_db()
+conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
+
 class AccountTestCase(unittest.TestCase):
+
     def setUp(self):
         self.app = server.app.test_client()
         server.app.testing = True
@@ -18,16 +23,18 @@ class AccountTestCase(unittest.TestCase):
         self.project_token = 'bb14af82-3c4f-4bb5-b1da-a89a0ced5e6f'
         self.job_id = 'c514af82-3c4f-4bb5-b1da-a89a0ced5e6f'
 
-        self.conn = connect_db()
-        cur = self.conn.cursor()
+        cur = conn.cursor()
         cur.execute('TRUNCATE auth_token')
         cur.execute('TRUNCATE project')
         cur.execute('''INSERT INTO project(name, type, id)
                         VALUES('test', 'upload', %s)''', (self.project_id,))
-        cur.close()
-        self.conn.commit()
-        db = DB(self.conn)
+        db = DB(conn)
         opa_push_project_data(db)
+
+    def tearDown(self):
+        cur = conn.cursor()
+        cur.execute('''DELETE FROM auth_token''')
+        cur.execute('''DELETE FROM project''')
 
     def test_no_token(self):
         r = self.get('/v2')
@@ -63,13 +70,11 @@ class AccountTestCase(unittest.TestCase):
         self.assertEqual(r['status'], 401)
 
     def test_v2_valid_token(self):
-        cur = self.conn.cursor()
+        cur = conn.cursor()
         cur.execute('''
             INSERT INTO auth_token (id, project_id, description)
             VALUES (%s, %s, 'desc')
         ''', [self.project_token, self.project_id])
-        cur.close()
-        self.conn.commit()
 
         r = self.get('/v2', self.get_project_headers())
         self.assertEqual(r['status'], 200)
@@ -98,13 +103,11 @@ class AccountTestCase(unittest.TestCase):
         self.assertEqual(r['status'], 401)
 
     def test_path_valid_token(self):
-        cur = self.conn.cursor()
+        cur = conn.cursor()
         cur.execute('''
             INSERT INTO auth_token (id, project_id, description)
             VALUES (%s, %s, 'desc')
         ''', [self.project_token, self.project_id])
-        cur.close()
-        self.conn.commit()
 
         print("valid project token")
 

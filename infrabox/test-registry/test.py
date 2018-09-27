@@ -6,16 +6,11 @@ import psycopg2
 import psycopg2.extensions
 import requests
 
-from pyinfraboxutils.db import DB
+from pyinfraboxutils.db import DB, connect_db
 from pyinfraboxutils.token import encode_project_token
 from pyinfraboxutils.ibopa import opa_push_project_data, opa_push_collaborator_data
 
-conn = psycopg2.connect(dbname=os.environ['INFRABOX_DATABASE_DB'],
-                        host=os.environ['INFRABOX_DATABASE_HOST'],
-                        port=os.environ['INFRABOX_DATABASE_PORT'],
-                        user=os.environ['INFRABOX_DATABASE_USER'],
-                        password=os.environ['INFRABOX_DATABASE_PASSWORD'])
-
+conn = connect_db()
 conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
 
 class InputTests(TestCase):
