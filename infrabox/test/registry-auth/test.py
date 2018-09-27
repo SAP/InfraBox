@@ -21,6 +21,7 @@ class AccountTestCase(unittest.TestCase):
         self.conn = connect_db()
         cur = self.conn.cursor()
         cur.execute('TRUNCATE auth_token')
+        cur.execute('TRUNCATE project')
         cur.execute('''INSERT INTO project(name, type, id)
                         VALUES('test', 'upload', %s)''', (self.project_id,))
         cur.close()
