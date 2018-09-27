@@ -1,5 +1,6 @@
 import json
 import select
+import os
 
 import urllib
 import requests
@@ -43,7 +44,8 @@ def main(): # pragma: no cover
             conn.poll()
             while conn.notifies:
                 notify = conn.notifies.pop(0)
-                if not is_leader(conn, 'github-review', cluster_name, exit=False):
+                if not is_leader(conn, 'github-review', cluster_name, exit=False
+                                 ):
                     continue
                 handle_job_update(conn, json.loads(notify.payload))
 
@@ -134,7 +136,15 @@ def handle_job_update(conn, event):
         AND project_id = %s
     ''', [commit_sha, project_id])[0]['github_status_url']
 
-    dashboard_url = get_root_url('global')
+    ha_mode = os.environ.get('INFRABOX_HA_ENABLED') == 'true'
+    if ha_mode:
+        dashboard_url = get_root_url('global')
+    else:
+        dashboard_url = execute_sql(conn, '''
+                    SELECT root_url
+                    FROM cluster
+                    WHERE name = 'master'
+                ''', [])[0]['root_url']
 
     target_url = '%s/dashboard/#/project/%s/build/%s/%s/job/%s' % (dashboard_url,
                                                                    project_name,
