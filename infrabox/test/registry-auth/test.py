@@ -5,7 +5,8 @@ from auth import server
 import xmlrunner
 import psycopg2
 
-from pyinfraboxutils.db import connect_db
+from pyinfraboxutils.ibopa import opa_push_project_data
+from pyinfraboxutils.db import connect_db, DB
 from pyinfraboxutils.token import encode_project_token
 
 class AccountTestCase(unittest.TestCase):
@@ -13,15 +14,20 @@ class AccountTestCase(unittest.TestCase):
         self.app = server.app.test_client()
         server.app.testing = True
 
-        self.conn = connect_db()
-        cur = self.conn.cursor()
-        cur.execute('TRUNCATE auth_token')
-        cur.close()
-        self.conn.commit()
-
         self.project_id = 'a514af82-3c4f-4bb5-b1da-a89a0ced5e6f'
         self.project_token = 'bb14af82-3c4f-4bb5-b1da-a89a0ced5e6f'
         self.job_id = 'c514af82-3c4f-4bb5-b1da-a89a0ced5e6f'
+
+        self.conn = connect_db()
+        cur = self.conn.cursor()
+        cur.execute('TRUNCATE auth_token')
+        cur.execute('''INSERT INTO project(name, type, id)
+                        VALUES('test', 'upload', %s)''', (self.project_id,))
+        cur.close()
+        self.conn.commit()
+        db = DB(conn)
+        opa_push_project_data(db)
+
 
     def test_no_token(self):
         r = self.get('/v2')
@@ -99,6 +105,8 @@ class AccountTestCase(unittest.TestCase):
         ''', [self.project_token, self.project_id])
         cur.close()
         self.conn.commit()
+
+        print("valid project token")
 
         r = self.get('/v2/%s/%s' % (self.project_id, self.job_id), self.get_project_headers())
         self.assertEqual(r['status'], 200)
