@@ -1,12 +1,14 @@
 import json
 import select
+import os
 
 import urllib
 import requests
 import psycopg2
 
-from pyinfraboxutils import get_logger, get_env
+from pyinfraboxutils import get_logger, get_env, get_root_url
 from pyinfraboxutils.db import connect_db
+from pyinfraboxutils.leader import elect_leader, is_leader, is_active
 
 logger = get_logger("github")
 
@@ -25,9 +27,12 @@ def main(): # pragma: no cover
     get_env('INFRABOX_DATABASE_HOST')
     get_env('INFRABOX_DATABASE_PORT')
 
+    cluster_name = get_env('INFRABOX_CLUSTER_NAME')
     conn = connect_db()
     conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
     logger.info("Connected to database")
+
+    elect_leader(conn, 'github-review', cluster_name)
 
     curs = conn.cursor()
     curs.execute("LISTEN job_update;")
@@ -39,6 +44,9 @@ def main(): # pragma: no cover
             conn.poll()
             while conn.notifies:
                 notify = conn.notifies.pop(0)
+                if not is_leader(conn, 'github-review', cluster_name, exit=False
+                                 ):
+                    continue
                 handle_job_update(conn, json.loads(notify.payload))
 
 
@@ -128,11 +136,15 @@ def handle_job_update(conn, event):
         AND project_id = %s
     ''', [commit_sha, project_id])[0]['github_status_url']
 
-    dashboard_url = execute_sql(conn, '''
-        SELECT root_url
-        FROM cluster
-        WHERE name = 'master'
-    ''', [])[0]['root_url']
+    ha_mode = os.environ.get('INFRABOX_HA_ENABLED') == 'true'
+    if ha_mode:
+        dashboard_url = get_root_url('global')
+    else:
+        dashboard_url = execute_sql(conn, '''
+                    SELECT root_url
+                    FROM cluster
+                    WHERE name = 'master'
+                ''', [])[0]['root_url']
 
     target_url = '%s/dashboard/#/project/%s/build/%s/%s/job/%s' % (dashboard_url,
                                                                    project_name,

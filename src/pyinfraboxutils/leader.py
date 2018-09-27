@@ -31,12 +31,15 @@ def _is_leader(conn, service_name, cluster_name=None):
     conn.commit()
     return r == (service_name, cluster_name)
 
-def is_leader(conn, service_name, cluster_name=None):
+def is_leader(conn, service_name, cluster_name=None, exit=True):
     leader = _is_leader(conn, service_name, cluster_name)
 
     if not leader:
         logger.info('Not the leader anymore')
-        sys.exit(1)
+        if exit:
+            sys.exit(1)
+        else:
+            return False
 
     return True
 

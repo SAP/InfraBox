@@ -282,11 +282,6 @@ https://{{- required "host is required" .Values.host -}}:{{- .Values.port -}}
 {{ end }}
 
 {{ define "env_ldap" }}
-{{ if ne .Values.cluster.name "master" }}
--
-    name: INFRABOX_ACCOUNT_LDAP_ENABLED
-    value: "false"
-{{ else }}
 -
     name: INFRABOX_ACCOUNT_LDAP_ENABLED
     value: {{ .Values.account.ldap.enabled | quote }}
@@ -309,7 +304,6 @@ https://{{- required "host is required" .Values.host -}}:{{- .Values.port -}}
         secretKeyRef:
             name: infrabox-ldap
             key: password
-{{ end }}
 {{ end }}
 {{ end }}
 
