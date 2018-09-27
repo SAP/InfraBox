@@ -35,7 +35,7 @@ def get_root_url(name):
     if name == 'cluster':
         return get_env('INFRABOX_ROOT_URL')
     elif name == 'global':
-        ha_mode = get_env('INFRABOX_HA_ENABLED') == 'true'
+        ha_mode = os.environ.get('INFRABOX_HA_ENABLED', None) == 'true'
         return get_env('INFRABOX_HA_GLOBAL_URL') if ha_mode else get_env('INFRABOX_ROOT_URL')
     else:
         raise Exception("only cluster or global url is supported")

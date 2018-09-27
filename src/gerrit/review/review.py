@@ -2,6 +2,7 @@ import json
 import select
 import urllib
 import time
+import os
 
 import psycopg2
 import paramiko
@@ -11,6 +12,13 @@ from pyinfraboxutils.db import connect_db
 from pyinfraboxutils.leader import elect_leader, is_leader, is_active
 
 logger = get_logger("gerrit")
+
+def execute_sql(conn, stmt, params): # pragma: no cover
+    c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    c.execute(stmt, params)
+    result = c.fetchall()
+    c.close()
+    return result
 
 def main():
     get_env('INFRABOX_VERSION')
@@ -136,7 +144,15 @@ def handle_job_update(conn, event):
     gerrit_username = get_env('INFRABOX_GERRIT_USERNAME')
     gerrit_key_filename = get_env('INFRABOX_GERRIT_KEY_FILENAME')
 
-    dashboard_url = get_root_url('global')
+    ha_mode = os.environ.get('INFRABOX_HA_ENABLED') == 'true'
+    if ha_mode:
+        dashboard_url = get_root_url('global')
+    else:
+        dashboard_url = execute_sql(conn, '''
+                SELECT root_url
+                FROM cluster
+                WHERE name = 'master'
+            ''', [])[0]['root_url']
 
     client = paramiko.SSHClient()
     client.load_system_host_keys()
