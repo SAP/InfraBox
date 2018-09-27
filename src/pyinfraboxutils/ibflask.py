@@ -105,7 +105,7 @@ def get_token():
             try:
                 decoded = base64.b64decode(auth)
             except:
-                logger.warn('could not base64 decode auth header')
+                logger.warn('could not base64 decode auth header %s', auth)
                 return None
 
             s = decoded.split('infrabox:')

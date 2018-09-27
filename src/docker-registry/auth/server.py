@@ -2,7 +2,6 @@ from flask import jsonify
 
 from pyinfraboxutils import get_env, get_logger
 from pyinfraboxutils.ibflask import app
-from pyinfraboxutils.ibopa import opa_push_all
 
 logger = get_logger('docker-registry-auth')
 
