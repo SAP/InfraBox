@@ -26,9 +26,8 @@ class AccountTestCase(unittest.TestCase):
                         VALUES('test', 'upload', %s)''', (self.project_id,))
         cur.close()
         self.conn.commit()
-        db = DB(conn)
+        db = DB(self.conn)
         opa_push_project_data(db)
-
 
     def test_no_token(self):
         r = self.get('/v2')
