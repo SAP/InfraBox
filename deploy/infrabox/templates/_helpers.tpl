@@ -352,10 +352,10 @@ https://{{- required "host is required" .Values.host -}}:{{- .Values.port -}}
     value: localhost
 -
     name: INFRABOX_OPA_PORT
-    value: 8181
+    value: "8181"
 -
     name: INFRABOX_OPA_PUSH_INTERVAL
-    value: 30
+    value: "30"
 {{ end }}
 
 {{ define "env_general" }}
