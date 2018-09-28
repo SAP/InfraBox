@@ -346,6 +346,18 @@ https://{{- required "host is required" .Values.host -}}:{{- .Values.port -}}
     value: {{ .Values.cluster.labels }}
 {{ end }}
 
+{{ define "env_opa" }}
+-
+    name: INFRABOX_OPA_HOST
+    value: localhost
+-
+    name: INFRABOX_OPA_PORT
+    value: 8181
+-
+    name: INFRABOX_OPA_PUSH_INTERVAL
+    value: 30
+{{ end }}
+
 {{ define "env_general" }}
 -
     name: INFRABOX_GENERAL_DONT_CHECK_CERTIFICATES
@@ -396,6 +408,13 @@ https://{{- required "host is required" .Values.host -}}:{{- .Values.port -}}
     - name: cloudsql
       mountPath: /cloudsql
 {{ end }}
+{{ end }}
+
+{{ define "containers_opa" }}
+-
+    image: {{ include "image_repository" . }}/opa:{{ include "image_tag" . }}
+    imagePullPolicy: Always
+    name: opa
 {{ end }}
 
 {{- define "dockerCredentials" }}
