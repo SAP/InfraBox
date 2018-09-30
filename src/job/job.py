@@ -654,8 +654,13 @@ class RunJob(Job):
 
             if build:
                 compose_file_content['services'][service]['image'] = image_name_latest
-                compose_file_content['services'][service]['build']['cache_from'] = [image_name_latest]
+                build['cache_from'] = [image_name_latest]
                 self.get_cached_image(image_name_latest)
+
+                if not build.get('args', None):
+                    build['args'] = []
+
+                build['args'] += ['INFRABOX_BUILD_NUMBER=%s' % self.build['build_number']]
 
         with open(compose_file_new, "w+") as out:
             json.dump(compose_file_content, out)
