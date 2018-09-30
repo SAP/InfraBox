@@ -1,8 +1,10 @@
-FROM alpine:3.6
+FROM debian:9.4-slim
 
-RUN apk add --no-cache python py2-psycopg2 py2-pip gcc openssl libffi-dev python2-dev musl-dev py2-flask git openssl-dev py-future && \
-    pip install bcrypt PyJWT jsonschema coverage xmlrunner cryptography codecov && \
-    apk del gcc python2-dev musl-dev openssl-dev libffi-dev
+RUN apt-get update -y && apt-get install -y python python-psycopg2 python-pip python-flask && \
+    pip install bcrypt PyJWT jsonschema coverage xmlrunner cryptography codecov eventlet future && \
+    apt-get remove -y python-pip && \
+    apt-get autoremove -y && \
+	rm -rf /var/lib/apt/lists/*
 
 ENV PYTHONPATH=/infrabox/context/src:/infrabox/context/src/docker-registry
 

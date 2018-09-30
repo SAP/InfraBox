@@ -136,9 +136,9 @@ class Checker(object):
             cursor.execute("""
                 UPDATE cluster SET active=%s
                 WHERE name=%s
-            """,["TRUE" if self.is_active else "FALSE",self.cluster_name])
+            """,[self.is_active, self.cluster_name])
             cursor.close()
-            self.logger.info("Set cluster %s active to %s. Resson: self check" % (self.cluster_name, self.is_active))
+            self.logger.info("Set cluster %s active to %s. Reason: self check" % (self.cluster_name, self.is_active))
 
     def update_status(self):
         cursor = self.conn.cursor()
@@ -152,7 +152,7 @@ class Checker(object):
         clusters = cursor.fetchall()
         cursor.close()
         for c in clusters:
-            self.logger.info("Set cluster %s to inactive.Resson: last update time is too old" % c[0])
+            self.logger.info("Set cluster %s to inactive. Reason: last update time is too old" % c[0])
 
     def run(self):
         self.logger.info("Starting checker")
