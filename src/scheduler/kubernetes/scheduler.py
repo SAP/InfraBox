@@ -352,7 +352,7 @@ class Scheduler(object):
                 continue
 
             last_state = result[0][0]
-            if last_state in ('killed', 'finished', 'error', 'finished'):
+            if last_state in ('killed', 'finished', 'error', 'failure'):
                 self.kube_delete_job(job_id)
                 continue
 
@@ -442,7 +442,7 @@ class Scheduler(object):
         cursor.execute("""
             SELECT name, labels
             FROM cluster
-            WHERE active = true AND 
+            WHERE active = true AND
                   enabled = true
         """)
         result = cursor.fetchall()

@@ -40,6 +40,7 @@ IMAGES = [
     {'name': 'metrics'},
     {'name': 'checker'},
     {'name': 'cluster-status'},
+    {'name': 'status-cachet'},
 ]
 
 def execute(command, cwd=None, env=None, ignore_error=False, ignore_output=False):
