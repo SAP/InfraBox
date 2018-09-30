@@ -23,16 +23,6 @@ class AdminService {
                 NotificationService.$emit('NOTIFICATION', new Notification(err))
             })
     }
-
-    loadClusters () {
-        return NewAPIService.get(`admin/clusters/`)
-            .then((s) => {
-                store.commit('setClusters', s)
-            })
-            .catch((err) => {
-                NotificationService.$emit('NOTIFICATION', new Notification(err))
-            })
-    }
 }
 
 export default new AdminService()

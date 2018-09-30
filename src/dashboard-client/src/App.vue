@@ -52,15 +52,6 @@
                     </md-list-expand>
                 </md-list-item>
 
-                <md-list-item>
-                    <router-link :to="{name: 'AdminClusters'}" style="color: inherit">
-                        <span @click="toggleLeftSidenav()">
-                            <md-icon><i class="fa fa-desktop fa-fw"></i></md-icon>
-                            <span class="fix-list">Clusters</span>
-                        </span>
-                    </router-link>
-                </md-list-item>
-
                 <md-list-item class="navi-link">
                     <a href="https://github.com/SAP/infrabox/tree/master/docs"
                        class="md-list-item-container md-button"

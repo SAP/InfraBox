@@ -450,3 +450,12 @@ https://{{- .Values.ha.global_host -}}:{{- .Values.ha.global_port -}}
 {{ end }}
 {{ end }}
 
+{{ define "env_cachet" }}
+-
+    name: INFRABOX_CACHET_ENABLED
+    value: {{ .Values.cachet.enabled | quote }}
+-   name: INFRABOX_CACHET_API_TOKEN_
+    value: {{ .Values.cachet.api_token }}
+-   name: INFRABOX_CACHET_ENDPOINT
+    value: {{ .Values.cachet.endpoint | quote }}
+{{ end }}
