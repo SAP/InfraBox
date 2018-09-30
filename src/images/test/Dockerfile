@@ -17,6 +17,7 @@ RUN    apt-get update -y \
         xmlrunner \
         mock \
         codecov \
+        crypto \
         flask \
         flask_restplus==0.11.0 \
         flask_socketio \
