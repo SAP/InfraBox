@@ -1,6 +1,5 @@
-FROM alpine:3.6
-
-RUN apk add --no-cache py2-flask py2-cryptography py2-jwt curl py-nose py2-psycopg2 py2-requests
+ARG INFRABOX_BUILD_NUMBER
+FROM quay.io/infrabox/images-test:build_$INFRABOX_BUILD_NUMBER
 
 ENV PYTHONPATH=/
 
