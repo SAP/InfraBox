@@ -9,6 +9,7 @@ RUN    apt-get update -y \
     && pip install \
         psycopg2 \
         nose \
+        pyyaml \
         coverage \
         xmlrunner \
         mock \
