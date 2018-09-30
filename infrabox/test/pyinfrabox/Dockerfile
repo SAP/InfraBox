@@ -1,7 +1,5 @@
-FROM alpine:3.6
-
-RUN apk add --no-cache py2-yaml py2-pip py-future git && \
-    pip install coverage codecov xmlrunner
+ARG INFRABOX_BUILD_NUMBER
+FROM quay.io/infrabox/images-test:build_$INFRABOX_BUILD_NUMBER
 
 ENV PYTHONPATH=/infrabox/context/src
 

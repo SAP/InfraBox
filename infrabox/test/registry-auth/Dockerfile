@@ -1,10 +1,5 @@
-FROM debian:9.4-slim
-
-RUN apt-get update -y && apt-get install -y python python-psycopg2 python-pip python-flask && \
-    pip install bcrypt PyJWT jsonschema coverage xmlrunner cryptography codecov eventlet && \
-    apt-get remove -y python-pip && \
-    apt-get autoremove -y && \
-	rm -rf /var/lib/apt/lists/*
+ARG INFRABOX_BUILD_NUMBER
+FROM quay.io/infrabox/images-test:build_$INFRABOX_BUILD_NUMBER
 
 ENV PYTHONPATH=/infrabox/context/src:/infrabox/context/src/docker-registry
 

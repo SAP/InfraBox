@@ -1,7 +1,5 @@
-FROM alpine:3.4
-
-RUN apk add --no-cache python py-pip
-RUN pip install flask
+ARG INFRABOX_BUILD_NUMBER
+FROM quay.io/infrabox/images-test:build_$INFRABOX_BUILD_NUMBER
 
 COPY infrabox/test-registry/mock-registry/server.py /server.py
 ENV FLASK_APP /server.py
