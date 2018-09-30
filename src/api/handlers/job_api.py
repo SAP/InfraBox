@@ -551,7 +551,7 @@ class Output(Resource):
             for c in clusters:
                 stream.seek(0)
                 url = '%s/api/job/output' % c['root_url']
-                files = {'output.tar.snappy': stream}
+                files = {f: stream}
                 token = encode_job_token(job_id)
                 headers = {'Authorization': 'bearer ' + token}
                 r = requests.post(url, files=files, headers=headers, timeout=120, verify=False)

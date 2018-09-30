@@ -191,8 +191,8 @@ def create_git_job(commit, build_no, project_id, repo, project_type, env):
         INSERT INTO job (id, state, build_id, type, name, project_id,
                          dockerfile, repo, env_var, cluster_name, definition)
         VALUES (gen_random_uuid(), 'queued', %s, 'create_job_matrix',
-                'Create Jobs', %s, '', %s, %s, 'master', %s)
-    ''', [build['id'], project_id, json.dumps(git_repo), json.dumps(env_var), json.dumps(definition)])
+                'Create Jobs', %s, '', %s, %s, %s, %s)
+    ''', [build['id'], project_id, json.dumps(git_repo), json.dumps(env_var), None, json.dumps(definition)])
 
     return (build['id'], build['build_number'])
 

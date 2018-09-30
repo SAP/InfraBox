@@ -3,6 +3,10 @@ from flask import jsonify
 from pyinfraboxutils import get_env, get_logger
 from pyinfraboxutils.ibflask import app
 
+import eventlet
+from eventlet import wsgi
+eventlet.monkey_patch()
+
 logger = get_logger('docker-registry-auth')
 
 @app.route('/ping')
@@ -32,9 +36,7 @@ def main(): # pragma: no cover
     get_env('INFRABOX_OPA_HOST')
     get_env('INFRABOX_OPA_PORT')
 
-    from gevent.wsgi import WSGIServer
-    http_server = WSGIServer(('', 8081), app, log=logger)
-    http_server.serve_forever()
+    wsgi.server(eventlet.listen(('0.0.0.0', 8081)), app)
 
 if __name__ == "__main__": # pragma: no cover
     main()

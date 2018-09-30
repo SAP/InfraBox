@@ -179,7 +179,7 @@
           "alias": "",
           "format": "table",
           "hide": false,
-          "rawSql": "SELECT c.name, c.nodes, count(j.id) filter (WHERE j.state = 'running') as running,\n  count(j.id) filter (WHERE j.state = 'scheduled') as scheduled,\n  count(j.id) filter (WHERE j.state = 'queued') as queued,\n  (sum(j.cpu) FILTER (WHERE j.state = 'running' ))::float / c.cpu_capacity as cpu_use, \n  (sum(j.memory) filter (WHERE j.state = 'running'))::float / c.memory_capacity * 1024 as mem_use\nFROM cluster c LEFT OUTER JOIN job j\nON c.name = j.cluster_name\nGROUP BY c.name",
+          "rawSql": "SELECT c.name, c.nodes, count(j.id) filter (WHERE j.state = 'running') as running,\n  count(j.id) filter (WHERE j.state = 'scheduled') as scheduled,\n  count(j.id) filter (WHERE j.state = 'queued') as queued,\n  (sum((j.definition#>>'{resources,limits,cpu}')::float) FILTER (WHERE j.state = 'running' ))::float / c.cpu_capacity as cpu_use, \n  (sum((j.definition#>>'{resources,limits,memory}')::float) filter (WHERE j.state = 'running'))::float / c.memory_capacity * 1024 as mem_use\nFROM cluster c LEFT OUTER JOIN job j\nON c.name = j.cluster_name\nGROUP BY c.name",
           "refId": "A"
         }
       ],
@@ -372,7 +372,7 @@
         "current": false,
         "max": true,
         "min": true,
-        "rightSide": true,
+        "rightSide": false,
         "show": true,
         "total": false,
         "values": true
@@ -779,7 +779,7 @@
           "alias": "",
           "format": "table",
           "hide": false,
-          "rawSql": "SELECT sum(j.memory)::float*100 / (SELECT sum(memory_capacity)/1024 FROM cluster) as percentage\nFROM job j\nWHERE j.state = 'running'",
+          "rawSql": "SELECT sum((j.definition#>>'{resources,limits,memory}')::float)::float*100 / (SELECT sum(memory_capacity)/1024 FROM cluster) as percentage\nFROM job j\nWHERE j.state = 'running'",
           "refId": "A"
         }
       ],
@@ -1039,7 +1039,7 @@
           "alias": "",
           "format": "table",
           "hide": false,
-          "rawSql": "SELECT sum(j.cpu)::float*100 / (SELECT sum(cpu_capacity) FROM cluster ) as percentage\nFROM job j\nWHERE j.state = 'running'",
+          "rawSql": "SELECT sum((j.definition#>>'{resources,limits,cpu}')::float)::float*100 / (SELECT sum(cpu_capacity) FROM cluster ) as percentage\nFROM job j\nWHERE j.state = 'running'",
           "refId": "A"
         }
       ],

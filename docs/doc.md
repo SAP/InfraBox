@@ -241,7 +241,7 @@ You can also specify an already build image and run it as a job.
 |depends_on|false|[Dependency Configuration](#dependency-configuration)|[]|Jobs may have dependencies. You can list all jobs which should finish before the current job may be executed.|
 |environment|false|object|{}|Can be used to set environment variables for the job. See Environment Variables for more details.|
 |deployments|false|[Deployment Configuration](#deployments)|[]|Push your images to a registry|
-|security_context|false|[Security Context](#security_context)|[]|Configure security related options|
+|security_context|false|[Security Context](#security-context)|[]|Configure security related options|
 |repository|false|[Repository Configuration](#repository)|{}|Configure git repository options|
 |registries|false|[Source Registry Configuration](#image-source-registry)|[]|Configure the source registries|
 |run|false|boolean|true|Set to false if you have a deployment configured and only want to push an image but not execute it|
