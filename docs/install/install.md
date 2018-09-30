@@ -97,6 +97,12 @@ You may optionally configure Grafana/Prometheus monitoring.
 
 - [Configure Monitoring](/docs/install/configure/monitoring.md)
 
+### Configure Status page
+You may optionally configure a status page.
+
+- [Cachet](/docs/install/configure/cachet.md)
+
+
 ## Clone InfraBox repository
 If you have not already cloned the InfraBox repository and checkout the version you would like to install.
 
