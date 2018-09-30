@@ -4,6 +4,9 @@ RUN    apt-get update -y \
     && apt-get install -y \
         python \
         python-pip \
+        python-six \
+        python-cryptography \
+        python-pyasn1 \
     && pip install \
         psycopg2 \
         flask \
@@ -13,7 +16,6 @@ RUN    apt-get update -y \
         requests==2.18.4 \
         PyJWT \
         jsonschema \
-        cryptography \
         eventlet \
         boto3 \
         google-cloud-storage \
@@ -26,7 +28,6 @@ RUN    apt-get update -y \
         python-swiftclient \
         bottle \
         python-cachetclient \
-        six \
     && apt-get remove -y python-pip \
     && apt-get autoremove -y \
     && rm -rf /var/lib/apt/lists/*

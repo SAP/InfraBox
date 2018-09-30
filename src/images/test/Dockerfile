@@ -16,7 +16,6 @@ RUN    apt-get update -y \
         coverage \
         xmlrunner \
         mock \
-        urllib3 \
         codecov \
         flask \
         flask_restplus \
