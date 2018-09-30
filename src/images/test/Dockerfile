@@ -4,6 +4,7 @@ RUN    apt-get update -y \
     && apt-get install -y \
         python \
         python-pip \
+        python-six \
         curl \
         git \
     && pip install \
@@ -35,7 +36,6 @@ RUN    apt-get update -y \
         python-swiftclient \
         bottle \
         python-cachetclient \
-        six \
     && apt-get remove -y python-pip \
     && apt-get autoremove -y \
     && rm -rf /var/lib/apt/lists/*
