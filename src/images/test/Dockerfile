@@ -5,6 +5,8 @@ RUN    apt-get update -y \
         python \
         python-pip \
         python-six \
+        python-cryptography \
+        python-pyasn1 \
         curl \
         git \
     && pip install \
@@ -23,7 +25,6 @@ RUN    apt-get update -y \
         requests==2.18.4 \
         PyJWT \
         jsonschema \
-        cryptography \
         eventlet \
         boto3 \
         google-cloud-storage \
