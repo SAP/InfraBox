@@ -1,7 +1,8 @@
-from debian:9.4-slim
+ARG INFRABOX_BUILD_NUMBER
+FROM quay.io/infrabox/images-base:$INFRABOX_BUILD_NUMBER
 
 RUN apt-get update -y && \
-    apt-get install -y python-paramiko openssh-client python-requests python-bottle && \
+    apt-get install -y python-paramiko openssh-client python-bottle && \
     rm -rf /var/lib/apt/lists/*
 
 COPY src/gerrit/api/api.py /api.py
