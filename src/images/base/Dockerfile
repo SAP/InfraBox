@@ -6,6 +6,7 @@ RUN    apt-get update -y \
         python-pip \
         python-six \
         python-cryptography \
+        python-crypto \
         python-pyasn1 \
     && pip install \
         psycopg2 \

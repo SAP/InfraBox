@@ -7,6 +7,7 @@ RUN    apt-get update -y \
         python-six \
         python-cryptography \
         python-pyasn1 \
+        python-crypto \
         curl \
         git \
     && pip install \
@@ -17,7 +18,6 @@ RUN    apt-get update -y \
         xmlrunner \
         mock \
         codecov \
-        crypto \
         flask \
         flask_restplus==0.11.0 \
         flask_socketio \
