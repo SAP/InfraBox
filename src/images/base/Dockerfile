@@ -10,7 +10,7 @@ RUN    apt-get update -y \
     && pip install \
         psycopg2 \
         flask \
-        flask_restplus \
+        flask_restplus==0.11.0 \
         flask_socketio \
         ldap \
         requests==2.18.4 \
