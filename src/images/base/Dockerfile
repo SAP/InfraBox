@@ -26,6 +26,7 @@ RUN    apt-get update -y \
         python-swiftclient \
         bottle \
         python-cachetclient \
+        six \
     && apt-get remove -y python-pip \
     && apt-get autoremove -y \
     && rm -rf /var/lib/apt/lists/*
