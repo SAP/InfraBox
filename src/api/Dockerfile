@@ -1,10 +1,5 @@
-FROM debian:9.4-slim
-
-RUN apt-get update -y && apt-get install -y python python-psycopg2 python-pip python-flask python-ldap && \
-    pip install requests==2.18.4 PyJWT jsonschema cryptography flask_restplus eventlet flask_socketio boto3 google-cloud-storage future bcrypt pycrypto \
-    azure-mgmt-resource azure-storage keystoneauth1==3.7.0 python-swiftclient && \
-    apt-get remove -y python-pip && \
-    rm -rf /var/lib/apt/lists/*
+ARG INFRABOX_BUILD_NUMBER
+FROM quay.io/infrabox/images-base:build_$INFRABOX_BUILD_NUMBER
 
 ENV PYTHONPATH=/
 
