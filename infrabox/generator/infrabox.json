@@ -7,7 +7,7 @@
     }, {
         "type": "workflow",
         "name": "test",
-        "infrabox_file": "../../.infrabox/output/tests.json"
+        "infrabox_file": "../../.infrabox/output/tests.json",
         "depends_on": ["images"]
     }, {
         "type": "workflow",
