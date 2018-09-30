@@ -1,6 +1,5 @@
-FROM alpine:3.6
-
-RUN apk add --no-cache python py-requests py-psycopg2
+ARG INFRABOX_BUILD_NUMBER
+FROM quay.io/infrabox/images-base:$INFRABOX_BUILD_NUMBER
 
 COPY src/github/review/review.py /review.py
 COPY src/pyinfraboxutils /pyinfraboxutils
