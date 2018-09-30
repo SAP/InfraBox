@@ -26,7 +26,7 @@ class Checker(object):
         self.active_timeout = get_env('INFRABOX_HA_ACTIVE_TIMEOUT')
         self.cluster_name = get_env('INFRABOX_CLUSTER_NAME')
         self.logger = get_logger("checker")
-        self.root_url =  get_env("INFRABOX_ROOT_URL")
+        self.root_url = get_env("INFRABOX_ROOT_URL")
         self.is_active = True
         self.check_result = True
         self.retry_times = 0
@@ -147,7 +147,7 @@ class Checker(object):
             WHERE enabled=TRUE
                 AND active=TRUE
                 AND last_update < (NOW() - %s * INTERVAL '1' SECOND)
-            RETURNING name, active 
+            RETURNING name, active
         """, [self.active_timeout])
         clusters = cursor.fetchall()
         cursor.close()

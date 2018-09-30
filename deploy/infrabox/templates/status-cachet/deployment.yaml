@@ -1,0 +1,31 @@
+{{ if .Values.cachet.enabled }}
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+    name: infrabox-status-cachet
+    namespace: {{ template "system_namespace" . }}
+    labels:
+        app: infrabox-status-cachet
+spec:
+    replicas: 1
+    template:
+        metadata:
+            labels:
+                app: infrabox-status-cachet
+        spec:
+            {{ include "imagePullSecret" . | indent 8 }}
+            terminationGracePeriodSeconds: 0
+            containers:
+            {{ include "containers_database" . | indent 12 }}
+            -
+                name: status-cachet
+                image: {{ include "image_repository" . }}/status-cachet:{{ include "image_tag" . }}
+                imagePullPolicy: Always
+                env:
+                {{ include "env_database" . | indent 16 }}
+                {{ include "env_general" . | indent 16 }}
+                {{ include "env_version" . | indent 16 }}
+                {{ include "env_status-cachet" . | indent 16 }}
+            volumes:
+                {{ include "volumes_database" . | indent 16 }}
+{{ end }}

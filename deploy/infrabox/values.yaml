@@ -274,3 +274,11 @@ job:
 monitoring:
     # Enable InfraBox Monitoring. Requires prometheus-operator to be available.
     enabled: false
+
+cachet:
+    # Enable Cachet Status page
+    enabled: false
+
+    endpoint: # <REQUIRED> i.e. https://status.example.com/api/v1
+
+    api_token: # <REQUIRED>
