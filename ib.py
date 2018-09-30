@@ -17,29 +17,30 @@ logging.basicConfig(
 logger = logging.getLogger('ib')
 
 IMAGES = [
-    {'name': 'gerrit-api'},
-    {'name': 'gerrit-trigger'},
-    {'name': 'gerrit-review'},
-    {'name': 'github-trigger'},
-    {'name': 'github-review'},
+    {'name': 'gerrit-api', 'depends_on': ['images-base']},
+    {'name': 'gerrit-trigger', 'depends_on': ['images-base']},
+    {'name': 'gerrit-review', 'depends_on': ['images-base']},
+    {'name': 'github-trigger', 'depends_on': ['images-base']},
+    {'name': 'github-review', 'depends_on': ['images-base']},
     {'name': 'collector-api'},
     {'name': 'collector-fluentd'},
     {'name': 'job'},
-    {'name': 'gc'},
+    {'name': 'gc', 'depends_on': ['images-base']},
     {'name': 'controller'},
     {'name': 'scheduler-kubernetes'},
-    {'name': 'api'},
+    {'name': 'api', 'depends_on': ['images-base']},
     {'name': 'build-dashboard-client'},
     {'name': 'static', 'depends_on': ['build-dashboard-client']},
     {'name': 'docker-registry-auth'},
-    {'name': 'docker-registry-nginx'},
-    {'name': 'db'},
+    {'name': 'docker-registry-nginx', 'depends_on': ['images-base']},
+    {'name': 'db', 'depends_on': ['images-base']},
     {'name': 'postgres'},
     {'name': 'service-gcp'},
     {'name': 'service-namespace'},
     {'name': 'metrics'},
-    {'name': 'checker'},
-    {'name': 'cluster-status'}
+    {'name': 'checker', 'depends_on': ['images-base']},
+    {'name': 'cluster-status', 'depends_on': ['images-base']},
+    {'name': 'status-cachet', 'depends_on': ['images-base']},
 ]
 
 def execute(command, cwd=None, env=None, ignore_error=False, ignore_output=False):

@@ -1,7 +1,5 @@
-FROM debian:9.4-slim
-
-RUN apt-get update -y && apt-get install -y python python-psycopg2 python-requests python-bcrypt python-crypto && \
-    rm -rf /var/lib/apt/lists/*
+ARG INFRABOX_BUILD_NUMBER
+FROM quay.io/infrabox/images-base:build_$INFRABOX_BUILD_NUMBER
 
 COPY src/db db
 COPY src/pyinfraboxutils /pyinfraboxutils
