@@ -29,7 +29,6 @@ RUN    apt-get update -y \
         google-cloud-storage \
         future \
         bcrypt \
-        pycrypto \
         azure-mgmt-resource \
         azure-storage \
         keystoneauth1==3.7.0 \
