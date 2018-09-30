@@ -17,7 +17,7 @@ const state = {
     settings: {},
     admin: {
         projects: [],
-        users: [],
+        users: []
     }
 }
 
