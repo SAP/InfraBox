@@ -1,5 +1,5 @@
 ARG INFRABOX_BUILD_NUMBER
-FROM quay.io/infrabox/images-base:$INFRABOX_BUILD_NUMBER
+FROM quay.io/infrabox/images-base:build_$INFRABOX_BUILD_NUMBER
 
 RUN apt-get update -y && \
     apt-get install -y python-paramiko openssh-client python-bottle && \
