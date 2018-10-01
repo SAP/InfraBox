@@ -262,8 +262,8 @@ class JobAbort(Resource):
     #pylint: disable=unused-argument
     def get(self, project_id, job_id):
         g.db.execute('''
-            INSERT INTO abort(job_id) VALUES(%s)
-        ''', [job_id])
+            INSERT INTO abort(job_id, user_id) VALUES(%s, %s)
+        ''', [job_id, g.token['user']['id']])
         g.db.commit()
 
         return OK('Successfully aborted job')
