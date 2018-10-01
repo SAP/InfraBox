@@ -88,7 +88,7 @@ class Jobs(Resource):
                 j.created_at::text as job_created_at,
                 j.message as job_message,
                 j.definition as job_definition,
-                j.cluster_name as job_cluster_name, 
+                j.cluster_name as job_cluster_name,
                 j.node_name as job_node_name,
                 j.avg_cpu as job_avg_cpu,
                 -- pull_request
@@ -186,6 +186,7 @@ class JobRestart(Resource):
 
     @auth_required(['user'])
     def get(self, project_id, job_id):
+        user_id = g.token['user']['id']
 
         job = g.db.execute_one_dict('''
             SELECT state, type, build_id
@@ -245,12 +246,22 @@ class JobRestart(Resource):
             if j['state'] not in restart_states and j['state'] not in ('skipped', 'queued'):
                 abort(400, 'Some children jobs are still running')
 
+        result = g.db.execute_one_dict('''
+            SELECT username
+            FROM "user"
+            WHERE id = %s
+        ''', [user_id])
+        username = result['username']
+        msg = 'Job restarted by %s\n' % username
+
         for j in restart_jobs:
             g.db.execute('''
                 UPDATE job
                 SET state = 'queued', console = null, message = null
-                WHERE id = %s
-            ''', [j])
+                WHERE id = %s;
+                INSERT INTO console (job_id, output)
+                VALUES (%s, %s);
+            ''', [j, j, msg])
         g.db.commit()
 
         return OK('Successfully restarted job')
