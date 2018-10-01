@@ -94,11 +94,10 @@ class BuildAbort(Resource):
               AND project_id = %s
         ''', [build_id, project_id])
 
-
         for j in jobs:
             g.db.execute('''
-                INSERT INTO abort(job_id) VALUES(%s)
-            ''', [j['id']])
+                INSERT INTO abort(job_id, user_id) VALUES(%s, %s)
+            ''', [j['id'], g.token['user']['id']])
 
         g.db.commit()
 
