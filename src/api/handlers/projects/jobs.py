@@ -257,7 +257,7 @@ class JobRestart(Resource):
         for j in restart_jobs:
             g.db.execute('''
                 UPDATE job
-                SET state = 'queued', console = null, message = null
+                SET state = 'queued', console = null, message = null, start_date = null
                 WHERE id = %s;
                 INSERT INTO console (job_id, output)
                 VALUES (%s, %s);
