@@ -99,7 +99,7 @@ def handle_patchset_created_project(conn, event, project_id, project_name):
     c = conn.cursor()
     c.execute('''
         INSERT INTO abort
-        SELECT j.id
+        SELECT j.id, null
         FROM job j
         JOIN build b
         ON b.id = j.build_id

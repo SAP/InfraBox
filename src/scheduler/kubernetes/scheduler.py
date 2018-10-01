@@ -237,19 +237,16 @@ class Scheduler(object):
         cursor = self.conn.cursor()
         cursor.execute('''
             WITH all_aborts AS (
-                DELETE FROM "abort" RETURNING job_id
+                DELETE FROM "abort" RETURNING job_id, user_id
             ), jobs_to_abort AS (
-                SELECT j.id, j.state FROM all_aborts
+                SELECT j.id, j.state, user_id FROM all_aborts
                 JOIN job j
                     ON all_aborts.job_id = j.id
                     AND j.state not in ('finished', 'failure', 'error', 'killed')
                     AND cluster_name = %s
-            ), jobs_not_started_yet AS (
-                UPDATE job SET state = 'killed'
-                WHERE id in (SELECT id FROM jobs_to_abort WHERE state in ('queued'))
             )
 
-            SELECT id FROM jobs_to_abort WHERE state in ('scheduled', 'running', 'queued')
+            SELECT id, user_id FROM jobs_to_abort WHERE state in ('scheduled', 'running', 'queued')
         ''', [cluster_name])
 
         aborts = cursor.fetchall()
@@ -257,14 +254,32 @@ class Scheduler(object):
 
         for abort in aborts:
             job_id = abort[0]
+            user_id = abort[1]
             self.kube_delete_job(job_id)
             self.upload_console(job_id)
+
+            if user_id:
+                cursor = self.conn.cursor()
+                cursor.execute("""
+                    SELECT username
+                    FROM "user"
+                    WHERE id = %s
+                """, [user_id])
+                user = cursor.fetchone()
+                cursor.close()
+                message = 'Aborted by %s' % user[0]
+            else:
+                message = 'Aborted'
 
             # Update state
             cursor = self.conn.cursor()
             cursor.execute("""
-                UPDATE job SET state = 'killed', end_date = current_timestamp
-                WHERE id = %s AND state IN ('scheduled', 'running', 'queued')""", (job_id,))
+                UPDATE job
+                SET state = 'killed',
+                    end_date = current_timestamp,
+                    message = %s
+                WHERE id = %s AND state IN ('scheduled', 'running', 'queued')
+            """, [message, job_id])
             cursor.close()
 
     def handle_timeouts(self):
@@ -292,7 +307,6 @@ class Scheduler(object):
             cursor.execute("""
                 UPDATE job SET state = 'error', end_date = current_timestamp, message = 'Aborted due to timeout'
                 WHERE id = %s""", (job_id,))
-
             cursor.close()
 
     def upload_console(self, job_id):
