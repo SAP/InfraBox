@@ -41,7 +41,7 @@ Follow us on Twitter: [@Infra_Box](https://twitter.com/Infra_Box) or have look a
 - [knative](https://cloud.google.com/knative/) integration
 - Service for creating AKS K8s Clusters
 - Service for creating EKS K8s Clusters
-- More to come, <your idea here>
+- More to come, _your idea here_
 
 ## Contribute
 Any contribution is highly appreciated. See our [developer's documentation](docs/dev.md) for details.
