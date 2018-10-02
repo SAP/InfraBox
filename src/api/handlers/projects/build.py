@@ -1,4 +1,5 @@
 import json
+import uuid
 
 from flask import g, abort
 from flask_restplus import Resource
@@ -22,6 +23,13 @@ def restart_build(project_id, build_id):
 
     if not build:
         abort(404)
+
+    result = g.db.execute_one_dict('''
+        SELECT username
+        FROM "user"
+        WHERE id = %s
+    ''', [user_id])
+    username = result['username']
 
     result = g.db.execute_one_dict('''
         SELECT max(restart_counter) as restart_counter
@@ -63,12 +71,16 @@ def restart_build(project_id, build_id):
     if definition:
         definition = json.dumps(definition)
 
+    job_id = str(uuid.uuid4())
+    msg = 'Build restarted by %s\n' % username
     g.db.execute('''
         INSERT INTO job (id, state, build_id, type,
             name, project_id, dockerfile, repo, env_var, definition, cluster_name)
-        VALUES (gen_random_uuid(), 'queued', %s, 'create_job_matrix',
+        VALUES (%s, 'queued', %s, 'create_job_matrix',
                 'Create Jobs', %s, '', %s, %s, %s, null);
-    ''', [new_build_id, project_id, repo, env_var, definition])
+        INSERT INTO console (job_id, output)
+        VALUES (%s, %s);
+    ''', [job_id, new_build_id, project_id, repo, env_var, definition, job_id, msg])
     g.db.commit()
 
     return OK('Restarted', {'build': {'id': new_build_id, 'restartCounter': restart_counter}})
@@ -92,11 +104,10 @@ class BuildAbort(Resource):
               AND project_id = %s
         ''', [build_id, project_id])
 
-
         for j in jobs:
             g.db.execute('''
-                INSERT INTO abort(job_id) VALUES(%s)
-            ''', [j['id']])
+                INSERT INTO abort(job_id, user_id) VALUES(%s, %s)
+            ''', [j['id'], g.token['user']['id']])
 
         g.db.commit()
 
