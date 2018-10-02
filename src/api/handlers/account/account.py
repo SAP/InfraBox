@@ -9,10 +9,13 @@ import bcrypt
 
 from pyinfraboxutils import get_logger
 from pyinfraboxutils.ibflask import OK
-from pyinfraboxutils.ibrestplus import api
+from pyinfraboxutils.ibrestplus import api, response_model
 from pyinfraboxutils.token import encode_user_token
 
-from api.namespaces import account as ns
+ns = api.namespace('Account',
+                   path='/api/v1/account',
+                   description='Account related operations')
+
 
 login_model = api.model('Login', {
     'email': fields.String(required=True),
@@ -25,7 +28,12 @@ logger = get_logger('login')
 class Login(Resource):
 
     @api.expect(login_model)
+    @api.response(200, 'Success', response_model)
+    @api.response(400, 'Invalid Credentials', response_model)
     def post(self):
+        '''
+        User login
+        '''
         b = request.get_json()
 
         email = b['email']
@@ -60,7 +68,13 @@ register_model = api.model('Register', {
 class Register(Resource):
 
     @api.expect(register_model)
+    @api.response(200, 'Success', response_model)
+    @api.response(400, 'Invalid credentials', response_model)
+    @api.response(404, 'Account signup disabled', response_model)
     def post(self):
+        '''
+        Create new user account
+        '''
         if os.environ['INFRABOX_ACCOUNT_SIGNUP_ENABLED'] != 'true':
             abort(404)
 

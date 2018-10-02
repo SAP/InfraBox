@@ -16,21 +16,22 @@ from werkzeug.datastructures import FileStorage
 from pyinfraboxutils import get_logger
 
 from pyinfraboxutils.ibflask import auth_required, OK
-from pyinfraboxutils.ibrestplus import api
+from pyinfraboxutils.ibrestplus import api, response_model
 from pyinfraboxutils.storage import storage
 from pyinfraboxutils.token import encode_project_token
 
+ns = api.namespace('Projects',
+                   path='/api/v1/projects/<project_id>',
+                   description='Project related operations')
+
+
 logger = get_logger('api')
 
-ns = api.namespace('api/v1/projects', description='Project related operations')
-
-enable_upload_forword = False
-
+enable_upload_forward = False
 if os.environ['INFRABOX_HA_ENABLED'] == 'true':
-    enable_upload_forword = True
+    enable_upload_forward = True
 elif os.environ['INFRABOX_CLUSTER_NAME'] == 'master':
-    enable_upload_forword = True
-
+    enable_upload_forward = True
 
 def nocache(view):
     @wraps(view)
@@ -56,32 +57,15 @@ def get_badge(url):
     response = Response(resp.content, resp.status_code, headers)
     return response
 
-project_model = api.model('ProjectModel', {
-    'id': fields.String,
-    'name': fields.String,
-    'type': fields.String,
-    'public': fields.Boolean
-})
-
-@ns.route('/<project_id>')
-class Project(Resource):
-
-    @auth_required(['user', 'project'])
-    @api.marshal_with(project_model)
-    def get(self, project_id):
-        p = g.db.execute_one_dict("""
-            SELECT name, id, type, public
-            FROM project
-            WHERE id = %s
-        """, [project_id])
-        return p
-
-@ns.route('/<project_id>/state.svg')
+@ns.route('/state.svg')
 @api.doc(security=[])
 class State(Resource):
 
     @nocache
     def get(self, project_id):
+        '''
+        State badge
+        '''
         p = g.db.execute_one_dict("""
             SELECT type FROM project WHERE id = %s
         """, [project_id])
@@ -141,12 +125,15 @@ class State(Resource):
         url = 'https://img.shields.io/badge/infrabox-%s-%s.svg' % (status, color)
         return get_badge(url)
 
-@ns.route('/<project_id>/tests.svg')
+@ns.route('/tests.svg')
 @api.doc(security=[])
 class Tests(Resource):
 
     @nocache
     def get(self, project_id):
+        '''
+        Tests badge
+        '''
         branch = request.args.get('branch', None)
         p = g.db.execute_one_dict('''
             SELECT type FROM project WHERE id = %s
@@ -218,12 +205,15 @@ class Tests(Resource):
         return get_badge('https://img.shields.io/badge/infrabox-%s-%s.svg' % (status,
                                                                               'brightgreen'))
 
-@ns.route('/<project_id>/badge.svg')
+@ns.route('/badge.svg')
 @api.doc(security=[])
 class Badge(Resource):
 
     @nocache
     def get(self, project_id):
+        '''
+        Badge
+        '''
         job_name = request.args.get('job_name', None)
         subject = request.args.get('subject', None)
         branch = request.args.get('branch', None)
@@ -286,12 +276,16 @@ upload_parser.add_argument('project.zip', location='files',
                            type=FileStorage, required=True)
 
 
-@ns.route('/<project_id>/upload/<build_id>/')
-@ns.expect(upload_parser)
+@ns.route('/upload/<build_id>/')
+@api.expect(upload_parser)
 class UploadRemote(Resource):
 
     @auth_required(['project'])
+    @api.response(200, 'Success', response_model)
     def post(self, project_id, build_id):
+        '''
+        Upload and trigger build
+        '''
         project = g.db.execute_one_dict('''
             SELECT type
             FROM project
@@ -312,12 +306,13 @@ class UploadRemote(Resource):
         return OK('successfully uploaded data')
 
 
-if enable_upload_forword:
-    @ns.route('/<project_id>/upload/')
-    @ns.expect(upload_parser)
+if enable_upload_forward:
+    @ns.route('/upload/', doc=False)
+    @api.expect(upload_parser)
     class Upload(Resource):
 
         @auth_required(['project'])
+        @api.response(200, 'Success', response_model)
         def post(self, project_id):
             project = g.db.execute_one_dict('''
                 SELECT type

@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import argparse
+import json
 import os
 import re
 import subprocess
@@ -41,6 +42,8 @@ IMAGES = [
     {'name': 'checker', 'depends_on': ['images-base']},
     {'name': 'cluster-status', 'depends_on': ['images-base']},
     {'name': 'status-cachet', 'depends_on': ['images-base']},
+    {'name': 'images-base'},
+    {'name': 'images-test'},
 ]
 
 def execute(command, cwd=None, env=None, ignore_error=False, ignore_output=False):
@@ -86,7 +89,11 @@ def _build_image(image, args):
                 break
 
     image_name = '%s/infrabox/%s:%s' % (args.registry, image['name'], args.tag)
-    job = 'ib/deploy/%s' % image['name']
+
+    if image['name'] in ('images-base', 'images-test'):
+        job = 'ib/images/%s' % image['name']
+    else:
+        job = 'ib/deploy/%s' % image['name']
 
     execute(['infrabox', 'run', job, '-t', image_name])
 
