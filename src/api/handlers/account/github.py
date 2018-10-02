@@ -7,10 +7,9 @@ from flask import g, request, abort, redirect
 from flask_restplus import Resource
 
 from pyinfraboxutils import get_logger, get_root_url
+from pyinfraboxutils.ibrestplus import api
 from pyinfraboxutils.token import encode_user_token
 from pyinfraboxutils.ibflask import auth_required
-
-from api.namespaces import github, github_auth
 
 logger = get_logger('github')
 
@@ -64,7 +63,7 @@ def get_github_api(url, token):
 
     return result
 
-@github_auth.route('/auth/connect')
+@api.route('/github/auth/connect', doc=False)
 class Connect(Resource):
 
     @auth_required(['user'], check_project_access=False)
@@ -93,7 +92,7 @@ class Connect(Resource):
         return redirect(url)
 
 
-@github.route('/repos')
+@api.route('/api/v1/github/repos', doc=False)
 class Repos(Resource):
 
     @auth_required(['user'], check_project_access=False)
@@ -130,7 +129,7 @@ class Repos(Resource):
 
         return github_repos
 
-@github_auth.route('/auth')
+@api.route('/github/auth', doc=False)
 class Auth(Resource):
 
     def get(self):
@@ -163,7 +162,7 @@ def check_org(access_token):
 
     abort(401, "Not allowed to signup")
 
-@github_auth.route('/auth/callback')
+@api.route('/github/auth/callback', doc=False)
 class Login(Resource):
 
     def get(self):

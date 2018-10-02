@@ -2,9 +2,11 @@ from flask import request, g, abort
 from flask_restplus import Resource, fields
 
 from pyinfraboxutils.ibflask import auth_required, OK
-from pyinfraboxutils.ibrestplus import api
+from pyinfraboxutils.ibrestplus import api, response_model
 
-from api.namespaces import project as ns
+ns = api.namespace('Collaborators',
+                   path='/api/v1/projects/<project_id>/collaborators',
+                   description='Collaborator related operations')
 
 collaborator_model = api.model('Collaborator', {
     'name': fields.String(required=True),
@@ -18,13 +20,16 @@ add_collaborator_model = api.model('AddCollaborator', {
     'username': fields.String(required=True)
 })
 
-
-@ns.route('/<project_id>/collaborators/')
+@ns.route('/')
+@api.response(403, 'Not Authorized')
 class Collaborators(Resource):
 
     @auth_required(['user'])
     @api.marshal_list_with(collaborator_model)
     def get(self, project_id):
+        '''
+        Returns all collaborators
+        '''
         p = g.db.execute_many_dict(
             """
             SELECT u.name, u.id, u.email, u.avatar_url, u.username FROM "user" u
@@ -37,7 +42,11 @@ class Collaborators(Resource):
 
     @auth_required(['user'], check_project_owner=True)
     @api.expect(add_collaborator_model)
+    @api.response(200, 'Success', response_model)
     def post(self, project_id):
+        '''
+        Add a collaborator
+        '''
         b = request.get_json()
         username = b['username']
 
@@ -71,11 +80,16 @@ class Collaborators(Resource):
         return OK('Successfully added user.')
 
 
-@ns.route('/<project_id>/collaborators/<user_id>')
+@ns.route('/<user_id>')
+@api.response(403, 'Not Authorized')
 class Collaborator(Resource):
 
     @auth_required(['user'], check_project_owner=True)
+    @api.response(200, 'Success', response_model)
     def delete(self, project_id, user_id):
+        '''
+        Remove collaborator from project
+        '''
         owner_id = g.token['user']['id']
 
         if user_id == owner_id:
