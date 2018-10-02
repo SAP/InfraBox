@@ -26,6 +26,23 @@ If you need help please post your questions to [Stack Overflow](https://stackove
 In case you found a bug please open a [Github Issue](https://github.com/SAP/infrabox/issues).
 Follow us on Twitter: [@Infra_Box](https://twitter.com/Infra_Box) or have look at our Slack channel [infrabox.slack.com](https://join.slack.com/t/infrabox/shared_invite/enQtNDM5OTUzNzg4NjU3LWFiNWY1MDYyZTA3MmUxNWNmZjgwNWEzZTI0NGYzN2U5OTFjYjQyNTBmNWE0NTYzOGJlOTdmZWI3NmQ3OTQ0MDA).
 
+## Roadmap
+### 1.1
+- Bugfixes
+- High availability setup
+- Improve Documentation (installation, job definition & API)
+
+### 1.2
+- Integrate [Dex](https://github.com/dexidp/dex)
+- Service for creating [Gardener](https://github.com/gardener/gardener) K8s Clusters
+- Quota management on user and project level
+
+### 1.x
+- [knative](https://cloud.google.com/knative/) integration
+- Service for creating AKS K8s Clusters
+- Service for creating EKS K8s Clusters
+- More to come, <your idea here>
+
 ## Contribute
 Any contribution is highly appreciated. See our [developer's documentation](docs/dev.md) for details.
 
