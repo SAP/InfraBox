@@ -9,7 +9,7 @@ ns = api.namespace('User',
                    description='User related operations')
 
 user_model = api.model('User', {
-    'github_id': fields.String,
+    'github_id': fields.Integer,
     'username': fields.String,
     'avatar_url': fields.String,
     'name': fields.String,
