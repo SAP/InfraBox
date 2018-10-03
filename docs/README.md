@@ -7,7 +7,7 @@
     - [GCP Service](/src/services/gcp/README.md)
 
 ## Use InfraBox
-- [Job definition](/docs/doc.md):
+- [Job definition](/docs/doc.md): How do define InfraBox jobs
 - [Docker](/docs/job/docker.md): Build and Run a docker container
 - [Docker Compose](/docs/job/docker_compose.md): Run multiple containers with docker-compose
 - [Docker Image](/docs/job/docker_image.md): Run an already built image as job
