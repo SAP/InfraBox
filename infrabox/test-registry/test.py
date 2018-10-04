@@ -8,7 +8,7 @@ import requests
 
 from pyinfraboxutils.db import DB, connect_db
 from pyinfraboxutils.token import encode_project_token
-from pyinfraboxutils.ibopa import opa_push_project_data, opa_push_collaborator_data
+from pyinfraboxutils.ibopa import opa_push_all
 
 conn = connect_db()
 conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
@@ -61,10 +61,8 @@ class Test(TestCase):
                         VALUES('test', 'upload', %s)''', (self.project_id,))
         cur.execute('''INSERT INTO collaborator(project_id, user_id, role)
                         VALUES(%s, %s, 'Owner')''', (self.project_id, self.user_id))
-                        
         db = DB(conn)
-        opa_push_collaborator_data(db)
-        opa_push_project_data(db)
+        opa_push_all(db)
 
 
     def tearDown(self):
