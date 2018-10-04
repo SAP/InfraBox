@@ -1,12 +1,16 @@
+import eventlet
+from eventlet import wsgi
+eventlet.monkey_patch()
+
 from flask import jsonify
 
 from pyinfraboxutils import get_env, get_logger
 from pyinfraboxutils.ibflask import app
+from pyinfraboxutils.db import DB, connect_db
 from pyinfraboxutils.ibopa import opa_start_push_loop
 
-import eventlet
-from eventlet import wsgi
-eventlet.monkey_patch()
+import psycopg2
+import psycopg2.extensions
 
 logger = get_logger('docker-registry-auth')
 
@@ -38,8 +42,10 @@ def main(): # pragma: no cover
     get_env('INFRABOX_OPA_PORT')
     get_env('INFRABOX_OPA_PUSH_INTERVAL')
 
-    opa_start_push_loop()
 
+    conn = connect_db()
+    conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
+    opa_start_push_loop(DB(conn))
     wsgi.server(eventlet.listen(('0.0.0.0', 8081)), app)
 
 if __name__ == "__main__": # pragma: no cover

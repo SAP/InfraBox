@@ -8,7 +8,7 @@ from flask import Flask, g, jsonify, request, abort
 
 from pyinfrabox.utils import validate_uuid
 
-from pyinfraboxutils import get_logger, get_env
+from pyinfraboxutils import get_logger, get_env, dbpool
 from pyinfraboxutils.db import DB, connect_db
 from pyinfraboxutils.token import decode
 from pyinfraboxutils.ibopa import opa_do_auth
@@ -18,31 +18,9 @@ app.url_map.strict_slashes = False
 
 logger = get_logger('ibflask')
 
-try:
-    #pylint: disable=ungrouped-imports,wrong-import-position
-    from pyinfraboxutils import dbpool
-    logger.info('Using DB Pool')
-
-    @app.before_request
-    def before_request():
-        g.db = dbpool.get()
-
-        g.token = normalize_token(get_token())
-        check_request_authorization()
-
-        def release_db():
-            db = getattr(g, 'db', None)
-            if not db:
-                return
-
-            dbpool.put(db)
-            g.db = None
-
-        g.release_db = release_db
-
-except:
-    @app.before_request
-    def before_request():
+@app.before_request
+def before_request():
+    if get_path_array(request.path)[0] == "v2":
         g.db = DB(connect_db())
 
         g.token = normalize_token(get_token())
@@ -57,7 +35,23 @@ except:
             g.db = None
 
         g.release_db = release_db
+    else:  
+        logger.info('Using DB Pool')
+        g.db = dbpool.get()
 
+        g.token = normalize_token(get_token())
+        check_request_authorization()
+
+        def release_db():
+            db = getattr(g, 'db', None)
+            if not db:
+                return
+
+            dbpool.put(db)
+            g.db = None
+
+        g.release_db = release_db
+            
 @app.teardown_request
 def teardown_request(_):
     try:

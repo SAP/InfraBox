@@ -52,21 +52,22 @@ def opa_push_project_data(db):
     payload = json.dumps({"projects": projects})
     opa_push_data(PROJECT_DATA_DEST_URL, payload)
 
-def opa_push_all():
-    db = dbpool.get()
+def opa_push_all(arg_db = None):
+    db = dbpool.get() if arg_db is None else arg_db
     try:
         opa_push_collaborator_data(db)
         opa_push_project_data(db)
     finally:
-        dbpool.put(db)
+        if arg_db is None:
+            dbpool.put(db)
 
-def opa_start_push_loop():
+def opa_start_push_loop(db = None):
     class OPA_Push_Thread(threading.Thread):
         stopped = False
         push_interval = float(get_env('INFRABOX_OPA_PUSH_INTERVAL'))
         def run(self):
             while not self.stopped:
-                opa_push_all()
+                opa_push_all(db)
                 time.sleep(self.push_interval)
         def join(self, timeout=None):
             self.stopped = True
