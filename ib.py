@@ -153,9 +153,8 @@ def services_start(args):
         run = os.path.join(p, 'run_with_dummy.sh')
         execute(['bash', run], cwd=p)
     elif args.service_name == 'opa':
-        run = ['docker', 'run', '-ti', '--rm', '-p', '8181:8181',
-               'openpolicyagent/opa:0.9.1', 'run', '--server', '--log-level=debug']
-        execute(run)
+        execute(['docker-compose', 'up'],
+                cwd=os.path.join(os.path.dirname(os.path.realpath(__file__)), 'infrabox', 'utils', 'opa'))
     elif args.service_name == 'dashboard-client':
         p = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'src', 'dashboard-client')
         execute(['npm', 'run', 'dev'], cwd=p)
@@ -167,6 +166,9 @@ def services_rm(args):
     if args.service_name == 'storage':
         execute(['docker-compose', 'rm', '-f'],
                 cwd=os.path.join(os.path.dirname(os.path.realpath(__file__)), 'infrabox', 'utils', 'storage'))
+    elif args.service_name == 'opa':
+        execute(['docker-compose', 'rm', '-f'],
+                cwd=os.path.join(os.path.dirname(os.path.realpath(__file__)), 'infrabox', 'utils', 'opa'))
     else:
         print("Unknown service")
         sys.exit(1)
@@ -175,6 +177,9 @@ def services_kill(args):
     if args.service_name == 'storage':
         execute(['docker-compose', 'kill'],
                 cwd=os.path.join(os.path.dirname(os.path.realpath(__file__)), 'infrabox', 'utils', 'storage'))
+    elif args.service_name == 'opa':
+        execute(['docker-compose', 'kill'],
+                cwd=os.path.join(os.path.dirname(os.path.realpath(__file__)), 'infrabox', 'utils', 'opa'))
     else:
         print("Unknown service")
         sys.exit(1)
@@ -198,13 +203,6 @@ def changelog_create(args):
     repo_name = 'infrabox/infrabox'
     command.append(repo_name)
     execute(command, cwd=os.getcwd())
-
-def init_opa(args):
-    p = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'src', 'openpolicyagent')
-    run = os.path.join(p, 'run_opa.sh')
-    execute(['bash', run], cwd=p)
-
-
 
 def main():
     parser = argparse.ArgumentParser(prog="ib")
@@ -252,14 +250,6 @@ def main():
     create_changelog_parser = sub_changelog.add_parser('create')
     create_changelog_parser.set_defaults(func=changelog_create)
     create_changelog_parser.add_argument("--token", required=False)
-
-    #OpenPolicyAgent
-    opa = cmd_parser.add_parser('opa')
-    sub_opa = opa.add_subparsers()
-
-    opa_init_parser = sub_opa.add_parser('init')
-    opa_init_parser.set_defaults(func=init_opa)
-
 
     args = parser.parse_args()
     args.func(args)
