@@ -1,3 +1,4 @@
+import time
 import os
 
 import psycopg2
@@ -18,8 +19,13 @@ POOL = ConnectionPool(psycopg2,
                       max_size=10)
 
 def get():
-    conn = POOL.get()
-    return DB(conn)
+    while True:
+        try:
+            conn = POOL.get()
+            return DB(conn)
+        except Exception as e:
+            logger.warn("Could not connect to db: %s", e)
+            time.sleep(3)
 
 def put(db):
     try:
