@@ -2,6 +2,7 @@ from flask import jsonify
 
 from pyinfraboxutils import get_env, get_logger
 from pyinfraboxutils.ibflask import app
+from pyinfraboxutils.ibopa import opa_start_push_loop
 
 import eventlet
 from eventlet import wsgi
@@ -35,6 +36,9 @@ def main(): # pragma: no cover
     get_env('INFRABOX_DATABASE_DB')
     get_env('INFRABOX_OPA_HOST')
     get_env('INFRABOX_OPA_PORT')
+    get_env('INFRABOX_OPA_PUSH_INTERVAL')
+
+    opa_start_push_loop()
 
     wsgi.server(eventlet.listen(('0.0.0.0', 8081)), app)
 
