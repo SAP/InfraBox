@@ -1,6 +1,7 @@
 FROM openpolicyagent/opa:0.9.1
 
-COPY src/pyinfraboxutils /pyinfraboxutils
+ENV PYTHONPATH=/
+
 COPY src/openpolicyagent/policies /policies
 WORKDIR /policies
 
