@@ -61,9 +61,10 @@ class Test(TestCase):
                         VALUES('test', 'upload', %s)''', (self.project_id,))
         cur.execute('''INSERT INTO collaborator(project_id, user_id, role)
                         VALUES(%s, %s, 'Owner')''', (self.project_id, self.user_id))
+                        
         db = DB(conn)
-        opa_push_project_data(db)
         opa_push_collaborator_data(db)
+        opa_push_project_data(db)
 
 
     def tearDown(self):

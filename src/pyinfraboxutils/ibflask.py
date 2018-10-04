@@ -154,12 +154,13 @@ def check_request_authorization():
             "input": {
                 "method": request.method,
                 "path": get_path_array(request.path),
-                "token": g.token
+                "token": g.token,
             }
         }
 
-        if "X-Original-Method" in request.headers:
-            opa_input["input"]["original_method"] = request.headers["X-Original-Method"]
+        original_method = dict(request.headers).get('X-Original-Method', None)
+        if original_method is not None:
+            opa_input["input"]["original_method"] = original_method
 
         is_authorized = opa_do_auth(opa_input)
 
