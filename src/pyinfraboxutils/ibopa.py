@@ -4,7 +4,7 @@ import requests
 import threading
 import time
 
-from pyinfraboxutils import get_logger, get_env, dbpool
+from pyinfraboxutils import get_logger, get_env
 
 logger = get_logger('OPA')
 
