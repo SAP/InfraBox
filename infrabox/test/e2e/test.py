@@ -13,7 +13,7 @@ import xmlrunner
 from pyinfraboxutils.db import connect_db, DB
 from pyinfraboxutils.token import encode_project_token
 from pyinfraboxutils.secrets import encrypt_secret
-from pyinfraboxutils.opa import opa_push_all
+from pyinfraboxutils.ibopa import opa_push_all
 
 class Test(unittest.TestCase):
     job_id = '1514af82-3c4f-4bb5-b1da-a89a0ced5e6f'
