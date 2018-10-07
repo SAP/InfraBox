@@ -13,7 +13,6 @@ import xmlrunner
 from pyinfraboxutils.db import connect_db, DB
 from pyinfraboxutils.token import encode_project_token
 from pyinfraboxutils.secrets import encrypt_secret
-from pyinfraboxutils.ibopa import opa_push_all
 
 class Test(unittest.TestCase):
     job_id = '1514af82-3c4f-4bb5-b1da-a89a0ced5e6f'
@@ -49,7 +48,6 @@ class Test(unittest.TestCase):
         cur.execute('''INSERT INTO secret(project_id, name, value)
                         VALUES(%s, 'SECRET_ENV', %s)''', (self.project_id, encrypt_secret('hello world')))
         conn.commit()
-        opa_push_all(DB(conn))
 
         os.environ['INFRABOX_CLI_TOKEN'] = encode_project_token(self.token_id, self.project_id)
         self.root_url = os.environ['INFRABOX_ROOT_URL']
