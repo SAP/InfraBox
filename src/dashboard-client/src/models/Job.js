@@ -16,6 +16,7 @@ class Section {
         this.startTime = startTime
         this.lines_raw = []
         this.id = id
+        this.color = null
     }
 
     setEndTime (end) {
@@ -117,12 +118,14 @@ export default class Job {
 
             let idx = line.indexOf('|##')
             let date = null
+            let userSection = false
 
             if (idx >= 0 && idx < 10) {
                 header = line.substr(idx + 3)
                 const d = line.substr(0, idx)
                 date = this._getTime(d)
                 isSection = true
+                userSection = true
             }
 
             idx = line.indexOf('|Step')
@@ -138,7 +141,34 @@ export default class Job {
                     this.currentSection.setEndTime(date)
                     this.currentSection.generateHtml()
                 }
+
+                let color = null
+
+                if (userSection) {
+                    // check for color
+                    console.log('row: ' + header)
+                    idx = header.indexOf('[level=')
+                    if (idx >= 0) {
+                        let end = header.indexOf(']')
+                        idx += 7
+                        console.log(idx, end)
+                        let c = header.substr(idx, end - idx)
+
+                        if (c === 'info') {
+                            color = 'blue'
+                        } else if (c === 'warning') {
+                            color = 'yellow'
+                        } else if (c === 'error') {
+                            color = '#b71c1c'
+                        }
+
+                        header = header.substr(end + 2, header.length - end)
+                    }
+                }
+
                 this.currentSection = new Section(this.linesProcessed, header, date, this.sections.length)
+
+                this.currentSection.color = color
                 this.linesProcessed++
                 this.sections.push(this.currentSection)
             } else {
