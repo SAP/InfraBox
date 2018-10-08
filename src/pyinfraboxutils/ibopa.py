@@ -5,6 +5,7 @@ import threading
 import time
 
 from pyinfraboxutils import get_logger, get_env
+from pyinfraboxutils import dbpool
 
 logger = get_logger('OPA')
 
@@ -36,47 +37,44 @@ def opa_push_data(destination_url, json_payload):
         logger.exception("Failed pushing data to %s: %s; Req.: %s", destination_url, e, json_payload)
 
 def opa_push_collaborator_data(db):
-    collaborators = db.execute_many_dict(
-        """
+    collaborators = db.execute_many_dict("""
         SELECT user_id, project_id, role FROM collaborator
     """)
     payload = json.dumps({'collaborators': collaborators})
     opa_push_data(COLLABORATOR_DATA_DEST_URL, payload)
 
 def opa_push_project_data(db):
-    projects = db.execute_many_dict(
-        """
+    projects = db.execute_many_dict("""
         SELECT id, public FROM project
     """
     )
     payload = json.dumps({"projects": projects})
     opa_push_data(PROJECT_DATA_DEST_URL, payload)
 
-def opa_push_all(arg_db = None):
-    if arg_db is None:
-        from pyinfraboxutils import dbpool
-        db = dbpool.get()
-    else:
-        db = arg_db
+def opa_push_all():
     try:
+        db = dbpool.get()
         opa_push_collaborator_data(db)
         opa_push_project_data(db)
     finally:
-        if arg_db is None:
-            dbpool.put(db)
+        dbpool.put(db)
 
-def opa_start_push_loop(db = None):
+def opa_start_push_loop():
     class OPA_Push_Thread(threading.Thread):
         stopped = False
         push_interval = float(get_env('INFRABOX_OPA_PUSH_INTERVAL'))
         def run(self):
             while not self.stopped:
-                opa_push_all(db)
-                time.sleep(self.push_interval)
+                try:
+                    opa_push_all()
+                    time.sleep(self.push_interval)
+                except Exception as e:
+                    logger.exception(e)
+
         def join(self, timeout=None):
             self.stopped = True
             threading.Thread.join(self, timeout)
-            
+
     thread = OPA_Push_Thread()
     thread.daemon = True
     thread.start()

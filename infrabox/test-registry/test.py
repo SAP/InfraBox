@@ -2,6 +2,9 @@ import os
 import base64
 from unittest import TestCase
 
+import eventlet
+eventlet.monkey_patch()
+
 import psycopg2
 import psycopg2.extensions
 import requests
@@ -61,9 +64,7 @@ class Test(TestCase):
                         VALUES('test', 'upload', %s)''', (self.project_id,))
         cur.execute('''INSERT INTO collaborator(project_id, user_id, role)
                         VALUES(%s, %s, 'Owner')''', (self.project_id, self.user_id))
-        db = DB(conn)
-        opa_push_all(db)
-
+        opa_push_all()
 
     def tearDown(self):
         cur = conn.cursor()

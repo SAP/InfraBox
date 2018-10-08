@@ -1,3 +1,6 @@
+import eventlet
+eventlet.monkey_patch()
+
 import unittest
 import json
 import base64
@@ -6,7 +9,7 @@ import xmlrunner
 import psycopg2
 import psycopg2.extensions
 
-from pyinfraboxutils.ibopa import opa_push_project_data
+from pyinfraboxutils.ibopa import opa_push_all
 from pyinfraboxutils.db import  DB, connect_db
 from pyinfraboxutils.token import encode_project_token
 
@@ -28,8 +31,7 @@ class AccountTestCase(unittest.TestCase):
         cur.execute('TRUNCATE project')
         cur.execute('''INSERT INTO project(name, type, id)
                         VALUES('test', 'upload', %s)''', (self.project_id,))
-        db = DB(conn)
-        opa_push_project_data(db)
+        opa_push_all()
 
     def tearDown(self):
         cur = conn.cursor()

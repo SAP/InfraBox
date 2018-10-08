@@ -20,38 +20,23 @@ logger = get_logger('ibflask')
 
 @app.before_request
 def before_request():
-    if get_path_array(request.path)[0] == "v2":
-        g.db = DB(connect_db())
+    logger.info('Using DB Pool')
 
-        g.token = normalize_token(get_token())
-        check_request_authorization()
+    def release_db():
+        db = getattr(g, 'db', None)
+        if not db:
+            return
 
-        def release_db():
-            db = getattr(g, 'db', None)
-            if not db:
-                return
+        dbpool.put(db)
+        g.db = None
 
-            db.close()
-            g.db = None
+    g.release_db = release_db
 
-        g.release_db = release_db
-    else:  
-        logger.info('Using DB Pool')
-        g.db = dbpool.get()
+    g.db = dbpool.get()
 
-        g.token = normalize_token(get_token())
-        check_request_authorization()
+    g.token = normalize_token(get_token())
+    check_request_authorization()
 
-        def release_db():
-            db = getattr(g, 'db', None)
-            if not db:
-                return
-
-            dbpool.put(db)
-            g.db = None
-
-        g.release_db = release_db
-            
 @app.teardown_request
 def teardown_request(_):
     try:
@@ -189,47 +174,35 @@ def check_job_belongs_to_project(f):
     return decorated_function
 
 def normalize_token(token):
-    # DB access if called by socket.io
-    if "db" not in g:
-        g.db = dbpool.get()
-        release_after = True
-    else:
-        release_after = False
-
-    try:
-        # Enrich job token
-        if token is None or not "type" in token:
-            return token
-        if token["type"] == "job":
-            try:
-                return enrich_job_token(token)
-            except:
-                logger.exception("Enrichment of job token failed")
-                return None
-        # Legacy
-        if token["type"] == "project-token":
-            token["type"] = 'project'
-
-        # Validate user token
-        if token["type"] == "user":
-            if not validate_user_token(token):
-                return None
-
-        # Validate project_token
-        if token["type"] == "project":
-            if not validate_project_token(token):
-                return None
-
+    # Enrich job token
+    if token is None or not "type" in token:
         return token
-    finally:
-        if release_after:
-            dbpool.put(g.db)
-            g.db = None
+    if token["type"] == "job":
+        try:
+            return enrich_job_token(token)
+        except:
+            logger.exception("Enrichment of job token failed")
+            return None
+    # Legacy
+    if token["type"] == "project-token":
+        token["type"] = 'project'
+
+    # Validate user token
+    if token["type"] == "user":
+        if not validate_user_token(token):
+            return None
+
+    # Validate project_token
+    if token["type"] == "project":
+        if not validate_project_token(token):
+            return None
+
+    return token
 
 def enrich_job_token(token):
     if not ("job" in token and "id" in token["job"] and validate_uuid(token["job"]["id"])):
         raise LookupError('invalid job id')
-    
+
     job_id = token["job"]["id"]
 
     r = g.db.execute_one('''
@@ -278,4 +251,3 @@ def get_path_array(path):
     if pathstring[-1] == "/":
         pathstring = pathstring[:-1]
     return pathstring.split("/")[1:]
-    
