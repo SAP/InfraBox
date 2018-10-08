@@ -1,7 +1,7 @@
 import requests
 
 def test_get():
-    print "get"
+    print("get")
     r = requests.get("http://test-server:3000")
-    print r.json()
+    print(r.json())
     assert True

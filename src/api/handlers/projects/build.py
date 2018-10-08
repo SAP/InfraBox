@@ -5,7 +5,7 @@ from flask import g, abort
 from flask_restplus import Resource
 
 from pyinfraboxutils.ibrestplus import api, response_model
-from pyinfraboxutils.ibflask import auth_required, OK
+from pyinfraboxutils.ibflask import OK
 from pyinfraboxutils.storage import storage
 
 ns = api.namespace('Builds',
@@ -95,7 +95,6 @@ def restart_build(project_id, build_id):
 @api.response(403, 'Not Authorized')
 class BuildRestart(Resource):
 
-    @auth_required(['user'])
     @api.response(200, 'Success', response_model)
     def get(self, project_id, build_id):
         '''
@@ -108,7 +107,6 @@ class BuildRestart(Resource):
 @api.response(403, 'Not Authorized')
 class BuildAbort(Resource):
 
-    @auth_required(['user'])
     @api.response(200, 'Success', response_model)
     def get(self, project_id, build_id):
         '''
@@ -134,7 +132,6 @@ class BuildAbort(Resource):
 @api.response(403, 'Not Authorized')
 class BuildCacheClear(Resource):
 
-    @auth_required(['user'])
     @api.response(200, 'Success', response_model)
     def get(self, project_id, build_id):
         '''
@@ -163,7 +160,6 @@ class BuildCacheClear(Resource):
 @api.response(403, 'Not Authorized')
 class BuildStatus(Resource):
 
-    @auth_required(['user', 'project'], allow_if_public=True)
     def get(self, project_id, build_number, build_restart_counter):
         '''
         Returns build state
@@ -197,7 +193,6 @@ class BuildStatus(Resource):
 @api.response(403, 'Not Authorized')
 class Build(Resource):
 
-    @auth_required(['user'], allow_if_public=True)
     def get(self, project_id, build_number, build_restart_counter):
         jobs = g.db.execute_many_dict('''
             SELECT

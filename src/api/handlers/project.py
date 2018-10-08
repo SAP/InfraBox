@@ -15,7 +15,7 @@ from werkzeug.datastructures import FileStorage
 
 from pyinfraboxutils import get_logger
 
-from pyinfraboxutils.ibflask import auth_required, OK
+from pyinfraboxutils.ibflask import OK
 from pyinfraboxutils.ibrestplus import api, response_model
 from pyinfraboxutils.storage import storage
 from pyinfraboxutils.token import encode_project_token
@@ -280,7 +280,6 @@ upload_parser.add_argument('project.zip', location='files',
 @api.expect(upload_parser)
 class UploadRemote(Resource):
 
-    @auth_required(['project'])
     @api.response(200, 'Success', response_model)
     def post(self, project_id, build_id):
         '''
@@ -311,7 +310,6 @@ if enable_upload_forward:
     @api.expect(upload_parser)
     class Upload(Resource):
 
-        @auth_required(['project'])
         @api.response(200, 'Success', response_model)
         def post(self, project_id):
             project = g.db.execute_one_dict('''

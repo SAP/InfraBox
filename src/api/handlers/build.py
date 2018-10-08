@@ -1,7 +1,6 @@
 from flask import g
 from flask_restplus import Resource, fields
 
-from pyinfraboxutils.ibflask import auth_required
 from pyinfraboxutils.ibrestplus import api
 
 from api.handlers.job import job_model
@@ -20,7 +19,6 @@ build_model = api.model('BuildModel', {
 @ns.route('/')
 @api.doc(responses={403: 'Not Authorized'})
 class Builds(Resource):
-    @auth_required(['user', 'project'])
     @api.marshal_list_with(build_model)
     def get(self, project_id):
         '''
@@ -38,7 +36,6 @@ class Builds(Resource):
 @ns.route('/<build_id>')
 @api.doc(responses={403: 'Not Authorized'})
 class Build(Resource):
-    @auth_required(['user', 'project'])
     @api.marshal_with(build_model)
     def get(self, project_id, build_id):
         '''
@@ -58,7 +55,6 @@ class Build(Resource):
 @api.doc(responses={403: 'Not Authorized'})
 class Jobs(Resource):
 
-    @auth_required(['project'])
     @api.marshal_list_with(job_model)
     def get(self, project_id, build_id):
         '''
