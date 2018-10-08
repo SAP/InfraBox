@@ -27,9 +27,6 @@ from pyinfraboxutils.storage import storage
 from pyinfraboxutils.secrets import decrypt_secret
 from pyinfraboxutils import get_root_url
 
-ns = api.namespace('api/job',
-                   description='Job runtime related operations')
-
 def allowed_file(filename, extensions):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in extensions
 
@@ -40,7 +37,7 @@ def delete_file(path):
         except Exception as error:
             app.logger.warn("Failed to delete file: %s", error)
 
-@ns.route("/job")
+@api.route("/api/job/job", doc=False)
 class Job(Resource):
 
     def get(self):
@@ -394,7 +391,7 @@ class Job(Resource):
 
         return jsonify(data)
 
-@ns.route("/source")
+@api.route("/api/job/source", doc=False)
 class Source(Resource):
 
     def get(self):
@@ -433,7 +430,7 @@ cache_upload_parser.add_argument('cache.tar.snappy', location='files',
                                  type=FileStorage, required=True)
 
 
-@ns.route("/cache")
+@api.route("/api/job/cache", doc=False)
 class Cache(Resource):
 
     def get(self):
@@ -453,7 +450,7 @@ class Cache(Resource):
 
         return send_file(f)
 
-    @ns.expect(cache_upload_parser)
+    @api.expect(cache_upload_parser)
     def post(self):
         project_id = g.token['project']['id']
         job_name = g.token['job']['name']
@@ -468,7 +465,7 @@ class Cache(Resource):
         return jsonify({})
 
 
-@ns.route("/archive")
+@api.route("/api/job/archive", doc=False)
 class Archive(Resource):
 
     def post(self):
@@ -495,7 +492,7 @@ class Archive(Resource):
 
         return jsonify({"message": "File uploaded"})
 
-@ns.route("/output")
+@api.route("/api/job/output", doc=False)
 class Output(Resource):
 
     def post(self):
@@ -562,7 +559,7 @@ class Output(Resource):
 
             return jsonify({})
 
-@ns.route("/output/<parent_job_id>")
+@api.route("/api/job/output/<parent_job_id>", doc=False)
 class OutputParent(Resource):
 
     def get(self, parent_job_id):
@@ -615,7 +612,7 @@ def find_leaf_jobs(jobs):
 
     return leaf_jobs
 
-@ns.route("/create_jobs")
+@api.route("/api/job/create_jobs", doc=False)
 class CreateJobs(Resource):
     def get_target_cluster(self, clusters, cluster_selector):
         for c in clusters:
@@ -860,7 +857,7 @@ class CreateJobs(Resource):
         g.db.commit()
         return "Successfully create jobs"
 
-@ns.route("/consoleupdate")
+@api.route("/api/job/consoleupdate", doc=False)
 class ConsoleUpdate(Resource):
 
     def post(self):
@@ -895,7 +892,7 @@ class ConsoleUpdate(Resource):
 
         return jsonify({})
 
-@ns.route("/stats")
+@api.route("/api/job/stats", doc=False)
 class Stats(Resource):
 
     def post(self):
@@ -938,7 +935,7 @@ def insert(c, cols, rows, table):
     cursor.execute(stmt)
     cursor.close()
 
-@ns.route("/markup")
+@api.route("/api/job/markup", doc=False)
 class Markup(Resource):
 
     def post(self):
@@ -991,7 +988,7 @@ class Markup(Resource):
 
         return jsonify({})
 
-@ns.route("/badge")
+@api.route("/api/job/badge", doc=False)
 class Badge(Resource):
 
     def post(self):
@@ -1045,7 +1042,7 @@ class Badge(Resource):
 
         return jsonify({})
 
-@ns.route("/testresult")
+@api.route("/api/job/testresult", doc=False)
 class Testresult(Resource):
 
     def post(self):

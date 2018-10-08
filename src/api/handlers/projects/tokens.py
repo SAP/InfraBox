@@ -3,9 +3,12 @@ from flask_restplus import Resource, fields
 
 from pyinfrabox.utils import validate_uuid
 from pyinfraboxutils.ibflask import OK
-from pyinfraboxutils.ibrestplus import api
+from pyinfraboxutils.ibrestplus import api, response_model
 from pyinfraboxutils.token import encode_project_token
-from api.namespaces import project as ns
+
+ns = api.namespace('Tokens',
+                   path='/api/v1/projects/<project_id>/tokens',
+                   description='Token related operations')
 
 project_token_model = api.model('ProjectToken', {
     'description': fields.String(required=True),
@@ -14,11 +17,15 @@ project_token_model = api.model('ProjectToken', {
     'id': fields.String(required=False)
 })
 
-@ns.route('/<project_id>/tokens')
+@ns.route('/')
+@api.doc(responses={403: 'Not Authorized'})
 class Tokens(Resource):
 
     @api.marshal_list_with(project_token_model)
     def get(self, project_id):
+        '''
+        Returns project's tokens
+        '''
         p = g.db.execute_many_dict('''
             SELECT description, scope_push, scope_pull, id
             FROM auth_token
@@ -26,9 +33,12 @@ class Tokens(Resource):
         ''', [project_id])
         return p
 
-
     @api.expect(project_token_model)
+    @api.response(200, 'Success', response_model)
     def post(self, project_id):
+        '''
+        Create new token
+        '''
         b = request.get_json()
 
         result = g.db.execute_one("""
@@ -51,10 +61,16 @@ class Tokens(Resource):
 
         return OK('Successfully added token.', {'token': token})
 
-@ns.route('/<project_id>/tokens/<token_id>')
+@ns.route('/<token_id>')
+@api.doc(responses={403: 'Not Authorized'})
+@api.doc(responses={404: 'Token not found'})
 class Token(Resource):
 
+    @api.response(200, 'Success', response_model)
     def delete(self, project_id, token_id):
+        '''
+        Delete a token
+        '''
         if not validate_uuid(token_id):
             abort(400, "Invalid project-token uuid.")
 
@@ -64,7 +80,7 @@ class Token(Resource):
         """, [project_id, token_id])[0]
 
         if num_tokens == 0:
-            return abort(400, 'Such token does not exist.')
+            return abort(404, 'Such token does not exist.')
 
         g.db.execute("""
                      DELETE FROM auth_token
