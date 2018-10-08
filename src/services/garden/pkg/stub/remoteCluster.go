@@ -42,7 +42,7 @@ func (r *RemoteClusterSDK) Create(object types.Object, log *logrus.Entry) (err e
 	unstructObj := k8sutil.UnstructuredFromRuntimeObject(object)
 	unstructObj, err = resourceClient.Create(unstructObj)
 	if err != nil {
-		log.Errorf("Failed to create object: %v", err)
+		//log.Errorf("Failed to create object: %v", err)
 		return err
 	}
 

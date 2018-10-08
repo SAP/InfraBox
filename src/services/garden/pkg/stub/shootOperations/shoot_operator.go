@@ -71,7 +71,7 @@ func (so *ShootOperator) Sync(shootCluster *v1alpha1.ShootCluster) error {
 		return err
 	}
 
-	if shootCluster.Status.Status == v1alpha1.ShootClusterStateReady {
+	if shootCluster.Status.Status == v1alpha1.ShootClusterStateShootReady {
 		// fetch kubecfg for shoot cluster
 		shootCredsSecret, err := so.fetchKubeconfigFor(shootCluster, clients)
 		if err != nil {

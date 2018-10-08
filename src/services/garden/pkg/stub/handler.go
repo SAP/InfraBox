@@ -6,25 +6,20 @@ import (
 	"crypto/x509"
 	b64 "encoding/base64"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"mime/multipart"
 	"net/http"
 	"os/exec"
-	"strconv"
-	"strings"
 
+	"github.com/operator-framework/operator-sdk/pkg/sdk/action"
+	"github.com/operator-framework/operator-sdk/pkg/sdk/handler"
 	"github.com/operator-framework/operator-sdk/pkg/sdk/query"
+	"github.com/operator-framework/operator-sdk/pkg/sdk/types"
 	"github.com/sap/infrabox/src/services/garden/pkg/apis/garden/v1alpha1"
 	"github.com/sap/infrabox/src/services/garden/pkg/stub/shootOperations"
 	"github.com/sap/infrabox/src/services/garden/pkg/stub/shootOperations/common"
 	"github.com/sap/infrabox/src/services/garden/pkg/stub/shootOperations/k8sClientCache"
 	"github.com/sap/infrabox/src/services/garden/pkg/stub/shootOperations/utils"
-	"github.com/satori/go.uuid"
-
-	"github.com/operator-framework/operator-sdk/pkg/sdk/action"
-	"github.com/operator-framework/operator-sdk/pkg/sdk/handler"
-	"github.com/operator-framework/operator-sdk/pkg/sdk/types"
 	"github.com/sirupsen/logrus"
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/api/core/v1"
@@ -33,7 +28,6 @@ import (
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
@@ -85,341 +79,360 @@ func (h *Handler) Handle(ctx types.Context, event types.Event) error {
 	return nil
 }
 
-func (h *Handler) sync(ns *v1alpha1.ShootCluster, log *logrus.Entry) error {
-    if err := h.ensureThatFinalizersAreSet(ns, log); err != nil {
-        return err
-    }
-
-    oldStatus := ns.Status.Status
-    oldMsg := ns.Status.Message
-    err := h.fac.Get(log).Sync(ns)
-    //status, err := syncGardenCluster(ns, log)
-    if err != nil {
-        ns.Status.Status = "error"
-        ns.Status.Message = err.Error()
-        err = action.Update(ns)
-        return err
-    } else {
-        if ns.Status.Status != oldStatus || ns.Status.Message != oldMsg {
-            err = action.Update(ns)
-            return err
-        }
-    }
-
-    // if cluster is ready -> injectCollector
-    if ns.Status.Status == v1alpha1.ShootClusterStateReady {
-        if err := h.tryToInjectCollectors(ns, log, ); err != nil {
-            log.Error("injecting collectors failed")
-            return err
-        }
-        // TODO: only become ready if injectors are ready
-    }
-
-    return nil
-}
-
-func (h *Handler) ensureThatFinalizersAreSet(ns *v1alpha1.ShootCluster, log *logrus.Entry) error {
-    finalizers := ns.GetFinalizers()
-    if len(finalizers) == 0 {
-        ns.SetFinalizers([]string{"garden.service.infrabox.net"})
-        ns.Status.Status = "pending" // TODO: use status from set of valid ones
-
-        ns.Status.ClusterName = ns.Spec.ShootName
-        err := action.Update(ns)
-        if err != nil {
-            log.Errorf("Failed to set finalizers: %v", err)
-            return err
-        }
-    }
-
-    return nil
-}
-
-func (h *Handler) tryToInjectCollectors(ns *v1alpha1.ShootCluster, log *logrus.Entry) error {
-    s := utils.NewSecret(ns)
-    if err := query.Get(s); err != nil {
-        log.Errorf("couldn't get secret containing credentials. err: %s", err.Error())
-        return err
-    }
-
-    restCfg, err := utils.BuildK8sConfig("", s.Data[common.KeyNameOfShootKubecfgInSecret])
-    if err != nil {
-        log.Errorf("couldn't parse config from kubeconfig. err: %s", err.Error())
-        return err
-    }
-
-    cluster := &RemoteCluster{
-        Status:   ns.Status.Status,
-        Name:     ns.Spec.ShootName,
-        Endpoint: restCfg.Host,
-        MasterAuth: MasterAuth{
-            Username:             restCfg.Username,
-            Password:             restCfg.Password,
-            ClusterCaCertificate: string(restCfg.CAData),
-            ClientCertificate:    string(restCfg.CertData),
-            ClientKey:            string(restCfg.KeyData),
-        },
-    }
-
-    if err = injectCollector(cluster, log); err != nil {
-        log.Errorf("Failed to inject collector: %v", err)
-        return err
-    }
-
-    return nil
-}
-
-func (h *Handler) delete(sc *v1alpha1.ShootCluster, log *logrus.Entry) error {
-
-	// 1) retrieve logs (only if not in state DELETING)
-
-	if sc.Status.Status == v1alpha1.ShootClusterStateReady {
-        gkecluster, err := getRemoteCluster(sc.Status.ClusterName, log)
-        if err != nil && !errors.IsNotFound(err) {
-            log.Errorf("Failed to get GKE Cluster: %v", err)
-            return err
-        }
-        retrieveLogs(sc, gkecluster, log)
-    }
-
-	sc.Status.Status = v1alpha1.ShootClusterStateDeleting
-	if err := action.Update(sc); err != nil {
-	    return err
-    }
-
-	// 2) switch to state "deleting"
-	// 3) trigger deletion
-	return h.fac.Get(log).Delete(sc)
-}
-
-func syncGardenCluster(cr *v1alpha1.ShootCluster, log *logrus.Entry) (*v1alpha1.ShootClusterStatus, error) {
-	if cr.Status.Status == "ready" || cr.Status.Status == "error" {
-		return &cr.Status, nil
+func (h *Handler) sync(shootCluster *v1alpha1.ShootCluster, log *logrus.Entry) error {
+	if err := h.ensureThatFinalizersAreSet(shootCluster, log); err != nil {
+		return err
 	}
 
-	finalizers := cr.GetFinalizers()
-	if len(finalizers) == 0 {
-		cr.SetFinalizers([]string{"gcp.service.infrabox.net"})
-		cr.Status.Status = "pending"
-		u := uuid.NewV4()
-
-		cr.Status.ClusterName = "ib-" + u.String()
-		err := action.Update(cr)
-		if err != nil {
-			log.Errorf("Failed to set finalizers: %v", err)
-			return nil, err
-		}
-	}
-
-	// Get the GKE Cluster
-	gkecluster, err := getRemoteCluster(cr.Status.ClusterName, log)
-	if err != nil && !errors.IsNotFound(err) {
-		log.Errorf("Could not get GKE Cluster: %v", err)
-		return nil, err
-	}
-
-	if gkecluster == nil {
-		args := []string{"container", "clusters",
-			"create", cr.Status.ClusterName,
-			"--async",
-			"--enable-autorepair",
-			"--scopes=gke-default,storage-rw",
-			"--zone", cr.Spec.Zone,
-		}
-
-		if cr.Spec.DiskSize != 0 {
-			args = append(args, "--disk-size")
-			args = append(args, strconv.Itoa(int(cr.Spec.DiskSize)))
-		}
-
-		if cr.Spec.MachineType != "" {
-			args = append(args, "--machine-type")
-			args = append(args, cr.Spec.MachineType)
-		}
-
-		if cr.Spec.EnableNetworkPolicy {
-			args = append(args, "--enable-network-policy")
-		}
-
-		if cr.Spec.NumNodes != 0 {
-			args = append(args, "--num-nodes")
-			args = append(args, strconv.Itoa(int(cr.Spec.NumNodes)))
-		}
-
-		if cr.Spec.Preemptible {
-			args = append(args, "--preemptible")
-		}
-
-		if cr.Spec.EnableAutoscaling {
-			args = append(args, "--enable-autoscaling")
-
-			if cr.Spec.MaxNodes != 0 {
-				args = append(args, "--max-nodes")
-				args = append(args, strconv.Itoa(int(cr.Spec.MaxNodes)))
-			}
-
-			if cr.Spec.MinNodes != 0 {
-				args = append(args, "--min-nodes")
-				args = append(args, strconv.Itoa(int(cr.Spec.MinNodes)))
-			}
-		}
-
-		if cr.Spec.ClusterVersion != "" {
-			// find out the exact cluster version
-			version, err := getExactClusterVersion(cr, log)
-
-			if err != nil {
-				return nil, err
-			}
-
-			args = append(args, "--cluster-version", version)
-		}
-
-		cmd := exec.Command("gcloud", args...)
-		out, err := cmd.CombinedOutput()
-
-		if err != nil {
-			log.Errorf("Failed to create GKE Cluster: %v", err)
-			log.Error(string(out))
-			return nil, err
-		}
-
-		status := cr.Status
-		status.Status = "pending"
-		status.Message = "Cluster is being created"
-		return &status, nil
-	} else {
-		if err != nil {
-			log.Errorf("Failed to create secret: %v", err)
-			return nil, err
-		}
-
-		if gkecluster.Status == "RUNNING" {
-			err = injectCollector(gkecluster, log)
-			if err != nil {
-				log.Errorf("Failed to inject collector: %v", err)
-				return nil, err
-			}
-
-			err = action.Create(newSecret(cr, gkecluster))
-			if err != nil && !errors.IsAlreadyExists(err) {
-				log.Errorf("Failed to create secret: %v", err)
-				return nil, err
-			}
-
-			status := cr.Status
-			status.Status = "ready"
-			status.Message = "Cluster ready"
-			return &status, nil
-		}
-	}
-
-	return &cr.Status, nil
-}
-
-func deleteGKECluster(cr *v1alpha1.ShootCluster, log *logrus.Entry) error {
-	cr.Status.Status = "pending"
-	cr.Status.Message = "deleting"
-
-	err := action.Update(cr)
+	oldStatus := shootCluster.Status.Status
+	oldMsg := shootCluster.Status.Message
+	err := h.fac.Get(log).Sync(shootCluster)
 	if err != nil {
-		log.Errorf("Failed to update status: %v", err)
+		shootCluster.Status.Status = "error"
+		shootCluster.Status.Message = err.Error()
+		err = action.Update(shootCluster)
 		return err
-	}
-
-	// Get the GKE Cluster
-	gkecluster, err := getRemoteCluster(cr.Status.ClusterName, log)
-	if err != nil && !errors.IsNotFound(err) {
-		log.Errorf("Failed to get GKE Cluster: %v", err)
-		return err
-	}
-
-	if gkecluster != nil {
-		if gkecluster.Status == "RUNNING" {
-			// only try it once when the cluster is still running
-			retrieveLogs(cr, gkecluster, log)
-		}
-
-		// Cluster still exists, delete it
-		cmd := exec.Command("gcloud", "-q", "container", "clusters", "delete", cr.Status.ClusterName, "--async", "--zone", cr.Spec.Zone)
-		out, err := cmd.CombinedOutput()
-
-		if err != nil {
-			log.Errorf("Failed to delete cluster: %v", err)
-			log.Error(string(out))
+	} else {
+		if shootCluster.Status.Status != oldStatus || shootCluster.Status.Message != oldMsg {
+			err = action.Update(shootCluster)
 			return err
 		}
-
-		return nil
 	}
 
-	secretName := cr.ObjectMeta.Labels["service.infrabox.net/secret-name"]
-	secret := v1.Secret{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Secret",
-			APIVersion: "v1",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      secretName,
-			Namespace: cr.Namespace,
-		},
+	// if cluster is ready -> injectCollector
+	if shootCluster.Status.Status == v1alpha1.ShootClusterStateShootReady {
+		if err := h.injectCollectorsAndUpdateState(shootCluster, log); err != nil {
+			return err
+		}
 	}
 
-	err = action.Delete(&secret)
-	if err != nil && !errors.IsNotFound(err) {
-		log.Errorf("Failed to delete secret: %v", err)
+	return nil
+}
+
+func (h *Handler) injectCollectorsAndUpdateState(shootCluster *v1alpha1.ShootCluster, log *logrus.Entry) error {
+	// the shootCluster cr might have been updated -> get current version
+	if err := query.Get(shootCluster); err != nil {
 		return err
 	}
 
-	cr.SetFinalizers([]string{})
-	err = action.Update(cr)
-	if err != nil {
-		log.Errorf("Failed to remove finalizers: %v", err)
+	if err := h.tryToInjectCollectors(shootCluster, log); err != nil {
+		log.Error("injecting collectors failed")
 		return err
 	}
 
-	err = action.Delete(cr)
-	if err != nil && !errors.IsNotFound(err) {
-		log.Errorf("Failed to delete cr: %v", err)
+	shootCluster.Status.Status = v1alpha1.ShootClusterStateReady
+	if err := action.Update(shootCluster); err != nil {
+		log.Error("failed to update cr. err: ", err)
 		return err
 	}
 
 	return nil
 }
 
-type ServerConfig struct {
-	ValidMasterVersions []string `json:"validMasterVersions"`
-	ValidNodeVersions   []string `json:"validNodeVersions"`
-}
-
-func getExactClusterVersion(cr *v1alpha1.ShootCluster, log *logrus.Entry) (string, error) {
-	cmd := exec.Command("gcloud", "container", "get-server-config",
-		"--format", "json",
-		"--zone", cr.Spec.Zone)
-
-	out, err := cmd.Output()
-
-	if err != nil {
-		log.Errorf("Could not get server config: %v", err)
-		return "", err
-	}
-
-	var config ServerConfig
-	err = json.Unmarshal(out, &config)
-
-	if err != nil {
-		log.Errorf("Could not parse cluster config: %v", err)
-		return "", err
-	}
-
-	for _, v := range config.ValidMasterVersions {
-		if strings.HasPrefix(v, cr.Spec.ClusterVersion) {
-			return v, nil
+func (h *Handler) ensureThatFinalizersAreSet(ns *v1alpha1.ShootCluster, log *logrus.Entry) error {
+	finalizers := ns.GetFinalizers()
+	if len(finalizers) == 0 {
+		ns.SetFinalizers([]string{"garden.service.infrabox.net"})
+		ns.Status.ClusterName = ns.Spec.ShootName
+		err := action.Update(ns)
+		if err != nil {
+			log.Errorf("Failed to set finalizers: %v", err)
+			return err
 		}
 	}
 
-	return "", fmt.Errorf("Could not find a valid cluster version match for %v", cr.Spec.ClusterVersion)
+	return nil
 }
+
+func (h *Handler) tryToInjectCollectors(ns *v1alpha1.ShootCluster, log *logrus.Entry) error {
+	cluster, err := h.getRemoteClusterFromSecret(ns, log)
+	if err != nil {
+		return err
+	}
+
+	if err = injectCollector(cluster, log); err != nil {
+		log.Errorf("Failed to inject collector: %v", err)
+		return err
+	}
+
+	return nil
+}
+
+func (h *Handler) getRemoteClusterFromSecret(ns *v1alpha1.ShootCluster, log *logrus.Entry) (*RemoteCluster, error) {
+	s := utils.NewSecret(ns)
+	if err := query.Get(s); err != nil {
+		log.Errorf("couldn't get secret containing credentials. err: %s", err.Error())
+		return nil, err
+	}
+	restCfg, err := utils.BuildK8sConfig("", s.Data[common.KeyNameOfShootKubecfgInSecret])
+	if err != nil {
+		log.Errorf("couldn't parse config from kubeconfig. err: %s", err.Error())
+		return nil, err
+	}
+	cluster := &RemoteCluster{
+		Status:   ns.Status.Status,
+		Name:     ns.Spec.ShootName,
+		Endpoint: restCfg.Host,
+		MasterAuth: MasterAuth{
+			Username:             restCfg.Username,
+			Password:             restCfg.Password,
+			ClusterCaCertificate: string(restCfg.CAData),
+			ClientCertificate:    string(restCfg.CertData),
+			ClientKey:            string(restCfg.KeyData),
+		},
+	}
+
+	return cluster, nil
+}
+
+func (h *Handler) delete(sc *v1alpha1.ShootCluster, log *logrus.Entry) error {
+	if sc.Status.Status == v1alpha1.ShootClusterStateShootReady {
+		cluster, err := h.getRemoteClusterFromSecret(sc, log)
+		if err != nil && !errors.IsNotFound(err) {
+			log.Errorf("Failed to get Cluster: %v", err)
+			return err
+		}
+
+		retrieveLogs(sc, cluster, log)
+	}
+
+	sc.Status.Status = v1alpha1.ShootClusterStateDeleting
+	if err := action.Update(sc); err != nil {
+		return err
+	}
+
+	return h.fac.Get(log).Delete(sc)
+}
+
+//
+//func syncGardenCluster(cr *v1alpha1.ShootCluster, log *logrus.Entry) (*v1alpha1.ShootClusterStatus, error) {
+//	if cr.Status.Status == "ready" || cr.Status.Status == "error" {
+//		return &cr.Status, nil
+//	}
+//
+//	finalizers := cr.GetFinalizers()
+//	if len(finalizers) == 0 {
+//		cr.SetFinalizers([]string{"gcp.service.infrabox.net"})
+//		cr.Status.Status = "pending"
+//		u := uuid.NewV4()
+//
+//		cr.Status.ClusterName = "ib-" + u.String()
+//		err := action.Update(cr)
+//		if err != nil {
+//			log.Errorf("Failed to set finalizers: %v", err)
+//			return nil, err
+//		}
+//	}
+//
+//	// Get the GKE Cluster
+//	gkecluster, err := getRemoteCluster(cr.Status.ClusterName, log)
+//	if err != nil && !errors.IsNotFound(err) {
+//		log.Errorf("Could not get GKE Cluster: %v", err)
+//		return nil, err
+//	}
+//
+//	if gkecluster == nil {
+//		args := []string{"container", "clusters",
+//			"create", cr.Status.ClusterName,
+//			"--async",
+//			"--enable-autorepair",
+//			"--scopes=gke-default,storage-rw",
+//			"--zone", cr.Spec.Zone,
+//		}
+//
+//		if cr.Spec.DiskSize != 0 {
+//			args = append(args, "--disk-size")
+//			args = append(args, strconv.Itoa(int(cr.Spec.DiskSize)))
+//		}
+//
+//		if cr.Spec.MachineType != "" {
+//			args = append(args, "--machine-type")
+//			args = append(args, cr.Spec.MachineType)
+//		}
+//
+//		if cr.Spec.EnableNetworkPolicy {
+//			args = append(args, "--enable-network-policy")
+//		}
+//
+//		if cr.Spec.NumNodes != 0 {
+//			args = append(args, "--num-nodes")
+//			args = append(args, strconv.Itoa(int(cr.Spec.NumNodes)))
+//		}
+//
+//		if cr.Spec.Preemptible {
+//			args = append(args, "--preemptible")
+//		}
+//
+//		if cr.Spec.EnableAutoscaling {
+//			args = append(args, "--enable-autoscaling")
+//
+//			if cr.Spec.MaxNodes != 0 {
+//				args = append(args, "--max-nodes")
+//				args = append(args, strconv.Itoa(int(cr.Spec.MaxNodes)))
+//			}
+//
+//			if cr.Spec.MinNodes != 0 {
+//				args = append(args, "--min-nodes")
+//				args = append(args, strconv.Itoa(int(cr.Spec.MinNodes)))
+//			}
+//		}
+//
+//		if cr.Spec.ClusterVersion != "" {
+//			// find out the exact cluster version
+//			version, err := getExactClusterVersion(cr, log)
+//
+//			if err != nil {
+//				return nil, err
+//			}
+//
+//			args = append(args, "--cluster-version", version)
+//		}
+//
+//		cmd := exec.Command("gcloud", args...)
+//		out, err := cmd.CombinedOutput()
+//
+//		if err != nil {
+//			log.Errorf("Failed to create GKE Cluster: %v", err)
+//			log.Error(string(out))
+//			return nil, err
+//		}
+//
+//		status := cr.Status
+//		status.Status = "pending"
+//		status.Message = "Cluster is being created"
+//		return &status, nil
+//	} else {
+//		if err != nil {
+//			log.Errorf("Failed to create secret: %v", err)
+//			return nil, err
+//		}
+//
+//		if gkecluster.Status == "RUNNING" {
+//			err = injectCollector(gkecluster, log)
+//			if err != nil {
+//				log.Errorf("Failed to inject collector: %v", err)
+//				return nil, err
+//			}
+//
+//			err = action.Create(newSecret(cr, gkecluster))
+//			if err != nil && !errors.IsAlreadyExists(err) {
+//				log.Errorf("Failed to create secret: %v", err)
+//				return nil, err
+//			}
+//
+//			status := cr.Status
+//			status.Status = "ready"
+//			status.Message = "Cluster ready"
+//			return &status, nil
+//		}
+//	}
+//
+//	return &cr.Status, nil
+//}
+//
+//func deleteGKECluster(cr *v1alpha1.ShootCluster, log *logrus.Entry) error {
+//	cr.Status.Status = "pending"
+//	cr.Status.Message = "deleting"
+//
+//	err := action.Update(cr)
+//	if err != nil {
+//		log.Errorf("Failed to update status: %v", err)
+//		return err
+//	}
+//
+//	// Get the GKE Cluster
+//	gkecluster, err := getRemoteCluster(cr.Status.ClusterName, log)
+//	if err != nil && !errors.IsNotFound(err) {
+//		log.Errorf("Failed to get GKE Cluster: %v", err)
+//		return err
+//	}
+//
+//	if gkecluster != nil {
+//		if gkecluster.Status == "RUNNING" {
+//			// only try it once when the cluster is still running
+//			retrieveLogs(cr, gkecluster, log)
+//		}
+//
+//		// Cluster still exists, delete it
+//		cmd := exec.Command("gcloud", "-q", "container", "clusters", "delete", cr.Status.ClusterName, "--async", "--zone", cr.Spec.Zone)
+//		out, err := cmd.CombinedOutput()
+//
+//		if err != nil {
+//			log.Errorf("Failed to delete cluster: %v", err)
+//			log.Error(string(out))
+//			return err
+//		}
+//
+//		return nil
+//	}
+//
+//	secretName := cr.ObjectMeta.Labels["service.infrabox.net/secret-name"]
+//	secret := v1.Secret{
+//		TypeMeta: metav1.TypeMeta{
+//			Kind:       "Secret",
+//			APIVersion: "v1",
+//		},
+//		ObjectMeta: metav1.ObjectMeta{
+//			Name:      secretName,
+//			Namespace: cr.Namespace,
+//		},
+//	}
+//
+//	err = action.Delete(&secret)
+//	if err != nil && !errors.IsNotFound(err) {
+//		log.Errorf("Failed to delete secret: %v", err)
+//		return err
+//	}
+//
+//	cr.SetFinalizers([]string{})
+//	err = action.Update(cr)
+//	if err != nil {
+//		log.Errorf("Failed to remove finalizers: %v", err)
+//		return err
+//	}
+//
+//	err = action.Delete(cr)
+//	if err != nil && !errors.IsNotFound(err) {
+//		log.Errorf("Failed to delete cr: %v", err)
+//		return err
+//	}
+//
+//	return nil
+//}
+
+//type ServerConfig struct {
+//	ValidMasterVersions []string `json:"validMasterVersions"`
+//	ValidNodeVersions   []string `json:"validNodeVersions"`
+//}
+//
+//func getExactClusterVersion(cr *v1alpha1.ShootCluster, log *logrus.Entry) (string, error) {
+//	cmd := exec.Command("gcloud", "container", "get-server-config",
+//		"--format", "json",
+//		"--zone", cr.Spec.Zone)
+//
+//	out, err := cmd.Output()
+//
+//	if err != nil {
+//		log.Errorf("Could not get server config: %v", err)
+//		return "", err
+//	}
+//
+//	var config ServerConfig
+//	err = json.Unmarshal(out, &config)
+//
+//	if err != nil {
+//		log.Errorf("Could not parse cluster config: %v", err)
+//		return "", err
+//	}
+//
+//	for _, v := range config.ValidMasterVersions {
+//		if strings.HasPrefix(v, cr.Spec.ClusterVersion) {
+//			return v, nil
+//		}
+//	}
+//
+//	return "", fmt.Errorf("Could not find a valid cluster version match for %v", cr.Spec.ClusterVersion)
+//}
 
 func getRemoteCluster(name string, log *logrus.Entry) (*RemoteCluster, error) {
 	cmd := exec.Command("gcloud", "container", "clusters", "list",
@@ -447,40 +460,40 @@ func getRemoteCluster(name string, log *logrus.Entry) (*RemoteCluster, error) {
 	return &gkeclusters[0], nil
 }
 
-func newSecret(cluster *v1alpha1.ShootCluster, gke *RemoteCluster) *v1.Secret {
-	caCrt, _ := b64.StdEncoding.DecodeString(gke.MasterAuth.ClusterCaCertificate)
-	clientKey, _ := b64.StdEncoding.DecodeString(gke.MasterAuth.ClientKey)
-	clientCrt, _ := b64.StdEncoding.DecodeString(gke.MasterAuth.ClientCertificate)
-
-	secretName := cluster.ObjectMeta.Labels["service.infrabox.net/secret-name"]
-
-	return &v1.Secret{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Secret",
-			APIVersion: "v1",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      secretName,
-			Namespace: cluster.Namespace,
-			OwnerReferences: []metav1.OwnerReference{
-				*metav1.NewControllerRef(cluster, schema.GroupVersionKind{
-					Group:   v1alpha1.SchemeGroupVersion.Group,
-					Version: v1alpha1.SchemeGroupVersion.Version,
-					Kind:    "Cluster",
-				}),
-			},
-		},
-		Type: "Opaque",
-		Data: map[string][]byte{
-			"ca.crt":     []byte(caCrt),
-			"client.key": []byte(clientKey),
-			"client.crt": []byte(clientCrt),
-			"username":   []byte(gke.MasterAuth.Username),
-			"password":   []byte(gke.MasterAuth.Password),
-			"endpoint":   []byte("https://" + gke.Endpoint),
-		},
-	}
-}
+//func newSecret(cluster *v1alpha1.ShootCluster, gke *RemoteCluster) *v1.Secret {
+//	caCrt, _ := b64.StdEncoding.DecodeString(gke.MasterAuth.ClusterCaCertificate)
+//	clientKey, _ := b64.StdEncoding.DecodeString(gke.MasterAuth.ClientKey)
+//	clientCrt, _ := b64.StdEncoding.DecodeString(gke.MasterAuth.ClientCertificate)
+//
+//	secretName := cluster.ObjectMeta.Labels["service.infrabox.net/secret-name"]
+//
+//	return &v1.Secret{
+//		TypeMeta: metav1.TypeMeta{
+//			Kind:       "Secret",
+//			APIVersion: "v1",
+//		},
+//		ObjectMeta: metav1.ObjectMeta{
+//			Name:      secretName,
+//			Namespace: cluster.Namespace,
+//			OwnerReferences: []metav1.OwnerReference{
+//				*metav1.NewControllerRef(cluster, schema.GroupVersionKind{
+//					Group:   v1alpha1.SchemeGroupVersion.Group,
+//					Version: v1alpha1.SchemeGroupVersion.Version,
+//					Kind:    "Cluster",
+//				}),
+//			},
+//		},
+//		Type: "Opaque",
+//		Data: map[string][]byte{
+//			"ca.crt":     []byte(caCrt),
+//			"client.key": []byte(clientKey),
+//			"client.crt": []byte(clientCrt),
+//			"username":   []byte(gke.MasterAuth.Username),
+//			"password":   []byte(gke.MasterAuth.Password),
+//			"endpoint":   []byte("https://" + gke.Endpoint),
+//		},
+//	}
+//}
 
 func doCollectorRequest(cluster *RemoteCluster, log *logrus.Entry, endpoint string) (*[]byte, error) {
 	caCrt, _ := b64.StdEncoding.DecodeString(cluster.MasterAuth.ClusterCaCertificate)

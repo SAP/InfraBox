@@ -17,14 +17,14 @@ func CheckReadinessAndUpdateShootClusterObj(gardenCs gardenClientSet.Interface, 
 		if !apiErrors.IsNotFound(err) {
 			logrus.Errorf("couldn't get shoot information: %s", err)
 
-		} else if shootCluster.Status.Status == v1alpha1.ShootClusterStateReady {
+		} else if shootCluster.Status.Status == v1alpha1.ShootClusterStateShootReady {
 			shootCluster.Status.Status = v1alpha1.ShootClusterStateError
 			shootCluster.Status.Message = "created cluster should exist, but gardener claimed that it is gone"
 		}
 		return
 	}
 
-	if isShootReady(shoot) && (shootCluster.Status.Status != v1alpha1.ShootClusterStateReady) {
+	if isShootReady(shoot) && (shootCluster.Status.Status != v1alpha1.ShootClusterStateShootReady) {
 		setStateToReady(shootCluster)
 	}
 
@@ -47,7 +47,7 @@ func numNodesInShoot(shoot *v1beta1.Shoot) int {
 }
 
 func setStateToReady(shootCluster *v1alpha1.ShootCluster) {
-	shootCluster.Status.Status = v1alpha1.ShootClusterStateReady
+	shootCluster.Status.Status = v1alpha1.ShootClusterStateShootReady
 	shootCluster.Status.Message = ""
 }
 

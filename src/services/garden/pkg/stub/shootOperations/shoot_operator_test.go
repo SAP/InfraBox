@@ -251,7 +251,7 @@ func TestShootOperator_SimpleSyncForEmptyCluster(t *testing.T) {
 	}
 
 	// shoot cluster isn't ready (we didn't set its state accordingly) => state also musn't be ready
-	if storedCluster.Status.Status == v1alpha1.ShootClusterStateReady {
+	if storedCluster.Status.Status == v1alpha1.ShootClusterStateShootReady {
 		t.Fatalf("wrong state. cluster shouldn't be ready, but got: %s", storedCluster.Status.Status)
 	}
 }
