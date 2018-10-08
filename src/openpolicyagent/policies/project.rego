@@ -83,3 +83,11 @@ allow {
     api.token.type = "project"
     api.token.project.id = project_id
 }
+
+allow {
+    api.method = "POST"
+    api.path = ["api", "v1", "projects", project_id, "upload"]
+
+    api.token.type = "project"
+    api.token.project.id = project_id
+}
