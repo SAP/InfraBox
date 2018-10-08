@@ -10,7 +10,7 @@ import urllib3
 
 import xmlrunner
 
-from pyinfraboxutils.db import connect_db
+from pyinfraboxutils.db import connect_db, DB
 from pyinfraboxutils.token import encode_project_token
 from pyinfraboxutils.secrets import encrypt_secret
 
