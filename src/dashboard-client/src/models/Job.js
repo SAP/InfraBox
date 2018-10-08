@@ -214,6 +214,10 @@ export default class Job {
     }
 
     loadTests () {
+        if (this.tests.length > 0) {
+            return
+        }
+
         return NewAPIService.get(`projects/${this.project.id}/jobs/${this.id}/testruns`)
             .then((tests) => {
                 store.commit('setTests', { job: this, tests: tests })
