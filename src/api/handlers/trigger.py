@@ -6,7 +6,7 @@ import requests
 from flask_restplus import Resource, fields
 from flask import abort, request, g
 
-from pyinfraboxutils.ibflask import auth_required, OK
+from pyinfraboxutils.ibflask import OK
 from pyinfraboxutils.ibrestplus import api
 from project import ns
 
@@ -119,7 +119,7 @@ def create_github_commit(project_id, repo_id, branch_or_sha):
         SELECT github_api_token FROM "user" u
         INNER JOIN collaborator co
             ON co.user_id = u.id
-            AND co.owner = true
+            AND co.role = 'Owner'
         INNER JOIN project p
             ON co.project_id = p.id
         INNER JOIN repository r
@@ -256,7 +256,6 @@ trigger_model = api.model('Trigger', {
 @ns.route('/<project_id>/trigger')
 class Trigger(Resource):
 
-    @auth_required(['user', 'project'])
     @api.expect(trigger_model)
     def post(self, project_id):
         body = request.get_json()

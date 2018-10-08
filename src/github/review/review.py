@@ -118,7 +118,7 @@ def handle_job_update(conn, event):
     token = execute_sql(conn, '''
         SELECT github_api_token FROM "user" u
         INNER JOIN collaborator co
-            ON co.owner = true
+            ON co.role = 'Owner'
             AND co.project_id = %s
             AND co.user_id = u.id
     ''', [project_id])
