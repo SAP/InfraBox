@@ -4,7 +4,7 @@ import requests
 import threading
 import time
 
-from pyinfraboxutils import get_logger, get_env, dbpool
+from pyinfraboxutils import get_logger, get_env
 
 logger = get_logger('OPA')
 
@@ -53,7 +53,11 @@ def opa_push_project_data(db):
     opa_push_data(PROJECT_DATA_DEST_URL, payload)
 
 def opa_push_all(arg_db = None):
-    db = dbpool.get() if arg_db is None else arg_db
+    if arg_db is None:
+        from pyinfraboxutils import dbpool
+        db = dbpool.get()
+    else:
+        db = arg_db
     try:
         opa_push_collaborator_data(db)
         opa_push_project_data(db)
