@@ -42,10 +42,9 @@ def main(): # pragma: no cover
     get_env('INFRABOX_OPA_PORT')
     get_env('INFRABOX_OPA_PUSH_INTERVAL')
 
-
     conn = connect_db()
-    conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
-    opa_start_push_loop(DB(conn))
+
+    opa_start_push_loop()
     wsgi.server(eventlet.listen(('0.0.0.0', 8081)), app)
 
 if __name__ == "__main__": # pragma: no cover
