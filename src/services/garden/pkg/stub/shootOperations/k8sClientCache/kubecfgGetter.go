@@ -23,7 +23,7 @@ func (g *StaticKubecfgGetter) Get(cluster *v1alpha1.ShootCluster) (string, error
 }
 
 // SecretKubecfgGetter fetches the kubeconfig from a secret. In detail, the secret must be in the same namespace as the
-// dhInfra object itself.
+// shootCluster object itself.
 type SecretKubecfgGetter struct {
 	opsdk common.SdkOperations
 }

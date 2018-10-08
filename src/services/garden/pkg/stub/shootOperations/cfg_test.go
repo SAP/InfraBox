@@ -34,9 +34,9 @@ func TestFillSpecWK8sVer_Failures(t *testing.T) {
 func testInvalidK8sVersionRequirements(supportedVersions []string, k8sVersionWanted string, t *testing.T) {
     mockCtrl, cpMock := setupMocksForCloudProfile(t)
     defer mockCtrl.Finish()
-    dhInfra, shoot := expectCallAndCreateStructs(supportedVersions, cpMock, k8sVersionWanted)
+    shootCluster, shoot := expectCallAndCreateStructs(supportedVersions, cpMock, k8sVersionWanted)
 
-    err := fillSpecWithK8sVersion(shoot, dhInfra, cpMock)
+    err := fillSpecWithK8sVersion(shoot, shootCluster, cpMock)
 
     if err == nil {
         t.Fatal("expected err, but got none")
@@ -53,11 +53,11 @@ func TestFillSpecWK8sVer_OnBogusExpectedVersion_Fail(t *testing.T) {
     mockCtrl, cpMock := setupMocksForCloudProfile(t)
     defer mockCtrl.Finish()
 
-    dhInfra := createShootClusterCr()
+    shootCluster := createShootClusterCr()
     shoot := DefaultAwsConfig()
-    dhInfra.Spec.ClusterVersion = "fasdfasd"
+    shootCluster.Spec.ClusterVersion = "fasdfasd"
 
-    err := fillSpecWithK8sVersion(shoot, dhInfra, cpMock)
+    err := fillSpecWithK8sVersion(shoot, shootCluster, cpMock)
 
     if err == nil {
         t.Fatal("expected err, but got none")
@@ -111,8 +111,8 @@ func TestFillSpecWK8sVer_Successes(t *testing.T) {
 func testValidK8sVersionRequirements(supportedVersions []string, k8sVersionWanted string, expVersion string, t *testing.T) {
     mockCtrl, cpMock := setupMocksForCloudProfile(t)
     defer mockCtrl.Finish()
-    dhInfra, shoot := expectCallAndCreateStructs(supportedVersions, cpMock, k8sVersionWanted)
-    err := fillSpecWithK8sVersion(shoot, dhInfra, cpMock)
+    shootCluster, shoot := expectCallAndCreateStructs(supportedVersions, cpMock, k8sVersionWanted)
+    err := fillSpecWithK8sVersion(shoot, shootCluster, cpMock)
 
     if err != nil {
         t.Fatal(err)

@@ -20,7 +20,7 @@ func TestCreateShootCluster(t *testing.T) {
 	shootCluster := createShootClusterCr()
 	fk := fake.NewSimpleClientset()
 	sdkmock := testUtils.NewSdkMockBackedByFake(t, k8sFake.NewSimpleClientset())
-	addInputSecretForDHInfraOperator(shootCluster, sdkmock)
+	addInputSecretForshootClusterOperator(shootCluster, sdkmock)
 	addCloudProfileForAws(shootCluster, fk, t)
 
 	_, err := CreateShootCluster(sdkmock, fk, shootCluster, log)
@@ -91,7 +91,7 @@ func TestCreateShootCluster_IfAlreadyExist_DontChangeAnything(t *testing.T) {
 	shootCluster := createShootClusterCr()
 	fk := fake.NewSimpleClientset()
 	sdkmock := testUtils.NewSdkMockBackedByFake(t, k8sFake.NewSimpleClientset())
-	addInputSecretForDHInfraOperator(shootCluster, sdkmock)
+	addInputSecretForshootClusterOperator(shootCluster, sdkmock)
 	addCloudProfileForAws(shootCluster, fk, t)
 
 	_, err := CreateShootCluster(sdkmock, fk, shootCluster, log)

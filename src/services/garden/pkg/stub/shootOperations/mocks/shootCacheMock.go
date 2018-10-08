@@ -23,6 +23,6 @@ func (cache *K8sClientsCacheMock) GetK8sClientSet() kubernetes.Interface {
 func (cache *K8sClientsCacheMock) GetGardenClientSet() gardenClientSet.Interface {
 	return cache.gardenK8sClient
 }
-func (cache *K8sClientsCacheMock) Get(dhInfra *v1alpha1.ShootCluster) k8sClientCache.ClientGetter {
+func (cache *K8sClientsCacheMock) Get(shootCluster *v1alpha1.ShootCluster) k8sClientCache.ClientGetter {
 	return cache
 }

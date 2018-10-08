@@ -17,11 +17,11 @@ import (
 	"github.com/sap/infrabox/src/services/garden/pkg/apis/garden/v1alpha1"
 )
 
-func deleteShootCluster(shoots gardenV1beta1.ShootInterface, dhInfra *v1alpha1.ShootCluster, log *logrus.Entry) {
-	logSuccess := func() { log.Infof("successfully triggered deletion of shoot %s", dhInfra.Spec.ShootName) }
+func deleteShootCluster(shoots gardenV1beta1.ShootInterface, shootCluster *v1alpha1.ShootCluster, log *logrus.Entry) {
+	logSuccess := func() { log.Infof("successfully triggered deletion of shoot %s", shootCluster.Spec.ShootName) }
 
-	log.Infof("Try to delete shoot %s in the namespace %s", dhInfra.Spec.ShootName, dhInfra.Spec.GardenerNamespace)
-	err := setDeletionConfirmation(shoots, dhInfra.Spec.ShootName, log)
+	log.Infof("Try to delete shoot %s in the namespace %s", shootCluster.Spec.ShootName, shootCluster.Spec.GardenerNamespace)
+	err := setDeletionConfirmation(shoots, shootCluster.Spec.ShootName, log)
 	if err != nil {
 		if apiErrors.IsNotFound(err) {
 			log.Info("shoot cluster does not exist")
@@ -31,7 +31,7 @@ func deleteShootCluster(shoots gardenV1beta1.ShootInterface, dhInfra *v1alpha1.S
 		return
 	}
 
-	err = shoots.Delete(dhInfra.Spec.ShootName, &metav1.DeleteOptions{})
+	err = shoots.Delete(shootCluster.Spec.ShootName, &metav1.DeleteOptions{})
 	if err != nil {
 		if apiErrors.IsNotFound(err) {
 			log.Info("shoot cluster does not exist")
@@ -41,7 +41,7 @@ func deleteShootCluster(shoots gardenV1beta1.ShootInterface, dhInfra *v1alpha1.S
 		return
 	}
 
-	err = setDeletionTimestampConfirmation(shoots, dhInfra.Spec.ShootName)
+	err = setDeletionTimestampConfirmation(shoots, shootCluster.Spec.ShootName)
 	if err != nil {
 		if apiErrors.IsNotFound(err) {
 			log.Info("shoot cluster does not exist")

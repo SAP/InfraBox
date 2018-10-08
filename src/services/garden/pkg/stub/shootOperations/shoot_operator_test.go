@@ -236,7 +236,7 @@ func TestShootOperator_SimpleSyncForEmptyCluster(t *testing.T) {
 	sop := NewShootOperator(mock, cache, &utils.StaticK8sClientSetFactory{ClientSet: k8sFake.NewSimpleClientset()}, logrus.WithField("test", "test"))
 
 	ShootCluster := createShootClusterCr()
-	addInputSecretForDHInfraOperator(ShootCluster, mock)
+	addInputSecretForshootClusterOperator(ShootCluster, mock)
 	addCloudProfileForAws(ShootCluster, gFake, t)
 
 	err := sop.Sync(ShootCluster)
@@ -256,34 +256,34 @@ func TestShootOperator_SimpleSyncForEmptyCluster(t *testing.T) {
 	}
 }
 
-func TestShootOperator_Sync_ChangedDHInfraResultsInUpdate(t *testing.T) {
+func TestShootOperator_Sync_ChangedshootClusterResultsInUpdate(t *testing.T) {
 	k8sCs, mock, gFake := setupMocks(t)
 
-	dhInfraInput := createShootClusterCr()
-	addReadyShootCluster(dhInfraInput, k8sCs, gFake, mock, t)
+	shootCluster := createShootClusterCr()
+	addReadyShootCluster(shootCluster, k8sCs, gFake, mock, t)
 
 	cache := mocks.NewK8sClientCacheMock(k8sCs, gFake)
 	sop := NewShootOperator(mock, cache, &utils.StaticK8sClientSetFactory{ClientSet: k8sFake.NewSimpleClientset()}, logrus.WithField("test", "test"))
 
-	dhInfraWithUpdate := dhInfraInput.DeepCopy()
-	dhInfraWithUpdate.Spec.MaxNodes++
-	dhInfraWithUpdate.Spec.MinNodes++
+	shootClusterWUpdate := shootCluster.DeepCopy()
+	shootClusterWUpdate.Spec.MaxNodes++
+	shootClusterWUpdate.Spec.MinNodes++
 
-	if err := sop.Sync(dhInfraWithUpdate); err != nil {
+	if err := sop.Sync(shootClusterWUpdate); err != nil {
 		t.Fatal(err)
 	}
 
-	shoot, err := gFake.GardenV1beta1().Shoots(dhInfraWithUpdate.Spec.GardenerNamespace).Get(dhInfraWithUpdate.Spec.ShootName, v1.GetOptions{})
+	shoot, err := gFake.GardenV1beta1().Shoots(shootClusterWUpdate.Spec.GardenerNamespace).Get(shootClusterWUpdate.Spec.ShootName, v1.GetOptions{})
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	// compare shoot spec with dhInfra specs
-	if got := shoot.Spec.Cloud.AWS.Workers[0].AutoScalerMin; got != int(dhInfraWithUpdate.Spec.MinNodes) {
-		t.Fatalf("min nodes mismatch. got: %d, want: %d", got, dhInfraWithUpdate.Spec.MinNodes)
+	// compare shoot spec with shootCluster specs
+	if got := shoot.Spec.Cloud.AWS.Workers[0].AutoScalerMin; got != int(shootClusterWUpdate.Spec.MinNodes) {
+		t.Fatalf("min nodes mismatch. got: %d, want: %d", got, shootClusterWUpdate.Spec.MinNodes)
 	}
-	if got := shoot.Spec.Cloud.AWS.Workers[0].AutoScalerMax; got != int(dhInfraWithUpdate.Spec.MaxNodes) {
-		t.Fatalf("max nodes mismatch. got: %d, want: %d", got, dhInfraWithUpdate.Spec.MaxNodes)
+	if got := shoot.Spec.Cloud.AWS.Workers[0].AutoScalerMax; got != int(shootClusterWUpdate.Spec.MaxNodes) {
+		t.Fatalf("max nodes mismatch. got: %d, want: %d", got, shootClusterWUpdate.Spec.MaxNodes)
 	}
 }
 
@@ -294,15 +294,15 @@ func setupMocks(t *testing.T) (*k8sFake.Clientset, *testUtils.SdkMockStateful, *
 	return k8sCs, mock, gFake
 }
 
-func addReadyShootCluster(dhInfraInput *v1alpha1.ShootCluster, k8sFake kubernetes.Interface, gFake *gardenFake.Clientset, sdkops common.SdkOperations, t *testing.T) {
-	if err := addInputSecretForDHInfraOperator(dhInfraInput, sdkops); err != nil {
+func addReadyShootCluster(shootClusterInput *v1alpha1.ShootCluster, k8sFake kubernetes.Interface, gFake *gardenFake.Clientset, sdkops common.SdkOperations, t *testing.T) {
+	if err := addInputSecretForshootClusterOperator(shootClusterInput, sdkops); err != nil {
 		t.Fatal(err)
 	}
 
-	addSecretContainingShootKubeCfg(dhInfraInput, k8sFake, t)
-	addCloudProfileForAws(dhInfraInput, gFake, t)
+	addSecretContainingShootKubeCfg(shootClusterInput, k8sFake, t)
+	addCloudProfileForAws(shootClusterInput, gFake, t)
 
-	shoot, err := createAwsConfig(sdkops, dhInfraInput, gFake.GardenV1beta1().CloudProfiles())
+	shoot, err := createAwsConfig(sdkops, shootClusterInput, gFake.GardenV1beta1().CloudProfiles())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -312,12 +312,12 @@ func addReadyShootCluster(dhInfraInput *v1alpha1.ShootCluster, k8sFake kubernete
 		Type:     v1beta1.ShootLastOperationTypeReconcile,
 	}
 
-	if _, err := gFake.GardenV1beta1().Shoots(dhInfraInput.Spec.GardenerNamespace).Create(shoot); err != nil {
+	if _, err := gFake.GardenV1beta1().Shoots(shootClusterInput.Spec.GardenerNamespace).Create(shoot); err != nil {
 		t.Fatal(err)
 	}
 }
 
-func addCloudProfileForAws(dhInfraInput *v1alpha1.ShootCluster, gFake *gardenFake.Clientset, t *testing.T) {
+func addCloudProfileForAws(shootClusterInput *v1alpha1.ShootCluster, gFake *gardenFake.Clientset, t *testing.T) {
 	p := &v1beta1.CloudProfile{
 		TypeMeta: v1.TypeMeta{
 			Kind:       "CloudProfile",
@@ -327,7 +327,7 @@ func addCloudProfileForAws(dhInfraInput *v1alpha1.ShootCluster, gFake *gardenFak
 			AWS: &v1beta1.AWSProfile{
 				Constraints: v1beta1.AWSConstraints{
 					Kubernetes: v1beta1.KubernetesConstraints{
-						Versions: []string{dhInfraInput.Spec.ClusterVersion},
+						Versions: []string{shootClusterInput.Spec.ClusterVersion},
 					},
 				},
 			},
@@ -340,55 +340,55 @@ func addCloudProfileForAws(dhInfraInput *v1alpha1.ShootCluster, gFake *gardenFak
 	}
 }
 
-func addSecretContainingShootKubeCfg(dhInfraInput *v1alpha1.ShootCluster, k8sFake kubernetes.Interface, t *testing.T) {
-	s := utils.NewSecret(dhInfraInput)
-	sName := dhInfraInput.Spec.ShootName + ".kubeconfig"
+func addSecretContainingShootKubeCfg(shootClusterInput *v1alpha1.ShootCluster, k8sFake kubernetes.Interface, t *testing.T) {
+	s := utils.NewSecret(shootClusterInput)
+	sName := shootClusterInput.Spec.ShootName + ".kubeconfig"
 	s.SetName(sName)
-	s.SetNamespace(dhInfraInput.Spec.GardenerNamespace)
+	s.SetNamespace(shootClusterInput.Spec.GardenerNamespace)
 	s.Data["kubeconfig"] = []byte(utils.ValidDummyKubeconfig())
-	if _, err := k8sFake.CoreV1().Secrets(dhInfraInput.Spec.GardenerNamespace).Create(s); err != nil {
+	if _, err := k8sFake.CoreV1().Secrets(shootClusterInput.Spec.GardenerNamespace).Create(s); err != nil {
 		t.Fatal(err)
 	}
 }
 
-func removeSecretContainingShootKubeCfg(dhInfraInput *v1alpha1.ShootCluster, k8sFake kubernetes.Interface, t *testing.T) {
-	sName := dhInfraInput.Spec.ShootName + ".kubeconfig"
-	if err := k8sFake.CoreV1().Secrets(dhInfraInput.Spec.GardenerNamespace).Delete(sName, &v1.DeleteOptions{}); err != nil {
+func removeSecretContainingShootKubeCfg(shootClusterInput *v1alpha1.ShootCluster, k8sFake kubernetes.Interface, t *testing.T) {
+	sName := shootClusterInput.Spec.ShootName + ".kubeconfig"
+	if err := k8sFake.CoreV1().Secrets(shootClusterInput.Spec.GardenerNamespace).Delete(sName, &v1.DeleteOptions{}); err != nil {
 		t.Fatal(err)
 	}
 }
 
-func addInputSecretForDHInfraOperator(dhInfraInput *v1alpha1.ShootCluster, sdkmock common.SdkOperations) error {
-	s := utils.NewSecret(dhInfraInput)
+func addInputSecretForshootClusterOperator(shootClusterInput *v1alpha1.ShootCluster, sdkmock common.SdkOperations) error {
+	s := utils.NewSecret(shootClusterInput)
 	s.Data[common.KeySecretBindingRefInSecret] = []byte("foo")
 	return sdkmock.Create(s)
 }
 
-func TestShootOperator_Sync_OnReconcilingShoot_DHInfraState_NumNodesDoesNotGetUpdated(t *testing.T) {
+func TestShootOperator_Sync_OnReconcilingShoot_shootClusterState_NumNodesDoesNotGetUpdated(t *testing.T) {
 	k8sCs, mock, gFake := setupMocks(t)
 
-	dhInfraInput := createShootClusterCr()
-	addReconcilingShootCluster(dhInfraInput, k8sCs, gFake, mock, t)
+	shootClusterInput := createShootClusterCr()
+	addReconcilingShootCluster(shootClusterInput, k8sCs, gFake, mock, t)
 	sop := NewShootOperator(mock, mocks.NewK8sClientCacheMock(k8sCs, gFake), &utils.StaticK8sClientSetFactory{ClientSet: k8sFake.NewSimpleClientset()}, logrus.WithField("test", "test"))
 
-	if err := sop.Sync(dhInfraInput); err != nil {
+	if err := sop.Sync(shootClusterInput); err != nil {
 		t.Fatal(err)
 	}
 
-	if dhInfraInput.Status.NumNodes != 0 {
-		t.Fatalf("wrong NumNodes. expected %d, got: %d", 0, dhInfraInput.Status.NumNodes)
+	if shootClusterInput.Status.NumNodes != 0 {
+		t.Fatalf("wrong NumNodes. expected %d, got: %d", 0, shootClusterInput.Status.NumNodes)
 	}
 }
 
-func addReconcilingShootCluster(dhInfraInput *v1alpha1.ShootCluster, k8sFake kubernetes.Interface, gFake *gardenFake.Clientset, sdkops common.SdkOperations, t *testing.T) {
-	if err := addInputSecretForDHInfraOperator(dhInfraInput, sdkops); err != nil {
+func addReconcilingShootCluster(shootClusterInput *v1alpha1.ShootCluster, k8sFake kubernetes.Interface, gFake *gardenFake.Clientset, sdkops common.SdkOperations, t *testing.T) {
+	if err := addInputSecretForshootClusterOperator(shootClusterInput, sdkops); err != nil {
 		t.Fatal(err)
 	}
 
-	addSecretContainingShootKubeCfg(dhInfraInput, k8sFake, t)
-	addCloudProfileForAws(dhInfraInput, gFake, t)
+	addSecretContainingShootKubeCfg(shootClusterInput, k8sFake, t)
+	addCloudProfileForAws(shootClusterInput, gFake, t)
 
-	shoot, err := createAwsConfig(sdkops, dhInfraInput, gFake.GardenV1beta1().CloudProfiles())
+	shoot, err := createAwsConfig(sdkops, shootClusterInput, gFake.GardenV1beta1().CloudProfiles())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -398,30 +398,30 @@ func addReconcilingShootCluster(dhInfraInput *v1alpha1.ShootCluster, k8sFake kub
 		Type:     v1beta1.ShootLastOperationTypeReconcile,
 	}
 
-	if _, err := gFake.GardenV1beta1().Shoots(dhInfraInput.Spec.GardenerNamespace).Create(shoot); err != nil {
+	if _, err := gFake.GardenV1beta1().Shoots(shootClusterInput.Spec.GardenerNamespace).Create(shoot); err != nil {
 		t.Fatal(err)
 	}
 }
 
-func TestShootOperator_Sync_DHInfraState_NumNodesGetsUpdated(t *testing.T) {
+func TestShootOperator_Sync_shootClusterState_NumNodesGetsUpdated(t *testing.T) {
 	k8sCs := k8sFake.NewSimpleClientset()
 	mock := testUtils.NewSdkMockBackedByFake(t, k8sCs)
 	gFake := gardenFake.NewSimpleClientset()
 
 	const numNodes = 4217
-	dhInfraInput := createShootClusterCr()
-	dhInfraInput.Spec.MinNodes = numNodes
-	dhInfraInput.Spec.MaxNodes = numNodes
+	shootClusterInput := createShootClusterCr()
+	shootClusterInput.Spec.MinNodes = numNodes
+	shootClusterInput.Spec.MaxNodes = numNodes
 
-	addReadyShootCluster(dhInfraInput, k8sCs, gFake, mock, t)
+	addReadyShootCluster(shootClusterInput, k8sCs, gFake, mock, t)
 	sop := NewShootOperator(mock, mocks.NewK8sClientCacheMock(k8sCs, gFake), &utils.StaticK8sClientSetFactory{ClientSet: k8sFake.NewSimpleClientset()}, logrus.WithField("test", "test"))
 
-	if err := sop.Sync(dhInfraInput); err != nil {
+	if err := sop.Sync(shootClusterInput); err != nil {
 		t.Fatal(err)
 	}
 
-	if dhInfraInput.Status.NumNodes != numNodes {
-		t.Fatalf("wrong NumNodes. expected %d, got: %d", numNodes, dhInfraInput.Status.NumNodes)
+	if shootClusterInput.Status.NumNodes != numNodes {
+		t.Fatalf("wrong NumNodes. expected %d, got: %d", numNodes, shootClusterInput.Status.NumNodes)
 	}
 }
 
@@ -429,21 +429,21 @@ func TestUpdateShootSpecIfNecessary(t *testing.T) {
 	cache := mocks.NewK8sClientCacheMock(nil, nil)
 	sop := NewShootOperator(nil, cache, nil, nil)
 
-	dhInfra := createShootClusterCr()
+	shootCluster := createShootClusterCr()
 	shoot := DefaultAwsConfig()
 
-	if !sop.updateShootSpecIfNecessary(shoot, dhInfra) {
+	if !sop.updateShootSpecIfNecessary(shoot, shootCluster) {
 		t.Fatal("multiple values don't match, therefore there must be an update")
 	}
 
 	worker := shoot.Spec.Cloud.AWS.Workers[0]
-	if worker.AutoScalerMin != int(dhInfra.Spec.MinNodes) {
-		t.Fatalf("value mismatch. expected: %d, got: %d", dhInfra.Spec.MinNodes, worker.AutoScalerMin)
+	if worker.AutoScalerMin != int(shootCluster.Spec.MinNodes) {
+		t.Fatalf("value mismatch. expected: %d, got: %d", shootCluster.Spec.MinNodes, worker.AutoScalerMin)
 	}
-	if worker.AutoScalerMax != int(dhInfra.Spec.MaxNodes) {
-		t.Fatalf("value mismatch. expected: %d, got: %d", dhInfra.Spec.MaxNodes, worker.AutoScalerMax)
+	if worker.AutoScalerMax != int(shootCluster.Spec.MaxNodes) {
+		t.Fatalf("value mismatch. expected: %d, got: %d", shootCluster.Spec.MaxNodes, worker.AutoScalerMax)
 	}
-	if expVolSize := fmt.Sprintf("%dGi", dhInfra.Spec.DiskSize); worker.VolumeSize != expVolSize {
+	if expVolSize := fmt.Sprintf("%dGi", shootCluster.Spec.DiskSize); worker.VolumeSize != expVolSize {
 		t.Fatalf("value mismatch. expected: %s, got: %s", expVolSize, worker.VolumeSize)
 	}
 }
@@ -487,18 +487,18 @@ func addIncompleteSecret(ShootCluster *v1alpha1.ShootCluster, mock *testUtils.Sd
 func TestShootOperator_IfShootCfgIsMissing_SyncFails(t *testing.T) {
 	k8sCs, mock, gFake := setupMocks(t)
 
-	dhInfraInput := createShootClusterCr()
-	addReadyShootClusterButMissingShootKubeCfg(dhInfraInput, k8sCs, gFake, mock, t)
+	shootClusterInput := createShootClusterCr()
+	addReadyShootClusterButMissingShootKubeCfg(shootClusterInput, k8sCs, gFake, mock, t)
 
 	cache := mocks.NewK8sClientCacheMock(k8sCs, gFake)
 	sop := NewShootOperator(mock, cache, &utils.StaticK8sClientSetFactory{ClientSet: k8sFake.NewSimpleClientset()}, logrus.WithField("test", "test"))
 
-	if err := sop.Sync(dhInfraInput); err == nil {
+	if err := sop.Sync(shootClusterInput); err == nil {
 		t.Fatal("expected an error since the shoot kubeconfig does not exist")
 	}
 }
 
-func addReadyShootClusterButMissingShootKubeCfg(dhInfraInput *v1alpha1.ShootCluster, k8sFake kubernetes.Interface, gFake *gardenFake.Clientset, sdkops common.SdkOperations, t *testing.T) {
-	addReadyShootCluster(dhInfraInput, k8sFake, gFake, sdkops, t)
-	removeSecretContainingShootKubeCfg(dhInfraInput, k8sFake, t)
+func addReadyShootClusterButMissingShootKubeCfg(shootClusterInput *v1alpha1.ShootCluster, k8sFake kubernetes.Interface, gFake *gardenFake.Clientset, sdkops common.SdkOperations, t *testing.T) {
+	addReadyShootCluster(shootClusterInput, k8sFake, gFake, sdkops, t)
+	removeSecretContainingShootKubeCfg(shootClusterInput, k8sFake, t)
 }
