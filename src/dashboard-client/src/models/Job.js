@@ -155,9 +155,9 @@ export default class Job {
                         let c = header.substr(idx, end - idx)
 
                         if (c === 'info') {
-                            color = 'blue'
+                            color = '#23c6c8'
                         } else if (c === 'warning') {
-                            color = 'yellow'
+                            color = '#f4f4f5'
                         } else if (c === 'error') {
                             color = '#b71c1c'
                         }
