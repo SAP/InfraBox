@@ -10,26 +10,26 @@ import (
 	"github.com/sap/infrabox/src/services/garden/pkg/apis/garden/v1alpha1"
 )
 
-func CheckReadinessAndUpdateDHInfraObj(gardenCs gardenClientSet.Interface, dhInfra *v1alpha1.ShootCluster) (err error) {
+func CheckReadinessAndUpdateShootClusterObj(gardenCs gardenClientSet.Interface, shootCluster *v1alpha1.ShootCluster) (err error) {
 	var shoot *v1beta1.Shoot
-	shoot, err = gardenCs.GardenV1beta1().Shoots(dhInfra.Spec.GardenerNamespace).Get(dhInfra.Spec.ShootName, v1.GetOptions{})
+	shoot, err = gardenCs.GardenV1beta1().Shoots(shootCluster.Spec.GardenerNamespace).Get(shootCluster.Spec.ShootName, v1.GetOptions{})
 	if err != nil {
 		if !apiErrors.IsNotFound(err) {
 			logrus.Errorf("couldn't get shoot information: %s", err)
 
-		} else if dhInfra.Status.Status == v1alpha1.ShootClusterStateReady {
-			dhInfra.Status.Status = v1alpha1.ShootClusterStateError
-			dhInfra.Status.Message = "created cluster should exist, but gardener claimed that it is gone"
+		} else if shootCluster.Status.Status == v1alpha1.ShootClusterStateReady {
+			shootCluster.Status.Status = v1alpha1.ShootClusterStateError
+			shootCluster.Status.Message = "created cluster should exist, but gardener claimed that it is gone"
 		}
 		return
 	}
 
-	if isShootReady(shoot) && (dhInfra.Status.Status != v1alpha1.ShootClusterStateReady) {
-		setStateToReady(dhInfra)
+	if isShootReady(shoot) && (shootCluster.Status.Status != v1alpha1.ShootClusterStateReady) {
+		setStateToReady(shootCluster)
 	}
 
 	if isShootReady(shoot) && !isShootReconciling(shoot) {
-		dhInfra.Status.NumNodes = numNodesInShoot(shoot)
+		shootCluster.Status.NumNodes = numNodesInShoot(shoot)
 	}
 
 	return
@@ -46,9 +46,9 @@ func numNodesInShoot(shoot *v1beta1.Shoot) int {
 	return cnt
 }
 
-func setStateToReady(dhInfra *v1alpha1.ShootCluster) {
-	dhInfra.Status.Status = v1alpha1.ShootClusterStateReady
-	dhInfra.Status.Message = ""
+func setStateToReady(shootCluster *v1alpha1.ShootCluster) {
+	shootCluster.Status.Status = v1alpha1.ShootClusterStateReady
+	shootCluster.Status.Message = ""
 }
 
 func isShootReconciling(shoot *v1beta1.Shoot) bool {

@@ -15,10 +15,10 @@ type ClientGetter interface {
 
 // interface for caches which cache both, the native kubernetes clientset and the gardener clienset for the same Garden kubernetes cluster
 type ClientCacher interface {
-	Get(dhInfra *v1alpha1.ShootCluster) ClientGetter
+	Get(shootCluster *v1alpha1.ShootCluster) ClientGetter
 }
 
 type KubecfgGetter interface {
-	// takes a dhInfra object and returns the full kubeconfig as string (not just a path to the kubecfg)
-	Get(dhInfra *v1alpha1.ShootCluster) (string, error)
+	// takes a shootCluster object and returns the full kubeconfig as string (not just a path to the kubecfg)
+	Get(shootCluster *v1alpha1.ShootCluster) (string, error)
 }

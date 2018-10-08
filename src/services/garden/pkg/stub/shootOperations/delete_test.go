@@ -182,41 +182,41 @@ func TestDeleteShootCluster_TriesToDeleteShoot(t *testing.T) {
 	mockCtrl, simock, shoot := setupMockAndShoot(t)
 	defer mockCtrl.Finish()
 
-	var dhInfra v1alpha1.ShootCluster
-	dhInfra.Spec.ShootName = shoot.GetName()
+	var shootCluster v1alpha1.ShootCluster
+	shootCluster.Spec.ShootName = shoot.GetName()
 	log := logrus.WithField("test", "test")
 
 	simock.EXPECT().Get(shoot.GetName(), gomock.Any()).Return(shoot, nil).AnyTimes()
 	simock.EXPECT().Patch(shoot.GetName(), types.MergePatchType, gomock.Any()).Return(shoot, nil).Times(2) // two patches because of two different confirmations
 	simock.EXPECT().Delete(shoot.GetName(), gomock.Any()).Times(1)
 
-	deleteShootCluster(simock, &dhInfra, log)
+	deleteShootCluster(simock, &shootCluster, log)
 }
 
 func TestDeleteShootCluster_DoesNotDeleteIfFirstPatchingFails(t *testing.T) {
 	mockCtrl, simock, shoot := setupMockAndShoot(t)
 	defer mockCtrl.Finish()
 
-	var dhInfra v1alpha1.ShootCluster
-	dhInfra.Spec.ShootName = shoot.GetName()
+	var shootCluster v1alpha1.ShootCluster
+	shootCluster.Spec.ShootName = shoot.GetName()
 	log := logrus.WithField("test", "test")
 
 	simock.EXPECT().Get(shoot.GetName(), gomock.Any()).Return(nil, apiErrors.NewNotFound(schema.GroupResource{}, shoot.Name)).AnyTimes()
 
-	deleteShootCluster(simock, &dhInfra, log)
+	deleteShootCluster(simock, &shootCluster, log)
 }
 
 func TestDeleteShootCluster_DoesNotApplySecondPatchIfDeleteFails(t *testing.T) {
 	mockCtrl, simock, shoot := setupMockAndShoot(t)
 	defer mockCtrl.Finish()
 
-	var dhInfra v1alpha1.ShootCluster
-	dhInfra.Spec.ShootName = shoot.GetName()
+	var shootCluster v1alpha1.ShootCluster
+	shootCluster.Spec.ShootName = shoot.GetName()
 	log := logrus.WithField("test", "test")
 
 	simock.EXPECT().Get(shoot.GetName(), gomock.Any()).Return(shoot, nil).AnyTimes()
 	simock.EXPECT().Patch(shoot.GetName(), types.MergePatchType, gomock.Any()).Return(shoot, nil).Times(1)
 	simock.EXPECT().Delete(shoot.GetName(), gomock.Any()).Return(apiErrors.NewNotFound(schema.GroupResource{}, shoot.Name))
 
-	deleteShootCluster(simock, &dhInfra, log)
+	deleteShootCluster(simock, &shootCluster, log)
 }

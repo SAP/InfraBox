@@ -25,27 +25,27 @@ const shootDomainPostfix = ".datahub.shoot.canary.k8s-hana.ondemand.com"
 const dummyNameForClusterName = "CLUSTERNAME"
 const dummyNameForAwsRegion = "REGIONDUMMY"
 
-func createAwsConfig(sdkops common.SdkOperations, dhInfra *v1alpha1.ShootCluster, cloudProfileIf v1beta1.CloudProfileInterface) (*gApiV1beta.Shoot, error) {
+func createAwsConfig(sdkops common.SdkOperations, shootCluster *v1alpha1.ShootCluster, cloudProfileIf v1beta1.CloudProfileInterface) (*gApiV1beta.Shoot, error) {
 	shootcfg := DefaultAwsConfig()
-	fillSpecWithStaticInfo(shootcfg, dhInfra)
+	fillSpecWithStaticInfo(shootcfg, shootCluster)
 	fillSpecFromEnv(shootcfg)
-	if err := setNetworkSpec(dhInfra, shootcfg, make([]*net.IPNet, 0)); err != nil {
+	if err := setNetworkSpec(shootCluster, shootcfg, make([]*net.IPNet, 0)); err != nil {
 		return nil, err
 	}
 
-	if err := fillSpecWithSecretBindingRef(sdkops, dhInfra, shootcfg); err != nil {
+	if err := fillSpecWithSecretBindingRef(sdkops, shootCluster, shootcfg); err != nil {
 		return nil, err
 	}
 
-	if err := fillSpecWithK8sVersion(shootcfg, dhInfra, cloudProfileIf); err != nil {
+	if err := fillSpecWithK8sVersion(shootcfg, shootCluster, cloudProfileIf); err != nil {
 		return nil, err
 	}
 
 	return shootcfg, nil
 }
 
-func fillSpecWithSecretBindingRef(sdkops common.SdkOperations, dhInfra *v1alpha1.ShootCluster, shootcfg *gApiV1beta.Shoot) error {
-	s := utils.NewSecret(dhInfra)
+func fillSpecWithSecretBindingRef(sdkops common.SdkOperations, shootCluster *v1alpha1.ShootCluster, shootcfg *gApiV1beta.Shoot) error {
+	s := utils.NewSecret(shootCluster)
 	if err := sdkops.Get(s); err != nil {
 		return err
 	}
@@ -59,36 +59,36 @@ func fillSpecWithSecretBindingRef(sdkops common.SdkOperations, dhInfra *v1alpha1
 	return nil
 }
 
-func fillSpecWithStaticInfo(shootcfg *gApiV1beta.Shoot, dhInfra *v1alpha1.ShootCluster) {
-	shootcfg.GetObjectMeta().SetName(dhInfra.Spec.ShootName)
-	shootcfg.ObjectMeta.SetNamespace(dhInfra.Spec.GardenerNamespace)
+func fillSpecWithStaticInfo(shootcfg *gApiV1beta.Shoot, shootCluster *v1alpha1.ShootCluster) {
+	shootcfg.GetObjectMeta().SetName(shootCluster.Spec.ShootName)
+	shootcfg.ObjectMeta.SetNamespace(shootCluster.Spec.GardenerNamespace)
 
-	vpc := gApiV1beta.CIDR(dhInfra.Spec.VpcCIDR)
+	vpc := gApiV1beta.CIDR(shootCluster.Spec.VpcCIDR)
 	shootcfg.Spec.Cloud.AWS.Networks.VPC.CIDR = &vpc
 
 	shootcfg.Spec.Cloud.AWS.Workers = []gApiV1beta.AWSWorker{{
 		Worker: gApiV1beta.Worker{
-			AutoScalerMin: int(dhInfra.Spec.MinNodes),
-			AutoScalerMax: int(dhInfra.Spec.MaxNodes),
-			Name:          "worker",                                     //dhInfra.Spec.WorkerName
-			MachineType:   convertMachineType(dhInfra.Spec.MachineType), // TODO: fix as soon as gardener supports all machine types
+			AutoScalerMin: int(shootCluster.Spec.MinNodes),
+			AutoScalerMax: int(shootCluster.Spec.MaxNodes),
+			Name:          "worker",                                     //shootCluster.Spec.WorkerName
+			MachineType:   convertMachineType(shootCluster.Spec.MachineType), // TODO: fix as soon as gardener supports all machine types
 		},
-		VolumeType: "gp2", //dhInfra.Spec.WorkerVolumeType,
-		VolumeSize: strconv.Itoa(int(dhInfra.Spec.DiskSize)) + "Gi",
+		VolumeType: "gp2", //shootCluster.Spec.WorkerVolumeType,
+		VolumeSize: strconv.Itoa(int(shootCluster.Spec.DiskSize)) + "Gi",
 	}}
 
-	shootcfg.Spec.Cloud.Region = dhInfra.Spec.Zone[:len(dhInfra.Spec.Zone)-1] // aws zones are the name of the region plus one letter
-	shootcfg.Spec.Cloud.AWS.Zones = []string{dhInfra.Spec.Zone}
+	shootcfg.Spec.Cloud.Region = shootCluster.Spec.Zone[:len(shootCluster.Spec.Zone)-1] // aws zones are the name of the region plus one letter
+	shootcfg.Spec.Cloud.AWS.Zones = []string{shootCluster.Spec.Zone}
 
-	newPolicy := strings.Replace(shootcfg.Spec.Addons.Kube2IAM.Roles[0].Policy, dummyNameForAwsRegion, dhInfra.Spec.Zone, 1)
-	newPolicy = strings.Replace(newPolicy, dummyNameForClusterName, dhInfra.Spec.ShootName, 1)
+	newPolicy := strings.Replace(shootcfg.Spec.Addons.Kube2IAM.Roles[0].Policy, dummyNameForAwsRegion, shootCluster.Spec.Zone, 1)
+	newPolicy = strings.Replace(newPolicy, dummyNameForClusterName, shootCluster.Spec.ShootName, 1)
 	shootcfg.Spec.Addons.Kube2IAM.Roles[0].Policy = newPolicy
 
-	dns := dhInfra.Spec.ShootName + shootDomainPostfix
+	dns := shootCluster.Spec.ShootName + shootDomainPostfix
 	shootcfg.Spec.DNS.Domain = &dns
 
-	shootcfg.Spec.Kubernetes.Version = dhInfra.Spec.ClusterVersion
-	shootcfg.Spec.Addons.ClusterAutoscaler.Enabled = dhInfra.Spec.EnableAutoscaling
+	shootcfg.Spec.Kubernetes.Version = shootCluster.Spec.ClusterVersion
+	shootcfg.Spec.Addons.ClusterAutoscaler.Enabled = shootCluster.Spec.EnableAutoscaling
 
 }
 
@@ -188,20 +188,20 @@ func fillSpecFromEnv(shootcfg *gApiV1beta.Shoot) {
 	}
 }
 
-func setNetworkSpec(dhInfra *v1alpha1.ShootCluster, shootcfg *gApiV1beta.Shoot, usedSubnets []*net.IPNet) error {
-	if len(dhInfra.Spec.VpcCIDR) == 0 {
+func setNetworkSpec(shootCluster *v1alpha1.ShootCluster, shootcfg *gApiV1beta.Shoot, usedSubnets []*net.IPNet) error {
+	if len(shootCluster.Spec.VpcCIDR) == 0 {
 		return fmt.Errorf("no vpc CIDR specified for AWS cluster!")
-	} else if _, _, err := net.ParseCIDR(dhInfra.Spec.VpcCIDR); err != nil {
-		return fmt.Errorf("invalid AWS vpc CIDR specified (%s): error: %s", dhInfra.Spec.VpcCIDR, err)
+	} else if _, _, err := net.ParseCIDR(shootCluster.Spec.VpcCIDR); err != nil {
+		return fmt.Errorf("invalid AWS vpc CIDR specified (%s): error: %s", shootCluster.Spec.VpcCIDR, err)
 	} else if usedSubnets == nil {
 		return fmt.Errorf("no previous usedSubnets given")
 	}
 
 	cidr := new(gApiV1beta.CIDR)
-	*cidr = gApiV1beta.CIDR(dhInfra.Spec.VpcCIDR)
+	*cidr = gApiV1beta.CIDR(shootCluster.Spec.VpcCIDR)
 	shootcfg.Spec.Cloud.AWS.Networks.VPC.CIDR = cidr
 
-	snGen := NewSubnetGenerator(dhInfra.Spec.VpcCIDR)
+	snGen := NewSubnetGenerator(shootCluster.Spec.VpcCIDR)
 	snGen.Init(usedSubnets)
 
 	internal, err := snGen.GenerateNext24Subnet()

@@ -38,11 +38,11 @@ func TestSecretGetter_OnNonexistingEntryInSecret_ReturnsError(t *testing.T) {
 	m := testUtils.NewSdkMockBackedByFake(t, fake.NewSimpleClientset())
 	cfgGetter := NewSecretKubecfgGetter(m)
 
-	dhInfra := utils.CreateShootCluster()
-	s := utils.NewSecret(dhInfra)
+	shootCluster := utils.CreateShootCluster()
+	s := utils.NewSecret(shootCluster)
 	m.Create(s)
 
-	if _, err := cfgGetter.Get(dhInfra); err == nil {
+	if _, err := cfgGetter.Get(shootCluster); err == nil {
 		t.Fatal("expected an error")
 	}
 }
@@ -51,14 +51,14 @@ func TestSecretGetter_OnExistingEntryInSecret_ReturnsSecretAndNoError(t *testing
 	m := testUtils.NewSdkMockBackedByFake(t, fake.NewSimpleClientset())
 	cfgGetter := NewSecretKubecfgGetter(m)
 
-	dhInfra := utils.CreateShootCluster()
-	s := utils.NewSecret(dhInfra)
+	shootCluster := utils.CreateShootCluster()
+	s := utils.NewSecret(shootCluster)
 	cfgData := "foodata"
 	s.Data[common.KeyGardenKubectlInSecret] = []byte(cfgData)
 
 	m.Create(s)
 
-	if cfg, err := cfgGetter.Get(dhInfra); err != nil {
+	if cfg, err := cfgGetter.Get(shootCluster); err != nil {
 		t.Fatal("expected an error")
 	} else if cfgData != cfg {
 		t.Fatal("returned cfg is wrong")

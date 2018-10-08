@@ -30,28 +30,28 @@ type ClientCache struct {
 	cache         map[string]ClientGetter
 }
 
-func (cc *ClientCache) Get(dhInfra *v1alpha1.ShootCluster) ClientGetter {
+func (cc *ClientCache) Get(shootCluster *v1alpha1.ShootCluster) ClientGetter {
 	cc.Lock()
 	defer cc.Unlock()
 
-	hash := cc.hash(dhInfra)
+	hash := cc.hash(shootCluster)
 	if cg, ok := cc.cache[hash]; ok {
 		return cg
 	}
 
-	clientGetter := cc.createNewClientGetter(dhInfra)
+	clientGetter := cc.createNewClientGetter(shootCluster)
 	if clientGetter != nil {
         cc.cache[hash] = clientGetter
     }
 	return clientGetter
 }
 
-func (cc *ClientCache) hash(dhInfra *v1alpha1.ShootCluster) string {
-	return dhInfra.Spec.ShootName + dhInfra.Spec.GardenerNamespace
+func (cc *ClientCache) hash(shootCluster *v1alpha1.ShootCluster) string {
+	return shootCluster.Spec.ShootName + shootCluster.Spec.GardenerNamespace
 }
 
-func (cc *ClientCache) createNewClientGetter(dhInfra *v1alpha1.ShootCluster) ClientGetter {
-	kubecfg, err := cc.kubecfgGetter.Get(dhInfra)
+func (cc *ClientCache) createNewClientGetter(shootCluster *v1alpha1.ShootCluster) ClientGetter {
+	kubecfg, err := cc.kubecfgGetter.Get(shootCluster)
 	if err != nil {
 		logrus.Errorf("Couldn't get the kubeconfigs. err: %s", err)
 		return nil

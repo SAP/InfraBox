@@ -19,8 +19,8 @@ import (
 )
 
 type Operator interface {
-	Sync(dhinfrastructure *v1alpha1.ShootCluster) error
-	Delete(dhinfrastructure *v1alpha1.ShootCluster) error
+	Sync(shootCluster *v1alpha1.ShootCluster) error
+	Delete(shootCluster *v1alpha1.ShootCluster) error
 }
 
 func NewShootOperator(sdkops common.SdkOperations, cache k8sClientCache.ClientCacher, csFactory utils.K8sClientSetCreator, log *logrus.Entry) *ShootOperator {
@@ -39,17 +39,17 @@ type ShootOperator struct {
 	csFactory   utils.K8sClientSetCreator
 }
 
-func (so *ShootOperator) Sync(dhInfra *v1alpha1.ShootCluster) error {
+func (so *ShootOperator) Sync(shootCluster *v1alpha1.ShootCluster) error {
 	defer func(tStart time.Time) { so.log.Infof("synced with shoot within %s", time.Now().Sub(tStart)) }(time.Now())
 
-	clients := so.clientCache.Get(dhInfra)
+	clients := so.clientCache.Get(shootCluster)
 	if clients == nil {
 		so.log.Error("couldn't get k8s clientsets")
 		return fmt.Errorf("couldn't get k8s clientsets")
 	}
 
 	// try to install
-	_, err := CreateShootCluster(so.operatorSdk, clients.GetGardenClientSet(), dhInfra, so.log)
+	_, err := CreateShootCluster(so.operatorSdk, clients.GetGardenClientSet(), shootCluster, so.log)
 	if err != nil && !apiErrors.IsAlreadyExists(err) {
 		err = fmt.Errorf("failed to create deployment: %v", err)
 		so.log.Error(err)
@@ -57,39 +57,39 @@ func (so *ShootOperator) Sync(dhInfra *v1alpha1.ShootCluster) error {
 	}
 
 	// shoot creation was triggered or is completed
-	if err := so.setFinalizerIfNotPresent(dhInfra); err != nil {
+	if err := so.setFinalizerIfNotPresent(shootCluster); err != nil {
 		return err
 	}
 
-	if len(dhInfra.Status.Status) == 0 {
-		dhInfra.Status.Status = v1alpha1.ShootClusterStateCreating
-		dhInfra.Status.Message = ""
+	if len(shootCluster.Status.Status) == 0 {
+		shootCluster.Status.Status = v1alpha1.ShootClusterStateCreating
+		shootCluster.Status.Message = ""
 	}
 
-	if err = CheckReadinessAndUpdateDHInfraObj(clients.GetGardenClientSet(), dhInfra); err != nil {
+	if err = CheckReadinessAndUpdateShootClusterObj(clients.GetGardenClientSet(), shootCluster); err != nil {
 		so.log.Errorf("couldn't check if cluster is ready. err : %s", err)
 		return err
 	}
 
-	if dhInfra.Status.Status == v1alpha1.ShootClusterStateReady {
+	if shootCluster.Status.Status == v1alpha1.ShootClusterStateReady {
 		// fetch kubecfg for shoot cluster
-		shootCredsSecret, err := so.fetchKubeconfigFor(dhInfra, clients)
+		shootCredsSecret, err := so.fetchKubeconfigFor(shootCluster, clients)
 		if err != nil {
-			dhInfra.Status.Status = v1alpha1.ShootClusterStateError
+			shootCluster.Status.Status = v1alpha1.ShootClusterStateError
 			return err
 		}
 
-		so.syncSecret(dhInfra, shootCredsSecret, clients)
+		so.syncSecret(shootCluster, shootCredsSecret, clients)
 	}
 
-	err = so.updateShootIfNecessary(dhInfra, clients)
+	err = so.updateShootIfNecessary(shootCluster, clients)
 	return err
 }
 
-func (so *ShootOperator) setFinalizerIfNotPresent(dhInfra *v1alpha1.ShootCluster) error {
-	if len(dhInfra.GetFinalizers()) == 0 {
-		dhInfra.SetFinalizers([]string{"datahub.sap.com"})
-		if err := so.operatorSdk.Update(dhInfra); err != nil {
+func (so *ShootOperator) setFinalizerIfNotPresent(shootCluster *v1alpha1.ShootCluster) error {
+	if len(shootCluster.GetFinalizers()) == 0 {
+		shootCluster.SetFinalizers([]string{"datahub.sap.com"})
+		if err := so.operatorSdk.Update(shootCluster); err != nil {
 			so.log.Error("Failed to set finalizers")
 			return err
 		}
@@ -97,33 +97,33 @@ func (so *ShootOperator) setFinalizerIfNotPresent(dhInfra *v1alpha1.ShootCluster
 	return nil
 }
 
-//func (so *ShootOperator) syncSecret(dhInfra *v1alpha1.ShootCluster, shootKubeCfg []byte, clientGetter k8sClientCache.ClientGetter) {
-func (so *ShootOperator) syncSecret(dhInfra *v1alpha1.ShootCluster, shootCredsSecret *corev1.Secret, clientGetter k8sClientCache.ClientGetter) {
-	secretWeWant := newSecretFromShootCredSecr(dhInfra, shootCredsSecret)
+//func (so *ShootOperator) syncSecret(shootCluster *v1alpha1.ShootCluster, shootKubeCfg []byte, clientGetter k8sClientCache.ClientGetter) {
+func (so *ShootOperator) syncSecret(shootCluster *v1alpha1.ShootCluster, shootCredsSecret *corev1.Secret, clientGetter k8sClientCache.ClientGetter) {
+	secretWeWant := newSecretFromShootCredSecr(shootCluster, shootCredsSecret)
 
-	secretWeHave, exists := so.secretExists(dhInfra)
+	secretWeHave, exists := so.secretExists(shootCluster)
 	if exists {
 		if err := so.updateSecretIfNecessary(secretWeWant, secretWeHave); err == nil {
-			dhInfra.Status.SecretName = secretWeWant.GetName()
+			shootCluster.Status.SecretName = secretWeWant.GetName()
 
 		} else if apiErrors.IsResourceExpired(err) { // probably the secret was updated in the meantime. no real error. just return
 			so.log.Debugf("shoot-op: resource expired for secret (name: %s, ns: %s)", secretWeWant.GetName(), secretWeWant.GetNamespace())
 			return
 		} else {
-			dhInfra.Status.Status = v1alpha1.ShootClusterStateError
-			dhInfra.Status.Message = fmt.Sprintf("couldn't update secret. err: %v", err)
+			shootCluster.Status.Status = v1alpha1.ShootClusterStateError
+			shootCluster.Status.Message = fmt.Sprintf("couldn't update secret. err: %v", err)
 			return
 		}
 	} else {
 		if err := so.operatorSdk.Create(secretWeWant); err == nil {
-			dhInfra.Status.SecretName = secretWeWant.GetName()
+			shootCluster.Status.SecretName = secretWeWant.GetName()
 		} else if apiErrors.IsResourceExpired(err) { // probably the secret was updated in the meantime.  no real error. just return
 			so.log.Debugf("shoot-op: resource expired for new secret (name: %s, ns: %s)", secretWeWant.GetName(), secretWeWant.GetNamespace())
 			return
 		} else {
 			so.log.Errorf("creating secret filled with gardener kubeconfig failed. err: %s", err)
-			dhInfra.Status.Status = v1alpha1.ShootClusterStateError
-			dhInfra.Status.Message = fmt.Sprintf("couldn't create secret. err: %v", err)
+			shootCluster.Status.Status = v1alpha1.ShootClusterStateError
+			shootCluster.Status.Message = fmt.Sprintf("couldn't create secret. err: %v", err)
 			return
 		}
 	}
@@ -131,16 +131,16 @@ func (so *ShootOperator) syncSecret(dhInfra *v1alpha1.ShootCluster, shootCredsSe
 	return
 }
 
-func (so *ShootOperator) fetchKubeconfigFor(dhInfra *v1alpha1.ShootCluster, clientGetter k8sClientCache.ClientGetter) (*corev1.Secret, error) {
-	cfgPath := dhInfra.Spec.ShootName + ".kubeconfig"
-	secret, err := clientGetter.GetK8sClientSet().CoreV1().Secrets(dhInfra.Spec.GardenerNamespace).Get(cfgPath, v1.GetOptions{})
+func (so *ShootOperator) fetchKubeconfigFor(shootCluster *v1alpha1.ShootCluster, clientGetter k8sClientCache.ClientGetter) (*corev1.Secret, error) {
+	cfgPath := shootCluster.Spec.ShootName + ".kubeconfig"
+	secret, err := clientGetter.GetK8sClientSet().CoreV1().Secrets(shootCluster.Spec.GardenerNamespace).Get(cfgPath, v1.GetOptions{})
 	if err != nil {
 		so.log.Errorf("couldn't fetch the secret for cluster. err: %s", err.Error())
 		return nil, err
 	}
 
 	if _, ok := secret.Data["kubeconfig"]; !ok {
-		return nil, fmt.Errorf("Secret for '%s' does not have a kubeconfig", dhInfra.Spec.ShootName)
+		return nil, fmt.Errorf("Secret for '%s' does not have a kubeconfig", shootCluster.Spec.ShootName)
 	} else {
 		return secret, nil
 	}
@@ -150,7 +150,7 @@ func (so *ShootOperator) updateSecretIfNecessary(want *corev1.Secret, have *core
 	var updateNecessary bool
 
 	for k, v := range want.Data {
-		if oldVal, exists := have.Data[k]; !exists  || !bytes.Equal(oldVal, v) {
+		if oldVal, exists := have.Data[k]; !exists || !bytes.Equal(oldVal, v) {
 			have.Data[k] = v
 			updateNecessary = true
 		}
@@ -162,7 +162,6 @@ func (so *ShootOperator) updateSecretIfNecessary(want *corev1.Secret, have *core
 	//} else if !bytes.Equal(want.Data["config"], shootKubecfg) {
 	//	updateNecessary = true
 	//}
-
 
 	if !updateNecessary {
 		return nil
@@ -176,12 +175,12 @@ func (so *ShootOperator) updateSecretIfNecessary(want *corev1.Secret, have *core
 	return nil
 }
 
-func newSecretFromShootCredSecr(dhInfra *v1alpha1.ShootCluster, credSecr *corev1.Secret) *corev1.Secret {
-	if dhInfra == nil {
+func newSecretFromShootCredSecr(shootCluster *v1alpha1.ShootCluster, credSecr *corev1.Secret) *corev1.Secret {
+	if shootCluster == nil {
 		return nil
 	}
 
-	secret := utils.NewSecret(dhInfra)
+	secret := utils.NewSecret(shootCluster)
 	secret.Data[common.KeyNameOfShootKubecfgInSecret] = credSecr.Data["kubeconfig"]
 	secret.Data[common.KeyNameOfShootKubecfgKeyInSecret] = credSecr.Data["kubecfg.key"]
 	secret.Data[common.KeyNameOfShootCaCrtInSecret] = credSecr.Data["ca.crt"]
@@ -192,19 +191,19 @@ func newSecretFromShootCredSecr(dhInfra *v1alpha1.ShootCluster, credSecr *corev1
 	return secret
 }
 
-func newSecret(dhInfra *v1alpha1.ShootCluster, cfg []byte) *corev1.Secret {
-	if dhInfra == nil {
+func newSecret(shootCluster *v1alpha1.ShootCluster, cfg []byte) *corev1.Secret {
+	if shootCluster == nil {
 		return nil
 	}
 
-	secret := utils.NewSecret(dhInfra)
+	secret := utils.NewSecret(shootCluster)
 	secret.Data[common.KeyNameOfShootKubecfgInSecret] = cfg
 	secret.Data[common.KeyNameOfK8sStorageClassInSecret] = []byte(common.NameOfDefaultStorageClass)
 	return secret
 }
 
-func (so *ShootOperator) secretExists(dhInfra *v1alpha1.ShootCluster) (*corev1.Secret, bool) {
-	secret := newSecret(dhInfra, nil)
+func (so *ShootOperator) secretExists(shootCluster *v1alpha1.ShootCluster) (*corev1.Secret, bool) {
+	secret := newSecret(shootCluster, nil)
 	if err := so.operatorSdk.Get(secret); apiErrors.IsNotFound(err) {
 		return nil, false
 	} else if err != nil {
@@ -215,16 +214,16 @@ func (so *ShootOperator) secretExists(dhInfra *v1alpha1.ShootCluster) (*corev1.S
 	return secret, true
 }
 
-func (so *ShootOperator) updateShootIfNecessary(dhInfra *v1alpha1.ShootCluster, clientGetter k8sClientCache.ClientGetter) error {
-	shoot, err := clientGetter.GetGardenClientSet().GardenV1beta1().Shoots(dhInfra.Spec.GardenerNamespace).Get(dhInfra.Spec.ShootName, v1.GetOptions{})
+func (so *ShootOperator) updateShootIfNecessary(shootCluster *v1alpha1.ShootCluster, clientGetter k8sClientCache.ClientGetter) error {
+	shoot, err := clientGetter.GetGardenClientSet().GardenV1beta1().Shoots(shootCluster.Spec.GardenerNamespace).Get(shootCluster.Spec.ShootName, v1.GetOptions{})
 	if err != nil {
 		so.log.Errorf("couldn't get current status of shoot cluster. err: %s", err)
 		return err
 	}
 
-	if so.updateShootSpecIfNecessary(shoot, dhInfra) {
+	if so.updateShootSpecIfNecessary(shoot, shootCluster) {
 		so.log.Info("specifications have changed, will update shoot...")
-		if _, err := clientGetter.GetGardenClientSet().GardenV1beta1().Shoots(dhInfra.Spec.GardenerNamespace).Update(shoot); err != nil {
+		if _, err := clientGetter.GetGardenClientSet().GardenV1beta1().Shoots(shootCluster.Spec.GardenerNamespace).Update(shoot); err != nil {
 			so.log.Errorf("couldn't update shoot with new specs. err: ", err)
 			return err
 		}
@@ -233,21 +232,21 @@ func (so *ShootOperator) updateShootIfNecessary(dhInfra *v1alpha1.ShootCluster, 
 	return nil
 }
 
-func (so *ShootOperator) updateShootSpecIfNecessary(shoot *v1beta1.Shoot, dhInfra *v1alpha1.ShootCluster) bool {
+func (so *ShootOperator) updateShootSpecIfNecessary(shoot *v1beta1.Shoot, shootCluster *v1alpha1.ShootCluster) bool {
 	needsUpdate := false
 	if len(shoot.Spec.Cloud.AWS.Workers) != 0 {
 		worker := &shoot.Spec.Cloud.AWS.Workers[0]
-		if worker.AutoScalerMin != int(dhInfra.Spec.MinNodes) {
+		if worker.AutoScalerMin != int(shootCluster.Spec.MinNodes) {
 			needsUpdate = true
-			worker.AutoScalerMin = int(dhInfra.Spec.MinNodes)
+			worker.AutoScalerMin = int(shootCluster.Spec.MinNodes)
 		}
 
-		if worker.AutoScalerMax != int(dhInfra.Spec.MaxNodes) {
+		if worker.AutoScalerMax != int(shootCluster.Spec.MaxNodes) {
 			needsUpdate = true
-			worker.AutoScalerMax = int(dhInfra.Spec.MaxNodes)
+			worker.AutoScalerMax = int(shootCluster.Spec.MaxNodes)
 		}
 
-		if expVolSize := fmt.Sprintf("%dGi", dhInfra.Spec.DiskSize); worker.VolumeSize != expVolSize {
+		if expVolSize := fmt.Sprintf("%dGi", shootCluster.Spec.DiskSize); worker.VolumeSize != expVolSize {
 			needsUpdate = true
 			worker.VolumeSize = expVolSize
 		}
@@ -256,31 +255,31 @@ func (so *ShootOperator) updateShootSpecIfNecessary(shoot *v1beta1.Shoot, dhInfr
 	return needsUpdate
 }
 
-func (so *ShootOperator) Delete(dhInfra *v1alpha1.ShootCluster) error {
-	clientGetter := so.clientCache.Get(dhInfra)
+func (so *ShootOperator) Delete(shootCluster *v1alpha1.ShootCluster) error {
+	clientGetter := so.clientCache.Get(shootCluster)
 	if clientGetter == nil {
 		so.log.Error("couldn't get k8s clientsets. Aborting deletion...")
 		return fmt.Errorf("couldn't get k8s clientsets")
 	}
 
-	deleteShootCluster(clientGetter.GetGardenClientSet().GardenV1beta1().Shoots(dhInfra.Spec.GardenerNamespace), dhInfra, so.log)
-	if err := so.deleteSecret(dhInfra); err != nil {
+	deleteShootCluster(clientGetter.GetGardenClientSet().GardenV1beta1().Shoots(shootCluster.Spec.GardenerNamespace), shootCluster, so.log)
+	if err := so.deleteSecret(shootCluster); err != nil {
 		return err
 	}
 
-	dhInfra.SetFinalizers([]string{})
-	if err := so.operatorSdk.Update(dhInfra); err != nil {
-		so.log.Errorf("Could not update dhinfrastructure object (removing finalizers). err: %s", err)
+	shootCluster.SetFinalizers([]string{})
+	if err := so.operatorSdk.Update(shootCluster); err != nil {
+		so.log.Errorf("Could not update shootClusterstructure object (removing finalizers). err: %s", err)
 		return err
 	} else {
-		so.log.Infof("successfully deleted dhinfrastructure %s", dhInfra.GetName())
+		so.log.Infof("successfully deleted shootClusterstructure %s", shootCluster.GetName())
 	}
 
 	return nil
 }
 
-func (so *ShootOperator) deleteSecret(dhInfra *v1alpha1.ShootCluster) error {
-	secret := newSecret(dhInfra, nil)
+func (so *ShootOperator) deleteSecret(shootCluster *v1alpha1.ShootCluster) error {
+	secret := newSecret(shootCluster, nil)
 
 	err := so.operatorSdk.Delete(secret)
 	if err != nil {
@@ -294,16 +293,16 @@ func (so *ShootOperator) deleteSecret(dhInfra *v1alpha1.ShootCluster) error {
 	return nil
 }
 
-func CreateShootCluster(sdkops common.SdkOperations, gardenCs gardenClientSet.Interface, dhInfra *v1alpha1.ShootCluster, log *logrus.Entry) (*v1beta1.Shoot, error) {
+func CreateShootCluster(sdkops common.SdkOperations, gardenCs gardenClientSet.Interface, shootCluster *v1alpha1.ShootCluster, log *logrus.Entry) (*v1beta1.Shoot, error) {
 	tstart := time.Now()
 
-	shootcfg, err := createAwsConfig(sdkops, dhInfra, gardenCs.GardenV1beta1().CloudProfiles())
+	shootcfg, err := createAwsConfig(sdkops, shootCluster, gardenCs.GardenV1beta1().CloudProfiles())
 	if err != nil {
 		log.Errorf("couldn't create a valid config. err: %s", err)
 		return nil, err
 	}
 
-	shoot, err := gardenCs.GardenV1beta1().Shoots(dhInfra.Spec.GardenerNamespace).Create(shootcfg)
+	shoot, err := gardenCs.GardenV1beta1().Shoots(shootCluster.Spec.GardenerNamespace).Create(shootcfg)
 	if err != nil {
 		if !apiErrors.IsAlreadyExists(err) {
 			log.Errorf("gardener didn't create the shoot. err: %s", err)

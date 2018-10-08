@@ -7,8 +7,8 @@ import (
 	"github.com/sap/infrabox/src/services/garden/pkg/apis/garden/v1alpha1"
 )
 
-func NewSecret(dhInfra *v1alpha1.ShootCluster) *corev1.Secret {
-	if dhInfra == nil {
+func NewSecret(shootCluster *v1alpha1.ShootCluster) *corev1.Secret {
+	if shootCluster == nil {
 		return nil
 	}
 
@@ -18,8 +18,8 @@ func NewSecret(dhInfra *v1alpha1.ShootCluster) *corev1.Secret {
 			APIVersion: "v1",
 		},
 		ObjectMeta: v1.ObjectMeta{
-			Name:      dhInfra.GetName(),
-			Namespace: dhInfra.GetNamespace(),
+			Name:      shootCluster.GetName(),
+			Namespace: shootCluster.GetNamespace(),
 		},
 		Type: "Opaque",
 		Data: make(map[string][]byte),
