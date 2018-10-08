@@ -11,7 +11,7 @@ class TestDockerCompose(unittest.TestCase):
             create_from(path)
             assert False
         except Exception as e:
-            print e
+            print(e)
             self.assertEqual(e.message, message)
 
     def test_empty(self):

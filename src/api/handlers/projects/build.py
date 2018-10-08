@@ -4,7 +4,7 @@ import uuid
 from flask import g, abort
 from flask_restplus import Resource
 
-from pyinfraboxutils.ibflask import auth_required, OK
+from pyinfraboxutils.ibflask import OK
 from pyinfraboxutils.storage import storage
 from api.namespaces import project as ns
 
@@ -89,7 +89,6 @@ def restart_build(project_id, build_id):
 @ns.route('/<project_id>/builds/<build_id>/restart')
 class BuildRestart(Resource):
 
-    @auth_required(['user'])
     def get(self, project_id, build_id):
         return restart_build(project_id, build_id)
 
@@ -97,7 +96,6 @@ class BuildRestart(Resource):
 @ns.route('/<project_id>/builds/<build_id>/abort')
 class BuildAbort(Resource):
 
-    @auth_required(['user'])
     def get(self, project_id, build_id):
         jobs = g.db.execute_many_dict('''
             SELECT id
@@ -118,7 +116,6 @@ class BuildAbort(Resource):
 @ns.route('/<project_id>/builds/<build_id>/cache/clear')
 class BuildCacheClear(Resource):
 
-    @auth_required(['user'])
     def get(self, project_id, build_id):
         jobs = g.db.execute_many_dict('''
             SELECT j.name, branch from job j
@@ -142,7 +139,6 @@ class BuildCacheClear(Resource):
 @ns.route('/<project_id>/builds/<build_number>/<build_restart_counter>/state')
 class BuildStatus(Resource):
 
-    @auth_required(['user', 'project'], allow_if_public=True)
     def get(self, project_id, build_number, build_restart_counter):
         states = g.db.execute_many_dict('''
             SELECT state
@@ -172,7 +168,6 @@ class BuildStatus(Resource):
 @ns.route('/<project_id>/builds/<build_number>/<build_restart_counter>')
 class Build(Resource):
 
-    @auth_required(['user'], allow_if_public=True)
     def get(self, project_id, build_number, build_restart_counter):
         jobs = g.db.execute_many_dict('''
             SELECT

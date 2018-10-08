@@ -8,7 +8,6 @@ from flask_restplus import Resource
 
 from pyinfraboxutils import get_logger, get_root_url
 from pyinfraboxutils.token import encode_user_token
-from pyinfraboxutils.ibflask import auth_required
 
 from api.namespaces import github, github_auth
 
@@ -67,7 +66,6 @@ def get_github_api(url, token):
 @github_auth.route('/auth/connect')
 class Connect(Resource):
 
-    @auth_required(['user'], check_project_access=False)
     def get(self):
         if os.environ['INFRABOX_GITHUB_LOGIN_ENABLED'] == 'true':
             abort(404)
@@ -96,7 +94,6 @@ class Connect(Resource):
 @github.route('/repos')
 class Repos(Resource):
 
-    @auth_required(['user'], check_project_access=False)
     def get(self):
         user_id = g.token['user']['id']
 
@@ -243,4 +240,3 @@ class Login(Resource):
         res = redirect(url)
         res.set_cookie('token', token)
         return res
-
