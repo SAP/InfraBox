@@ -4,12 +4,14 @@ import requests
 from flask import g, abort, request
 from flask_restplus import Resource, fields
 
-from pyinfraboxutils import get_logger, get_root_url
 from pyinfrabox.utils import validate_uuid
-from pyinfraboxutils.ibrestplus import api
+from pyinfraboxutils import get_logger, get_root_url
+from pyinfraboxutils.ibrestplus import api, response_model
 from pyinfraboxutils.ibflask import OK
 
-from api.namespaces import project as ns
+ns = api.namespace('Projects',
+                   path='/api/v1/projects',
+                   description='Project related operations')
 
 
 logger = get_logger('project')
@@ -18,7 +20,7 @@ project_model = api.model('Project', {
     'id': fields.String(required=True),
     'name': fields.String(required=True),
     'type': fields.String(required=True),
-    'public': fields.String(required=True)
+    'public': fields.Boolean(required=True)
 })
 
 add_project_schema = {
@@ -32,13 +34,17 @@ add_project_schema = {
     'required': ["name", "private", "type"]
 }
 
-add_project_model = ns.schema_model('AddProject', add_project_schema)
+add_project_model = api.schema_model('AddProject', add_project_schema)
 
 @ns.route('/')
+@api.response(403, 'Not Authorized')
 class Projects(Resource):
 
     @api.marshal_list_with(project_model)
     def get(self):
+        '''
+        Returns user's projects
+        '''
         projects = g.db.execute_many_dict("""
             SELECT p.id, p.name, p.type, p.public
             FROM project p
@@ -51,7 +57,11 @@ class Projects(Resource):
         return projects
 
     @api.expect(add_project_model)
+    @api.response(200, 'Success', response_model)
     def post(self):
+        '''
+        Create new project
+        '''
         user_id = g.token['user']['id']
 
         b = request.get_json()
@@ -201,7 +211,8 @@ class Projects(Resource):
 
         return OK('Project added')
 
-@ns.route('/name/<project_name>')
+@ns.route('/name/<project_name>', doc=False)
+@api.response(403, 'Not Authorized')
 class ProjectName(Resource):
 
     @api.marshal_with(project_model)
@@ -218,11 +229,15 @@ class ProjectName(Resource):
         return project
 
 
-@ns.route('/<project_id>/')
+@ns.route('/<project_id>')
+@api.response(403, 'Not Authorized')
 class Project(Resource):
 
     @api.marshal_with(project_model)
     def get(self, project_id):
+        '''
+        Returns a project
+        '''
         project = g.db.execute_one_dict('''
             SELECT p.id, p.name, p.type, p.public
             FROM project p
@@ -231,7 +246,11 @@ class Project(Resource):
 
         return project
 
+    @api.response(200, 'Success', response_model)
     def delete(self, project_id):
+        '''
+        Delete a project
+        '''
         if not validate_uuid(project_id):
             abort(400, "Invalid project uuid.")
 

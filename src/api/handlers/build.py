@@ -5,7 +5,10 @@ from pyinfraboxutils.ibrestplus import api
 
 from api.handlers.job import job_model
 
-ns = api.namespace('api/v1/projects/<project_id>/builds', description='Build related operations')
+ns = api.namespace('Builds',
+                   path='/api/v1/projects/<project_id>/builds/',
+                   description='Build related operations',
+                   params={'project_id': 'The project ID', 'build_id': 'The build ID'})
 
 build_model = api.model('BuildModel', {
     'id': fields.String,
@@ -14,9 +17,13 @@ build_model = api.model('BuildModel', {
 })
 
 @ns.route('/')
+@api.doc(responses={403: 'Not Authorized'})
 class Builds(Resource):
     @api.marshal_list_with(build_model)
     def get(self, project_id):
+        '''
+        Returns the latest 100 builds of the project
+        '''
         p = g.db.execute_many_dict('''
             SELECT id, build_number, restart_counter
             FROM build
@@ -27,9 +34,13 @@ class Builds(Resource):
         return p
 
 @ns.route('/<build_id>')
+@api.doc(responses={403: 'Not Authorized'})
 class Build(Resource):
     @api.marshal_with(build_model)
     def get(self, project_id, build_id):
+        '''
+        Returns a single build
+        '''
         p = g.db.execute_many_dict('''
             SELECT id, build_number, restart_counter
             FROM build
@@ -41,10 +52,14 @@ class Build(Resource):
         return p
 
 @ns.route('/<build_id>/jobs')
+@api.doc(responses={403: 'Not Authorized'})
 class Jobs(Resource):
 
-    @ns.marshal_list_with(job_model)
+    @api.marshal_list_with(job_model)
     def get(self, project_id, build_id):
+        '''
+        Returns alls jobs of a build
+        '''
         jobs = g.db.execute_many_dict('''
             SELECT id, state, start_date, build_id, end_date, name, type,
                 definition#>'{resources,limits,cpu}' as cpu,
