@@ -2,7 +2,7 @@
 from flask import g, jsonify, abort, send_file
 from flask_restplus import Resource, fields
 
-from pyinfraboxutils.ibflask import auth_required, check_job_belongs_to_project
+from pyinfraboxutils.ibflask import check_job_belongs_to_project
 from pyinfraboxutils.ibrestplus import api
 from pyinfraboxutils.storage import storage
 
@@ -42,7 +42,6 @@ job_model = api.model('JobModel', {
 @api.doc(responses={403: 'Not Authorized'})
 class Job(Resource):
 
-    @auth_required(['project'])
     @api.marshal_with(job_model)
     def get(self, project_id, job_id):
         '''
@@ -66,7 +65,6 @@ class Job(Resource):
 @api.doc(responses={403: 'Not Authorized'})
 class Output(Resource):
 
-    @auth_required(['project'])
     @check_job_belongs_to_project
     def get(self, project_id, job_id):
         '''
@@ -86,7 +84,6 @@ class Output(Resource):
 @api.doc(responses={403: 'Not Authorized'})
 class Project(Resource):
 
-    @auth_required(['project'])
     @check_job_belongs_to_project
     def get(self, project_id, job_id):
         result = g.db.execute_one_dict('''

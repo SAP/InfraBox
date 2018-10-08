@@ -3,8 +3,9 @@ import re
 from flask import request, g, abort
 from flask_restplus import Resource, fields
 
+
 from pyinfrabox.utils import validate_uuid
-from pyinfraboxutils.ibflask import auth_required, OK
+from pyinfraboxutils.ibflask import OK
 from pyinfraboxutils.ibrestplus import api, response_model
 from pyinfraboxutils.secrets import encrypt_secret
 
@@ -28,7 +29,6 @@ class Secrets(Resource):
 
     name_pattern = re.compile('^[a-zA-Z0-9_]+$')
 
-    @auth_required(['user'])
     @api.marshal_list_with(secret_model)
     def get(self, project_id):
         '''
@@ -40,7 +40,6 @@ class Secrets(Resource):
         ''', [project_id])
         return p
 
-    @auth_required(['user'])
     @api.expect(add_secret_model)
     @api.response(200, 'Success', response_model)
     def post(self, project_id):
@@ -81,7 +80,6 @@ class Secrets(Resource):
 @ns.route('/<secret_id>')
 @api.doc(responses={403: 'Not Authorized'})
 class Secret(Resource):
-    @auth_required(['user'])
     @api.response(200, 'Success', response_model)
     def delete(self, project_id, secret_id):
         '''
