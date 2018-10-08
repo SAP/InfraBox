@@ -15,11 +15,15 @@
                     </md-table-row>
                 </md-table-header>
                 <md-table-body>
-                    <md-table-row v-for="section of job.sections" :key="section.id">
+                    <md-table-row v-for="section of job.sections" :key="section.id" >
                         <md-table-cell class="console-table">
                             <md-card-expand>
                                 <md-card-actions class="console-table text-left text-top">
-                                <md-button md-theme="skipped" class="md-icon-button md-primary md-raised md-dense" md-expand-trigger>
+                                <md-button
+                                    md-theme="skipped"
+                                    class="md-icon-button md-primary md-raised md-dense"
+                                    v-bind:style="{ background: section.color}"
+                                    md-expand-trigger>
                                     <md-icon>expand_less</md-icon>
                                 </md-button>
                                 <span class="m-l-md md-body-2" style="flex: 1">
