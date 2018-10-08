@@ -51,6 +51,16 @@ class NewAPIService {
             })
             .catch(this._handleError(false))
     }
+
+    put (url, payload) {
+        console.log(`PUT API: ${url}`)
+        const u = this.api + url
+        return Vue.http.put(u, payload)
+            .then((response) => {
+                return response.body
+            })
+            .catch(this._handleError(false))
+    }
 }
 
 export default new NewAPIService()

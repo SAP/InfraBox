@@ -6,7 +6,7 @@ class CollaboratorsTest(ApiTestTemplate):
 
     def setUp(self):
         super(CollaboratorsTest, self).setUp()
-        self.test_collaborator_data = {'username': 'collaborator name1'}
+        self.test_collaborator_data = {'username': 'collaborator name1', 'role': 'Developer'}
         self.collaborator_id = '5432af82-3c4f-4bb5-b1da-a33a0ced0e6f'
 
     def test_collaborators_root(self):
@@ -39,17 +39,19 @@ class CollaboratorsTest(ApiTestTemplate):
 
     def test_collaborators_delete(self):
         TestClient.execute("""
-                           INSERT INTO collaborator (user_id, project_id, owner)
-                           VALUES (%s, %s, false)
+                           INSERT INTO collaborator (user_id, project_id, role)
+                           VALUES (%s, %s, 'Developer')
                            """, [self.collaborator_id, self.project_id])
 
-        # make sure collaborator's insertion is successfull
+        TestClient.opa_push()
+
+        # make sure collaborator's insertion is successful
         r = TestClient.execute_one("""
                                    SELECT count(*) FROM collaborator WHERE user_id = %s
                                    """, [self.collaborator_id])
         self.assertGreater(r[0], 0)
 
-        # make sure collaborator's removal is successfull
+        # make sure collaborator's removal is successful
         r = TestClient.delete('api/v1/projects/%s/collaborators/%s'
                               % (self.project_id, self.collaborator_id),
                               headers=TestClient.get_user_authorization(self.user_id))

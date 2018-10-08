@@ -1,7 +1,6 @@
 from flask import g
 from flask_restplus import Resource
 
-from pyinfraboxutils.ibflask import auth_required
 from pyinfraboxutils.ibrestplus import api
 
 ns = api.namespace('Commits',
@@ -13,7 +12,6 @@ ns = api.namespace('Commits',
 @api.response(403, 'Not Authorized')
 class Commit(Resource):
 
-    @auth_required(['user'], allow_if_public=True)
     def get(self, project_id, commit_id):
         p = g.db.execute_many_dict('''
             SELECT c.* FROM commit c

@@ -2,7 +2,7 @@ from flask import request, g, abort
 from flask_restplus import Resource, fields
 
 from pyinfrabox.utils import validate_uuid
-from pyinfraboxutils.ibflask import auth_required, OK
+from pyinfraboxutils.ibflask import OK
 from pyinfraboxutils.ibrestplus import api, response_model
 from pyinfraboxutils.token import encode_project_token
 
@@ -21,7 +21,6 @@ project_token_model = api.model('ProjectToken', {
 @api.doc(responses={403: 'Not Authorized'})
 class Tokens(Resource):
 
-    @auth_required(['user'])
     @api.marshal_list_with(project_token_model)
     def get(self, project_id):
         '''
@@ -34,7 +33,6 @@ class Tokens(Resource):
         ''', [project_id])
         return p
 
-    @auth_required(['user'])
     @api.expect(project_token_model)
     @api.response(200, 'Success', response_model)
     def post(self, project_id):
@@ -68,7 +66,6 @@ class Tokens(Resource):
 @api.doc(responses={404: 'Token not found'})
 class Token(Resource):
 
-    @auth_required(['user'])
     @api.response(200, 'Success', response_model)
     def delete(self, project_id, token_id):
         '''

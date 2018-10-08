@@ -1,0 +1,9 @@
+version: "3.2"
+
+services:
+    opa:
+        build:
+            context: ../../../
+            dockerfile: src/openpolicyagent/Dockerfile
+        ports:
+            - "8181:8181"

@@ -9,7 +9,7 @@ from flask import g, abort, Response, send_file, request
 from flask_restplus import Resource, fields
 
 from pyinfraboxutils import get_logger
-from pyinfraboxutils.ibflask import auth_required, OK
+from pyinfraboxutils.ibflask import OK
 from pyinfraboxutils.ibrestplus import api, response_model
 from pyinfraboxutils.storage import storage
 from pyinfraboxutils.token import encode_user_token
@@ -25,7 +25,6 @@ ns = api.namespace('Jobs',
 @api.response(403, 'Not Authorized')
 class Jobs(Resource):
 
-    @auth_required(['user'], allow_if_public=True)
     def get(self, project_id):
         jobs = g.db.execute_many_dict('''
             WITH github_builds AS (
@@ -191,7 +190,6 @@ class Jobs(Resource):
 @api.response(403, 'Not Authorized')
 class JobRestart(Resource):
 
-    @auth_required(['user'])
     @api.response(200, 'Success', response_model)
     def get(self, project_id, job_id):
         '''
@@ -281,7 +279,6 @@ class JobRestart(Resource):
 @api.response(403, 'Not Authorized')
 class JobAbort(Resource):
 
-    @auth_required(['user'])
     @api.response(200, 'Success', response_model)
     #pylint: disable=unused-argument
     def get(self, project_id, job_id):
@@ -299,7 +296,6 @@ class JobAbort(Resource):
 @api.response(403, 'Not Authorized')
 class Testresults(Resource):
 
-    @auth_required(['user'], allow_if_public=True)
     def get(self, project_id, job_id):
         '''
         Returns test result
@@ -320,7 +316,6 @@ class Testresults(Resource):
 @api.response(403, 'Not Authorized')
 class Tabs(Resource):
 
-    @auth_required(['user'], allow_if_public=True)
     def get(self, project_id, job_id):
         result = g.db.execute_many_dict('''
             SELECT name, data, type
@@ -335,7 +330,6 @@ class Tabs(Resource):
 @api.response(403, 'Not Authorized')
 class ArchiveDownload(Resource):
 
-    @auth_required(['user'], allow_if_public=True)
     def get(self, project_id, job_id):
         filename = request.args.get('filename', None)
 
@@ -386,7 +380,6 @@ class ArchiveDownload(Resource):
 @api.response(403, 'Not Authorized')
 class Archive(Resource):
 
-    @auth_required(['user'], allow_if_public=True)
     def get(self, project_id, job_id):
         '''
         Returns archive
@@ -408,7 +401,6 @@ class Archive(Resource):
 @api.response(403, 'Not Authorized')
 class Console(Resource):
 
-    @auth_required(['user'], allow_if_public=True)
     def get(self, project_id, job_id):
         '''
         Returns job's console output
@@ -444,7 +436,6 @@ class Console(Resource):
 @api.response(403, 'Not Authorized')
 class Output(Resource):
 
-    @auth_required(['user'], allow_if_public=True)
     #pylint: disable=unused-argument
     def get(self, project_id, job_id):
         g.release_db()
@@ -461,7 +452,6 @@ class Output(Resource):
 @api.response(403, 'Not Authorized')
 class Testruns(Resource):
 
-    @auth_required(['user'], allow_if_public=True)
     def get(self, project_id, job_id):
         '''
         Returns test runs
@@ -482,7 +472,6 @@ class Testruns(Resource):
 @api.response(403, 'Not Authorized')
 class TestHistory(Resource):
 
-    @auth_required(['user'], allow_if_public=True)
     def get(self, project_id, job_id):
 
         test = request.args.get('test', None)
@@ -558,7 +547,6 @@ badge_model = api.model('Badge', {
 @api.response(403, 'Not Authorized')
 class Badges(Resource):
 
-    @auth_required(['user'], allow_if_public=True)
     @api.marshal_list_with(badge_model)
     def get(self, project_id, job_id):
         '''
@@ -613,7 +601,6 @@ def compact(s):
 @api.response(403, 'Not Authorized')
 class Stats(Resource):
 
-    @auth_required(['user'], allow_if_public=True)
     def get(self, project_id, job_id):
         result = g.db.execute_one_dict('''
             SELECT stats
@@ -641,7 +628,6 @@ class Stats(Resource):
 @api.response(403, 'Not Authorized')
 class JobCacheClear(Resource):
 
-    @auth_required(['user'])
     def get(self, project_id, job_id):
         '''
         Clear job's cache

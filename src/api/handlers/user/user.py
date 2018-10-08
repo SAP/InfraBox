@@ -1,7 +1,7 @@
 from flask import g, abort
 from flask_restplus import Resource, fields
 
-from pyinfraboxutils.ibflask import auth_required
+from pyinfraboxutils.ibflask import OK
 from pyinfraboxutils.ibrestplus import api
 
 ns = api.namespace('User',
@@ -22,7 +22,6 @@ user_model = api.model('User', {
 @api.doc(responses={404: 'User not found'})
 class User(Resource):
 
-    @auth_required(['user'], check_project_access=False)
     @api.marshal_with(user_model)
     def get(self):
         '''
