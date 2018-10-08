@@ -20,8 +20,6 @@ logger = get_logger('ibflask')
 
 @app.before_request
 def before_request():
-    logger.info('Using DB Pool')
-
     def release_db():
         db = getattr(g, 'db', None)
         if not db:
