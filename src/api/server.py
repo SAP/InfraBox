@@ -135,8 +135,8 @@ def main(): # pragma: no cover
         if not sio_is_authorized(['listen:build', build_id]):
             return flask_socketio.disconnect()
 
+        conn = dbpool.get()
         try:
-            conn = dbpool.get()
             token = normalize_token(get_token())
 
             project_id = token['project']['id']
@@ -237,15 +237,17 @@ def main(): # pragma: no cover
         flask_socketio.join_room(job_id)
 
     def sio_is_authorized(path):
-        # Assemble Input Data for Open Policy Agent
-        opa_input = {
-            "input": {
-                "method": "WS",
-                "path": path,
-                "token": normalize_token(get_token())
-            }
-        }
+        g.db = dbpool.get()
         try:
+            # Assemble Input Data for Open Policy Agent
+            opa_input = {
+                "input": {
+                    "method": "WS",
+                    "path": path,
+                    "token": normalize_token(get_token())
+                }
+            }
+
             authorized = opa_do_auth(opa_input)
             if not authorized:
                 logger.warn("Unauthorized socket.io access attempt")
@@ -254,6 +256,9 @@ def main(): # pragma: no cover
         except RequestException as e:
             logger.error(e)
             return False
+        finally:
+            dbpool.put(g.db)
+            g.db = None
 
 
     logger.info('Starting DB listeners')
@@ -262,7 +267,7 @@ def main(): # pragma: no cover
 
     logger.info('Starting repeated push of data to Open Policy Agent')
     opa_start_push_loop()
-    
+
 
     port = int(os.environ.get('INFRABOX_PORT', 8080))
     logger.info('Starting Server on port %s', port)
