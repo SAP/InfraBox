@@ -5,6 +5,7 @@
 - [Multi Cluster installation](/docs/install/multi_cluster.md)
 - Services
     - [GCP Service](/src/services/gcp/README.md)
+- [HA mode](/docs/install/ha_mode.md)
 
 ## Use InfraBox
 - [Job definition](/docs/doc.md)
