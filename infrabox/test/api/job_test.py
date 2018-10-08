@@ -9,10 +9,10 @@ class JobTest(ApiTestTemplate):
 
     def test_get_job(self):
         r = TestClient.get('/api/v1/projects/%s/jobs/%s' % (self.project_id, self.job_id),
-                           TestClient.get_project_authorization(self.user_id, self.project_id))
+                           TestClient.get_project_authorization(self.token_id, self.project_id))
         self.assertEqual(r['id'], self.job_id)
 
     def test_get_job_manifest(self):
         r = TestClient.get('/api/v1/projects/%s/jobs/%s/manifest' % (self.project_id, self.job_id),
-                           TestClient.get_project_authorization(self.user_id, self.project_id))
+                           TestClient.get_project_authorization(self.token_id, self.project_id))
         self.assertEqual(r['id'], self.job_id)

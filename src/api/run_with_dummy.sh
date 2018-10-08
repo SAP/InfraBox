@@ -14,6 +14,11 @@ export INFRABOX_DATABASE_HOST=localhost
 export INFRABOX_DATABASE_USER=postgres
 export INFRABOX_DATABASE_PASSWORD=postgres
 
+# Open Policy Agent (OPA)
+export INFRABOX_OPA_HOST=localhost
+export INFRABOX_OPA_PORT=8181
+export INFRABOX_OPA_PUSH_INTERVAL=60
+
 # Service Config
 export INFRABOX_VERSION=local
 export INFRABOX_LOG_LEVEL=debug
@@ -52,6 +57,9 @@ export INFRABOX_GERRIT_ENABLED=false
 # RSA
 export INFRABOX_RSA_PRIVATE_KEY_PATH=../../infrabox/test/utils/id_rsa
 export INFRABOX_RSA_PUBLIC_KEY_PATH=../../infrabox/test/utils/id_rsa.pub
+
+#HA Mode
+export INFRABOX_HA_ENABLED=false
 
 
 python server.py

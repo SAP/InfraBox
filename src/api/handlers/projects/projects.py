@@ -7,7 +7,7 @@ from flask_restplus import Resource, fields
 from pyinfrabox.utils import validate_uuid
 from pyinfraboxutils import get_logger, get_root_url
 from pyinfraboxutils.ibrestplus import api, response_model
-from pyinfraboxutils.ibflask import auth_required, OK
+from pyinfraboxutils.ibflask import OK
 
 ns = api.namespace('Projects',
                    path='/api/v1/projects',
@@ -40,7 +40,6 @@ add_project_model = api.schema_model('AddProject', add_project_schema)
 @api.response(403, 'Not Authorized')
 class Projects(Resource):
 
-    @auth_required(['user'], check_project_access=False)
     @api.marshal_list_with(project_model)
     def get(self):
         '''
@@ -57,7 +56,6 @@ class Projects(Resource):
 
         return projects
 
-    @auth_required(['user'], check_project_access=False)
     @api.expect(add_project_model)
     @api.response(200, 'Success', response_model)
     def post(self):
@@ -147,8 +145,8 @@ class Projects(Resource):
         project_id = project['id']
 
         g.db.execute('''
-            INSERT INTO collaborator (user_id, project_id, owner)
-            VALUES (%s, %s, true)
+            INSERT INTO collaborator (user_id, project_id, role)
+            VALUES (%s, %s, 'Owner')
         ''', [user_id, project_id])
 
 
@@ -209,13 +207,14 @@ class Projects(Resource):
 
         g.db.commit()
 
+        # Updated collaborator and project data will be pushed with next push cycle to Open Policy Agent
+
         return OK('Project added')
 
 @ns.route('/name/<project_name>', doc=False)
 @api.response(403, 'Not Authorized')
 class ProjectName(Resource):
 
-    @auth_required(['user'], check_project_access=False, allow_if_public=True)
     @api.marshal_with(project_model)
     def get(self, project_name):
         project = g.db.execute_one_dict('''
@@ -234,7 +233,6 @@ class ProjectName(Resource):
 @api.response(403, 'Not Authorized')
 class Project(Resource):
 
-    @auth_required(['user'], allow_if_public=True)
     @api.marshal_with(project_model)
     def get(self, project_id):
         '''
@@ -248,7 +246,6 @@ class Project(Resource):
 
         return project
 
-    @auth_required(['user'], check_project_owner=True)
     @api.response(200, 'Success', response_model)
     def delete(self, project_id):
         '''
@@ -304,5 +301,7 @@ class Project(Resource):
         ''', [project_id])
 
         g.db.commit()
+
+        # Updated collaborator and project data will be pushed with next push cycle to Open Policy Agent
 
         return OK('deleted project')

@@ -22,7 +22,7 @@ from pyinfrabox import ValidationError
 
 from pyinfraboxutils.token import encode_job_token
 from pyinfraboxutils.ibrestplus import api
-from pyinfraboxutils.ibflask import job_token_required, app
+from pyinfraboxutils.ibflask import app
 from pyinfraboxutils.storage import storage
 from pyinfraboxutils.secrets import decrypt_secret
 from pyinfraboxutils import get_root_url
@@ -40,7 +40,6 @@ def delete_file(path):
 @api.route("/api/job/job", doc=False)
 class Job(Resource):
 
-    @job_token_required
     def get(self):
         job_id = g.token['job']['id']
         data = {}
@@ -84,7 +83,7 @@ class Job(Resource):
                 AND j.project_id = b.project_id
             INNER JOIN collaborator co
                 ON co.project_id = j.project_id
-                AND co.owner = true
+                AND co.role = 'Owner'
             INNER JOIN "user" u
                 ON co.user_id = u.id
             INNER JOIN project p
@@ -395,7 +394,6 @@ class Job(Resource):
 @api.route("/api/job/source", doc=False)
 class Source(Resource):
 
-    @job_token_required
     def get(self):
         job_id = g.token['job']['id']
         project_id = g.token['project']['id']
@@ -435,7 +433,6 @@ cache_upload_parser.add_argument('cache.tar.snappy', location='files',
 @api.route("/api/job/cache", doc=False)
 class Cache(Resource):
 
-    @job_token_required
     def get(self):
         project_id = g.token['project']['id']
         job_name = g.token['job']['name']
@@ -453,7 +450,6 @@ class Cache(Resource):
 
         return send_file(f)
 
-    @job_token_required
     @api.expect(cache_upload_parser)
     def post(self):
         project_id = g.token['project']['id']
@@ -472,7 +468,6 @@ class Cache(Resource):
 @api.route("/api/job/archive", doc=False)
 class Archive(Resource):
 
-    @job_token_required
     def post(self):
         job_id = g.token['job']['id']
 
@@ -500,7 +495,6 @@ class Archive(Resource):
 @api.route("/api/job/output", doc=False)
 class Output(Resource):
 
-    @job_token_required
     def post(self):
         job_id = g.token['job']['id']
 
@@ -568,7 +562,6 @@ class Output(Resource):
 @api.route("/api/job/output/<parent_job_id>", doc=False)
 class OutputParent(Resource):
 
-    @job_token_required
     def get(self, parent_job_id):
         job_id = g.token['job']['id']
 
@@ -675,7 +668,6 @@ class CreateJobs(Resource):
             assigned_clusters[j['name']] = target_cluster
             j['cluster']['name'] = target_cluster
 
-    @job_token_required
     def post(self):
         project_id = g.token['project']['id']
         parent_job_id = g.token['job']['id']
@@ -695,7 +687,7 @@ class CreateJobs(Resource):
             SELECT co.user_id, b.build_number, j.project_id FROM collaborator co
             INNER JOIN job j
                 ON j.project_id = co.project_id
-                AND co.owner = true
+                AND co.role = 'Owner'
                 AND j.id = %s
             INNER JOIN build b
                 ON b.id = j.build_id
@@ -868,7 +860,6 @@ class CreateJobs(Resource):
 @api.route("/api/job/consoleupdate", doc=False)
 class ConsoleUpdate(Resource):
 
-    @job_token_required
     def post(self):
         output = request.json['output']
 
@@ -904,7 +895,6 @@ class ConsoleUpdate(Resource):
 @api.route("/api/job/stats", doc=False)
 class Stats(Resource):
 
-    @job_token_required
     def post(self):
         job_id = g.token['job']['id']
 
@@ -948,7 +938,6 @@ def insert(c, cols, rows, table):
 @api.route("/api/job/markup", doc=False)
 class Markup(Resource):
 
-    @job_token_required
     def post(self):
         job_id = g.token['job']['id']
         project_id = g.token['project']['id']
@@ -1002,7 +991,6 @@ class Markup(Resource):
 @api.route("/api/job/badge", doc=False)
 class Badge(Resource):
 
-    @job_token_required
     def post(self):
         job_id = g.token['job']['id']
         project_id = g.token['project']['id']
@@ -1057,7 +1045,6 @@ class Badge(Resource):
 @api.route("/api/job/testresult", doc=False)
 class Testresult(Resource):
 
-    @job_token_required
     def post(self):
         job_id = g.token['job']['id']
         project_id = g.token['project']['id']

@@ -2,18 +2,18 @@ import os
 import base64
 from unittest import TestCase
 
+import eventlet
+eventlet.monkey_patch()
+
 import psycopg2
 import psycopg2.extensions
 import requests
 
+from pyinfraboxutils.db import DB, connect_db
 from pyinfraboxutils.token import encode_project_token
+from pyinfraboxutils.ibopa import opa_push_all
 
-conn = psycopg2.connect(dbname=os.environ['INFRABOX_DATABASE_DB'],
-                        host=os.environ['INFRABOX_DATABASE_HOST'],
-                        port=os.environ['INFRABOX_DATABASE_PORT'],
-                        user=os.environ['INFRABOX_DATABASE_USER'],
-                        password=os.environ['INFRABOX_DATABASE_PASSWORD'])
-
+conn = connect_db()
 conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
 
 class InputTests(TestCase):
@@ -55,13 +55,16 @@ class Test(TestCase):
 
     def setUp(self):
         cur = conn.cursor()
+        cur.execute('TRUNCATE auth_token')
+        cur.execute('TRUNCATE project')
+        cur.execute('TRUNCATE collaborator')
         cur.execute('''INSERT INTO auth_token (id, description, project_id, scope_push, scope_pull)
                         VALUES(%s, 'test token', %s, true, true)''', (self.token, self.project_id,))
         cur.execute('''INSERT INTO project(name, type, id)
                         VALUES('test', 'upload', %s)''', (self.project_id,))
-        cur.execute('''INSERT INTO collaborator(project_id, user_id)
-                        VALUES(%s, %s)''', (self.project_id, self.user_id,))
-
+        cur.execute('''INSERT INTO collaborator(project_id, user_id, role)
+                        VALUES(%s, %s, 'Owner')''', (self.project_id, self.user_id))
+        opa_push_all()
 
     def tearDown(self):
         cur = conn.cursor()
