@@ -10,9 +10,7 @@ import bcrypt
 from pyinfraboxutils import get_logger
 from pyinfraboxutils.ibflask import OK
 from pyinfraboxutils.token import encode_user_token
-from pyinfraboxutils.ibrestplus import api
-
-from api.namespaces import account as ns
+from pyinfraboxutils.ibrestplus import api, response_model
 
 login_model = api.model('Login', {
     'email': fields.String(required=True),
@@ -72,10 +70,12 @@ def authenticate(email, password):
     finally:
         connect.unbind_s()
 
-@ns.route('/login')
+@api.route('/api/v1/account/login')
 class Login(Resource):
 
     @api.expect(login_model)
+    @api.response(200, 'Success', response_model)
+    @api.response(400, 'Invalid Credentials', response_model)
     def post(self):
         b = request.get_json()
 
