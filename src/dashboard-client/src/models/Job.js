@@ -146,12 +146,10 @@ export default class Job {
 
                 if (userSection) {
                     // check for color
-                    console.log('row: ' + header)
                     idx = header.indexOf('[level=')
                     if (idx >= 0) {
                         let end = header.indexOf(']')
                         idx += 7
-                        console.log(idx, end)
                         let c = header.substr(idx, end - idx)
 
                         if (c === 'info') {

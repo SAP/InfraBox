@@ -26,6 +26,7 @@ IMAGES = [
     {'name': 'collector-api'},
     {'name': 'collector-fluentd'},
     {'name': 'job'},
+    {'name': 'opa'},
     {'name': 'gc', 'depends_on': ['images-base']},
     {'name': 'controller'},
     {'name': 'scheduler-kubernetes'},
