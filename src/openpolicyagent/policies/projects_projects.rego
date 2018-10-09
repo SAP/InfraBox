@@ -22,6 +22,11 @@ projects_projects_public(project){
     projects[i].public = true
 }
 
+projects_projects_name_public(project){
+    projects[i].name = project
+    projects[i].public = true
+}
+
 allow {
     api.method = "GET"
     api.path = ["api", "v1", "projects"]
@@ -37,7 +42,7 @@ allow {
 allow {
     api.method = "GET"
     api.path = ["api", "v1", "projects", "name", project_name]
-    api.token.type = "user"
+    projects_projects_name_public(project_name)
 }
 
 allow {
@@ -58,5 +63,3 @@ allow {
     api.token.type = "user"
     projects_projects_owner([api.token.user.id, project])
 }
-
-
