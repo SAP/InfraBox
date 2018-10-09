@@ -16,7 +16,7 @@ class Section {
         this.startTime = startTime
         this.lines_raw = []
         this.id = id
-        this.color = null
+        this.labels = {}
     }
 
     setEndTime (end) {
@@ -26,6 +26,14 @@ class Section {
 
         const dur = (end.getTime() - this.startTime.getTime()) / 1000
         this.duration = Math.max(Math.round(dur), 0)
+    }
+
+    addLabel (level) {
+        if (!this.labels[level]) {
+            this.labels[level] = 0
+        }
+
+        this.labels[level] += 1
     }
 
     addLine (line) {
@@ -107,77 +115,85 @@ export default class Job {
         return t
     }
 
+    _addSection (line, date) {
+        let idx = line.indexOf('|##')
+        const header = line.substr(idx + 3)
+
+        this.currentSection.setEndTime(date)
+        this.currentSection.generateHtml()
+
+        this.currentSection = new Section(this.linesProcessed, header, date, this.sections.length)
+        this.linesProcessed++
+        this.sections.push(this.currentSection)
+    }
+
+    _addStepSection (line, date) {
+        let idx = line.indexOf('|Step')
+        const header = line.substr(idx + 5)
+
+        this.currentSection.setEndTime(date)
+        this.currentSection.generateHtml()
+
+        this.currentSection = new Section(this.linesProcessed, header, date, this.sections.length)
+        this.linesProcessed++
+        this.sections.push(this.currentSection)
+    }
+
+    _addLabeledLine (line, date) {
+        let idx = line.indexOf('[level=')
+        if (idx >= 0) {
+            let end = line.indexOf(']')
+            idx += 7
+            const level = line.substr(idx, end - idx)
+            this.currentSection.addLabel(level)
+            // line = header.substr(end + 2, header.length - end)
+        }
+
+        this.currentSection.addLine(line)
+        this.linesProcessed++
+    }
+
+    _addLine (line) {
+        let idx = line.indexOf('|')
+
+        let date = null
+        if (idx > 0) {
+            const d = line.substr(0, idx)
+            date = this._getTime(d)
+        }
+
+        if (!this.currentSection) {
+            this.currentSection = new Section(this.linesProcessed, 'Prepare Job', date, 0)
+            this.sections.push(this.currentSection)
+        }
+
+        // Check for labled lines
+        idx = line.indexOf('|###')
+        if (idx >= 0 && idx < 10) {
+            return this._addLabeledLine(line, date)
+        }
+
+        idx = line.indexOf('|##')
+        if (idx >= 0 && idx < 10) {
+            return this._addSection(line, date)
+        }
+
+        idx = line.indexOf('|Step')
+        if (idx >= 0 && idx < 10) {
+            return this._addStepSection(line, date)
+        }
+
+        this.currentSection.addLine(line)
+        this.linesProcessed++
+    }
+
     _addLines (lines) {
         for (let line of lines) {
             if (line === '') {
                 continue
             }
 
-            let header = ''
-            let isSection = false
-
-            let idx = line.indexOf('|##')
-            let date = null
-            let userSection = false
-
-            if (idx >= 0 && idx < 10) {
-                header = line.substr(idx + 3)
-                const d = line.substr(0, idx)
-                date = this._getTime(d)
-                isSection = true
-                userSection = true
-            }
-
-            idx = line.indexOf('|Step')
-            if (idx >= 0 && idx < 10) {
-                header = line.substr(idx + 5)
-                const d = line.substr(0, idx)
-                date = this._getTime(d)
-                isSection = true
-            }
-
-            if (isSection) {
-                if (this.currentSection) {
-                    this.currentSection.setEndTime(date)
-                    this.currentSection.generateHtml()
-                }
-
-                let color = null
-
-                if (userSection) {
-                    // check for color
-                    idx = header.indexOf('[level=')
-                    if (idx >= 0) {
-                        let end = header.indexOf(']')
-                        idx += 7
-                        let c = header.substr(idx, end - idx)
-
-                        if (c === 'info') {
-                            color = '#23c6c8'
-                        } else if (c === 'warning') {
-                            color = '#f4f4f5'
-                        } else if (c === 'error') {
-                            color = '#b71c1c'
-                        }
-
-                        header = header.substr(end + 2, header.length - end)
-                    }
-                }
-
-                this.currentSection = new Section(this.linesProcessed, header, date, this.sections.length)
-
-                this.currentSection.color = color
-                this.linesProcessed++
-                this.sections.push(this.currentSection)
-            } else {
-                if (!this.currentSection) {
-                    this.currentSection = new Section(this.linesProcessed, 'Prepare Job', date, 0)
-                    this.sections.push(this.currentSection)
-                }
-
-                this.currentSection.addLine(line)
-                this.linesProcessed++
-            }
+            this._addLine(line)
         }
 
         if (this.currentSection) {
