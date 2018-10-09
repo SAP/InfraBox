@@ -20,7 +20,6 @@ import (
 	"github.com/sap/infrabox/src/services/garden/pkg/stub/shootOperations/utils"
 )
 
-const ENVAwsCloudZones = "AWS_CLOUD_ZONES"
 const shootDomainPostfix = ".datahub.shoot.canary.k8s-hana.ondemand.com"
 const dummyNameForClusterName = "CLUSTERNAME"
 const dummyNameForAwsRegion = "REGIONDUMMY"
@@ -70,7 +69,7 @@ func fillSpecWithStaticInfo(shootcfg *gApiV1beta.Shoot, shootCluster *v1alpha1.S
 		Worker: gApiV1beta.Worker{
 			AutoScalerMin: int(shootCluster.Spec.MinNodes),
 			AutoScalerMax: int(shootCluster.Spec.MaxNodes),
-			Name:          "worker",                                     //shootCluster.Spec.WorkerName
+			Name:          "worker",                                          //shootCluster.Spec.WorkerName
 			MachineType:   convertMachineType(shootCluster.Spec.MachineType), // TODO: fix as soon as gardener supports all machine types
 		},
 		VolumeType: "gp2", //shootCluster.Spec.WorkerVolumeType,
@@ -80,7 +79,8 @@ func fillSpecWithStaticInfo(shootcfg *gApiV1beta.Shoot, shootCluster *v1alpha1.S
 	shootcfg.Spec.Cloud.Region = shootCluster.Spec.Zone[:len(shootCluster.Spec.Zone)-1] // aws zones are the name of the region plus one letter
 	shootcfg.Spec.Cloud.AWS.Zones = []string{shootCluster.Spec.Zone}
 
-	newPolicy := strings.Replace(shootcfg.Spec.Addons.Kube2IAM.Roles[0].Policy, dummyNameForAwsRegion, shootCluster.Spec.Zone, 1)
+	region := shootCluster.Spec.Zone[:len(shootCluster.Spec.Zone)-1]
+	newPolicy := strings.Replace(shootcfg.Spec.Addons.Kube2IAM.Roles[0].Policy, dummyNameForAwsRegion, region, 1)
 	newPolicy = strings.Replace(newPolicy, dummyNameForClusterName, shootCluster.Spec.ShootName, 1)
 	shootcfg.Spec.Addons.Kube2IAM.Roles[0].Policy = newPolicy
 
@@ -111,8 +111,16 @@ func convertMachineType(t string) string {
 	}
 }
 
+const (
+	ENVDnsDomainSuffix               = "AWS_DNS_DOMAIN_SUFFIX"
+	ENVAwsCloudProfile               = "AWS_CLOUD_PROFILE"
+	ENVAwsMaintenanceAutoupdate      = "AWS_MAINTENANCE_AUTOUPDATE"
+	ENVAwsMaintenanceAutoUpdateBegin = "AWS_MAINTENANCE_AUTOUPDATE_TWBEGIN"
+	ENVAwsMaintenanceAutoUpdateEnd   = "AWS_MAINTENANCE_AUTOUPDATE_TWBEND"
+)
+
 func fillSpecFromEnv(shootcfg *gApiV1beta.Shoot) {
-	if s := os.Getenv("AWS_DNS_DOMAIN_SUFFIX"); len(s) != 0 {
+	if s := os.Getenv(ENVDnsDomainSuffix); len(s) != 0 {
 		var dns string
 		if s[0] == '.' {
 			dns = shootcfg.GetName() + s
@@ -121,18 +129,12 @@ func fillSpecFromEnv(shootcfg *gApiV1beta.Shoot) {
 		}
 		shootcfg.Spec.DNS.Domain = &dns
 	}
-	if s := os.Getenv("AWS_CLOUD_REGION"); len(s) != 0 {
-		shootcfg.Spec.Cloud.Region = s
 
-		zone := strings.Split(s, ",")[0]
-		nPol := strings.Replace(shootcfg.Spec.Addons.Kube2IAM.Roles[0].Policy, dummyNameForAwsRegion, zone, 1)
-		shootcfg.Spec.Addons.Kube2IAM.Roles[0].Policy = nPol
-	}
-
-	if s := os.Getenv("AWS_CLOUD_PROFILE"); len(s) != 0 {
+	if s := os.Getenv(ENVAwsCloudProfile); len(s) != 0 {
 		shootcfg.Spec.Cloud.Profile = s
 	}
-	if s := os.Getenv("AWS_MAINTENANCE_AUTOUPDATE"); len(s) != 0 {
+
+	if s := os.Getenv(ENVAwsMaintenanceAutoupdate); len(s) != 0 {
 		if b, err := strconv.ParseBool(s); err != nil {
 			logrus.Errorf("Invalid environment value (%s) given for 'AwsMaintenanceAutoUpdate'. Must be a bool. err: %s", s, err)
 		} else {
@@ -146,7 +148,7 @@ func fillSpecFromEnv(shootcfg *gApiV1beta.Shoot) {
 		}
 	}
 
-	if begin, end := os.Getenv("AWS_MAINTENANCE_AUTOUPDATE_TWBEGIN"), os.Getenv("AWS_MAINTENANCE_AUTOUPDATE_TWEND"); (len(begin) != 0) && (len(end) != 0) {
+	if begin, end := os.Getenv(ENVAwsMaintenanceAutoUpdateBegin), os.Getenv(ENVAwsMaintenanceAutoUpdateEnd); (len(begin) != 0) && (len(end) != 0) {
 
 		if shootcfg.Spec.Maintenance == nil {
 			shootcfg.Spec.Maintenance = &gApiV1beta.Maintenance{}
@@ -159,32 +161,6 @@ func fillSpecFromEnv(shootcfg *gApiV1beta.Shoot) {
 		shootcfg.Spec.Maintenance.TimeWindow.End = end
 	} else if (len(begin) + len(end)) != 0 {
 		logrus.Error("Incomplete time window specified. please check the env variables 'AwsMaintenanceAutoUpdateTWBegin' and 'AwsMaintenanceAutoUpdateTWEnd'")
-	}
-
-	if s := os.Getenv("AWS_CLUSTER_AUTOSCALER"); len(s) != 0 {
-		if b, err := strconv.ParseBool(s); err != nil {
-			logrus.Errorf("Invalid environment value (%s) given for 'AWS_CLUSTER_AUTOSCALER'. Must be a bool. err: %s", s, err)
-		} else {
-			if shootcfg.Spec.Addons == nil {
-				shootcfg.Spec.Addons = &gApiV1beta.Addons{}
-			}
-
-			if shootcfg.Spec.Addons.ClusterAutoscaler == nil {
-				shootcfg.Spec.Addons.ClusterAutoscaler = &gApiV1beta.ClusterAutoscaler{Addon: gApiV1beta.Addon{Enabled: b}}
-			} else {
-				shootcfg.Spec.Addons.ClusterAutoscaler.Addon.Enabled = b
-			}
-		}
-	}
-
-	if s := os.Getenv(ENVAwsCloudZones); len(s) != 0 {
-		trimmed := strings.Trim(s, ", ")
-		czones := strings.Split(trimmed, ",")
-		if len(czones) == 0 {
-			logrus.Errorf("env variable for 'AWS_CLOUD_ZONES' must be a comma-separated list with nonempty values. Found: %s, which leads to an empty list!", s)
-		}
-
-		shootcfg.Spec.Cloud.AWS.Zones = czones
 	}
 }
 
