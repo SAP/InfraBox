@@ -47,11 +47,12 @@ class Section {
         this.linesInSection += 1
     }
 
-    generateHtml () {
+    generateHtml (job) {
+        const url = `${NewAPIService.api}projects/${job.project.id}/jobs/${job.id}/console`
         let t = ''
 
         if (this.lines_raw.length >= 200) {
-            t += 'Output too large, only showing last 200 lines:\n'
+            t += `Output too large, only showing last 200 lines (Full console output):\n`
         }
 
         for (let l of this.lines_raw) {
@@ -63,6 +64,7 @@ class Section {
         this.lines_html = t
         const convert = new Convert()
         this.lines_html = convert.toHtml(t)
+        this.lines_html = this.lines_html.replace('Full console output', `<a href="${url}" target="_blank">Full console output</a>`)
     }
 
     escapeHtml (text) {
@@ -120,7 +122,7 @@ export default class Job {
         const header = line.substr(idx + 3)
 
         this.currentSection.setEndTime(date)
-        this.currentSection.generateHtml()
+        this.currentSection.generateHtml(this)
 
         this.currentSection = new Section(this.linesProcessed, header, date, this.sections.length)
         this.linesProcessed++
@@ -132,7 +134,7 @@ export default class Job {
         const header = line.substr(idx + 5)
 
         this.currentSection.setEndTime(date)
-        this.currentSection.generateHtml()
+        this.currentSection.generateHtml(this)
 
         this.currentSection = new Section(this.linesProcessed, header, date, this.sections.length)
         this.linesProcessed++
@@ -197,7 +199,7 @@ export default class Job {
         }
 
         if (this.currentSection) {
-            this.currentSection.generateHtml()
+            this.currentSection.generateHtml(this)
         }
     }
 
