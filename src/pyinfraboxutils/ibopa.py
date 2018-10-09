@@ -45,7 +45,7 @@ def opa_push_collaborator_data(db):
 
 def opa_push_project_data(db):
     projects = db.execute_many_dict("""
-        SELECT id, public FROM project
+        SELECT id, public, name FROM project
     """
     )
     payload = json.dumps({"projects": projects})
