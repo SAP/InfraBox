@@ -10,6 +10,7 @@
                 <md-table-header class="text-right">
                     <md-table-row>
                         <md-table-head class="console-table"><span class="p-xxl">Console Output</span></md-table-head>
+                        <md-table-head class="console-table" style="text-align: right"></md-table-head>
                         <md-table-head class="console-table" style="text-align: right">Lines</md-table-head>
                         <md-table-head class="console-table" style="text-align: right">Duration</md-table-head>
                     </md-table-row>
@@ -34,6 +35,16 @@
                                     <pre class="inherit-font no-margin p-l-xxl wrap-text" v-html="section.lines_html"></pre>
                                 </md-card-content>
                             </md-card-expand>
+                        </md-table-cell>
+                        <md-table-cell class="console-table text-top text-right dont-wrap">
+                            <div v-if="section.labels['error']" class="bg-failure circle-icon">
+                                <i class="fa fa-fw fa-exclamation-circle"></i>
+                                <md-tooltip>{{ section.labels.error }} Errors</md-tooltip>
+                            </div>
+                            <div v-if="section.labels['warning']" class="bg-warning circle-icon">
+                                <i class="fa fa-fw fa-exclamation-circle"></i>
+                                <md-tooltip>{{ section.labels.warning }} Warnings</md-tooltip>
+                            </div>
                         </md-table-cell>
                         <md-table-cell class="console-table text-top text-right dont-wrap">
                             <div class="p-t-sm">{{ section.linesInSection }} Lines</div>
