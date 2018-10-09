@@ -121,7 +121,6 @@ def get_token():
 
         return token
     else:
-        logger.info('No auth header')
         return None
 
 def check_request_authorization():
