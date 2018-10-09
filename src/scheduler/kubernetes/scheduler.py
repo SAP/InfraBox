@@ -335,6 +335,16 @@ class Scheduler(object):
         """, [job_id])
         cursor.close()
 
+    def handle_inactive_cluster_queued_jobs(self):
+        cursor = self.conn.cursor()
+        cursor.execute("""
+                    UPDATE job SET cluster_name = null WHERE state = 'queued' AND cluster_name IN (
+                        SELECT name
+                          FROM cluster
+                          WHERE active = false OR enabled = false)
+                """)
+        cursor.close()
+
     def handle_orphaned_jobs(self):
         self.logger.debug("Handling orphaned jobs")
 
@@ -556,6 +566,7 @@ class Scheduler(object):
             self.handle_timeouts()
             self.handle_aborts()
             self.handle_orphaned_jobs()
+            self.handle_inactive_cluster_queued_jobs()
         except Exception as e:
             self.logger.exception(e)
 
