@@ -23,3 +23,8 @@ allow {
     api.method = "GET"
     api.path = ["github", "auth"]
 }
+
+allow {
+    api.method = "GET"
+    api.path = ["github", "auth", "callback"]
+}
