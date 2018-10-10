@@ -14,6 +14,33 @@ class File(object):
         self.lines_hit = 0
         self.lines_found = 0
 
+    def __str__(self):
+        return ("Name: " + str(self.name) + 
+            " Func found: " + str(self.functions_found) + 
+            " Func hit: " + str(self.functions_hit) +
+            " Branch found: " + str(self.branches_found) +
+            " Branch hit: " + str(self.branches_hit) +
+            " Lines found: " + str(self.lines_found) +
+            " Lines hit: " + str(self.lines_hit))
+
+    def __add__(self, other):
+
+        if type(other) is not File:
+            raise TypeError()
+
+        if other.name != self.name:
+            raise ValueError()
+
+        f =  File(self.name)
+        f.functions_found = self.functions_found + other.functions_found
+        f.functions_hit = self.functions_hit + other.functions_hit
+        f.branches_found = self.branches_found + other.branches_found
+        f.branches_hit = self.branches_hit + other.branches_hit
+        f.lines_hit = self.lines_hit + other.lines_hit
+        f.lines_found = self.lines_found + other.lines_found
+
+        return f
+
 class Parser(object):
     def __init__(self, i):
         self.input = i
@@ -37,6 +64,29 @@ class Parser(object):
 
             self.files.append(f)
 
+    def __convert_jacoco_xml(self):
+        root = xml.etree.ElementTree.parse(self.input).getroot()
+
+        for sourcefile in root.iter("sourcefile"):
+
+            f = File(sourcefile.attrib["name"])
+
+            for elt in sourcefile:
+                if 'type' in elt.attrib.keys():
+
+                    if elt.attrib["type"] == "METHOD":
+                        f.functions_found = int(elt.attrib["covered"]) + int(elt.attrib["missed"])
+                        f.functions_hit = int(elt.attrib["covered"])
+
+                    elif elt.attrib["type"] == "COMPLEXITY":
+                        f.branches_found = int(elt.attrib["covered"]) + int(elt.attrib["missed"])
+                        f.branches_hit = int(elt.attrib["covered"])
+
+                    elif elt.attrib["type"] == "LINE":
+                        f.lines_found = int(elt.attrib["covered"]) + int(elt.attrib["missed"])
+                        f.lines_hit = int(elt.attrib["covered"])
+            
+            self.files.append(f)
 
     def __convert_xml(self):
         root = xml.etree.ElementTree.parse(self.input).getroot()
@@ -49,6 +99,10 @@ class Parser(object):
         data = root.findall('.//packages//class//lines')
         if data:
             self.__convert_cobertura()
+            return
+
+        if root.tag =="report":
+            self.__convert_jacoco_xml()
             return
 
         raise Exception('Could not detect coverage format')
@@ -232,5 +286,29 @@ class Parser(object):
         return doc
 
     def parse(self, badge_dir):
-        self.__convert_xml()
+        if(self.input == "/"):
+            self.parseDir(badge_dir)
+        else:
+            self.__convert_xml()
         return self.__create_markup(badge_dir)
+
+    def parseDir(self, badge_dir):
+        for root, dirs, files in os.walk("."):
+            for filename in files :
+                if filename.endswith(".xml"):
+                    self.input = filename
+                    self.__convert_xml()
+
+        tmp_files = []
+        while self.files != []:
+            f1 = self.files.pop(0)
+
+            for f in self.files:
+                if f.name == f1.name:
+                    f1 = f1 + f
+                    self.files.remove(f)
+
+            tmp_files.append(f1)
+
+        self.files = tmp_files
+        self.input = "/"
