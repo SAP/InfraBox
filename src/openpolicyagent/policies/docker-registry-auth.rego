@@ -4,9 +4,14 @@ import input as api
 
 import data.infrabox.projects.projects
 
-# Allow GET access to /ping for all
+# Allow GET access to /api/ping for all
 allow {
-    api.path = ["ping"]
+    api.path = ["api", "ping"]
+}
+
+# Allow GET access to /api/status for all
+allow {
+    api.path = ["api", "status"]
 }
 
 # Allow access to /v2

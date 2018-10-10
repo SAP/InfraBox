@@ -7,8 +7,11 @@ from flask_restplus import Resource, fields
 from flask import abort, request, g
 
 from pyinfraboxutils.ibflask import OK
-from pyinfraboxutils.ibrestplus import api
-from project import ns
+from pyinfraboxutils.ibrestplus import api, response_model
+
+ns = api.namespace('Projects',
+                   path='/api/v1/projects/<project_id>',
+                   description='Project related operations')
 
 def execute_github_api(url, token):
     headers = {
@@ -253,11 +256,17 @@ trigger_model = api.model('Trigger', {
 })
 
 
-@ns.route('/<project_id>/trigger')
+@ns.route('/trigger')
+@api.response(403, 'Not Authorized')
+@api.response(404, 'Project not found')
 class Trigger(Resource):
 
     @api.expect(trigger_model)
+    @api.response(200, 'Success', response_model)
     def post(self, project_id):
+        '''
+        Trigger a new build
+        '''
         body = request.get_json()
         branch_or_sha = body.get('branch_or_sha', None)
         env = body.get('env', None)
