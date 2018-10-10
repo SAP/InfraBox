@@ -688,6 +688,8 @@ class RunJob(Job):
             c.execute(['docker-compose', '-f', compose_file_new, 'ps'], env=self.environment, cwd=cwd)
             c.execute(['get_compose_exit_code.sh', compose_file_new], env=self.environment, cwd=cwd)
         except:
+            m = traceback.format_exc()
+            c.collect(m, show=True)
             raise Failure("Failed to build and run container")
         finally:
             c.header("Finalize", show=True)

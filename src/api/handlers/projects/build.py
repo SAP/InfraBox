@@ -4,9 +4,14 @@ import uuid
 from flask import g, abort
 from flask_restplus import Resource
 
+from pyinfraboxutils.ibrestplus import api, response_model
 from pyinfraboxutils.ibflask import OK
 from pyinfraboxutils.storage import storage
-from api.namespaces import project as ns
+
+ns = api.namespace('Builds',
+                   path='/api/v1/projects/<project_id>/builds',
+                   description='Build related operations')
+
 
 def restart_build(project_id, build_id):
     user_id = g.token['user']['id']
@@ -86,17 +91,27 @@ def restart_build(project_id, build_id):
     return OK('Restarted', {'build': {'id': new_build_id, 'restartCounter': restart_counter}})
 
 
-@ns.route('/<project_id>/builds/<build_id>/restart')
+@ns.route('/<build_id>/restart')
+@api.response(403, 'Not Authorized')
 class BuildRestart(Resource):
 
+    @api.response(200, 'Success', response_model)
     def get(self, project_id, build_id):
+        '''
+        Restart build
+        '''
         return restart_build(project_id, build_id)
 
 
-@ns.route('/<project_id>/builds/<build_id>/abort')
+@ns.route('/<build_id>/abort')
+@api.response(403, 'Not Authorized')
 class BuildAbort(Resource):
 
+    @api.response(200, 'Success', response_model)
     def get(self, project_id, build_id):
+        '''
+        Abort build
+        '''
         jobs = g.db.execute_many_dict('''
             SELECT id
             FROM job
@@ -113,10 +128,15 @@ class BuildAbort(Resource):
 
         return OK('Aborted all jobs')
 
-@ns.route('/<project_id>/builds/<build_id>/cache/clear')
+@ns.route('/<build_id>/cache/clear')
+@api.response(403, 'Not Authorized')
 class BuildCacheClear(Resource):
 
+    @api.response(200, 'Success', response_model)
     def get(self, project_id, build_id):
+        '''
+        Clear cache of all jobs in build
+        '''
         jobs = g.db.execute_many_dict('''
             SELECT j.name, branch from job j
             INNER JOIN build b
@@ -136,10 +156,14 @@ class BuildCacheClear(Resource):
 
         return OK('Cleared cache')
 
-@ns.route('/<project_id>/builds/<build_number>/<build_restart_counter>/state')
+@ns.route('/<build_number>/<build_restart_counter>/state', doc=False)
+@api.response(403, 'Not Authorized')
 class BuildStatus(Resource):
 
     def get(self, project_id, build_number, build_restart_counter):
+        '''
+        Returns build state
+        '''
         states = g.db.execute_many_dict('''
             SELECT state
             FROM job j
@@ -165,7 +189,8 @@ class BuildStatus(Resource):
             'state': state
         }
 
-@ns.route('/<project_id>/builds/<build_number>/<build_restart_counter>')
+@ns.route('/<build_number>/<build_restart_counter>', doc=False)
+@api.response(403, 'Not Authorized')
 class Build(Resource):
 
     def get(self, project_id, build_number, build_restart_counter):
