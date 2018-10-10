@@ -6,6 +6,7 @@ import copy
 import urllib
 import random
 from datetime import datetime
+from io import BytesIO
 
 import requests
 
@@ -609,6 +610,33 @@ class OutputParent(Resource):
         g.release_db()
         f = storage.download_output(key)
 
+        if f:
+            return send_file(f)
+
+        c = g.db.execute_one_dict('''
+            SELECT *
+            FROM cluster
+            WHERE name= (
+                SELECT cluster_name
+                FROM job
+                where id = %s)
+            ''', [parent_job_id])
+
+        if not c or not c['active'] or not c['enabled']:
+            abort(404)
+        if c['name'] == os.environ['INFRABOX_CLUSTER_NAME']:
+            abort(404)
+
+        token = encode_job_token(job_id)
+        headers = {'Authorization': 'bearer ' + token}
+        url = '%s/api/job/output/%s' % (c['root_url'], parent_job_id)
+
+        try:
+            r = requests.get(url, headers=headers, timeout=120, verify=False)
+            f = BytesIO(r.content)
+            f.seek(0)
+        except:
+            f = None
         if not f:
             abort(404)
 
