@@ -130,10 +130,22 @@
             </md-speed-dial>
             <md-card-content>
                 <md-tabs md-fixed class="md-transparent">
+				    <template slot="header-item" scope="props">
+						<md-icon v-if="props.header.icon">{{ props.header.icon }}</md-icon>
+						<template v-if="props.header.options && props.header.options.new_badge">
+						  <span v-if="props.header.label" class="label-with-new-badge">
+							{{ props.header.label }}
+							<span class="new-badge">{{ props.header.options.new_badge }}</span>
+						  </span>
+						</template>
+						<template v-else>
+						  <span v-if="props.header.label">{{ props.header.label }}</span>
+						</template>
+					</template>
                     <md-tab id="console" md-label="Console" md-icon="subtitles" class="widget-container">
                         <ib-console :job="job"></ib-console>
                     </md-tab>
-                    <md-tab id="test-list" md-icon="multiline_chart" md-label="Tests">
+                    <md-tab id="test-list" md-icon="multiline_chart" md-label="Tests" :md-options="{new_badge: failedTests}">
                         <ib-tests :job="job" :build="build" :project="project"></ib-tests>
                     </md-tab>
                     <md-tab id="stats" md-icon="insert_chart" md-label="Stats">
@@ -193,7 +205,8 @@ export default {
             build: null,
             project: null,
             job: null,
-            runLocalCommand: null
+            runLocalCommand: null,
+            failedTests: 0
         }
     },
     asyncComputed: {
@@ -214,8 +227,17 @@ export default {
                         j.loadBadges()
                         j.loadTabs()
                         j.loadArchive()
-
                         this.runLocalCommand = '$ export INFRABOX_CLI_TOKEN=<YOUR_TOKEN> \n$ infrabox pull --job-id ' + j.id
+                        return j.loadTests()
+                    })
+                    .then(() => {
+                        this.failedTests = 0
+                        for (let t of this.job.tests) {
+                            console.log(t.state)
+                            if (t.state === 'failure' || t.state === 'error') {
+                                this.failedTests += 1
+                            }
+                        }
                     })
             },
             watch () {
@@ -248,11 +270,20 @@ export default {
 </script>
 
 <style scoped>
-    .widget-container {
-        width: 98%;
-    }
+.widget-container {
+    width: 98%;
+}
 .left-margin {
     margin-left: 25px !important;
+}
+.label-with-new-badge {
+    font-weight: bolder;
+}
+.new-badge {
+    background-color: #b71c1c;
+    color: white;
+    padding: 3px;
+    border-radius: 3px;
 }
 </style>
 

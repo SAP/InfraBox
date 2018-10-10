@@ -20,8 +20,6 @@ logger = get_logger('ibflask')
 
 @app.before_request
 def before_request():
-    logger.info('Using DB Pool')
-
     def release_db():
         db = getattr(g, 'db', None)
         if not db:
@@ -123,7 +121,6 @@ def get_token():
 
         return token
     else:
-        logger.info('No auth header')
         return None
 
 def check_request_authorization():

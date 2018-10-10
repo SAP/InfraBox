@@ -1,11 +1,9 @@
-from flask import g, abort, request
-from flask_restplus import Resource, fields
+from flask import g
+from flask_restplus import Resource
 
 from pyinfraboxutils.ibrestplus import api
 
-from api.namespaces import admin as ns
-
-@ns.route('/projects/')
+@api.route('/api/v1/admin/projects', doc=False)
 class Projects(Resource):
 
     def get(self):
