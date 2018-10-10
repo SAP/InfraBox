@@ -45,15 +45,16 @@ def opa_push_collaborator_data(db):
 
 def opa_push_project_data(db):
     projects = db.execute_many_dict("""
-        SELECT id, public FROM project
+        SELECT id, public, name FROM project
     """
     )
     payload = json.dumps({"projects": projects})
     opa_push_data(PROJECT_DATA_DEST_URL, payload)
 
 def opa_push_all():
+    db = dbpool.get()
+
     try:
-        db = dbpool.get()
         opa_push_collaborator_data(db)
         opa_push_project_data(db)
     finally:
@@ -67,9 +68,10 @@ def opa_start_push_loop():
             while not self.stopped:
                 try:
                     opa_push_all()
-                    time.sleep(self.push_interval)
                 except Exception as e:
                     logger.exception(e)
+                finally:
+                    time.sleep(self.push_interval)
 
         def join(self, timeout=None):
             self.stopped = True

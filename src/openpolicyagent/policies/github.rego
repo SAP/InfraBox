@@ -18,3 +18,13 @@ allow {
     api.path = ["api", "v1", "github", "repos"]
     api.token.type = "user"
 }
+
+allow {
+    api.method = "GET"
+    api.path = ["github", "auth"]
+}
+
+allow {
+    api.method = "GET"
+    api.path = ["github", "auth", "callback"]
+}

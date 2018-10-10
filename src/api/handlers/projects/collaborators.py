@@ -4,9 +4,11 @@ from flask import request, g, abort
 from flask_restplus import Resource, fields
 
 from pyinfraboxutils.ibflask import OK
-from pyinfraboxutils.ibrestplus import api
+from pyinfraboxutils.ibrestplus import api, response_model
 
-from api.namespaces import project as ns
+ns = api.namespace('Collaborators',
+                   path='/api/v1/projects/<project_id>/collaborators',
+                   description='Collaborator related operations')
 
 collaborator_model = api.model('Collaborator', {
     'name': fields.String(required=True),
@@ -26,12 +28,15 @@ change_collaborator_model = api.model('AddCollaborator', {
     'role': fields.String(required=True)
 })
 
-
-@ns.route('/<project_id>/collaborators/')
+@ns.route('/')
+@api.response(403, 'Not Authorized')
 class Collaborators(Resource):
 
     @api.marshal_list_with(collaborator_model)
     def get(self, project_id):
+        '''
+        Returns all collaborators
+        '''
         p = g.db.execute_many_dict(
             """
             SELECT u.name, u.id, u.email, u.avatar_url, u.username, co.role FROM "user" u
@@ -43,7 +48,11 @@ class Collaborators(Resource):
         return p
 
     @api.expect(add_collaborator_model)
+    @api.response(200, 'Success', response_model)
     def post(self, project_id):
+        '''
+        Add a collaborator
+        '''
         b = request.get_json()
         username = b['username']
         userrole = b['role'] if 'role' in b else 'Developer'
@@ -91,20 +100,20 @@ class Collaborators(Resource):
 
         return OK('Successfully added user.')
 
-@ns.route('/<project_id>/collaborators/roles')
+@ns.route('/roles')
 class CollaboratorRoles(Resource):
     def get(self, project_id):
-        roles = g.db.execute_many(
-            """
+        roles = g.db.execute_many("""
             SELECT unnest(enum_range(NULL::user_role))
         """)
 
         return [role[0] for role in roles]
 
-@ns.route('/<project_id>/collaborators/<uuid:user_id>')
+@ns.route('/<uuid:user_id>')
 class Collaborator(Resource):
 
     @api.expect(change_collaborator_model)
+    @api.response(200, 'Success', response_model)
     def put(self, project_id, user_id):
 
         # Prevent for now a project owner change
@@ -148,11 +157,14 @@ class Collaborator(Resource):
         g.db.commit()
 
         # Updated collaborator data will be pushed with next push cycle to OPA
-        
+
         return OK('Successfully changed user role.')
 
-
+    @api.response(200, 'Success', response_model)
     def delete(self, project_id, user_id):
+        '''
+        Remove collaborator from project
+        '''
         owner_id = g.token['user']['id']
 
         if user_id.hex == UUID(owner_id).hex:
