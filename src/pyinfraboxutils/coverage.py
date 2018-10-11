@@ -286,7 +286,10 @@ class Parser(object):
         return doc
 
     def parse(self, badge_dir):
-        self.__convert_xml()
+        if(self.input == "/"):
+            self.parseDir(badge_dir)
+        else:
+            self.__convert_xml()
         return self.__create_markup(badge_dir)
 
     def parseDir(self, badge_dir):
@@ -294,7 +297,7 @@ class Parser(object):
             for filename in files :
                 if filename.endswith(".xml"):
                     self.input = filename
-                    self.parse(badge_dir)
+                    self.__convert_xml()
 
         tmp_files = []
         while self.files != []:
@@ -308,3 +311,4 @@ class Parser(object):
             tmp_files.append(f1)
 
         self.files = tmp_files
+        self.input = "/"
