@@ -17,8 +17,8 @@ class TestCoverageMethods(unittest.TestCase):
         self.assertTrue(parser.files[0].name == "HelloWorld.java")
 
     def test_parse_dir(self):
-        parser = Parser("")
-        parser.parseDir("/")
+        parser = Parser("/")
+        parser.parse("/")
 
         hello = 0
         hello2 = 1
