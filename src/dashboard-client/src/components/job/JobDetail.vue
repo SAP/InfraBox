@@ -231,10 +231,11 @@ export default {
                         return j.loadTests()
                     })
                     .then(() => {
+                        console.log(this.job.tests)
                         this.failedTests = 0
                         for (let t of this.job.tests) {
                             console.log(t.state)
-                            if (t.state === 'failure' || t.state === 'error') {
+                            if (t.state === 'failed' || t.state === 'error') {
                                 this.failedTests += 1
                             }
                         }
