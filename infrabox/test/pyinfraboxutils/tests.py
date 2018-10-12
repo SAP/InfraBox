@@ -18,7 +18,7 @@ class TestCoverageMethods(unittest.TestCase):
 
     def test_parse_dir(self):
         parser = Parser("/")
-        parser.parse("/")
+        parser.parse(".")
 
         hello = 0
         hello2 = 1
