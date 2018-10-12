@@ -9,6 +9,11 @@ allow {
     api.path = ["api", "ping"]
 }
 
+# Allow GET access to /ping for all
+allow {
+    api.path = ["ping"]
+}
+
 # Allow GET access to /api/status for all
 allow {
     api.path = ["api", "status"]
