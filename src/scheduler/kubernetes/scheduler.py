@@ -14,6 +14,107 @@ from pyinfraboxutils import get_logger, get_env
 from pyinfraboxutils.db import connect_db
 from pyinfraboxutils.token import encode_job_token
 
+class PipelineInvocationController(object):
+    def __init__(self, args):
+        self.args = args
+        self.namespace = get_env("INFRABOX_GENERAL_WORKER_NAMESPACE")
+        self.logger = get_logger("pipeline-controller")
+
+    def _get_pipeline(self, pi):
+        url = '%s/apis/core.infrabox.net/v1alpha1/namespaces/%s/ibpipelines/%s' % (self.args.api_server,
+                                                                                   pi['metadata']['namespace'],
+                                                                                   pi['spec']['pipelineName'])
+        return self._get(url)
+
+    def _get(self, url):
+        h = {'Authorization': 'Bearer %s' % self.args.token}
+        r = requests.get(url, headers=h, timeout=10)
+        result = r.json()
+        self.logger.info(json.dumps(result, indent=4))
+        return result
+
+    def _update(self, url, data):
+        h = {'Authorization': 'Bearer %s' % self.args.token}
+        r = requests.put(url, headers=h, json=data, timeout=10)
+        result = r.json()
+        self.logger.info(json.dumps(result, indent=4))
+        return result
+
+    def _create(self, url, data):
+        h = {'Authorization': 'Bearer %s' % self.args.token}
+        r = requests.post(url, headers=h, json=data, timeout=10)
+        result = r.json()
+        self.logger.info(json.dumps(result, indent=4))
+        return result
+
+    def _delete(self, url):
+        h = {'Authorization': 'Bearer %s' % self.args.token}
+        r = requests.delete(url, headers=h, timeout=10)
+        result = r.json()
+        self.logger.info(json.dumps(result, indent=4))
+        return result
+
+    def _update_finalizer(self, fi, finalizers):
+        finalizers = fi['metadata'].get('finalizers', None)
+
+        if finalizers:
+            return
+
+        fi['metadata']['finalizers'] = finalizers
+        url = self._get_url(fi)
+        self._update(url, fi)
+
+    def _get_url(self, fi):
+        url = '%s/apis/core.infrabox.net/v1alpha1/namespaces/%s/ibpipelineinvocations/%s' % (self.args.api_server,
+                                                                                             self.namespace,
+                                                                                             fi['metadata']['name'])
+        return url
+
+    def handle(self):
+        url = '%s/apis/core.infrabox.net/v1alpha1/namespaces/%s/ibfunctioninvocations' % (self.args.api_server,
+                                                                                          self.namespace)
+        data = self._get(url)
+
+        if 'items' not in data:
+            return
+
+        for fi in data['items']:
+            self._handle_pipeline_invocation(fi)
+
+    def _delete_pipeline_invocation(self, pi):
+        for i, s in enumerate(services):
+            name = '%s-%s' % (pi['metadata']['name'], i)
+            url = '%s/apis/%s/%s/namespaces/%s/%s' % (self.args.api_server,
+                                                      s['kind'].lower() + s,
+                                                      s['apiVersion'],
+                                                      self.namespace,
+                                                      name)
+            self._delete(url)
+
+        pipeline = self._get_pipeline(pi)
+        for step in pipeline['spec']['steps']:
+            name = pi['metadata']['name'] + '-' + step['name']
+            url = '%s/apis/core.infrabox.net/v1alpha1/namespaces/%s/ibfunctioninvocations/%s' % (self.args.api_server,
+                                                                                                 pi['metadata']['namespace'],
+                                                                                                 name)
+            self._delete(url)
+
+        self._update_finalizer(pi, [])
+
+    def _handle_pipeline_invocation(self, fi):
+        if fi.get('deletionTimestamp', None):
+            self._delete_pipeline_invocation(fi)
+            return
+
+        fi = self._sync_pipeline_invocation(fi)
+        url = self._get_url(fi)
+        self._update(url, fi)
+
+    def _sync_pipeline_invocation(self, fi):
+        self._update_finalizer(fi, ['core.service.infrabox.net'])
+        return fi
+
+
 class FunctionInvocationController(object):
     def __init__(self, args):
         self.args = args
