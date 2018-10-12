@@ -9,7 +9,7 @@ import data.infrabox.roles
 projects_tokens_administrator([user, project]){
     collaborators[i].project_id = project
     collaborators[i].user_id = user
-    roles[collaborators[i].role] >= 2
+    roles[collaborators[i].role] >= 20
 }
 
 # Allow GET access to /api/v1/projects/<project_id>/tokens for project administrators

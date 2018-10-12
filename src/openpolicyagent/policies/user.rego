@@ -3,7 +3,7 @@ package infrabox
 # HTTP API request
 import input as api
 
-roles = {"Developer": 1, "Administrator": 2, "Owner": 3}
+roles = {"Developer": 10, "Administrator": 20, "Owner": 30s}
 
 allow {
     api.method = "GET"
