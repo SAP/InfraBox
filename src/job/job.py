@@ -1125,13 +1125,14 @@ class RunJob(Job):
             if job['type'] == "git":
                 c.header("Clone repo %s" % job['clone_url'], show=True)
                 clone_url = job['clone_url']
+                branch = job.get("branch", None)
 
                 sub_path = os.path.join('.infrabox', 'tmp', job_name)
                 new_repo_path = os.path.join(self.mount_repo_dir, sub_path)
                 c.execute(['rm', '-rf', new_repo_path])
                 os.makedirs(new_repo_path)
 
-                self.clone_repo(job['commit'], clone_url, None, None, True, sub_path)
+                self.clone_repo(job['commit'], clone_url, branch, None, True, sub_path)
 
                 c.header("Parsing infrabox file", show=True)
                 ib_file = job.get('infrabox_file', None)
