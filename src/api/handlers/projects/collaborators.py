@@ -4,6 +4,7 @@ from flask import request, g, abort
 from flask_restplus import Resource, fields
 
 from pyinfraboxutils.ibflask import OK
+from pyinfraboxutils.ibopa import opa_push_collaborator_data
 from pyinfraboxutils.ibrestplus import api, response_model
 
 ns = api.namespace('Collaborators',
@@ -96,7 +97,7 @@ class Collaborators(Resource):
         """, [project_id, user['id'], userrole])
         g.db.commit()
 
-        # Updated collaborator data will be pushed with next push cycle to OPA
+        opa_push_collaborator_data(g.db)
 
         return OK('Successfully added user.')
 
@@ -153,7 +154,7 @@ class Collaborator(Resource):
 
         g.db.commit()
 
-        # Updated collaborator data will be pushed with next push cycle to OPA
+        opa_push_collaborator_data(g.db)
 
         return OK('Successfully changed user role.')
 
@@ -188,6 +189,6 @@ class Collaborator(Resource):
 
         g.db.commit()
 
-        # Updated collaborator data will be pushed with next push cycle to OPA
+        opa_push_collaborator_data(g.db)
 
         return OK('Successfully removed user.')
