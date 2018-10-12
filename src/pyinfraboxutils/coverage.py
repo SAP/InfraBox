@@ -286,7 +286,7 @@ class Parser(object):
         return doc
 
     def parse(self, badge_dir):
-        if(self.input == "/"):
+        if(os.path.isdir(self.input)):
             self.parseDir(badge_dir)
         else:
             self.__convert_xml()
