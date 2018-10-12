@@ -293,7 +293,8 @@ class Parser(object):
         return self.__create_markup(badge_dir)
 
     def parseDir(self, badge_dir):
-        for root, dirs, files in os.walk("."):
+        inputTmp = self.input
+        for root, dirs, files in os.walk(inputTmp):
             for filename in files :
                 if filename.endswith(".xml"):
                     self.input = filename
@@ -311,4 +312,4 @@ class Parser(object):
             tmp_files.append(f1)
 
         self.files = tmp_files
-        self.input = "/"
+        self.input = inputTmp
