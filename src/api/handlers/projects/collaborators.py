@@ -165,22 +165,22 @@ class Collaborator(Resource):
         '''
         Remove collaborator from project
         '''
-        owner_id = g.token['user']['id']
 
-        if user_id.hex == UUID(owner_id).hex:
-            abort(400, "It's not allowed to delete the owner of the project from collaborators.")
-
-        num_collaborators = g.db.execute_one(
+        collaborator = g.db.execute_one(
             """
-            SELECT COUNT(*) FROM collaborator
+            SELECT role FROM collaborator
             WHERE user_id = %s
             AND project_id = %s
-        """, [str(user_id), project_id])[0]
+            LIMIT 1
+        """, [str(user_id), project_id])
 
         # Give some warning if the specified user has been already removed
         # from the collaborators or has been never added there before
-        if num_collaborators == 0:
+        if not collaborator:
             return OK('Specified user is not in collaborators list.')
+
+        if collaborator[0] == 'Owner':
+            abort(400, "It's not allowed to delete the owner of the project.")
 
         g.db.execute(
             """
