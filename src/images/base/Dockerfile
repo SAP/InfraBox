@@ -8,12 +8,12 @@ RUN    apt-get update -y \
         python-cryptography \
         python-crypto \
         python-pyasn1 \
+        python-ldap \
     && pip install \
         psycopg2 \
         flask \
         flask_restplus \
         flask_socketio \
-        ldap \
         requests==2.18.4 \
         PyJWT \
         jsonschema \
