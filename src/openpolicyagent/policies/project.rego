@@ -6,10 +6,10 @@ import data.infrabox.collaborators.collaborators
 import data.infrabox.projects.projects
 import data.infrabox.roles
 
-project_owner([user, project]){
+project_administrator([user, project]){
     collaborators[i].project_id = project
     collaborators[i].user_id = user
-    roles[collaborators[i].role] >= 3
+    roles[collaborators[i].role] >= 20
 }
 
 project_collaborator([user, project]) {

@@ -10,10 +10,10 @@ collaborators_collaborator([user, project]) {
     collaborators[i].user_id = user
 }
 
-collaborators_owner([user, project]) {
+collaborators_administrator([user, project]) {
     collaborators[i].project_id = project
     collaborators[i].user_id = user
-    roles[collaborators[i].role] >=3
+    roles[collaborators[i].role] >=20
 }
 
 allow {
@@ -27,7 +27,7 @@ allow {
     api.method = "POST"
     api.path = ["api", "v1", "projects", project, "collaborators"]
     api.token.type = "user"
-    collaborators_owner([api.token.user.id, project])
+    collaborators_administrator([api.token.user.id, project])
 }
 
 allow {
@@ -41,12 +41,12 @@ allow {
     api.method = "PUT"
     api.path = ["api", "v1", "projects", project, "collaborators", uuid_user]
     api.token.type = "user"
-    collaborators_owner([api.token.user.id, project])
+    collaborators_administrator([api.token.user.id, project])
 }
 
 allow {
     api.method = "DELETE"
     api.path = ["api", "v1", "projects", project, "collaborators", uuid_user]
     api.token.type = "user"
-    collaborators_owner([api.token.user.id, project])
+    collaborators_administrator([api.token.user.id, project])
 }
