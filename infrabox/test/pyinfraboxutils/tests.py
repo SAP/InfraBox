@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 import unittest
-from coverage import *
+from pyinfraboxutils.coverage import *
 
 
 class TestCoverageMethods(unittest.TestCase):
