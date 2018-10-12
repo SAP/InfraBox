@@ -116,26 +116,23 @@ class Collaborator(Resource):
     @api.response(200, 'Success', response_model)
     def put(self, project_id, user_id):
 
-        # Prevent for now a project owner change
-        # (Because with GitHub Integration the project owner's GitHub Token will be used)
-        if user_id.hex == UUID(g.token['user']['id']).hex:
-            abort(403, "A project must have an owner.")
-
-        # Ensure that user is already a collaborator
-        num_collaborators = g.db.execute_one(
-            """
-            SELECT COUNT(*) FROM collaborator
-            WHERE user_id = %s
-            AND project_id = %s
-        """, [str(user_id), project_id])[0]
-        if num_collaborators == 0:
+        collaborator = g.db.execute_one(
+                    """
+                    SELECT role FROM collaborator
+                    WHERE user_id = %s
+                    AND project_id = %s
+                    LIMIT 1
+                """, [str(user_id), project_id])
+     
+        if not collaborator:
             abort(400, 'Specified user is not in collaborators list.')
+
+        if collaborator[0] == 'Owner':
+            abort(400, 'The project must have an owner.')
+         
 
         b = request.get_json()
         userrole = b['role']
-
-        if userrole == "Owner":
-            abort(403, "A project is limited to one owner.")
 
         # Ensure that role is valid
         roles = g.db.execute_many(
