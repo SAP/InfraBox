@@ -8,6 +8,7 @@ RUN    apt-get update -y \
         python-cryptography \
         python-pyasn1 \
         python-crypto \
+        python-ldap \
         curl \
         git \
     && pip install \
@@ -21,7 +22,6 @@ RUN    apt-get update -y \
         flask \
         flask_restplus \
         flask_socketio \
-        ldap \
         requests==2.18.4 \
         PyJWT \
         jsonschema \
