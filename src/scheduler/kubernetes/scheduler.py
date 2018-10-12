@@ -2,6 +2,7 @@ import argparse
 import time
 import os
 import random
+import json
 from datetime import datetime
 
 import requests
@@ -13,12 +14,184 @@ from pyinfraboxutils import get_logger, get_env
 from pyinfraboxutils.db import connect_db
 from pyinfraboxutils.token import encode_job_token
 
+class FunctionInvocationController(object):
+    def __init__(self, args):
+        self.args = args
+        self.namespace = get_env("INFRABOX_GENERAL_WORKER_NAMESPACE")
+        self.logger = get_logger("function-controller")
+
+    def _get(self, url):
+        h = {'Authorization': 'Bearer %s' % self.args.token}
+        r = requests.get(url, headers=h, timeout=10)
+        result = r.json()
+        self.logger.info(json.dumps(result, indent=4))
+        return result
+
+    def _update(self, url, data):
+        h = {'Authorization': 'Bearer %s' % self.args.token}
+        r = requests.put(url, headers=h, json=data, timeout=10)
+        result = r.json()
+        self.logger.info(json.dumps(result, indent=4))
+        return result
+
+    def _create(self, url, data):
+        h = {'Authorization': 'Bearer %s' % self.args.token}
+        r = requests.post(url, headers=h, json=data, timeout=10)
+        result = r.json()
+        self.logger.info(json.dumps(result, indent=4))
+        return result
+
+    def _delete(self, url):
+        h = {'Authorization': 'Bearer %s' % self.args.token}
+        r = requests.delete(url, headers=h, timeout=10)
+        result = r.json()
+        self.logger.info(json.dumps(result, indent=4))
+        return result
+
+    def _get_url(self, fi):
+        url = '%s/apis/core.infrabox.net/v1alpha1/namespaces/%s/ibfunctioninvocations/%s' % (self.args.api_server,
+                                                                                             self.namespace,
+                                                                                             fi['metadata']['name'])
+        return url
+
+    def _get_function(self, fi):
+        url = '%s/apis/core.infrabox.net/v1alpha1/namespaces/%s/ibfunctionins/%s' % (self.args.api_server,
+                                                                                     self.namespace,
+                                                                                     fi['spec']['functionName'])
+        return self._get(url)
+
+    def _update_finalizer(self, fi, finalizers):
+        finalizers = fi['metadata'].get('finalizers', None)
+
+        if finalizers:
+            return
+
+        fi['metadata']['finalizers'] = finalizers
+        url = self._get_url(fi)
+        self._update(url, fi)
+
+    def handle(self):
+        url = '%s/apis/core.infrabox.net/v1alpha1/namespaces/%s/ibfunctioninvocations' % (self.args.api_server,
+                                                                                          self.namespace)
+        data = self._get(url)
+
+        if 'items' not in data:
+            return
+
+        for fi in data['items']:
+            self._kube_sync_function_invocation(fi)
+
+    def _delete_function_invocation(self, fi):
+        url = '%s/apis/batch/v1/namespaces/%s/jobs/%s' % (self.args.api_server,
+                                                          self.namespace,
+                                                          fi['metadata']['name'])
+        self._delete(url)
+        self._update_finalizer(fi, [])
+
+    def _kube_sync_function_invocation(self, fi):
+        if fi.get('deletionTimestamp', None):
+            self._delete_function_invocation(fi)
+            return
+
+        fi = self._sync_function_invocation(fi)
+        url = self._get_url(fi)
+        self._update(url, fi)
+
+    def _sync_function_invocation(self, fi):
+        self._update_finalizer(fi, ['core.service.infrabox.net'])
+        f = self._get_function(fi)
+
+        # Create a batch job
+        job = {
+            'name': 'function',
+            'imagePullPolicy': 'Always',
+            'image': f['spec']['image'],
+            'resources': f['spec']['resources'],
+            'env': f['spec']['env'],
+            'securityContext': f['spec']['securityContext'],
+            'volumeMounts': f['spec']['volumeMounts'],
+        }
+
+        job['volumeMounts'] += fi['spec']['volumeMounts']
+        job['env'] += fi['spec']['env']
+
+        if fi['spec'].get('resources', None):
+            job['resources'] = fi['spec']['resources']
+
+        containers = [job]
+
+        # TODO: owner reference
+        batch = {
+            'Kind': 'Job',
+            'apiVersion': 'batch/v1',
+            'metadata': {
+                'name': fi['metadata']['name'],
+                'namespace': fi['metadata']['namespace'],
+                'labels': {
+                    'function.infrabox.net/function-invocation-name':  fi['metadata']['name']
+                }
+            },
+            'spec': {
+                'template': {
+                    'spec': {
+                        'automountServiceAccountToken': False,
+                        'containers': containers,
+                        'restartPolicy': 'Never',
+                        'terminationGracePeriodSeconds': 0,
+                        'volumes': f['spec']['volumes'],
+                        'imagePullSecrets': f['spec']['imagePullSecrets']
+                    },
+                    'metadata': {
+                        'labels': {
+                            'function.infrabox.net/function-invocation-name':  fi['metadata']['name']
+                        }
+                    }
+                },
+                'completion': 1,
+                'parallelism': 1,
+                'backoffLimit': 0
+            }
+        }
+
+        batch['spec']['template']['spec']['volumes'] += fi['spec']['volumes']
+
+        url = '%s/apis/batch/v1/namespaces/%s/jobs/%s' % (self.args.api_server,
+                                                          self.namespace,
+                                                          fi['metadata']['name'])
+        self._create(url, batch)
+
+        # Sync status
+        url = '%s/api/v1/namespaces/%s/pods?labelSelector=function.infrabox.net/function-invocation-name=%s' % (self.args.api_server,
+                                                                                                                self.namespace,
+                                                                                                                fi['metadata']['name'])
+        pods = self._get(url)
+        for pod in pods['items']:
+            if pod['status']['containerStatuses']:
+                fi['status']['state'] = pod['status']['containerStatuses'][0]['state']
+                fi['status']['nodeName'] = pod['spec']['nodeName']
+
+            if pod['status']['phase'] == 'Failed':
+                fi['status']['state'] = {
+                    'terminated': {
+                        'exitCode': 200,
+                        'reason': pod['status']['reason'],
+                        'message': pod['status']['message']
+                    }
+                }
+
+        return fi
+
+
 class Scheduler(object):
     def __init__(self, conn, args):
         self.conn = conn
         self.args = args
         self.namespace = get_env("INFRABOX_GENERAL_WORKER_NAMESPACE")
         self.logger = get_logger("scheduler")
+
+    def handle_function_invocations(self):
+        c = FunctionInvocationController(self.args)
+        c.handle()
 
     def kube_delete_job(self, job_id):
         h = {'Authorization': 'Bearer %s' % self.args.token}
@@ -405,13 +578,11 @@ class Scheduler(object):
                                 message = stepStatus['State']['terminated'].get('reason', 'Unknown Error')
 
                     if not message and current_state != 'finished':
-                        import json
                         self.logger.error(json.dumps(status, indent=4))
 
                     delete_job = True
 
                 if message == 'Error':
-                    import json
                     self.logger.error(json.dumps(status, indent=4))
 
                 if s == "error":
@@ -547,12 +718,13 @@ class Scheduler(object):
         active, enabled = cursor.fetchone()
         cursor.close()
 
-        return not ( active and enabled)
+        return not (active and enabled)
 
     def handle(self):
         self.update_cluster_state()
 
         try:
+            self.handle_function_invocations()
             self.handle_timeouts()
             self.handle_aborts()
             self.handle_orphaned_jobs()
