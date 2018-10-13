@@ -49,7 +49,7 @@ spec:
     -
         name: local-cache
         hostPath:
-            Path: {{ default "/tmp/infrabox/local_cache" .Values.local_cache.host_path }}
+            path: {{ default "/tmp/infrabox/local_cache" .Values.local_cache.host_path }}
 {{ end }}
 {{ if .Values.gerrit.enabled }}
     -
