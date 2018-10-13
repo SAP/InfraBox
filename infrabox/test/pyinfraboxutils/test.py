@@ -6,8 +6,8 @@ from pyinfraboxutils.coverage import *
 class TestCoverageMethods(unittest.TestCase):
 
     def test_jacoco(self):
-        parser = Parser("report_test.xml")
-        parser.parse("/")
+        parser = Parser("data/report_test.xml")
+        parser.parse(None, create_markup=False)
         self.assertTrue(parser.files[0].functions_found == 2)
         self.assertTrue(parser.files[0].functions_hit == 0)
         self.assertTrue(parser.files[0].branches_found == 2)
@@ -17,8 +17,8 @@ class TestCoverageMethods(unittest.TestCase):
         self.assertTrue(parser.files[0].name == "HelloWorld.java")
 
     def test_parse_dir(self):
-        parser = Parser("/")
-        parser.parse(".")
+        parser = Parser("data/")
+        parser.parse(None, create_markup=False)
 
         hello = 0
         hello2 = 1

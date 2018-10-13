@@ -356,20 +356,14 @@ class RunJob(Job):
 
 
     def upload_coverage_results(self):
-        c = self.console
         if not os.path.exists(self.infrabox_coverage_dir):
             return
 
-        files = self.get_files_in_dir(self.infrabox_coverage_dir, ending=".xml")
-        for f in files:
-            c.collect("%s\n" % f, show=True)
-            converted_result = self.convert_coverage_result(f)
-            file_name = os.path.basename(f)
+        converted_result = self.convert_coverage_result(self.infrabox_coverage_dir)
+        mu_path = os.path.join(self.infrabox_markup_dir, 'coverage.json')
 
-            mu_path = os.path.join(self.infrabox_markup_dir, file_name + '.json')
-
-            with open(mu_path, 'w') as out:
-                json.dump(converted_result, out)
+        with open(mu_path, 'w') as out:
+            json.dump(converted_result, out)
 
     def convert_test_result(self, f):
         parser = TestresultParser(f)
