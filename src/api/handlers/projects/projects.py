@@ -8,6 +8,7 @@ from pyinfrabox.utils import validate_uuid
 from pyinfraboxutils import get_logger, get_root_url
 from pyinfraboxutils.ibrestplus import api, response_model
 from pyinfraboxutils.ibflask import OK
+from pyinfraboxutils.ibopa import opa_push_project_data, opa_push_collaborator_data
 
 ns = api.namespace('Projects',
                    path='/api/v1/projects',
@@ -207,7 +208,9 @@ class Projects(Resource):
 
         g.db.commit()
 
-        # Updated collaborator and project data will be pushed with next push cycle to Open Policy Agent
+        # Push updated collaborator and project data to Open Policy Agent
+        opa_push_project_data(g.db)
+        opa_push_collaborator_data(g.db)
 
         return OK('Project added')
 
