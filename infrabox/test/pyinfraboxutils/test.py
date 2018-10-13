@@ -1,7 +1,9 @@
 #! /usr/bin/env python
 import unittest
-from pyinfraboxutils.coverage import *
+import sys
+import xmlrunner
 
+from pyinfraboxutils.coverage import *
 
 class TestCoverageMethods(unittest.TestCase):
 
@@ -44,6 +46,7 @@ class TestCoverageMethods(unittest.TestCase):
         self.assertTrue(parser.files[hello2].lines_found == 3)
         self.assertTrue(parser.files[hello2].name == "HelloWorld2.java")
 
-
 if __name__ == '__main__':
-    unittest.main()
+    s = unittest.defaultTestLoader.discover('.')
+    r = xmlrunner.XMLTestRunner(output='/infrabox/upload/testresult/').run(s)
+    sys.exit(not r.wasSuccessful())
