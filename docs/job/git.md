@@ -22,6 +22,7 @@ An example git job definition:
 |type|true|string||Has to be "git" to include a workflow from a repository|
 |name|true|string||Name of the job|
 |clone_url|true|string||Url to clone the git repository|
+|branch|false|string|master|branch to clone initially
 |commit|true|string||branch name or commit sha|
 |depends_on|false|[Dependency Configuration](/docs/job/dependencies.md)|[]|Jobs may have dependencies. You can list all jobs which should finish before the current job may be executed.|
 |environment|false|[Environment Variables](/docs/job/env_vars.md)|{}|Can be used to set environment variables for the job.|
