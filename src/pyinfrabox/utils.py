@@ -6,9 +6,6 @@ from builtins import int, range, str
 from past.builtins import basestring
 
 from pyinfrabox import ValidationError
-from pyinfraboxutils import get_logger
-
-logger = get_logger('uuid')
 
 try:
     #python2
