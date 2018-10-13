@@ -66,7 +66,6 @@ class Controller(object):
             return None
 
         if r.status_code != 201:
-            self.logger.error(json.dumps(data, indent=4))
             raise APIException(r)
 
         result = r.json()
