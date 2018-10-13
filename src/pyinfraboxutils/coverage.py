@@ -15,13 +15,13 @@ class File(object):
         self.lines_found = 0
 
     def __str__(self):
-        return ("Name: " + str(self.name) + 
-            " Func found: " + str(self.functions_found) + 
-            " Func hit: " + str(self.functions_hit) +
-            " Branch found: " + str(self.branches_found) +
-            " Branch hit: " + str(self.branches_hit) +
-            " Lines found: " + str(self.lines_found) +
-            " Lines hit: " + str(self.lines_hit))
+        return ("Name: " + str(self.name) +
+                " Func found: " + str(self.functions_found) +
+                " Func hit: " + str(self.functions_hit) +
+                " Branch found: " + str(self.branches_found) +
+                " Branch hit: " + str(self.branches_hit) +
+                " Lines found: " + str(self.lines_found) +
+                " Lines hit: " + str(self.lines_hit))
 
     def __add__(self, other):
 
@@ -31,7 +31,7 @@ class File(object):
         if other.name != self.name:
             raise ValueError()
 
-        f =  File(self.name)
+        f = File(self.name)
         f.functions_found = self.functions_found + other.functions_found
         f.functions_hit = self.functions_hit + other.functions_hit
         f.branches_found = self.branches_found + other.branches_found
@@ -51,7 +51,6 @@ class Parser(object):
         data = e.findall('./project/metrics/file')
 
         for d in data:
-            print(d)
             f = File(d.get('name'))
             metrics = d.find('metrics')
 
@@ -85,7 +84,7 @@ class Parser(object):
                     elif elt.attrib["type"] == "LINE":
                         f.lines_found = int(elt.attrib["covered"]) + int(elt.attrib["missed"])
                         f.lines_hit = int(elt.attrib["covered"])
-            
+
             self.files.append(f)
 
     def __convert_xml(self):
@@ -101,7 +100,7 @@ class Parser(object):
             self.__convert_cobertura()
             return
 
-        if root.tag =="report":
+        if root.tag == "report":
             self.__convert_jacoco_xml()
             return
 
@@ -285,20 +284,25 @@ class Parser(object):
 
         return doc
 
-    def parse(self, badge_dir):
-        if(os.path.isdir(self.input)):
-            self.parseDir(badge_dir)
+    def parse(self, badge_dir, create_markup=True):
+        if os.path.isdir(self.input):
+            self.parse_dir()
         else:
             self.__convert_xml()
-        return self.__create_markup(badge_dir)
 
-    def parseDir(self, badge_dir):
-        inputTmp = self.input
-        for root, dirs, files in os.walk(inputTmp):
-            for filename in files :
+        if create_markup:
+            return self.__create_markup(badge_dir)
+
+        return None
+
+    def parse_dir(self):
+        for _, _, files in os.walk(self.input):
+            for filename in files:
                 if filename.endswith(".xml"):
-                    self.input = filename
-                    self.__convert_xml()
+                    f = os.path.join(self.input, filename)
+                    p = Parser(f)
+                    p.parse(None, create_markup=False)
+                    self.files += p.files
 
         tmp_files = []
         while self.files != []:
@@ -312,4 +316,3 @@ class Parser(object):
             tmp_files.append(f1)
 
         self.files = tmp_files
-        self.input = inputTmp
