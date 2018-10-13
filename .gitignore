@@ -44,7 +44,3 @@ src/services/gcp/tmp/_output/
 src/services/namespace/vendor
 src/services/namespace/namespace
 src/services/namespace/tmp/_output/
-src/controller/vendor
-src/controller/namespace
-src/controller/tmp/_output/
-src/controller/deploy/operator.yaml

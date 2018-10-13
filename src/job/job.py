@@ -840,7 +840,9 @@ class RunJob(Job):
         try:
             c.header("Run container", show=True)
             c.execute(cmd, show=True, show_cmd=False)
-            c.execute(("docker", "commit", container_name, image_name))
+
+            if self.job['definition'].get('cache', {}).get('image', False) and not self.job['definition'].get('deployments', None):
+                c.execute(("docker", "commit", container_name, image_name))
         except Exception as e:
             try:
                 # Find out if container was killed due to oom
@@ -860,14 +862,7 @@ class RunJob(Job):
                 logger.exception(ex)
                 raise Failure("Could not get exit code of container")
 
-            try:
-                if self.job['definition'].get('cache', {}).get('image', False):
-                    c.execute(("docker", "commit", container_name, image_name))
-                c.header("Finalize", show=True)
-            except Exception as ex:
-                logger.exception(ex)
-                raise Failure("Could not commit and push container")
-
+            c.header("Finalize", show=True)
             logger.exception(e)
             raise Failure("Container run exited with error (exit code=%s)" % exit_code)
 

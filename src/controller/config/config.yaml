@@ -1,3 +1,0 @@
-apiVersion: core.infrabox.net/v1alpha1
-kind: FunctionInvocation
-projectName: operator
