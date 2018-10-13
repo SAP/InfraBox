@@ -281,7 +281,7 @@ class PipelineInvocationController(Controller):
 
             status = pi['status']['stepStatuses'][i]
 
-            if status['state'].get('terminated', None):
+            if status.get('state', {}).get('terminated', None):
                 # already finished
                 continue
 
