@@ -4,6 +4,7 @@ from flask import request, g, abort
 from flask_restplus import Resource, fields
 
 from pyinfraboxutils.ibflask import OK
+from pyinfraboxutils.ibopa import opa_push_collaborator_data
 from pyinfraboxutils.ibrestplus import api, response_model
 
 ns = api.namespace('Collaborators',
@@ -96,7 +97,7 @@ class Collaborators(Resource):
         """, [project_id, user['id'], userrole])
         g.db.commit()
 
-        # Updated collaborator data will be pushed with next push cycle to OPA
+        opa_push_collaborator_data(g.db)
 
         return OK('Successfully added user.')
 
@@ -116,26 +117,23 @@ class Collaborator(Resource):
     @api.response(200, 'Success', response_model)
     def put(self, project_id, user_id):
 
-        # Prevent for now a project owner change
-        # (Because with GitHub Integration the project owner's GitHub Token will be used)
-        if user_id.hex == UUID(g.token['user']['id']).hex:
-            abort(403, "A project must have an owner.")
-
-        # Ensure that user is already a collaborator
-        num_collaborators = g.db.execute_one(
-            """
-            SELECT COUNT(*) FROM collaborator
-            WHERE user_id = %s
-            AND project_id = %s
-        """, [str(user_id), project_id])[0]
-        if num_collaborators == 0:
+        collaborator = g.db.execute_one(
+                    """
+                    SELECT role FROM collaborator
+                    WHERE user_id = %s
+                    AND project_id = %s
+                    LIMIT 1
+                """, [str(user_id), project_id])
+     
+        if not collaborator:
             abort(400, 'Specified user is not in collaborators list.')
+
+        if collaborator[0] == 'Owner':
+            abort(400, 'The project must have an owner.')
+         
 
         b = request.get_json()
         userrole = b['role']
-
-        if userrole == "Owner":
-            abort(403, "A project is limited to one owner.")
 
         # Ensure that role is valid
         roles = g.db.execute_many(
@@ -156,7 +154,7 @@ class Collaborator(Resource):
 
         g.db.commit()
 
-        # Updated collaborator data will be pushed with next push cycle to OPA
+        opa_push_collaborator_data(g.db)
 
         return OK('Successfully changed user role.')
 
@@ -165,22 +163,22 @@ class Collaborator(Resource):
         '''
         Remove collaborator from project
         '''
-        owner_id = g.token['user']['id']
 
-        if user_id.hex == UUID(owner_id).hex:
-            abort(400, "It's not allowed to delete the owner of the project from collaborators.")
-
-        num_collaborators = g.db.execute_one(
+        collaborator = g.db.execute_one(
             """
-            SELECT COUNT(*) FROM collaborator
+            SELECT role FROM collaborator
             WHERE user_id = %s
             AND project_id = %s
-        """, [str(user_id), project_id])[0]
+            LIMIT 1
+        """, [str(user_id), project_id])
 
         # Give some warning if the specified user has been already removed
         # from the collaborators or has been never added there before
-        if num_collaborators == 0:
+        if not collaborator:
             return OK('Specified user is not in collaborators list.')
+
+        if collaborator[0] == 'Owner':
+            abort(400, "It's not allowed to delete the owner of the project.")
 
         g.db.execute(
             """
@@ -191,6 +189,6 @@ class Collaborator(Resource):
 
         g.db.commit()
 
-        # Updated collaborator data will be pushed with next push cycle to OPA
+        opa_push_collaborator_data(g.db)
 
         return OK('Successfully removed user.')
