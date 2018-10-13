@@ -6,12 +6,6 @@ import data.infrabox.collaborators.collaborators
 import data.infrabox.projects.projects
 import data.infrabox.roles
 
-trigger_owner([user, project_id]){
-    collaborators[i].project_id = project
-    collaborators[i].user_id = user
-    roles[collaborators[i].role] >= 3
-}
-
 trigger_collaborator([user, project_id]) {
     collaborators[i].project_id = project
     collaborators[i].user_id = user

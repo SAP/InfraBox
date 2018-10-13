@@ -9,7 +9,7 @@ import data.infrabox.roles
 projects_projects_owner([user, project]){
     collaborators[i].project_id = project
     collaborators[i].user_id = user
-    roles[collaborators[i].role] >= 3
+    roles[collaborators[i].role] >= 30
 }
 
 projects_projects_collaborator([user, project]) {
