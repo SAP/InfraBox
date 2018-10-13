@@ -1,8 +1,10 @@
+# pylint: disable=too-few-public-methods,line-too-long,too-many-lines,too-many-nested-blocks
 import argparse
 import time
 import os
 import random
 import json
+import copy
 from datetime import datetime
 
 import requests
@@ -14,82 +16,181 @@ from pyinfraboxutils import get_logger, get_env
 from pyinfraboxutils.db import connect_db
 from pyinfraboxutils.token import encode_job_token
 
-class PipelineInvocationController(object):
-    def __init__(self, args):
+class APIException(Exception):
+    def __init__(self, result):
+        super(APIException, self).__init__("API Server Error (%s)" % result.status_code)
+        self.result = result
+
+class Controller(object):
+    def __init__(self, args, resource):
         self.args = args
         self.namespace = get_env("INFRABOX_GENERAL_WORKER_NAMESPACE")
-        self.logger = get_logger("pipeline-controller")
-
-    def _get_pipeline(self, pi):
-        url = '%s/apis/core.infrabox.net/v1alpha1/namespaces/%s/ibpipelines/%s' % (self.args.api_server,
-                                                                                   pi['metadata']['namespace'],
-                                                                                   pi['spec']['pipelineName'])
-        return self._get(url)
+        self.logger = get_logger("controller")
+        self.resource = resource
 
     def _get(self, url):
         h = {'Authorization': 'Bearer %s' % self.args.token}
+        self.logger.info('GET: %s', url)
         r = requests.get(url, headers=h, timeout=10)
+        # self.logger.info(r.text)
+
+        if r.status_code == 404:
+            return None
+
+        if r.status_code != 200:
+            raise APIException(r)
+
         result = r.json()
-        self.logger.info(json.dumps(result, indent=4))
         return result
 
     def _update(self, url, data):
         h = {'Authorization': 'Bearer %s' % self.args.token}
+        self.logger.info('PUT: %s', url)
         r = requests.put(url, headers=h, json=data, timeout=10)
+        # self.logger.info(r.text)
+
+        if r.status_code != 200:
+            raise APIException(r)
+
         result = r.json()
-        self.logger.info(json.dumps(result, indent=4))
         return result
 
     def _create(self, url, data):
         h = {'Authorization': 'Bearer %s' % self.args.token}
+        self.logger.info('POST: %s', url)
         r = requests.post(url, headers=h, json=data, timeout=10)
+        # self.logger.info(r.text)
+
+        if r.status_code == 409:
+            # Already exists
+            return None
+
+        if r.status_code != 201:
+            self.logger.error(json.dumps(data, indent=4))
+            raise APIException(r)
+
         result = r.json()
-        self.logger.info(json.dumps(result, indent=4))
         return result
 
     def _delete(self, url):
         h = {'Authorization': 'Bearer %s' % self.args.token}
+        self.logger.info('DELETE: %s', url)
         r = requests.delete(url, headers=h, timeout=10)
+        # self.logger.info(r.text)
+
+        if r.status_code == 404:
+            # does not exist
+            return None
+
+        if r.status_code != 200:
+            raise APIException(r)
+
         result = r.json()
-        self.logger.info(json.dumps(result, indent=4))
         return result
 
     def _update_finalizer(self, fi, finalizers):
-        finalizers = fi['metadata'].get('finalizers', None)
-
-        if finalizers:
-            return
+        if fi['metadata'].get('finalizers', None):
+            return fi
 
         fi['metadata']['finalizers'] = finalizers
         url = self._get_url(fi)
-        self._update(url, fi)
+        return self._update(url, fi)
 
     def _get_url(self, fi):
-        url = '%s/apis/core.infrabox.net/v1alpha1/namespaces/%s/ibpipelineinvocations/%s' % (self.args.api_server,
-                                                                                             self.namespace,
-                                                                                             fi['metadata']['name'])
+        url = '%s/apis/core.infrabox.net/v1alpha1/namespaces/%s/%s/%s' % (self.args.api_server,
+                                                                          self.namespace,
+                                                                          self.resource,
+                                                                          fi['metadata']['name'])
         return url
 
     def handle(self):
-        url = '%s/apis/core.infrabox.net/v1alpha1/namespaces/%s/ibfunctioninvocations' % (self.args.api_server,
-                                                                                          self.namespace)
+        url = '%s/apis/core.infrabox.net/v1alpha1/namespaces/%s/%s' % (self.args.api_server,
+                                                                       self.namespace,
+                                                                       self.resource)
         data = self._get(url)
 
         if 'items' not in data:
             return
 
         for fi in data['items']:
-            self._handle_pipeline_invocation(fi)
+            try:
+                before = json.dumps(fi.get('status', {})) + json.dumps(fi['metadata'].get('finalizers', {}))
+                if fi['metadata'].get('deletionTimestamp', None):
+                    fi = self._sync_delete(fi)
+                else:
+                    fi = self._sync(fi)
 
-    def _delete_pipeline_invocation(self, pi):
+                url = self._get_url(fi)
+                after = json.dumps(fi.get('status', {})) + json.dumps(fi['metadata'].get('finalizers', {}))
+
+                if before != after:
+                    self._update(url, fi)
+            except APIException as e:
+                self.logger.exception(e)
+                self.logger.warn(e.result.text)
+            except Exception as e:
+                self.logger.exception(e)
+
+    def _sync(self, _):
+        assert False
+
+    def _sync_delete(self, _):
+        assert False
+
+class PipelineInvocationController(Controller):
+    def __init__(self, args):
+        super(PipelineInvocationController, self).__init__(args, 'ibpipelineinvocations')
+        self.pipelines = {}
+
+    def _get_pipeline(self, pi):
+        if pi['spec']['pipelineName'] not in self.pipelines:
+            url = '%s/apis/core.infrabox.net/v1alpha1/namespaces/%s/ibpipelines/%s' % (self.args.api_server,
+                                                                                       pi['metadata']['namespace'],
+                                                                                       pi['spec']['pipelineName'])
+            self.pipelines[pi['spec']['pipelineName']] = self._get(url)
+
+        return copy.deepcopy(self.pipelines[pi['spec']['pipelineName']])
+
+    def _delete_services(self, pi):
+        services = pi['spec'].get('services', [])
+
+        if not services:
+            return
+
         for i, s in enumerate(services):
             name = '%s-%s' % (pi['metadata']['name'], i)
-            url = '%s/apis/%s/%s/namespaces/%s/%s' % (self.args.api_server,
-                                                      s['kind'].lower() + s,
+            url = '%s/apis/%s/namespaces/%s/%s/%s' % (self.args.api_server,
                                                       s['apiVersion'],
                                                       self.namespace,
+                                                      s['kind'].lower() + 's',
                                                       name)
             self._delete(url)
+
+    def _are_services_deleted(self, pi):
+        services = pi['spec'].get('services', [])
+
+        if not services:
+            return True
+
+        for i, s in enumerate(services):
+            name = '%s-%s' % (pi['metadata']['name'], i)
+            url = '%s/apis/%s/namespaces/%s/%s/%s' % (self.args.api_server,
+                                                      s['apiVersion'],
+                                                      self.namespace,
+                                                      s['kind'].lower() + 's',
+                                                      name)
+
+
+            try:
+                self._get(url)
+            except:
+                return False
+
+        return True
+
+
+    def _sync_delete(self, pi):
+        self._delete_services(pi)
 
         pipeline = self._get_pipeline(pi)
         for step in pipeline['spec']['steps']:
@@ -99,107 +200,239 @@ class PipelineInvocationController(object):
                                                                                                  name)
             self._delete(url)
 
-        self._update_finalizer(pi, [])
+        pi['metadata']['finalizers'] = []
+        return pi
 
-    def _handle_pipeline_invocation(self, fi):
-        if fi.get('deletionTimestamp', None):
-            self._delete_pipeline_invocation(fi)
-            return
+    def _sync_services(self, pi):
+        services = pi['spec'].get('services', [])
 
-        fi = self._sync_pipeline_invocation(fi)
-        url = self._get_url(fi)
-        self._update(url, fi)
+        ready = True
+        if not services:
+            return ready
 
-    def _sync_pipeline_invocation(self, fi):
-        self._update_finalizer(fi, ['core.service.infrabox.net'])
-        return fi
+        for i, s in enumerate(services):
+            name = '%s-%s' % (pi['metadata']['name'], i)
 
+            service = {
+                'apiVersion': s['apiVersion'],
+                'kind': s['kind'],
+                'metadata': {
+                    'name': name,
+                    'namespace': pi['metadata']['namespace'],
+                    'annotations': s['metadata'].get('annotations', {}),
+                    'labels': {
+                        'service.infrabox.net/secret-name': name
+                    }
+                },
+                'spec': s['spec']
+            }
 
-class FunctionInvocationController(object):
+            url = '%s/apis/%s/namespaces/%s/%s' % (self.args.api_server,
+                                                   s['apiVersion'],
+                                                   pi['metadata']['namespace'],
+                                                   s['kind'].lower() + 's')
+            self._create(url, service)
+
+            url = '%s/apis/%s/namespaces/%s/%s/%s' % (self.args.api_server,
+                                                      s['apiVersion'],
+                                                      pi['metadata']['namespace'],
+                                                      s['kind'].lower() + 's',
+                                                      name)
+
+            service = self._get(url)
+
+            status = service.get('status', {}).get('status', False)
+            if status == 'ready':
+                continue
+            elif status == 'error':
+                # TODO
+                pass
+            else:
+                ready = False
+
+        return ready
+
+    def _sync_prepare(self, pi):
+        pi['status']['message'] = 'Services are being created'
+        pi['status']['state'] = 'preparing'
+        pi = self._update_finalizer(pi, ['core.service.infrabox.net'])
+
+        ready = self._sync_services(pi)
+        if ready:
+            pi['status']['message'] = ''
+            pi['status']['state'] = 'scheduling'
+
+        return pi
+
+    def _sync_run(self, pi):
+        p = self._get_pipeline(pi)
+
+        for i, step in enumerate(p['spec']['steps']):
+            if not pi['status'].get('stepStatuses', None):
+                pi['status']['stepStatuses'] = []
+
+            if len(pi['status']['stepStatuses']) <= i:
+                pi['status']['stepStatuses'].append({
+                    'state': {
+                        'waiting': {
+                            'message': 'Containers are being created'
+                        }
+                    }
+                })
+
+            status = pi['status']['stepStatuses'][i]
+
+            if status['state'].get('terminated', None):
+                # already finished
+                continue
+
+            step_invocation = pi['spec']['steps'][step['name']]
+
+            fi_name = pi['metadata']['name'] + '-' + step['name']
+            fi = {
+                'apiVersion': 'core.infrabox.net/v1alpha1',
+                'kind': 'IBFunctionInvocation',
+                'metadata': {
+                    'name': fi_name,
+                    'namespace': pi['metadata']['namespace']
+                },
+                'spec': {
+                    'functionName': step['functionName'],
+                    'env': step_invocation['env'],
+                    'volumes': [],
+                    'volumeMounts': []
+                }
+            }
+
+            if step_invocation.get('resources', None):
+                fi['spec']['resources'] = step_invocation['resources']
+
+            if pi['spec'].get('services', None):
+                for j, s in enumerate(pi['spec']['services']):
+                    name = '%s-%s' % (pi['metadata']['name'], j)
+                    fi['spec']['volumes'] += [{
+                        'name': name,
+                        'secret': {
+                            'secretName': name
+                        }
+                    }]
+
+                    fi['spec']['volumeMounts'] += [{
+                        'name':  name,
+                        'mountPath': '/var/run/infrabox.net/services/' + s['metadata']['name']
+                    }]
+
+            url = '%s/apis/core.infrabox.net/v1alpha1/namespaces/%s/ibfunctioninvocations/' % (self.args.api_server,
+                                                                                               self.namespace)
+            self._create(url, fi)
+
+            url = '%s/apis/core.infrabox.net/v1alpha1/namespaces/%s/ibfunctioninvocations/%s' % (self.args.api_server,
+                                                                                                 self.namespace,
+                                                                                                 fi_name)
+
+            fi = self._get(url)
+
+            if fi.get('status', None):
+                pi['status']['stepStatuses'][i] = fi['status']
+
+                if fi['status'].get('state', {}).get('terminated', None):
+                    break
+
+        first_state = pi['status']['stepStatuses'][0].get('state', {})
+
+        if first_state.get('running', None):
+            pi['status']['message'] = ""
+            pi['status']['state'] = "running"
+            pi['status']['startTime'] = first_state['running']['startedAt']
+        elif first_state.get('terminated', None):
+            pi['status']['message'] = ""
+            pi['status']['state'] = "running"
+            pi['status']['startTime'] = first_state['terminated']['startedAt']
+
+        all_terminated = True
+
+        for step_status in pi['status']['stepStatuses']:
+            if not step_status.get('state', {}).get('terminated', None):
+                all_terminated = False
+
+        if all_terminated:
+            pi['status']['message'] = ""
+            pi['status']['state'] = "finalizing"
+            pi['status']['startTime'] = first_state['terminated']['startedAt']
+            pi['status']['completionTime'] = pi['status']['stepStatuses'][-1]['state']['terminated']['finishedAt']
+
+        return pi
+
+    def _sync_finalize(self, pi):
+        self._delete_services(pi)
+
+        deleted = self._are_services_deleted(pi)
+        if not deleted:
+            return pi
+
+        pi['status']['message'] = ''
+        pi['status']['state'] = 'terminated'
+        return pi
+
+    def _sync(self, pi):
+        if not pi.get('status', None):
+            pi['status'] = {
+                'stepStatuses': []
+            }
+
+        state = pi['status'].get('state', None)
+        if state in ('error', 'terminated'):
+            return pi
+
+        if state in (None, '', 'preparing'):
+            pi = self._sync_prepare(pi)
+
+        if state in ('running', 'scheduling'):
+            pi = self._sync_run(pi)
+
+        if state == 'finalizing':
+            pi = self._sync_finalize(pi)
+
+        return pi
+
+class FunctionInvocationController(Controller):
     def __init__(self, args):
-        self.args = args
-        self.namespace = get_env("INFRABOX_GENERAL_WORKER_NAMESPACE")
-        self.logger = get_logger("function-controller")
-
-    def _get(self, url):
-        h = {'Authorization': 'Bearer %s' % self.args.token}
-        r = requests.get(url, headers=h, timeout=10)
-        result = r.json()
-        self.logger.info(json.dumps(result, indent=4))
-        return result
-
-    def _update(self, url, data):
-        h = {'Authorization': 'Bearer %s' % self.args.token}
-        r = requests.put(url, headers=h, json=data, timeout=10)
-        result = r.json()
-        self.logger.info(json.dumps(result, indent=4))
-        return result
-
-    def _create(self, url, data):
-        h = {'Authorization': 'Bearer %s' % self.args.token}
-        r = requests.post(url, headers=h, json=data, timeout=10)
-        result = r.json()
-        self.logger.info(json.dumps(result, indent=4))
-        return result
-
-    def _delete(self, url):
-        h = {'Authorization': 'Bearer %s' % self.args.token}
-        r = requests.delete(url, headers=h, timeout=10)
-        result = r.json()
-        self.logger.info(json.dumps(result, indent=4))
-        return result
-
-    def _get_url(self, fi):
-        url = '%s/apis/core.infrabox.net/v1alpha1/namespaces/%s/ibfunctioninvocations/%s' % (self.args.api_server,
-                                                                                             self.namespace,
-                                                                                             fi['metadata']['name'])
-        return url
+        super(FunctionInvocationController, self).__init__(args, 'ibfunctioninvocations')
+        self.functions = {}
 
     def _get_function(self, fi):
-        url = '%s/apis/core.infrabox.net/v1alpha1/namespaces/%s/ibfunctionins/%s' % (self.args.api_server,
-                                                                                     self.namespace,
-                                                                                     fi['spec']['functionName'])
-        return self._get(url)
+        if fi['spec']['functionName'] not in self.functions:
+            url = '%s/apis/core.infrabox.net/v1alpha1/namespaces/%s/ibfunctions/%s' % (self.args.api_server,
+                                                                                       self.namespace,
+                                                                                       fi['spec']['functionName'])
+            self.functions[fi['spec']['functionName']] = self._get(url)
 
-    def _update_finalizer(self, fi, finalizers):
-        finalizers = fi['metadata'].get('finalizers', None)
+        return copy.deepcopy(self.functions[fi['spec']['functionName']])
 
-        if finalizers:
-            return
-
-        fi['metadata']['finalizers'] = finalizers
-        url = self._get_url(fi)
-        self._update(url, fi)
-
-    def handle(self):
-        url = '%s/apis/core.infrabox.net/v1alpha1/namespaces/%s/ibfunctioninvocations' % (self.args.api_server,
-                                                                                          self.namespace)
-        data = self._get(url)
-
-        if 'items' not in data:
-            return
-
-        for fi in data['items']:
-            self._kube_sync_function_invocation(fi)
-
-    def _delete_function_invocation(self, fi):
+    def _sync_delete(self, fi):
         url = '%s/apis/batch/v1/namespaces/%s/jobs/%s' % (self.args.api_server,
                                                           self.namespace,
                                                           fi['metadata']['name'])
         self._delete(url)
-        self._update_finalizer(fi, [])
 
-    def _kube_sync_function_invocation(self, fi):
-        if fi.get('deletionTimestamp', None):
-            self._delete_function_invocation(fi)
-            return
+        url = '%s/api/v1/namespaces/%s/pods?labelSelector=function.infrabox.net/function-invocation-name=%s' % (self.args.api_server,
+                                                                                                                self.namespace,
+                                                                                                                fi['metadata']['name'])
+        pods = self._get(url)
+        for pod in pods['items']:
+            url = '%s/api/v1/namespaces/%s/pods/%s' % (self.args.api_server,
+                                                       self.namespace,
+                                                       pod['metadata']['name'])
+            self._delete(url)
 
-        fi = self._sync_function_invocation(fi)
-        url = self._get_url(fi)
-        self._update(url, fi)
+        fi['metadata']['finalizers'] = []
+        return fi
 
-    def _sync_function_invocation(self, fi):
-        self._update_finalizer(fi, ['core.service.infrabox.net'])
+    def _sync(self, fi):
+        if not fi.get('status', None):
+            fi['status'] = {}
+
+        fi = self._update_finalizer(fi, ['core.service.infrabox.net'])
         f = self._get_function(fi)
 
         # Create a batch job
@@ -213,15 +446,14 @@ class FunctionInvocationController(object):
             'volumeMounts': f['spec']['volumeMounts'],
         }
 
-        job['volumeMounts'] += fi['spec']['volumeMounts']
-        job['env'] += fi['spec']['env']
+        job['volumeMounts'] += fi['spec'].get('volumeMounts', [])
+        job['env'] += fi['spec'].get('env', [])
 
         if fi['spec'].get('resources', None):
             job['resources'] = fi['spec']['resources']
 
         containers = [job]
 
-        # TODO: owner reference
         batch = {
             'Kind': 'Job',
             'apiVersion': 'batch/v1',
@@ -240,7 +472,7 @@ class FunctionInvocationController(object):
                         'restartPolicy': 'Never',
                         'terminationGracePeriodSeconds': 0,
                         'volumes': f['spec']['volumes'],
-                        'imagePullSecrets': f['spec']['imagePullSecrets']
+                        'imagePullSecrets': f['spec'].get('imagePullSecrets', None)
                     },
                     'metadata': {
                         'labels': {
@@ -254,11 +486,10 @@ class FunctionInvocationController(object):
             }
         }
 
-        batch['spec']['template']['spec']['volumes'] += fi['spec']['volumes']
+        batch['spec']['template']['spec']['volumes'] += fi['spec'].get('volumes', [])
 
-        url = '%s/apis/batch/v1/namespaces/%s/jobs/%s' % (self.args.api_server,
-                                                          self.namespace,
-                                                          fi['metadata']['name'])
+        url = '%s/apis/batch/v1/namespaces/%s/jobs/' % (self.args.api_server,
+                                                        self.namespace)
         self._create(url, batch)
 
         # Sync status
@@ -267,21 +498,19 @@ class FunctionInvocationController(object):
                                                                                                                 fi['metadata']['name'])
         pods = self._get(url)
         for pod in pods['items']:
-            if pod['status']['containerStatuses']:
+            if pod['status'].get('containerStatuses', None):
                 fi['status']['state'] = pod['status']['containerStatuses'][0]['state']
                 fi['status']['nodeName'] = pod['spec']['nodeName']
-
-            if pod['status']['phase'] == 'Failed':
+            elif pod['status']['phase'] == 'Failed':
                 fi['status']['state'] = {
                     'terminated': {
                         'exitCode': 200,
-                        'reason': pod['status']['reason'],
-                        'message': pod['status']['message']
+                        'reason': pod['status'].get('reason', None),
+                        'message': pod['status'].get('message', None)
                     }
                 }
 
         return fi
-
 
 class Scheduler(object):
     def __init__(self, conn, args):
@@ -289,10 +518,14 @@ class Scheduler(object):
         self.args = args
         self.namespace = get_env("INFRABOX_GENERAL_WORKER_NAMESPACE")
         self.logger = get_logger("scheduler")
+        self.function_controller = FunctionInvocationController(args)
+        self.pipeline_controller = PipelineInvocationController(args)
 
     def handle_function_invocations(self):
-        c = FunctionInvocationController(self.args)
-        c.handle()
+        self.function_controller.handle()
+
+    def handle_pipeline_invocations(self):
+        self.pipeline_controller.handle()
 
     def kube_delete_job(self, job_id):
         h = {'Authorization': 'Bearer %s' % self.args.token}
@@ -667,16 +900,16 @@ class Scheduler(object):
 
                     if 'stepStatuses' in status and status['stepStatuses']:
                         stepStatus = status['stepStatuses'][-1]
-                        exit_code = stepStatus['State']['terminated']['exitCode']
+                        exit_code = stepStatus['state']['terminated']['exitCode']
 
                         if exit_code == 0:
                             current_state = 'finished'
                         else:
                             current_state = 'failure'
-                            message = stepStatus['State']['terminated'].get('message', None)
+                            message = stepStatus['state']['terminated'].get('message', None)
 
                             if not message:
-                                message = stepStatus['State']['terminated'].get('reason', 'Unknown Error')
+                                message = stepStatus['state']['terminated'].get('reason', 'Unknown Error')
 
                     if not message and current_state != 'finished':
                         self.logger.error(json.dumps(status, indent=4))
@@ -826,6 +1059,7 @@ class Scheduler(object):
 
         try:
             self.handle_function_invocations()
+            self.handle_pipeline_invocations()
             self.handle_timeouts()
             self.handle_aborts()
             self.handle_orphaned_jobs()
@@ -852,7 +1086,7 @@ class Scheduler(object):
 
         while True:
             self.handle()
-            time.sleep(2)
+            time.sleep(1)
 
 def main():
     # Arguments
