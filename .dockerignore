@@ -9,9 +9,6 @@ src/dashboard-client/dist/*
 *.pyc
 .infrabox*
 !.infrabox/inputs
-src/controller/pkg/client
-src/controller/vendor
-src/controller/controller
 src/services/gcp/pkg/client
 src/services/gcp/vendor
 src/services/gcp/tmp/_output
