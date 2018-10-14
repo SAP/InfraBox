@@ -359,7 +359,8 @@ class RunJob(Job):
         if not os.path.exists(self.infrabox_coverage_dir):
             return
 
-        if not os.listdir(self.infrabox_coverage_dir):
+        files = self.get_files_in_dir(self.infrabox_coverage_dir, ending=".xml")
+        if not files:
             return
 
         converted_result = self.convert_coverage_result(self.infrabox_coverage_dir)
