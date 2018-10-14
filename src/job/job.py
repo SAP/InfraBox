@@ -359,6 +359,9 @@ class RunJob(Job):
         if not os.path.exists(self.infrabox_coverage_dir):
             return
 
+        if not os.listdir(self.infrabox_coverage_dir):
+            return
+
         converted_result = self.convert_coverage_result(self.infrabox_coverage_dir)
         mu_path = os.path.join(self.infrabox_markup_dir, 'coverage.json')
 
