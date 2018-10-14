@@ -128,7 +128,9 @@ def parse_git(d, path):
     check_name(d['name'], path + ".name")
     check_text(d['commit'], path + ".commit")
     check_text(d['clone_url'], path + ".clone_url")
-    check_text(d['branch'], path + ".clone_url")
+
+    if 'branch' in d:
+        check_text(d['branch'], path + ".clone_url")
 
     if 'depends_on' in d:
         parse_depends_on(d['depends_on'], path + ".depends_on")
