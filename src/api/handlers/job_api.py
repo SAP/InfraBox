@@ -1084,16 +1084,20 @@ class Testresult(Resource):
             abort(400, e.message)
 
         rows = g.db.execute_one("""
-                SELECT j.project_id, b.build_number
-                FROM job  j
-                INNER JOIN build b
-                    ON j.id = %s
-                    AND b.id = j.build_id
-            """, [job_id])
+            SELECT j.project_id, b.build_number
+            FROM job  j
+            INNER JOIN build b
+                ON j.id = %s
+                AND b.id = j.build_id
+        """, [job_id])
         project_id = rows[0]
         build_number = rows[1]
 
-        existing_tests = g.db.execute_many("""SELECT suite, name, id FROM test WHERE project_id = %s""", [project_id])
+        existing_tests = g.db.execute_many("""
+            SELECT suite, name, id
+            FROM test
+            WHERE project_id = %s
+        """, [project_id])
 
         test_index = {}
         for t in existing_tests:
