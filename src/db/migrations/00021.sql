@@ -1,4 +1,5 @@
 DROP TABLE test;
+TRUNCATE TABLE test_run;
 ALTER TABLE test_run DROP COLUMN test_id CASCADE;
-ALTER TABLE test_run ADD COLUMN suite text;
-ALTER TABLE test_run ADD COLUMN name text;
+ALTER TABLE test_run ADD COLUMN suite text NOT NULL;
+ALTER TABLE test_run ADD COLUMN name text NOT NULL;
