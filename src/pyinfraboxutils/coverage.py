@@ -296,10 +296,10 @@ class Parser(object):
         return None
 
     def parse_dir(self):
-        for _, _, files in os.walk(self.input):
+        for root, _, files in os.walk(self.input):
             for filename in files:
                 if filename.endswith(".xml"):
-                    f = os.path.join(self.input, filename)
+                    f = os.path.join(root, filename)
                     p = Parser(f)
                     p.parse(None, create_markup=False)
                     self.files += p.files
