@@ -1084,55 +1084,25 @@ class Testresult(Resource):
             abort(400, e.message)
 
         rows = g.db.execute_one("""
-            SELECT j.project_id, b.build_number
+            SELECT j.project_id
             FROM job  j
             INNER JOIN build b
                 ON j.id = %s
                 AND b.id = j.build_id
         """, [job_id])
         project_id = rows[0]
-        build_number = rows[1]
-
-        existing_tests = g.db.execute_many("""
-            SELECT suite, name, id
-            FROM test
-            WHERE project_id = %s
-        """, [project_id])
-
-        test_index = {}
-        for t in existing_tests:
-            test_index[t[0] + '|' + t[1]] = t[2]
 
         # Lookup all IDs and prepare insert for missing tests
-        missing_tests = []
         test_runs = []
         measurements = []
 
         tests = data['tests']
         for t in tests:
-
             if len(t['suite']) > 250:
                 t['suite'] = t['suite'][0:250]
 
             if len(t['name']) > 250:
                 t['name'] = t['name'][0:250]
-
-            # check if if already exists
-            test_id = None
-            concat_name = t['suite'] + '|' + t['name']
-            if  concat_name in test_index:
-                # existing test
-                test_id = test_index[concat_name]
-            else:
-                # new test
-                test_id = str(uuid.uuid4())
-                missing_tests.append((
-                    t['name'],
-                    t['suite'],
-                    project_id,
-                    test_id,
-                    build_number
-                ))
 
             # Track stats
             if t['status'] == 'fail' or t['status'] == 'failure':
@@ -1144,11 +1114,12 @@ class Testresult(Resource):
                 test_run_id,
                 t['status'],
                 job_id,
-                test_id,
                 t['duration'],
                 project_id,
                 t.get('message', None),
-                t.get('stack', None)
+                t.get('stack', None),
+                t['name'],
+                t['suite']
             ))
 
             # create measurements
@@ -1161,14 +1132,11 @@ class Testresult(Resource):
                     project_id
                 ))
 
-        if missing_tests:
-            insert(g.db.conn, ("name", "suite", "project_id", "id", "build_number"), missing_tests, 'test')
-
         if measurements:
             insert(g.db.conn, ("test_run_id", "name", "unit", "value", "project_id"), measurements, 'measurement')
 
         insert(g.db.conn, ("id", "state", "job_id", "test_id", "duration",
-                           "project_id", "message", "stack"), test_runs, 'test_run')
+                           "project_id", "message", "stack", "name", "suite"), test_runs, 'test_run')
 
         g.db.commit()
         return jsonify({})
