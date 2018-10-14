@@ -33,7 +33,6 @@ class Test(unittest.TestCase):
         cur.execute('''DELETE FROM build''')
         cur.execute('''DELETE FROM test_run''')
         cur.execute('''DELETE FROM measurement''')
-        cur.execute('''DELETE FROM test''')
         cur.execute('''DELETE FROM job_markup''')
         cur.execute('''DELETE FROM secret''')
         cur.execute('''INSERT INTO "user"(id, github_id, avatar_url, name,

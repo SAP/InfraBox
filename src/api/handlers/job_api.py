@@ -1135,7 +1135,7 @@ class Testresult(Resource):
         if measurements:
             insert(g.db.conn, ("test_run_id", "name", "unit", "value", "project_id"), measurements, 'measurement')
 
-        insert(g.db.conn, ("id", "state", "job_id", "test_id", "duration",
+        insert(g.db.conn, ("id", "state", "job_id", "duration",
                            "project_id", "message", "stack", "name", "suite"), test_runs, 'test_run')
 
         g.db.commit()
