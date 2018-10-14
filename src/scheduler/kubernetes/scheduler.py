@@ -30,9 +30,8 @@ class Controller(object):
 
     def _get(self, url):
         h = {'Authorization': 'Bearer %s' % self.args.token}
-        self.logger.info('GET: %s', url)
+        self.logger.debug('GET: %s', url)
         r = requests.get(url, headers=h, timeout=10)
-        # self.logger.info(r.text)
 
         if r.status_code == 404:
             return None
@@ -45,9 +44,8 @@ class Controller(object):
 
     def _update(self, url, data):
         h = {'Authorization': 'Bearer %s' % self.args.token}
-        self.logger.info('PUT: %s', url)
+        self.logger.debug('PUT: %s', url)
         r = requests.put(url, headers=h, json=data, timeout=10)
-        # self.logger.info(r.text)
 
         if r.status_code != 200:
             raise APIException(r)
@@ -57,9 +55,8 @@ class Controller(object):
 
     def _create(self, url, data):
         h = {'Authorization': 'Bearer %s' % self.args.token}
-        self.logger.info('POST: %s', url)
+        self.logger.debug('POST: %s', url)
         r = requests.post(url, headers=h, json=data, timeout=10)
-        # self.logger.info(r.text)
 
         if r.status_code == 409:
             # Already exists
@@ -73,9 +70,8 @@ class Controller(object):
 
     def _delete(self, url):
         h = {'Authorization': 'Bearer %s' % self.args.token}
-        self.logger.info('DELETE: %s', url)
+        self.logger.debug('DELETE: %s', url)
         r = requests.delete(url, headers=h, timeout=10)
-        # self.logger.info(r.text)
 
         if r.status_code == 404:
             # does not exist
@@ -244,8 +240,9 @@ class PipelineInvocationController(Controller):
             if status == 'ready':
                 continue
             elif status == 'error':
-                # TODO
-                pass
+                pi['status']['state'] = status
+                pi['status']['message'] = service['status'].get('message', 'Internal Error')
+                ready = False
             else:
                 ready = False
 
@@ -618,7 +615,7 @@ class Scheduler(object):
         definition = j[0]
 
         cpu -= 0.2
-        self.logger.info("Scheduling job to kubernetes")
+        self.logger.debug("Scheduling job to kubernetes")
 
         services = None
 
@@ -632,8 +629,8 @@ class Scheduler(object):
         cursor.execute("UPDATE job SET state = 'scheduled' WHERE id = %s", [job_id])
         cursor.close()
 
-        self.logger.info("Finished scheduling job")
-        self.logger.info("")
+        self.logger.debug("Finished scheduling job")
+        self.logger.debug("")
 
     def schedule(self):
         # find jobs
@@ -665,9 +662,9 @@ class Scheduler(object):
             memory = limits.get('memory', 1024)
             cpu = limits.get('cpu', 1)
 
-            self.logger.info("")
-            self.logger.info("Starting to schedule job: %s", job_id)
-            self.logger.info("Dependencies: %s", dependencies)
+            self.logger.debug("")
+            self.logger.debug("Starting to schedule job: %s", job_id)
+            self.logger.debug("Dependencies: %s", dependencies)
 
             cursor = self.conn.cursor()
             cursor.execute('''
@@ -682,7 +679,7 @@ class Scheduler(object):
             result = cursor.fetchall()
             cursor.close()
 
-            self.logger.info("Parent states: %s", result)
+            self.logger.debug("Parent states: %s", result)
 
             # check if there's still some parent running
             parents_running = False
@@ -694,7 +691,7 @@ class Scheduler(object):
                     break
 
             if parents_running:
-                self.logger.info("A parent is still running, not scheduling job")
+                self.logger.debug("A parent is still running, not scheduling job")
                 continue
 
             # check if conditions are met
@@ -709,11 +706,11 @@ class Scheduler(object):
 
                 assert on
 
-                self.logger.info("Checking parent %s with state %s", parent_id, parent_state)
-                self.logger.info("Condition is %s", on)
+                self.logger.debug("Checking parent %s with state %s", parent_id, parent_state)
+                self.logger.debug("Condition is %s", on)
 
                 if parent_state not in on:
-                    self.logger.info("Condition is not met, skipping job")
+                    self.logger.debug("Condition is not met, skipping job")
                     skipped = True
                     # dependency error, don't run this job_id
                     cursor = self.conn.cursor()
@@ -727,7 +724,7 @@ class Scheduler(object):
 
             # If it's a wait job we are done here
             if job_type == "wait":
-                self.logger.info("Wait job, we are done")
+                self.logger.debug("Wait job, we are done")
                 cursor = self.conn.cursor()
                 cursor.execute('''
                     UPDATE job SET state = 'finished', start_date = now(), end_date = now() WHERE id = %s;
@@ -870,7 +867,7 @@ class Scheduler(object):
             cursor.close()
 
             if not result:
-                self.logger.info('Deleting orphaned job %s', job_id)
+                self.logger.debug('Deleting orphaned job %s', job_id)
                 self.kube_delete_job(job_id)
                 continue
 
@@ -955,7 +952,7 @@ class Scheduler(object):
 
             if delete_job:
                 self.upload_console(job_id)
-                self.logger.info('Deleting job %s', job_id)
+                self.logger.debug('Deleting job %s', job_id)
                 self.kube_delete_job(job_id)
 
     def get_default_cluster(self):
