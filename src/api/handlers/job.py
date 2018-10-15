@@ -2,13 +2,13 @@
 from flask import g, jsonify, abort, send_file
 from flask_restplus import Resource, fields
 
-from pyinfraboxutils.ibflask import auth_required, check_job_belongs_to_project
+from pyinfraboxutils.ibflask import check_job_belongs_to_project
 from pyinfraboxutils.ibrestplus import api
 from pyinfraboxutils.storage import storage
 
-ns = api.namespace('api/v1/projects/<project_id>/jobs',
-                   description='Job related operations',
-                   tag="test")
+ns = api.namespace('Jobs',
+                   path='/api/v1/projects/<project_id>/jobs/<job_id>',
+                   description='Settings related operations')
 
 limits_model = api.model('LimitsModel', {
     'cpu': fields.Integer(min=1, attribute='cpu'),
@@ -38,12 +38,15 @@ job_model = api.model('JobModel', {
     'depends_on': fields.Nested(dependency_model),
 })
 
-@ns.route('/<job_id>')
+@ns.route('')
+@api.doc(responses={403: 'Not Authorized'})
 class Job(Resource):
 
-    @auth_required(['project'])
-    @ns.marshal_with(job_model)
+    @api.marshal_with(job_model)
     def get(self, project_id, job_id):
+        '''
+        Returns a single job
+        '''
         job = g.db.execute_one_dict('''
             SELECT id, state, start_date, build_id, end_date, name,
                 definition#>'{resources,limits,cpu}' as cpu,
@@ -58,12 +61,15 @@ class Job(Resource):
         return job
 
 
-@ns.route('/<job_id>/output')
+@ns.route('/output', doc=False)
+@api.doc(responses={403: 'Not Authorized'})
 class Output(Resource):
 
-    @auth_required(['project'])
     @check_job_belongs_to_project
     def get(self, project_id, job_id):
+        '''
+        Returns the the content of /infrabox/output of the job
+        '''
         g.release_db()
 
         key = '%s.tar.snappy' % job_id
@@ -74,10 +80,10 @@ class Output(Resource):
 
         return send_file(f, attachment_filename=key)
 
-@ns.route('/<job_id>/manifest')
+@ns.route('/manifest', doc=False)
+@api.doc(responses={403: 'Not Authorized'})
 class Project(Resource):
 
-    @auth_required(['project'])
     @check_job_belongs_to_project
     def get(self, project_id, job_id):
         result = g.db.execute_one_dict('''

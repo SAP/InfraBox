@@ -1,13 +1,10 @@
-FROM alpine:3.6
-
-RUN apk add --no-cache py2-flask py2-psycopg2 py2-jwt py2-cryptography py2-gevent
+ARG INFRABOX_BUILD_NUMBER
+FROM quay.io/infrabox/images-base:build_$INFRABOX_BUILD_NUMBER
 
 COPY src/docker-registry/auth/server.py /server.py
 COPY src/pyinfraboxutils /pyinfraboxutils
+COPY src/pyinfrabox /pyinfrabox
 
 ENV PYTHONPATH=/
-
-RUN adduser -S auth
-USER auth
 
 CMD python /server.py

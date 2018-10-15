@@ -110,6 +110,6 @@ class ApiConsole(object):
                           json=payload).json()
             self.output = []
         except Exception as e:
-            print e
+            print(e)
 
         self.last_send = datetime.now()

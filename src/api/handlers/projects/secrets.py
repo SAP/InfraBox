@@ -3,11 +3,15 @@ import re
 from flask import request, g, abort
 from flask_restplus import Resource, fields
 
-from pyinfrabox.utils import validate_uuid4
-from pyinfraboxutils.ibflask import auth_required, OK
-from pyinfraboxutils.ibrestplus import api
+
+from pyinfrabox.utils import validate_uuid
+from pyinfraboxutils.ibflask import OK
+from pyinfraboxutils.ibrestplus import api, response_model
 from pyinfraboxutils.secrets import encrypt_secret
-from api.namespaces import project as ns
+
+ns = api.namespace('Secrets',
+                   path='/api/v1/projects/<project_id>/secrets',
+                   description='Secret related operations')
 
 secret_model = api.model('Secret', {
     'name': fields.String(required=True),
@@ -19,23 +23,29 @@ add_secret_model = api.model('AddSecret', {
     'value': fields.String(required=True, max_length=1024 * 128),
 })
 
-@ns.route('/<project_id>/secrets/')
+@ns.route('/')
+@api.doc(responses={403: 'Not Authorized'})
 class Secrets(Resource):
 
     name_pattern = re.compile('^[a-zA-Z0-9_]+$')
 
-    @auth_required(['user'])
     @api.marshal_list_with(secret_model)
     def get(self, project_id):
+        '''
+        Returns project's secrets
+        '''
         p = g.db.execute_many_dict('''
             SELECT name, id FROM secret
             WHERE project_id = %s
         ''', [project_id])
         return p
 
-    @auth_required(['user'])
     @api.expect(add_secret_model)
+    @api.response(200, 'Success', response_model)
     def post(self, project_id):
+        '''
+        Create new secret
+        '''
         b = request.get_json()
 
         if not Secrets.name_pattern.match(b['name']):
@@ -67,11 +77,15 @@ class Secrets(Resource):
         return OK('Successfully added secret.')
 
 
-@ns.route('/<project_id>/secrets/<secret_id>')
+@ns.route('/<secret_id>')
+@api.doc(responses={403: 'Not Authorized'})
 class Secret(Resource):
-    @auth_required(['user'])
+    @api.response(200, 'Success', response_model)
     def delete(self, project_id, secret_id):
-        if not validate_uuid4(secret_id):
+        '''
+        Delete a secret
+        '''
+        if not validate_uuid(secret_id):
             abort(400, "Invalid secret uuid.")
 
         num_secrets = g.db.execute_one("""

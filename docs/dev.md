@@ -24,6 +24,7 @@ pipenv shell
 To build all images run:
 
 ``` bash
+infrabox run
 ./ib.py images build
 ```
 
@@ -56,6 +57,8 @@ During development you may want to start several services separately to test you
 ./ib.py services start <service_name>
 ```
 
+Services to start are `storage`, `opa`, `api` and `dashboard-client`.
+
 ## Generate Changelog
 If you want to create a new changelog file, run:
 ```bash
@@ -70,5 +73,6 @@ Otherwise, you may want to explicitly specify your token within a command:
 
 See the service's READMEs for details:
 - [Storage](/infrabox/utils/storage/)
+- [Open Policy Agent](/src/openpolicyagent)
 - [API](/src/api/)
 - [Dashboard UI](/src/dashboard-client)

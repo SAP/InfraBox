@@ -15,6 +15,7 @@ spec:
             {{ include "imagePullSecret" . | indent 8 }}
             containers:
             {{ include "containers_database" . | indent 12 }}
+            {{ include "containers_opa" . | indent 12 }}
             {{ if .Values.gerrit.enabled }}
             -
                 image: {{ include "image_repository" . }}/gerrit-api:{{ include "image_tag" . }}
@@ -48,6 +49,8 @@ spec:
                 {{ include "env_version" . | indent 16 }}
                 {{ include "env_cluster" . | indent 16 }}
                 {{ include "env_account" . | indent 16 }}
+                {{ include "env_ha" . | indent 16 }}
+                {{ include "env_opa" . | indent 16 }}
                 -
                     name: INFRABOX_GERRIT_ENABLED
                     value: {{ .Values.gerrit.enabled | quote }}

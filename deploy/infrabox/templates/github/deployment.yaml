@@ -1,4 +1,4 @@
-{{ if eq .Values.cluster.name "master" }}
+{{ define "github_deployment" }}
 {{ if .Values.github.enabled }}
 apiVersion: extensions/v1beta1
 kind: Deployment
@@ -27,6 +27,7 @@ spec:
                 {{ include "env_general" . | indent 16 }}
                 {{ include "env_github_secrets" . | indent 16 }}
                 {{ include "env_version" . | indent 16 }}
+                {{ include "env_ha" . | indent 16 }}
                 resources:
                     requests:
                         memory: "256Mi"
@@ -40,6 +41,8 @@ spec:
                 {{ include "env_github" . | indent 16 }}
                 {{ include "env_general" . | indent 16 }}
                 {{ include "env_version" . | indent 16 }}
+                {{ include "env_cluster" . | indent 16 }}
+                {{ include "env_ha" . | indent 16 }}
                 resources:
                     requests:
                         memory: "256Mi"
@@ -47,4 +50,10 @@ spec:
             volumes:
                 {{ include "volumes_database" . | indent 16 }}
 {{ end }}
+{{ end }}
+
+{{ if .Values.ha.enabled }}
+    {{ include "github_deployment" . }}
+{{ else if eq .Values.cluster.name "master" }}
+    {{ include "github_deployment" . }}
 {{ end }}

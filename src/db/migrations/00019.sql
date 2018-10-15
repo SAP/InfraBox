@@ -1,0 +1,1 @@
+ALTER TABLE abort ADD COLUMN user_id uuid;

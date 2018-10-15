@@ -1,7 +1,10 @@
+# pylint: disable=too-few-public-methods,line-too-long,too-many-lines,too-many-nested-blocks
 import argparse
 import time
 import os
 import random
+import json
+import copy
 from datetime import datetime
 
 import requests
@@ -13,12 +16,512 @@ from pyinfraboxutils import get_logger, get_env
 from pyinfraboxutils.db import connect_db
 from pyinfraboxutils.token import encode_job_token
 
+class APIException(Exception):
+    def __init__(self, result):
+        super(APIException, self).__init__("API Server Error (%s)" % result.status_code)
+        self.result = result
+
+class Controller(object):
+    def __init__(self, args, resource):
+        self.args = args
+        self.namespace = get_env("INFRABOX_GENERAL_WORKER_NAMESPACE")
+        self.logger = get_logger("controller")
+        self.resource = resource
+
+    def _get(self, url):
+        h = {'Authorization': 'Bearer %s' % self.args.token}
+        self.logger.debug('GET: %s', url)
+        r = requests.get(url, headers=h, timeout=10)
+
+        if r.status_code == 404:
+            return None
+
+        if r.status_code != 200:
+            raise APIException(r)
+
+        result = r.json()
+        return result
+
+    def _update(self, url, data):
+        h = {'Authorization': 'Bearer %s' % self.args.token}
+        self.logger.debug('PUT: %s', url)
+        r = requests.put(url, headers=h, json=data, timeout=10)
+
+        if r.status_code != 200:
+            raise APIException(r)
+
+        result = r.json()
+        return result
+
+    def _create(self, url, data):
+        h = {'Authorization': 'Bearer %s' % self.args.token}
+        self.logger.debug('POST: %s', url)
+        r = requests.post(url, headers=h, json=data, timeout=10)
+
+        if r.status_code == 409:
+            # Already exists
+            return None
+
+        if r.status_code != 201:
+            raise APIException(r)
+
+        result = r.json()
+        return result
+
+    def _delete(self, url):
+        h = {'Authorization': 'Bearer %s' % self.args.token}
+        self.logger.debug('DELETE: %s', url)
+        r = requests.delete(url, headers=h, timeout=10)
+
+        if r.status_code == 404:
+            # does not exist
+            return None
+
+        if r.status_code != 200:
+            raise APIException(r)
+
+        result = r.json()
+        return result
+
+    def _update_finalizer(self, fi, finalizers):
+        if fi['metadata'].get('finalizers', None):
+            return fi
+
+        fi['metadata']['finalizers'] = finalizers
+        url = self._get_url(fi)
+        return self._update(url, fi)
+
+    def _get_url(self, fi):
+        url = '%s/apis/core.infrabox.net/v1alpha1/namespaces/%s/%s/%s' % (self.args.api_server,
+                                                                          self.namespace,
+                                                                          self.resource,
+                                                                          fi['metadata']['name'])
+        return url
+
+    def handle(self):
+        url = '%s/apis/core.infrabox.net/v1alpha1/namespaces/%s/%s' % (self.args.api_server,
+                                                                       self.namespace,
+                                                                       self.resource)
+        data = self._get(url)
+
+        if 'items' not in data:
+            return
+
+        for fi in data['items']:
+            try:
+                before = json.dumps(fi.get('status', {})) + json.dumps(fi['metadata'].get('finalizers', {}))
+                if fi['metadata'].get('deletionTimestamp', None):
+                    fi = self._sync_delete(fi)
+                else:
+                    fi = self._sync(fi)
+
+                url = self._get_url(fi)
+                after = json.dumps(fi.get('status', {})) + json.dumps(fi['metadata'].get('finalizers', {}))
+
+                if before != after:
+                    self._update(url, fi)
+            except APIException as e:
+                self.logger.exception(e)
+                self.logger.warn(e.result.text)
+            except Exception as e:
+                self.logger.exception(e)
+
+    def _sync(self, _):
+        assert False
+
+    def _sync_delete(self, _):
+        assert False
+
+class PipelineInvocationController(Controller):
+    def __init__(self, args):
+        super(PipelineInvocationController, self).__init__(args, 'ibpipelineinvocations')
+        self.pipelines = {}
+
+    def _get_pipeline(self, pi):
+        if pi['spec']['pipelineName'] not in self.pipelines:
+            url = '%s/apis/core.infrabox.net/v1alpha1/namespaces/%s/ibpipelines/%s' % (self.args.api_server,
+                                                                                       pi['metadata']['namespace'],
+                                                                                       pi['spec']['pipelineName'])
+            self.pipelines[pi['spec']['pipelineName']] = self._get(url)
+
+        return copy.deepcopy(self.pipelines[pi['spec']['pipelineName']])
+
+    def _delete_services(self, pi):
+        services = pi['spec'].get('services', [])
+
+        if not services:
+            return
+
+        for i, s in enumerate(services):
+            name = '%s-%s' % (pi['metadata']['name'], i)
+            url = '%s/apis/%s/namespaces/%s/%s/%s' % (self.args.api_server,
+                                                      s['apiVersion'],
+                                                      self.namespace,
+                                                      s['kind'].lower() + 's',
+                                                      name)
+            self._delete(url)
+
+    def _are_services_deleted(self, pi):
+        services = pi['spec'].get('services', [])
+
+        if not services:
+            return True
+
+        for i, s in enumerate(services):
+            name = '%s-%s' % (pi['metadata']['name'], i)
+            url = '%s/apis/%s/namespaces/%s/%s/%s' % (self.args.api_server,
+                                                      s['apiVersion'],
+                                                      self.namespace,
+                                                      s['kind'].lower() + 's',
+                                                      name)
+
+
+            try:
+                self._get(url)
+            except:
+                return False
+
+        return True
+
+
+    def _sync_delete(self, pi):
+        self._delete_services(pi)
+
+        pipeline = self._get_pipeline(pi)
+        for step in pipeline['spec']['steps']:
+            name = pi['metadata']['name'] + '-' + step['name']
+            url = '%s/apis/core.infrabox.net/v1alpha1/namespaces/%s/ibfunctioninvocations/%s' % (self.args.api_server,
+                                                                                                 pi['metadata']['namespace'],
+                                                                                                 name)
+            self._delete(url)
+
+        pi['metadata']['finalizers'] = []
+        return pi
+
+    def _sync_services(self, pi):
+        services = pi['spec'].get('services', [])
+
+        ready = True
+        if not services:
+            return ready
+
+        for i, s in enumerate(services):
+            name = '%s-%s' % (pi['metadata']['name'], i)
+
+            service = {
+                'apiVersion': s['apiVersion'],
+                'kind': s['kind'],
+                'metadata': {
+                    'name': name,
+                    'namespace': pi['metadata']['namespace'],
+                    'annotations': s['metadata'].get('annotations', {}),
+                    'labels': {
+                        'service.infrabox.net/secret-name': name
+                    }
+                },
+                'spec': s['spec']
+            }
+
+            url = '%s/apis/%s/namespaces/%s/%s' % (self.args.api_server,
+                                                   s['apiVersion'],
+                                                   pi['metadata']['namespace'],
+                                                   s['kind'].lower() + 's')
+            self._create(url, service)
+
+            url = '%s/apis/%s/namespaces/%s/%s/%s' % (self.args.api_server,
+                                                      s['apiVersion'],
+                                                      pi['metadata']['namespace'],
+                                                      s['kind'].lower() + 's',
+                                                      name)
+
+            service = self._get(url)
+
+            status = service.get('status', {}).get('status', False)
+            if status == 'ready':
+                continue
+            elif status == 'error':
+                pi['status']['state'] = status
+                pi['status']['message'] = service['status'].get('message', 'Internal Error')
+                ready = False
+            else:
+                ready = False
+
+        return ready
+
+    def _sync_prepare(self, pi):
+        pi['status']['message'] = 'Services are being created'
+        pi['status']['state'] = 'preparing'
+        pi = self._update_finalizer(pi, ['core.service.infrabox.net'])
+
+        ready = self._sync_services(pi)
+        if ready:
+            pi['status']['message'] = ''
+            pi['status']['state'] = 'scheduling'
+
+        return pi
+
+    def _sync_run(self, pi):
+        p = self._get_pipeline(pi)
+
+        for i, step in enumerate(p['spec']['steps']):
+            if not pi['status'].get('stepStatuses', None):
+                pi['status']['stepStatuses'] = []
+
+            if len(pi['status']['stepStatuses']) <= i:
+                pi['status']['stepStatuses'].append({
+                    'state': {
+                        'waiting': {
+                            'message': 'Containers are being created'
+                        }
+                    }
+                })
+
+            status = pi['status']['stepStatuses'][i]
+
+            if status.get('state', {}).get('terminated', None):
+                # already finished
+                continue
+
+            step_invocation = pi['spec']['steps'][step['name']]
+
+            fi_name = pi['metadata']['name'] + '-' + step['name']
+            fi = {
+                'apiVersion': 'core.infrabox.net/v1alpha1',
+                'kind': 'IBFunctionInvocation',
+                'metadata': {
+                    'name': fi_name,
+                    'namespace': pi['metadata']['namespace']
+                },
+                'spec': {
+                    'functionName': step['functionName'],
+                    'env': step_invocation['env'],
+                    'volumes': [],
+                    'volumeMounts': []
+                }
+            }
+
+            if step_invocation.get('resources', None):
+                fi['spec']['resources'] = step_invocation['resources']
+
+            if pi['spec'].get('services', None):
+                for j, s in enumerate(pi['spec']['services']):
+                    name = '%s-%s' % (pi['metadata']['name'], j)
+                    fi['spec']['volumes'] += [{
+                        'name': name,
+                        'secret': {
+                            'secretName': name
+                        }
+                    }]
+
+                    fi['spec']['volumeMounts'] += [{
+                        'name':  name,
+                        'mountPath': '/var/run/infrabox.net/services/' + s['metadata']['name']
+                    }]
+
+            url = '%s/apis/core.infrabox.net/v1alpha1/namespaces/%s/ibfunctioninvocations/' % (self.args.api_server,
+                                                                                               self.namespace)
+            self._create(url, fi)
+
+            url = '%s/apis/core.infrabox.net/v1alpha1/namespaces/%s/ibfunctioninvocations/%s' % (self.args.api_server,
+                                                                                                 self.namespace,
+                                                                                                 fi_name)
+
+            fi = self._get(url)
+
+            if fi.get('status', None):
+                pi['status']['stepStatuses'][i] = fi['status']
+
+                if fi['status'].get('state', {}).get('terminated', None):
+                    break
+
+        first_state = pi['status']['stepStatuses'][0].get('state', {})
+
+        if first_state.get('running', None):
+            pi['status']['message'] = ""
+            pi['status']['state'] = "running"
+            pi['status']['startTime'] = first_state['running']['startedAt']
+        elif first_state.get('terminated', None):
+            pi['status']['message'] = ""
+            pi['status']['state'] = "running"
+            pi['status']['startTime'] = first_state['terminated']['startedAt']
+
+        all_terminated = True
+
+        for step_status in pi['status']['stepStatuses']:
+            if not step_status.get('state', {}).get('terminated', None):
+                all_terminated = False
+
+        if all_terminated:
+            pi['status']['message'] = ""
+            pi['status']['state'] = "finalizing"
+            pi['status']['startTime'] = first_state['terminated']['startedAt']
+            pi['status']['completionTime'] = pi['status']['stepStatuses'][-1]['state']['terminated']['finishedAt']
+
+        return pi
+
+    def _sync_finalize(self, pi):
+        self._delete_services(pi)
+
+        deleted = self._are_services_deleted(pi)
+        if not deleted:
+            return pi
+
+        pi['status']['message'] = ''
+        pi['status']['state'] = 'terminated'
+        return pi
+
+    def _sync(self, pi):
+        if not pi.get('status', None):
+            pi['status'] = {
+                'stepStatuses': []
+            }
+
+        state = pi['status'].get('state', None)
+        if state in ('error', 'terminated'):
+            return pi
+
+        if state in (None, '', 'preparing'):
+            pi = self._sync_prepare(pi)
+
+        if state in ('running', 'scheduling'):
+            pi = self._sync_run(pi)
+
+        if state == 'finalizing':
+            pi = self._sync_finalize(pi)
+
+        return pi
+
+class FunctionInvocationController(Controller):
+    def __init__(self, args):
+        super(FunctionInvocationController, self).__init__(args, 'ibfunctioninvocations')
+        self.functions = {}
+
+    def _get_function(self, fi):
+        if fi['spec']['functionName'] not in self.functions:
+            url = '%s/apis/core.infrabox.net/v1alpha1/namespaces/%s/ibfunctions/%s' % (self.args.api_server,
+                                                                                       self.namespace,
+                                                                                       fi['spec']['functionName'])
+            self.functions[fi['spec']['functionName']] = self._get(url)
+
+        return copy.deepcopy(self.functions[fi['spec']['functionName']])
+
+    def _sync_delete(self, fi):
+        url = '%s/apis/batch/v1/namespaces/%s/jobs/%s' % (self.args.api_server,
+                                                          self.namespace,
+                                                          fi['metadata']['name'])
+        self._delete(url)
+
+        url = '%s/api/v1/namespaces/%s/pods?labelSelector=function.infrabox.net/function-invocation-name=%s' % (self.args.api_server,
+                                                                                                                self.namespace,
+                                                                                                                fi['metadata']['name'])
+        pods = self._get(url)
+        for pod in pods['items']:
+            url = '%s/api/v1/namespaces/%s/pods/%s' % (self.args.api_server,
+                                                       self.namespace,
+                                                       pod['metadata']['name'])
+            self._delete(url)
+
+        fi['metadata']['finalizers'] = []
+        return fi
+
+    def _sync(self, fi):
+        if not fi.get('status', None):
+            fi['status'] = {}
+
+        fi = self._update_finalizer(fi, ['core.service.infrabox.net'])
+        f = self._get_function(fi)
+
+        # Create a batch job
+        job = {
+            'name': 'function',
+            'imagePullPolicy': 'Always',
+            'image': f['spec']['image'],
+            'resources': f['spec']['resources'],
+            'env': f['spec']['env'],
+            'securityContext': f['spec']['securityContext'],
+            'volumeMounts': f['spec']['volumeMounts'],
+        }
+
+        job['volumeMounts'] += fi['spec'].get('volumeMounts', [])
+        job['env'] += fi['spec'].get('env', [])
+
+        if fi['spec'].get('resources', None):
+            job['resources'] = fi['spec']['resources']
+
+        containers = [job]
+
+        batch = {
+            'Kind': 'Job',
+            'apiVersion': 'batch/v1',
+            'metadata': {
+                'name': fi['metadata']['name'],
+                'namespace': fi['metadata']['namespace'],
+                'labels': {
+                    'function.infrabox.net/function-invocation-name':  fi['metadata']['name']
+                }
+            },
+            'spec': {
+                'template': {
+                    'spec': {
+                        'automountServiceAccountToken': False,
+                        'containers': containers,
+                        'restartPolicy': 'Never',
+                        'terminationGracePeriodSeconds': 0,
+                        'volumes': f['spec']['volumes'],
+                        'imagePullSecrets': f['spec'].get('imagePullSecrets', None)
+                    },
+                    'metadata': {
+                        'labels': {
+                            'function.infrabox.net/function-invocation-name':  fi['metadata']['name']
+                        }
+                    }
+                },
+                'completion': 1,
+                'parallelism': 1,
+                'backoffLimit': 0
+            }
+        }
+
+        batch['spec']['template']['spec']['volumes'] += fi['spec'].get('volumes', [])
+
+        url = '%s/apis/batch/v1/namespaces/%s/jobs/' % (self.args.api_server,
+                                                        self.namespace)
+        self._create(url, batch)
+
+        # Sync status
+        url = '%s/api/v1/namespaces/%s/pods?labelSelector=function.infrabox.net/function-invocation-name=%s' % (self.args.api_server,
+                                                                                                                self.namespace,
+                                                                                                                fi['metadata']['name'])
+        pods = self._get(url)
+        for pod in pods['items']:
+            if pod['status'].get('containerStatuses', None):
+                fi['status']['state'] = pod['status']['containerStatuses'][0]['state']
+                fi['status']['nodeName'] = pod['spec']['nodeName']
+            elif pod['status']['phase'] == 'Failed':
+                fi['status']['state'] = {
+                    'terminated': {
+                        'exitCode': 200,
+                        'reason': pod['status'].get('reason', None),
+                        'message': pod['status'].get('message', None)
+                    }
+                }
+
+        return fi
+
 class Scheduler(object):
     def __init__(self, conn, args):
         self.conn = conn
         self.args = args
         self.namespace = get_env("INFRABOX_GENERAL_WORKER_NAMESPACE")
         self.logger = get_logger("scheduler")
+        self.function_controller = FunctionInvocationController(args)
+        self.pipeline_controller = PipelineInvocationController(args)
+
+    def handle_function_invocations(self):
+        self.function_controller.handle()
+
+    def handle_pipeline_invocations(self):
+        self.pipeline_controller.handle()
 
     def kube_delete_job(self, job_id):
         h = {'Authorization': 'Bearer %s' % self.args.token}
@@ -112,7 +615,7 @@ class Scheduler(object):
         definition = j[0]
 
         cpu -= 0.2
-        self.logger.info("Scheduling job to kubernetes")
+        self.logger.debug("Scheduling job to kubernetes")
 
         services = None
 
@@ -126,8 +629,8 @@ class Scheduler(object):
         cursor.execute("UPDATE job SET state = 'scheduled' WHERE id = %s", [job_id])
         cursor.close()
 
-        self.logger.info("Finished scheduling job")
-        self.logger.info("")
+        self.logger.debug("Finished scheduling job")
+        self.logger.debug("")
 
     def schedule(self):
         # find jobs
@@ -159,9 +662,9 @@ class Scheduler(object):
             memory = limits.get('memory', 1024)
             cpu = limits.get('cpu', 1)
 
-            self.logger.info("")
-            self.logger.info("Starting to schedule job: %s", job_id)
-            self.logger.info("Dependencies: %s", dependencies)
+            self.logger.debug("")
+            self.logger.debug("Starting to schedule job: %s", job_id)
+            self.logger.debug("Dependencies: %s", dependencies)
 
             cursor = self.conn.cursor()
             cursor.execute('''
@@ -176,7 +679,7 @@ class Scheduler(object):
             result = cursor.fetchall()
             cursor.close()
 
-            self.logger.info("Parent states: %s", result)
+            self.logger.debug("Parent states: %s", result)
 
             # check if there's still some parent running
             parents_running = False
@@ -188,7 +691,7 @@ class Scheduler(object):
                     break
 
             if parents_running:
-                self.logger.info("A parent is still running, not scheduling job")
+                self.logger.debug("A parent is still running, not scheduling job")
                 continue
 
             # check if conditions are met
@@ -203,11 +706,11 @@ class Scheduler(object):
 
                 assert on
 
-                self.logger.info("Checking parent %s with state %s", parent_id, parent_state)
-                self.logger.info("Condition is %s", on)
+                self.logger.debug("Checking parent %s with state %s", parent_id, parent_state)
+                self.logger.debug("Condition is %s", on)
 
                 if parent_state not in on:
-                    self.logger.info("Condition is not met, skipping job")
+                    self.logger.debug("Condition is not met, skipping job")
                     skipped = True
                     # dependency error, don't run this job_id
                     cursor = self.conn.cursor()
@@ -221,7 +724,7 @@ class Scheduler(object):
 
             # If it's a wait job we are done here
             if job_type == "wait":
-                self.logger.info("Wait job, we are done")
+                self.logger.debug("Wait job, we are done")
                 cursor = self.conn.cursor()
                 cursor.execute('''
                     UPDATE job SET state = 'finished', start_date = now(), end_date = now() WHERE id = %s;
@@ -236,20 +739,11 @@ class Scheduler(object):
 
         cursor = self.conn.cursor()
         cursor.execute('''
-            WITH all_aborts AS (
-                DELETE FROM "abort" RETURNING job_id
-            ), jobs_to_abort AS (
-                SELECT j.id, j.state FROM all_aborts
-                JOIN job j
-                    ON all_aborts.job_id = j.id
-                    AND j.state not in ('finished', 'failure', 'error', 'killed')
-                    AND cluster_name = %s
-            ), jobs_not_started_yet AS (
-                UPDATE job SET state = 'killed'
-                WHERE id in (SELECT id FROM jobs_to_abort WHERE state in ('queued'))
-            )
-
-            SELECT id FROM jobs_to_abort WHERE state in ('scheduled', 'running', 'queued')
+            SELECT j.id, a.user_id
+            FROM abort a
+            JOIN job j
+                ON a.job_id = j.id
+                AND j.cluster_name = %s
         ''', [cluster_name])
 
         aborts = cursor.fetchall()
@@ -257,14 +751,41 @@ class Scheduler(object):
 
         for abort in aborts:
             job_id = abort[0]
+            user_id = abort[1]
+
             self.kube_delete_job(job_id)
             self.upload_console(job_id)
+
+            if user_id:
+                cursor = self.conn.cursor()
+                cursor.execute("""
+                    SELECT username
+                    FROM "user"
+                    WHERE id = %s
+                """, [user_id])
+                user = cursor.fetchone()
+                cursor.close()
+                message = 'Aborted by %s' % user[0]
+            else:
+                message = 'Aborted'
 
             # Update state
             cursor = self.conn.cursor()
             cursor.execute("""
-                UPDATE job SET state = 'killed', end_date = current_timestamp
-                WHERE id = %s AND state IN ('scheduled', 'running', 'queued')""", (job_id,))
+                UPDATE job
+                SET state = 'killed',
+                    end_date = current_timestamp,
+                    message = %s
+                WHERE id = %s AND state IN ('scheduled', 'running', 'queued')
+            """, [message, job_id])
+            cursor.close()
+
+            # Forget abort
+            cursor = self.conn.cursor()
+            cursor.execute('''
+                DELETE FROM "abort"
+                WHERE job_id = %s
+            ''', [job_id])
             cursor.close()
 
     def handle_timeouts(self):
@@ -292,7 +813,6 @@ class Scheduler(object):
             cursor.execute("""
                 UPDATE job SET state = 'error', end_date = current_timestamp, message = 'Aborted due to timeout'
                 WHERE id = %s""", (job_id,))
-
             cursor.close()
 
     def upload_console(self, job_id):
@@ -347,12 +867,12 @@ class Scheduler(object):
             cursor.close()
 
             if not result:
-                self.logger.info('Deleting orphaned job %s', job_id)
+                self.logger.debug('Deleting orphaned job %s', job_id)
                 self.kube_delete_job(job_id)
                 continue
 
             last_state = result[0][0]
-            if last_state in ('killed', 'finished', 'error', 'finished'):
+            if last_state in ('killed', 'finished', 'error', 'failure'):
                 self.kube_delete_job(job_id)
                 continue
 
@@ -379,25 +899,23 @@ class Scheduler(object):
 
                     if 'stepStatuses' in status and status['stepStatuses']:
                         stepStatus = status['stepStatuses'][-1]
-                        exit_code = stepStatus['State']['terminated']['exitCode']
+                        exit_code = stepStatus['state']['terminated']['exitCode']
 
                         if exit_code == 0:
                             current_state = 'finished'
                         else:
                             current_state = 'failure'
-                            message = stepStatus['State']['terminated'].get('message', None)
+                            message = stepStatus['state']['terminated'].get('message', None)
 
                             if not message:
-                                message = stepStatus['State']['terminated'].get('reason', 'Unknown Error')
+                                message = stepStatus['state']['terminated'].get('reason', 'Unknown Error')
 
                     if not message and current_state != 'finished':
-                        import json
                         self.logger.error(json.dumps(status, indent=4))
 
                     delete_job = True
 
                 if message == 'Error':
-                    import json
                     self.logger.error(json.dumps(status, indent=4))
 
                 if s == "error":
@@ -434,7 +952,7 @@ class Scheduler(object):
 
             if delete_job:
                 self.upload_console(job_id)
-                self.logger.info('Deleting job %s', job_id)
+                self.logger.debug('Deleting job %s', job_id)
                 self.kube_delete_job(job_id)
 
     def get_default_cluster(self):
@@ -442,7 +960,8 @@ class Scheduler(object):
         cursor.execute("""
             SELECT name, labels
             FROM cluster
-            WHERE active = true
+            WHERE active = true AND
+                  enabled = true
         """)
         result = cursor.fetchall()
         cursor.close()
@@ -467,11 +986,14 @@ class Scheduler(object):
             return
 
         cursor = self.conn.cursor()
+        cursor.execute("begin;")
         cursor.execute("""
             UPDATE job
             SET cluster_name = %s
             WHERE cluster_name is null
         """, [cluster_name])
+
+        cursor.execute("commit;")
         cursor.close()
 
     def update_cluster_state(self):
@@ -514,7 +1036,7 @@ class Scheduler(object):
             INSERT INTO cluster (name, labels, root_url, nodes, cpu_capacity, memory_capacity, active)
             VALUES(%s, %s, %s, %s, %s, %s, true)
             ON CONFLICT (name) DO UPDATE
-            SET labels = %s, root_url = %s, nodes = %s, cpu_capacity = %s, memory_capacity = %s
+            SET last_update = NOW(), labels = %s, root_url = %s, nodes = %s, cpu_capacity = %s, memory_capacity = %s
             WHERE cluster.name = %s """, [cluster_name, labels, root_url, nodes, cpu, memory, labels,
                                           root_url, nodes, cpu, memory, cluster_name])
         cursor.close()
@@ -523,18 +1045,20 @@ class Scheduler(object):
         cluster_name = os.environ['INFRABOX_CLUSTER_NAME']
         cursor = self.conn.cursor()
         cursor.execute("""
-            SELECT active
+            SELECT active, enabled
             FROM cluster
             WHERE name = %s """, [cluster_name])
-        active = cursor.fetchone()[0]
+        active, enabled = cursor.fetchone()
         cursor.close()
 
-        return not active
+        return not (active and enabled)
 
     def handle(self):
         self.update_cluster_state()
 
         try:
+            self.handle_function_invocations()
+            self.handle_pipeline_invocations()
             self.handle_timeouts()
             self.handle_aborts()
             self.handle_orphaned_jobs()
@@ -542,13 +1066,17 @@ class Scheduler(object):
             self.logger.exception(e)
 
         cluster_name = os.environ['INFRABOX_CLUSTER_NAME']
-        if cluster_name == 'master':
-            self.assign_cluster()
+        ha_mode = os.environ['INFRABOX_HA_ENABLED'] == "true"
 
         if self._inactive():
-            self.logger.info('Cluster set to inactive, sleeping...')
+            self.logger.info('Cluster set to inactive or disabled, sleeping...')
             time.sleep(5)
             return
+
+        if ha_mode:
+            self.assign_cluster()
+        elif cluster_name == 'master':
+            self.assign_cluster()
 
         self.schedule()
 
@@ -557,7 +1085,7 @@ class Scheduler(object):
 
         while True:
             self.handle()
-            time.sleep(2)
+            time.sleep(1)
 
 def main():
     # Arguments

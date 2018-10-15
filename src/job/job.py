@@ -212,7 +212,7 @@ class RunJob(Job):
             clone_url = repo['clone_url']
             branch = repo.get('branch', None)
             private = repo.get('github_private_repo', False)
-            clone_all = repo.get('clone_all', False)
+            clone_all = repo.get('full_history', False)
             ref = repo.get('ref', None)
 
             definition = self.job['definition']
@@ -356,20 +356,18 @@ class RunJob(Job):
 
 
     def upload_coverage_results(self):
-        c = self.console
         if not os.path.exists(self.infrabox_coverage_dir):
             return
 
         files = self.get_files_in_dir(self.infrabox_coverage_dir, ending=".xml")
-        for f in files:
-            c.collect("%s\n" % f, show=True)
-            converted_result = self.convert_coverage_result(f)
-            file_name = os.path.basename(f)
+        if not files:
+            return
 
-            mu_path = os.path.join(self.infrabox_markup_dir, file_name + '.json')
+        converted_result = self.convert_coverage_result(self.infrabox_coverage_dir)
+        mu_path = os.path.join(self.infrabox_markup_dir, 'coverage.json')
 
-            with open(mu_path, 'w') as out:
-                json.dump(converted_result, out)
+        with open(mu_path, 'w') as out:
+            json.dump(converted_result, out)
 
     def convert_test_result(self, f):
         parser = TestresultParser(f)
@@ -634,6 +632,10 @@ class RunJob(Job):
                 if service_build_context:
                     build_context = os.path.join(os.path.dirname(compose_file), service_build_context)
                     service_volumes += ['%s:/infrabox/context' % build_context]
+                else:
+                    service_volumes += ['%s:/infrabox/context' % self.mount_repo_dir]
+            else:
+                service_volumes += ['%s:/infrabox/context' % self.mount_repo_dir]
 
             if os.environ['INFRABOX_LOCAL_CACHE_ENABLED'] == 'true':
                 service_volumes.append("/local-cache:/infrabox/local-cache")
@@ -650,8 +652,13 @@ class RunJob(Job):
 
             if build:
                 compose_file_content['services'][service]['image'] = image_name_latest
-                compose_file_content['services'][service]['build']['cache_from'] = [image_name_latest]
+                build['cache_from'] = [image_name_latest]
                 self.get_cached_image(image_name_latest)
+
+                if not build.get('args', None):
+                    build['args'] = []
+
+                build['args'] += ['INFRABOX_BUILD_NUMBER=%s' % self.build['build_number']]
 
         with open(compose_file_new, "w+") as out:
             json.dump(compose_file_content, out)
@@ -679,6 +686,8 @@ class RunJob(Job):
             c.execute(['docker-compose', '-f', compose_file_new, 'ps'], env=self.environment, cwd=cwd)
             c.execute(['get_compose_exit_code.sh', compose_file_new], env=self.environment, cwd=cwd)
         except:
+            m = traceback.format_exc()
+            c.collect(m, show=True)
             raise Failure("Failed to build and run container")
         finally:
             c.header("Finalize", show=True)
@@ -829,7 +838,9 @@ class RunJob(Job):
         try:
             c.header("Run container", show=True)
             c.execute(cmd, show=True, show_cmd=False)
-            c.execute(("docker", "commit", container_name, image_name))
+
+            if self.job['definition'].get('cache', {}).get('image', False) and not self.job['definition'].get('deployments', None):
+                c.execute(("docker", "commit", container_name, image_name))
         except Exception as e:
             try:
                 # Find out if container was killed due to oom
@@ -849,13 +860,7 @@ class RunJob(Job):
                 logger.exception(ex)
                 raise Failure("Could not get exit code of container")
 
-            try:
-                c.execute(("docker", "commit", container_name, image_name))
-                c.header("Finalize", show=True)
-            except Exception as ex:
-                logger.exception(ex)
-                raise Failure("Could not commit and push container")
-
+            c.header("Finalize", show=True)
             logger.exception(e)
             raise Failure("Container run exited with error (exit code=%s)" % exit_code)
 
@@ -1113,13 +1118,14 @@ class RunJob(Job):
             if job['type'] == "git":
                 c.header("Clone repo %s" % job['clone_url'], show=True)
                 clone_url = job['clone_url']
+                branch = job.get("branch", None)
 
                 sub_path = os.path.join('.infrabox', 'tmp', job_name)
                 new_repo_path = os.path.join(self.mount_repo_dir, sub_path)
                 c.execute(['rm', '-rf', new_repo_path])
                 os.makedirs(new_repo_path)
 
-                self.clone_repo(job['commit'], clone_url, None, None, True, sub_path)
+                self.clone_repo(job['commit'], clone_url, branch, None, True, sub_path)
 
                 c.header("Parsing infrabox file", show=True)
                 ib_file = job.get('infrabox_file', None)

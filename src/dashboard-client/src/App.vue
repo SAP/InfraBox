@@ -16,7 +16,7 @@
                 <i class="fa fa-sign-in"></i> Login
             </md-button>
             <div v-if="$store.state.user" md-right>
-                {{ $store.state.user.username }} <div v-if="$store.state.user.email">({{ $store.state.user.email }})</div>
+                {{ $store.state.user.username }} | {{ $store.state.settings.INFRABOX_CLUSTER_NAME }}
             </div>
         </md-toolbar>
 
@@ -50,15 +50,6 @@
                             </md-list-item>
                         </md-list>
                     </md-list-expand>
-                </md-list-item>
-
-                <md-list-item>
-                    <router-link :to="{name: 'AdminClusters'}" style="color: inherit">
-                        <span @click="toggleLeftSidenav()">
-                            <md-icon><i class="fa fa-desktop fa-fw"></i></md-icon>
-                            <span class="fix-list">Clusters</span>
-                        </span>
-                    </router-link>
                 </md-list-item>
 
                 <md-list-item class="navi-link">

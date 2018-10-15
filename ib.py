@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import argparse
+import json
 import os
 import re
 import subprocess
@@ -17,27 +18,32 @@ logging.basicConfig(
 logger = logging.getLogger('ib')
 
 IMAGES = [
-    {'name': 'gerrit-api'},
-    {'name': 'gerrit-trigger'},
-    {'name': 'gerrit-review'},
-    {'name': 'github-trigger'},
-    {'name': 'github-review'},
+    {'name': 'gerrit-api', 'depends_on': ['images-base']},
+    {'name': 'gerrit-trigger', 'depends_on': ['images-base']},
+    {'name': 'gerrit-review', 'depends_on': ['images-base']},
+    {'name': 'github-trigger', 'depends_on': ['images-base']},
+    {'name': 'github-review', 'depends_on': ['images-base']},
     {'name': 'collector-api'},
     {'name': 'collector-fluentd'},
     {'name': 'job'},
-    {'name': 'gc'},
-    {'name': 'controller'},
+    {'name': 'opa'},
+    {'name': 'gc', 'depends_on': ['images-base']},
     {'name': 'scheduler-kubernetes'},
-    {'name': 'api'},
+    {'name': 'api', 'depends_on': ['images-base']},
     {'name': 'build-dashboard-client'},
     {'name': 'static', 'depends_on': ['build-dashboard-client']},
     {'name': 'docker-registry-auth'},
-    {'name': 'docker-registry-nginx'},
-    {'name': 'db'},
+    {'name': 'docker-registry-nginx', 'depends_on': ['images-base']},
+    {'name': 'db', 'depends_on': ['images-base']},
     {'name': 'postgres'},
     {'name': 'service-gcp'},
     {'name': 'service-namespace'},
     {'name': 'metrics'},
+    {'name': 'checker', 'depends_on': ['images-base']},
+    {'name': 'cluster-status', 'depends_on': ['images-base']},
+    {'name': 'status-cachet', 'depends_on': ['images-base']},
+    {'name': 'images-base'},
+    {'name': 'images-test'},
 ]
 
 def execute(command, cwd=None, env=None, ignore_error=False, ignore_output=False):
@@ -83,7 +89,11 @@ def _build_image(image, args):
                 break
 
     image_name = '%s/infrabox/%s:%s' % (args.registry, image['name'], args.tag)
-    job = 'ib/deploy/%s' % image['name']
+
+    if image['name'] in ('images-base', 'images-test'):
+        job = 'ib/images/%s' % image['name']
+    else:
+        job = 'ib/deploy/%s' % image['name']
 
     execute(['infrabox', 'run', job, '-t', image_name])
 
@@ -112,7 +122,7 @@ def images_push(args):
         elif args.type == 'gcr':
             execute(['gcloud', 'docker', '--', 'push', image_name])
         else:
-            print 'invalid type'
+            print('invalid type')
             sys.exit(1)
 
 def _setup_rsa_keys():
@@ -149,27 +159,36 @@ def services_start(args):
         p = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'src', 'api')
         run = os.path.join(p, 'run_with_dummy.sh')
         execute(['bash', run], cwd=p)
+    elif args.service_name == 'opa':
+        execute(['docker-compose', 'up'],
+                cwd=os.path.join(os.path.dirname(os.path.realpath(__file__)), 'infrabox', 'utils', 'opa'))
     elif args.service_name == 'dashboard-client':
         p = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'src', 'dashboard-client')
         execute(['npm', 'run', 'dev'], cwd=p)
     else:
-        print "Unknown service"
+        print("Unknown service")
         sys.exit(1)
 
 def services_rm(args):
     if args.service_name == 'storage':
         execute(['docker-compose', 'rm', '-f'],
                 cwd=os.path.join(os.path.dirname(os.path.realpath(__file__)), 'infrabox', 'utils', 'storage'))
+    elif args.service_name == 'opa':
+        execute(['docker-compose', 'rm', '-f'],
+                cwd=os.path.join(os.path.dirname(os.path.realpath(__file__)), 'infrabox', 'utils', 'opa'))
     else:
-        print "Unknown service"
+        print("Unknown service")
         sys.exit(1)
 
 def services_kill(args):
     if args.service_name == 'storage':
         execute(['docker-compose', 'kill'],
                 cwd=os.path.join(os.path.dirname(os.path.realpath(__file__)), 'infrabox', 'utils', 'storage'))
+    elif args.service_name == 'opa':
+        execute(['docker-compose', 'kill'],
+                cwd=os.path.join(os.path.dirname(os.path.realpath(__file__)), 'infrabox', 'utils', 'opa'))
     else:
-        print "Unknown service"
+        print("Unknown service")
         sys.exit(1)
 
 def changelog_create(args):
@@ -191,7 +210,6 @@ def changelog_create(args):
     repo_name = 'infrabox/infrabox'
     command.append(repo_name)
     execute(command, cwd=os.getcwd())
-
 
 def main():
     parser = argparse.ArgumentParser(prog="ib")
@@ -239,7 +257,6 @@ def main():
     create_changelog_parser = sub_changelog.add_parser('create')
     create_changelog_parser.set_defaults(func=changelog_create)
     create_changelog_parser.add_argument("--token", required=False)
-
 
     args = parser.parse_args()
     args.func(args)

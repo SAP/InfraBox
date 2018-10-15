@@ -14,7 +14,7 @@ from flask_restplus import Resource
 
 from werkzeug.datastructures import FileStorage
 
-from pyinfrabox.utils import validate_uuid4
+from pyinfrabox.utils import validate_uuid
 from pyinfrabox.badge import validate_badge
 from pyinfrabox.markup import validate_markup
 from pyinfrabox.testresult import validate_result
@@ -22,12 +22,10 @@ from pyinfrabox import ValidationError
 
 from pyinfraboxutils.token import encode_job_token
 from pyinfraboxutils.ibrestplus import api
-from pyinfraboxutils.ibflask import job_token_required, app
+from pyinfraboxutils.ibflask import app
 from pyinfraboxutils.storage import storage
 from pyinfraboxutils.secrets import decrypt_secret
-
-ns = api.namespace('api/job',
-                   description='Job runtime related operations')
+from pyinfraboxutils import get_root_url
 
 def allowed_file(filename, extensions):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in extensions
@@ -39,10 +37,9 @@ def delete_file(path):
         except Exception as error:
             app.logger.warn("Failed to delete file: %s", error)
 
-@ns.route("/job")
+@api.route("/api/job/job", doc=False)
 class Job(Resource):
 
-    @job_token_required
     def get(self):
         job_id = g.token['job']['id']
         data = {}
@@ -86,7 +83,7 @@ class Job(Resource):
                 AND j.project_id = b.project_id
             INNER JOIN collaborator co
                 ON co.project_id = j.project_id
-                AND co.owner = true
+                AND co.role = 'Owner'
             INNER JOIN "user" u
                 ON co.user_id = u.id
             INNER JOIN project p
@@ -334,11 +331,7 @@ class Job(Resource):
                 else:
                     abort(400, "Unknown deployment type")
 
-        root_url = g.db.execute_one('''
-            SELECT root_url
-            FROM cluster
-            WHERE name = 'master'
-        ''', [])[0]
+        root_url = get_root_url("global")
 
         # Default env vars
         project_name = urllib.quote_plus(data['project']['name']).replace('+', '%20')
@@ -385,7 +378,7 @@ class Job(Resource):
 
         if env_vars:
             for name, value in env_vars.iteritems():
-                data['env_vars'][name] = value
+                data['env_vars'][name] = str(value)
 
         if env_var_refs:
             for name, value in env_var_refs.iteritems():
@@ -398,10 +391,9 @@ class Job(Resource):
 
         return jsonify(data)
 
-@ns.route("/source")
+@api.route("/api/job/source", doc=False)
 class Source(Resource):
 
-    @job_token_required
     def get(self):
         job_id = g.token['job']['id']
         project_id = g.token['project']['id']
@@ -438,10 +430,9 @@ cache_upload_parser.add_argument('cache.tar.snappy', location='files',
                                  type=FileStorage, required=True)
 
 
-@ns.route("/cache")
+@api.route("/api/job/cache", doc=False)
 class Cache(Resource):
 
-    @job_token_required
     def get(self):
         project_id = g.token['project']['id']
         job_name = g.token['job']['name']
@@ -459,8 +450,7 @@ class Cache(Resource):
 
         return send_file(f)
 
-    @job_token_required
-    @ns.expect(cache_upload_parser)
+    @api.expect(cache_upload_parser)
     def post(self):
         project_id = g.token['project']['id']
         job_name = g.token['job']['name']
@@ -475,10 +465,9 @@ class Cache(Resource):
         return jsonify({})
 
 
-@ns.route("/archive")
+@api.route("/api/job/archive", doc=False)
 class Archive(Resource):
 
-    @job_token_required
     def post(self):
         job_id = g.token['job']['id']
 
@@ -503,10 +492,9 @@ class Archive(Resource):
 
         return jsonify({"message": "File uploaded"})
 
-@ns.route("/output")
+@api.route("/api/job/output", doc=False)
 class Output(Resource):
 
-    @job_token_required
     def post(self):
         job_id = g.token['job']['id']
 
@@ -547,6 +535,7 @@ class Output(Resource):
                 SELECT root_url
                 FROM cluster
                 WHERE active = true
+                AND enabled = true
                 AND name = ANY (%s)
                 AND name != %s
                 AND name != %s
@@ -559,7 +548,7 @@ class Output(Resource):
             for c in clusters:
                 stream.seek(0)
                 url = '%s/api/job/output' % c['root_url']
-                files = {'output.tar.snappy': stream}
+                files = {f: stream}
                 token = encode_job_token(job_id)
                 headers = {'Authorization': 'bearer ' + token}
                 r = requests.post(url, files=files, headers=headers, timeout=120, verify=False)
@@ -570,14 +559,13 @@ class Output(Resource):
 
             return jsonify({})
 
-@ns.route("/output/<parent_job_id>")
+@api.route("/api/job/output/<parent_job_id>", doc=False)
 class OutputParent(Resource):
 
-    @job_token_required
     def get(self, parent_job_id):
         job_id = g.token['job']['id']
 
-        if not validate_uuid4(parent_job_id):
+        if not validate_uuid(parent_job_id):
             abort(400, "Invalid uuid")
 
         filename = request.args.get('filename', None)
@@ -624,7 +612,7 @@ def find_leaf_jobs(jobs):
 
     return leaf_jobs
 
-@ns.route("/create_jobs")
+@api.route("/api/job/create_jobs", doc=False)
 class CreateJobs(Resource):
     def get_target_cluster(self, clusters, cluster_selector):
         for c in clusters:
@@ -644,6 +632,7 @@ class CreateJobs(Resource):
             SELECT name, labels
             FROM cluster
             WHERE active = true
+            AND enabled = true
         ''')
 
         # Shuffle so we can assign the default clusters randomly
@@ -679,7 +668,6 @@ class CreateJobs(Resource):
             assigned_clusters[j['name']] = target_cluster
             j['cluster']['name'] = target_cluster
 
-    @job_token_required
     def post(self):
         project_id = g.token['project']['id']
         parent_job_id = g.token['job']['id']
@@ -699,7 +687,7 @@ class CreateJobs(Resource):
             SELECT co.user_id, b.build_number, j.project_id FROM collaborator co
             INNER JOIN job j
                 ON j.project_id = co.project_id
-                AND co.owner = true
+                AND co.role = 'Owner'
                 AND j.id = %s
             INNER JOIN build b
                 ON b.id = j.build_id
@@ -869,10 +857,9 @@ class CreateJobs(Resource):
         g.db.commit()
         return "Successfully create jobs"
 
-@ns.route("/consoleupdate")
+@api.route("/api/job/consoleupdate", doc=False)
 class ConsoleUpdate(Resource):
 
-    @job_token_required
     def post(self):
         output = request.json['output']
 
@@ -905,10 +892,9 @@ class ConsoleUpdate(Resource):
 
         return jsonify({})
 
-@ns.route("/stats")
+@api.route("/api/job/stats", doc=False)
 class Stats(Resource):
 
-    @job_token_required
     def post(self):
         job_id = g.token['job']['id']
 
@@ -949,10 +935,9 @@ def insert(c, cols, rows, table):
     cursor.execute(stmt)
     cursor.close()
 
-@ns.route("/markup")
+@api.route("/api/job/markup", doc=False)
 class Markup(Resource):
 
-    @job_token_required
     def post(self):
         job_id = g.token['job']['id']
         project_id = g.token['project']['id']
@@ -1003,10 +988,9 @@ class Markup(Resource):
 
         return jsonify({})
 
-@ns.route("/badge")
+@api.route("/api/job/badge", doc=False)
 class Badge(Resource):
 
-    @job_token_required
     def post(self):
         job_id = g.token['job']['id']
         project_id = g.token['project']['id']
@@ -1058,10 +1042,9 @@ class Badge(Resource):
 
         return jsonify({})
 
-@ns.route("/testresult")
+@api.route("/api/job/testresult", doc=False)
 class Testresult(Resource):
 
-    @job_token_required
     def post(self):
         job_id = g.token['job']['id']
         project_id = g.token['project']['id']
@@ -1101,51 +1084,25 @@ class Testresult(Resource):
             abort(400, e.message)
 
         rows = g.db.execute_one("""
-                SELECT j.project_id, b.build_number
-                FROM job  j
-                INNER JOIN build b
-                    ON j.id = %s
-                    AND b.id = j.build_id
-            """, [job_id])
+            SELECT j.project_id
+            FROM job  j
+            INNER JOIN build b
+                ON j.id = %s
+                AND b.id = j.build_id
+        """, [job_id])
         project_id = rows[0]
-        build_number = rows[1]
-
-        existing_tests = g.db.execute_many("""SELECT suite, name, id FROM test WHERE project_id = %s""", [project_id])
-
-        test_index = {}
-        for t in existing_tests:
-            test_index[t[0] + '|' + t[1]] = t[2]
 
         # Lookup all IDs and prepare insert for missing tests
-        missing_tests = []
         test_runs = []
         measurements = []
 
         tests = data['tests']
         for t in tests:
-
             if len(t['suite']) > 250:
                 t['suite'] = t['suite'][0:250]
 
             if len(t['name']) > 250:
                 t['name'] = t['name'][0:250]
-
-            # check if if already exists
-            test_id = None
-            concat_name = t['suite'] + '|' + t['name']
-            if  concat_name in test_index:
-                # existing test
-                test_id = test_index[concat_name]
-            else:
-                # new test
-                test_id = str(uuid.uuid4())
-                missing_tests.append((
-                    t['name'],
-                    t['suite'],
-                    project_id,
-                    test_id,
-                    build_number
-                ))
 
             # Track stats
             if t['status'] == 'fail' or t['status'] == 'failure':
@@ -1157,11 +1114,12 @@ class Testresult(Resource):
                 test_run_id,
                 t['status'],
                 job_id,
-                test_id,
                 t['duration'],
                 project_id,
                 t.get('message', None),
-                t.get('stack', None)
+                t.get('stack', None),
+                t['name'],
+                t['suite']
             ))
 
             # create measurements
@@ -1174,14 +1132,11 @@ class Testresult(Resource):
                     project_id
                 ))
 
-        if missing_tests:
-            insert(g.db.conn, ("name", "suite", "project_id", "id", "build_number"), missing_tests, 'test')
-
         if measurements:
             insert(g.db.conn, ("test_run_id", "name", "unit", "value", "project_id"), measurements, 'measurement')
 
-        insert(g.db.conn, ("id", "state", "job_id", "test_id", "duration",
-                           "project_id", "message", "stack"), test_runs, 'test_run')
+        insert(g.db.conn, ("id", "state", "job_id", "duration",
+                           "project_id", "message", "stack", "name", "suite"), test_runs, 'test_run')
 
         g.db.commit()
         return jsonify({})

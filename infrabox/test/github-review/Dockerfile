@@ -1,7 +1,5 @@
-FROM alpine:3.6
-
-RUN apk add --no-cache python py-requests py-pip git py-psycopg2
-RUN pip install coverage mock xmlrunner codecov
+ARG INFRABOX_BUILD_NUMBER
+FROM quay.io/infrabox/images-test:build_$INFRABOX_BUILD_NUMBER
 
 ENV PYTHONPATH=/infrabox/context/src:/infrabox/context/src/github/review
 

@@ -16,6 +16,11 @@ First start `postgres` and `minio` with some [dummy data](/infrabox/utils/storag
 ./ib.py services start storage
 ```
 
+Then start `opa` and push the policies to `opa`:
+```bash
+./ib.py services start opa
+```
+
 Now start the API:
 
 ```bash

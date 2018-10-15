@@ -175,7 +175,7 @@
           "alias": "",
           "format": "table",
           "hide": false,
-          "rawSql": "select p.name as p_name, b.build_number, b.restart_counter, j.name as j_name, j.memory, j.cpu , j.id \nfrom project p, build b, job j \nwhere p.id = j.project_id AND b.id = j.build_id AND b.id = '[[bid]]'",
+          "rawSql": "select p.name as p_name, b.build_number, b.restart_counter, j.name as j_name, (j.definition#>>'{resources,limits,memory}')::float as memory, (j.definition#>>'{resources,limits,cpu}')::float as cpu, j.id \nfrom project p, build b, job j \nwhere p.id = j.project_id AND b.id = j.build_id AND b.id = '[[bid]]'",
           "refId": "A"
         }
       ],

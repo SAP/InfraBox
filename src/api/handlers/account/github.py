@@ -6,20 +6,18 @@ from flask import g, request, abort, redirect
 
 from flask_restplus import Resource
 
-from pyinfraboxutils import get_logger
+from pyinfraboxutils import get_logger, get_root_url
+from pyinfraboxutils.ibrestplus import api
 from pyinfraboxutils.token import encode_user_token
-from pyinfraboxutils.ibflask import auth_required
-
-from api.namespaces import github, github_auth
 
 logger = get_logger('github')
 
 GITHUB_CLIENT_ID = os.environ['INFRABOX_GITHUB_CLIENT_ID']
 GITHUB_CLIENT_SECRET = os.environ['INFRABOX_GITHUB_CLIENT_SECRET']
-GITHUB_CALLBACK_URL = os.environ['INFRABOX_ROOT_URL'] + "/github/auth/callback"
 GITHUB_AUTHORIZATION_URL = os.environ['INFRABOX_GITHUB_LOGIN_URL'] + "/oauth/authorize"
 GITHUB_TOKEN_URL = os.environ['INFRABOX_GITHUB_LOGIN_URL'] + "/oauth/access_token"
 GITHUB_USER_PROFILE_URL = os.environ['INFRABOX_GITHUB_API_URL'] + "/user"
+GITHUB_CALLBACK_URL = get_root_url('global') + "/github/auth/callback"
 
 # TODO(ib-steffen): move into DB
 states = {}
@@ -64,10 +62,9 @@ def get_github_api(url, token):
 
     return result
 
-@github_auth.route('/auth/connect')
+@api.route('/github/auth/connect', doc=False)
 class Connect(Resource):
 
-    @auth_required(['user'], check_project_access=False)
     def get(self):
         if os.environ['INFRABOX_GITHUB_LOGIN_ENABLED'] == 'true':
             abort(404)
@@ -93,10 +90,9 @@ class Connect(Resource):
         return redirect(url)
 
 
-@github.route('/repos')
+@api.route('/api/v1/github/repos', doc=False)
 class Repos(Resource):
 
-    @auth_required(['user'], check_project_access=False)
     def get(self):
         user_id = g.token['user']['id']
 
@@ -130,7 +126,7 @@ class Repos(Resource):
 
         return github_repos
 
-@github_auth.route('/auth')
+@api.route('/github/auth', doc=False)
 class Auth(Resource):
 
     def get(self):
@@ -163,7 +159,7 @@ def check_org(access_token):
 
     abort(401, "Not allowed to signup")
 
-@github_auth.route('/auth/callback')
+@api.route('/github/auth/callback', doc=False)
 class Login(Resource):
 
     def get(self):
@@ -238,9 +234,8 @@ class Login(Resource):
         g.db.commit()
 
         token = encode_user_token(user_id)
-        url = os.environ['INFRABOX_ROOT_URL'] + '/dashboard/'
+        url = get_root_url('global') + '/dashboard/'
         logger.error(url)
         res = redirect(url)
         res.set_cookie('token', token)
         return res
-

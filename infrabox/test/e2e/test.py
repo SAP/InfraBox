@@ -10,7 +10,7 @@ import urllib3
 
 import xmlrunner
 
-from pyinfraboxutils.db import connect_db
+from pyinfraboxutils.db import connect_db, DB
 from pyinfraboxutils.token import encode_project_token
 from pyinfraboxutils.secrets import encrypt_secret
 
@@ -33,7 +33,6 @@ class Test(unittest.TestCase):
         cur.execute('''DELETE FROM build''')
         cur.execute('''DELETE FROM test_run''')
         cur.execute('''DELETE FROM measurement''')
-        cur.execute('''DELETE FROM test''')
         cur.execute('''DELETE FROM job_markup''')
         cur.execute('''DELETE FROM secret''')
         cur.execute('''INSERT INTO "user"(id, github_id, avatar_url, name,
@@ -41,8 +40,8 @@ class Test(unittest.TestCase):
                         VALUES(%s, 1, 'avatar', 'name', 'email', 'token', 'login')''', (self.user_id,))
         cur.execute('''INSERT INTO project(name, type, id, public)
                         VALUES('test', 'upload', %s, true)''', (self.project_id,))
-        cur.execute('''INSERT INTO collaborator(project_id, user_id, owner)
-                        VALUES(%s, %s, true)''', (self.project_id, self.user_id,))
+        cur.execute('''INSERT INTO collaborator(project_id, user_id, role)
+                        VALUES(%s, %s, 'Owner')''', (self.project_id, self.user_id,))
         cur.execute('''INSERT INTO auth_token(project_id, id, description, scope_push, scope_pull)
                         VALUES(%s, %s, 'asd', true, true)''', (self.project_id, self.token_id,))
         cur.execute('''INSERT INTO secret(project_id, name, value)
@@ -73,8 +72,8 @@ class Test(unittest.TestCase):
         try:
             return result.json()[0]
         except:
-            print "Get build failed: "
-            print result.text
+            print("Get build failed: ")
+            print(result.text)
             raise
 
     def _get_jobs(self):
@@ -85,8 +84,8 @@ class Test(unittest.TestCase):
         try:
             return jobs.json()
         except:
-            print "Get jobs failed: "
-            print jobs
+            print("Get jobs failed: ")
+            print(jobs)
             raise
 
     def _wait_build(self):
@@ -116,7 +115,7 @@ class Test(unittest.TestCase):
             ansi_escape = re.compile(r'\x1B\[[0-?]*[ -/]*[@-~]')
             logs = ansi_escape.sub('', r.text)
 
-            print logs
+            print(logs)
 
     def _get_job(self, job_name):
         jobs = self._get_jobs()
@@ -169,7 +168,7 @@ class Test(unittest.TestCase):
                 break
             except subprocess.CalledProcessError as e:
                 output = e.output
-                print output
+                print(output)
                 time.sleep(5)
 
         self._print_job_logs()
@@ -272,10 +271,10 @@ def main():
 
     urllib3.disable_warnings()
 
-    print "Connecting to DB"
+    print("Connecting to DB")
     connect_db() # Wait for DB
 
-    print "ROOT_URL: %s" % root_url
+    print("ROOT_URL: %s" % root_url)
     while True:
         time.sleep(1)
         r = None
@@ -285,15 +284,15 @@ def main():
             if r.status_code in (200, 404):
                 break
 
-            print r.text
+            print(r.text)
         except Exception as e:
-            print e
+            print(e)
 
-        print "Server not yet ready"
+        print("Server not yet ready")
 
     time.sleep(90)
 
-    print "Starting tests"
+    print("Starting tests")
     with open('results.xml', 'wb') as output:
         unittest.main(testRunner=xmlrunner.XMLTestRunner(output=output), buffer=False)
 
