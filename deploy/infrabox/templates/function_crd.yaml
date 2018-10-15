@@ -40,6 +40,7 @@ spec:
         mountPath: /var/run/gerrit/
         name: gerrit-ssh
 {{ end }}
+    {{ include "mounts_ca_bundle" . | indent 4 }}
     volumes:
     -
         name: data-dir
@@ -48,6 +49,7 @@ spec:
         name: dockerd-config
         configMap:
             name: infrabox-dockerd-config
+    {{ include "volumes_ca_bundle" . | indent 4 }}
 {{ if .Values.local_cache.enabled }}
     -
         name: local-cache
