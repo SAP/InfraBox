@@ -13,7 +13,7 @@ def execute_ssh_cmd(client, cmd):
     _, stdout, stderr = client.exec_command(cmd)
     err = stderr.read()
     if err:
-        print err
+        print(err)
 
     return stdout.read()
 

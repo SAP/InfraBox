@@ -9,6 +9,10 @@ services:
         build:
             context: ../..
             dockerfile: src/postgres/Dockerfile
+    opa:
+        build:
+            context: ../..
+            dockerfile: src/openpolicyagent/Dockerfile
     docker_auth:
         build:
             context: ../..
@@ -20,6 +24,9 @@ services:
             - INFRABOX_DATABASE_HOST=postgres
             - INFRABOX_DATABASE_PORT=5432
             - INFRABOX_DATABASE_DB=postgres
+            - INFRABOX_OPA_HOST=opa
+            - INFRABOX_OPA_PORT=8181
+            - INFRABOX_OPA_PUSH_INTERVAL=30
     docker_nginx:
         build:
             context: ../..
@@ -46,4 +53,6 @@ services:
             - INFRABOX_DATABASE_HOST=postgres
             - INFRABOX_DATABASE_PORT=5432
             - INFRABOX_DATABASE_DB=postgres
+            - INFRABOX_OPA_HOST=opa
+            - INFRABOX_OPA_PORT=8181
 

@@ -1,15 +1,24 @@
 import json
 import select
 import urllib
+import time
+import os
 
 import psycopg2
 import paramiko
 
-from pyinfraboxutils import get_logger, get_env
+from pyinfraboxutils import get_logger, get_env, get_root_url
 from pyinfraboxutils.db import connect_db
-from pyinfraboxutils.leader import elect_leader, is_leader
+from pyinfraboxutils.leader import elect_leader, is_leader, is_active
 
 logger = get_logger("gerrit")
+
+def execute_sql(conn, stmt, params): # pragma: no cover
+    c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    c.execute(stmt, params)
+    result = c.fetchall()
+    c.close()
+    return result
 
 def main():
     get_env('INFRABOX_VERSION')
@@ -23,11 +32,13 @@ def main():
     get_env('INFRABOX_GERRIT_USERNAME')
     get_env('INFRABOX_GERRIT_KEY_FILENAME')
 
+    cluster_name = get_env('INFRABOX_CLUSTER_NAME')
+
     conn = connect_db()
     conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
     logger.info("Connected to database")
 
-    elect_leader(conn, "gerrit-review")
+    elect_leader(conn, 'gerrit-review' ,cluster_name)
 
     curs = conn.cursor()
     curs.execute("LISTEN job_update;")
@@ -35,12 +46,18 @@ def main():
     logger.info("Waiting for job updates")
 
     while True:
-        is_leader(conn, "gerrit-review")
-        if select.select([conn], [], [], 5) != ([], [], []):
-            conn.poll()
-            while conn.notifies:
-                notify = conn.notifies.pop(0)
-                handle_job_update(conn, json.loads(notify.payload))
+        if not is_active(conn, cluster_name):
+            logger.info("cluster is inactive or disabled, sleeping")
+            time.sleep(5)
+            continue
+
+        is_leader(conn, 'gerrit-review', cluster_name)
+        curs.execute('commit;')
+        while conn.notifies:
+            notify = conn.notifies.pop(0)
+            logger.debug("got notify: %s" % notify.payload)
+            handle_job_update(conn, json.loads(notify.payload))
+        time.sleep(3)
 
 def handle_job_update_retry(conn, update):
     for _ in xrange(0, 3):
@@ -48,7 +65,7 @@ def handle_job_update_retry(conn, update):
             handle_job_update(conn, update)
             return
         except:
-            logger.exception()
+            logger.exception("Exception occured")
 
     logger.error('Failed to set review multiple times. Restarting')
 
@@ -127,14 +144,15 @@ def handle_job_update(conn, event):
     gerrit_username = get_env('INFRABOX_GERRIT_USERNAME')
     gerrit_key_filename = get_env('INFRABOX_GERRIT_KEY_FILENAME')
 
-    c = conn.cursor()
-    c.execute('''
-        SELECT root_url
-        FROM cluster
-        WHERE name = 'master'
-    ''')
-    dashboard_url = c.fetchone()[0]
-    c.close()
+    ha_mode = os.environ.get('INFRABOX_HA_ENABLED') == 'true'
+    if ha_mode:
+        dashboard_url = get_root_url('global')
+    else:
+        dashboard_url = execute_sql(conn, '''
+                SELECT root_url
+                FROM cluster
+                WHERE name = 'master'
+            ''', [])[0]['root_url']
 
     client = paramiko.SSHClient()
     client.load_system_host_keys()
@@ -145,9 +163,9 @@ def handle_job_update(conn, event):
                    key_filename=gerrit_key_filename)
     client.get_transport().set_keepalive(60)
 
-    project_name = urllib.quote_plus(project_name).replace('+', '%20')
+    project_name_quote = urllib.quote_plus(project_name).replace('+', '%20')
     build_url = "%s/dashboard/#/project/%s/build/%s/%s" % (dashboard_url,
-                                                           project_name,
+                                                           project_name_quote,
                                                            build_number,
                                                            build_restart_counter)
 

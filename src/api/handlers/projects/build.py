@@ -1,11 +1,17 @@
 import json
+import uuid
 
 from flask import g, abort
 from flask_restplus import Resource
 
-from pyinfraboxutils.ibflask import auth_required, OK
+from pyinfraboxutils.ibrestplus import api, response_model
+from pyinfraboxutils.ibflask import OK
 from pyinfraboxutils.storage import storage
-from api.namespaces import project as ns
+
+ns = api.namespace('Builds',
+                   path='/api/v1/projects/<project_id>/builds',
+                   description='Build related operations')
+
 
 def restart_build(project_id, build_id):
     user_id = g.token['user']['id']
@@ -22,6 +28,13 @@ def restart_build(project_id, build_id):
 
     if not build:
         abort(404)
+
+    result = g.db.execute_one_dict('''
+        SELECT username
+        FROM "user"
+        WHERE id = %s
+    ''', [user_id])
+    username = result['username']
 
     result = g.db.execute_one_dict('''
         SELECT max(restart_counter) as restart_counter
@@ -63,30 +76,42 @@ def restart_build(project_id, build_id):
     if definition:
         definition = json.dumps(definition)
 
+    job_id = str(uuid.uuid4())
+    msg = 'Build restarted by %s\n' % username
     g.db.execute('''
         INSERT INTO job (id, state, build_id, type,
             name, project_id, dockerfile, repo, env_var, definition, cluster_name)
-        VALUES (gen_random_uuid(), 'queued', %s, 'create_job_matrix',
+        VALUES (%s, 'queued', %s, 'create_job_matrix',
                 'Create Jobs', %s, '', %s, %s, %s, null);
-    ''', [new_build_id, project_id, repo, env_var, definition])
+        INSERT INTO console (job_id, output)
+        VALUES (%s, %s);
+    ''', [job_id, new_build_id, project_id, repo, env_var, definition, job_id, msg])
     g.db.commit()
 
     return OK('Restarted', {'build': {'id': new_build_id, 'restartCounter': restart_counter}})
 
 
-@ns.route('/<project_id>/builds/<build_id>/restart')
+@ns.route('/<build_id>/restart')
+@api.response(403, 'Not Authorized')
 class BuildRestart(Resource):
 
-    @auth_required(['user'])
+    @api.response(200, 'Success', response_model)
     def get(self, project_id, build_id):
+        '''
+        Restart build
+        '''
         return restart_build(project_id, build_id)
 
 
-@ns.route('/<project_id>/builds/<build_id>/abort')
+@ns.route('/<build_id>/abort')
+@api.response(403, 'Not Authorized')
 class BuildAbort(Resource):
 
-    @auth_required(['user'])
+    @api.response(200, 'Success', response_model)
     def get(self, project_id, build_id):
+        '''
+        Abort build
+        '''
         jobs = g.db.execute_many_dict('''
             SELECT id
             FROM job
@@ -94,21 +119,24 @@ class BuildAbort(Resource):
               AND project_id = %s
         ''', [build_id, project_id])
 
-
         for j in jobs:
             g.db.execute('''
-                INSERT INTO abort(job_id) VALUES(%s)
-            ''', [j['id']])
+                INSERT INTO abort(job_id, user_id) VALUES(%s, %s)
+            ''', [j['id'], g.token['user']['id']])
 
         g.db.commit()
 
         return OK('Aborted all jobs')
 
-@ns.route('/<project_id>/builds/<build_id>/cache/clear')
+@ns.route('/<build_id>/cache/clear')
+@api.response(403, 'Not Authorized')
 class BuildCacheClear(Resource):
 
-    @auth_required(['user'])
+    @api.response(200, 'Success', response_model)
     def get(self, project_id, build_id):
+        '''
+        Clear cache of all jobs in build
+        '''
         jobs = g.db.execute_many_dict('''
             SELECT j.name, branch from job j
             INNER JOIN build b
@@ -128,11 +156,14 @@ class BuildCacheClear(Resource):
 
         return OK('Cleared cache')
 
-@ns.route('/<project_id>/builds/<build_number>/<build_restart_counter>/state')
+@ns.route('/<build_number>/<build_restart_counter>/state', doc=False)
+@api.response(403, 'Not Authorized')
 class BuildStatus(Resource):
 
-    @auth_required(['user', 'project'], allow_if_public=True)
     def get(self, project_id, build_number, build_restart_counter):
+        '''
+        Returns build state
+        '''
         states = g.db.execute_many_dict('''
             SELECT state
             FROM job j
@@ -158,10 +189,10 @@ class BuildStatus(Resource):
             'state': state
         }
 
-@ns.route('/<project_id>/builds/<build_number>/<build_restart_counter>')
+@ns.route('/<build_number>/<build_restart_counter>', doc=False)
+@api.response(403, 'Not Authorized')
 class Build(Resource):
 
-    @auth_required(['user'], allow_if_public=True)
     def get(self, project_id, build_number, build_restart_counter):
         jobs = g.db.execute_many_dict('''
             SELECT

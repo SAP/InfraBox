@@ -1,3 +1,4 @@
+import time
 import os
 
 import psycopg2
