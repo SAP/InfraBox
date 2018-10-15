@@ -1,0 +1,16 @@
+kind: Service
+cluster-statusVersion: v1
+metadata:
+    name: infrabox-cluster-status
+    labels:
+        app: infrabox-cluster-status
+spec:
+    selector:
+        app: infrabox-cluster-status
+    type: NodePort
+    ports:
+    -
+        name: http-web
+        protocol: TCP
+        port: 8080
+        targetPort: 8080

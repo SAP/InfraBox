@@ -4,12 +4,15 @@ import requests
 from flask import g, abort, request
 from flask_restplus import Resource, fields
 
-from pyinfraboxutils import get_logger
-from pyinfrabox.utils import validate_uuid4
-from pyinfraboxutils.ibrestplus import api
-from pyinfraboxutils.ibflask import auth_required, OK
+from pyinfrabox.utils import validate_uuid
+from pyinfraboxutils import get_logger, get_root_url
+from pyinfraboxutils.ibrestplus import api, response_model
+from pyinfraboxutils.ibflask import OK
+from pyinfraboxutils.ibopa import opa_push_project_data, opa_push_collaborator_data
 
-from api.namespaces import project as ns
+ns = api.namespace('Projects',
+                   path='/api/v1/projects',
+                   description='Project related operations')
 
 
 logger = get_logger('project')
@@ -18,7 +21,7 @@ project_model = api.model('Project', {
     'id': fields.String(required=True),
     'name': fields.String(required=True),
     'type': fields.String(required=True),
-    'public': fields.String(required=True)
+    'public': fields.Boolean(required=True)
 })
 
 add_project_schema = {
@@ -32,14 +35,17 @@ add_project_schema = {
     'required': ["name", "private", "type"]
 }
 
-add_project_model = ns.schema_model('AddProject', add_project_schema)
+add_project_model = api.schema_model('AddProject', add_project_schema)
 
 @ns.route('/')
+@api.response(403, 'Not Authorized')
 class Projects(Resource):
 
-    @auth_required(['user'], check_project_access=False)
     @api.marshal_list_with(project_model)
     def get(self):
+        '''
+        Returns user's projects
+        '''
         projects = g.db.execute_many_dict("""
             SELECT p.id, p.name, p.type, p.public
             FROM project p
@@ -51,9 +57,12 @@ class Projects(Resource):
 
         return projects
 
-    @auth_required(['user'], check_project_access=False)
     @api.expect(add_project_model)
+    @api.response(200, 'Success', response_model)
     def post(self):
+        '''
+        Create new project
+        '''
         user_id = g.token['user']['id']
 
         b = request.get_json()
@@ -137,8 +146,8 @@ class Projects(Resource):
         project_id = project['id']
 
         g.db.execute('''
-            INSERT INTO collaborator (user_id, project_id, owner)
-            VALUES (%s, %s, true)
+            INSERT INTO collaborator (user_id, project_id, role)
+            VALUES (%s, %s, 'Owner')
         ''', [user_id, project_id])
 
 
@@ -165,7 +174,7 @@ class Projects(Resource):
                     "create", "delete", "public", "pull_request", "push"
                 ],
                 'config': {
-                    'url': os.environ['INFRABOX_ROOT_URL'] + '/github/hook',
+                    'url': get_root_url('global') + '/github/hook',
                     'content_type': "json",
                     'secret': os.environ['INFRABOX_GITHUB_WEBHOOK_SECRET'],
                     'insecure_ssl': insecure_ssl
@@ -199,12 +208,16 @@ class Projects(Resource):
 
         g.db.commit()
 
+        # Push updated collaborator and project data to Open Policy Agent
+        opa_push_project_data(g.db)
+        opa_push_collaborator_data(g.db)
+
         return OK('Project added')
 
-@ns.route('/name/<project_name>')
+@ns.route('/name/<project_name>', doc=False)
+@api.response(403, 'Not Authorized')
 class ProjectName(Resource):
 
-    @auth_required(['user'], check_project_access=False, allow_if_public=True)
     @api.marshal_with(project_model)
     def get(self, project_name):
         project = g.db.execute_one_dict('''
@@ -219,12 +232,15 @@ class ProjectName(Resource):
         return project
 
 
-@ns.route('/<project_id>/')
+@ns.route('/<project_id>')
+@api.response(403, 'Not Authorized')
 class Project(Resource):
 
-    @auth_required(['user'], allow_if_public=True)
     @api.marshal_with(project_model)
     def get(self, project_id):
+        '''
+        Returns a project
+        '''
         project = g.db.execute_one_dict('''
             SELECT p.id, p.name, p.type, p.public
             FROM project p
@@ -233,9 +249,12 @@ class Project(Resource):
 
         return project
 
-    @auth_required(['user'], check_project_owner=True)
+    @api.response(200, 'Success', response_model)
     def delete(self, project_id):
-        if not validate_uuid4(project_id):
+        '''
+        Delete a project
+        '''
+        if not validate_uuid(project_id):
             abort(400, "Invalid project uuid.")
 
         project = g.db.execute_one_dict("""
@@ -285,5 +304,7 @@ class Project(Resource):
         ''', [project_id])
 
         g.db.commit()
+
+        # Updated collaborator and project data will be pushed with next push cycle to Open Policy Agent
 
         return OK('deleted project')

@@ -6,20 +6,25 @@ from io import BytesIO
 import requests
 
 from flask import g, abort, Response, send_file, request
-from flask_restplus import Resource
+from flask_restplus import Resource, fields
 
 from pyinfraboxutils import get_logger
-from pyinfraboxutils.ibflask import auth_required, OK
+from pyinfraboxutils.ibflask import OK
+from pyinfraboxutils.ibrestplus import api, response_model
 from pyinfraboxutils.storage import storage
-from api.namespaces import project as ns
 from pyinfraboxutils.token import encode_user_token
 
 logger = get_logger('api')
 
-@ns.route('/<project_id>/jobs/')
+ns = api.namespace('Jobs',
+                   path='/api/v1/projects/<project_id>/jobs/',
+                   description='Commit related operations')
+
+
+@ns.route('/', doc=False)
+@api.response(403, 'Not Authorized')
 class Jobs(Resource):
 
-    @auth_required(['user'], allow_if_public=True)
     def get(self, project_id):
         jobs = g.db.execute_many_dict('''
             WITH github_builds AS (
@@ -88,6 +93,7 @@ class Jobs(Resource):
                 j.created_at::text as job_created_at,
                 j.message as job_message,
                 j.definition as job_definition,
+                j.cluster_name as job_cluster_name,
                 j.node_name as job_node_name,
                 j.avg_cpu as job_avg_cpu,
                 -- pull_request
@@ -111,10 +117,6 @@ class Jobs(Resource):
 
         result = []
         for j in jobs:
-            limits = {}
-            if j['job_definition']:
-                limits = j['job_definition'].get('resources', {}).get('limits', {})
-
             o = {
                 'build': {
                     'id': j['build_id'],
@@ -135,14 +137,13 @@ class Jobs(Resource):
                     'start_date': j['job_start_date'],
                     'end_date': j['job_end_date'],
                     'name': j['job_name'],
-                    'cpu': limits.get('cpu', 1),
-                    'memory': limits.get('memory', 1024),
                     'dependencies': j['job_dependencies'],
                     'created_at': j['job_created_at'],
                     'message': j['job_message'],
                     'definition': j['job_definition'],
                     'node_name': j['job_node_name'],
-                    'avg_cpu': j['job_avg_cpu']
+                    'avg_cpu': j['job_avg_cpu'],
+                    'cluster_name': j['job_cluster_name']
                 }
             }
 
@@ -185,11 +186,16 @@ class Jobs(Resource):
         return result
 
 
-@ns.route('/<project_id>/jobs/<job_id>/restart')
+@ns.route('/<job_id>/restart')
+@api.response(403, 'Not Authorized')
 class JobRestart(Resource):
 
-    @auth_required(['user'])
+    @api.response(200, 'Success', response_model)
     def get(self, project_id, job_id):
+        '''
+        Restart job
+        '''
+        user_id = g.token['user']['id']
 
         job = g.db.execute_one_dict('''
             SELECT state, type, build_id
@@ -249,50 +255,47 @@ class JobRestart(Resource):
             if j['state'] not in restart_states and j['state'] not in ('skipped', 'queued'):
                 abort(400, 'Some children jobs are still running')
 
+        result = g.db.execute_one_dict('''
+            SELECT username
+            FROM "user"
+            WHERE id = %s
+        ''', [user_id])
+        username = result['username']
+        msg = 'Job restarted by %s\n' % username
+
         for j in restart_jobs:
             g.db.execute('''
                 UPDATE job
-                SET state = 'queued', console = null, message = null
-                WHERE id = %s
-            ''', [j])
+                SET state = 'queued', console = null, message = null, start_date = null
+                WHERE id = %s;
+                INSERT INTO console (job_id, output)
+                VALUES (%s, %s);
+            ''', [j, j, msg])
         g.db.commit()
 
         return OK('Successfully restarted job')
 
-@ns.route('/<project_id>/jobs/<job_id>/abort')
+@ns.route('/<job_id>/abort')
+@api.response(403, 'Not Authorized')
 class JobAbort(Resource):
 
-    @auth_required(['user'])
+    @api.response(200, 'Success', response_model)
     #pylint: disable=unused-argument
     def get(self, project_id, job_id):
+        '''
+        Abort job
+        '''
         g.db.execute('''
-            INSERT INTO abort(job_id) VALUES(%s)
-        ''', [job_id])
+            INSERT INTO abort(job_id, user_id) VALUES(%s, %s)
+        ''', [job_id, g.token['user']['id']])
         g.db.commit()
 
         return OK('Successfully aborted job')
 
-@ns.route('/<project_id>/jobs/<job_id>/testresults')
-class Testresults(Resource):
-
-    @auth_required(['user'], allow_if_public=True)
-    def get(self, project_id, job_id):
-        result = g.db.execute_many_dict('''
-            SELECT tr.state, t.name, t.suite, tr.duration, t.build_number, tr.message, tr.stack
-            FROM test t
-            INNER JOIN test_run tr
-                ON t.id = tr.test_id
-                AND t.project_id = tr.project_id
-            WHERE   tr.project_id = %s
-                AND tr.job_id = %s
-        ''', [project_id, job_id])
-
-        return result
-
-@ns.route('/<project_id>/jobs/<job_id>/tabs')
+@ns.route('/<job_id>/tabs', doc=False)
+@api.response(403, 'Not Authorized')
 class Tabs(Resource):
 
-    @auth_required(['user'], allow_if_public=True)
     def get(self, project_id, job_id):
         result = g.db.execute_many_dict('''
             SELECT name, data, type
@@ -303,10 +306,10 @@ class Tabs(Resource):
 
         return result
 
-@ns.route('/<project_id>/jobs/<job_id>/archive/download')
+@ns.route('/<job_id>/archive/download', doc=False)
+@api.response(403, 'Not Authorized')
 class ArchiveDownload(Resource):
 
-    @auth_required(['user'], allow_if_public=True)
     def get(self, project_id, job_id):
         filename = request.args.get('filename', None)
 
@@ -341,10 +344,9 @@ class ArchiveDownload(Resource):
                 #public project has no token here.
                 token = ""
             headers = {'Authorization': 'bearer ' + token}
-            logger.info('get archive %s from %s', [filename, url])
 
             # TODO(ib-steffen): allow custom ca bundles
-            r = requests.get(url,headers=headers, timeout=120, verify=False)
+            r = requests.get(url, headers=headers, timeout=120, verify=False)
             f = BytesIO(r.content)
             f.seek(0)
 
@@ -354,11 +356,14 @@ class ArchiveDownload(Resource):
 
         return send_file(f, as_attachment=True, attachment_filename=os.path.basename(filename))
 
-@ns.route('/<project_id>/jobs/<job_id>/archive')
+@ns.route('/<job_id>/archive')
+@api.response(403, 'Not Authorized')
 class Archive(Resource):
 
-    @auth_required(['user'], allow_if_public=True)
     def get(self, project_id, job_id):
+        '''
+        Returns archive
+        '''
         result = g.db.execute_one_dict('''
             SELECT archive
             FROM job
@@ -372,11 +377,14 @@ class Archive(Resource):
         return result['archive']
 
 
-@ns.route('/<project_id>/jobs/<job_id>/console')
+@ns.route('/<job_id>/console')
+@api.response(403, 'Not Authorized')
 class Console(Resource):
 
-    @auth_required(['user'], allow_if_public=True)
     def get(self, project_id, job_id):
+        '''
+        Returns job's console output
+        '''
         result = g.db.execute_one_dict('''
             SELECT console
             FROM job
@@ -404,10 +412,10 @@ class Console(Resource):
         return Response(output, mimetype='text/plain')
 
 
-@ns.route('/<project_id>/jobs/<job_id>/output')
+@ns.route('/<job_id>/output', doc=False)
+@api.response(403, 'Not Authorized')
 class Output(Resource):
 
-    @auth_required(['user'], allow_if_public=True)
     #pylint: disable=unused-argument
     def get(self, project_id, job_id):
         g.release_db()
@@ -420,27 +428,27 @@ class Output(Resource):
 
         return send_file(f, attachment_filename=key)
 
-@ns.route('/<project_id>/jobs/<job_id>/testruns')
+@ns.route('/<job_id>/testruns', doc=False)
+@api.response(403, 'Not Authorized')
 class Testruns(Resource):
 
-    @auth_required(['user'], allow_if_public=True)
     def get(self, project_id, job_id):
+        '''
+        Returns test runs
+        '''
         result = g.db.execute_many_dict('''
-            SELECT tr.state, t.name, t.suite, tr.duration, t.build_number, tr.message, tr.stack, to_char(tr.timestamp, 'YYYY-MM-DD HH24:MI:SS') as timestamp
-            FROM test t
-            INNER JOIN test_run tr
-                ON t.id = tr.test_id
-                AND t.project_id = %s
-                AND tr.project_id = %s
-                AND tr.job_id = %s
-        ''', [project_id, project_id, job_id])
+            SELECT tr.state, tr.name, tr.suite, tr.duration, tr.message, tr.stack, to_char(tr.timestamp, 'YYYY-MM-DD HH24:MI:SS') as timestamp
+            FROM test_run tr
+            WHERE job_id = %s
+            AND project_id = %s
+        ''', [job_id, project_id])
 
         return result
 
-@ns.route('/<project_id>/jobs/<job_id>/tests/history')
+@ns.route('/<job_id>/tests/history', doc=False)
+@api.response(403, 'Not Authorized')
 class TestHistory(Resource):
 
-    @auth_required(['user'], allow_if_public=True)
     def get(self, project_id, job_id):
 
         test = request.args.get('test', None)
@@ -457,23 +465,20 @@ class TestHistory(Resource):
 		m.name measurement_name,
 		m.value measurement_value,
 		m.unit measurement_unit
-	    FROM test t
-	    INNER JOIN test_run tr
-		ON t.id = tr.test_id
-		AND tr.project_id = t.project_id
+	    FROM test_run tr
 	    INNER JOIN job j
 		ON j.id = tr.job_id
 		AND j.name = (SELECT name FROM job WHERE id = %s)
-		AND j.project_id = t.project_id
+		AND j.project_id = tr.project_id
 	    INNER JOIN build b
 		ON b.id = j.build_id
 		AND b.project_id = j.project_id
 	    LEFT OUTER JOIN measurement m
 		ON tr.id = m.test_run_id
 		AND m.project_id = b.project_id
-	    WHERE   t.name = %s
-		AND t.suite = %s
-		AND t.project_id = %s
+	    WHERE   tr.name = %s
+		AND tr.suite = %s
+		AND tr.project_id = %s
 	    ORDER BY b.build_number, b.restart_counter
 	    LIMIT 30
         ''', [job_id, test, suite, project_id])
@@ -482,9 +487,10 @@ class TestHistory(Resource):
         result = []
 
         for r in results:
-            if current_build and current_build['build_number'] != r['build_number']:
-                result.append(current_build)
-                current_build = None
+            if current_build:
+                if current_build['build_number'] != r['build_number']:
+                    result.append(current_build)
+                    current_build = None
 
             if not current_build:
                 current_build = {
@@ -506,12 +512,21 @@ class TestHistory(Resource):
 
         return result
 
+badge_model = api.model('Badge', {
+    'subject': fields.String,
+    'status': fields.String,
+    'color': fields.String,
+})
 
-@ns.route('/<project_id>/jobs/<job_id>/badges')
+@ns.route('/<job_id>/badges')
+@api.response(403, 'Not Authorized')
 class Badges(Resource):
 
-    @auth_required(['user'], allow_if_public=True)
+    @api.marshal_list_with(badge_model)
     def get(self, project_id, job_id):
+        '''
+        Returns job's badges
+        '''
         result = g.db.execute_many_dict('''
             SELECT subject, status, color
             FROM job_badge
@@ -557,10 +572,10 @@ def compact(s):
 
     return result
 
-@ns.route('/<project_id>/jobs/<job_id>/stats')
+@ns.route('/<job_id>/stats', doc=False)
+@api.response(403, 'Not Authorized')
 class Stats(Resource):
 
-    @auth_required(['user'], allow_if_public=True)
     def get(self, project_id, job_id):
         result = g.db.execute_one_dict('''
             SELECT stats
@@ -583,11 +598,15 @@ class Stats(Resource):
 
         return r
 
-@ns.route('/<project_id>/jobs/<job_id>/cache/clear')
+@ns.route('/<job_id>/cache/clear')
+@api.response(200, 'Success', response_model)
+@api.response(403, 'Not Authorized')
 class JobCacheClear(Resource):
 
-    @auth_required(['user'])
     def get(self, project_id, job_id):
+        '''
+        Clear job's cache
+        '''
         job = g.db.execute_one_dict('''
             SELECT j.name, branch from job j
             INNER JOIN build b

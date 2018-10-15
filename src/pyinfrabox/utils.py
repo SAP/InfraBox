@@ -77,9 +77,9 @@ def validate_url(url):
     except:
         return False
 
-def validate_uuid4(uuid_string):
+def validate_uuid(uuid_string):
     try:
-        val = uuid.UUID(uuid_string, version=4)
+        val = uuid.UUID(uuid_string)
     except ValueError:
         return False
 

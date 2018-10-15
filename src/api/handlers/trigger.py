@@ -6,9 +6,12 @@ import requests
 from flask_restplus import Resource, fields
 from flask import abort, request, g
 
-from pyinfraboxutils.ibflask import auth_required, OK
-from pyinfraboxutils.ibrestplus import api
-from project import ns
+from pyinfraboxutils.ibflask import OK
+from pyinfraboxutils.ibrestplus import api, response_model
+
+ns = api.namespace('Projects',
+                   path='/api/v1/projects/<project_id>',
+                   description='Project related operations')
 
 def execute_github_api(url, token):
     headers = {
@@ -119,7 +122,7 @@ def create_github_commit(project_id, repo_id, branch_or_sha):
         SELECT github_api_token FROM "user" u
         INNER JOIN collaborator co
             ON co.user_id = u.id
-            AND co.owner = true
+            AND co.role = 'Owner'
         INNER JOIN project p
             ON co.project_id = p.id
         INNER JOIN repository r
@@ -191,8 +194,8 @@ def create_git_job(commit, build_no, project_id, repo, project_type, env):
         INSERT INTO job (id, state, build_id, type, name, project_id,
                          dockerfile, repo, env_var, cluster_name, definition)
         VALUES (gen_random_uuid(), 'queued', %s, 'create_job_matrix',
-                'Create Jobs', %s, '', %s, %s, 'master', %s)
-    ''', [build['id'], project_id, json.dumps(git_repo), json.dumps(env_var), json.dumps(definition)])
+                'Create Jobs', %s, '', %s, %s, %s, %s)
+    ''', [build['id'], project_id, json.dumps(git_repo), json.dumps(env_var), None, json.dumps(definition)])
 
     return (build['id'], build['build_number'])
 
@@ -253,12 +256,17 @@ trigger_model = api.model('Trigger', {
 })
 
 
-@ns.route('/<project_id>/trigger')
+@ns.route('/trigger')
+@api.response(403, 'Not Authorized')
+@api.response(404, 'Project not found')
 class Trigger(Resource):
 
-    @auth_required(['user', 'project'])
     @api.expect(trigger_model)
+    @api.response(200, 'Success', response_model)
     def post(self, project_id):
+        '''
+        Trigger a new build
+        '''
         body = request.get_json()
         branch_or_sha = body.get('branch_or_sha', None)
         env = body.get('env', None)

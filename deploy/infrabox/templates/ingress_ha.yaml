@@ -1,0 +1,69 @@
+{{ if .Values.ingress.enabled }}
+{{ if .Values.ha.enabled}}
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+    name: infrabox-ha-entry
+    namespace: {{ template "system_namespace" . }}
+    annotations:
+        kubernetes.io/ingress.class: "nginx"
+        nginx.ingress.kubernetes.io/proxy-body-size: "2048m"
+        nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+        nginx.ingress.kubernetes.io/proxy-connect-timeout: "1200"
+        nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+        nginx.ingress.kubernetes.io/affinity: "cookie"
+        nginx.ingress.kubernetes.io/session-cookie-name: "route"
+        nginx.ingress.kubernetes.io/session-cookie-hash: "sha1"
+        nginx.ingress.kubernetes.io/ssl-redirect: "true"
+spec:
+    rules:
+    -
+        host: {{ .Values.ha.global_host }}
+        http:
+            paths:
+            -
+                path: /dashboard
+                backend:
+                    serviceName: infrabox-static
+                    servicePort: 80
+            -
+                path: /api
+                backend:
+                    serviceName: infrabox-api
+                    servicePort: 8080
+            {{ if .Values.github.enabled }}
+            -
+                path: /github/hook
+                backend:
+                    serviceName: infrabox-github-trigger
+                    servicePort: 8080
+            -
+                path: /github/auth
+                backend:
+                    serviceName: infrabox-api
+                    servicePort: 8080
+            {{ end }}
+            {{ if .Values.monitoring.enabled }}
+            -
+                path: /grafana
+                backend:
+                    serviceName: infrabox-grafana
+                    servicePort: 80
+            {{ end }}
+            -
+                path: /v2
+                backend:
+                    serviceName: infrabox-docker-registry
+                    servicePort: 8080
+            -
+                path: /
+                backend:
+                    serviceName: infrabox-static
+                    servicePort: 80
+
+    tls:
+        - hosts:
+            - {{ .Values.ha.global_host }}
+          secretName: infrabox-ha-tls-certs
+{{ end }}
+{{ end }}

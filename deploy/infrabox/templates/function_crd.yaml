@@ -17,6 +17,9 @@ spec:
     {{ include "env_general" . | indent 4 }}
     {{ include "env_gerrit" . | indent 4 }}
     -
+        name: INFRABOX_JOB_STORAGE_DRIVER
+        value: {{ .Values.job.storage_driver }}
+    -
         name: INFRABOX_LOCAL_CACHE_ENABLED
         value: {{ .Values.local_cache.enabled | quote }}
     volumeMounts:
@@ -49,7 +52,7 @@ spec:
     -
         name: local-cache
         hostPath:
-            Path: {{ default "/tmp/infrabox/local_cache" .Values.local_cache.host_path }}
+            path: {{ default "/tmp/infrabox/local_cache" .Values.local_cache.host_path }}
 {{ end }}
 {{ if .Values.gerrit.enabled }}
     -

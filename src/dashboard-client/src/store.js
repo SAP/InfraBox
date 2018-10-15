@@ -17,8 +17,7 @@ const state = {
     settings: {},
     admin: {
         projects: [],
-        users: [],
-        clusters: []
+        users: []
     }
 }
 
@@ -127,8 +126,6 @@ function handleJobUpdate (state, event) {
         const job = new Job(
             d.id,
             d.name,
-            d.cpu,
-            d.memory,
             d.state,
             startDate,
             endDate,
@@ -193,6 +190,12 @@ function setCollaborators (state, data) {
     const project = data.project
     const collaborators = data.collaborators
     project.collaborators = collaborators
+}
+
+function setRoles (state, data) {
+    const project = data.project
+    const roles = data.roles
+    project.roles = roles
 }
 
 function setTokens (state, data) {
@@ -288,15 +291,12 @@ function setAdminProjects (state, projects) {
     state.admin.projects = projects
 }
 
-function setClusters (state, clusters) {
-    state.admin.clusters = clusters
-}
-
 const mutations = {
     addProjects,
     addJobs,
     setSecrets,
     setCollaborators,
+    setRoles,
     setTokens,
     handleJobUpdate,
     setUser,
@@ -311,7 +311,6 @@ const mutations = {
     setTabs,
     setAdminUsers,
     setAdminProjects,
-    setClusters,
     setArchive
 }
 

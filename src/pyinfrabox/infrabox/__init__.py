@@ -13,13 +13,16 @@ def check_name(n, path):
         raise ValidationError(path, "'%s' not a valid value" % n)
 
 def parse_repository(d, path):
-    check_allowed_properties(d, path, ('clone', 'submodules'))
+    check_allowed_properties(d, path, ('clone', 'submodules', 'full_history'))
 
     if 'clone' in d:
         check_boolean(d['clone'], path + ".clone")
 
     if 'submodules' in d:
         check_boolean(d['submodules'], path + ".submodules")
+
+    if 'full_history' in d:
+        check_boolean(d['full_history'], path + ".full_history")
 
 def parse_cluster(d, path):
     check_allowed_properties(d, path, ('selector',))
@@ -120,11 +123,14 @@ def parse_cache(d, path):
 
 def parse_git(d, path):
     check_allowed_properties(d, path, ("type", "name", "commit", "clone_url",
-                                       "depends_on", "environment", "infrabox_file"))
+                                       "depends_on", "environment", "infrabox_file", "branch"))
     check_required_properties(d, path, ("type", "name", "commit", "clone_url"))
     check_name(d['name'], path + ".name")
     check_text(d['commit'], path + ".commit")
     check_text(d['clone_url'], path + ".clone_url")
+
+    if 'branch' in d:
+        check_text(d['branch'], path + ".clone_url")
 
     if 'depends_on' in d:
         parse_depends_on(d['depends_on'], path + ".depends_on")

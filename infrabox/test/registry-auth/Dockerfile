@@ -1,8 +1,5 @@
-FROM alpine:3.6
-
-RUN apk add --no-cache python py2-psycopg2 py2-pip gcc openssl libffi-dev python2-dev musl-dev py2-flask git openssl-dev && \
-    pip install bcrypt PyJWT jsonschema coverage xmlrunner cryptography codecov && \
-    apk del gcc python2-dev musl-dev openssl-dev libffi-dev
+ARG INFRABOX_BUILD_NUMBER
+FROM quay.io/infrabox/images-test:build_$INFRABOX_BUILD_NUMBER
 
 ENV PYTHONPATH=/infrabox/context/src:/infrabox/context/src/docker-registry
 

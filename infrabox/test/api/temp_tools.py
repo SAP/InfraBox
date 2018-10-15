@@ -7,6 +7,7 @@ import psycopg2
 from api import server
 from pyinfraboxutils.db import connect_db
 from pyinfraboxutils.token import encode_user_token, encode_project_token, encode_job_token
+from pyinfraboxutils.ibopa import opa_push_all
 
 
 class TestUtils:
@@ -67,9 +68,8 @@ class TestClient:
         return h
 
     @staticmethod
-    def get_project_authorization(user_id, project_id):  # pragma: no cover
-        user_token = encode_user_token(user_id)
-        project_token = encode_project_token(user_token, project_id)
+    def get_project_authorization(token_id, project_id):  # pragma: no cover
+        project_token = encode_project_token(token_id, project_id)
         h = {'Authorization': 'token %s' % project_token}
         return h
 
@@ -119,3 +119,8 @@ class TestClient:
             return j
 
         return r
+
+    
+    @staticmethod
+    def opa_push():
+        opa_push_all()

@@ -16,6 +16,7 @@ class Section {
         this.startTime = startTime
         this.lines_raw = []
         this.id = id
+        this.labels = {}
     }
 
     setEndTime (end) {
@@ -25,6 +26,14 @@ class Section {
 
         const dur = (end.getTime() - this.startTime.getTime()) / 1000
         this.duration = Math.max(Math.round(dur), 0)
+    }
+
+    addLabel (level) {
+        if (!this.labels[level]) {
+            this.labels[level] = 0
+        }
+
+        this.labels[level] += 1
     }
 
     addLine (line) {
@@ -38,11 +47,12 @@ class Section {
         this.linesInSection += 1
     }
 
-    generateHtml () {
+    generateHtml (job) {
+        const url = `${NewAPIService.api}projects/${job.project.id}/jobs/${job.id}/console`
         let t = ''
 
         if (this.lines_raw.length >= 200) {
-            t += 'Output too large, only showing last 200 lines:\n'
+            t += `Output too large, only showing last 200 lines (Full console output):\n`
         }
 
         for (let l of this.lines_raw) {
@@ -54,6 +64,7 @@ class Section {
         this.lines_html = t
         const convert = new Convert()
         this.lines_html = convert.toHtml(t)
+        this.lines_html = this.lines_html.replace('Full console output', `<a href="${url}" target="_blank">Full console output</a>`)
     }
 
     escapeHtml (text) {
@@ -70,13 +81,11 @@ class Section {
 }
 
 export default class Job {
-    constructor (id, name, cpu, memory, state,
+    constructor (id, name, state,
             startDate, endDate, build, project,
             dependencies, message, definition, nodeName, avgCpu) {
         this.id = id
         this.name = name
-        this.cpu = cpu
-        this.memory = memory
         this.state = state
         this.startDate = startDate
         this.endDate = endDate
@@ -108,54 +117,89 @@ export default class Job {
         return t
     }
 
+    _addSection (line, date) {
+        let idx = line.indexOf('|##')
+        const header = line.substr(idx + 3)
+
+        this.currentSection.setEndTime(date)
+        this.currentSection.generateHtml(this)
+
+        this.currentSection = new Section(this.linesProcessed, header, date, this.sections.length)
+        this.linesProcessed++
+        this.sections.push(this.currentSection)
+    }
+
+    _addStepSection (line, date) {
+        let idx = line.indexOf('|Step')
+        const header = line.substr(idx + 5)
+
+        this.currentSection.setEndTime(date)
+        this.currentSection.generateHtml(this)
+
+        this.currentSection = new Section(this.linesProcessed, header, date, this.sections.length)
+        this.linesProcessed++
+        this.sections.push(this.currentSection)
+    }
+
+    _addLabeledLine (line, date) {
+        let idx = line.indexOf('[level=')
+        if (idx >= 0) {
+            let end = line.indexOf(']')
+            idx += 7
+            const level = line.substr(idx, end - idx)
+            this.currentSection.addLabel(level)
+            // line = header.substr(end + 2, header.length - end)
+        }
+
+        this.currentSection.addLine(line)
+        this.linesProcessed++
+    }
+
+    _addLine (line) {
+        let idx = line.indexOf('|')
+
+        let date = null
+        if (idx > 0) {
+            const d = line.substr(0, idx)
+            date = this._getTime(d)
+        }
+
+        if (!this.currentSection) {
+            this.currentSection = new Section(this.linesProcessed, 'Prepare Job', date, 0)
+            this.sections.push(this.currentSection)
+        }
+
+        // Check for labled lines
+        idx = line.indexOf('|###')
+        if (idx >= 0 && idx < 10) {
+            return this._addLabeledLine(line, date)
+        }
+
+        idx = line.indexOf('|##')
+        if (idx >= 0 && idx < 10) {
+            return this._addSection(line, date)
+        }
+
+        idx = line.indexOf('|Step')
+        if (idx >= 0 && idx < 10) {
+            return this._addStepSection(line, date)
+        }
+
+        this.currentSection.addLine(line)
+        this.linesProcessed++
+    }
+
     _addLines (lines) {
         for (let line of lines) {
             if (line === '') {
                 continue
             }
 
-            let header = ''
-            let isSection = false
-
-            let idx = line.indexOf('|##')
-            let date = null
-
-            if (idx >= 0 && idx < 10) {
-                header = line.substr(idx + 3)
-                const d = line.substr(0, idx)
-                date = this._getTime(d)
-                isSection = true
-            }
-
-            idx = line.indexOf('|Step')
-            if (idx >= 0 && idx < 10) {
-                header = line.substr(idx + 5)
-                const d = line.substr(0, idx)
-                date = this._getTime(d)
-                isSection = true
-            }
-
-            if (isSection) {
-                if (this.currentSection) {
-                    this.currentSection.setEndTime(date)
-                    this.currentSection.generateHtml()
-                }
-                this.currentSection = new Section(this.linesProcessed, header, date, this.sections.length)
-                this.linesProcessed++
-                this.sections.push(this.currentSection)
-            } else {
-                if (!this.currentSection) {
-                    this.currentSection = new Section(this.linesProcessed, 'Prepare Job', date, 0)
-                    this.sections.push(this.currentSection)
-                }
-
-                this.currentSection.addLine(line)
-                this.linesProcessed++
-            }
+            this._addLine(line)
         }
 
         if (this.currentSection) {
-            this.currentSection.generateHtml()
+            this.currentSection.generateHtml(this)
         }
     }
 
@@ -216,6 +260,10 @@ export default class Job {
     }
 
     loadTests () {
+        if (this.tests.length > 0) {
+            return
+        }
+
         return NewAPIService.get(`projects/${this.project.id}/jobs/${this.id}/testruns`)
             .then((tests) => {
                 store.commit('setTests', { job: this, tests: tests })

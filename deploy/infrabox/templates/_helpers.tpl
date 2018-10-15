@@ -282,11 +282,6 @@ https://{{- required "host is required" .Values.host -}}:{{- .Values.port -}}
 {{ end }}
 
 {{ define "env_ldap" }}
-{{ if ne .Values.cluster.name "master" }}
--
-    name: INFRABOX_ACCOUNT_LDAP_ENABLED
-    value: "false"
-{{ else }}
 -
     name: INFRABOX_ACCOUNT_LDAP_ENABLED
     value: {{ .Values.account.ldap.enabled | quote }}
@@ -309,7 +304,6 @@ https://{{- required "host is required" .Values.host -}}:{{- .Values.port -}}
         secretKeyRef:
             name: infrabox-ldap
             key: password
-{{ end }}
 {{ end }}
 {{ end }}
 
@@ -352,6 +346,18 @@ https://{{- required "host is required" .Values.host -}}:{{- .Values.port -}}
     value: {{ .Values.cluster.labels }}
 {{ end }}
 
+{{ define "env_opa" }}
+-
+    name: INFRABOX_OPA_HOST
+    value: localhost
+-
+    name: INFRABOX_OPA_PORT
+    value: "8181"
+-
+    name: INFRABOX_OPA_PUSH_INTERVAL
+    value: "30"
+{{ end }}
+
 {{ define "env_general" }}
 -
     name: INFRABOX_GENERAL_DONT_CHECK_CERTIFICATES
@@ -359,6 +365,9 @@ https://{{- required "host is required" .Values.host -}}:{{- .Values.port -}}
 -
     name: INFRABOX_GENERAL_WORKER_NAMESPACE
     value: {{ template "worker_namespace" . }}
+-
+    name: INFRABOX_GENERAL_SYSTEM_NAMESPACE
+    value: {{ template "system_namespace" . }}
 -
     name: INFRABOX_ROOT_URL
     value: {{ template "root_url" . }}
@@ -368,6 +377,8 @@ https://{{- required "host is required" .Values.host -}}:{{- .Values.port -}}
 -
     name: INFRABOX_GENERAL_REPORT_ISSUE_URL
     value: {{ .Values.general.report_issue_url }}
+-   name: INFRABOX_LOG_LEVEL
+    value: {{ .Values.general.log_level }}
 {{ end }}
 
 {{ define "env_docker_registry" }}
@@ -399,6 +410,13 @@ https://{{- required "host is required" .Values.host -}}:{{- .Values.port -}}
 {{ end }}
 {{ end }}
 
+{{ define "containers_opa" }}
+-
+    image: {{ include "image_repository" . }}/opa:{{ include "image_tag" . }}
+    imagePullPolicy: Always
+    name: opa
+{{ end }}
+
 {{- define "dockerCredentials" }}
 {{- printf "{\"auths\": {\"%s\": {\"auth\": \"%s\"}}}" .Values.image.repository (printf "%s:%s" .Values.image.username .Values.image.password | b64enc) | b64enc }}
 {{- end }}
@@ -408,4 +426,36 @@ https://{{- required "host is required" .Values.host -}}:{{- .Values.port -}}
     imagePullSecrets:
     - name: infrabox-docker-credentials
 {{ end }}
+{{ end }}
+
+{{- define "ha_global_url" -}}
+{{- if eq 443.0 .Values.ha.global_port -}}
+https://{{- .Values.ha.global_host -}}
+{{- else -}}
+https://{{- .Values.ha.global_host -}}:{{- .Values.ha.global_port -}}
+{{- end -}}
+{{- end -}}
+
+{{ define "env_ha" }}
+-
+    name: INFRABOX_HA_ENABLED
+    value: {{ .Values.ha.enabled | quote }}
+{{ if .Values.ha.enabled }}
+-   name: INFRABOX_HA_CHECK_INTERVAL
+    value: {{ .Values.ha.check_interval | quote }}
+-   name: INFRABOX_HA_ACTIVE_TIMEOUT
+    value: {{ .Values.ha.active_timeout | quote }}
+-   name: INFRABOX_HA_GLOBAL_URL
+    value: {{ template "ha_global_url" . }}
+{{ end }}
+{{ end }}
+
+{{ define "env_cachet" }}
+-
+    name: INFRABOX_CACHET_ENABLED
+    value: {{ .Values.cachet.enabled | quote }}
+-   name: INFRABOX_CACHET_API_TOKEN
+    value: {{ .Values.cachet.api_token }}
+-   name: INFRABOX_CACHET_ENDPOINT
+    value: {{ .Values.cachet.endpoint | quote }}
 {{ end }}

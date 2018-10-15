@@ -16,6 +16,8 @@ general:
 
     report_issue_url: https://github.com/SAP/infrabox/issues
 
+    log_level: info
+
 image:
     # Address of the docker registry which contains
     # all the InfraBox images. It must be accessible
@@ -30,6 +32,17 @@ image:
 
     password: #<required if use private_repo>
 
+
+ha:
+    enabled: false
+
+    check_interval: 10
+
+    active_timeout: 60
+
+    global_host: #<required if use ha>
+
+    global_port: 443
 
 cluster:
     # Unique name of all clusters which are connected to the
@@ -258,6 +271,16 @@ job:
     docker_daemon_config: |-
         {}
 
+    storage_driver: overlay
+
 monitoring:
     # Enable InfraBox Monitoring. Requires prometheus-operator to be available.
     enabled: false
+
+cachet:
+    # Enable Cachet Status page
+    enabled: false
+
+    endpoint: # <REQUIRED> i.e. https://status.example.com/api/v1
+
+    api_token: # <REQUIRED>

@@ -1,103 +1,39 @@
 import base64
+
 from functools import wraps
+
+import requests
 
 from flask import Flask, g, jsonify, request, abort
 
-from pyinfraboxutils import get_logger
+from pyinfrabox.utils import validate_uuid
+
+from pyinfraboxutils import get_logger, get_env, dbpool
 from pyinfraboxutils.db import DB, connect_db
 from pyinfraboxutils.token import decode
+from pyinfraboxutils.ibopa import opa_do_auth
 
 app = Flask(__name__)
 app.url_map.strict_slashes = False
 
 logger = get_logger('ibflask')
 
-def get_token():
-    auth = dict(request.headers).get('Authorization', None)
-    cookie = request.cookies.get('token', None)
+@app.before_request
+def before_request():
+    def release_db():
+        db = getattr(g, 'db', None)
+        if not db:
+            return
 
-    if auth:
-        if auth.startswith("Basic "):
-            auth = auth.split(" ")[1]
+        dbpool.put(db)
+        g.db = None
 
-            try:
-                decoded = base64.b64decode(auth)
-            except:
-                logger.warn('could not base64 decode auth header')
-                abort(401, 'Unauthorized')
+    g.release_db = release_db
 
-            s = decoded.split('infrabox:')
+    g.db = dbpool.get()
 
-            if len(s) != 2:
-                logger.warn('Invalid auth header format')
-                abort(401, 'Unauthorized')
-
-            try:
-                token = decode(s[1])
-            except Exception as e:
-                logger.exception(e)
-                abort(401, 'Unauthorized')
-
-            return token
-        elif auth.startswith("token ") or auth.startswith("bearer "):
-            token = auth.split(" ")[1]
-
-            try:
-                token = decode(token.encode('utf8'))
-            except Exception as e:
-                logger.exception(e)
-                abort(401, 'Unauthorized')
-
-            return token
-        else:
-            logger.warn('Invalid auth header format')
-            abort(401, 'Unauthorized')
-    elif cookie:
-        token = cookie
-        try:
-            token = decode(token.encode('utf8'))
-        except Exception as e:
-            logger.exception(e)
-            abort(401, 'Unauthorized')
-
-        return token
-    else:
-        logger.info('No auth header')
-        abort(401, 'Unauthorized')
-
-try:
-    #pylint: disable=ungrouped-imports,wrong-import-position
-    from pyinfraboxutils import dbpool
-    logger.info('Using DB Pool')
-
-    @app.before_request
-    def before_request():
-        g.db = dbpool.get()
-
-        def release_db():
-            db = getattr(g, 'db', None)
-            if not db:
-                return
-
-            dbpool.put(db)
-            g.db = None
-
-        g.release_db = release_db
-
-except:
-    @app.before_request
-    def before_request():
-        g.db = DB(connect_db())
-
-        def release_db():
-            db = getattr(g, 'db', None)
-            if not db:
-                return
-
-            db.close()
-            g.db = None
-
-        g.release_db = release_db
+    g.token = normalize_token(get_token())
+    check_request_authorization()
 
 @app.teardown_request
 def teardown_request(_):
@@ -135,13 +71,82 @@ def OK(message, data=None):
 
     return jsonify(d)
 
-def token_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        g.token = get_token()
-        return f(*args, **kwargs)
+def get_token():
+    auth = dict(request.headers).get('Authorization', None)
+    cookie = request.cookies.get('token', None)
 
-    return decorated_function
+    if auth:
+        if auth.startswith("Basic "):
+            auth = auth.split(" ")[1]
+
+            try:
+                decoded = base64.b64decode(auth)
+            except:
+                logger.warn('could not base64 decode auth header %s', auth)
+                return None
+
+            s = decoded.split('infrabox:')
+
+            if len(s) != 2:
+                logger.warn('Invalid auth header format')
+                return None
+
+            try:
+                token = decode(s[1])
+            except Exception as e:
+                logger.exception(e)
+                return None
+
+            return token
+        elif auth.startswith("token ") or auth.startswith("bearer "):
+            token = auth.split(" ")[1]
+
+            try:
+                token = decode(token.encode('utf8'))
+            except Exception as e:
+                logger.exception(e)
+                return None
+
+            return token
+        else:
+            logger.warn('Invalid auth header format')
+            return None
+    elif cookie:
+        token = cookie
+        try:
+            token = decode(token.encode('utf8'))
+        except Exception as e:
+            logger.exception(e)
+            return None
+
+        return token
+    else:
+        return None
+
+def check_request_authorization():
+    try:
+        # Assemble Input Data for Open Policy Agent
+        opa_input = {
+            "input": {
+                "method": request.method,
+                "path": get_path_array(request.path),
+                "token": g.token,
+            }
+        }
+
+        original_method = dict(request.headers).get('X-Original-Method', None)
+        if original_method is not None:
+            opa_input["input"]["original_method"] = original_method
+
+        is_authorized = opa_do_auth(opa_input)
+
+        if not is_authorized:
+            logger.info("Rejected unauthorized request")
+            abort(401, 'Unauthorized')
+
+    except requests.exceptions.RequestException as e:
+        logger.error(e)
+        abort(500, 'Authorization failed')
 
 def check_job_belongs_to_project(f):
     @wraps(f)
@@ -165,210 +170,81 @@ def check_job_belongs_to_project(f):
         return f(*args, **kwargs)
     return decorated_function
 
-def job_token_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        token = get_token()
+def normalize_token(token):
+    # Enrich job token
+    if token is None or not "type" in token:
+        return token
+    if token["type"] == "job":
+        try:
+            return enrich_job_token(token)
+        except:
+            logger.exception("Enrichment of job token failed")
+            return None
+    # Legacy
+    if token["type"] == "project-token":
+        token["type"] = 'project'
 
-        if token['type'] != 'job':
-            logger.warn('token type is not job but "%s"', token['type'])
-            abort(401, 'Unauthorized')
+    # Validate user token
+    if token["type"] == "user":
+        if not validate_user_token(token):
+            return None
 
-        job_id = token['job']['id']
-        r = g.db.execute_one('''
-            SELECT state, project_id, name
-            FROM job
-            WHERE id = %s''', [job_id])
+    # Validate project_token
+    if token["type"] == "project":
+        if not validate_project_token(token):
+            return None
 
-        if not r:
-            logger.warn('job not found')
-            abort(401, 'Unauthorized')
+    return token
 
-        job_state = r[0]
-        if job_state not in ('queued', 'running', 'scheduled'):
-            abort(401, 'Unauthorized')
+def enrich_job_token(token):
+    if not ("job" in token and "id" in token["job"] and validate_uuid(token["job"]["id"])):
+        raise LookupError('invalid job id')
 
+    job_id = token["job"]["id"]
 
-        token['job']['state'] = r[0]
-        token['job']['name'] = r[2]
-        token['project'] = {}
-        token['project']['id'] = r[1]
-        g.token = token
-
-        return f(*args, **kwargs)
-
-    return decorated_function
-
-def validate_job_token(token):
-    job_id = token['job']['id']
     r = g.db.execute_one('''
         SELECT state, project_id, name
         FROM job
         WHERE id = %s''', [job_id])
 
     if not r:
-        logger.warn('job not found')
-        abort(401, 'Unauthorized')
-
-    job_state = r[0]
-    if job_state not in ('queued', 'running', 'scheduled'):
-        abort(401, 'Unauthorized')
+        raise LookupError('job not found')
 
 
     token['job']['state'] = r[0]
     token['job']['name'] = r[2]
     token['project'] = {}
     token['project']['id'] = r[1]
-    g.token = token
+    return token
 
-def is_collaborator(user_id, project_id, db=None):
-    if not db:
-        db = g.db
+def validate_user_token(token):
+    if not ("user" in token and "id" in token["user"] and validate_uuid(token['user']['id'])):
+        return False
 
-    u = db.execute_many('''
-        SELECT co.*
-        FROM collaborator co
-        INNER JOIN "user" u
-            ON u.id = co.user_id
-            AND u.id = %s
-            AND co.project_id = %s
-    ''', [user_id, project_id])
-
-    return u
-
-def is_public(project_id, project_name):
-    if project_id:
-        p = g.db.execute_one_dict('''
-            SELECT public
-            FROM project
-            WHERE id = %s
-        ''', [project_id])
-
-        if not p:
-            abort(404, 'Project not found')
-
-        if p['public']:
-            return True
-    elif project_name:
-        p = g.db.execute_one_dict('''
-            SELECT public
-            FROM project
-            WHERE name = %s
-        ''', [project_name])
-
-        if not p:
-            abort(404, 'Project not found')
-
-        if p['public']:
-            return True
-    else:
-        logger.warn('no project_id or project_name')
-        abort(401, 'Unauthorized')
-
-    return False
-
-
-def validate_user_token(token, check_project_access, project_id, check_project_owner):
     u = g.db.execute_one('''
         SELECT id FROM "user" WHERE id = %s
     ''', [token['user']['id']])
-
     if not u:
         logger.warn('user not found')
-        abort(401, 'Unauthorized')
+        return False
+    return True
 
-    if check_project_access:
-        if not project_id:
-            logger.warn('no project id')
-            abort(401, 'Unauthorized')
+def validate_project_token(token):
+    if not ("project" in token and "id" in token['project'] and validate_uuid(token['project']['id'])
+            and "id" in token and validate_uuid(token['id'])):
+        return False
 
-        u = is_collaborator(token['user']['id'], project_id)
+    r = g.db.execute_one('''
+        SELECT id FROM auth_token
+        WHERE id = %s AND project_id = %s
+    ''', (token['id'], token['project']['id'],))
+    if not r:
+        logger.warn('project token not valid')
+        return False
+    return True
 
-        if not u:
-            logger.warn('user has no access to project')
-            abort(401, 'Unauthorized')
-
-    if check_project_owner:
-        if not project_id:
-            logger.warn('no project id')
-            abort(401, 'Unauthorized')
-
-        u = g.db.execute_many('''
-            SELECT co.*
-            FROM collaborator co
-            INNER JOIN "user" u
-                ON u.id = co.user_id
-                AND u.id = %s
-                AND co.project_id = %s
-                AND co.owner = true
-        ''', [token['user']['id'], project_id])
-
-        if not u:
-            logger.warn('user has no access to project')
-            abort(401, 'Unauthorized')
-
-def validate_project_token(token, check_project_access, project_id):
-    if not check_project_access:
-        return
-
-    if project_id != token['project']['id']:
-        logger.warn('token not valid for project')
-        abort(401, 'Unauthorized')
-
-def auth_required(types,
-                  check_project_access=True,
-                  check_project_owner=False,
-                  check_admin=False,
-                  allow_if_public=False):
-    def actual_decorator(f):
-        @wraps(f)
-        def decorated_function(*args, **kwargs):
-            project_id = kwargs.get('project_id', None)
-            project_name = kwargs.get('project_name', None)
-
-            if allow_if_public:
-                if is_public(project_id, project_name):
-                    return f(*args, **kwargs)
-
-            token = get_token()
-            token_type = token['type']
-            g.token = token
-
-            if token_type == 'project-token':
-                token_type = 'project'
-
-            if token_type not in types:
-                logger.warn('token type "%s" not allowed here', token_type)
-                abort(401, 'Unauthorized')
-
-            if token_type == 'job':
-                if check_project_owner:
-                    logger.warn('Project owner validation not possible with job token')
-                    abort(401, 'Unauthorized')
-
-                validate_job_token(token)
-            elif token_type == 'user':
-                if token['user']['id'] != '00000000-0000-0000-0000-000000000000':
-                    if check_admin:
-                        abort(401, 'Unauthorized')
-                    else:
-                        validate_user_token(token,
-                                            check_project_access,
-                                            project_id,
-                                            check_project_owner)
-            elif token_type == 'project':
-                project_id = kwargs.get('project_id')
-
-                if check_project_owner:
-                    logger.warn('Project owner validation not possible with project token')
-                    abort(401, 'Unauthorized')
-
-                validate_project_token(token, check_project_access, project_id)
-            else:
-                logger.warn('unhandled token type')
-                abort(401, 'Unauthorized')
-
-            return f(*args, **kwargs)
-
-        return decorated_function
-    return actual_decorator
+def get_path_array(path):
+    pathstring = path.strip()
+    if pathstring[-1] == "/":
+        pathstring = pathstring[:-1]
+    return pathstring.split("/")[1:]

@@ -1,3 +1,33 @@
+{{ define "ing_dashboard" }}
+-
+    path: /dashboard
+    backend:
+        serviceName: infrabox-static
+        servicePort: 80
+{{ end }}
+
+{{ define "ing_root" }}
+-
+    path: /
+    backend:
+        serviceName: infrabox-static
+        servicePort: 80
+{{ end }}
+
+{{ define "ing_github"}}
+-
+    path: /github/hook
+    backend:
+        serviceName: infrabox-github-trigger
+        servicePort: 8080
+-
+    path: /github/auth
+    backend:
+        serviceName: infrabox-api
+        servicePort: 8080
+{{ end }}
+
+
 {{ if .Values.ingress.enabled }}
 apiVersion: extensions/v1beta1
 kind: Ingress
@@ -20,30 +50,21 @@ spec:
         host: {{ .Values.host }}
         http:
             paths:
-            {{ if eq .Values.cluster.name "master" }}
-            -
-                path: /dashboard
-                backend:
-                    serviceName: infrabox-static
-                    servicePort: 80
+            {{ if .Values.ha.enabled }}
+                {{ include "ing_dashboard" . | indent 12 }}
+            {{ else if eq .Values.cluster.name "master" }}
+                {{ include "ing_dashboard" . | indent 12 }}
             {{ end }}
             -
                 path: /api
                 backend:
                     serviceName: infrabox-api
                     servicePort: 8080
-            {{ if eq .Values.cluster.name "master" }}
             {{ if .Values.github.enabled }}
-            -
-                path: /github/hook
-                backend:
-                    serviceName: infrabox-github-trigger
-                    servicePort: 8080
-            -
-                path: /github/auth
-                backend:
-                    serviceName: infrabox-api
-                    servicePort: 8080
+            {{ if .Values.ha.enabled }}
+                {{ include "ing_github" . | indent 12 }}
+            {{ else if eq .Values.cluster.name "master" }}
+                {{ include "ing_github" . | indent 12 }}
             {{ end }}
             {{ end }}
             -
@@ -64,6 +85,11 @@ spec:
                 backend:
                     serviceName: infrabox-static
                     servicePort: 80
+            {{ end }}
+            {{ if .Values.ha.enabled }}
+                {{ include "ing_root" . | indent 12 }}
+            {{ else if eq .Values.cluster.name "master" }}
+                {{ include "ing_root" . | indent 12 }}
             {{ end }}
     tls:
         - hosts:
