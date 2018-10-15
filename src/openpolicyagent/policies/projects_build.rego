@@ -9,6 +9,11 @@ build_collaborator([user, project]) {
     collaborators[i].user_id = user
 }
 
+build_project_public(project){
+    projects[i].id = project
+    projects[i].public = true
+}
+
 allow {
     api.method = "GET"
     api.path = ["api", "v1", "projects", project, "builds", _, "restart"]
@@ -39,9 +44,22 @@ allow {
 
 allow {
     api.method = "GET"
+    api.path = ["api", "v1", "projects", project, "builds", _, _, "state"]
+    api.token.type = "user"
+    build_project_public(project)
+}
+
+allow {
+    api.method = "GET"
     api.path = ["api", "v1", "projects", project, "builds", _, _]
     api.token.type = "user"
     build_collaborator([api.token.user.id, project])
+}
+
+allow {
+    api.method = "GET"
+    api.path = ["api", "v1", "projects", project, "builds", _, _]
+    build_project_public( project )
 }
 
 allow {
