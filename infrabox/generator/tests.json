@@ -24,6 +24,13 @@
         "resources": { "limits": { "cpu": 1, "memory": 1024 } }
     }, {
         "type": "docker",
+        "name": "pyinfraboxutils",
+        "build_context": "../..",
+        "docker_file": "infrabox/test/pyinfraboxutils/Dockerfile",
+        "build_only": false,
+        "resources": { "limits": { "cpu": 1, "memory": 1024 } }
+    }, {
+        "type": "docker",
         "name": "github-review",
         "build_context": "../..",
         "docker_file": "infrabox/test/github-review/Dockerfile",

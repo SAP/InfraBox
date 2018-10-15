@@ -506,29 +506,6 @@
         {
             "type": "docker",
             "build_context": "../..",
-            "name": "controller",
-            "docker_file": "src/controller/Dockerfile",
-            "resources": {
-                "limits": {
-                    "cpu": 1,
-                    "memory": 2048
-                }
-            },
-            "deployments": [
-                {
-                    "type": "docker-registry",
-                    "host": "quay.io/infrabox",
-                    "repository": "controller",
-                    "username": "infrabox+infrabox_ci",
-                    "password": {
-                        "$secret": "QUAY_PASSWORD"
-                    }
-                }
-            ]
-        },
-        {
-            "type": "docker",
-            "build_context": "../..",
             "name": "service-gcp",
             "docker_file": "src/services/gcp/Dockerfile",
             "resources": {
