@@ -28,7 +28,6 @@ IMAGES = [
     {'name': 'job'},
     {'name': 'opa'},
     {'name': 'gc', 'depends_on': ['images-base']},
-    {'name': 'controller'},
     {'name': 'scheduler-kubernetes'},
     {'name': 'api', 'depends_on': ['images-base']},
     {'name': 'build-dashboard-client'},
