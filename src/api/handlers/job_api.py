@@ -551,7 +551,7 @@ class Output(Resource):
                 files = {f: stream}
                 token = encode_job_token(job_id)
                 headers = {'Authorization': 'bearer ' + token}
-                r = requests.post(url, files=files, headers=headers, timeout=120, verify=False)
+                r = requests.post(url, files=files, headers=headers, timeout=120)
 
                 if r.status_code != 200:
                     app.logger.error(r.text)

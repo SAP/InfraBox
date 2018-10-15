@@ -40,7 +40,7 @@ class Checker(object):
     def check_dashboard(self):
         self.logger.debug('check dashboard')
         try:
-            r = requests.head(self.root_url, verify=False, timeout=5)
+            r = requests.head(self.root_url, timeout=5)
             self.logger.debug("http return status code: %d" % r.status_code)
             if r.status_code != 200:
                 self.check_result = False
@@ -53,7 +53,7 @@ class Checker(object):
     def check_api(self):
         self.logger.debug('check api ping')
         try:
-            r = requests.head(self.root_url + '/api/ping', verify=False, timeout=5)
+            r = requests.head(self.root_url + '/api/ping', timeout=5)
             self.logger.debug("http return status code: %d" % r.status_code)
             if r.status_code != 200:
                 self.check_result = False
@@ -69,7 +69,7 @@ class Checker(object):
             h = {'Authorization': 'Bearer %s' % self.args.token}
             r = requests.get(
                 self.args.api_server + '/api/v1/namespaces/%s/pods' % self.namespace,
-                headers=h, timeout=10, verify=False)
+                headers=h, timeout=10)
             if r.status_code != 200:
                 self.check_result = False
                 self.logger.debug('check pods requests response http code: %d' % r.status_code)
