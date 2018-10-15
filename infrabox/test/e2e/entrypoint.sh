@@ -130,7 +130,7 @@ _installNginxIngress() {
     export ROOT_URL="$nginx_ip.nip.io"
     echo "Generating certs for: $ROOT_URL"
     openssl genrsa -out /tmp/ca.key 2048
-    openssl req -x509 -new -nodes -key /tmp/ca.key -sha256 -days 1024 -out /tmp/ca.crt -subj "/CN=$ROOT_URL"
+    openssl req -x509 -new -nodes -key /tmp/ca.key -sha256 -days 1024 -out /tmp/ca.crt -subj "/CN=test.infrabox.ninja"
 
     openssl genrsa -out /tmp/tls.key 2048
     openssl req -new -key /tmp/tls.key -out /tmp/tls.csr -subj "/CN=$ROOT_URL"
