@@ -345,8 +345,7 @@ class ArchiveDownload(Resource):
                 token = ""
             headers = {'Authorization': 'bearer ' + token}
 
-            # TODO(ib-steffen): allow custom ca bundles
-            r = requests.get(url, headers=headers, timeout=120, verify=False)
+            r = requests.get(url, headers=headers, timeout=120)
             f = BytesIO(r.content)
             f.seek(0)
 

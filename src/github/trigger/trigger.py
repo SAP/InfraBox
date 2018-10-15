@@ -7,6 +7,7 @@ import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
+from pyinfraboxutils import certs
 from pyinfraboxutils import get_env, get_logger
 from pyinfraboxutils.ibbottle import InfraBoxPostgresPlugin
 from pyinfraboxutils.db import connect_db
@@ -60,14 +61,13 @@ def get_commits(url, token):
 
     s.mount('http://', HTTPAdapter(max_retries=retries))
 
-    # TODO(ib-steffen): allow custom ca bundles
-    r = requests.get(url + '?per_page=100', headers=headers, verify=False)
+    r = requests.get(url + '?per_page=100', headers=headers)
     result = []
     result.extend(r.json())
 
     p = get_next_page(r)
     while p:
-        r = requests.get(p, headers=headers, verify=False)
+        r = requests.get(p, headers=headers)
         p = get_next_page(r)
         result.extend(r.json())
 

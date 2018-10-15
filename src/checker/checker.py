@@ -11,11 +11,10 @@ import requests
 import psycopg2
 import psycopg2.extensions
 
+from pyinfraboxutils import certs
 from pyinfraboxutils import get_logger, get_env
 from pyinfraboxutils.storage import storage
 from pyinfraboxutils.db import connect_db
-
-
 
 class Checker(object):
     def __init__(self, conn, args):

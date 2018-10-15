@@ -62,6 +62,20 @@ https://{{- required "host is required" .Values.host -}}:{{- .Values.port -}}
 {{ end }}
 {{ end }}
 
+{{ define "volumes_ca_bundle" }}
+-
+    name: ca-bundle
+    secret:
+        secretName: infrabox-ca-bundle
+{{ end }}
+
+{{ define "mounts_ca_bundle" }}
+-
+    name: ca-bundle
+    mountPath: "/var/run/secrets/infrabox.net/certs"
+    readOnly: true
+{{ end }}
+
 {{ define "volumes_rsa" }}
 -
     name: rsa-key

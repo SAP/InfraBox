@@ -6,6 +6,7 @@ import urllib
 import requests
 import psycopg2
 
+from pyinfraboxutils import certs
 from pyinfraboxutils import get_logger, get_env, get_root_url
 from pyinfraboxutils.db import connect_db
 from pyinfraboxutils.leader import elect_leader, is_leader, is_active
@@ -164,13 +165,11 @@ def handle_job_update(conn, event):
         "User-Agent": "InfraBox"
     }
 
-    # TODO(ib-steffen): support ca bundles
     try:
         r = requests.post(github_status_url,
                           data=json.dumps(payload),
                           headers=headers,
-                          timeout=10,
-                          verify=False)
+                          timeout=10)
 
         if r.status_code != 201:
             logger.warn("Failed to update github status: %s", r.text)

@@ -19,9 +19,8 @@ def execute_github_api(url, token):
         "User-Agent": "InfraBox"
     }
 
-    # TODO(ib-steffen): allow custom ca bundles
     url = os.environ['INFRABOX_GITHUB_API_URL'] + url
-    return requests.get(url, headers=headers, verify=False)
+    return requests.get(url, headers=headers)
 
 def get_sha_for_branch(owner, repo, branch_or_sha, token):
     url = '/repos/%s/%s/branches/%s' % (owner, repo, branch_or_sha)

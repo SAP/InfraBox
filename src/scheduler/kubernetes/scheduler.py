@@ -12,6 +12,7 @@ import requests
 import psycopg2
 import psycopg2.extensions
 
+from pyinfraboxutils import certs
 from pyinfraboxutils import get_logger, get_env
 from pyinfraboxutils.db import connect_db
 from pyinfraboxutils.token import encode_job_token

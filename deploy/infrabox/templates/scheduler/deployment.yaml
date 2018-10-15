@@ -35,6 +35,8 @@ spec:
                     value: "443"
                 volumeMounts:
                 {{ include "mounts_rsa_private" . | indent 16 }}
+                {{ include "mounts_ca_bundle" . | indent 16 }}
             volumes:
                 {{ include "volumes_database" . | indent 16 }}
                 {{ include "volumes_rsa" . | indent 16 }}
+                {{ include "volumes_ca_bundle" . | indent 16 }}

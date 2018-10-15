@@ -119,8 +119,7 @@ class Projects(Resource):
             url = '%s/repos/%s/%s' % (os.environ['INFRABOX_GITHUB_API_URL'],
                                       owner, repo_name)
 
-            # TODO(ib-steffen): allow custom ca bundles
-            r = requests.get(url, headers=headers, verify=False)
+            r = requests.get(url, headers=headers)
 
             if r.status_code != 200:
                 abort(400, 'Failed to get github repo')
@@ -188,8 +187,7 @@ class Projects(Resource):
             url = '%s/repos/%s/%s/hooks' % (os.environ['INFRABOX_GITHUB_API_URL'],
                                             owner, repo_name)
 
-            # TODO(ib-steffen): allow custom ca bundles
-            r = requests.post(url, headers=headers, json=webhook_config, verify=False)
+            r = requests.post(url, headers=headers, json=webhook_config)
 
             if r.status_code != 201:
                 abort(400, 'Failed to create github webhook')
@@ -289,8 +287,7 @@ class Project(Resource):
             url = '%s/repos/%s/%s/hooks/%s' % (os.environ['INFRABOX_GITHUB_API_URL'],
                                                gh_owner, gh_repo_name, gh_hook_id)
 
-            # TODO(ib-steffen): allow custom ca bundles
-            requests.delete(url, headers=headers, verify=False)
+            requests.delete(url, headers=headers)
 
         # TODO: delete all tables
         g.db.execute('''

@@ -12,11 +12,6 @@ from infrabox_job.process import Failure
 class Job(object):
     def __init__(self):
         self.api_server = os.environ["INFRABOX_ROOT_URL"] + "/api/job"
-        self.verify = True
-
-        if os.environ.get('INFRABOX_GENERAL_DONT_CHECK_CERTIFICATES', 'false') == 'true':
-            self.verify = False
-
         self.job = None
         self.project = None
         self.build = None
@@ -36,8 +31,7 @@ class Job(object):
             try:
                 r = requests.get("%s/job" % self.api_server,
                                  headers=self.get_headers(),
-                                 timeout=10,
-                                 verify=self.verify)
+                                 timeout=10)
                 time.sleep(1)
 
                 if r.status_code == 409:
@@ -97,7 +91,7 @@ class Job(object):
             try:
                 r = requests.post("%s/create_jobs" % self.api_server,
                                   headers=self.get_headers(),
-                                  json=payload, timeout=300, verify=self.verify)
+                                  json=payload, timeout=300)
             except:
                 self.console.collect('Failed to connect to API, retrying.', show=True)
                 time.sleep(3)
@@ -124,8 +118,7 @@ class Job(object):
                 r = requests.post("%s/%s" % (self.api_server, endpoint),
                                   headers=self.get_headers(),
                                   timeout=20,
-                                  json=data,
-                                  verify=self.verify)
+                                  json=data)
                 if r.status_code == 200:
                     return
             except Exception as e:
@@ -183,7 +176,7 @@ class Job(object):
                 message = None
                 r = requests.get("%s%s" % (self.api_server, url),
                                  headers=self.get_headers(),
-                                 timeout=600, stream=True, verify=self.verify)
+                                 timeout=600, stream=True)
 
                 if r.status_code == 404:
                     return
@@ -253,7 +246,7 @@ class Job(object):
             try:
                 r = requests.post("%s%s" % (self.api_server, url),
                                   headers=self.get_headers(),
-                                  files=files, timeout=600, verify=self.verify)
+                                  files=files, timeout=600)
             except Exception as e:
                 message = str(e)
                 time.sleep(5)

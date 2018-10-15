@@ -15,8 +15,8 @@ from flask import request, abort, g, jsonify
 from flask_restplus import Resource
 from requests.exceptions import RequestException
 
+from pyinfraboxutils import certs
 from pyinfraboxutils import get_env, get_logger
-
 from pyinfraboxutils.ibflask import get_token, normalize_token
 from pyinfraboxutils.ibrestplus import api, app
 from pyinfraboxutils.ibopa import opa_do_auth, opa_start_push_loop

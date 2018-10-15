@@ -49,14 +49,13 @@ def get_github_api(url, token):
     }
     url = os.environ['INFRABOX_GITHUB_API_URL'] + url
 
-    # TODO(ib-steffen): allow custom ca bundles
-    r = requests.get(url, headers=headers, verify=False)
+    r = requests.get(url, headers=headers)
     result = []
     result.extend(r.json())
 
     p = get_next_page(r)
     while p:
-        r = requests.get(p, headers=headers, verify=False)
+        r = requests.get(p, headers=headers)
         p = get_next_page(r)
         result.extend(r.json())
 
@@ -172,13 +171,12 @@ class Login(Resource):
 
         del states[state]
 
-        # TODO(ib-steffen): allow custom ca bundles
         r = requests.post(GITHUB_TOKEN_URL, data={
             'client_id': GITHUB_CLIENT_ID,
             'client_secret': GITHUB_CLIENT_SECRET,
             'code': code,
             'state': state
-        }, headers={'Accept': 'application/json'}, verify=False)
+        }, headers={'Accept': 'application/json'})
 
         if r.status_code != 200:
             logger.error(r.text)
@@ -189,11 +187,10 @@ class Login(Resource):
         access_token = result['access_token']
         check_org(access_token)
 
-        # TODO(ib-steffen): allow custom ca bundles
         r = requests.get(GITHUB_USER_PROFILE_URL, headers={
             'Accept': 'application/json',
             'Authorization': 'token %s' % access_token
-        }, verify=False)
+        })
         gu = r.json()
 
         github_id = gu['id']

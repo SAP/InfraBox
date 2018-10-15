@@ -14,6 +14,10 @@ general:
     # certificate you are using for InfraBox itself are self signed.
     dont_check_certificates: false
 
+    # If you are using a self signed certificates you may provide
+    # a custom ca bundle to validate your certificates
+    ca_bundle:
+
     report_issue_url: https://github.com/SAP/infrabox/issues
 
     log_level: info

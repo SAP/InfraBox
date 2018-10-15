@@ -32,6 +32,8 @@ spec:
                     requests:
                         memory: "256Mi"
                         cpu: "200m"
+                volumeMounts:
+                {{ include "mounts_ca_bundle" . | indent 16 }}
             -
                 name: github-review
                 image: {{ include "image_repository" . }}/github-review:{{ include "image_tag"  . }}
@@ -47,8 +49,11 @@ spec:
                     requests:
                         memory: "256Mi"
                         cpu: "200m"
+                volumeMounts:
+                {{ include "mounts_ca_bundle" . | indent 16 }}
             volumes:
                 {{ include "volumes_database" . | indent 16 }}
+                {{ include "volumes_ca_bundle" . | indent 16 }}
 {{ end }}
 {{ end }}
 

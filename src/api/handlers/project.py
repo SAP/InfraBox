@@ -346,8 +346,7 @@ if enable_upload_forward:
                 headers = {'Authorization': 'bearer ' + token}
                 logger.info('Also uploading to %s', url)
 
-                # TODO(ib-steffen): allow custom ca bundles
-                r = requests.post(url, files=files, headers=headers, timeout=120, verify=False)
+                r = requests.post(url, files=files, headers=headers, timeout=120)
 
                 if r.status_code != 200:
                     abort(500, "Failed to upload data")

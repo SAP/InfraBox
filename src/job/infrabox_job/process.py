@@ -17,10 +17,6 @@ class ApiConsole(object):
         self.is_finish = False
         self.enable_logging = True
 
-        self.verify = True
-        if os.environ.get('INFRABOX_GENERAL_DONT_CHECK_CERTIFICATES', 'false') == 'true':
-            self.verify = False
-
     def collect(self, line, show=False):
         if self.enable_logging:
             sys.stdout.write(line)
@@ -106,7 +102,6 @@ class ApiConsole(object):
 
             requests.post("%s/consoleupdate" % api_server,
                           headers=headers,
-                          verify=self.verify,
                           json=payload).json()
             self.output = []
         except Exception as e:

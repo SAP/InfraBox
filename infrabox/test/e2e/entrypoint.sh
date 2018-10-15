@@ -129,7 +129,12 @@ _installNginxIngress() {
 
     export ROOT_URL="$nginx_ip.nip.io"
     echo "Generating certs for: $ROOT_URL"
-    openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /tmp/tls.key -out /tmp/tls.crt -subj "/CN=$ROOT_URL"
+    openssl genrsa -out /tmp/ca.key 2048
+    openssl req -x509 -new -nodes -key /tmp/ca.key -sha256 -days 1024 -out /tmp/ca.crt -subj "/CN=$ROOT_URL"
+
+    openssl genrsa -out /tmp/tls.key 2048
+    openssl req -new -key /tmp/tls.key -out /tmp/tls.csr -subj "/CN=$ROOT_URL"
+    openssl x509 -req -in /tmp/tls.csr -CA /tmp/ca.crt -CAkey /tmp/ca.key -CAcreateserial -out /tmp/tls.crt -days 1024 -sha256
 
     kubectl create -n infrabox-system secret tls infrabox-tls-certs --key /tmp/tls.key --cert /tmp/tls.crt
 }
@@ -154,7 +159,8 @@ admin:
   private_key: $(base64 -w 0 ./id_rsa)
   public_key: $(base64 -w 0 ./id_rsa.pem)
 general:
-  dont_check_certificates: true
+  ca_bundle: |-
+    $(base64 -w 0 /tmp/ca.crt)
 database:
   postgres:
     db: postgres
