@@ -1,10 +1,29 @@
 import time
 import json
 
+import requests
 import cachetclient.cachet as cachet
 
 from pyinfraboxutils import get_env, get_logger
 from pyinfraboxutils.db import DB, connect_db
+
+try:
+    from functools import partialmethod
+except ImportError:
+    # Python 2 fallback: https://gist.github.com/carymrobbins/8940382
+    from functools import partial
+
+    class partialmethod(partial):
+        def __get__(self, instance, owner):
+            if instance is None:
+                return self
+
+            return partial(self.func, instance, *(self.args or ()), **(self.keywords or {}))
+
+# TODO: Support custom ca bundles
+session = requests.Session
+old_request = session.request
+session.request = partialmethod(old_request, verify=False)
 
 logger = get_logger('state')
 

@@ -16,7 +16,7 @@
                 <i class="fa fa-sign-in"></i> Login
             </md-button>
             <div v-if="$store.state.user" md-right>
-                {{ $store.state.user.username }} <div v-if="$store.state.user.email">({{ $store.state.user.email }})</div> | {{ $store.state.settings.INFRABOX_CLUSTER_NAME }}
+                {{ $store.state.user.username }} | {{ $store.state.settings.INFRABOX_CLUSTER_NAME }}
             </div>
         </md-toolbar>
 
