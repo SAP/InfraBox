@@ -40,8 +40,8 @@ func createAwsConfig(sdkops common.SdkOperations, shootCluster *v1alpha1.ShootCl
 }
 
 func fillSpecWithStaticInfo(shootcfg *gApiV1beta.Shoot, shootCluster *v1alpha1.ShootCluster) {
-	shootcfg.GetObjectMeta().SetName(shootCluster.Spec.ShootName)
-	shootcfg.ObjectMeta.SetNamespace(shootCluster.Spec.GardenerNamespace)
+	shootcfg.GetObjectMeta().SetName(shootCluster.Status.ShootName)
+	shootcfg.ObjectMeta.SetNamespace(shootCluster.Status.GardenerNamespace)
 
 	vpc := gApiV1beta.CIDR(defaultVpcCIDR)
 	shootcfg.Spec.Cloud.AWS.Networks.VPC.CIDR = &vpc
@@ -62,10 +62,10 @@ func fillSpecWithStaticInfo(shootcfg *gApiV1beta.Shoot, shootCluster *v1alpha1.S
 
 	region := shootCluster.Spec.Zone[:len(shootCluster.Spec.Zone)-1]
 	newPolicy := strings.Replace(shootcfg.Spec.Addons.Kube2IAM.Roles[0].Policy, dummyNameForAwsRegion, region, 1)
-	newPolicy = strings.Replace(newPolicy, dummyNameForClusterName, shootCluster.Spec.ShootName, 1)
+	newPolicy = strings.Replace(newPolicy, dummyNameForClusterName, shootCluster.Status.ShootName, 1)
 	shootcfg.Spec.Addons.Kube2IAM.Roles[0].Policy = newPolicy
 
-	dns := shootCluster.Spec.ShootName + shootDomainPostfix
+	dns := shootCluster.Status.ShootName + shootDomainPostfix
 	shootcfg.Spec.DNS.Domain = &dns
 
 	shootcfg.Spec.Kubernetes.Version = shootCluster.Spec.ClusterVersion

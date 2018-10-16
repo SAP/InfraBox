@@ -8,10 +8,12 @@ import (
 	b64 "encoding/base64"
 	"encoding/binary"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"math/rand"
 	"mime/multipart"
 	"net/http"
+	"os"
 
 	"github.com/operator-framework/operator-sdk/pkg/sdk/action"
 	"github.com/operator-framework/operator-sdk/pkg/sdk/handler"
@@ -90,8 +92,8 @@ func (h *Handler) Handle(ctx types.Context, event types.Event) error {
 }
 
 func (h *Handler) sync(shootCluster *v1alpha1.ShootCluster, log *logrus.Entry) error {
-	if len(shootCluster.Status.ShootName) == 0 {
-		if err := h.ensureThatClusternameIsSet(shootCluster, log); err != nil {
+	if len(shootCluster.Status.ShootName) == 0  || len(shootCluster.Status.GardenerNamespace) == 0 {
+		if err := h.ensureThatGardenerFieldsAreSet(shootCluster, log); err != nil {
 			return err
 		}
 	}
@@ -125,14 +127,43 @@ func (h *Handler) sync(shootCluster *v1alpha1.ShootCluster, log *logrus.Entry) e
 	return nil
 }
 
-func (h *Handler) ensureThatClusternameIsSet(shootCluster *v1alpha1.ShootCluster, log *logrus.Entry) error {
-	if err := h.createAndSetClustername(shootCluster, log); err != nil {
-		return err
+const ENVGardenNamespace = "GARDEN_NAMESPACE"
+
+func (h *Handler) ensureThatGardenerFieldsAreSet(shootCluster *v1alpha1.ShootCluster, log *logrus.Entry) error {
+	if len(shootCluster.Status.ShootName) == 0 {
+		log.Info("try to generate the clustername")
+		if err := h.createAndSetClustername(shootCluster, log); err != nil {
+			log.Errorf("couldn't generate shootCluster name. err: %s", err.Error())
+			return err
+		}
+		log.Info("new clustername: ", shootCluster.Status.ShootName)
+	}
+
+	if len(shootCluster.Status.GardenerNamespace) == 0 {
+		if err := h.setGardenNamespace(shootCluster, log); err != nil {
+			return err
+		}
 	}
 
 	if err := action.Update(shootCluster); err != nil {
 		log.Errorf("couldn't update shootCluster object. err: %s", err.Error())
 		return err
+	}
+
+	return nil
+}
+
+func (h *Handler) setGardenNamespace(shootCluster *v1alpha1.ShootCluster, log *logrus.Entry) error {
+	if val, exists := os.LookupEnv(ENVGardenNamespace); !exists {
+		err := fmt.Errorf("env variable %s not set", ENVGardenNamespace)
+		log.Error("couldn't set garden namespace. err: ", err)
+		return err
+	} else if len(val) == 0 {
+		err := fmt.Errorf("env variable %s must not be empty", ENVGardenNamespace)
+		log.Error("couldn't set garden namespace. err: ", err)
+		return err
+	} else {
+		shootCluster.Status.GardenerNamespace = val
 	}
 
 	return nil
@@ -147,8 +178,8 @@ func (h *Handler) createAndSetClustername(cr *v1alpha1.ShootCluster, log *logrus
 		log.Errorf("Failed to get list of existent clusters: %v", err)
 		return err
 	}
-	cr.Status.ClusterName = utils.CreateUniqueClusterName(&dhlist)
-	log.Debugf("cluster name will be %s", cr.Status.ClusterName)
+	cr.Status.ShootName = utils.CreateUniqueClusterName(&dhlist)
+	log.Debugf("cluster name will be %s", cr.Status.ShootName)
 	return nil
 }
 
@@ -176,7 +207,7 @@ func (h *Handler) ensureThatFinalizersAreSet(ns *v1alpha1.ShootCluster, log *log
 	finalizers := ns.GetFinalizers()
 	if len(finalizers) == 0 {
 		ns.SetFinalizers([]string{"garden.service.infrabox.net"})
-		ns.Status.ClusterName = ns.Spec.ShootName
+		//ns.Status.ClusterName = ns.Status.ShootName
 		err := action.Update(ns)
 		if err != nil {
 			log.Errorf("Failed to set finalizers: %v", err)
@@ -214,7 +245,7 @@ func (h *Handler) getRemoteClusterFromSecret(ns *v1alpha1.ShootCluster, log *log
 	}
 	cluster := &RemoteCluster{
 		Status:   ns.Status.Status,
-		Name:     ns.Spec.ShootName,
+		Name:     ns.Status.ShootName,
 		Endpoint: restCfg.Host,
 		MasterAuth: MasterAuth{
 			Username:             restCfg.Username,

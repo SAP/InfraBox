@@ -132,15 +132,15 @@ func (so *ShootOperator) syncSecret(shootCluster *v1alpha1.ShootCluster, shootCr
 }
 
 func (so *ShootOperator) fetchKubeconfigFor(shootCluster *v1alpha1.ShootCluster, clientGetter k8sClientCache.ClientGetter) (*corev1.Secret, error) {
-	cfgPath := shootCluster.Spec.ShootName + ".kubeconfig"
-	secret, err := clientGetter.GetK8sClientSet().CoreV1().Secrets(shootCluster.Spec.GardenerNamespace).Get(cfgPath, v1.GetOptions{})
+	cfgPath := shootCluster.Status.ShootName + ".kubeconfig"
+	secret, err := clientGetter.GetK8sClientSet().CoreV1().Secrets(shootCluster.Status.GardenerNamespace).Get(cfgPath, v1.GetOptions{})
 	if err != nil {
 		so.log.Errorf("couldn't fetch the secret for cluster. err: %s", err.Error())
 		return nil, err
 	}
 
 	if _, ok := secret.Data["kubeconfig"]; !ok {
-		return nil, fmt.Errorf("Secret for '%s' does not have a kubeconfig", shootCluster.Spec.ShootName)
+		return nil, fmt.Errorf("Secret for '%s' does not have a kubeconfig", shootCluster.Status.ShootName)
 	} else {
 		return secret, nil
 	}
@@ -215,7 +215,7 @@ func (so *ShootOperator) secretExists(shootCluster *v1alpha1.ShootCluster) (*cor
 }
 
 func (so *ShootOperator) updateShootIfNecessary(shootCluster *v1alpha1.ShootCluster, clientGetter k8sClientCache.ClientGetter) error {
-	shoot, err := clientGetter.GetGardenClientSet().GardenV1beta1().Shoots(shootCluster.Spec.GardenerNamespace).Get(shootCluster.Spec.ShootName, v1.GetOptions{})
+	shoot, err := clientGetter.GetGardenClientSet().GardenV1beta1().Shoots(shootCluster.Status.GardenerNamespace).Get(shootCluster.Status.ShootName, v1.GetOptions{})
 	if err != nil {
 		so.log.Errorf("couldn't get current status of shoot cluster. err: %s", err)
 		return err
@@ -223,7 +223,7 @@ func (so *ShootOperator) updateShootIfNecessary(shootCluster *v1alpha1.ShootClus
 
 	if so.updateShootSpecIfNecessary(shoot, shootCluster) {
 		so.log.Info("specifications have changed, will update shoot...")
-		if _, err := clientGetter.GetGardenClientSet().GardenV1beta1().Shoots(shootCluster.Spec.GardenerNamespace).Update(shoot); err != nil {
+		if _, err := clientGetter.GetGardenClientSet().GardenV1beta1().Shoots(shootCluster.Status.GardenerNamespace).Update(shoot); err != nil {
 			so.log.Errorf("couldn't update shoot with new specs. err: ", err)
 			return err
 		}
@@ -262,7 +262,7 @@ func (so *ShootOperator) Delete(shootCluster *v1alpha1.ShootCluster) error {
 		return fmt.Errorf("couldn't get k8s clientsets")
 	}
 
-	deleteShootCluster(clientGetter.GetGardenClientSet().GardenV1beta1().Shoots(shootCluster.Spec.GardenerNamespace), shootCluster, so.log)
+	deleteShootCluster(clientGetter.GetGardenClientSet().GardenV1beta1().Shoots(shootCluster.Status.GardenerNamespace), shootCluster, so.log)
 	if err := so.deleteSecret(shootCluster); err != nil {
 		return err
 	}
@@ -302,7 +302,7 @@ func CreateShootCluster(sdkops common.SdkOperations, gardenCs gardenClientSet.In
 		return nil, err
 	}
 
-	shoot, err := gardenCs.GardenV1beta1().Shoots(shootCluster.Spec.GardenerNamespace).Create(shootcfg)
+	shoot, err := gardenCs.GardenV1beta1().Shoots(shootCluster.Status.GardenerNamespace).Create(shootcfg)
 	if err != nil {
 		if !apiErrors.IsAlreadyExists(err) {
 			log.Errorf("gardener didn't create the shoot. err: %s", err)

@@ -53,7 +53,7 @@ func TestCreateUniqueShootName_NoNameCollisions(t *testing.T) {
 		} else {
 			givenNames[name] = struct{}{}
 			list.Items = append(list.Items, v1alpha1.ShootCluster{
-				Status: v1alpha1.ShootClusterStatus{ClusterName: name},
+				Status: v1alpha1.ShootClusterStatus{ShootName: name},
 			})
 		}
 	}

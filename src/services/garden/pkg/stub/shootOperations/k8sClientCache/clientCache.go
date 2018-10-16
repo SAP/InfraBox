@@ -47,7 +47,7 @@ func (cc *ClientCache) Get(shootCluster *v1alpha1.ShootCluster) ClientGetter {
 }
 
 func (cc *ClientCache) hash(shootCluster *v1alpha1.ShootCluster) string {
-	return shootCluster.Spec.ShootName + shootCluster.Spec.GardenerNamespace
+	return shootCluster.Status.ShootName + shootCluster.Status.GardenerNamespace
 }
 
 func (cc *ClientCache) createNewClientGetter(shootCluster *v1alpha1.ShootCluster) ClientGetter {
