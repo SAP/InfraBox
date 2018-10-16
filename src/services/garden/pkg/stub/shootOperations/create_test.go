@@ -28,7 +28,7 @@ func TestCreateShootCluster(t *testing.T) {
 		t.Fatalf("create shoot cluster failed: %s", err)
 	}
 
-	s, err := fk.GardenV1beta1().Shoots(shootCluster.Spec.GardenerNamespace).Get(shootCluster.Spec.ShootName, v1.GetOptions{})
+	s, err := fk.GardenV1beta1().Shoots(shootCluster.Status.GardenerNamespace).Get(shootCluster.Status.ShootName, v1.GetOptions{})
 	if err != nil {
 		t.Fatalf("getting shoot cluster failed: %s", err)
 	}
@@ -38,8 +38,6 @@ func TestCreateShootCluster(t *testing.T) {
 
 func createShootClusterCr() *v1alpha1.ShootCluster {
 	ShootCluster := &v1alpha1.ShootCluster{}
-	ShootCluster.Spec.GardenerNamespace = "gnamespace"
-	ShootCluster.Spec.ShootName = "shootname"
 	ShootCluster.Spec.MinNodes = 42
 	ShootCluster.Spec.MaxNodes = 42
 	ShootCluster.Spec.DiskSize = 100
@@ -48,6 +46,9 @@ func createShootClusterCr() *v1alpha1.ShootCluster {
 	ShootCluster.SetName("ShootClusterName")
 	ShootCluster.SetNamespace("ShootClusterNamespace")
 	ShootCluster.SetGroupVersionKind(schema.GroupVersionKind{Group: "garden.service.infrabox.net", Version: "v1alpha1", Kind: "ShootCluster"})
+
+	ShootCluster.Status.ShootName = "shootname"
+	ShootCluster.Status.GardenerNamespace = "gnamespace"
 	return ShootCluster
 }
 
@@ -58,10 +59,10 @@ func checkShootAgainstSpec(s *v1beta1.Shoot, ShootCluster *v1alpha1.ShootCluster
 	if s.Spec.Cloud.AWS.Workers[0].Worker.AutoScalerMax != int(ShootCluster.Spec.MaxNodes) {
 		t.Fatal("max worker mismatch")
 	}
-	if s.GetName() != ShootCluster.Spec.ShootName {
+	if s.GetName() != ShootCluster.Status.ShootName {
 		t.Fatal("name mismatch")
 	}
-	if s.GetNamespace() != ShootCluster.Spec.GardenerNamespace {
+	if s.GetNamespace() != ShootCluster.Status.GardenerNamespace {
 		t.Fatal("namespace mismatch")
 	}
 }
@@ -73,10 +74,10 @@ func checkIfShootHasCorrectVals(s *v1beta1.Shoot, shootCluster *v1alpha1.ShootCl
 	if s.Spec.Cloud.AWS.Workers[0].Worker.AutoScalerMax != int(shootCluster.Spec.MaxNodes) {
 		t.Fatal("max worker mismatch")
 	}
-	if s.GetName() != shootCluster.Spec.ShootName {
+	if s.GetName() != shootCluster.Status.ShootName {
 		t.Fatal("name mismatch")
 	}
-	if s.GetNamespace() != shootCluster.Spec.GardenerNamespace {
+	if s.GetNamespace() != shootCluster.Status.GardenerNamespace {
 		t.Fatal("namespace mismatch")
 	}
 }
@@ -100,12 +101,12 @@ func TestCreateShootCluster_IfAlreadyExist_DontChangeAnything(t *testing.T) {
 		t.Fatalf("expected an AlreadyExists error, but got: %s", err)
 	}
 
-	l, err := fk.GardenV1beta1().Shoots(shootCluster.Spec.GardenerNamespace).List(v1.ListOptions{})
+	l, err := fk.GardenV1beta1().Shoots(shootCluster.Status.GardenerNamespace).List(v1.ListOptions{})
 	if len(l.Items) != 1 {
 		t.Fatalf("only one shoot should exist: %s", err)
 	}
 
-	s, err := fk.GardenV1beta1().Shoots(shootCluster.Spec.GardenerNamespace).Get(shootCluster.Spec.ShootName, v1.GetOptions{})
+	s, err := fk.GardenV1beta1().Shoots(shootCluster.Status.GardenerNamespace).Get(shootCluster.Status.ShootName, v1.GetOptions{})
 	if err != nil {
 		t.Fatalf("getting shoot cluster failed: %s", err)
 	}
