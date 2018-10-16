@@ -122,10 +122,10 @@ func createFakeK8sFilledWithKubecfgSecret(ShootCluster *v1alpha1.ShootCluster, t
 
 func setKubeconfigSecret(ShootCluster *v1alpha1.ShootCluster, gK8sCs *k8sFake.Clientset, t *testing.T) {
 	s := &corev1.Secret{}
-	s.SetName(ShootCluster.Spec.ShootName + ".kubeconfig")
-	s.SetNamespace(ShootCluster.Spec.GardenerNamespace)
+	s.SetName(ShootCluster.Status.ShootName + ".kubeconfig")
+	s.SetNamespace(ShootCluster.Status.GardenerNamespace)
 	s.Data = map[string][]byte{"kubeconfig": []byte("kubeconfig data")}
-	if _, err := gK8sCs.CoreV1().Secrets(ShootCluster.Spec.GardenerNamespace).Create(s); err != nil {
+	if _, err := gK8sCs.CoreV1().Secrets(ShootCluster.Status.GardenerNamespace).Create(s); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -273,7 +273,7 @@ func TestShootOperator_Sync_ChangedshootClusterResultsInUpdate(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	shoot, err := gFake.GardenV1beta1().Shoots(shootClusterWUpdate.Spec.GardenerNamespace).Get(shootClusterWUpdate.Spec.ShootName, v1.GetOptions{})
+	shoot, err := gFake.GardenV1beta1().Shoots(shootClusterWUpdate.Status.GardenerNamespace).Get(shootClusterWUpdate.Status.ShootName, v1.GetOptions{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -312,7 +312,7 @@ func addReadyShootCluster(shootClusterInput *v1alpha1.ShootCluster, k8sFake kube
 		Type:     v1beta1.ShootLastOperationTypeReconcile,
 	}
 
-	if _, err := gFake.GardenV1beta1().Shoots(shootClusterInput.Spec.GardenerNamespace).Create(shoot); err != nil {
+	if _, err := gFake.GardenV1beta1().Shoots(shootClusterInput.Status.GardenerNamespace).Create(shoot); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -342,18 +342,18 @@ func addCloudProfileForAws(shootClusterInput *v1alpha1.ShootCluster, gFake *gard
 
 func addSecretContainingShootKubeCfg(shootClusterInput *v1alpha1.ShootCluster, k8sFake kubernetes.Interface, t *testing.T) {
 	s := utils.NewSecret(shootClusterInput)
-	sName := shootClusterInput.Spec.ShootName + ".kubeconfig"
+	sName := shootClusterInput.Status.ShootName + ".kubeconfig"
 	s.SetName(sName)
-	s.SetNamespace(shootClusterInput.Spec.GardenerNamespace)
+	s.SetNamespace(shootClusterInput.Status.GardenerNamespace)
 	s.Data["kubeconfig"] = []byte(utils.ValidDummyKubeconfig())
-	if _, err := k8sFake.CoreV1().Secrets(shootClusterInput.Spec.GardenerNamespace).Create(s); err != nil {
+	if _, err := k8sFake.CoreV1().Secrets(shootClusterInput.Status.GardenerNamespace).Create(s); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func removeSecretContainingShootKubeCfg(shootClusterInput *v1alpha1.ShootCluster, k8sFake kubernetes.Interface, t *testing.T) {
-	sName := shootClusterInput.Spec.ShootName + ".kubeconfig"
-	if err := k8sFake.CoreV1().Secrets(shootClusterInput.Spec.GardenerNamespace).Delete(sName, &v1.DeleteOptions{}); err != nil {
+	sName := shootClusterInput.Status.ShootName + ".kubeconfig"
+	if err := k8sFake.CoreV1().Secrets(shootClusterInput.Status.GardenerNamespace).Delete(sName, &v1.DeleteOptions{}); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -398,7 +398,7 @@ func addReconcilingShootCluster(shootClusterInput *v1alpha1.ShootCluster, k8sFak
 		Type:     v1beta1.ShootLastOperationTypeReconcile,
 	}
 
-	if _, err := gFake.GardenV1beta1().Shoots(shootClusterInput.Spec.GardenerNamespace).Create(shoot); err != nil {
+	if _, err := gFake.GardenV1beta1().Shoots(shootClusterInput.Status.GardenerNamespace).Create(shoot); err != nil {
 		t.Fatal(err)
 	}
 }

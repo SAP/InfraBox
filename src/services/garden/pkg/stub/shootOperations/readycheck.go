@@ -12,7 +12,7 @@ import (
 
 func CheckReadinessAndUpdateShootClusterObj(gardenCs gardenClientSet.Interface, shootCluster *v1alpha1.ShootCluster) (err error) {
 	var shoot *v1beta1.Shoot
-	shoot, err = gardenCs.GardenV1beta1().Shoots(shootCluster.Spec.GardenerNamespace).Get(shootCluster.Spec.ShootName, v1.GetOptions{})
+	shoot, err = gardenCs.GardenV1beta1().Shoots(shootCluster.Status.GardenerNamespace).Get(shootCluster.Status.ShootName, v1.GetOptions{})
 	if err != nil {
 		if !apiErrors.IsNotFound(err) {
 			logrus.Errorf("couldn't get shoot information: %s", err)
