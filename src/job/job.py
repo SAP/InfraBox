@@ -839,7 +839,7 @@ class RunJob(Job):
             c.header("Run container", show=True)
             c.execute(cmd, show=True, show_cmd=False)
 
-            if self.job['definition'].get('cache', {}).get('image', False) and not self.job['definition'].get('deployments', None):
+            if self.job['definition'].get('cache', {}).get('image', False) or self.job['definition'].get('deployments', None):
                 c.execute(("docker", "commit", container_name, image_name))
         except Exception as e:
             try:
