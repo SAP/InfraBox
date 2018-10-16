@@ -317,11 +317,11 @@ class ArchiveDownload(Resource):
             abort(404)
 
         result = g.db.execute_one_dict('''
-                    SELECT cluster_name
-                    FROM job
-                    WHERE   id = %s
-                        AND project_id = %s
-                ''', [job_id, project_id])
+            SELECT cluster_name
+            FROM job
+            WHERE   id = %s
+                AND project_id = %s
+        ''', [job_id, project_id])
 
         if not result or not result['cluster_name']:
             abort(404)
@@ -333,14 +333,14 @@ class ArchiveDownload(Resource):
             f = storage.download_archive(key)
         else:
             c = g.db.execute_one_dict('''
-                                SELECT *
-                                FROM cluster
-                                WHERE name=%s
-                            ''', [job_cluster])
+                SELECT *
+                FROM cluster
+                WHERE name=%s
+            ''', [job_cluster])
             url = '%s/api/v1/projects/%s/jobs/%s/archive/download?filename=%s' % (c['root_url'], project_id, job_id, filename)
             try:
                 token = encode_user_token(g.token['user']['id'])
-            except AttributeError:
+            except Exception:
                 #public project has no token here.
                 token = ""
             headers = {'Authorization': 'bearer ' + token}
