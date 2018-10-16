@@ -183,7 +183,7 @@ func TestDeleteShootCluster_TriesToDeleteShoot(t *testing.T) {
 	defer mockCtrl.Finish()
 
 	var shootCluster v1alpha1.ShootCluster
-	shootCluster.Status.ShootName = shoot.GetName()
+	shootCluster.Status.ClusterName = shoot.GetName()
 	log := logrus.WithField("test", "test")
 
 	simock.EXPECT().Get(shoot.GetName(), gomock.Any()).Return(shoot, nil).AnyTimes()
@@ -198,7 +198,7 @@ func TestDeleteShootCluster_DoesNotDeleteIfFirstPatchingFails(t *testing.T) {
 	defer mockCtrl.Finish()
 
 	var shootCluster v1alpha1.ShootCluster
-	shootCluster.Status.ShootName = shoot.GetName()
+	shootCluster.Status.ClusterName = shoot.GetName()
 	log := logrus.WithField("test", "test")
 
 	simock.EXPECT().Get(shoot.GetName(), gomock.Any()).Return(nil, apiErrors.NewNotFound(schema.GroupResource{}, shoot.Name)).AnyTimes()
@@ -211,7 +211,7 @@ func TestDeleteShootCluster_DoesNotApplySecondPatchIfDeleteFails(t *testing.T) {
 	defer mockCtrl.Finish()
 
 	var shootCluster v1alpha1.ShootCluster
-	shootCluster.Status.ShootName = shoot.GetName()
+	shootCluster.Status.ClusterName = shoot.GetName()
 	log := logrus.WithField("test", "test")
 
 	simock.EXPECT().Get(shoot.GetName(), gomock.Any()).Return(shoot, nil).AnyTimes()

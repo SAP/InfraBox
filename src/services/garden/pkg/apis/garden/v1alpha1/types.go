@@ -35,12 +35,11 @@ type ShootClusterSpec struct {
 }
 
 type ShootClusterStatus struct {
-	Status      string `json:"status,omitempty"`
-	Message     string `json:"message,omitempty"`
-	//ClusterName string `json:"clusterName,omitempty"`
-	SecretName  string `json:"clusterName,omitempty"`
-	NumNodes    int    `json:"numNodes,omitempty"`
-	ShootName   string `json:"shootName,omitempty"`
+	Status            string `json:"status,omitempty"`
+	Message           string `json:"message,omitempty"`
+	SecretName        string `json:"clusterName,omitempty"`
+	NumNodes          int    `json:"numNodes,omitempty"`
+	ClusterName       string `json:"shootName,omitempty"`
 	GardenerNamespace string `json:"gardenerNamespace,omitempty"`
 }
 

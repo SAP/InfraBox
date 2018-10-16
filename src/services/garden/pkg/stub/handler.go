@@ -92,7 +92,7 @@ func (h *Handler) Handle(ctx types.Context, event types.Event) error {
 }
 
 func (h *Handler) sync(shootCluster *v1alpha1.ShootCluster, log *logrus.Entry) error {
-	if len(shootCluster.Status.ShootName) == 0  || len(shootCluster.Status.GardenerNamespace) == 0 {
+	if len(shootCluster.Status.ClusterName) == 0 || len(shootCluster.Status.GardenerNamespace) == 0 {
 		if err := h.ensureThatGardenerFieldsAreSet(shootCluster, log); err != nil {
 			return err
 		}
@@ -104,24 +104,22 @@ func (h *Handler) sync(shootCluster *v1alpha1.ShootCluster, log *logrus.Entry) e
 
 	oldStatus := shootCluster.Status.Status
 	oldMsg := shootCluster.Status.Message
-	err := h.fac.Get(log).Sync(shootCluster)
-	if err != nil {
+	if err := h.fac.Get(log).Sync(shootCluster); err != nil {
 		shootCluster.Status.Status = "error"
 		shootCluster.Status.Message = err.Error()
 		err = action.Update(shootCluster)
 		return err
-	} else {
-		if shootCluster.Status.Status != oldStatus || shootCluster.Status.Message != oldMsg {
-			err = action.Update(shootCluster)
+	}
+
+	if shootCluster.Status.Status != oldStatus || shootCluster.Status.Message != oldMsg {
+		if err := action.Update(shootCluster); err != nil {
+			log.Error("failed to update cr. err: ", err)
 			return err
 		}
 	}
 
-	// if cluster is ready -> injectCollector
-	if shootCluster.Status.Status == v1alpha1.ShootClusterStateShootReady {
-		if err := h.injectCollectorsAndUpdateState(shootCluster, log); err != nil {
-			return err
-		}
+	if err := h.injectCollectorsAndUpdateState(shootCluster, log); err != nil {
+		return err
 	}
 
 	return nil
@@ -130,13 +128,11 @@ func (h *Handler) sync(shootCluster *v1alpha1.ShootCluster, log *logrus.Entry) e
 const ENVGardenNamespace = "GARDEN_NAMESPACE"
 
 func (h *Handler) ensureThatGardenerFieldsAreSet(shootCluster *v1alpha1.ShootCluster, log *logrus.Entry) error {
-	if len(shootCluster.Status.ShootName) == 0 {
-		log.Info("try to generate the clustername")
+	if len(shootCluster.Status.ClusterName) == 0 {
 		if err := h.createAndSetClustername(shootCluster, log); err != nil {
 			log.Errorf("couldn't generate shootCluster name. err: %s", err.Error())
 			return err
 		}
-		log.Info("new clustername: ", shootCluster.Status.ShootName)
 	}
 
 	if len(shootCluster.Status.GardenerNamespace) == 0 {
@@ -158,10 +154,12 @@ func (h *Handler) setGardenNamespace(shootCluster *v1alpha1.ShootCluster, log *l
 		err := fmt.Errorf("env variable %s not set", ENVGardenNamespace)
 		log.Error("couldn't set garden namespace. err: ", err)
 		return err
+
 	} else if len(val) == 0 {
 		err := fmt.Errorf("env variable %s must not be empty", ENVGardenNamespace)
 		log.Error("couldn't set garden namespace. err: ", err)
 		return err
+
 	} else {
 		shootCluster.Status.GardenerNamespace = val
 	}
@@ -178,14 +176,15 @@ func (h *Handler) createAndSetClustername(cr *v1alpha1.ShootCluster, log *logrus
 		log.Errorf("Failed to get list of existent clusters: %v", err)
 		return err
 	}
-	cr.Status.ShootName = utils.CreateUniqueClusterName(&dhlist)
-	log.Debugf("cluster name will be %s", cr.Status.ShootName)
+	cr.Status.ClusterName = utils.CreateUniqueClusterName(&dhlist)
+	log.Debugf("cluster name will be %s", cr.Status.ClusterName)
 	return nil
 }
 
 func (h *Handler) injectCollectorsAndUpdateState(shootCluster *v1alpha1.ShootCluster, log *logrus.Entry) error {
 	// the shootCluster cr might have been updated -> get current version
 	if err := query.Get(shootCluster); err != nil {
+		log.Error("couldn't query shoot cr. err: ", err)
 		return err
 	}
 
@@ -207,7 +206,7 @@ func (h *Handler) ensureThatFinalizersAreSet(ns *v1alpha1.ShootCluster, log *log
 	finalizers := ns.GetFinalizers()
 	if len(finalizers) == 0 {
 		ns.SetFinalizers([]string{"garden.service.infrabox.net"})
-		//ns.Status.ClusterName = ns.Status.ShootName
+		//ns.Status.ClusterName = ns.Status.ClusterName
 		err := action.Update(ns)
 		if err != nil {
 			log.Errorf("Failed to set finalizers: %v", err)
@@ -245,7 +244,7 @@ func (h *Handler) getRemoteClusterFromSecret(ns *v1alpha1.ShootCluster, log *log
 	}
 	cluster := &RemoteCluster{
 		Status:   ns.Status.Status,
-		Name:     ns.Status.ShootName,
+		Name:     ns.Status.ClusterName,
 		Endpoint: restCfg.Host,
 		MasterAuth: MasterAuth{
 			Username:             restCfg.Username,
