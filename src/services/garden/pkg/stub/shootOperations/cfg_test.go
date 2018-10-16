@@ -164,10 +164,10 @@ func TestFillSpecFromEnv(t *testing.T) {
 
 	env := map[string]string{
 		ENVDnsDomainSuffix:               "fooDNS",
-		ENVAwsCloudProfile:               "awsCloudProfile",
 		ENVAwsMaintenanceAutoupdate:      "false",
 		ENVAwsMaintenanceAutoUpdateBegin: "100000+0100",
 		ENVAwsMaintenanceAutoUpdateEnd:   "120000+0100",
+		ENVSecretBindingRef:              "secrBindingRef",
 	}
 
 	oldEnv := make(map[string]string, len(env))
@@ -196,9 +196,6 @@ func TestFillSpecFromEnv(t *testing.T) {
 	if !strings.HasSuffix(*shoot.Spec.DNS.Domain, env[ENVDnsDomainSuffix]) {
 		t.Fatalf("dns domain wasn't used from env. have: %s", *shoot.Spec.DNS.Domain)
 	}
-	if shoot.Spec.Cloud.Profile != env[ENVAwsCloudProfile] {
-		t.Fatalf("cloud profile mismatch. want: %s, have: %s", env["AwsCloudProfile"], shoot.Spec.Cloud.Profile)
-	}
 
 	if shoot.Spec.Maintenance.AutoUpdate.KubernetesVersion == true {
 		t.Fatal("autoupdate of maintenance kubernetes version should be false")
@@ -208,5 +205,8 @@ func TestFillSpecFromEnv(t *testing.T) {
 	}
 	if shoot.Spec.Maintenance.TimeWindow.End != env[ENVAwsMaintenanceAutoUpdateEnd] {
 		t.Fatal("time window end mismatch")
+	}
+	if shoot.Spec.Cloud.SecretBindingRef.Name != env[ENVSecretBindingRef] {
+		t.Fatal("secret binding ref mismatch")
 	}
 }

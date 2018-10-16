@@ -2,11 +2,14 @@ package stub
 
 import (
 	"bytes"
+	cryptoRand "crypto/rand"
 	"crypto/tls"
 	"crypto/x509"
 	b64 "encoding/base64"
+	"encoding/binary"
 	"encoding/json"
 	"io/ioutil"
+	"math/rand"
 	"mime/multipart"
 	"net/http"
 
@@ -46,9 +49,17 @@ type RemoteCluster struct {
 }
 
 func NewHandler(sdk common.SdkOperations) handler.Handler {
+	initRand()
+
 	k8sCCache := k8sClientCache.NewClientCache(k8sClientCache.NewSecretKubecfgGetter(sdk))
 	shootOpFac := shootOperations.NewShootOperatorFactory(sdk, k8sCCache, utils.NewDefaultDynamicK8sK8sClientSetFactory())
 	return &Handler{shootOpFac}
+}
+
+func initRand() {
+	var seed int64
+	binary.Read(cryptoRand.Reader, binary.LittleEndian, &seed)
+	rand.Seed(seed)
 }
 
 type Handler struct {
@@ -79,6 +90,12 @@ func (h *Handler) Handle(ctx types.Context, event types.Event) error {
 }
 
 func (h *Handler) sync(shootCluster *v1alpha1.ShootCluster, log *logrus.Entry) error {
+	if len(shootCluster.Status.ShootName) == 0 {
+		if err := h.ensureThatClusternameIsSet(shootCluster, log); err != nil {
+			return err
+		}
+	}
+
 	if err := h.ensureThatFinalizersAreSet(shootCluster, log); err != nil {
 		return err
 	}
@@ -105,6 +122,33 @@ func (h *Handler) sync(shootCluster *v1alpha1.ShootCluster, log *logrus.Entry) e
 		}
 	}
 
+	return nil
+}
+
+func (h *Handler) ensureThatClusternameIsSet(shootCluster *v1alpha1.ShootCluster, log *logrus.Entry) error {
+	if err := h.createAndSetClustername(shootCluster, log); err != nil {
+		return err
+	}
+
+	if err := action.Update(shootCluster); err != nil {
+		log.Errorf("couldn't update shootCluster object. err: %s", err.Error())
+		return err
+	}
+
+	return nil
+}
+
+func (h *Handler) createAndSetClustername(cr *v1alpha1.ShootCluster, log *logrus.Entry) error {
+	log.Debug("generating name for cluster...")
+	var dhlist v1alpha1.ShootClusterList
+	gvk := cr.GroupVersionKind()
+	dhlist.SetGroupVersionKind(gvk)
+	if err := query.List(cr.GetNamespace(), &dhlist); err != nil {
+		log.Errorf("Failed to get list of existent clusters: %v", err)
+		return err
+	}
+	cr.Status.ClusterName = utils.CreateUniqueClusterName(&dhlist)
+	log.Debugf("cluster name will be %s", cr.Status.ClusterName)
 	return nil
 }
 
