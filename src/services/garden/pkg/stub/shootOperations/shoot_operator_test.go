@@ -122,7 +122,7 @@ func createFakeK8sFilledWithKubecfgSecret(ShootCluster *v1alpha1.ShootCluster, t
 
 func setKubeconfigSecret(ShootCluster *v1alpha1.ShootCluster, gK8sCs *k8sFake.Clientset, t *testing.T) {
 	s := &corev1.Secret{}
-	s.SetName(ShootCluster.Status.ShootName + ".kubeconfig")
+	s.SetName(ShootCluster.Status.ClusterName + ".kubeconfig")
 	s.SetNamespace(ShootCluster.Status.GardenerNamespace)
 	s.Data = map[string][]byte{"kubeconfig": []byte("kubeconfig data")}
 	if _, err := gK8sCs.CoreV1().Secrets(ShootCluster.Status.GardenerNamespace).Create(s); err != nil {
@@ -273,7 +273,7 @@ func TestShootOperator_Sync_ChangedshootClusterResultsInUpdate(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	shoot, err := gFake.GardenV1beta1().Shoots(shootClusterWUpdate.Status.GardenerNamespace).Get(shootClusterWUpdate.Status.ShootName, v1.GetOptions{})
+	shoot, err := gFake.GardenV1beta1().Shoots(shootClusterWUpdate.Status.GardenerNamespace).Get(shootClusterWUpdate.Status.ClusterName, v1.GetOptions{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -342,7 +342,7 @@ func addCloudProfileForAws(shootClusterInput *v1alpha1.ShootCluster, gFake *gard
 
 func addSecretContainingShootKubeCfg(shootClusterInput *v1alpha1.ShootCluster, k8sFake kubernetes.Interface, t *testing.T) {
 	s := utils.NewSecret(shootClusterInput)
-	sName := shootClusterInput.Status.ShootName + ".kubeconfig"
+	sName := shootClusterInput.Status.ClusterName + ".kubeconfig"
 	s.SetName(sName)
 	s.SetNamespace(shootClusterInput.Status.GardenerNamespace)
 	s.Data["kubeconfig"] = []byte(utils.ValidDummyKubeconfig())
@@ -352,7 +352,7 @@ func addSecretContainingShootKubeCfg(shootClusterInput *v1alpha1.ShootCluster, k
 }
 
 func removeSecretContainingShootKubeCfg(shootClusterInput *v1alpha1.ShootCluster, k8sFake kubernetes.Interface, t *testing.T) {
-	sName := shootClusterInput.Status.ShootName + ".kubeconfig"
+	sName := shootClusterInput.Status.ClusterName + ".kubeconfig"
 	if err := k8sFake.CoreV1().Secrets(shootClusterInput.Status.GardenerNamespace).Delete(sName, &v1.DeleteOptions{}); err != nil {
 		t.Fatal(err)
 	}

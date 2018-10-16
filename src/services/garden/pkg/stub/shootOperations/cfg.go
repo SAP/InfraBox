@@ -40,7 +40,7 @@ func createAwsConfig(sdkops common.SdkOperations, shootCluster *v1alpha1.ShootCl
 }
 
 func fillSpecWithStaticInfo(shootcfg *gApiV1beta.Shoot, shootCluster *v1alpha1.ShootCluster) {
-	shootcfg.GetObjectMeta().SetName(shootCluster.Status.ShootName)
+	shootcfg.GetObjectMeta().SetName(shootCluster.Status.ClusterName)
 	shootcfg.ObjectMeta.SetNamespace(shootCluster.Status.GardenerNamespace)
 
 	vpc := gApiV1beta.CIDR(defaultVpcCIDR)
@@ -62,10 +62,10 @@ func fillSpecWithStaticInfo(shootcfg *gApiV1beta.Shoot, shootCluster *v1alpha1.S
 
 	region := shootCluster.Spec.Zone[:len(shootCluster.Spec.Zone)-1]
 	newPolicy := strings.Replace(shootcfg.Spec.Addons.Kube2IAM.Roles[0].Policy, dummyNameForAwsRegion, region, 1)
-	newPolicy = strings.Replace(newPolicy, dummyNameForClusterName, shootCluster.Status.ShootName, 1)
+	newPolicy = strings.Replace(newPolicy, dummyNameForClusterName, shootCluster.Status.ClusterName, 1)
 	shootcfg.Spec.Addons.Kube2IAM.Roles[0].Policy = newPolicy
 
-	dns := shootCluster.Status.ShootName + shootDomainPostfix
+	dns := shootCluster.Status.ClusterName + shootDomainPostfix
 	shootcfg.Spec.DNS.Domain = &dns
 
 	shootcfg.Spec.Kubernetes.Version = shootCluster.Spec.ClusterVersion

@@ -13,7 +13,7 @@ func CreateShootCluster() *v1alpha1.ShootCluster {
 	shootCluster.SetNamespace("shootClusterNamespace")
 	shootCluster.SetGroupVersionKind(schema.GroupVersionKind{Group: "garden.service.infrabox.net", Version: "v1alpha1", Kind: "ShootCluster"})
 
-	shootCluster.Status.ShootName = "shootname"
+	shootCluster.Status.ClusterName = "shootname"
 	shootCluster.Status.GardenerNamespace = "gnamespace"
 	return shootCluster
 }

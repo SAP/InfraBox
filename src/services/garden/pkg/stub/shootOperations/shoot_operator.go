@@ -132,7 +132,7 @@ func (so *ShootOperator) syncSecret(shootCluster *v1alpha1.ShootCluster, shootCr
 }
 
 func (so *ShootOperator) fetchKubeconfigFor(shootCluster *v1alpha1.ShootCluster, clientGetter k8sClientCache.ClientGetter) (*corev1.Secret, error) {
-	cfgPath := shootCluster.Status.ShootName + ".kubeconfig"
+	cfgPath := shootCluster.Status.ClusterName + ".kubeconfig"
 	secret, err := clientGetter.GetK8sClientSet().CoreV1().Secrets(shootCluster.Status.GardenerNamespace).Get(cfgPath, v1.GetOptions{})
 	if err != nil {
 		so.log.Errorf("couldn't fetch the secret for cluster. err: %s", err.Error())
@@ -140,7 +140,7 @@ func (so *ShootOperator) fetchKubeconfigFor(shootCluster *v1alpha1.ShootCluster,
 	}
 
 	if _, ok := secret.Data["kubeconfig"]; !ok {
-		return nil, fmt.Errorf("Secret for '%s' does not have a kubeconfig", shootCluster.Status.ShootName)
+		return nil, fmt.Errorf("Secret for '%s' does not have a kubeconfig", shootCluster.Status.ClusterName)
 	} else {
 		return secret, nil
 	}
@@ -215,7 +215,7 @@ func (so *ShootOperator) secretExists(shootCluster *v1alpha1.ShootCluster) (*cor
 }
 
 func (so *ShootOperator) updateShootIfNecessary(shootCluster *v1alpha1.ShootCluster, clientGetter k8sClientCache.ClientGetter) error {
-	shoot, err := clientGetter.GetGardenClientSet().GardenV1beta1().Shoots(shootCluster.Status.GardenerNamespace).Get(shootCluster.Status.ShootName, v1.GetOptions{})
+	shoot, err := clientGetter.GetGardenClientSet().GardenV1beta1().Shoots(shootCluster.Status.GardenerNamespace).Get(shootCluster.Status.ClusterName, v1.GetOptions{})
 	if err != nil {
 		so.log.Errorf("couldn't get current status of shoot cluster. err: %s", err)
 		return err
