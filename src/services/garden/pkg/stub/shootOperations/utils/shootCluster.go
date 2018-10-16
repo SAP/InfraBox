@@ -10,7 +10,6 @@ func CreateShootCluster() *v1alpha1.ShootCluster {
 	shootCluster.Spec.GardenerNamespace = "gnamespace"
 	shootCluster.Spec.ShootName = "shootname"
 	shootCluster.Spec.SecretBindingRef = "bindingRef"
-	shootCluster.Spec.VpcCIDR = "172.0.0.0/16"
 	shootCluster.Spec.MinNodes = 42
 	shootCluster.Spec.MaxNodes = 42
 	shootCluster.SetName("shootClusterName")

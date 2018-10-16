@@ -40,7 +40,6 @@ func createShootClusterCr() *v1alpha1.ShootCluster {
 	ShootCluster := &v1alpha1.ShootCluster{}
 	ShootCluster.Spec.GardenerNamespace = "gnamespace"
 	ShootCluster.Spec.ShootName = "shootname"
-	ShootCluster.Spec.VpcCIDR = "172.0.0.0/16"
 	ShootCluster.Spec.MinNodes = 42
 	ShootCluster.Spec.MaxNodes = 42
 	ShootCluster.Spec.DiskSize = 100
@@ -58,9 +57,6 @@ func checkShootAgainstSpec(s *v1beta1.Shoot, ShootCluster *v1alpha1.ShootCluster
 	}
 	if s.Spec.Cloud.AWS.Workers[0].Worker.AutoScalerMax != int(ShootCluster.Spec.MaxNodes) {
 		t.Fatal("max worker mismatch")
-	}
-	if string(*s.Spec.Cloud.AWS.Networks.VPC.CIDR) != ShootCluster.Spec.VpcCIDR {
-		t.Fatal("aws vpc mismatch")
 	}
 	if s.GetName() != ShootCluster.Spec.ShootName {
 		t.Fatal("name mismatch")

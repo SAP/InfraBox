@@ -34,7 +34,6 @@ type ShootClusterSpec struct {
 	Zone              string `json:"zone"`
 	ShootName         string `json:"shootName,omitempty"`
 	GardenerNamespace string `json:"gardenerNamespace,omitempty"`
-	VpcCIDR           string `json:"vpcCIDR"`
 	SecretBindingRef  string `json:"secretBindingRef"`
 }
 
@@ -44,6 +43,7 @@ type ShootClusterStatus struct {
 	ClusterName string `json:"clusterName,omitempty"`
 	SecretName  string `json:"clusterName,omitempty"`
 	NumNodes    int    `json:"numNodes,omitempty"`
+	ShootName   string `json:"shootName,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
