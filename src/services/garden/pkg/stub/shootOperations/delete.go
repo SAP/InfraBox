@@ -18,10 +18,10 @@ import (
 )
 
 func deleteShootCluster(shoots gardenV1beta1.ShootInterface, shootCluster *v1alpha1.ShootCluster, log *logrus.Entry) {
-	logSuccess := func() { log.Infof("successfully triggered deletion of shoot %s", shootCluster.Status.ShootName) }
+	logSuccess := func() { log.Infof("successfully triggered deletion of shoot %s", shootCluster.Status.ClusterName) }
 
-	log.Infof("Try to delete shoot %s in the namespace %s", shootCluster.Status.ShootName, shootCluster.Status.GardenerNamespace)
-	err := setDeletionConfirmation(shoots, shootCluster.Status.ShootName, log)
+	log.Infof("Try to delete shoot %s in the namespace %s", shootCluster.Status.ClusterName, shootCluster.Status.GardenerNamespace)
+	err := setDeletionConfirmation(shoots, shootCluster.Status.ClusterName, log)
 	if err != nil {
 		if apiErrors.IsNotFound(err) {
 			log.Info("shoot cluster does not exist")
@@ -31,7 +31,7 @@ func deleteShootCluster(shoots gardenV1beta1.ShootInterface, shootCluster *v1alp
 		return
 	}
 
-	err = shoots.Delete(shootCluster.Status.ShootName, &metav1.DeleteOptions{})
+	err = shoots.Delete(shootCluster.Status.ClusterName, &metav1.DeleteOptions{})
 	if err != nil {
 		if apiErrors.IsNotFound(err) {
 			log.Info("shoot cluster does not exist")
@@ -41,7 +41,7 @@ func deleteShootCluster(shoots gardenV1beta1.ShootInterface, shootCluster *v1alp
 		return
 	}
 
-	err = setDeletionTimestampConfirmation(shoots, shootCluster.Status.ShootName)
+	err = setDeletionTimestampConfirmation(shoots, shootCluster.Status.ClusterName)
 	if err != nil {
 		if apiErrors.IsNotFound(err) {
 			log.Info("shoot cluster does not exist")

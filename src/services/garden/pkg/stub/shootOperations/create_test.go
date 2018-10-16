@@ -28,7 +28,7 @@ func TestCreateShootCluster(t *testing.T) {
 		t.Fatalf("create shoot cluster failed: %s", err)
 	}
 
-	s, err := fk.GardenV1beta1().Shoots(shootCluster.Status.GardenerNamespace).Get(shootCluster.Status.ShootName, v1.GetOptions{})
+	s, err := fk.GardenV1beta1().Shoots(shootCluster.Status.GardenerNamespace).Get(shootCluster.Status.ClusterName, v1.GetOptions{})
 	if err != nil {
 		t.Fatalf("getting shoot cluster failed: %s", err)
 	}
@@ -47,7 +47,7 @@ func createShootClusterCr() *v1alpha1.ShootCluster {
 	ShootCluster.SetNamespace("ShootClusterNamespace")
 	ShootCluster.SetGroupVersionKind(schema.GroupVersionKind{Group: "garden.service.infrabox.net", Version: "v1alpha1", Kind: "ShootCluster"})
 
-	ShootCluster.Status.ShootName = "shootname"
+	ShootCluster.Status.ClusterName = "shootname"
 	ShootCluster.Status.GardenerNamespace = "gnamespace"
 	return ShootCluster
 }
@@ -59,7 +59,7 @@ func checkShootAgainstSpec(s *v1beta1.Shoot, ShootCluster *v1alpha1.ShootCluster
 	if s.Spec.Cloud.AWS.Workers[0].Worker.AutoScalerMax != int(ShootCluster.Spec.MaxNodes) {
 		t.Fatal("max worker mismatch")
 	}
-	if s.GetName() != ShootCluster.Status.ShootName {
+	if s.GetName() != ShootCluster.Status.ClusterName {
 		t.Fatal("name mismatch")
 	}
 	if s.GetNamespace() != ShootCluster.Status.GardenerNamespace {
@@ -74,7 +74,7 @@ func checkIfShootHasCorrectVals(s *v1beta1.Shoot, shootCluster *v1alpha1.ShootCl
 	if s.Spec.Cloud.AWS.Workers[0].Worker.AutoScalerMax != int(shootCluster.Spec.MaxNodes) {
 		t.Fatal("max worker mismatch")
 	}
-	if s.GetName() != shootCluster.Status.ShootName {
+	if s.GetName() != shootCluster.Status.ClusterName {
 		t.Fatal("name mismatch")
 	}
 	if s.GetNamespace() != shootCluster.Status.GardenerNamespace {
@@ -106,7 +106,7 @@ func TestCreateShootCluster_IfAlreadyExist_DontChangeAnything(t *testing.T) {
 		t.Fatalf("only one shoot should exist: %s", err)
 	}
 
-	s, err := fk.GardenV1beta1().Shoots(shootCluster.Status.GardenerNamespace).Get(shootCluster.Status.ShootName, v1.GetOptions{})
+	s, err := fk.GardenV1beta1().Shoots(shootCluster.Status.GardenerNamespace).Get(shootCluster.Status.ClusterName, v1.GetOptions{})
 	if err != nil {
 		t.Fatalf("getting shoot cluster failed: %s", err)
 	}
