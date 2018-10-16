@@ -1,7 +1,6 @@
 package shootOperations
 
 import (
-	"bytes"
 	"fmt"
 	"net"
 	"os"
@@ -17,22 +16,19 @@ import (
 
 	"github.com/sap/infrabox/src/services/garden/pkg/apis/garden/v1alpha1"
 	"github.com/sap/infrabox/src/services/garden/pkg/stub/shootOperations/common"
-	"github.com/sap/infrabox/src/services/garden/pkg/stub/shootOperations/utils"
 )
 
 const shootDomainPostfix = ".datahub.shoot.canary.k8s-hana.ondemand.com"
 const dummyNameForClusterName = "CLUSTERNAME"
 const dummyNameForAwsRegion = "REGIONDUMMY"
+const defaultVpcCIDR = "10.0.0.0/16"
 
 func createAwsConfig(sdkops common.SdkOperations, shootCluster *v1alpha1.ShootCluster, cloudProfileIf v1beta1.CloudProfileInterface) (*gApiV1beta.Shoot, error) {
 	shootcfg := DefaultAwsConfig()
 	fillSpecWithStaticInfo(shootcfg, shootCluster)
 	fillSpecFromEnv(shootcfg)
-	if err := setNetworkSpec(shootCluster, shootcfg, make([]*net.IPNet, 0)); err != nil {
-		return nil, err
-	}
 
-	if err := fillSpecWithSecretBindingRef(sdkops, shootCluster, shootcfg); err != nil {
+	if err := setNetworkSpec(shootcfg, make([]*net.IPNet, 0)); err != nil {
 		return nil, err
 	}
 
@@ -43,26 +39,11 @@ func createAwsConfig(sdkops common.SdkOperations, shootCluster *v1alpha1.ShootCl
 	return shootcfg, nil
 }
 
-func fillSpecWithSecretBindingRef(sdkops common.SdkOperations, shootCluster *v1alpha1.ShootCluster, shootcfg *gApiV1beta.Shoot) error {
-	s := utils.NewSecret(shootCluster)
-	if err := sdkops.Get(s); err != nil {
-		return err
-	}
-
-	if refBinding, ok := s.Data[common.KeySecretBindingRefInSecret]; !ok {
-		return fmt.Errorf("secret does not contain secretBindingRef (key: %s)", common.KeySecretBindingRefInSecret)
-	} else {
-		shootcfg.Spec.Cloud.SecretBindingRef.Name = string(bytes.Trim(refBinding, "\n"))
-	}
-
-	return nil
-}
-
 func fillSpecWithStaticInfo(shootcfg *gApiV1beta.Shoot, shootCluster *v1alpha1.ShootCluster) {
 	shootcfg.GetObjectMeta().SetName(shootCluster.Spec.ShootName)
 	shootcfg.ObjectMeta.SetNamespace(shootCluster.Spec.GardenerNamespace)
 
-	vpc := gApiV1beta.CIDR(shootCluster.Spec.VpcCIDR)
+	vpc := gApiV1beta.CIDR(defaultVpcCIDR)
 	shootcfg.Spec.Cloud.AWS.Networks.VPC.CIDR = &vpc
 
 	shootcfg.Spec.Cloud.AWS.Workers = []gApiV1beta.AWSWorker{{
@@ -113,10 +94,10 @@ func convertMachineType(t string) string {
 
 const (
 	ENVDnsDomainSuffix               = "AWS_DNS_DOMAIN_SUFFIX"
-	ENVAwsCloudProfile               = "AWS_CLOUD_PROFILE"
 	ENVAwsMaintenanceAutoupdate      = "AWS_MAINTENANCE_AUTOUPDATE"
 	ENVAwsMaintenanceAutoUpdateBegin = "AWS_MAINTENANCE_AUTOUPDATE_TWBEGIN"
 	ENVAwsMaintenanceAutoUpdateEnd   = "AWS_MAINTENANCE_AUTOUPDATE_TWBEND"
+	ENVSecretBindingRef              = "SECRET_BINDING_REF"
 )
 
 func fillSpecFromEnv(shootcfg *gApiV1beta.Shoot) {
@@ -128,10 +109,6 @@ func fillSpecFromEnv(shootcfg *gApiV1beta.Shoot) {
 			dns = shootcfg.GetName() + "." + s
 		}
 		shootcfg.Spec.DNS.Domain = &dns
-	}
-
-	if s := os.Getenv(ENVAwsCloudProfile); len(s) != 0 {
-		shootcfg.Spec.Cloud.Profile = s
 	}
 
 	if s := os.Getenv(ENVAwsMaintenanceAutoupdate); len(s) != 0 {
@@ -162,22 +139,23 @@ func fillSpecFromEnv(shootcfg *gApiV1beta.Shoot) {
 	} else if (len(begin) + len(end)) != 0 {
 		logrus.Error("Incomplete time window specified. please check the env variables 'AwsMaintenanceAutoUpdateTWBegin' and 'AwsMaintenanceAutoUpdateTWEnd'")
 	}
+
+	shootcfg.Spec.Cloud.SecretBindingRef.Name = ""
+	if s := os.Getenv(ENVSecretBindingRef); len(s) != 0 {
+		shootcfg.Spec.Cloud.SecretBindingRef.Name = s
+	}
 }
 
-func setNetworkSpec(shootCluster *v1alpha1.ShootCluster, shootcfg *gApiV1beta.Shoot, usedSubnets []*net.IPNet) error {
-	if len(shootCluster.Spec.VpcCIDR) == 0 {
-		return fmt.Errorf("no vpc CIDR specified for AWS cluster!")
-	} else if _, _, err := net.ParseCIDR(shootCluster.Spec.VpcCIDR); err != nil {
-		return fmt.Errorf("invalid AWS vpc CIDR specified (%s): error: %s", shootCluster.Spec.VpcCIDR, err)
-	} else if usedSubnets == nil {
+func setNetworkSpec(shootcfg *gApiV1beta.Shoot, usedSubnets []*net.IPNet) error {
+	if usedSubnets == nil {
 		return fmt.Errorf("no previous usedSubnets given")
 	}
 
 	cidr := new(gApiV1beta.CIDR)
-	*cidr = gApiV1beta.CIDR(shootCluster.Spec.VpcCIDR)
+	*cidr = gApiV1beta.CIDR(defaultVpcCIDR)
 	shootcfg.Spec.Cloud.AWS.Networks.VPC.CIDR = cidr
 
-	snGen := NewSubnetGenerator(shootCluster.Spec.VpcCIDR)
+	snGen := NewSubnetGenerator(defaultVpcCIDR)
 	snGen.Init(usedSubnets)
 
 	internal, err := snGen.GenerateNext24Subnet()
@@ -232,7 +210,7 @@ func fillSpecWithK8sVersion(shootcfg *gApiV1beta.Shoot, shootCluster *v1alpha1.S
 
 func DefaultAwsConfig() *gApiV1beta.Shoot {
 	domain := "scenarios" + shootDomainPostfix
-	awsVpcCIDR := gApiV1beta.CIDR("10.0.0.0/16") // vpc-86f8b7ed
+	awsVpcCIDR := gApiV1beta.CIDR("10.0.0.0/16")
 
 	return &gApiV1beta.Shoot{
 		ObjectMeta: metav1.ObjectMeta{
