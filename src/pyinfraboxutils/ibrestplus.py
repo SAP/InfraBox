@@ -7,6 +7,8 @@ authorizations = {
     }
 }
 
+
+app.config['AUTH_TYPE'] = 'opa'
 api = Api(app, authorizations=authorizations,
           doc='/api/doc/',
           validate=True,

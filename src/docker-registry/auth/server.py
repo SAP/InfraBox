@@ -14,6 +14,8 @@ import psycopg2.extensions
 
 logger = get_logger('docker-registry-auth')
 
+app.config['AUTH_TYPE'] = 'opa'
+
 @app.route('/ping')
 def ping():
     return jsonify({'status': 200})
