@@ -1,6 +1,7 @@
 import time
 import json
 
+import urllib3
 import requests
 import cachetclient.cachet as cachet
 
@@ -24,6 +25,8 @@ except ImportError:
 session = requests.Session
 old_request = session.request
 session.request = partialmethod(old_request, verify=False)
+
+urllib3.disable_warnings()
 
 logger = get_logger('state')
 
@@ -53,14 +56,16 @@ class Cachet(object):
             FROM cluster
         """)
 
-        for c in clusters:
+        for i, c in enumerate(clusters):
             if c['name'] in self.components:
                 continue
 
             cid = self._get_component_id(c['name'])
             if not cid:
                 a = components.post(name=c['name'],
+                                    description=c['name'],
                                     status=1,
+                                    order=i,
                                     group_id=gid,
                                     enabled=True)
                 component = json.loads(a)
@@ -120,7 +125,7 @@ class Cachet(object):
 
             components = cachet.Components(endpoint=self.endpoint,
                                            api_token=self.api_token)
-            components.put(id=cid, status=status)
+            components.put(id=cid, status=status, enabled=True)
 
         jobs = db.execute_one_dict("""
             SELECT count(*) as count
@@ -130,6 +135,8 @@ class Cachet(object):
 
         mid = self.metrics['Running Jobs']
         points = cachet.Points(endpoint=self.endpoint, api_token=self.api_token)
+
+        logger.info('Running jobs: %s', jobs['count'])
         points.post(id=mid, value=jobs['count'], timestamp=int(time.time()))
 
 def main(): # pragma: no cover
