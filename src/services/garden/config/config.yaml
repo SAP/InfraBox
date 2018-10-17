@@ -5,7 +5,6 @@ metadata:
   labels:
     service.infrabox.net/secret-name: targetsecret
 spec:
-  shootName: "d068804tib1"              # name of the k8s cluster created by gardener
   clusterVersion: "1.10"
   maxNodes: 1
   minNodes: 1
@@ -13,4 +12,3 @@ spec:
   diskSize: 100
   enableAutoscaling: true
   zone: "eu-central-1a"
-  #  volumeType: "gp2"

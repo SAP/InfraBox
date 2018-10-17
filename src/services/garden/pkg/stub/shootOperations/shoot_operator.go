@@ -157,19 +157,10 @@ func (so *ShootOperator) updateSecretIfNecessary(want *corev1.Secret, have *core
 		}
 	}
 
-	//shootKubecfg, exists := have.Data["config"]
-	//if !exists {
-	//	updateNecessary = true
-	//} else if !bytes.Equal(want.Data["config"], shootKubecfg) {
-	//	updateNecessary = true
-	//}
-
 	if !updateNecessary {
 		return nil
 	}
-
-	//have.Data["config"] = want.Data["config"]
-	//have.Data[common.KeyNameOfK8sStorageClassInSecret] = want.Data[common.KeyNameOfK8sStorageClassInSecret]
+	
 	if err := so.operatorSdk.Update(have); err != nil { // we are only interested in setting the 'config', rest can stay
 		return err
 	}
