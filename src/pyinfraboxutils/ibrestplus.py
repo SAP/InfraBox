@@ -7,6 +7,7 @@ authorizations = {
     }
 }
 
+app.config['OPA_ENABLED'] = True
 api = Api(app, authorizations=authorizations,
           doc='/api/doc/',
           validate=True,
