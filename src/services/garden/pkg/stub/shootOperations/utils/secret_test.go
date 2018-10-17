@@ -1,6 +1,9 @@
 package utils
 
-import "testing"
+import (
+	"github.com/sap/infrabox/src/services/garden/pkg/stub/shootOperations/common"
+	"testing"
+)
 
 func TestNewSecret_FailsOnNilInput(t *testing.T) {
 	t.Run("failsOnNilInput", func(t *testing.T) {
@@ -9,14 +12,14 @@ func TestNewSecret_FailsOnNilInput(t *testing.T) {
 		}
 	})
 
-	t.Run("namesMatchCluster", func(t *testing.T) {
+	t.Run("namesMatchLabelSpec", func(t *testing.T) {
 		c := CreateShootCluster()
 		s := NewSecret(c)
 		if s == nil {
 			t.Error("should not fail")
 		}
 
-		if s.GetName() != c.GetName() {
+		if s.GetName() != c.GetLabels()[common.LabelForTargetSecret] {
 			t.Fatal("name mismatch")
 		} else if s.GetNamespace() != c.GetNamespace() {
 			t.Fatal("namespace mismatch")
@@ -34,4 +37,11 @@ func TestNewSecret_FailsOnNilInput(t *testing.T) {
 		}
 	})
 
+	t.Run("label for target secret isn't set", func(t *testing.T) {
+		cluster := CreateShootCluster()
+		cluster.Labels = make(map[string]string)
+		if NewSecret(cluster) != nil {
+			t.Error("should fail")
+		}
+	})
 }

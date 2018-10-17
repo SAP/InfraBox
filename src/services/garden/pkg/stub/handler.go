@@ -118,8 +118,10 @@ func (h *Handler) sync(shootCluster *v1alpha1.ShootCluster, log *logrus.Entry) e
 		}
 	}
 
-	if err := h.injectCollectorsAndUpdateState(shootCluster, log); err != nil {
-		return err
+	if shootCluster.Status.Status == v1alpha1.ShootClusterStateShootReady {
+		if err := h.injectCollectorsAndUpdateState(shootCluster, log); err != nil {
+			return err
+		}
 	}
 
 	return nil

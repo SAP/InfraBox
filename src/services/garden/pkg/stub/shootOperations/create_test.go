@@ -12,6 +12,7 @@ import (
 	k8sFake "k8s.io/client-go/kubernetes/fake"
 
 	"github.com/sap/infrabox/src/services/garden/pkg/apis/garden/v1alpha1"
+	"github.com/sap/infrabox/src/services/garden/pkg/stub/shootOperations/common"
 	"github.com/sap/infrabox/src/services/garden/pkg/stub/shootOperations/common/testUtils"
 )
 
@@ -49,6 +50,8 @@ func createShootClusterCr() *v1alpha1.ShootCluster {
 
 	ShootCluster.Status.ClusterName = "shootname"
 	ShootCluster.Status.GardenerNamespace = "gnamespace"
+
+	ShootCluster.Labels = map[string]string{common.LabelForTargetSecret: "outsecret"}
 	return ShootCluster
 }
 
