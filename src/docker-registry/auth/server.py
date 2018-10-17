@@ -14,7 +14,7 @@ import psycopg2.extensions
 
 logger = get_logger('docker-registry-auth')
 
-app.config['AUTH_TYPE'] = 'opa'
+app.config['OPA_ENABLED'] = True
 
 @app.route('/ping')
 def ping():
