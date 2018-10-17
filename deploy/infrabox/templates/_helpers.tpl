@@ -95,10 +95,12 @@ https://{{- required "host is required" .Values.host -}}:{{- .Values.port -}}
 {{ end }}
 
 {{ define "mounts_gerrit" }}
+{{ if .Values.gerrit.enabled }}
 -
     name: gerrit-ssh
     mountPath: /tmp/gerrit
     readOnly: true
+{{ end }}
 {{ end }}
 
 {{ define "volumes_gerrit" }}
