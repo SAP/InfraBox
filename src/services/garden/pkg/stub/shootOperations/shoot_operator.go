@@ -190,24 +190,47 @@ func newSecretFromShootCredSecr(shootCluster *v1alpha1.ShootCluster, credSecr *c
 	secret.Data[common.KeyNameOfShootUserInSecret] = credSecr.Data["username"]
 	secret.Data[common.KeyNameOfShootPasswordInSecret] = credSecr.Data["password"]
 
+	endpoint := extractEndpoint(credSecr)
+	if endpoint == nil {
+		return nil
+	}
+
+	secret.Data[common.KeyNameOfShootEndpointInSecret] = endpoint
+	setShootClusterCrAsOwner(shootCluster, secret)
+	return secret
+}
+
+func extractEndpoint(s *corev1.Secret) []byte {
 	tmpfileRootdir := "/dev/shm" // try to store it on a ramdisk. /dev/shm is a ramdisk per default on linux >=  2.6.X
 	if _, err := os.Stat(tmpfileRootdir); err == os.ErrNotExist {
 		tmpfileRootdir = ""
 	}
 
-	cfg, err := utils.BuildK8sConfig(tmpfileRootdir, []byte(credSecr.Data["kubeconfig"]))
+	cfg, err := utils.BuildK8sConfig(tmpfileRootdir, []byte(s.Data["kubeconfig"]))
 	if err != nil {
 		return nil
 	}
 
-	u, err := url.Parse(cfg.Host) // Host actually contains more than just the host (e.g. "https://api.ib-4vv1fnky91j.datahub.shoot.canary.k8s-hana.ondemand.com") -> parse it
+	// Host actually contains more than just the host (e.g. "https://api.ib-4vv1fnky91j.datahub.shoot.canary.k8s-hana.ondemand.com") -> parse it
+	u, err := url.Parse(cfg.Host)
 	if err != nil {
 		logrus.Errorf("gardener returned invalid url as host in kubeconfig: %s. err: %s", u.Host, err.Error())
 		return nil
 	}
 
-	secret.Data[common.KeyNameOfShootEndpointInSecret] = []byte(u.Host)
-	return secret
+	return []byte(u.Host)
+}
+
+func setShootClusterCrAsOwner(shootCluster *v1alpha1.ShootCluster, secret *corev1.Secret) {
+	gvk := shootCluster.GetObjectKind().GroupVersionKind()
+	secret.OwnerReferences = []v1.OwnerReference{
+		{
+			APIVersion: gvk.Version,
+			Name:       shootCluster.GetName(),
+			Kind:       gvk.Kind,
+			UID:        shootCluster.GetUID(),
+		},
+	}
 }
 
 func newSecret(shootCluster *v1alpha1.ShootCluster, cfg []byte) *corev1.Secret {
@@ -281,9 +304,6 @@ func (so *ShootOperator) Delete(shootCluster *v1alpha1.ShootCluster) error {
 	}
 
 	deleteShootCluster(clientGetter.GetGardenClientSet().GardenV1beta1().Shoots(shootCluster.Status.GardenerNamespace), shootCluster, so.log)
-	if err := so.deleteSecret(shootCluster); err != nil {
-		return err
-	}
 
 	shootCluster.SetFinalizers([]string{})
 	if err := so.operatorSdk.Update(shootCluster); err != nil {
@@ -293,21 +313,6 @@ func (so *ShootOperator) Delete(shootCluster *v1alpha1.ShootCluster) error {
 		so.log.Infof("successfully deleted shootClusterstructure %s", shootCluster.GetName())
 	}
 
-	return nil
-}
-
-func (so *ShootOperator) deleteSecret(shootCluster *v1alpha1.ShootCluster) error {
-	secret := newSecret(shootCluster, nil)
-
-	err := so.operatorSdk.Delete(secret)
-	if err != nil {
-		if !apiErrors.IsNotFound(err) {
-			so.log.Error("couldn't delete secret: ", err.Error())
-			return err
-		}
-	}
-
-	so.log.Info("successfully deleted secret")
 	return nil
 }
 
