@@ -31,7 +31,7 @@ else
     echo "Using host docker daemon socket"
 fi
 
-if [ -z "$INFRABOX_GIT_PRIVATE_KEY" ]; then
+if [ ! -z "$INFRABOX_GIT_PRIVATE_KEY" ]; then
     echo "Setting private key"
     eval `ssh-agent -s`
     echo $INFRABOX_GIT_PRIVATE_KEY > ~/.ssh/id_rsa
@@ -39,16 +39,6 @@ if [ -z "$INFRABOX_GIT_PRIVATE_KEY" ]; then
     echo "StrictHostKeyChecking no" > ~/.ssh/config
     ssh-add ~/.ssh/id_rsa
     ssh-keyscan -p $INFRABOX_GIT_PORT $INFRABOX_GIT_HOSTNAME >> ~/.ssh/known_hosts
-fi
-
-if [ -f /var/run/gerrit/id_rsa ]; then
-    echo "Setting private key"
-    eval `ssh-agent -s`
-    cp /var/run/gerrit/id_rsa ~/.ssh/id_rsa
-    chmod 600 ~/.ssh/id_rsa
-    echo "StrictHostKeyChecking no" > ~/.ssh/config
-    ssh-add ~/.ssh/id_rsa
-    ssh-keyscan -p $INFRABOX_GERRIT_PORT $INFRABOX_GERRIT_HOSTNAME >> ~/.ssh/known_hosts
 else
     echo "No private key configured"
 fi

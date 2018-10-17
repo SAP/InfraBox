@@ -158,11 +158,15 @@ class Projects(Resource):
             owner = split[0]
             repo_name = split[1]
 
+            clone_url = repo['clone_url']
+            if repo['private']:
+                clone_url = repo['ssh_url']
+
             g.db.execute('''
                 INSERT INTO repository (name, html_url, clone_url, github_id,
                                         private, project_id, github_owner)
                 VALUES (%s, %s, %s, %s, %s, %s, %s)
-            ''', [repo['name'], repo['html_url'], repo['clone_url'],
+            ''', [repo['name'], repo['html_url'], clone_url,
                   repo['id'], repo['private'], project_id, repo['owner']['login']])
 
             insecure_ssl = "0"
