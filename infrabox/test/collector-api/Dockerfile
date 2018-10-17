@@ -1,5 +1,5 @@
-
-FROM quay.io/infrabox/images-test:build_local
+ARG INFRABOX_BUILD_NUMBER
+FROM quay.io/infrabox/images-test:build_$INFRABOX_BUILD_NUMBER
 
 ENV PYTHONPATH=/infrabox/context/src:/infrabox/context/src/collector-api
 
