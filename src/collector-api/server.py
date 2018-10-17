@@ -10,13 +10,14 @@ from flask_restplus import Resource, Api
 import eventlet
 eventlet.monkey_patch()
 
-from pyinfraboxutils import get_env, get_logger
+from pyinfraboxutils import get_logger
 
 logger = get_logger('api')
 
 storage_path = '/tmp/collector/'
 
 app = Flask(__name__)
+app.config['AUTH_TYPE'] = 'open'
 api = Api(app)
 
 @api.route('/ping')

@@ -32,8 +32,9 @@ def before_request():
 
     g.db = dbpool.get()
 
-    g.token = normalize_token(get_token())
-    check_request_authorization()
+    if app.config['AUTH_TYPE'] == 'opa':
+        g.token = normalize_token(get_token())
+        check_request_authorization()
 
 @app.teardown_request
 def teardown_request(_):
