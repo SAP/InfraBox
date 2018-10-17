@@ -17,7 +17,7 @@ logger = get_logger('api')
 storage_path = '/tmp/collector/'
 
 app = Flask(__name__)
-app.config['AUTH_TYPE'] = 'open'
+app.config['OPA_ENABLED'] = False
 api = Api(app)
 
 @api.route('/ping')
