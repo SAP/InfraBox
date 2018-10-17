@@ -542,7 +542,7 @@ class Scheduler(object):
         except:
             pass
 
-    def kube_job(self, job_id, cpu, mem, services=None):
+    def kube_job(self, job_id, cpu, mem, private_key, services=None):
         h = {'Authorization': 'Bearer %s' % self.args.token}
 
         job_token = encode_job_token(job_id).decode()
@@ -560,6 +560,18 @@ class Scheduler(object):
             'name': 'INFRABOX_JOB_RESOURCES_LIMITS_CPU',
             'value': str(cpu)
         }]
+
+        if private_key:
+            env += [{
+                'name': 'INFRABOX_GIT_PORT',
+                'value': 443
+            }, {
+                'name': 'INFRABOX_GIT_HOSTNAME',
+                'value': 'github.com'
+            }, {
+                'name': 'INFRABOX_GIT_PRIVATE_KEY',
+                'value': private_key
+            }]
 
         root_url = os.environ['INFRABOX_ROOT_URL']
 
@@ -590,6 +602,8 @@ class Scheduler(object):
                             }
                         },
                         'env': env,
+                        'volumes': volumes,
+                        'volumeMounts': volumeMounts
                     }
                 }
             }
@@ -622,7 +636,34 @@ class Scheduler(object):
         if definition and 'services' in definition:
             services = definition['services']
 
-        if not self.kube_job(job_id, cpu, memory, services=services):
+        # Get ssh key for private repos
+        cursor = self.conn.cursor()
+        cursor.execute('''
+            SELECT p.type, p.id
+            FROM project p
+            JOIN job j
+            ON j.project_id = p.id
+            WHERE j.id = %s
+        ''', [job_id])
+        result = cursor.fetchone()
+        cursor.close()
+
+        project_type = result[0]
+        project_id = result[1]
+
+        private_key = None
+        if project_type == 'github':
+            cursor = self.conn.cursor()
+            cursor.execute('''
+                SELECT r.private_key
+                FROM repositor r
+                WHERE r.project_id = %s
+            ''', [project_id])
+            result = cursor.fetchone()
+            cursor.close()
+            private_key = result[0]
+
+        if not self.kube_job(job_id, cpu, memory, private_key, services=services):
             return
 
         cursor = self.conn.cursor()
