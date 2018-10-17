@@ -160,7 +160,7 @@ func (so *ShootOperator) updateSecretIfNecessary(want *corev1.Secret, have *core
 	if !updateNecessary {
 		return nil
 	}
-	
+
 	if err := so.operatorSdk.Update(have); err != nil { // we are only interested in setting the 'config', rest can stay
 		return err
 	}
