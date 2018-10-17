@@ -40,7 +40,7 @@ type ShootOperator struct {
 }
 
 func (so *ShootOperator) Sync(shootCluster *v1alpha1.ShootCluster) error {
-	defer func(tStart time.Time) { so.log.Infof("synced with shoot within %s", time.Now().Sub(tStart)) }(time.Now())
+	defer func(tStart time.Time) { so.log.Debugf("synced with shoot within %s", time.Now().Sub(tStart)) }(time.Now())
 
 	clients := so.clientCache.Get(shootCluster)
 	if clients == nil {
@@ -97,7 +97,6 @@ func (so *ShootOperator) setFinalizerIfNotPresent(shootCluster *v1alpha1.ShootCl
 	return nil
 }
 
-//func (so *ShootOperator) syncSecret(shootCluster *v1alpha1.ShootCluster, shootKubeCfg []byte, clientGetter k8sClientCache.ClientGetter) {
 func (so *ShootOperator) syncSecret(shootCluster *v1alpha1.ShootCluster, shootCredsSecret *corev1.Secret, clientGetter k8sClientCache.ClientGetter) {
 	secretWeWant := newSecretFromShootCredSecr(shootCluster, shootCredsSecret)
 
@@ -181,6 +180,7 @@ func newSecretFromShootCredSecr(shootCluster *v1alpha1.ShootCluster, credSecr *c
 	}
 
 	secret := utils.NewSecret(shootCluster)
+
 	secret.Data[common.KeyNameOfShootKubecfgInSecret] = credSecr.Data["kubeconfig"]
 	secret.Data[common.KeyNameOfShootKubecfgKeyInSecret] = credSecr.Data["kubecfg.key"]
 	secret.Data[common.KeyNameOfShootCaCrtInSecret] = credSecr.Data["ca.crt"]
@@ -198,7 +198,6 @@ func newSecret(shootCluster *v1alpha1.ShootCluster, cfg []byte) *corev1.Secret {
 
 	secret := utils.NewSecret(shootCluster)
 	secret.Data[common.KeyNameOfShootKubecfgInSecret] = cfg
-	secret.Data[common.KeyNameOfK8sStorageClassInSecret] = []byte(common.NameOfDefaultStorageClass)
 	return secret
 }
 

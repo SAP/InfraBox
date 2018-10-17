@@ -360,7 +360,6 @@ func removeSecretContainingShootKubeCfg(shootClusterInput *v1alpha1.ShootCluster
 
 func addInputSecretForshootClusterOperator(shootClusterInput *v1alpha1.ShootCluster, sdkmock common.SdkOperations) error {
 	s := utils.NewSecret(shootClusterInput)
-	s.Data[common.KeySecretBindingRefInSecret] = []byte("foo")
 	return sdkmock.Create(s)
 }
 

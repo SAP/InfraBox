@@ -5,10 +5,16 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/sap/infrabox/src/services/garden/pkg/apis/garden/v1alpha1"
+	"github.com/sap/infrabox/src/services/garden/pkg/stub/shootOperations/common"
 )
 
 func NewSecret(shootCluster *v1alpha1.ShootCluster) *corev1.Secret {
 	if shootCluster == nil {
+		return nil
+	}
+
+	name, exists := shootCluster.GetLabels()[common.LabelForTargetSecret]
+	if !exists {
 		return nil
 	}
 
@@ -18,7 +24,7 @@ func NewSecret(shootCluster *v1alpha1.ShootCluster) *corev1.Secret {
 			APIVersion: "v1",
 		},
 		ObjectMeta: v1.ObjectMeta{
-			Name:      shootCluster.GetName(),
+			Name:      name,
 			Namespace: shootCluster.GetNamespace(),
 		},
 		Type: "Opaque",

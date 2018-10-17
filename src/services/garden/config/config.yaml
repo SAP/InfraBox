@@ -2,6 +2,8 @@ apiVersion: garden.service.infrabox.net/v1alpha1
 kind: ShootCluster
 metadata:
   name: "exampleshoot"
+  labels:
+    service.infrabox.net/secret-name: targetsecret
 spec:
   shootName: "d068804tib1"              # name of the k8s cluster created by gardener
   clusterVersion: "1.10"
