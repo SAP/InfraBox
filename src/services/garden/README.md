@@ -1,5 +1,5 @@
-# GCP Service
-The InfraBox GCP Service can be used to dynamically provision a Kubernetes Cluster for an InfraBox job.
+# Gardener Service
+The InfraBox Garden Service can be used to dynamically provision a Kubernetes Cluster for an InfraBox job.
 
 ## Usage
 
@@ -22,14 +22,12 @@ The InfraBox GCP Service can be used to dynamically provision a Kubernetes Clust
             },
             "spec": {
                 "diskSize": 100,
-                "machineType": "n1-standard-1",
-                "enableNetworkPolicy": false,
-                "numNodes": 1,
-                "preemptible": true,
+                "machineType": "m4.xlarge",
                 "enableAutoscaling": false,
                 "maxNodes": 1,
                 "minNodes": 1,
-                "zone": "us-east1-b"
+                "zone": "eu-central-1a",
+                "clusterVersion": "1.10",
             }
         }]
     }]
@@ -80,12 +78,12 @@ kubectl get pods
 ```
 
 ## Install
-To install the service in your Kubernetes cluster you have to first create a GCP Service Account with `Kubernetes Engine Admin` and `Service Account User` roles.
-Download the service account json file and save it as `service_account.json`. Then create a secret for it:
-
+To install the service in your Kubernetes cluster you have to first create a AWS Service Account and configure gardener to use it (secretBindingRef). Next, create a kubeconfig which this service will use to communicate with Gardener. Create a secret containing the kubeconfig:
 ```bash
-kubectl -n infrabox-system create secret generic infrabox-service-garden-sa --from-file ./service_account.json
+kubectl -n infrabox-system create secret generic infrabox-service-garden-sa --from-file ./garden_kubeconfig
 ```
+
+The names of the secret and the secretBindingRef can be chosen arbitrarily. The service will read the names from the environment variables mentioned below. The name of the kubeconfig entry within the secret (`garden_kubeconfig`) is mandatory. 
 
 Now use helm to install the GCP Service.
 
@@ -93,3 +91,19 @@ Now use helm to install the GCP Service.
 cd infrabox-service-garden
 helm install --namespace infrabox-system -n infrabox-service-garden .
 ```
+
+### Env variables
+The garden-operator depends on several environment variables:
+
+#### mandatory:
+* `CRENDENTIALS_SECRET`: Name of the secret containing the kubeconfig for Gardener. Within the secret, the config must be stored under the name `garden_kubecfg`.
+* `GARDEN_NAMESPACE` : The namespace within Gardener to create new shoot clusters in.
+* `GARDENER_PROJECTNAME`: Name of the gardener project which will contain the generated clusters.
+* `SECRET_BINDING_REF`: secretBindingRef as configured in Gardener.
+
+#### optional
+* `LOGLVL`: the logging level to use. Valid values are: `debug`, `info`, `warn`, `error`. default: `warn`.
+* `AWS_MAINTENANCE_AUTOUPDATE`: boolean. Enables autoupdate of kubernetes. default: `true`.
+* `AWS_MAINTENANCE_AUTOUPDATE_TWBEGIN`: Begin of the maintenance window. default: `220000+0100`. If used, must be set in conjunction with `AWS_MAINTENANCE_AUTOUPDATE_TWBEND`.
+* `AWS_MAINTENANCE_AUTOUPDATE_TWBEND`: End of the maintenance window. default: `230000+0100`. If used, must be set in conjunction with `AWS_MAINTENANCE_AUTOUPDATE_TWBEGIN`.
+  
