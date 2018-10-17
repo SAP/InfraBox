@@ -35,11 +35,6 @@ spec:
         mountPath: /local-cache
         name: local-cache
 {{ end }}
-{{ if .Values.gerrit.enabled }}
-    -
-        mountPath: /var/run/gerrit/
-        name: gerrit-ssh
-{{ end }}
     volumes:
     -
         name: data-dir
@@ -53,10 +48,4 @@ spec:
         name: local-cache
         hostPath:
             path: {{ default "/tmp/infrabox/local_cache" .Values.local_cache.host_path }}
-{{ end }}
-{{ if .Values.gerrit.enabled }}
-    -
-        name: gerrit-ssh
-        secret:
-            secretName: infrabox-gerrit-ssh
 {{ end }}
