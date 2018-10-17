@@ -32,7 +32,7 @@ def before_request():
 
     g.db = dbpool.get()
 
-    if app.config['AUTH_TYPE'] == 'opa':
+    if app.config['OPA_ENABLED']:
         g.token = normalize_token(get_token())
         check_request_authorization()
 
