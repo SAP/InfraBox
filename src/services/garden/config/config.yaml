@@ -1,14 +1,3 @@
 apiVersion: garden.service.infrabox.net/v1alpha1
 kind: ShootCluster
-metadata:
-  name: "exampleshoot"
-  labels:
-    service.infrabox.net/secret-name: targetsecret
-spec:
-  clusterVersion: "1.10"
-  maxNodes: 1
-  minNodes: 1
-  machineType: "m4.xlarge"
-  diskSize: 100
-  enableAutoscaling: true
-  zone: "eu-central-1a"
+projectName: garden
