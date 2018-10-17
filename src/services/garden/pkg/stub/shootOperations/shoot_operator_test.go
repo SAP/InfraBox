@@ -12,7 +12,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/kubernetes"
 	k8sFake "k8s.io/client-go/kubernetes/fake"
@@ -23,45 +22,6 @@ import (
 	"github.com/sap/infrabox/src/services/garden/pkg/stub/shootOperations/mocks"
 	"github.com/sap/infrabox/src/services/garden/pkg/stub/shootOperations/utils"
 )
-
-func TestDeleteSecret_CallsSdkDelete(t *testing.T) {
-	mockCtrl, sdkMock := testUtils.CreateMock(t)
-	defer mockCtrl.Finish()
-
-	var deletedObject runtime.Object
-	sdkMock.EXPECT().Delete(gomock.Any()).Return(nil).Do(func(o runtime.Object) { deletedObject = o.DeepCopyObject() })
-
-	cache := mocks.NewK8sClientCacheMock(k8sFake.NewSimpleClientset(), gardenFake.NewSimpleClientset())
-	sop := NewShootOperator(sdkMock, cache, &utils.StaticK8sClientSetFactory{}, logrus.WithField("test", "test"))
-	ShootCluster := createShootClusterCr()
-
-	err := sop.deleteSecret(ShootCluster)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	_, ok := deletedObject.(*corev1.Secret)
-	if !ok {
-		t.Fatal("called with wrong type. expected secret")
-	}
-}
-
-func TestDeleteSecret_AnyNonNOTFOUNDErrorIsReturned(t *testing.T) {
-	mockCtrl, sdkMock := testUtils.CreateMock(t)
-	defer mockCtrl.Finish()
-
-	errToReturn := fmt.Errorf("foo")
-	sdkMock.EXPECT().Delete(gomock.Any()).Return(errToReturn)
-
-	cache := mocks.NewK8sClientCacheMock(k8sFake.NewSimpleClientset(), gardenFake.NewSimpleClientset())
-	sop := NewShootOperator(sdkMock, cache, &utils.StaticK8sClientSetFactory{ClientSet: k8sFake.NewSimpleClientset()}, logrus.WithField("test", "test"))
-	ShootCluster := createShootClusterCr()
-
-	err := sop.deleteSecret(ShootCluster)
-	if err != errToReturn {
-		t.Fatalf("got invalid error. want: '%s'; got: '%s'", errToReturn, err)
-	}
-}
 
 func TestShootOperator_SecretExists_CorrectlyIndicatesSecretExistence(t *testing.T) {
 	mockCtrl, sdkMock := testUtils.CreateMock(t)
@@ -104,7 +64,7 @@ func TestSyncSecret_ForNonExistentSecret_NewSecretIsSet(t *testing.T) {
 	cache := mocks.NewK8sClientCacheMock(gK8sCs, gardenFake.NewSimpleClientset())
 	sop := NewShootOperator(sdkMock, cache, &utils.StaticK8sClientSetFactory{ClientSet: k8sFake.NewSimpleClientset()}, logrus.WithField("test", "test"))
 
-	s := createSecretWithKubecfg(ShootCluster, make([]byte, 0))
+	s := createSecretWithKubecfg(ShootCluster, []byte(dummyKubeconfig))
 	sop.syncSecret(ShootCluster, s, cache.Get(ShootCluster))
 }
 
@@ -113,6 +73,27 @@ func createSecretWithKubecfg(ShootCluster *v1alpha1.ShootCluster, kubecfg []byte
 	s.Data["kubeconfig"] = kubecfg // gardener puts the kubeconfig under the key 'kubeconfig'
 	return s
 }
+
+const dummyKubeconfig = `apiVersion: v1
+clusters:
+- cluster:
+    certificate-authority-data: Zm9vYmFyZm9vYmFyZm9vYmFyCg==
+    server: https://35.189.65.129
+  name: my-cluster
+contexts:
+- context:
+    cluster: my-cluster
+    user: admin
+  name: default-system
+current-context: default-system
+kind: Config
+preferences: {}
+users:
+- name: admin
+  user:
+    password: foo
+    username: admin
+`
 
 func createFakeK8sFilledWithKubecfgSecret(ShootCluster *v1alpha1.ShootCluster, t *testing.T) *k8sFake.Clientset {
 	gK8sCs := k8sFake.NewSimpleClientset()
@@ -151,7 +132,7 @@ func TestSyncSecret_ForExistentSecretWithDifferentData_ExistentSecretIsUpdated(t
 	cache := mocks.NewK8sClientCacheMock(gK8sCs, gardenFake.NewSimpleClientset())
 	sop := NewShootOperator(sdkMock, cache, &utils.StaticK8sClientSetFactory{ClientSet: k8sFake.NewSimpleClientset()}, logrus.WithField("test", "test"))
 
-	shootKubeCfg := []byte("kubeconfig data")
+	shootKubeCfg := []byte(dummyKubeconfig)
 	s := createSecretWithKubecfg(ShootCluster, shootKubeCfg)
 
 	sop.syncSecret(ShootCluster, s, cache.Get(ShootCluster))
@@ -196,7 +177,7 @@ func TestSyncSecret_ForNonexistentSecret_IfCreateFails_NewStateIsError(t *testin
 	gK8sCs := createFakeK8sFilledWithKubecfgSecret(ShootCluster, t)
 	cache := mocks.NewK8sClientCacheMock(gK8sCs, gardenFake.NewSimpleClientset())
 	sop := NewShootOperator(sdkMock, cache, &utils.StaticK8sClientSetFactory{ClientSet: k8sFake.NewSimpleClientset()}, logrus.WithField("test", "test"))
-	s := createSecretWithKubecfg(ShootCluster, make([]byte, 0))
+	s := createSecretWithKubecfg(ShootCluster, []byte(dummyKubeconfig))
 
 	sop.syncSecret(ShootCluster, s, cache.Get(ShootCluster))
 
@@ -219,7 +200,7 @@ func TestSyncSecret_ForExistentSecret_IfUpdateFails_NewStateIsError(t *testing.T
 	cache := mocks.NewK8sClientCacheMock(gK8sCs, gardenFake.NewSimpleClientset())
 	sop := NewShootOperator(sdkMock, cache, &utils.StaticK8sClientSetFactory{ClientSet: k8sFake.NewSimpleClientset()}, logrus.WithField("test", "test"))
 
-	s := createSecretWithKubecfg(ShootCluster, make([]byte, 0))
+	s := createSecretWithKubecfg(ShootCluster, []byte(dummyKubeconfig))
 
 	sop.syncSecret(ShootCluster, s, cache.Get(ShootCluster))
 
