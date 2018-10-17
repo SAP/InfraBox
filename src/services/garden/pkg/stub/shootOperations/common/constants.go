@@ -1,6 +1,6 @@
 package common
 
-const EnvCredentialSecretName = "CRENDENTIALS_SECRET"	// env variable for name of input secret
+const EnvCredentialSecretName = "CRENDENTIALS_SECRET" // env variable for name of input secret
 const KeyGardenKubectlInSecret = "garden_kubecfg"
 
 // output secret
@@ -13,3 +13,4 @@ const KeyNameOfShootCaCrtInSecret = "ca.crt"
 const KeyNameOfShootKubecfgCrtInSecret = "kubecfg.crt"
 const KeyNameOfShootUserInSecret = "username"
 const KeyNameOfShootPasswordInSecret = "password"
+const KeyNameOfShootEndpointInSecret = "endpoint"
