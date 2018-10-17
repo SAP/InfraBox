@@ -1,0 +1,9 @@
+version: "3.2"
+
+services:
+
+    test:
+        build:
+            context: ../../../
+            dockerfile: ./infrabox/test/collector-api/Dockerfile
+
