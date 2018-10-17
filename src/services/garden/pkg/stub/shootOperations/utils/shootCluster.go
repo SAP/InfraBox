@@ -1,8 +1,10 @@
 package utils
 
 import (
-	"github.com/sap/infrabox/src/services/garden/pkg/apis/garden/v1alpha1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	"github.com/sap/infrabox/src/services/garden/pkg/apis/garden/v1alpha1"
+	"github.com/sap/infrabox/src/services/garden/pkg/stub/shootOperations/common"
 )
 
 func CreateShootCluster() *v1alpha1.ShootCluster {
@@ -15,5 +17,7 @@ func CreateShootCluster() *v1alpha1.ShootCluster {
 
 	shootCluster.Status.ClusterName = "shootname"
 	shootCluster.Status.GardenerNamespace = "gnamespace"
+
+	shootCluster.Labels = map[string]string{common.LabelForTargetSecret : "targetsecret"}
 	return shootCluster
 }

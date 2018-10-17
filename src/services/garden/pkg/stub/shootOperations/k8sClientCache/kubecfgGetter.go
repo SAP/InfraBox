@@ -2,6 +2,7 @@ package k8sClientCache
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/sirupsen/logrus"
 
@@ -38,6 +39,12 @@ func (g *SecretKubecfgGetter) Get(cluster *v1alpha1.ShootCluster) (string, error
 	}
 
 	s := utils.NewSecret(cluster)
+
+	s.SetName(os.Getenv(common.EnvCredentialSecretName))
+	if len(s.GetName()) == 0 {
+		return "", fmt.Errorf("env variable (%s) for credential secret not set!", common.EnvCredentialSecretName)
+	}
+
 	err := g.opsdk.Get(s)
 	if err != nil {
 		logrus.Error("sdk get failed: ", err)

@@ -1,6 +1,7 @@
 package k8sClientCache
 
 import (
+	"os"
 	"testing"
 
 	"k8s.io/client-go/kubernetes/fake"
@@ -29,7 +30,11 @@ func TestSecretGetter_OnNonexistingSecret_ReturnsError(t *testing.T) {
 	m := testUtils.NewSdkMockBackedByFake(t, fake.NewSimpleClientset())
 	cfgGetter := NewSecretKubecfgGetter(m)
 
-	if _, err := cfgGetter.Get(utils.CreateShootCluster()); err == nil {
+	cluster := utils.CreateShootCluster()
+	os.Setenv(common.EnvCredentialSecretName, cluster.GetName())
+	defer os.Unsetenv(common.EnvCredentialSecretName)
+
+	if _, err := cfgGetter.Get(cluster); err == nil {
 		t.Fatal("expected an error")
 	}
 }
@@ -42,7 +47,18 @@ func TestSecretGetter_OnNonexistingEntryInSecret_ReturnsError(t *testing.T) {
 	s := utils.NewSecret(shootCluster)
 	m.Create(s)
 
+	os.Setenv(common.EnvCredentialSecretName, s.GetName())
+	defer os.Unsetenv(common.EnvCredentialSecretName)
 	if _, err := cfgGetter.Get(shootCluster); err == nil {
+		t.Fatal("expected an error")
+	}
+}
+
+func TestSecretGetter_OnNotSetEnvVariable_ReturnsError(t *testing.T) {
+	m := testUtils.NewSdkMockBackedByFake(t, fake.NewSimpleClientset())
+	cfgGetter := NewSecretKubecfgGetter(m)
+
+	if _, err := cfgGetter.Get(utils.CreateShootCluster()); err == nil {
 		t.Fatal("expected an error")
 	}
 }
@@ -57,6 +73,9 @@ func TestSecretGetter_OnExistingEntryInSecret_ReturnsSecretAndNoError(t *testing
 	s.Data[common.KeyGardenKubectlInSecret] = []byte(cfgData)
 
 	m.Create(s)
+
+	os.Setenv(common.EnvCredentialSecretName, s.GetName())
+	defer os.Unsetenv(common.EnvCredentialSecretName)
 
 	if cfg, err := cfgGetter.Get(shootCluster); err != nil {
 		t.Fatal("expected an error")
