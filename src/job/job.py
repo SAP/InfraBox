@@ -211,7 +211,6 @@ class RunJob(Job):
             repo = self.job['repo']
             clone_url = repo['clone_url']
             branch = repo.get('branch', None)
-            private = repo.get('github_private_repo', False)
             clone_all = repo.get('full_history', False)
             ref = repo.get('ref', None)
 
@@ -228,10 +227,6 @@ class RunJob(Job):
 
             if not repo_clone:
                 return
-
-            if private:
-                clone_url = clone_url.replace('github.com',
-                                              '%s@github.com' % self.repository['github_api_token'])
 
             self.clone_repo(commit, clone_url, branch, ref, clone_all, submodules=repo_submodules)
         elif self.project['type'] == 'upload':

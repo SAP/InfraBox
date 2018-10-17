@@ -10,6 +10,8 @@ from pyinfraboxutils.ibrestplus import api, response_model
 from pyinfraboxutils.ibflask import OK
 from pyinfraboxutils.ibopa import opa_push_project_data, opa_push_collaborator_data
 
+from Crypto.PublicKey import RSA
+
 ns = api.namespace('Projects',
                    path='/api/v1/projects',
                    description='Project related operations')
@@ -200,6 +202,31 @@ class Projects(Resource):
                 UPDATE repository SET github_hook_id = %s
                 WHERE github_id = %s
             ''', [hook['id'], repo['id']])
+
+            # deploy key
+            key = RSA.generate(2048)
+            private_key = key.exportKey('PEM')
+            public_key = key.publickey().exportKey('OpenSSH')
+            deploy_key_config = {
+                'title': "InfraBox",
+                'key': public_key,
+                'read_only': True
+            }
+
+            url = '%s/repos/%s/%s/keys' % (os.environ['INFRABOX_GITHUB_API_URL'],
+                                           owner, repo_name)
+
+            # TODO(ib-steffen): allow custom ca bundles
+            r = requests.post(url, headers=headers, json=deploy_key_config, verify=False)
+
+            if r.status_code != 201:
+                abort(400, 'Failed to create deploy key')
+
+            g.db.execute('''
+                UPDATE repository SET private_key = %s
+                WHERE github_id = %s
+            ''', [private_key, repo['id']])
+
         elif typ == 'gerrit':
             g.db.execute('''
                 INSERT INTO repository (name, private, project_id, html_url, clone_url, github_id)
