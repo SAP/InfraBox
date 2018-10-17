@@ -3,6 +3,8 @@ package shootOperations
 import (
 	"bytes"
 	"fmt"
+	"net/url"
+	"os"
 	"time"
 
 	"github.com/gardener/gardener/pkg/apis/garden/v1beta1"
@@ -188,6 +190,23 @@ func newSecretFromShootCredSecr(shootCluster *v1alpha1.ShootCluster, credSecr *c
 	secret.Data[common.KeyNameOfShootUserInSecret] = credSecr.Data["username"]
 	secret.Data[common.KeyNameOfShootPasswordInSecret] = credSecr.Data["password"]
 
+	tmpfileRootdir := "/dev/shm" // try to store it on a ramdisk. /dev/shm is a ramdisk per default on linux >=  2.6.X
+	if _, err := os.Stat(tmpfileRootdir); err == os.ErrNotExist {
+		tmpfileRootdir = ""
+	}
+
+	cfg, err := utils.BuildK8sConfig(tmpfileRootdir, []byte(credSecr.Data["kubeconfig"]))
+	if err != nil {
+		return nil
+	}
+
+	u, err := url.Parse(cfg.Host) // Host actually contains more than just the host (e.g. "https://api.ib-4vv1fnky91j.datahub.shoot.canary.k8s-hana.ondemand.com") -> parse it
+	if err != nil {
+		logrus.Errorf("gardener returned invalid url as host in kubeconfig: %s. err: %s", u.Host, err.Error())
+		return nil
+	}
+
+	secret.Data[common.KeyNameOfShootEndpointInSecret] = []byte(u.Host)
 	return secret
 }
 
