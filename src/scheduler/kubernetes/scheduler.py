@@ -564,7 +564,7 @@ class Scheduler(object):
         if private_key:
             env += [{
                 'name': 'INFRABOX_GIT_PORT',
-                'value': 443
+                'value': '443'
             }, {
                 'name': 'INFRABOX_GIT_HOSTNAME',
                 'value': 'github.com'
@@ -602,8 +602,6 @@ class Scheduler(object):
                             }
                         },
                         'env': env,
-                        'volumes': volumes,
-                        'volumeMounts': volumeMounts
                     }
                 }
             }
@@ -656,7 +654,7 @@ class Scheduler(object):
             cursor = self.conn.cursor()
             cursor.execute('''
                 SELECT r.private_key
-                FROM repositor r
+                FROM repository r
                 WHERE r.project_id = %s
             ''', [project_id])
             result = cursor.fetchone()
