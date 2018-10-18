@@ -817,28 +817,26 @@ class Scheduler(object):
 
     def upload_console(self, job_id):
         cursor = self.conn.cursor()
+        cursor.execute("begin")
         cursor.execute("""
             SELECT output FROM console WHERE job_id = %s
-            ORDER BY date
+            ORDER BY date FOR UPDATE
         """, [job_id])
         lines = cursor.fetchall()
-        cursor.close()
 
         output = ""
         for l in lines:
             output += l[0]
 
-        cursor = self.conn.cursor()
+        if not output:
+            cursor.execute("commit;")
+            return
+
         cursor.execute("""
             UPDATE job SET console = %s WHERE id = %s;
             DELETE FROM console WHERE job_id = %s;
         """, [output, job_id, job_id])
-        cursor.close()
-
-        cursor = self.conn.cursor()
-        cursor.execute("""
-            DELETE FROM console WHERE job_id = %s
-        """, [job_id])
+        cursor.execute("commit")
         cursor.close()
 
     def handle_orphaned_jobs(self):
