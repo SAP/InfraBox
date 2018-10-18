@@ -127,7 +127,7 @@ func (h *Handler) sync(shootCluster *v1alpha1.ShootCluster, log *logrus.Entry) e
 	return nil
 }
 
-const ENVGardenNamespace = "GARDEN_NAMESPACE"
+const ENVGardenNamespace = "GARDENER_NAMESPACE"
 
 func (h *Handler) ensureThatGardenerFieldsAreSet(shootCluster *v1alpha1.ShootCluster, log *logrus.Entry) error {
 	if len(shootCluster.Status.ClusterName) == 0 {
