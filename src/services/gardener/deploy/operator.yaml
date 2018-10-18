@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gardener
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: gardener
+  template:
+    metadata:
+      labels:
+        name: gardener
+    spec:
+      containers:
+        - name: gardener
+          image: 192.168.1.31:5000/infrabox/service-gardener
+          command:
+          - gardener
+          imagePullPolicy: Always
+          env:
+            - name: WATCH_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace

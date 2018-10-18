@@ -1,0 +1,40 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: {{ template "infrabox-service-gcp.fullname" . }}
+  labels:
+    app: {{ template "infrabox-service-gcp.name" . }}
+    chart: {{ template "infrabox-service-gcp.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ template "infrabox-service-gardener.name" . }}
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "infrabox-service-gardener.name" . }}
+        release: {{ .Release.Name }}
+    spec:
+      serviceAccountName: infrabox-service-gardener
+      containers:
+        - name: {{ .Chart.Name }}
+          command: ["./gardener"]
+          args: ["-gardenserviceaccount", "/var/run/infrabox.net/gardener/service_account.json"]
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: "Always"
+          resources:
+          volumeMounts:
+          - name: service-account
+            mountPath: "/var/run/infrabox.net/gardener"
+            readOnly: true
+          env:
+          - name: WATCH_NAMESPACE
+            value: infrabox-worker
+      volumes:
+      - name: service-account
+        secret:
+          secretName: "infrabox-service-gardener-sa"

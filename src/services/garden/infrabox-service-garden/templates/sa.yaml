@@ -1,5 +1,0 @@
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: infrabox-service-garden
-  namespace: infrabox-system
