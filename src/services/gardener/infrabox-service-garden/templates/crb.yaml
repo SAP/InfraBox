@@ -1,0 +1,13 @@
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1beta1
+metadata:
+  name: infrabox-service-gardener
+  namespace: infrabox-system
+subjects:
+- kind: ServiceAccount
+  name: infrabox-service-gardener
+  namespace: infrabox-system
+roleRef:
+  kind: ClusterRole
+  name: cluster-admin
+  apiGroup: rbac.authorization.k8s.io

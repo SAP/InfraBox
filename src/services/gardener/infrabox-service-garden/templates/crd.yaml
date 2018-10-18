@@ -1,0 +1,43 @@
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: shootclusters.gardener.service.infrabox.net
+spec:
+  group: gardener.service.infrabox.net
+  version: v1alpha1
+  names:
+    kind: ShootCluster
+    plural: shootclusters
+  scope: Namespaced
+  validation:
+    openAPIV3Schema:
+      required:
+      - spec
+      properties:
+        spec:
+          required:
+          - zone
+          properties:
+            diskSize:
+              type: integer
+              minimum: 10
+            machineType:
+              type: string
+            enableNetworkPolicy:
+              type: boolean
+            numNodes:
+              type: integer
+              minimum: 1
+            preemptible:
+              type: boolean
+            enableAutoscaling:
+              type: boolean
+            maxNodes:
+              type: integer
+            minNodes:
+              type: integer
+              minimum: 1
+            zone:
+              type: string
+            clusterVersion:
+              type: string

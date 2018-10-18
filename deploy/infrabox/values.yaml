@@ -271,6 +271,8 @@ job:
     docker_daemon_config: |-
         {}
 
+    storage_driver: overlay
+
 monitoring:
     # Enable InfraBox Monitoring. Requires prometheus-operator to be available.
     enabled: false
