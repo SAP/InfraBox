@@ -1,0 +1,3 @@
+apiVersion: garden.service.infrabox.net/v1alpha1
+kind: ShootCluster
+projectName: garden
