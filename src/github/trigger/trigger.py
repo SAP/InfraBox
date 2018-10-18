@@ -7,19 +7,19 @@ import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
+from flask import Response, Flask, request
+
 from pyinfraboxutils import get_env, get_logger
-from pyinfraboxutils.ibbottle import InfraBoxPostgresPlugin
 from pyinfraboxutils.db import connect_db
 
-import bottle
-from bottle import post, run, request, response, install, get
+app = Flask(__name__)
 
-bottle.BaseRequest.MEMFILE_MAX = 10 * 1024 * 1024
+app.config["MAX_CONTENT_LENGHT"] = 10 * 1024 * 1024
 
 logger = get_logger("github")
 
 def res(status, message):
-    response.status = status
+    Response.status = status
     return {"message": message}
 
 def remove_ref(ref):
@@ -415,7 +415,7 @@ class Trigger(object):
 def sign_blob(key, blob):
     return 'sha1=' + hmac.new(key, blob, hashlib.sha1).hexdigest()
 
-@post('/github/hook')
+@app.route('/github/hook', methods=['POST'])
 def trigger_build(conn):
     headers = dict(request.headers)
 
@@ -428,7 +428,7 @@ def trigger_build(conn):
     event = headers['X-Github-Event']
     sig = headers['X-Hub-Signature']
     #pylint: disable=no-member
-    body = request.body.read()
+    body = request.get_data()
     secret = get_env('INFRABOX_GITHUB_WEBHOOK_SECRET')
     signed = sign_blob(secret, body)
 
@@ -437,13 +437,13 @@ def trigger_build(conn):
 
     trigger = Trigger(conn)
     if event == 'push':
-        return trigger.handle_push(request.json)
+        return trigger.handle_push(request.get_json())
     elif event == 'pull_request':
-        return trigger.handle_pull_request(request.json)
+        return trigger.handle_pull_request(request.get_json())
 
     return res(200, "OK")
 
-@get('/ping')
+@app.route('/ping', methods=['GET'])
 def ping():
     return res(200, "OK")
 
@@ -458,8 +458,7 @@ def main():
 
     connect_db() # Wait until DB is ready
 
-    install(InfraBoxPostgresPlugin())
-    run(host='0.0.0.0', port=8080)
+    app.run(host='0.0.0.0', port=8080)
 
 if __name__ == '__main__':
     main()
