@@ -1,10 +1,10 @@
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  name: {{ template "infrabox-service-gcp.fullname" . }}
+  name: {{ template "infrabox-service-gardener.fullname" . }}
   labels:
-    app: {{ template "infrabox-service-gcp.name" . }}
-    chart: {{ template "infrabox-service-gcp.chart" . }}
+    app: {{ template "infrabox-service-gardener.name" . }}
+    chart: {{ template "infrabox-service-gardener.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
 spec:
@@ -34,6 +34,14 @@ spec:
           env:
           - name: WATCH_NAMESPACE
             value: infrabox-worker
+          - name: CRENDENTIALS_SECRET
+            value: {{ .Values.gardener.credential_secret }}
+          - name: GARDENER_NAMESPACE
+            value: {{ .Values.gardener.namespace }}
+          - name: GARDENER_PROJECTNAME
+            value: {{ .Values.gardener.project }}
+          - name: SECRET_BINDING_REF
+            value: {{ .Values.gardener.secret_binding_ref }}
       volumes:
       - name: service-account
         secret:
