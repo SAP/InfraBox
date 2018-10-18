@@ -12,7 +12,6 @@
         "cache": {
             "image": true
         },
-        "timeout": 1800,
         "services": [{
             "apiVersion": "gcp.service.infrabox.net/v1alpha1",
             "kind": "GKECluster",
@@ -39,7 +38,6 @@
         "cache": {
             "image": true
         },
-        "timeout": 1800,
         "services": [{
             "apiVersion": "gcp.service.infrabox.net/v1alpha1",
             "kind": "GKECluster",
