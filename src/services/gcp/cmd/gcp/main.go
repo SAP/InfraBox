@@ -24,7 +24,6 @@ func printVersion() {
 func main() {
 	printVersion()
 
-
     gcpserviceaccount := "/var/run/infrabox.net/gcp/service_account.json"
 
 	logrus.Info("Activating GCP service account")
@@ -60,6 +59,9 @@ func main() {
 	}
 	resyncPeriod := 5
 	logrus.Infof("Watching %s, %s, %s, %d", resource, kind, namespace, resyncPeriod)
+
+    logrus.SetLevel(logrus.WarnLevel)
+
 	sdk.Watch(resource, kind, namespace, resyncPeriod)
 	sdk.Handle(stub.NewHandler())
 	sdk.Run(context.TODO())

@@ -683,8 +683,8 @@ class RunJob(Job):
 
             c.execute(['docker-compose', '-f', compose_file_new, 'up',
                        '--abort-on-container-exit'], env=self.environment, show=True, cwd=cwd)
-            c.execute(['docker-compose', '-f', compose_file_new, 'ps'], env=self.environment, cwd=cwd)
-            c.execute(['get_compose_exit_code.sh', compose_file_new], env=self.environment, cwd=cwd)
+            c.execute(['docker-compose', '-f', compose_file_new, 'ps'], env=self.environment, cwd=cwd, show=True)
+            c.execute(['get_compose_exit_code.sh', compose_file_new], env=self.environment, cwd=cwd, show=True)
         except:
             m = traceback.format_exc()
             c.collect(m, show=True)
@@ -839,7 +839,7 @@ class RunJob(Job):
             c.header("Run container", show=True)
             c.execute(cmd, show=True, show_cmd=False)
 
-            if self.job['definition'].get('cache', {}).get('image', False) and not self.job['definition'].get('deployments', None):
+            if self.job['definition'].get('cache', {}).get('image', False) or self.job['definition'].get('deployments', None):
                 c.execute(("docker", "commit", container_name, image_name))
         except Exception as e:
             try:
