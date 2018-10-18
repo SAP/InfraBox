@@ -2,7 +2,9 @@ import os
 import json
 
 import paramiko
-from bottle import post, run, request, response
+from flask import Flask, request, Response
+
+app = Flask(__name__)
 
 def get_env(name):
     if name not in os.environ:
@@ -18,7 +20,7 @@ def execute_ssh_cmd(client, cmd):
     return stdout.read()
 
 def error(status, message):
-    response.status = status
+    Response.status = status
     return {"message": message}
 
 def get_branch(branch_or_sha, client, project):
@@ -48,9 +50,9 @@ def get_sha(branch_or_sha, client, project):
     change = json.loads(rows[0])
     return change
 
-@post('/api/v1/commit')
+@app.route('/api/v1/commit', methods=['POST'])
 def get_commit():
-    query = dict(request.forms)
+    query = dict(request.form)
 
     project = query.get('project', None)
     if not project:
@@ -108,7 +110,7 @@ def main():
     get_env('INFRABOX_GERRIT_USERNAME')
     get_env('INFRABOX_GERRIT_KEY_FILENAME')
 
-    run(host='0.0.0.0', port=8082)
+    app.run(host='0.0.0.0', port=8082)
 
 if __name__ == '__main__':
     main()
