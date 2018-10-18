@@ -45,7 +45,7 @@ class GC(object):
         logger.info('Deleting console output of %s jobs', r['count'])
 
         r = db.execute('''
-	    UPDATE job
+	        UPDATE job
             SET console = 'deleted'
             WHERE created_at < NOW() - INTERVAL '30 days'
             AND console != 'deleted'
@@ -98,7 +98,7 @@ class GC(object):
         tables = [
             'auth_token', 'build', 'collaborator', 'commit',
             'job', 'job_badge', 'job_markup', 'measurement',
-            'pull_request', 'repository', 'secret', 'source_upload', 'test',
+            'pull_request', 'repository', 'secret', 'source_upload',
             'test_run'
         ]
         for t in tables:
