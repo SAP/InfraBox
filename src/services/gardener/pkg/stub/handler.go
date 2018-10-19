@@ -119,7 +119,7 @@ func (h *Handler) sync(shootCluster *v1alpha1.ShootCluster, log *logrus.Entry) e
 	}
 
 	if shootCluster.Status.Status == v1alpha1.ShootClusterStateShootReady {
-		if err := h.injectCollectorsAndUpdateState(shootCluster, log); err != nil {
+		if err := h.injectCollectorsAndUpdateState(shootCluster, log); err != nil && !errors.IsResourceExpired(err) {
 			return err
 		}
 	}
@@ -197,7 +197,9 @@ func (h *Handler) injectCollectorsAndUpdateState(shootCluster *v1alpha1.ShootClu
 
 	shootCluster.Status.Status = v1alpha1.ShootClusterStateReady
 	if err := action.Update(shootCluster); err != nil {
-		log.Error("failed to update cr. err: ", err)
+		if !errors.IsResourceExpired(err) { // deletion might be triggered
+			log.Error("failed to update cr during collector injection. err: ", err)
+		}
 		return err
 	}
 
