@@ -2,7 +2,7 @@ package common
 
 const (
 	EnvCredentialSecretName  = "CREDENTIALS_SECRET" // env variable for name of input secret
-	KeyGardenKubectlInSecret = "garden_kubecfg"
+	KeyGardenKubectlInSecret = "gardener.conf"
 
 	// output secret
 	LabelForTargetSecret = "service.infrabox.net/secret-name"

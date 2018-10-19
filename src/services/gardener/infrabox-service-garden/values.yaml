@@ -3,3 +3,9 @@ replicaCount: 1
 image:
   repository: quay.io/infrabox/service-gardener
   tag: latest
+
+gardener:
+  credential_secret: infrabox-service-gardener-sa
+  namespace: <REQUIRED>
+  project: <REQUIRED>
+  secret_binding_ref: <REQUIRED>

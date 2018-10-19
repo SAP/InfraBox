@@ -36,6 +36,7 @@ IMAGES = [
     {'name': 'docker-registry-nginx', 'depends_on': ['images-base']},
     {'name': 'db', 'depends_on': ['images-base']},
     {'name': 'postgres'},
+    {'name': 'service-gardener'},
     {'name': 'service-gcp'},
     {'name': 'service-namespace'},
     {'name': 'metrics'},

@@ -3,7 +3,6 @@ package shootOperations
 import (
 	"bytes"
 	"fmt"
-	"net/url"
 	"os"
 	"time"
 
@@ -187,14 +186,7 @@ func extractEndpoint(s *corev1.Secret) []byte {
 		return nil
 	}
 
-	// Host actually contains more than just the host (e.g. "https://api.ib-4vv1fnky91j.datahub.shoot.canary.k8s-hana.ondemand.com") -> parse it
-	u, err := url.Parse(cfg.Host)
-	if err != nil {
-		logrus.Errorf("gardener returned invalid url as host in kubeconfig: %s. err: %s", u.Host, err.Error())
-		return nil
-	}
-
-	return []byte(u.Host)
+	return []byte(cfg.Host)
 }
 
 func setShootClusterCrAsOwner(shootCluster *v1alpha1.ShootCluster, secret *corev1.Secret) {
