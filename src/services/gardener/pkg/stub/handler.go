@@ -113,13 +113,13 @@ func (h *Handler) sync(shootCluster *v1alpha1.ShootCluster, log *logrus.Entry) e
 
 	if shootCluster.Status.Status != oldStatus || shootCluster.Status.Message != oldMsg {
 		if err := action.Update(shootCluster); err != nil {
-			log.Error("failed to update cr. err: ", err)
+			log.Error("failed to update cr after sync. err: ", err)
 			return err
 		}
 	}
 
 	if shootCluster.Status.Status == v1alpha1.ShootClusterStateShootReady {
-		if err := h.injectCollectorsAndUpdateState(shootCluster, log); err != nil {
+		if err := h.injectCollectorsAndUpdateState(shootCluster, log); err != nil && !errors.IsResourceExpired(err) {
 			return err
 		}
 	}
@@ -197,7 +197,9 @@ func (h *Handler) injectCollectorsAndUpdateState(shootCluster *v1alpha1.ShootClu
 
 	shootCluster.Status.Status = v1alpha1.ShootClusterStateReady
 	if err := action.Update(shootCluster); err != nil {
-		log.Error("failed to update cr. err: ", err)
+		if !errors.IsResourceExpired(err) { // deletion might be triggered
+			log.Error("failed to update cr during collector injection. err: ", err)
+		}
 		return err
 	}
 
@@ -261,6 +263,11 @@ func (h *Handler) getRemoteClusterFromSecret(ns *v1alpha1.ShootCluster, log *log
 }
 
 func (h *Handler) delete(sc *v1alpha1.ShootCluster, log *logrus.Entry) error {
+	if len(sc.GetFinalizers()) == 0 { // work was finished in a previous run. We just got this cr again before it was deleted
+		log.Debug("got a to-delete cr, but work was already done -> ignore")
+		return nil
+	}
+
 	if sc.Status.Status == v1alpha1.ShootClusterStateShootReady {
 		cluster, err := h.getRemoteClusterFromSecret(sc, log)
 		if err != nil && !errors.IsNotFound(err) {
@@ -273,6 +280,7 @@ func (h *Handler) delete(sc *v1alpha1.ShootCluster, log *logrus.Entry) error {
 
 	sc.Status.Status = v1alpha1.ShootClusterStateDeleting
 	if err := action.Update(sc); err != nil {
+		log.Errorf("couldn't update cluster state to %s. err: %s", sc.Status.Status, err)
 		return err
 	}
 
