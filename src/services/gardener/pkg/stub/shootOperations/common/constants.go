@@ -1,7 +1,7 @@
 package common
 
 const (
-	EnvCredentialSecretName  = "CRENDENTIALS_SECRET" // env variable for name of input secret
+	EnvCredentialSecretName  = "CREDENTIALS_SECRET" // env variable for name of input secret
 	KeyGardenKubectlInSecret = "garden_kubecfg"
 
 	// output secret
