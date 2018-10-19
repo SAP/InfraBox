@@ -263,6 +263,11 @@ func (h *Handler) getRemoteClusterFromSecret(ns *v1alpha1.ShootCluster, log *log
 }
 
 func (h *Handler) delete(sc *v1alpha1.ShootCluster, log *logrus.Entry) error {
+	if len(sc.GetFinalizers()) == 0 { // work was finished in a previous run. We just got this cr again before it was deleted
+		log.Debug("got a to-delete cr, but work was already done -> ignore")
+		return nil
+	}
+
 	if sc.Status.Status == v1alpha1.ShootClusterStateShootReady {
 		cluster, err := h.getRemoteClusterFromSecret(sc, log)
 		if err != nil && !errors.IsNotFound(err) {
