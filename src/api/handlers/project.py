@@ -13,7 +13,7 @@ from flask_restplus import Resource, fields
 
 from werkzeug.datastructures import FileStorage
 
-from pyinfraboxutils import get_logger
+from pyinfraboxutils import get_logger, get_root_url
 
 from pyinfraboxutils.ibflask import OK
 from pyinfraboxutils.ibrestplus import api, response_model
@@ -388,7 +388,8 @@ if enable_upload_forward:
                 SELECT name FROM project WHERE id = %s
             ''', [project_id])[0]
 
-            url = '%s/dashboard/#/project/%s/build/%s/1' % (os.environ['INFRABOX_ROOT_URL'],
+            root_url = get_root_url('global')
+            url = '%s/dashboard/#/project/%s/build/%s/1' % (root_url,
                                                             project_name,
                                                             build_number)
 

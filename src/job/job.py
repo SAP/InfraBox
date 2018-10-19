@@ -1148,7 +1148,8 @@ class RunJob(Job):
                     "clone_url": job['clone_url'],
                     "commit": job['commit'],
                     "infrabox_file": ib_file,
-                    "clone_all": True
+                    "clone_all": True,
+                    "branch": job.get('branch', None)
                 }
 
                 new_infrabox_context = os.path.dirname(ib_path)

@@ -18,9 +18,9 @@ import (
 )
 
 func deleteShootCluster(shoots gardenV1beta1.ShootInterface, shootCluster *v1alpha1.ShootCluster, log *logrus.Entry) {
-	logSuccess := func() { log.Infof("successfully triggered deletion of shoot %s", shootCluster.Status.ClusterName) }
+	logSuccess := func() { log.Debugf("successfully triggered deletion of shoot %s", shootCluster.Status.ClusterName) }
 
-	log.Infof("Try to delete shoot %s in the namespace %s", shootCluster.Status.ClusterName, shootCluster.Status.GardenerNamespace)
+	log.Debugf("Try to delete shoot %s in the namespace %s", shootCluster.Status.ClusterName, shootCluster.Status.GardenerNamespace)
 	err := setDeletionConfirmation(shoots, shootCluster.Status.ClusterName, log)
 	if err != nil {
 		if apiErrors.IsNotFound(err) {
@@ -86,9 +86,9 @@ func createDeletionConfirmationJPatch(shoot *v1beta1.Shoot) ([]byte, error) {
 		return nil, errors.New("Couldn't marshal old shoot: " + err.Error())
 	}
 	if shoot.GetAnnotations() == nil {
-		shoot.Annotations = map[string]string{"confirmation.gardener.sapcloud.io/deletion": "true"}
+		shoot.Annotations = map[string]string{"confirmation.garden.sapcloud.io/deletion": "true"}
 	} else {
-		shoot.GetAnnotations()["confirmation.gardener.sapcloud.io/deletion"] = "true"
+		shoot.GetAnnotations()["confirmation.garden.sapcloud.io/deletion"] = "true"
 	}
 	tjson, err := json.Marshal(shoot)
 	if err != nil {

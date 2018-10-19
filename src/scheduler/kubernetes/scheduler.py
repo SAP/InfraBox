@@ -226,7 +226,16 @@ class PipelineInvocationController(Controller):
                                                    s['apiVersion'],
                                                    pi['metadata']['namespace'],
                                                    s['kind'].lower() + 's')
-            self._create(url, service)
+            try:
+                self._create(url, service)
+            except APIException as ae:
+                if ae.result.status_code == 404:
+                    pi['status']['state'] = 'error'
+                    pi['status']['message'] = ae.result.text
+                    ready = False
+                    return
+                else:
+                    raise ae
 
             url = '%s/apis/%s/namespaces/%s/%s/%s' % (self.args.api_server,
                                                       s['apiVersion'],
