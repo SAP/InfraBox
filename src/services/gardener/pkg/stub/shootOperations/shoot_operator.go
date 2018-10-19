@@ -282,10 +282,10 @@ func (so *ShootOperator) Delete(shootCluster *v1alpha1.ShootCluster) error {
 
 	shootCluster.SetFinalizers([]string{})
 	if err := so.operatorSdk.Update(shootCluster); err != nil {
-		so.log.Errorf("Could not update shootClusterstructure object (removing finalizers). err: %s", err)
+		so.log.Errorf("Could not update shootCluster object (removing finalizers). err: %s", err)
 		return err
 	} else {
-		so.log.Infof("successfully deleted shootClusterstructure %s", shootCluster.GetName())
+		so.log.Debugf("successfully deleted shootCluster %s", shootCluster.GetName())
 	}
 
 	return nil
