@@ -570,6 +570,56 @@ class Scheduler(object):
             'value': str(cpu)
         }]
 
+        # Get ssh key for private repos
+        cursor = self.conn.cursor()
+        cursor.execute('''
+            SELECT p.type, p.id
+            FROM project p
+            JOIN job j
+            ON j.project_id = p.id
+            WHERE j.id = %s
+        ''', [job_id])
+        result = cursor.fetchone()
+        cursor.close()
+
+        project_type = result[0]
+        project_id = result[1]
+
+        private_key = None
+        if project_type == 'github':
+            cursor = self.conn.cursor()
+            cursor.execute('''
+                SELECT r.private_key
+                FROM repository r
+                WHERE r.project_id = %s
+            ''', [project_id])
+            result = cursor.fetchone()
+            cursor.close()
+            private_key = result[0]
+
+            env += [{
+                'name': 'INFRABOX_GIT_PORT',
+                'value': '443'
+            }, {
+                'name': 'INFRABOX_GIT_HOSTNAME',
+                'value': 'github.com'
+            }, {
+                'name': 'INFRABOX_GIT_PRIVATE_KEY',
+                'value': private_key
+            }]
+        elif project_type == 'gerrit':
+            with open(os.environ['INFRABOX_GERRIT_KEY_FILENAME']) as key:
+                env += [{
+                    'name': 'INFRABOX_GIT_PORT',
+                    'value': os.environ['INFRABOX_GERRIT_PORT']
+                }, {
+                    'name': 'INFRABOX_GIT_HOSTNAME',
+                    'value': os.environ['INFRABOX_GERRIT_HOSTNAME']
+                }, {
+                    'name': 'INFRABOX_GIT_PRIVATE_KEY',
+                    'value': key.read()
+                }]
+
         root_url = os.environ['INFRABOX_ROOT_URL']
 
         if services:
