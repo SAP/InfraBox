@@ -113,7 +113,7 @@ func (h *Handler) sync(shootCluster *v1alpha1.ShootCluster, log *logrus.Entry) e
 
 	if shootCluster.Status.Status != oldStatus || shootCluster.Status.Message != oldMsg {
 		if err := action.Update(shootCluster); err != nil {
-			log.Error("failed to update cr. err: ", err)
+			log.Error("failed to update cr after sync. err: ", err)
 			return err
 		}
 	}
@@ -280,6 +280,7 @@ func (h *Handler) delete(sc *v1alpha1.ShootCluster, log *logrus.Entry) error {
 
 	sc.Status.Status = v1alpha1.ShootClusterStateDeleting
 	if err := action.Update(sc); err != nil {
+		log.Errorf("couldn't update cluster state to %s. err: %s", sc.Status.Status, err)
 		return err
 	}
 
