@@ -225,15 +225,9 @@ func TestShootOperator_SimpleSyncForEmptyCluster(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	storedCluster := &v1alpha1.ShootCluster{}
-	ShootCluster.DeepCopyInto(storedCluster)
-	if err := mock.Get(storedCluster); err != nil {
-		t.Fatal(err)
-	}
-
 	// shoot cluster isn't ready (we didn't set its state accordingly) => state also musn't be ready
-	if storedCluster.Status.Status == v1alpha1.ShootClusterStateShootReady {
-		t.Fatalf("wrong state. cluster shouldn't be ready, but got: %s", storedCluster.Status.Status)
+	if ShootCluster.Status.Status == v1alpha1.ShootClusterStateShootReady {
+		t.Fatalf("wrong state. cluster shouldn't be ready, but got: %s", ShootCluster.Status.Status)
 	}
 }
 
