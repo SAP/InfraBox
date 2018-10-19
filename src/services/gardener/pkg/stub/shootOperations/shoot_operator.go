@@ -13,6 +13,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/sap/infrabox/src/services/gardener/pkg/apis/gardener/v1alpha1"
 	"github.com/sap/infrabox/src/services/gardener/pkg/stub/shootOperations/common"
@@ -197,14 +198,12 @@ func extractEndpoint(s *corev1.Secret) []byte {
 }
 
 func setShootClusterCrAsOwner(shootCluster *v1alpha1.ShootCluster, secret *corev1.Secret) {
-	gvk := shootCluster.GetObjectKind().GroupVersionKind()
 	secret.OwnerReferences = []v1.OwnerReference{
-		{
-			APIVersion: gvk.Version,
-			Name:       shootCluster.GetName(),
-			Kind:       gvk.Kind,
-			UID:        shootCluster.GetUID(),
-		},
+		*v1.NewControllerRef(shootCluster, schema.GroupVersionKind{
+			Group:   v1alpha1.SchemeGroupVersion.Group,
+			Version: v1alpha1.SchemeGroupVersion.Version,
+			Kind:    shootCluster.Kind,
+		}),
 	}
 }
 
