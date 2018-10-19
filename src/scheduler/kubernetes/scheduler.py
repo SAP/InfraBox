@@ -809,7 +809,6 @@ class Scheduler(object):
             job_id = abort[0]
             user_id = abort[1]
 
-            self.kube_delete_job(job_id)
             self.upload_console(job_id)
 
             if user_id:
@@ -832,16 +831,9 @@ class Scheduler(object):
                 SET state = 'killed',
                     end_date = current_timestamp,
                     message = %s
-                WHERE id = %s AND state IN ('scheduled', 'running', 'queued')
-            """, [message, job_id])
-            cursor.close()
-
-            # Forget abort
-            cursor = self.conn.cursor()
-            cursor.execute('''
-                DELETE FROM "abort"
-                WHERE job_id = %s
-            ''', [job_id])
+                WHERE id = %s AND state IN ('scheduled', 'running', 'queued');
+                DELETE FROM "abort" WHERE job_id = %s
+            """, [message, job_id, job_id])
             cursor.close()
 
     def handle_timeouts(self):
@@ -861,7 +853,6 @@ class Scheduler(object):
 
         for abort in aborts:
             job_id = abort[0]
-            self.kube_delete_job(job_id)
             self.upload_console(job_id)
 
             # Update state
