@@ -34,7 +34,7 @@ spec:
           env:
           - name: WATCH_NAMESPACE
             value: infrabox-worker
-          - name: CRENDENTIALS_SECRET
+          - name: CREDENTIALS_SECRET
             value: {{ .Values.gardener.credential_secret }}
           - name: GARDENER_NAMESPACE
             value: {{ .Values.gardener.namespace }}
