@@ -58,11 +58,6 @@ func (so *ShootOperator) Sync(shootCluster *v1alpha1.ShootCluster) error {
 		return err
 	}
 
-	// shoot creation was triggered or is completed
-	if err := so.setFinalizerIfNotPresent(shootCluster); err != nil {
-		return err
-	}
-
 	if len(shootCluster.Status.Status) == 0 {
 		shootCluster.Status.Status = v1alpha1.ShootClusterStateCreating
 		shootCluster.Status.Message = ""
@@ -86,17 +81,6 @@ func (so *ShootOperator) Sync(shootCluster *v1alpha1.ShootCluster) error {
 
 	err = so.updateShootIfNecessary(shootCluster, clients)
 	return err
-}
-
-func (so *ShootOperator) setFinalizerIfNotPresent(shootCluster *v1alpha1.ShootCluster) error {
-	if len(shootCluster.GetFinalizers()) == 0 {
-		shootCluster.SetFinalizers([]string{"datahub.sap.com"})
-		if err := so.operatorSdk.Update(shootCluster); err != nil {
-			so.log.Error("Failed to set finalizers")
-			return err
-		}
-	}
-	return nil
 }
 
 func (so *ShootOperator) syncSecret(shootCluster *v1alpha1.ShootCluster, shootCredsSecret *corev1.Secret, clientGetter k8sClientCache.ClientGetter) {
