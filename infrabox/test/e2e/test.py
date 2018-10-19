@@ -10,6 +10,7 @@ import urllib3
 
 import xmlrunner
 
+from pyinfraboxutils import certs
 from pyinfraboxutils.db import connect_db, DB
 from pyinfraboxutils.token import encode_project_token
 from pyinfraboxutils.secrets import encrypt_secret
@@ -57,7 +58,7 @@ class Test(unittest.TestCase):
 
         while True:
             try:
-                return requests.get(url, headers=headers, verify=False)
+                return requests.get(url, headers=headers)
             except Exception as e:
                 logging.exception(e)
                 time.sleep(1)
@@ -279,7 +280,7 @@ def main():
         time.sleep(1)
         r = None
         try:
-            r = requests.get(root_url, verify=False)
+            r = requests.get(root_url)
 
             if r.status_code in (200, 404):
                 break

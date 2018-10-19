@@ -137,6 +137,8 @@ _installNginxIngress() {
     openssl x509 -req -in /tmp/tls.csr -CA /tmp/ca.crt -CAkey /tmp/ca.key -CAcreateserial -out /tmp/tls.crt -days 1024 -sha256
 
     kubectl create -n infrabox-system secret tls infrabox-tls-certs --key /tmp/tls.key --cert /tmp/tls.crt
+    mkdir -p /var/run/secrets/infrabox.net/certs/
+    cp /tmp/ca.crt /var/run/secrets/infrabox.net/certs/ca_bundle.pem
 }
 
 _installInfrabox() {
