@@ -146,10 +146,13 @@ class GCS(object):
         return self._delete('cache/%s' % key)
 
     def _delete(self, key):
-        client = gcs.Client()
-        bucket = client.get_bucket(self.bucket)
-        blob = bucket.blob(key)
-        blob.delete()
+        try:
+            client = gcs.Client()
+            bucket = client.get_bucket(self.bucket)
+            blob = bucket.blob(key)
+            blob.delete()
+        except:
+            pass
 
     def _upload(self, stream, key):
         client = gcs.Client()
