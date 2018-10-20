@@ -34,7 +34,7 @@ fi
 if [ ! -z "$INFRABOX_GIT_PRIVATE_KEY" ]; then
     echo "Setting private key"
     eval `ssh-agent -s`
-    echo $INFRABOX_GIT_PRIVATE_KEY > ~/.ssh/id_rsa
+    echo "$INFRABOX_GIT_PRIVATE_KEY" > ~/.ssh/id_rsa
     chmod 600 ~/.ssh/id_rsa
     echo "StrictHostKeyChecking no" > ~/.ssh/config
     ssh-add ~/.ssh/id_rsa
