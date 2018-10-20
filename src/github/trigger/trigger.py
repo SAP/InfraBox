@@ -223,7 +223,12 @@ class Trigger(object):
                   status_url])
 
         build_id = self.create_build(commit_id, project_id)
-        self.create_job(c['id'], repository['clone_url'], build_id,
+        clone_url = repository['clone_url']
+
+        if repository['private']:
+            clone_url = repository['ssh_url']
+
+        self.create_job(c['id'], clone_url, build_id,
                         project_id, branch)
 
     def handle_push(self, event):
@@ -393,8 +398,14 @@ class Trigger(object):
             return res(200, 'build already triggered')
 
         build_id = self.create_build(commit_id, project_id)
+
+        clone_url = event['repository']['clone_url']
+
+        if event['repository']['private']:
+            clone_url = event['repository']['ssh_url']
+
         self.create_job(event['pull_request']['head']['sha'],
-                        event['pull_request']['head']['repo']['clone_url'],
+                        clone_url,
                         build_id, project_id, branch, env=env, fork=is_fork)
 
         self.conn.commit()
