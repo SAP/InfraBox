@@ -608,7 +608,7 @@ class Scheduler(object):
                 'value': private_key
             }]
         elif project_type == 'gerrit':
-            with open(os.environ['INFRABOX_GERRIT_KEY_FILENAME']) as key:
+            with open('/tmp/gerrit/id_rsa') as key:
                 env += [{
                     'name': 'INFRABOX_GIT_PORT',
                     'value': os.environ['INFRABOX_GERRIT_PORT']
