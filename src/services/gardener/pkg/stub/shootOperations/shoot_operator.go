@@ -3,7 +3,6 @@ package shootOperations
 import (
 	"bytes"
 	"fmt"
-	"net/url"
 	"os"
 	"time"
 
@@ -13,6 +12,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/sap/infrabox/src/services/gardener/pkg/apis/gardener/v1alpha1"
 	"github.com/sap/infrabox/src/services/gardener/pkg/stub/shootOperations/common"
@@ -58,11 +58,6 @@ func (so *ShootOperator) Sync(shootCluster *v1alpha1.ShootCluster) error {
 		return err
 	}
 
-	// shoot creation was triggered or is completed
-	if err := so.setFinalizerIfNotPresent(shootCluster); err != nil {
-		return err
-	}
-
 	if len(shootCluster.Status.Status) == 0 {
 		shootCluster.Status.Status = v1alpha1.ShootClusterStateCreating
 		shootCluster.Status.Message = ""
@@ -86,17 +81,6 @@ func (so *ShootOperator) Sync(shootCluster *v1alpha1.ShootCluster) error {
 
 	err = so.updateShootIfNecessary(shootCluster, clients)
 	return err
-}
-
-func (so *ShootOperator) setFinalizerIfNotPresent(shootCluster *v1alpha1.ShootCluster) error {
-	if len(shootCluster.GetFinalizers()) == 0 {
-		shootCluster.SetFinalizers([]string{"datahub.sap.com"})
-		if err := so.operatorSdk.Update(shootCluster); err != nil {
-			so.log.Error("Failed to set finalizers")
-			return err
-		}
-	}
-	return nil
 }
 
 func (so *ShootOperator) syncSecret(shootCluster *v1alpha1.ShootCluster, shootCredsSecret *corev1.Secret, clientGetter k8sClientCache.ClientGetter) {
@@ -202,25 +186,16 @@ func extractEndpoint(s *corev1.Secret) []byte {
 		return nil
 	}
 
-	// Host actually contains more than just the host (e.g. "https://api.ib-4vv1fnky91j.datahub.shoot.canary.k8s-hana.ondemand.com") -> parse it
-	u, err := url.Parse(cfg.Host)
-	if err != nil {
-		logrus.Errorf("gardener returned invalid url as host in kubeconfig: %s. err: %s", u.Host, err.Error())
-		return nil
-	}
-
-	return []byte(u.Host)
+	return []byte(cfg.Host)
 }
 
 func setShootClusterCrAsOwner(shootCluster *v1alpha1.ShootCluster, secret *corev1.Secret) {
-	gvk := shootCluster.GetObjectKind().GroupVersionKind()
 	secret.OwnerReferences = []v1.OwnerReference{
-		{
-			APIVersion: gvk.Version,
-			Name:       shootCluster.GetName(),
-			Kind:       gvk.Kind,
-			UID:        shootCluster.GetUID(),
-		},
+		*v1.NewControllerRef(shootCluster, schema.GroupVersionKind{
+			Group:   v1alpha1.SchemeGroupVersion.Group,
+			Version: v1alpha1.SchemeGroupVersion.Version,
+			Kind:    shootCluster.Kind,
+		}),
 	}
 }
 
@@ -298,10 +273,10 @@ func (so *ShootOperator) Delete(shootCluster *v1alpha1.ShootCluster) error {
 
 	shootCluster.SetFinalizers([]string{})
 	if err := so.operatorSdk.Update(shootCluster); err != nil {
-		so.log.Errorf("Could not update shootClusterstructure object (removing finalizers). err: %s", err)
+		so.log.Errorf("Could not update shootCluster object (removing finalizers). err: %s", err)
 		return err
 	} else {
-		so.log.Infof("successfully deleted shootClusterstructure %s", shootCluster.GetName())
+		so.log.Debugf("successfully deleted shootCluster %s", shootCluster.GetName())
 	}
 
 	return nil

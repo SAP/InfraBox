@@ -226,7 +226,16 @@ class PipelineInvocationController(Controller):
                                                    s['apiVersion'],
                                                    pi['metadata']['namespace'],
                                                    s['kind'].lower() + 's')
-            self._create(url, service)
+            try:
+                self._create(url, service)
+            except APIException as ae:
+                if ae.result.status_code == 404:
+                    pi['status']['state'] = 'error'
+                    pi['status']['message'] = ae.result.text
+                    ready = False
+                    return
+                else:
+                    raise ae
 
             url = '%s/apis/%s/namespaces/%s/%s/%s' % (self.args.api_server,
                                                       s['apiVersion'],
@@ -561,6 +570,56 @@ class Scheduler(object):
             'value': str(cpu)
         }]
 
+        # Get ssh key for private repos
+        cursor = self.conn.cursor()
+        cursor.execute('''
+            SELECT p.type, p.id
+            FROM project p
+            JOIN job j
+            ON j.project_id = p.id
+            WHERE j.id = %s
+        ''', [job_id])
+        result = cursor.fetchone()
+        cursor.close()
+
+        project_type = result[0]
+        project_id = result[1]
+
+        private_key = None
+        if project_type == 'github':
+            cursor = self.conn.cursor()
+            cursor.execute('''
+                SELECT r.private_key
+                FROM repository r
+                WHERE r.project_id = %s
+            ''', [project_id])
+            result = cursor.fetchone()
+            cursor.close()
+            private_key = result[0]
+
+            env += [{
+                'name': 'INFRABOX_GIT_PORT',
+                'value': '443'
+            }, {
+                'name': 'INFRABOX_GIT_HOSTNAME',
+                'value': 'github.com'
+            }, {
+                'name': 'INFRABOX_GIT_PRIVATE_KEY',
+                'value': private_key
+            }]
+        elif project_type == 'gerrit':
+            with open('/tmp/gerrit/id_rsa') as key:
+                env += [{
+                    'name': 'INFRABOX_GIT_PORT',
+                    'value': os.environ['INFRABOX_GERRIT_PORT']
+                }, {
+                    'name': 'INFRABOX_GIT_HOSTNAME',
+                    'value': os.environ['INFRABOX_GERRIT_HOSTNAME']
+                }, {
+                    'name': 'INFRABOX_GIT_PRIVATE_KEY',
+                    'value': key.read()
+                }]
+
         root_url = os.environ['INFRABOX_ROOT_URL']
 
         if services:
@@ -735,16 +794,13 @@ class Scheduler(object):
             self.schedule_job(job_id, cpu, memory)
 
     def handle_aborts(self):
-        cluster_name = os.environ['INFRABOX_CLUSTER_NAME']
-
         cursor = self.conn.cursor()
         cursor.execute('''
             SELECT j.id, a.user_id
             FROM abort a
             JOIN job j
                 ON a.job_id = j.id
-                AND j.cluster_name = %s
-        ''', [cluster_name])
+        ''')
 
         aborts = cursor.fetchall()
         cursor.close()
@@ -753,7 +809,6 @@ class Scheduler(object):
             job_id = abort[0]
             user_id = abort[1]
 
-            self.kube_delete_job(job_id)
             self.upload_console(job_id)
 
             if user_id:
@@ -776,16 +831,9 @@ class Scheduler(object):
                 SET state = 'killed',
                     end_date = current_timestamp,
                     message = %s
-                WHERE id = %s AND state IN ('scheduled', 'running', 'queued')
-            """, [message, job_id])
-            cursor.close()
-
-            # Forget abort
-            cursor = self.conn.cursor()
-            cursor.execute('''
-                DELETE FROM "abort"
-                WHERE job_id = %s
-            ''', [job_id])
+                WHERE id = %s AND state IN ('scheduled', 'running', 'queued');
+                DELETE FROM "abort" WHERE job_id = %s
+            """, [message, job_id, job_id])
             cursor.close()
 
     def handle_timeouts(self):
@@ -805,41 +853,41 @@ class Scheduler(object):
 
         for abort in aborts:
             job_id = abort[0]
-            self.kube_delete_job(job_id)
             self.upload_console(job_id)
 
             # Update state
             cursor = self.conn.cursor()
             cursor.execute("""
                 UPDATE job SET state = 'error', end_date = current_timestamp, message = 'Aborted due to timeout'
-                WHERE id = %s""", (job_id,))
+                WHERE id = %s and state = 'running' """, (job_id,))
             cursor.close()
 
     def upload_console(self, job_id):
         cursor = self.conn.cursor()
-        cursor.execute("""
-            SELECT output FROM console WHERE job_id = %s
-            ORDER BY date
-        """, [job_id])
-        lines = cursor.fetchall()
-        cursor.close()
+        cursor.execute("begin")
+        try:
+            cursor.execute("""
+                   SELECT output FROM console WHERE job_id = %s
+                   ORDER BY date FOR UPDATE
+               """, [job_id])
+            lines = cursor.fetchall()
 
-        output = ""
-        for l in lines:
-            output += l[0]
+            output = ""
+            for l in lines:
+                output += l[0]
 
-        cursor = self.conn.cursor()
-        cursor.execute("""
-            UPDATE job SET console = %s WHERE id = %s;
-            DELETE FROM console WHERE job_id = %s;
-        """, [output, job_id, job_id])
-        cursor.close()
+            if output:
+                cursor.execute("""
+                               UPDATE job SET console = %s WHERE id = %s;
+                               DELETE FROM console WHERE job_id = %s;
+                           """, [output, job_id, job_id])
+            cursor.execute("commit")
+        except Exception as e:
+            self.logger.error(e)
+            cursor.execute("rollback")
+        finally:
+            cursor.close()
 
-        cursor = self.conn.cursor()
-        cursor.execute("""
-            DELETE FROM console WHERE job_id = %s
-        """, [job_id])
-        cursor.close()
 
     def handle_orphaned_jobs(self):
         self.logger.debug("Handling orphaned jobs")

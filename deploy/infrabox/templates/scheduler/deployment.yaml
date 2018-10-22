@@ -27,6 +27,7 @@ spec:
                 {{ include "env_version" . | indent 16 }}
                 {{ include "env_cluster" . | indent 16 }}
                 {{ include "env_ha" . | indent 16 }}
+                {{ include "env_gerrit" . | indent 16 }}
                 -
                     name: INFRABOX_KUBERNETES_MASTER_HOST
                     value: "kubernetes.default"
@@ -35,6 +36,8 @@ spec:
                     value: "443"
                 volumeMounts:
                 {{ include "mounts_rsa_private" . | indent 16 }}
+                {{ include "mounts_gerrit" . | indent 16 }}
             volumes:
                 {{ include "volumes_database" . | indent 16 }}
                 {{ include "volumes_rsa" . | indent 16 }}
+                {{ include "volumes_gerrit" . | indent 16 }}
