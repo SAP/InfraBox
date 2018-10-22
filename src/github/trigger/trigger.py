@@ -355,7 +355,6 @@ class Trigger(object):
             "GITHUB_REPOSITORY_FULL_NAME": event['repository']['full_name']
         })
 
-
         author_email = 'unknown'
         author_login = 'unknown'
         author_name = 'unknown'
@@ -406,7 +405,7 @@ class Trigger(object):
 
         self.create_job(event['pull_request']['head']['sha'],
                         clone_url,
-                        build_id, project_id, branch, env=env, fork=is_fork)
+                        build_id, project_id, None, env=env, fork=is_fork)
 
         self.conn.commit()
 
