@@ -125,7 +125,6 @@ class Trigger(object):
         git_repo = {
             "commit": commit_id,
             "clone_url": clone_url,
-            "branch": branch,
             "fork": fork
         }
 
