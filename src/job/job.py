@@ -211,7 +211,6 @@ class RunJob(Job):
             repo = self.job['repo']
             clone_url = repo['clone_url']
             branch = repo.get('branch', None)
-            private = repo.get('github_private_repo', False)
             clone_all = repo.get('full_history', False)
             ref = repo.get('ref', None)
 
@@ -228,10 +227,6 @@ class RunJob(Job):
 
             if not repo_clone:
                 return
-
-            if private:
-                clone_url = clone_url.replace('github.com',
-                                              '%s@github.com' % self.repository['github_api_token'])
 
             self.clone_repo(commit, clone_url, branch, ref, clone_all, submodules=repo_submodules)
         elif self.project['type'] == 'upload':
@@ -686,8 +681,6 @@ class RunJob(Job):
             c.execute(['docker-compose', '-f', compose_file_new, 'ps'], env=self.environment, cwd=cwd, show=True)
             c.execute(['get_compose_exit_code.sh', compose_file_new], env=self.environment, cwd=cwd, show=True)
         except:
-            m = traceback.format_exc()
-            c.collect(m, show=True)
             raise Failure("Failed to build and run container")
         finally:
             c.header("Finalize", show=True)

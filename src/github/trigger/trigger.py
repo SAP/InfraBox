@@ -121,11 +121,10 @@ class Trigger(object):
         build_id = result[0][0]
         return build_id
 
-    def create_job(self, commit_id, clone_url, build_id, project_id, github_private_repo, branch, env=None, fork=False):
+    def create_job(self, commit_id, clone_url, build_id, project_id, branch, env=None, fork=False):
         git_repo = {
             "commit": commit_id,
             "clone_url": clone_url,
-            "github_private_repo": github_private_repo,
             "branch": branch,
             "fork": fork
         }
@@ -168,13 +167,12 @@ class Trigger(object):
             return
 
         result = self.execute('''
-            SELECT id, project_id, private
+            SELECT id, project_id
             FROM repository
             WHERE github_id = %s''', [repository['id']])[0]
 
         repo_id = result[0]
         project_id = result[1]
-        github_repo_private = result[2]
         commit_id = None
 
         result = self.execute('''
@@ -225,8 +223,13 @@ class Trigger(object):
                   status_url])
 
         build_id = self.create_build(commit_id, project_id)
-        self.create_job(c['id'], repository['clone_url'], build_id,
-                        project_id, github_repo_private, branch)
+        clone_url = repository['clone_url']
+
+        if repository['private']:
+            clone_url = repository['ssh_url']
+
+        self.create_job(c['id'], clone_url, build_id,
+                        project_id, branch)
 
     def handle_push(self, event):
         result = self.execute('''
@@ -275,7 +278,7 @@ class Trigger(object):
             return res(200, 'action ignored')
 
         result = self.execute('''
-            SELECT id, project_id, private FROM repository WHERE github_id = %s;
+            SELECT id, project_id FROM repository WHERE github_id = %s;
         ''', [event['repository']['id']])
 
         if not result:
@@ -285,7 +288,6 @@ class Trigger(object):
 
         repo_id = result[0]
         project_id = result[1]
-        github_repo_private = result[2]
 
         result = self.execute('''
             SELECT build_on_push FROM project WHERE id = %s;
@@ -353,7 +355,6 @@ class Trigger(object):
             "GITHUB_REPOSITORY_FULL_NAME": event['repository']['full_name']
         })
 
-
         author_email = 'unknown'
         author_login = 'unknown'
         author_name = 'unknown'
@@ -396,9 +397,15 @@ class Trigger(object):
             return res(200, 'build already triggered')
 
         build_id = self.create_build(commit_id, project_id)
+
+        clone_url = event['repository']['clone_url']
+
+        if event['repository']['private']:
+            clone_url = event['repository']['ssh_url']
+
         self.create_job(event['pull_request']['head']['sha'],
-                        event['pull_request']['head']['repo']['clone_url'],
-                        build_id, project_id, github_repo_private, branch, env=env, fork=is_fork)
+                        clone_url,
+                        build_id, project_id, None, env=env, fork=is_fork)
 
         self.conn.commit()
 
