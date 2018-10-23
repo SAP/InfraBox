@@ -50,7 +50,11 @@ def get_sha(branch_or_sha, client, project):
     change = json.loads(rows[0])
     return change
 
+<<<<<<< HEAD
 @app.route('/api/v1/commit', methods=['POST'])
+=======
+@post('/api/v1/commit')
+>>>>>>> 2594bbc777c93c1aabba343774cdc3f150bafec6
 def get_commit():
     query = dict(request.form)
 
