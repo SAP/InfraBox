@@ -35,10 +35,15 @@ class AllocatedRscGauge:
                  ) as foo
         '''
 
-        self._request_total = "SELECT (SELECT name FROM project WHERE id = foo.project_id), foo.mem, foo.cpu " \
-                                "FROM (SELECT project_id, sum((definition#>>'{resources,limits,memory}')::integer) as mem, sum((definition#>>'{resources,limits,cpu}')::decimal) as cpu "\
-                                "FROM job "\
-                                "WHERE state='running' GROUP BY project_id) as foo"
+        self._request_total = """
+            SELECT (SELECT name FROM project WHERE id = foo.project_id), foo.mem, foo.cpu
+            FROM (SELECT project_id,
+                         sum((definition#>>'{resources,limits,memory}')::integer) as mem,
+                         sum((definition#>>'{resources,limits,cpu}')::decimal) as cpu
+                  FROM job
+                  WHERE state='running'
+                  GROUP BY project_id) as foo
+        """
 
         self._request_possible_cluster = "SELECT DISTINCT name FROM cluster ORDER BY name"
         self._request_possible_projects = "SELECT DISTINCT name FROM project ORDER BY name"
@@ -233,8 +238,8 @@ class ActiveJobClusterGauge:
             SELECT count(id) filter(WHERE state = 'running'),
                    count(id) filter(WHERE state = 'queued'),
                    count(id) filter(WHERE state = 'scheduled')
-            WHERE state in ('running', 'queued', 'scheduled')
             FROM job
+            WHERE state in ('running', 'queued', 'scheduled')
         """
 
     def update(self, conn):
