@@ -34,13 +34,6 @@ RUN    apt-get update -y \
         azure-storage \
         keystoneauth1==3.7.0 \
         python-swiftclient \
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-        bottle \
->>>>>>> 2594bbc777c93c1aabba343774cdc3f150bafec6
-=======
->>>>>>> 20455f7c39a05080fe7d22459cac779ea73394da
         python-cachetclient \
     && apt-get remove -y python-pip \
     && apt-get autoremove -y \
