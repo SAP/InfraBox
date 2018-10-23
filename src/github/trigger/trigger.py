@@ -7,14 +7,20 @@ import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 from flask import Response, Flask, request
 =======
 >>>>>>> 2594bbc777c93c1aabba343774cdc3f150bafec6
+=======
+
+from flask import Response, Flask, request
+>>>>>>> 20455f7c39a05080fe7d22459cac779ea73394da
 
 from pyinfraboxutils import get_env, get_logger
 from pyinfraboxutils.db import connect_db
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 app = Flask(__name__)
 
@@ -25,6 +31,11 @@ from bottle import post, run, request, response, install, get
 
 bottle.BaseRequest.MEMFILE_MAX = 10 * 1024 * 1024
 >>>>>>> 2594bbc777c93c1aabba343774cdc3f150bafec6
+=======
+app = Flask(__name__)
+
+app.config["MAX_CONTENT_LENGHT"] = 10 * 1024 * 1024
+>>>>>>> 20455f7c39a05080fe7d22459cac779ea73394da
 
 logger = get_logger("github")
 
@@ -426,10 +437,14 @@ def sign_blob(key, blob):
     return 'sha1=' + hmac.new(key, blob, hashlib.sha1).hexdigest()
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 @app.route('/github/hook', methods=['POST'])
 =======
 @post('/github/hook')
 >>>>>>> 2594bbc777c93c1aabba343774cdc3f150bafec6
+=======
+@app.route('/github/hook', methods=['POST'])
+>>>>>>> 20455f7c39a05080fe7d22459cac779ea73394da
 def trigger_build(conn):
     headers = dict(request.headers)
 
@@ -461,10 +476,6 @@ def trigger_build(conn):
 def ping():
     return res(200, "OK")
 
-@get('/ping')
-def ping():
-    return res(200, "OK")
-
 def main():
     get_env('INFRABOX_VERSION')
     get_env('INFRABOX_DATABASE_DB')
@@ -477,11 +488,15 @@ def main():
     connect_db() # Wait until DB is ready
 
 <<<<<<< HEAD
+<<<<<<< HEAD
     app.run(host='0.0.0.0', port=8080)
 =======
     install(InfraBoxPostgresPlugin())
     run(host='0.0.0.0', port=8080)
 >>>>>>> 2594bbc777c93c1aabba343774cdc3f150bafec6
+=======
+    app.run(host='0.0.0.0', port=8080)
+>>>>>>> 20455f7c39a05080fe7d22459cac779ea73394da
 
 if __name__ == '__main__':
     main()
