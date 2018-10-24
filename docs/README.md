@@ -5,6 +5,9 @@
 - [Multi Cluster installation](/docs/install/multi_cluster.md)
 - Services
     - [GCP Service](/src/services/gcp/README.md)
+    - [AKS Service](/src/services/aks/README.md)
+    - [Gardener Service](/src/services/gardener/README.md)
+
 - [HA mode](/docs/install/ha_mode.md)
 
 ## Use InfraBox
