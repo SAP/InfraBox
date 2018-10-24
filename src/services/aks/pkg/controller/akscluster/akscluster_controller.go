@@ -182,6 +182,8 @@ func syncAKSCluster(r *ReconcileAKSCluster, cr *v1alpha1.AKSCluster, log *logrus
 			"--no-wait",
 			"--no-ssh-key",
 			"--location", cr.Spec.Zone,
+			"--service-principal", os.Getenv("SERVICE_PRINCIPAL"),
+			"--client-secret", os.Getenv("CLIENT_SECRET"),
 		}
 
 		if cr.Spec.DiskSize != 0 {
@@ -205,8 +207,6 @@ func syncAKSCluster(r *ReconcileAKSCluster, cr *v1alpha1.AKSCluster, log *logrus
 		}
 
 		cmd = exec.Command("az", args...)
-
-		log.Infof("Create AKS cluster using args: az %v", args)
 
 		out, err = cmd.CombinedOutput()
 
