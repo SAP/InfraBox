@@ -172,7 +172,7 @@ func syncAKSCluster(r *ReconcileAKSCluster, cr *v1alpha1.AKSCluster, log *logrus
 		cmd := exec.Command("az", "group", "create", "--name", cr.Status.ClusterName, "--location", cr.Spec.Zone)
 		out, err := cmd.CombinedOutput()
 		if err != nil {
-			log.Errorf("Could not create AKS cluster: %v", err)
+			log.Errorf("Could not create AKS cluster: %v. msg: %s", err, string(out))
 			return nil, err
 		}
 
@@ -205,7 +205,7 @@ func syncAKSCluster(r *ReconcileAKSCluster, cr *v1alpha1.AKSCluster, log *logrus
 		}
 
 		cmd = exec.Command("az", args...)
-		out, err = cmd.Output()
+		out, err = cmd.CombinedOutput()
 
 		if err != nil {
 			log.Errorf("Failed to create AKS Cluster: %v", err)
