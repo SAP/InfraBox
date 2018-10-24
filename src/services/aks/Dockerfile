@@ -8,6 +8,7 @@ COPY . /go/src/github.com/sap/infrabox/
 WORKDIR /go/src/github.com/sap/infrabox/src/services/aks
 
 RUN dep ensure
+RUN chmod +x ./tmp/build.sh
 RUN ./tmp/build.sh
 
 FROM alpine:3.7
@@ -23,6 +24,6 @@ RUN \
   az aks install-cli
 
 WORKDIR /app
-COPY --from=build-env /go/src/github.com/sap/infrabox/src/services/gcp/tmp/_output/bin/aks /app/aks
+COPY --from=build-env /go/src/github.com/sap/infrabox/src/services/aks/tmp/_output/bin/aks /app/aks
 
 ENTRYPOINT ./aks

@@ -12,7 +12,7 @@ fi
 BIN_DIR="$(pwd)/tmp/_output/bin"
 mkdir -p ${BIN_DIR}
 PROJECT_NAME="aks"
-REPO_PATH="github.wdf.sap.corp/i349934/ib-svc-aks"
+REPO_PATH="github.com/sap/infrabox/src/services/aks"
 BUILD_PATH="${REPO_PATH}/cmd/manager"
 echo "building "${PROJECT_NAME}"..."
 GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o ${BIN_DIR}/${PROJECT_NAME} $BUILD_PATH
