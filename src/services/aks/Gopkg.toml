@@ -42,13 +42,13 @@ required = [
 [[constraint]]
   name = "github.com/operator-framework/operator-sdk"
   # The version rule is used for a specific release and the master branch for in between releases.
-  branch = "refactor/controller-runtime" #osdk_branch_annotation
-  # version = "=v0.0.6" #osdk_version_annotation
+  # branch = "refactor/controller-runtime" #osdk_branch_annotation
+  version = "=v0.0.7" #osdk_version_annotation
 
 [prune]
   go-tests = true
   non-go = true
-  
+
   [[prune.project]]
     name = "k8s.io/code-generator"
     non-go = false

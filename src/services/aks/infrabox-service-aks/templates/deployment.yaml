@@ -30,10 +30,10 @@ spec:
           - name: WATCH_NAMESPACE
             value: infrabox-worker
           - name: SUBSCRIPTION_ID
-            value: {{ .Values.azure.subscription_id }}
+            value: {{ required "azure.subscription_id is required" .Values.azure.subscription_id }}
           - name: TENANT_ID
-            value: {{ .Values.azure.tenant_id }}
+            value: {{ required "azure.tenant_id is required" .Values.azure.tenant_id }}
           - name: SERVICE_PRINCIPAL
-            value: {{ .Values.azure.service_principal }}
+            value: {{ required "azure.service_principal is required" .Values.azure.service_principal }}
           - name: CLIENT_SECRET
-            value: {{ .Values.azure.client_secret }}
+            value: {{ required "azure.client_secret" .Values.azure.client_secret }}
