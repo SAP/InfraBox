@@ -205,6 +205,9 @@ func syncAKSCluster(r *ReconcileAKSCluster, cr *v1alpha1.AKSCluster, log *logrus
 		}
 
 		cmd = exec.Command("az", args...)
+
+		log.Infof("Create AKS cluster using args: az %v", args)
+
 		out, err = cmd.CombinedOutput()
 
 		if err != nil {
