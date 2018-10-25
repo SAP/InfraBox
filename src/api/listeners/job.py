@@ -51,20 +51,20 @@ def __handle_event(event, socketio):
         pr = None
         if project['type'] in ('gerrit', 'github'):
             commit = db.execute_one_dict('''
-		SELECT
-                    c.id,
-                    split_part(c.message, '\n', 1) as message,
-                    c.author_name,
-                    c.author_email,
-                    c.author_username,
-                    c.committer_name,
-                    c.committer_email,
-                    c.committer_username,
-                    c.url,
-                    c.branch,
-                    c.pull_request_id
-		FROM commit c
-		WHERE c.id = %s
+                SELECT
+                            c.id,
+                            split_part(c.message, '\n', 1) as message,
+                            c.author_name,
+                            c.author_email,
+                            c.author_username,
+                            c.committer_name,
+                            c.committer_email,
+                            c.committer_username,
+                            c.url,
+                            c.branch,
+                            c.pull_request_id
+                FROM commit c
+                WHERE c.id = %s
                 AND   c.project_id = %s
             ''', [commit_id, project_id])
 

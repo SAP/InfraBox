@@ -35,10 +35,15 @@ class AllocatedRscGauge:
                  ) as foo
         '''
 
-        self._request_total = "SELECT (SELECT name FROM project WHERE id = foo.project_id), foo.mem, foo.cpu " \
-                                "FROM (SELECT project_id, sum((definition#>>'{resources,limits,memory}')::integer) as mem, sum((definition#>>'{resources,limits,cpu}')::decimal) as cpu "\
-                                "FROM job "\
-                                "WHERE state='running' GROUP BY project_id) as foo"
+        self._request_total = """
+            SELECT (SELECT name FROM project WHERE id = foo.project_id), foo.mem, foo.cpu
+            FROM (SELECT project_id,
+                         sum((definition#>>'{resources,limits,memory}')::integer) as mem,
+                         sum((definition#>>'{resources,limits,cpu}')::decimal) as cpu
+                  FROM job
+                  WHERE state='running'
+                  GROUP BY project_id) as foo
+        """
 
         self._request_possible_cluster = "SELECT DISTINCT name FROM cluster ORDER BY name"
         self._request_possible_projects = "SELECT DISTINCT name FROM project ORDER BY name"
@@ -219,13 +224,23 @@ class ActiveJobClusterGauge:
     def __init__(self, name):
         self._gauge = Gauge(name, "A gauge of current ammount of active jobs per cluster",
                               ['state', 'cluster'])
-        self._request_per_cluster = "SELECT cluster_name, count(id) filter(WHERE state = 'running'), " \
-                                   "count(id) filter(WHERE state = 'queued'),count(id) filter(WHERE state = 'scheduled') " \
-                                   "FROM job GROUP BY cluster_name"
+        self._request_per_cluster = """
+            SELECT cluster_name,
+                count(id) filter(WHERE state = 'running'),
+                count(id) filter(WHERE state = 'queued'),
+                count(id) filter(WHERE state = 'scheduled')
+            FROM job
+            WHERE state in ('running', 'queued', 'scheduled')
+            GROUP BY cluster_name
+        """
 
-        self._request_total = "SELECT count(id) filter(WHERE state = 'running'), " \
-                             "count(id) filter(WHERE state = 'queued'), " \
-                             "count(id) filter(WHERE state = 'scheduled') FROM job"
+        self._request_total = """
+            SELECT count(id) filter(WHERE state = 'running'),
+                   count(id) filter(WHERE state = 'queued'),
+                   count(id) filter(WHERE state = 'scheduled')
+            FROM job
+            WHERE state in ('running', 'queued', 'scheduled')
+        """
 
     def update(self, conn):
         per_cluster = execute_sql(conn, self._request_per_cluster, None)

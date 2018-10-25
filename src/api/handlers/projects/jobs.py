@@ -112,6 +112,8 @@ class Jobs(Resource):
                 ON c.committer_username = u.username
                 LEFT OUTER JOIN pull_request pr
                 ON c.pull_request_id = pr.id
+                WHERE j.project_id = %(pid)s
+                AND b.project_id = %(pid)s
                 ORDER BY j.created_at DESC
         ''', {'pid': project_id})
 
