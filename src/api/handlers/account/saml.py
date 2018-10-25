@@ -17,62 +17,81 @@ from pyinfraboxutils.token import encode_user_token
 
 logger = get_logger('saml')
 
-def init_saml_auth(req):
-    auth = OneLogin_Saml2_Auth(req, custom_base_path="src/api/handlers/account")
-    return auth
-
-def prepare_flask_request(request):
-    # If server is behind proxys or balancers use the HTTP_X_FORWARDED fields
-    url_data = urlparse(request.url)
-    return {
+def init_saml_auth():
+    parsed_url = urlparse(request.url)
+    request_data = {
         'https': 'on' if request.scheme == 'https' else 'off',
         'http_host': request.host,
-        'server_port': url_data.port,
+        'server_port': parsed_url.port,
         'script_name': request.path,
         'get_data': request.args.copy(),
         'post_data': request.form.copy(),
-        # Uncomment if using ADFS as IdP, https://github.com/onelogin/python-saml/pull/144
-        # 'lowercase_urlencoding': True,
         'query_string': request.query_string
-    }
+        }
+    
+    auth = OneLogin_Saml2_Auth(request_data, custom_base_path="src/api/handlers/account")
+    return auth
 
 @api.route('/saml/auth')
 class SamlAuth(Resource):
 
     def get(self):
-        req = prepare_flask_request(request)
-        auth = init_saml_auth(req)
-
+        auth = init_saml_auth()
         return redirect(auth.login())
 
 @api.route('/saml/callback', doc=False)
 class SamlCallback(Resource):
 
     def post(self):
-        req = prepare_flask_request(request)
-        auth = init_saml_auth(req)
+        auth = init_saml_auth()
         auth.process_response()
         errors = auth.get_errors()
+
+        if len(errors) != 0:
+            logger.error("Authentication failed: %s", errors)
+            abort(500, "Authentication failed")
         not_auth_warn = not auth.is_authenticated()
         
-        if len(errors) == 0:
-            userdata = auth.get_attributes()
-            nameid = auth.get_nameid()
-            session_index = auth.get_session_index()
-            logger.debug("User: %s, nameID: %s, session_index: %s", userdata, nameid, session_index)
-            logger.debug("Request: %s", request)
-            return redirect(get_env('INFRABOX_ROOT_URL'))
-        else:
-            raise Exception(errors)
-        
-                
-        # Check if user exists in DB
-        # Insert non-existent user to database
-        #g.db.commit()
+        if not auth.is_authenticated():
+            logger.info("User access is unauthorized after callback call")
+            abort(401, "Unauthorized")
 
-        #token = encode_user_token(user_id)
-        #url = get_root_url('global') + '/dashboard/'
-        #logger.error(url)
-        #res = redirect(url)
-        #res.set_cookie('token', token)
-        #return res
+        userdata = auth.get_attributes()
+        logger.debug("User data: %s", userdata)
+
+        if not 'email' in userdata or len(userdata['email']) == 0:
+            logger.error("IdP provided no user email address")
+            abort(401, "Unauthorized")
+
+        email = userdata['email']
+        if isinstance(email, list):
+            email = userdata['email'][0] # Take first email address if there are multiple
+
+        # Check if user already exists in database
+        user = g.db.execute_one_dict('''
+                SELECT id FROM "user"
+                WHERE email = %s
+            ''', [email])
+
+        if not user:
+            nameid = auth.get_nameid()
+
+            name = nameid
+            if 'name' in userdata:
+                name = userdata['name']
+
+            user = g.db.execute_one_dict('''
+                INSERT INTO "user" (name, username, email)
+                VALUES (%s, %s, %s) RETURNING id
+            ''', [name, nameid, email])
+
+        token = encode_user_token(user['id'])
+
+        g.db.commit()
+        
+        redirect_url = get_root_url('global') + '/dashboard/'
+        logger.debug("Redirecting authenticated user to %s", redirect_url)
+        response = redirect(redirect_url)
+        response.set_cookie('token', token)
+        return response
+        
