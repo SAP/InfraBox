@@ -13,6 +13,7 @@ import JobDetail from '@/components/job/JobDetail'
 import TestDetail from '@/components/test/TestDetail'
 import AdminUsers from '@/components/admin/AdminUsers'
 import AdminProjects from '@/components/admin/AdminProjects'
+import AdminQuotas from '@/components/admin/AdminQuotas'
 
 import UserService from '../services/UserService'
 
@@ -61,6 +62,11 @@ export default new Router({
         path: '/admin/users',
         name: 'AdminUsers',
         component: AdminUsers,
+        beforeEnter: loginGuard
+    }, {
+        path: '/admin/quotas',
+        name: 'AdminQuotas',
+        component: AdminQuotas,
         beforeEnter: loginGuard
     }, {
         path: '/project/:projectName',

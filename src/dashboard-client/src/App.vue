@@ -98,6 +98,14 @@
                                     </span>
                                 </router-link>
                             </md-list-item>
+                            <md-list-item class="md-inset">
+                                <router-link :to="{name: 'AdminQuotas'}">
+                                    <span @click="toggleLeftSidenav()">
+                                        <i class="fa fa-users"></i>
+                                        Quotas
+                                    </span>
+                                </router-link>
+                            </md-list-item>
                         </md-list>
                     </md-list-expand>
                 </md-list-item>

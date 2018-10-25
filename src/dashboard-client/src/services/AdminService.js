@@ -23,6 +23,16 @@ class AdminService {
                 NotificationService.$emit('NOTIFICATION', new Notification(err))
             })
     }
+
+    loadQuotas () {
+        return NewAPIService.get(`admin/quotas/`)
+        .then((s) => {
+            store.commit('setAdminQuotas', s)
+        })
+        .catch((err) => {
+            NotificationService.$emit('NOTIFICATION', new Notification(err))
+        })
+    }
 }
 
 export default new AdminService()
