@@ -1,4 +1,7 @@
 ALTER TABLE job ADD COLUMN restarted boolean default false;
+-- Drop table
+
+-- DROP TABLE public.quotas
 
 CREATE TABLE public.quotas (
 	value int4 NOT NULL,
