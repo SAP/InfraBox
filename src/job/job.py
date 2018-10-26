@@ -6,6 +6,7 @@ import shutil
 import time
 import json
 import subprocess
+import re
 import uuid
 import base64
 import traceback
@@ -477,7 +478,13 @@ class RunJob(Job):
 
             if os.path.isfile(storage_input_file_tar):
                 c.collect("output found for %s\n" % dep['name'], show=True)
-                infrabox_input_dir = os.path.join(self.infrabox_inputs_dir, dep['name'].split('/')[-1])
+                dir_name = dep['name'].split('/')[-1]
+
+                m = re.search('(.*)\.([0-9]+)', dir_name)
+                if m:
+                    dir_name = m.group(1)
+
+                infrabox_input_dir = os.path.join(self.infrabox_inputs_dir, dir_name)
                 os.makedirs(infrabox_input_dir)
                 self.uncompress(storage_input_file_tar, infrabox_input_dir)
                 c.execute(['ls', '-alh', infrabox_input_dir], show=True)

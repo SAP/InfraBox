@@ -1,5 +1,7 @@
 import json
 import os
+import uuid
+import re
 
 from io import BytesIO
 
@@ -96,6 +98,7 @@ class Jobs(Resource):
                 j.cluster_name as job_cluster_name,
                 j.node_name as job_node_name,
                 j.avg_cpu as job_avg_cpu,
+                j.restarted as job_restarted,
                 -- pull_request
                 pr.title as pull_request_title,
                 pr.url as pull_request_url
@@ -145,7 +148,8 @@ class Jobs(Resource):
                     'definition': j['job_definition'],
                     'node_name': j['job_node_name'],
                     'avg_cpu': j['job_avg_cpu'],
-                    'cluster_name': j['job_cluster_name']
+                    'cluster_name': j['job_cluster_name'],
+                    'restarted': j['job_restarted']
                 }
             }
 
@@ -200,7 +204,7 @@ class JobRestart(Resource):
         user_id = g.token['user']['id']
 
         job = g.db.execute_one_dict('''
-            SELECT state, type, build_id
+            SELECT state, type, build_id, restarted
             FROM job
             WHERE id = %s
             AND project_id = %s
@@ -212,6 +216,7 @@ class JobRestart(Resource):
         job_type = job['type']
         job_state = job['state']
         build_id = job['build_id']
+        restarted = job['restarted']
 
         if job_type not in ('run_project_container', 'run_docker_compose'):
             abort(400, 'Job type cannot be restarted')
@@ -220,6 +225,9 @@ class JobRestart(Resource):
 
         if job_state not in restart_states:
             abort(400, 'Job in state %s cannot be restarted' % job_state)
+
+        if restarted:
+            abort(400, 'This job has been already restarted')
 
         jobs = g.db.execute_many_dict('''
             SELECT state, id, dependencies
@@ -265,14 +273,65 @@ class JobRestart(Resource):
         username = result['username']
         msg = 'Job restarted by %s\n' % username
 
+        # Clone Jobs and adjust dependencies
+        jobs = []
         for j in restart_jobs:
+            jobs += g.db.execute_many_dict('''
+                SELECT id, build_id, type, dockerfile, name, project_id, dependencies, repo, env_var, env_var_ref, build_arg, deployment, definition
+                FROM job
+                WHERE id = %s;
+            ''', [j])
+
+        name_job = {}
+        for j in jobs:
+            # Mark old jobs a restarted
             g.db.execute('''
                 UPDATE job
-                SET state = 'queued', console = null, message = null, start_date = null
+                SET restarted = true
                 WHERE id = %s;
+            ''', [j['id']])
+
+            # Create new ID for the new jobs
+            j['id'] = str(uuid.uuid4())
+            name_job[j['name']] = j
+
+            m = re.search('(.*)\.([0-9]+)', j['name'])
+            if m:
+                # was already restarted
+                c = int(m.group(2))
+                j['name'] = '%s.%s' % (m.group(1), c+1)
+            else:
+                # First restart
+                j['name'] = j['name'] + '.1'
+
+        for j in jobs:
+            for dep in j['dependencies']:
+                if dep['job'] in name_job:
+                    dep['job-id'] = name_job[dep['job']]['id']
+                    dep['job'] = name_job[dep['job']]['name']
+
+        for j in jobs:
+            g.db.execute('''
+                INSERT INTO job (state, id, build_id, type, dockerfile, name, project_id, dependencies, repo,
+                                 env_var, env_var_ref, build_arg, deployment, definition, restarted)
+                VALUES ('queued', %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, false);
                 INSERT INTO console (job_id, output)
                 VALUES (%s, %s);
-            ''', [j, j, msg])
+            ''', [j['id'],
+                  j['build_id'],
+                  j['type'],
+                  j['dockerfile'],
+                  j['name'],
+                  j['project_id'],
+                  json.dumps(j['dependencies']),
+                  json.dumps(j['repo']),
+                  json.dumps(j['env_var']),
+                  json.dumps(j['env_var_ref']),
+                  json.dumps(j['build_arg']),
+                  json.dumps(j['deployment']),
+                  json.dumps(j['definition']),
+                  j['id'],
+                  msg])
         g.db.commit()
 
         return OK('Successfully restarted job')

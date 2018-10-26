@@ -75,6 +75,10 @@ export default class Build {
         this.state = 'finished'
 
         for (let j of this.jobs) {
+            if (j.restarted) {
+                continue
+            }
+
             if (j.state === 'queued' || j.state === 'scheduled' || j.state === 'running') {
                 this.state = 'running'
                 break

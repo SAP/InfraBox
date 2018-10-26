@@ -9,9 +9,13 @@ import router from '../../router'
 import Raphael from 'raphael'
 /* eslint-disable */
 class StateFormat {
-    constructor (jobState) {
-        this.jobState = jobState
-        this.setFormat(jobState)
+    constructor (job) {
+        this.jobState = job.state
+        this.setFormat(job.state)
+
+        if (job.restarted) {
+            this.stateColor = 'dimgrey'
+        }
     }
 
     setFormat (js) {
@@ -168,7 +172,7 @@ class StateFormat {
 
 class GanttJob {
     constructor (id, name, dependencies, level,
-        state, projectName, buildNumber, buildRestartCounter) {
+        state, projectName, buildNumber, buildRestartCounter, restarted) {
         this.id = id
         this.name = name
         this.dependencies = dependencies
@@ -178,6 +182,7 @@ class GanttJob {
         this.buildNumber = buildNumber
         this.buildRestartCounter = buildRestartCounter
         this.parentElements = []
+        this.restarted = restarted
     }
 }
 
@@ -271,7 +276,7 @@ export class GanttChart {
         }
 
         const job = new GanttJob(j.id, j.name, j.dependencies, 0, j.state, j.project.name,
-                                 j.build.number, j.build.restartCounter)
+                                 j.build.number, j.build.restartCounter, j.restarted)
         this.jobs.push(job)
     }
 
@@ -476,7 +481,7 @@ export class GanttChart {
     }
 
     setNodeAttributes(job) {
-        const nodeState = new StateFormat(job.state)
+        const nodeState = new StateFormat(job)
 
         const x = job.x + this.box_width / 2
         const y = job.y + this.box_height / 2

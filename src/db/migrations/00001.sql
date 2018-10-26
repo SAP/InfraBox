@@ -629,25 +629,6 @@ BEGIN
 END;
 $$;
 
-
---
--- Name: truncate_tables(character varying); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION truncate_tables(username character varying) RETURNS void
-    LANGUAGE plpgsql
-    AS $$
-DECLARE
-    statements CURSOR FOR
-        SELECT tablename FROM pg_tables
-        WHERE tableowner = username AND schemaname = 'public';
-BEGIN
-    FOR stmt IN statements LOOP
-        EXECUTE 'TRUNCATE TABLE ' || quote_ident(stmt.tablename) || ' CASCADE;';
-    END LOOP;
-END;
-$$;
-
 --
 -- Name: console_notify_insert; Type: TRIGGER; Schema: public; Owner: -
 --

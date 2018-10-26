@@ -200,7 +200,7 @@ class Build(Resource):
             j.definition as job_definition,
             j.node_name as job_node_name,
             j.avg_cpu as job_avg_cpu,
-
+            j.restarted as job_restarted,
             -- pull_request
             pr.title as pull_request_title,
             pr.url as pull_request_url
@@ -255,7 +255,8 @@ class Build(Resource):
                     'message': j['job_message'],
                     'definition': j['job_definition'],
                     'node_name': j['job_node_name'],
-                    'avg_cpu': j['job_avg_cpu']
+                    'avg_cpu': j['job_avg_cpu'],
+                    'restarted': j['job_restarted']
                 }
             }
 
