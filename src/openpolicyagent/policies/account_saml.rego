@@ -12,3 +12,8 @@ allow {
     api.method = "POST"
     api.path = ["saml", "callback"]
 }
+
+allow {
+    api.method = "GET"
+    api.path = ["saml", "metadata"]
+}
