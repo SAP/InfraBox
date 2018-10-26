@@ -21,6 +21,9 @@ class StateFormat {
         } else if (js === 'failure') {
             this.stateIcon = '\uf0e7'
             this.stateColor = '#b71c1c'
+        } else if (js === 'unstable') {
+            this.stateIcon = '\uf0e7'
+            this.stateColor = '#b7ad1c'
         } else if (js === 'error') {
             this.stateIcon = '\uf1e2'
             this.stateColor = 'black'
@@ -642,4 +645,3 @@ export default {
 }
 
 </script>
-

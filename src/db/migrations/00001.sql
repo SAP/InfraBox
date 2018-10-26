@@ -26,7 +26,8 @@ CREATE TYPE job_state AS ENUM (
     'failure',
     'error',
     'skipped',
-    'killed'
+    'killed',
+    'unstable'
 );
 
 

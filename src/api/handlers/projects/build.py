@@ -156,39 +156,6 @@ class BuildCacheClear(Resource):
 
         return OK('Cleared cache')
 
-@ns.route('/<build_number>/<build_restart_counter>/state', doc=False)
-@api.response(403, 'Not Authorized')
-class BuildStatus(Resource):
-
-    def get(self, project_id, build_number, build_restart_counter):
-        '''
-        Returns build state
-        '''
-        states = g.db.execute_many_dict('''
-            SELECT state
-            FROM job j
-            JOIN build b
-            ON j.build_id = b.id
-            WHERE b.project_id = %s
-            AND b.build_number = %s
-            AND b.restart_counter = %s
-            GROUP BY j.state
-        ''', [project_id, build_number, build_restart_counter])
-
-        state = 'finished'
-
-        for s in states:
-            if s['state'] in ('running', 'queued', 'scheduled'):
-                state = 'runing'
-                break
-            elif s['state'] in ('error', 'failure', 'killed'):
-                state = s['state']
-                break
-
-        return {
-            'state': state
-        }
-
 @ns.route('/<build_number>/<build_restart_counter>', doc=False)
 @api.response(403, 'Not Authorized')
 class Build(Resource):

@@ -216,7 +216,7 @@ class JobRestart(Resource):
         if job_type not in ('run_project_container', 'run_docker_compose'):
             abort(400, 'Job type cannot be restarted')
 
-        restart_states = ('error', 'failure', 'finished', 'killed')
+        restart_states = ('error', 'failure', 'finished', 'killed', 'unstable')
 
         if job_state not in restart_states:
             abort(400, 'Job in state %s cannot be restarted' % job_state)

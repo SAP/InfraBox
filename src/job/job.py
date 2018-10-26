@@ -1074,7 +1074,7 @@ class RunJob(Job):
                 on = d['on']
                 for n in range(0, len(on)):
                     if on[n] == "*":
-                        d['on'] = ["finished", "error", "failure", "skipped", "killed"]
+                        d['on'] = ["finished", "error", "failure", "skipped", "killed", "unstable"]
                         break
 
     def get_job_list(self, data, c, repo, parent_name="",

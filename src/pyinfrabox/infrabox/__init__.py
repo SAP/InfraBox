@@ -44,7 +44,7 @@ def parse_depends_on_condition(d, path):
 
     on_used = {}
     for i in on:
-        if i not in ('finished', 'error', 'failure', '*'):
+        if i not in ('finished', 'error', 'failure', 'unstable', '*'):
             raise ValidationError(path + ".on", "%s is not a valid value" % i)
 
         if i in on_used:

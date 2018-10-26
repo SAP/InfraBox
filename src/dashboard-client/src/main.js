@@ -95,6 +95,18 @@ Vue.material.registerTheme({
             textColor: 'grey'
         }
     },
+    unstable: {
+        primary: {
+            color: 'red',
+            hue: '900',
+            textColor: 'white'
+        },
+        accent: {
+            color: 'red',
+            hue: 100,
+            textColor: 'grey'
+        }
+    },
     finished: {
         primary: {
             color: 'green',

@@ -114,7 +114,7 @@ class Job(Resource):
         }
 
         state = data['job']['state']
-        if state in ("finished", "error", "failure", "skipped", "killed"):
+        if state in ("finished", "error", "failure", "skipped", "killed", "unstable"):
             abort(409, 'job not running anymore')
 
         env_vars = r[20]

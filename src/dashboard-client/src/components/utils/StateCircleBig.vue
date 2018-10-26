@@ -48,6 +48,14 @@
             </md-avatar>
             <md-tooltip>{{ state }}</md-tooltip>
         </span>
+        <span v-if="state=='unstable'">
+            <md-avatar md-theme="unstable" class="md-avatar-icon md-large md-primary">
+                <md-icon>
+                    <i class="fa fa-fw fa-bolt"></i>
+                </md-icon>
+            </md-avatar>
+            <md-tooltip>{{ state }}</md-tooltip>
+        </span>
         <span v-if="state=='error'">
             <md-avatar md-theme="error" class="md-avatar-icon md-large md-primary">
                 <md-icon>

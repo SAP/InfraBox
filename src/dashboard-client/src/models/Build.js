@@ -80,7 +80,7 @@ export default class Build {
                 break
             }
 
-            if (j.state === 'error' || j.state === 'failure' || j.state === 'killed') {
+            if (j.state === 'error' || j.state === 'failure' || j.state === 'unstable' || j.state === 'killed') {
                 this.state = j.state
             }
         }
