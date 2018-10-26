@@ -1,10 +1,6 @@
-import uuid
-import os
-import requests
-
 from urlparse import urlparse
 
-from flask import g, request, abort, redirect
+from flask import g, request, abort, redirect, make_response
 
 from flask_restplus import Resource
 
@@ -39,7 +35,7 @@ class SamlAuth(Resource):
         auth = init_saml_auth()
         return redirect(auth.login())
 
-@api.route('/saml/callback', doc=False)
+@api.route('/saml/callback')
 class SamlCallback(Resource):
 
     def post(self):
@@ -47,13 +43,14 @@ class SamlCallback(Resource):
         auth.process_response()
         errors = auth.get_errors()
 
+        logger.info("Request: %s %s", request, request.headers)
+
         if len(errors) != 0:
             logger.error("Authentication failed: %s", errors)
             abort(500, "Authentication failed")
-        not_auth_warn = not auth.is_authenticated()
         
         if not auth.is_authenticated():
-            logger.info("User access is unauthorized after callback call")
+            logger.error("User returned unauthorized from IdP")
             abort(401, "Unauthorized")
 
         userdata = auth.get_attributes()
@@ -95,3 +92,18 @@ class SamlCallback(Resource):
         response.set_cookie('token', token)
         return response
         
+@api.route('/saml/metadata')
+class SamlMetadata(Resource):
+    def get(self):
+        auth = init_saml_auth()
+        settings = auth.get_settings()
+        metadata = settings.get_sp_metadata()
+        metadata_errors = settings.validate_metadata(metadata)
+        
+        if len(metadata_errors) != 0:
+            logger.error("SP Metadata contains errors: %s", ";".join(metadata_errors))
+            abort(500)
+
+        response = make_response(metadata, 200)
+        response.headers["Content-Type"] = 'application/xml'
+        return response
