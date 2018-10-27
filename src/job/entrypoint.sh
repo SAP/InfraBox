@@ -13,7 +13,7 @@ if [ ! -e /var/run/docker.sock ]; then
     echo "Waiting for docker daemon to start up"
 
     # Start docker daemon
-    nohup dockerd-entrypoint.sh --storage-driver $INFRABOX_JOB_STORAGE_DRIVER --data-root /data/docker > /tmp/dockerd.log &
+    nohup dockerd-entrypoint.sh -l warn --storage-driver $INFRABOX_JOB_STORAGE_DRIVER --data-root /data/docker > /tmp/dockerd.log &
 
     # Wait until daemon is ready
     COUNTER=0
