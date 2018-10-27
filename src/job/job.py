@@ -263,9 +263,9 @@ class RunJob(Job):
 
         if jobs:
             self.create_jobs(jobs)
-            c.collect("Done creating jobs\n")
+            c.collect("Done creating jobs")
         else:
-            c.collect("No jobs\n")
+            c.collect("No jobs")
 
     def check_container_crashed(self):
         # if the started file exists already this
@@ -282,36 +282,36 @@ class RunJob(Job):
     def main(self):
         self.load_data()
         # Date
-        self.console.collect("Date:\n", show=True)
+        self.console.collect("Date:", show=True)
         self.console.execute(['date'], show=True, show_cmd=False)
 
         # Show environment
-        self.console.collect("Environment:\n", show=True)
+        self.console.collect("Environment:", show=True)
         for name, value in self.env_vars.iteritems():
-            self.console.collect("%s=%s\n" % (name, value), show=True)
+            self.console.collect("%s=%s" % (name, value), show=True)
 
-        self.console.collect("\n", show=True)
+        self.console.collect("", show=True)
 
         # Show secrets
         if self.secrets:
-            self.console.collect("Secrets:\n", show=True)
+            self.console.collect("Secrets:", show=True)
             for name, _ in self.secrets.iteritems():
-                self.console.collect("%s=*****\n" % name, show=True)
-            self.console.collect("\n", show=True)
+                self.console.collect("%s=*****" % name, show=True)
+            self.console.collect("", show=True)
 
         # Show Registries
         if self.registries:
-            self.console.collect("Registries:\n", show=True)
+            self.console.collect("Registries:", show=True)
             for r in self.registries:
-                self.console.collect("%s\n" % r['host'], show=True)
-            self.console.collect("\n", show=True)
+                self.console.collect("%s" % r['host'], show=True)
+            self.console.collect("", show=True)
 
         # Show Deployments
         if self.deployments:
-            self.console.collect("Deployments:\n", show=True)
+            self.console.collect("Deployments:", show=True)
             for d in self.deployments:
-                self.console.collect("%s\n" % d['host'], show=True)
-            self.console.collect("\n", show=True)
+                self.console.collect("%s" % d['host'], show=True)
+            self.console.collect("", show=True)
 
         self.get_source()
         self.create_infrabox_directories()
@@ -336,7 +336,7 @@ class RunJob(Job):
                 c.collect("Uploading /infrabox/upload/archive", show=True)
 
                 for f in files:
-                    c.collect("%s\n" % f, show=True)
+                    c.collect("%s" % f, show=True)
                     self.post_file_to_api_server("/archive", f, filename=f.replace(self.infrabox_upload_dir, ''))
 
         if os.path.exists(self.infrabox_testresult_dir):
@@ -345,7 +345,7 @@ class RunJob(Job):
             if files:
 
                 for f in files:
-                    c.collect("%s\n" % f, show=True)
+                    c.collect("%s" % f, show=True)
 
 
     def upload_coverage_results(self):
@@ -380,14 +380,14 @@ class RunJob(Job):
         c.collect("Uploading /infrabox/upload/testresult", show=True)
         files = self.get_files_in_dir(self.infrabox_testresult_dir, ending=".xml")
         for f in files:
-            c.collect("%s\n" % f, show=True)
+            c.collect("%s" % f, show=True)
             self.post_file_to_api_server("/archive", f, filename=f.replace(self.infrabox_upload_dir, ''))
 
             try:
                 converted_result = self.convert_test_result(f)
                 self.post_file_to_api_server("/testresult", converted_result, filename='data')
             except Exception as e:
-                self.console.collect("Failed to parse test result: %s \n" % e, show=True)
+                self.console.collect("Failed to parse test result: %s" % e, show=True)
 
 
     def upload_markdown_files(self):
@@ -397,7 +397,7 @@ class RunJob(Job):
 
         files = self.get_files_in_dir(self.infrabox_markdown_dir, ending=".md")
         for f in files:
-            c.collect("%s\n" % f, show=True)
+            c.collect("%s" % f, show=True)
 
             file_name = os.path.basename(f)
             self.post_file_to_api_server("/markdown", f, filename=file_name)
@@ -409,7 +409,7 @@ class RunJob(Job):
 
         files = self.get_files_in_dir(self.infrabox_markup_dir, ending=".json")
         for f in files:
-            c.collect("%s\n" % f, show=True)
+            c.collect("%s" % f, show=True)
 
             file_name = os.path.basename(f)
             self.post_file_to_api_server("/markup", f, filename=file_name)
@@ -422,7 +422,7 @@ class RunJob(Job):
         files = self.get_files_in_dir(self.infrabox_badge_dir, ending=".json")
 
         for f in files:
-            c.collect("%s\n" % f, show=True)
+            c.collect("%s" % f, show=True)
 
             file_name = os.path.basename(f)
             self.post_file_to_api_server("/badge", f, filename=file_name)
@@ -444,9 +444,9 @@ class RunJob(Job):
 
             if jobs:
                 self.create_jobs(jobs)
-                c.collect("Done creating jobs\n")
+                c.collect("Done creating jobs")
             else:
-                c.collect("No jobs\n")
+                c.collect("No jobs")
 
     def _get_size(self, start_path):
         total_size = 0
@@ -474,7 +474,7 @@ class RunJob(Job):
             self.get_file_from_api_server('/output/%s' % dep['id'], storage_input_file_tar, split=True)
 
             if os.path.isfile(storage_input_file_tar):
-                c.collect("output found for %s\n" % dep['name'], show=True)
+                c.collect("output found for %s" % dep['name'], show=True)
                 dir_name = dep['name'].split('/')[-1]
 
                 m = re.search('(.*)\.([0-9]+)', dir_name)
@@ -487,8 +487,8 @@ class RunJob(Job):
                 c.execute(['ls', '-alh', infrabox_input_dir], show=True)
                 os.remove(storage_input_file_tar)
             else:
-                c.collect("no output found for %s\n" % dep['name'], show=True)
-        c.collect("\n", show=True)
+                c.collect("no output found for %s" % dep['name'], show=True)
+        c.collect("", show=True)
 
         # <storage_dir>/cache is synced with the corresponding
         # Storage path which stores the compressed cache
@@ -508,11 +508,11 @@ class RunJob(Job):
                 try:
                     self.uncompress(storage_cache_tar, self.infrabox_cache_dir)
                 except:
-                    c.collect("Failed to unpack cache\n", show=True)
+                    c.collect("Failed to unpack cache", show=True)
                 os.remove(storage_cache_tar)
             else:
-                c.collect("no cache found\n", show=True)
-        c.collect("\n", show=True)
+                c.collect("no cache found", show=True)
+        c.collect("", show=True)
 
         try:
             if self.job['definition']['type'] == 'docker':
@@ -550,7 +550,7 @@ class RunJob(Job):
         else:
             c.collect("Output is empty", show=True)
 
-        c.collect("\n", show=True)
+        c.collect("", show=True)
 
         # Compressing cache
         c.collect("Uploading /infrabox/cache", show=True)
@@ -566,7 +566,7 @@ class RunJob(Job):
                 self.post_file_to_api_server('/cache', storage_cache_tar)
             else:
                 c.collect("Cache is empty", show=True)
-        c.collect("\n", show=True)
+        c.collect("", show=True)
 
         shutil.rmtree(self.mount_data_dir, True)
         shutil.rmtree(self.infrabox_cache_dir, True)
@@ -1165,7 +1165,7 @@ class RunJob(Job):
             if job['type'] == 'workflow':
                 c.header("Parsing infrabox file", show=True)
                 p = os.path.join(infrabox_context, job['infrabox_file'])
-                c.collect("file: %s\n" % p)
+                c.collect("file: %s" % p)
 
                 if p in infrabox_paths:
                     raise Failure("Recursive include detected")

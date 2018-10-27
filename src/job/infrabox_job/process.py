@@ -1,4 +1,5 @@
 import subprocess
+import sys
 
 class Failure(Exception):
     def __init__(self, message):
@@ -12,6 +13,7 @@ class ApiConsole(object):
     def collect(self, line, show=False):
         if show:
             print line
+            sys.stdout.flush()
 
     def execute(self, command, cwd=None, shell=False, show=False, env=None, ignore_error=False, show_cmd=True):
         if show_cmd:
@@ -24,7 +26,6 @@ class ApiConsole(object):
             raise Exception('Command failed')
 
     def header(self, h, show=False):
-        h = "\n## " + h + '\n'
-        self.collect("", show=show)
+        h = "## " + h + '\n'
         self.collect(h, show=show)
         self.collect(('=' * len(h)) + "\n", show=False)

@@ -14,7 +14,7 @@ spec:
       serviceAccountName: infrabox
       containers:
       - name: fluent-bit
-        image: fluent/fluent-bit:0.14
+        image: fluent/fluent-bit:0.13
         resources:
           limits:
             memory: 100Mi
@@ -30,6 +30,9 @@ spec:
         - name: config
           mountPath: /fluent-bit/etc/fluent-bit.conf
           subPath: fluent-bit.conf
+        - name: config
+          mountPath: /fluent-bit/etc/parsers.conf
+          subPath: parsers.conf
       terminationGracePeriodSeconds: 10
       volumes:
       - name: varlog

@@ -40,6 +40,7 @@ class ConsoleUpdate(Resource):
             a = float(r['date'])
             date = datetime.fromtimestamp(float(a)).strftime("%H:%M:%S")
             log = "%s|%s" % (date, r['log'])
+            log = log.replace('\x00', '\n')
 
             if not data.get(job_id):
                 data[job_id] = ""
@@ -47,6 +48,9 @@ class ConsoleUpdate(Resource):
             data[job_id] += log
 
         for job_id, log in data.items():
+            if not log:
+                continue
+
             r = g.db.execute_one("""
                 SELECT state
                 FROM job
@@ -59,10 +63,10 @@ class ConsoleUpdate(Resource):
             if r[0] not in ('scheduled', 'running'):
                 continue
 
-            g.db.execute("INSERT INTO console (job_id, output) VALUES (%s, %s)", [job_id, log])
             g.db.execute("""
+                INSERT INTO console (job_id, output) VALUES (%s, %s);
                 UPDATE job SET state = 'running', start_date = current_timestamp
-                WHERE id = %s and state = 'scheduled'""", [job_id])
+                WHERE id = %s and state = 'scheduled'""", [job_id, log, job_id])
             g.db.commit()
 
         return {}

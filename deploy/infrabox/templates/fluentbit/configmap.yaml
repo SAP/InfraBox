@@ -4,6 +4,15 @@ metadata:
   name: infrabox-fluent-bit
   namespace: {{ template "system_namespace" . }}
 data:
+  parsers.conf: |-
+    [PARSER]
+        Name         docker_utf8
+        Format       json
+        Time_Key     time
+        Time_Format  %Y-%m-%dT%H:%M:%S.%L
+        Time_Keep    On
+        Decode_Field_as escaped_utf8 log do_next
+        Decode_Field_as escaped      log
   fluent-bit.conf: |-
     [SERVICE]
         Flush        2
@@ -13,7 +22,7 @@ data:
     [INPUT]
         Name             tail
         Path             /var/log/containers/*{{- template "worker_namespace" . -}}*.log
-        Parser           docker
+        Parser           docker_utf8
         Tag              kube.*
         Refresh_Interval 2
         Mem_Buf_Limit    50MB
