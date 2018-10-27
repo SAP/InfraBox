@@ -24,5 +24,6 @@ spec:
                 {{ include "env_general" . | indent 16 }}
                 {{ include "env_version" . | indent 16 }}
                 {{ include "env_cluster" . | indent 16 }}
+                {{ include "env_opa" . | indent 16 }}
             volumes:
                 {{ include "volumes_database" . | indent 16 }}
