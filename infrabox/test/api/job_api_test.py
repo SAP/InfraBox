@@ -2,7 +2,6 @@ from os import getcwd, stat, remove
 
 import json
 
-from pyinfraboxutils.token import encode_job_token
 from pyinfraboxutils.storage import storage
 from temp_tools import TestClient, TestUtils
 from test_template import ApiTestTemplate
@@ -24,7 +23,7 @@ class JobApiTest(ApiTestTemplate):
         self.assertEqual(r['job']['id'], self.job_id)
 
     def test_source(self):
-        data = { "data": "dummy_data" }
+        data = {"data": "dummy_data"}
         file_name = "test_source.tmp_test_file"
 
         with open(file_name, "w") as source_data_file:
@@ -53,7 +52,7 @@ class JobApiTest(ApiTestTemplate):
         file_path = getcwd() + '/' + filename
 
         test_data = open(file_path, 'rb')
-        files = { 'cache.tar.snappy': test_data }
+        files = {'cache.tar.snappy': test_data}
 
         r = TestClient.post(self.url_ns + '/cache', data=files, headers=self.job_headers,
                             content_type='multipart/form-data')
@@ -72,7 +71,7 @@ class JobApiTest(ApiTestTemplate):
         file_path = getcwd() + '/' + filename
 
         test_data = open(file_path, 'rb')
-        files = { 'output.tar.snappy': test_data }
+        files = {'output.tar.snappy': test_data}
 
         r = TestClient.post(self.url_ns + '/output', data=files, headers=self.job_headers,
                             content_type='multipart/form-data')
@@ -80,14 +79,14 @@ class JobApiTest(ApiTestTemplate):
 
     def test_create_jobs(self):
         job_id = "6544af82-1c4f-5bb5-b1da-a54a0ced5e6f"
-        data = { "jobs": [{
+        data = {"jobs": [{
             "id": job_id,
             "type": "docker",
             "name": "test_job1",
             "docker_file": "",
             "build_only": False,
-            "resources": { "limits": { "cpu": 1, "memory": 512 }}
-            }]}
+            "resources": {"limits": {"cpu": 1, "memory": 512}}
+        }]}
         r = TestClient.post(self.url_ns + '/create_jobs', data, self.job_headers)
         self.assertEqual(r, 'Successfully create jobs')
 
@@ -101,17 +100,8 @@ class JobApiTest(ApiTestTemplate):
         num_jobs = len(jobs)
         self.assertEqual(num_jobs, 1)
 
-    def test_consoleupdate(self):
-        data = { "output": "some test output" }
-        r = TestClient.post(self.url_ns + '/consoleupdate', data=data, headers=self.job_headers)
-        self.assertEqual(r, {})
-
-        r = TestClient.execute_one("""SELECT output FROM console
-                                       WHERE job_id = %s""", [self.job_id])
-        self.assertEqual(r["output"], data["output"])
-
     def test_stats(self):
-        data = { "stats": {}}
+        data = {"stats": {}}
         r = TestClient.post(self.url_ns + '/stats', data=data, headers=self.job_headers)
         self.assertEqual(r, {})
 
@@ -123,11 +113,10 @@ class JobApiTest(ApiTestTemplate):
         markup_data = {
             "version": 1,
             "title": "dummy_title",
-            "elements": [ {
-                  "type": "text",
-                  "text": "dummy_text"
-                }
-            ]
+            "elements": [{
+                "type": "text",
+                "text": "dummy_text"
+            }]
         }
         file_name = "test_markup.tmp_test_file.json"
 
@@ -136,7 +125,7 @@ class JobApiTest(ApiTestTemplate):
 
         with open(file_name, 'r') as markup_data_file:
             markup_data_file.seek(0)
-            data = { "file1": markup_data_file }
+            data = {"file1": markup_data_file}
             r = TestClient.post(self.url_ns + '/markup', data=data, headers=self.job_headers,
                                 content_type='multipart/form-data')
         remove(file_name)
@@ -144,7 +133,6 @@ class JobApiTest(ApiTestTemplate):
 
         r = TestClient.execute_one("""SELECT job_id, project_id, name, data FROM job_markup
                                        WHERE job_id = %s""", [self.job_id])
-        print(r)
         # check job_id
         self.assertEqual(r[0], self.job_id)
         # check project_id
@@ -171,9 +159,9 @@ class JobApiTest(ApiTestTemplate):
             json.dump(job_data, job_data_file)
 
         with open(file_name, 'r') as job_data_file:
-            data = { "file1": job_data_file }
+            data = {"file1": job_data_file}
             result = TestClient.post(self.url_ns + '/badge', data=data, headers=self.job_headers,
-                                    content_type='multipart/form-data')
+                                     content_type='multipart/form-data')
         remove(file_name)
         self.assertEqual(result, {})
 
@@ -198,7 +186,7 @@ class JobApiTest(ApiTestTemplate):
             pass
 
         with open(test_filename, 'r') as test_file:
-            data = { "data": test_file }
+            data = {"data": test_file}
             r = TestClient.post(self.url_ns + '/testresult', data=data, headers=self.job_headers,
                                 content_type='multipart/form-data')
         self.assertEqual(r['message'], 'file ending not allowed')
@@ -233,7 +221,7 @@ class JobApiTest(ApiTestTemplate):
         TestClient.execute("""TRUNCATE test_run""")
 
         with open(test_filename, 'r') as test_file:
-            data = { "data": test_file }
+            data = {"data": test_file}
             r = TestClient.post(self.url_ns + '/testresult', data=data, headers=self.job_headers,
                                 content_type='multipart/form-data')
         self.assertEqual(r, {})
