@@ -382,6 +382,33 @@
         {
             "type": "docker",
             "build_context": "../..",
+            "name": "internal-api",
+            "docker_file": "src/internal-api/Dockerfile",
+            "build_only": true,
+            "resources": {
+                "limits": {
+                    "cpu": 1,
+                    "memory": 1024
+                }
+            },
+            "deployments": [
+                {
+                    "type": "docker-registry",
+                    "host": "quay.io/infrabox",
+                    "repository": "internal-api",
+                    "username": "infrabox+infrabox_ci",
+                    "password": {
+                        "$secret": "QUAY_PASSWORD"
+                    }
+                }
+            ],
+            "cache": {
+                "image": true
+            }
+        },
+        {
+            "type": "docker",
+            "build_context": "../..",
             "name": "job",
             "docker_file": "src/job/Dockerfile",
             "build_only": true,

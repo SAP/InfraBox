@@ -30,6 +30,7 @@ IMAGES = [
     {'name': 'gc', 'depends_on': ['images-base']},
     {'name': 'scheduler-kubernetes'},
     {'name': 'api', 'depends_on': ['images-base']},
+    {'name': 'internal-api', 'depends_on': ['images-base']},
     {'name': 'build-dashboard-client'},
     {'name': 'static', 'depends_on': ['build-dashboard-client']},
     {'name': 'docker-registry-auth'},
