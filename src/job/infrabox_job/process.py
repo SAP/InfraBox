@@ -17,7 +17,7 @@ class ApiConsole(object):
 
     def execute(self, command, cwd=None, shell=False, show=False, env=None, ignore_error=False, show_cmd=True):
         if show_cmd:
-            self.collect(' '.join(command) + '\n', show=show)
+            self.collect(' '.join(command), show=show)
 
         p = subprocess.Popen(command, cwd=cwd, env=env, shell=shell)
         p.wait()
@@ -26,6 +26,6 @@ class ApiConsole(object):
             raise Exception('Command failed')
 
     def header(self, h, show=False):
-        h = "## " + h + '\n'
+        h = "## " + h
         self.collect(h, show=show)
-        self.collect(('=' * len(h)) + "\n", show=False)
+        self.collect(('=' * len(h)), show=False)
