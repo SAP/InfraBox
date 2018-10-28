@@ -385,6 +385,14 @@ def parse_deployment_ecr(d, path):
     if 'target' in d:
         check_text(d['target'], path + ".target")
 
+def parse_registry_gcr(d, path):
+    check_required_properties(d, path, ("type", "service_account", "repository", "host"))
+    parse_secret_ref(d['service_account'], path + ".service_account")
+
+    check_text(d['host'], path + ".host")
+    check_text(d['repository'], path + ".region")
+    parse_secret_ref(d['service_account'], path + ".service_account")
+
 def parse_deployment_gcr(d, path):
     check_allowed_properties(d, path, ("type", "service_account", "repository", "host", "tag", "target"))
     check_required_properties(d, path, ("type", "service_account", "repository", "host"))
@@ -420,6 +428,8 @@ def parse_registries(e, path):
             parse_registry_docker_registry(elem, p)
         elif t == 'ecr':
             parse_registry_ecr(elem, p)
+        elif t == 'gcr':
+            parse_registry_gcr(elem, p)
         else:
             raise ValidationError(p, "type '%s' not supported" % t)
 

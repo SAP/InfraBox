@@ -311,6 +311,15 @@ class Job(Resource):
 
                     r['password'] = secret
                     data['registries'].append(r)
+                elif r['type'] == 'gcr':
+                    service_account = r['service_account']['$secret']
+                    secret = get_secret(service_account)
+
+                    if secret is None:
+                        abort(400, "Secret %s not found" % service_account)
+
+                    r['service_account'] = secret
+                    data['registries'].append(r)
                 elif r['type'] == 'ecr':
                     access_key_id_name = r['access_key_id']['$secret']
                     secret = get_secret(access_key_id_name)
@@ -329,7 +338,7 @@ class Job(Resource):
                     r['secret_access_key'] = secret
                     data['registries'].append(r)
                 else:
-                    abort(400, "Unknown deployment type")
+                    abort(400, "Unknown registry type")
 
         root_url = get_root_url("global")
 
