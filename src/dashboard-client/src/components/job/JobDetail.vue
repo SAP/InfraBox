@@ -5,9 +5,6 @@
                 <md-card-header-text>
                     <h3 class="md-title left-margin">
                         <md-layout>
-                            <md-layout md-hide-medium-and-up md-vertical-align="center" v-if="$store.state.user">
-                                <ib-state :state="job.state"></ib-state>
-                            </md-layout>
                             <md-layout md-vertical-align="center">
                                 <router-link :to="{name: 'ProjectDetailBuilds', params: {projectName: encodeURIComponent(project.name)}}">
                                     <span v-if="project.isGit()"><i class="fa fa-github"></i></span>
@@ -22,35 +19,6 @@
                                     Build {{ build.number }}.{{ build.restartCounter }}
                                 </router-link>
                                 / {{ job.name}}
-                            </md-layout>
-                            <md-layout md-hide-large-and-up class="min-header-height" md-vertical-align="center">
-                                <md-menu md-size="3" class="bg-white">
-                                    <md-button md-theme="default" class="md-icon-button md-primary" md-menu-trigger>
-                                        <md-icon>info</md-icon>
-                                    </md-button>
-                                    <md-menu-content class="bg-white">
-                                        <md-menu-item class="bg-white">
-                                            <span><i class="fa fa-calendar fa-fw" aria-hidden="true"></i><strong> Started</strong>
-                                            <ib-date :date="job.startDate"></ib-date></span>
-                                        </md-menu-item>
-                                        <md-menu-item class="bg-white">
-                                            <span><i class="fa fa-clock-o fa-fw" aria-hidden="true"></i><strong> Duration</strong>
-                                            <ib-duration :start="job.startDate" :end="job.endDate"></ib-duration></span>
-                                        </md-menu-item>
-                                        <md-menu-item class="bg-white" v-if="build.commit">
-                                            <span><i class="fa fa-list-ol fa-fw" aria-hidden="true"></i><strong> Change</strong>
-                                            <ib-gitjobtype :build="build"></ib-gitjobtype></span>
-                                        </md-menu-item>
-                                        <md-menu-item class="bg-white" v-if="build.commit">
-                                            <span><i class="fa fa-user fa-fw" aria-hidden="true"></i><strong> Author</strong><br/>
-                                            {{ build.commit.author_name }}</span>
-                                        </md-menu-item>
-                                        <md-menu-item class="bg-white" v-if="build.commit">
-                                            <span><i class="fa fa-code-fork fa-fw" aria-hidden="true"></i><strong> Branch</strong><br/>
-                                            {{ build.commit.branch }}</span>
-                                        </md-menu-item>
-                                    </md-menu-content>
-                                </md-menu>
                             </md-layout>
                             <md-layout md-hide-medium md-flex="60" md-align="end" md-vertical-align="start">
                                 <md-table-card class="clean-card">
@@ -95,39 +63,118 @@
                                 </div>
                             </md-layout>
                         </md-layout>
+                        <md-layout class="m-b-xl">
+                            <md-layout  md-align="start" md-vertical-align="start" md-flex-xsmall="100" md-flex-small="100" md-flex-medium="100" md-flex-large="100" md-flex-xlarge="100" md-hide-medium>
+                                <md-button class="md-raised md-primary md-dense" v-on:click="job.abort()">
+                                    <md-icon>not_interested</md-icon><span class="m-l-xs">Stop Job</span>
+                                    <md-tooltip md-direction="bottom">Stop Job</md-tooltip>
+                                </md-button>
+                                <md-button class="md-raised md-primary md-dense" v-on:click="job.restart()">
+                                    <md-icon>replay</md-icon><span class="m-l-xs">Restart Job</span>
+                                    <md-tooltip md-direction="bottom">Restart Job</md-tooltip>
+                                </md-button>
+                                <md-button class="md-raised md-primary md-dense" v-on:click="job.clearCache()">
+                                    <md-icon>delete_sweep</md-icon><span class="m-l-xs">Clear Job</span>
+                                    <md-tooltip md-direction="bottom">Clear Job</md-tooltip>
+                                </md-button>
+                                <md-button class="md-raised md-primary md-dense" v-on:click="openDialog('cli_dialog')">
+                                    <md-icon>file_download</md-icon><span class="m-l-xs">Run Local</span>
+                                    <md-tooltip md-direction="bottom">Run Local</md-tooltip>
+                                </md-button>
+                                <md-button class="md-raised md-primary md-dense" v-on:click="downloadOutput()" :disabled="job.state=='running'||job.state=='queued'||job.state=='scheduled'">
+                                    <md-icon>subtitles</md-icon><span class="m-l-xs">Console Output</span>
+                                    <md-tooltip md-direction="bottom">Console Output</md-tooltip>
+                                </md-button>
+                                <md-button class="md-raised md-primary md-dense" v-on:click="downloadDataOutput()" :disabled="job.state=='running'||job.state=='queued'||job.state=='scheduled'">
+                                    <md-icon>insert_drive_file</md-icon><span class="m-l-xs">Data Output</span>
+                                    <md-tooltip md-direction="bottom">Data Output</md-tooltip>
+                                </md-button>
+                            </md-layout>
+                            <md-layout  md-align="start" md-vertical-align="start" md-flex-xsmall="100" md-flex-small="100" md-flex-medium="100" md-flex-large="100" md-flex-xlarge="100" md-hide-large-and-up>
+                                <md-table-card class="clean-card">
+                                    <md-table>
+                                        <md-table-body>
+                                            <md-table-row style="border-top: none">
+                                                <md-table-cell>
+                                                    <div class="m-r-xl" v-if="$store.state.user">
+                                                        <ib-state :state="job.state"></ib-state>
+                                                    </div>
+                                                    <div class="m-r-xl">
+                                                        <md-button class="md-icon-button md-primary md-raised md-dense" v-on:click="job.abort()">
+                                                            <md-icon style="color: white">not_interested</md-icon>
+                                                            <md-tooltip md-direction="bottom">Stop Job</md-tooltip>
+                                                        </md-button>
+                                                    </div>
+                                                    <div class="m-r-xl">
+                                                         <md-button class="md-icon-button md-primary md-raised md-dense" v-on:click="job.restart()">
+                                                            <md-icon style="color: white">replay</md-icon>
+                                                            <md-tooltip md-direction="bottom">Restart Job</md-tooltip>
+                                                        </md-button>
+                                                    </div>
+                                                    <div class="m-r-xl">
+                                                        <md-button class="md-icon-button md-primary md-raised md-dense" v-on:click="job.clearCache()">
+                                                            <md-icon style="color: white">delete_sweep</md-icon>
+                                                            <md-tooltip md-direction="bottom">Clear Job</md-tooltip>
+                                                        </md-button>
+                                                    </div>
+                                                    <div class="m-r-xl">
+                                                        <md-button class="md-icon-button md-primary md-raised md-dense" v-on:click="openDialog('cli_dialog')">
+                                                            <md-icon style="color: white">file_download</md-icon>
+                                                            <md-tooltip md-direction="bottom">Run Local</md-tooltip>
+                                                        </md-button>
+                                                    </div>
+                                                    <div class="m-r-xl">
+                                                        <md-button class="md-icon-button md-primary md-raised md-dense" v-on:click="downloadOutput()" :disabled="job.state=='running'||job.state=='queued'||job.state=='scheduled'">
+                                                            <md-icon style="color: white">subtitles</md-icon>
+                                                            <md-tooltip md-direction="bottom">Console Output</md-tooltip>
+                                                        </md-button>
+                                                    </div>
+                                                    <div class="m-r-xl">
+                                                        <md-button class="md-icon-button md-primary md-raised md-dense" v-on:click="downloadDataOutput()" :disabled="job.state=='running'||job.state=='queued'||job.state=='scheduled'">
+                                                            <md-icon style="color: white">insert_drive_file</md-icon>
+                                                            <md-tooltip md-direction="bottom">Data Output</md-tooltip>
+                                                        </md-button>
+                                                    </div>
+                                                    <div class="m-r-xl">
+                                                        <md-menu md-size="4" class="bg-white">
+                                                            <md-button class="md-icon-button md-primary md-raised md-dense" md-menu-trigger>
+                                                                <md-icon style="color: white">info</md-icon>
+                                                                <md-tooltip md-direction="bottom">Show Details</md-tooltip>
+                                                            </md-button>
+                                                            <md-menu-content class="bg-white">
+                                                                <md-menu-item class="bg-white">
+                                                                    <span><i class="fa fa-calendar fa-fw" aria-hidden="true"></i><strong> Started</strong>
+                                                                    <ib-date :date="job.startDate"></ib-date></span>
+                                                                </md-menu-item>
+                                                                <md-menu-item class="bg-white">
+                                                                    <span><i class="fa fa-clock-o fa-fw" aria-hidden="true"></i><strong> Duration</strong>
+                                                                    <ib-duration :start="job.startDate" :end="job.endDate"></ib-duration></span>
+                                                                </md-menu-item>
+                                                                <md-menu-item class="bg-white" v-if="build.commit">
+                                                                    <span><i class="fa fa-list-ol fa-fw" aria-hidden="true"></i><strong> Change</strong>
+                                                                    <ib-gitjobtype :build="build"></ib-gitjobtype></span>
+                                                                </md-menu-item>
+                                                                <md-menu-item class="bg-white" v-if="build.commit">
+                                                                    <span><i class="fa fa-user fa-fw" aria-hidden="true"></i><strong> Author</strong><br/>
+                                                                    {{ build.commit.author_name }}</span>
+                                                                </md-menu-item>
+                                                                <md-menu-item class="bg-white" v-if="build.commit">
+                                                                    <span><i class="fa fa-code-fork fa-fw" aria-hidden="true"></i><strong> Branch</strong><br/>
+                                                                    {{ build.commit.branch }}</span>
+                                                                </md-menu-item>
+                                                            </md-menu-content>
+                                                        </md-menu>
+                                                    </div>
+                                                </md-table-cell>
+                                            </md-table-row>
+                                        </md-table-body>
+                                    </md-table>
+                                </md-table-card>
+                            </md-layout>
+                        </md-layout>
                     </h3>
                 </md-card-header-text>
             </md-card-header>
-            <md-speed-dial v-if="$store.state.user" md-open="hover" md-direction="bottom" class="md-fab-top-right" md-theme="default">
-                <md-button class="md-icon-button md-primary" md-fab-trigger>
-                    <md-icon md-icon-morph>more_vert</md-icon>
-                    <md-icon>more_vert</md-icon>
-                </md-button>
-                <md-button class="md-fab md-primary md-mini md-clean" md-fab-trigger v-on:click="job.abort()">
-                    <md-icon style="color: white">not_interested</md-icon>
-                    <md-tooltip md-direction="left">Stop Job</md-tooltip>
-                </md-button>
-                <md-button class="md-fab md-primary md-mini md-clean" md-fab-trigger v-on:click="job.restart()">
-                    <md-icon style="color: white">replay</md-icon>
-                    <md-tooltip md-direction="left">Restart Job</md-tooltip>
-                </md-button>
-                <md-button class="md-fab md-primary md-mini md-clean" v-on:click="job.clearCache()">
-                    <md-icon style="color: white">delete_sweep</md-icon>
-                    <md-tooltip md-direction="left">Clear Job</md-tooltip>
-                </md-button>
-                <md-button class="md-fab md-primary md-mini md-clean" v-on:click="openDialog('cli_dialog')">
-                    <md-icon style="color: white">file_download</md-icon>
-                    <md-tooltip md-direction="left">Run Local</md-tooltip>
-                </md-button>
-                <md-button class="md-fab md-primary md-mini md-clean" v-on:click="downloadOutput()" :disabled="job.state=='running'||job.state=='queued'||job.state=='scheduled'">
-                    <md-icon style="color: white">subtitles</md-icon>
-                    <md-tooltip md-direction="left">Console Output</md-tooltip>
-                </md-button>
-                <md-button v-if="job.state === 'finished'" class="md-fab md-primary md-mini md-clean" v-on:click="downloadDataOutput()" :disabled="job.state=='running'||job.state=='queued'||job.state=='scheduled'">
-                    <md-icon style="color: white">insert_drive_file</md-icon>
-                    <md-tooltip md-direction="left">Data Output</md-tooltip>
-                </md-button>
-            </md-speed-dial>
             <md-card-content>
                 <md-tabs md-fixed class="md-transparent">
 				    <template slot="header-item" scope="props">

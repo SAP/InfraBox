@@ -11,27 +11,55 @@
                                 {{ project.name }}
                             </md-layout>
                         </md-layout>
+                        <md-layout v-if="$store.state.user">
+                            <md-layout class="m-t-xl m-r-xxl" md-align="start" md-vertical-align="start" md-flex-xsmall="100" md-flex-small="100" md-flex-medium="100" md-flex-large="100" md-flex-xlarge="100" md-hide-small>
+                                <md-button class="md-raised md-primary md-dense" v-on:click="project.builds[0].clearCache()">
+                                    <md-icon>delete_sweep</md-icon><span class="m-l-xs">Clear Cache</span>
+                                    <md-tooltip md-direction="bottom">Clear Cache</md-tooltip>
+                                </md-button>
+                                <md-button class="md-raised md-primary md-dense" v-on:click="triggerBuild()">
+                                    <md-icon>replay</md-icon><span class="m-l-xs">Trigger Build</span>
+                                    <md-tooltip md-direction="bottom">Triger a new Build</md-tooltip>
+                                </md-button>
+                                <md-button class="md-raised md-primary md-dense" v-on:click="openDialog('confirmDeleteProject')">
+                                    <md-icon>delete_forever</md-icon><span class="m-l-xs">Delete Project</span>
+                                    <md-tooltip md-direction="bottom">Remove project permanently from InfraBox</md-tooltip>
+                                </md-button>
+                            </md-layout>
+                            <md-layout  md-align="start" md-vertical-align="start" md-flex-xsmall="100" md-flex-small="100" md-flex-medium="100" md-flex-large="100" md-flex-xlarge="100" md-hide-medium-and-up>
+                                <md-table-card class="clean-card">
+                                    <md-table>
+                                        <md-table-body>
+                                            <md-table-row style="border-top: none">
+                                                <md-table-cell>
+                                                    <div class="m-r-xl">
+                                                        <md-button class="md-icon-button md-primary md-raised md-dense" v-on:click="project.builds[0].clearCache()">
+                                                            <md-icon style="color: white">delete_sweep</md-icon>
+                                                            <md-tooltip md-direction="bottom">Clear Cache</md-tooltip>
+                                                        </md-button>
+                                                    </div>
+                                                    <div class="m-r-xl">
+                                                        <md-button class="md-icon-button md-primary  md-raised md-dense" v-on:click="triggerBuild()">
+                                                            <md-icon style="color: white">replay</md-icon>
+                                                            <md-tooltip md-direction="bottom">Trigger a new Build</md-tooltip>
+                                                        </md-button>
+                                                    </div>
+                                                    <div class="m-r-xl">
+                                                        <md-button class="md-icon-button md-primary md-raised md-dense" v-on:click="openDialog('confirmDeleteProject')">
+                                                            <md-icon style="color: white">delete_forever</md-icon>
+                                                            <md-tooltip md-direction="bottom">Remove project permanently from InfraBox</md-tooltip>
+                                                        </md-button>
+                                                    </div>
+                                                </md-table-cell>
+                                            </md-table-row>
+                                        </md-table-body>
+                                    </md-table>
+                                </md-table-card>
+                            </md-layout>
+                        </md-layout>
                     </h3>
                 </md-card-header-text>
             </md-card-header>
-            <md-speed-dial md-open="hover" md-direction="bottom" class="md-fab-top-right" md-theme="default" v-if="$store.state.user">
-                <md-button class="md-icon-button md-primary" md-fab-trigger>
-                    <md-icon md-icon-morph>more_vert</md-icon>
-                    <md-icon>more_vert</md-icon>
-                </md-button>
-                <md-button class="md-fab md-primary md-mini md-clean" md-fab-trigger v-on:click="project.builds[0].clearCache()">
-                    <md-icon style="color: white">delete_sweep</md-icon>
-                    <md-tooltip md-direction="left">Clear Cache</md-tooltip>
-                </md-button>
-                <md-button v-if="project.type != 'upload'" class="md-fab md-primary md-mini md-clean" md-fab-trigger v-on:click="triggerBuild()">
-                    <md-icon style="color: white">replay</md-icon>
-                    <md-tooltip md-direction="left">Trigger a new Build</md-tooltip>
-                </md-button>
-                <md-button class="md-fab md-primary md-mini md-clean" v-on:click="openDialog('confirmDeleteProject')">
-                    <md-icon style="color: white">delete_forever</md-icon>
-                    <md-tooltip md-direction="left">Remove project permanently from InfraBox</md-tooltip>
-                </md-button>
-            </md-speed-dial>
             <md-card-area>
                 <md-tabs md-fixed class="md-transparent" @change="tabSelected">
                     <template slot="header-item" slot-scope="props">
