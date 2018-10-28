@@ -49,7 +49,7 @@
                                 </md-table-card>
                             </md-layout>
                         </md-layout>
-                        <md-layout class="m-b-xl">
+                        <md-layout class="m-b-xl" v-if="$store.state.user">
                             <md-layout  md-align="start" md-vertical-align="start" md-flex-xsmall="100" md-flex-small="100" md-flex-medium="100" md-flex-large="100" md-flex-xlarge="100" md-hide-small>
                                 <md-button class="md-raised md-primary md-dense" v-on:click="build.abort()">
                                     <md-icon>not_interested</md-icon><span class="m-l-xs">Stop Build</span>
