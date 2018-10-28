@@ -282,7 +282,7 @@ class JobRestart(Resource):
                 WHERE id = %s;
             ''', [j])
 
-        name_job = {}
+        old_id_job = {}
         for j in jobs:
             # Mark old jobs a restarted
             g.db.execute('''
@@ -292,8 +292,8 @@ class JobRestart(Resource):
             ''', [j['id']])
 
             # Create new ID for the new jobs
+            old_id_job[j['id']] = j
             j['id'] = str(uuid.uuid4())
-            name_job[j['name']] = j
 
             m = re.search('(.*)\.([0-9]+)', j['name'])
             if m:
@@ -304,11 +304,15 @@ class JobRestart(Resource):
                 # First restart
                 j['name'] = j['name'] + '.1'
 
+        logger.error(json.dumps(old_id_job, indent=4))
+
         for j in jobs:
             for dep in j['dependencies']:
-                if dep['job'] in name_job:
-                    dep['job-id'] = name_job[dep['job']]['id']
-                    dep['job'] = name_job[dep['job']]['name']
+                if dep['job-id'] in old_id_job:
+                    dep['job'] = old_id_job[dep['job-id']]['name']
+                    dep['job-id'] = old_id_job[dep['job-id']]['id']
+                else:
+                    logger.error('%s not found', dep['job'])
 
         for j in jobs:
             g.db.execute('''
