@@ -755,7 +755,6 @@ class Scheduler(object):
 
             # check if conditions are met
             skipped = False
-            wait_state = 'finished'
             for r in result:
                 on = None
                 parent_id = r[0]
@@ -768,17 +767,6 @@ class Scheduler(object):
 
                 self.logger.debug("Checking parent %s with state %s", parent_id, parent_state)
                 self.logger.debug("Condition is %s", on)
-
-                if parent_state == 'killed':
-                    wait_state = 'killed'
-                elif parent_state == 'error' and wait_state != 'killed':
-                    wait_state = 'error'
-                elif parent_state == 'failed' and wait_state not in ['killed', 'error']:
-                    wait_state = 'failed'
-                elif parent_state == 'unstable' and wait_state not in ['killed', 'error', 'failed']:
-                    wait_state = 'unstable'
-                elif parent_state == 'skipped' and wait_state == 'finished':
-                    wait_state = 'skipped'
 
                 if parent_state not in on:
                     self.logger.debug("Condition is not met, skipping job")
@@ -798,9 +786,8 @@ class Scheduler(object):
                 self.logger.debug("Wait job, we are done")
                 cursor = self.conn.cursor()
                 cursor.execute('''
-                    UPDATE job SET state = %s, start_date = now(), end_date = now()
-                    WHERE id = %s;
-                ''', [wait_state, job_id])
+                    UPDATE job SET state = 'finished', start_date = now(), end_date = now() WHERE id = %s;
+                ''', (job_id,))
                 cursor.close()
                 continue
 
