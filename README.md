@@ -31,12 +31,11 @@ Follow us on Twitter: [@Infra_Box](https://twitter.com/Infra_Box) or have look a
 ### 1.2
 - Bugfixes
 - Improve Documentation (installation, job definition & API)
-- Integrate [Dex](https://github.com/dexidp/dex)
+- Add support for SAML
 - Quota management on user and project level
 
 ### 1.x
 - [knative](https://cloud.google.com/knative/) integration
-- Service for creating AKS K8s Clusters
 - Service for creating EKS K8s Clusters
 - More to come, _your idea here_
 
