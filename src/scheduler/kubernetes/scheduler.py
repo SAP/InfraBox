@@ -698,7 +698,7 @@ class Scheduler(object):
             SELECT j.id, j.type, j.dependencies, j.definition
             FROM job j
             WHERE j.state = 'queued' and cluster_name = %s
-            ORDER BY j.created_at
+            ORDER BY j.created_at ASC
         ''', [os.environ['INFRABOX_CLUSTER_NAME']])
         jobs = cursor.fetchall()
         cursor.close()

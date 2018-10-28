@@ -1187,7 +1187,7 @@ class RunJob(Job):
             job_with_children = {}
             for s in sub:
                 deps = s.get('depends_on', [])
-                if len(deps) == 0:
+                if not deps:
                     s['depends_on'] = job.get('depends_on', [])
 
                 for d in deps:

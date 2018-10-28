@@ -775,7 +775,7 @@ class CreateJobs(Resource):
                             AND build_id = %s
                             AND project_id = %s
                     )
-                ''', [json.dumps(wait_job), job_id, build_id, project_id])
+                ''', [json.dumps(wait_job), parent_job_id, build_id, project_id])
 
         self.assign_cluster(jobs)
 
