@@ -1,0 +1,42 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: infrabox-fluent-bit
+  namespace: {{ template "system_namespace" . }}
+data:
+  parsers.conf: |-
+    [PARSER]
+        Name         docker_utf8
+        Format       json
+        Time_Key     time
+        Time_Format  %Y-%m-%dT%H:%M:%S.%L
+        Time_Keep    On
+        Decode_Field_as escaped_utf8 log do_next
+        Decode_Field_as escaped      log
+  fluent-bit.conf: |-
+    [SERVICE]
+        Flush        2
+        Daemon       Off
+        Log_Level    info
+        Parsers_File parsers.conf
+    [INPUT]
+        Name             tail
+        Path             /var/log/containers/*{{- template "worker_namespace" . -}}*.log
+        Parser           docker_utf8
+        Tag              kube.*
+        Refresh_Interval 2
+        Mem_Buf_Limit    50MB
+        Skip_Long_Lines  On
+    [FILTER]
+        Name                kubernetes
+        Match               kube.*
+        Kube_URL            https://kubernetes.default.svc.cluster.local:443
+        Kube_CA_File        /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        Kube_Token_File     /var/run/secrets/kubernetes.io/serviceaccount/token
+    [OUTPUT]
+        Name  http
+        Match *
+        Host infrabox-internal-api.{{ template "system_namespace" . }}
+        Port 8080
+        URI /api/job/consoleupdate
+        Format json
