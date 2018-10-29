@@ -114,7 +114,7 @@ class Job(Resource):
         }
 
         state = data['job']['state']
-        if state in ("finished", "error", "failure", "skipped", "killed"):
+        if state in ("finished", "error", "failure", "skipped", "killed", "unstable"):
             abort(409, 'job not running anymore')
 
         env_vars = r[20]
@@ -311,6 +311,15 @@ class Job(Resource):
 
                     r['password'] = secret
                     data['registries'].append(r)
+                elif r['type'] == 'gcr':
+                    service_account = r['service_account']['$secret']
+                    secret = get_secret(service_account)
+
+                    if secret is None:
+                        abort(400, "Secret %s not found" % service_account)
+
+                    r['service_account'] = secret
+                    data['registries'].append(r)
                 elif r['type'] == 'ecr':
                     access_key_id_name = r['access_key_id']['$secret']
                     secret = get_secret(access_key_id_name)
@@ -329,7 +338,7 @@ class Job(Resource):
                     r['secret_access_key'] = secret
                     data['registries'].append(r)
                 else:
-                    abort(400, "Unknown deployment type")
+                    abort(400, "Unknown registry type")
 
         root_url = get_root_url("global")
 
@@ -775,7 +784,7 @@ class CreateJobs(Resource):
                             AND build_id = %s
                             AND project_id = %s
                     )
-                ''', [json.dumps(wait_job), job_id, build_id, project_id])
+                ''', [json.dumps(wait_job), parent_job_id, build_id, project_id])
 
         self.assign_cluster(jobs)
 
@@ -856,41 +865,6 @@ class CreateJobs(Resource):
 
         g.db.commit()
         return "Successfully create jobs"
-
-@api.route("/api/job/consoleupdate", doc=False)
-class ConsoleUpdate(Resource):
-
-    def post(self):
-        output = request.json['output']
-
-        job_id = g.token['job']['id']
-
-        r = g.db.execute_one("""
-            SELECT sum(char_length(output)), count(*) FROM console WHERE job_id = %s
-        """, [job_id])
-
-        if not r:
-            abort(404, "Not found")
-
-        console_output_len = r[0]
-        console_output_updates = r[1]
-
-        if console_output_len > 16 * 1024 * 1024:
-            abort(400, "Console output too big")
-
-        if console_output_updates > 4000:
-            abort(400, "Too many console updates")
-
-        try:
-            g.db.execute("INSERT INTO console (job_id, output) VALUES (%s, %s)", [job_id, output])
-            g.db.execute("""
-                UPDATE job SET state = 'running', start_date = current_timestamp
-                WHERE id = %s and state = 'scheduled'""", [job_id])
-            g.db.commit()
-        except:
-            pass
-
-        return jsonify({})
 
 @api.route("/api/job/stats", doc=False)
 class Stats(Resource):

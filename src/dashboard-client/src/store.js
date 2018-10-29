@@ -135,16 +135,20 @@ function handleJobUpdate (state, event) {
             d.message,
             d.definition,
             d.node_name,
-            d.avg_cpu
+            d.avg_cpu,
+            d.restarted
         )
         build.jobs.push(job)
         state.jobs[d.id] = job
     } else {
+        job.name = d.name
         job.state = d.state
         job.startDate = startDate
         job.endDate = endDate
         job.nodeName = d.node_name
         job.avgCpu = d.avg_cpu
+        job.restarted = d.restarted
+        job.dependencies = d.dependencies || []
 
         if (d.message) {
             job.message = d.message

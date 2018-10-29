@@ -26,7 +26,8 @@ CREATE TYPE job_state AS ENUM (
     'failure',
     'error',
     'skipped',
-    'killed'
+    'killed',
+    'unstable'
 );
 
 
@@ -625,25 +626,6 @@ BEGIN
 	PERFORM pg_notify('job_update', json_build_object('type', TG_OP, 'job_id', NEW.id, 'state', NEW.state)::text);
 
   RETURN NEW;
-END;
-$$;
-
-
---
--- Name: truncate_tables(character varying); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION truncate_tables(username character varying) RETURNS void
-    LANGUAGE plpgsql
-    AS $$
-DECLARE
-    statements CURSOR FOR
-        SELECT tablename FROM pg_tables
-        WHERE tableowner = username AND schemaname = 'public';
-BEGIN
-    FOR stmt IN statements LOOP
-        EXECUTE 'TRUNCATE TABLE ' || quote_ident(stmt.tablename) || ' CASCADE;';
-    END LOOP;
 END;
 $$;
 

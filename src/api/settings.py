@@ -19,6 +19,8 @@ settings_model = api.model('User', {
     'INFRABOX_CLUSTER_NAME': fields.String,
     'INFRABOX_GITHUB_LOGIN_ENABLED': fields.Boolean,
     'INFRABOX_SSO_LOGIN_ENABLED': fields.Boolean,
+    'INFRABOX_LEGAL_PRIVACY_URL': fields.String,
+    'INFRABOX_LEGAL_TERMS_OF_USE_URL': fields.String
 })
 
 @ns.route('')
@@ -39,6 +41,8 @@ class Settings(Resource):
             'INFRABOX_ROOT_URL': os.environ['INFRABOX_ROOT_URL'],
             'INFRABOX_GENERAL_REPORT_ISSUE_URL': os.environ['INFRABOX_GENERAL_REPORT_ISSUE_URL'],
             'INFRABOX_CLUSTER_NAME': os.environ['INFRABOX_CLUSTER_NAME'],
+            'INFRABOX_LEGAL_PRIVACY_URL':  os.environ['INFRABOX_LEGAL_PRIVACY_URL'],
+            'INFRABOX_LEGAL_TERMS_OF_USE_URL':  os.environ['INFRABOX_LEGAL_TERMS_OF_USE_URL'],
         }
 
         if github_enabled:

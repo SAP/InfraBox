@@ -1,0 +1,39 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: {{ template "infrabox-service-aks.fullname" . }}
+  labels:
+    app: {{ template "infrabox-service-aks.name" . }}
+    chart: {{ template "infrabox-service-aks.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ template "infrabox-service-aks.name" . }}
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "infrabox-service-aks.name" . }}
+        release: {{ .Release.Name }}
+    spec:
+      serviceAccountName: infrabox-service-aks
+      containers:
+        - name: {{ .Chart.Name }}
+          command: ["./aks"]
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: "Always"
+          resources:
+          env:
+          - name: WATCH_NAMESPACE
+            value: infrabox-worker
+          - name: SUBSCRIPTION_ID
+            value: {{ required "azure.subscription_id is required" .Values.azure.subscription_id }}
+          - name: TENANT_ID
+            value: {{ required "azure.tenant_id is required" .Values.azure.tenant_id }}
+          - name: SERVICE_PRINCIPAL
+            value: {{ required "azure.service_principal is required" .Values.azure.service_principal }}
+          - name: CLIENT_SECRET
+            value: {{ required "azure.client_secret" .Values.azure.client_secret }}

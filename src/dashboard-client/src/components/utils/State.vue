@@ -36,6 +36,12 @@
                 <md-tooltip>{{ state }}</md-tooltip>
             </div>
         </span>
+        <span v-if="state=='unstable'">
+            <div class="bg-unstable circle-icon">
+                <i class="fa fa-fw fa-bolt"></i>
+                <md-tooltip>{{ state }}</md-tooltip>
+            </div>
+        </span>
         <span v-if="state=='error'">
             <div class="bg-error circle-icon">
                 <i class="fa fa-fw fa-bomb"></i>

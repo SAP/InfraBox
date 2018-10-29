@@ -105,7 +105,7 @@ def handle_job_update(conn, event):
     if job_state in ('scheduled', 'running', 'queued'):
         state = 'pending'
 
-    if job_state in ('failure', 'skipped', 'killed'):
+    if job_state in ('failure', 'skipped', 'killed', 'unstable'):
         state = 'failure'
 
     if job_state == 'error':

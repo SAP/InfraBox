@@ -6,6 +6,8 @@ import data.infrabox.collaborators.collaborators
 import data.infrabox.projects.projects
 import data.infrabox.roles
 
+svg_images = {"state.svg", "tests.svg", "badge.svg"}
+
 project_collaborator([user, project]) {
     collaborators[i].project_id = project
     collaborators[i].user_id = user
@@ -36,8 +38,6 @@ allow {
 
 # Allow GET access to /api/v1/projects/<project_id>/(state.svg|tests.svg|badges.svg) for collaborators
 allow {
-    svg_images := ["state.svg", "tests.svg", "badge.svg"]
-
     api.method = "GET"
     api.path = ["api", "v1", "projects", project_id, svg_image]
     svg_image = svg_images[_]
@@ -48,8 +48,6 @@ allow {
 
 # Allow GET access to /api/v1/projects/<project_id>/(state.svg|tests.svg|badges.svg) if project is public
 allow {
-    svg_images := ["state.svg", "tests.svg", "badge.svg"]
-
     api.method = "GET"
     api.path = ["api", "v1", "projects", project_id, svg_image]
     svg_image = svg_images[_]
@@ -59,12 +57,10 @@ allow {
 
 # Allow GET access to /api/v1/projects/<project_id>/(state.svg|tests.svg|badges.svg) for project tokens
 allow {
-    svg_images := ["state.svg", "tests.svg", "badge.svg"]
-
     api.method = "GET"
     api.path = ["api", "v1", "projects", project_id, svg_image]
     svg_image = svg_images[_]
-
+    
     api.token.type = "project"
     api.token.project.id = project_id
 }

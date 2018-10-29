@@ -25,6 +25,11 @@
     <h1 class="m-xs">SKIPPED</h1>
 </div>
 
+<div v-if="state=='unstable'" class="state-widget bg-unstable">
+    <i class="fa fa-bolt fa-4x"></i>
+    <h1 class="m-xs">UNSTABLE</h1>
+</div>
+
 <div v-if="state=='failure'" class="state-widget bg-failure">
     <i class="fa fa-bolt fa-4x"></i>
     <h1 class="m-xs">FAILURE</h1>

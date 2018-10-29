@@ -36,6 +36,11 @@
     color: #ffffff;
 }
 
+.bg-unstable {
+    background-color: #b7ad1c;
+    color: #ffffff;
+}
+
 .bg-warning {
     background-color: #b7ad1c;
     color: #ffffff;
@@ -53,6 +58,10 @@
 
 .bg-dark {
     background-color: #293846;
+}
+
+.bg-md {
+    background-color: #263238;
 }
 
 .b-r {
