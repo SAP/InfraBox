@@ -11,31 +11,51 @@ from pyinfraboxutils import get_logger, get_root_url, get_env
 from pyinfraboxutils.ibrestplus import api
 from pyinfraboxutils.token import encode_user_token
 
-logger = get_logger('saml')
+logger = get_logger("saml")
+
+get_env("INFRABOX_ACCOUNT_SAML_EMAIL_FORMAT")
+get_env("INFRABOX_ACCOUNT_SAML_NAME_FORMAT")
+get_env("INFRABOX_ACCOUNT_SAML_USERNAME_FORMAT")
 
 def init_saml_auth():
     parsed_url = urlparse(request.url)
     request_data = {
-        'https': 'on' if request.scheme == 'https' else 'off',
-        'http_host': request.host,
-        'server_port': parsed_url.port,
-        'script_name': request.path,
-        'get_data': request.args.copy(),
-        'post_data': request.form.copy(),
-        'query_string': request.query_string
+        "https": "on" if request.scheme == "https" else "off",
+        "http_host": request.host,
+        "server_port": parsed_url.port,
+        "script_name": request.path,
+        "get_data": request.args.copy(),
+        "post_data": request.form.copy(),
+        "query_string": request.query_string
         }
     
     auth = OneLogin_Saml2_Auth(request_data, custom_base_path="src/api/handlers/account")
     return auth
 
-@api.route('/saml/auth')
+def get_attribute_dict(saml_auth):
+    attributes = {}
+    nested_attribute_dict = saml_auth.get_attributes()
+    for attribute_name, nested_attribute in nested_attribute_dict.items():
+        if len(nested_attribute) > 0:
+            attributes[attribute_name] = nested_attribute[0]
+    attributes["NameID"] = saml_auth.get_nameid()
+    return attributes
+
+def format_user_field(format_string, attributes):
+    try:
+        return format_string.format(**attributes)
+    except KeyError as e_key:
+        logger.error("The IdP did not provide a required attribute: %s", e_key)
+        abort(500)
+
+@api.route("/saml/auth")
 class SamlAuth(Resource):
 
     def get(self):
         auth = init_saml_auth()
         return redirect(auth.login())
 
-@api.route('/saml/callback')
+@api.route("/saml/callback")
 class SamlCallback(Resource):
 
     def post(self):
@@ -46,53 +66,44 @@ class SamlCallback(Resource):
         logger.info("Request: %s %s", request, request.headers)
 
         if len(errors) != 0:
-            logger.error("Authentication failed: %s", errors)
+            logger.error("Authentication failed: %s", "; ".join(errors))
             abort(500, "Authentication failed")
         
         if not auth.is_authenticated():
             logger.error("User returned unauthorized from IdP")
             abort(401, "Unauthorized")
 
-        userdata = auth.get_attributes()
-        logger.debug("User data: %s", userdata)
+        attributes = get_attribute_dict(auth)
+        logger.debug("User data: %s", attributes)
 
-        if not 'email' in userdata or len(userdata['email']) == 0:
-            logger.error("IdP provided no user email address")
-            abort(401, "Unauthorized")
-
-        email = userdata['email']
-        if isinstance(email, list):
-            email = userdata['email'][0] # Take first email address if there are multiple
+        email = format_user_field(get_env("INFRABOX_ACCOUNT_SAML_EMAIL_FORMAT"), attributes)
 
         # Check if user already exists in database
-        user = g.db.execute_one_dict('''
+        user = g.db.execute_one_dict("""
                 SELECT id FROM "user"
                 WHERE email = %s
-            ''', [email])
+            """, [email])
 
         if not user:
-            nameid = auth.get_nameid()
+            name = format_user_field(get_env("INFRABOX_ACCOUNT_SAML_NAME_FORMAT"), attributes)
+            username = format_user_field(get_env("INFRABOX_ACCOUNT_SAML_USERNAME_FORMAT"), attributes)
 
-            name = nameid
-            if 'name' in userdata:
-                name = userdata['name']
-
-            user = g.db.execute_one_dict('''
+            user = g.db.execute_one_dict("""
                 INSERT INTO "user" (name, username, email)
                 VALUES (%s, %s, %s) RETURNING id
-            ''', [name, nameid, email])
+            """, [name, username, email])
 
-        token = encode_user_token(user['id'])
+        token = encode_user_token(user["id"])
 
         g.db.commit()
         
-        redirect_url = get_root_url('global') + '/dashboard/'
+        redirect_url = get_root_url("global") + "/dashboard/"
         logger.debug("Redirecting authenticated user to %s", redirect_url)
         response = redirect(redirect_url)
-        response.set_cookie('token', token)
+        response.set_cookie("token", token)
         return response
         
-@api.route('/saml/metadata')
+@api.route("/saml/metadata")
 class SamlMetadata(Resource):
     def get(self):
         auth = init_saml_auth()
@@ -101,9 +112,9 @@ class SamlMetadata(Resource):
         metadata_errors = settings.validate_metadata(metadata)
         
         if len(metadata_errors) != 0:
-            logger.error("SP Metadata contains errors: %s", ";".join(metadata_errors))
+            logger.error("SP Metadata contains errors: %s", "; ".join(metadata_errors))
             abort(500)
 
         response = make_response(metadata, 200)
-        response.headers["Content-Type"] = 'application/xml'
+        response.headers["Content-Type"] = "application/xml"
         return response
