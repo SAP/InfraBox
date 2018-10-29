@@ -147,4 +147,8 @@ class SamlLogout(Resource):
 class SamlInitiateLogout(Resource):
     def get(self):
         auth = init_saml_auth()
-        return redirect(auth.logout())
+        try:
+            return redirect(auth.logout())
+        except Exception as e:
+            logger.error("Could not initiate Single Logout: %s", e)
+            return redirect(get_root_url("global"))
