@@ -118,7 +118,7 @@ class State(Resource):
                 color = 'grey'
                 break
 
-            if state in ('failure', 'error', 'killed'):
+            if state in ('failure', 'error', 'killed', 'unstable'):
                 status = state
                 color = 'red'
 

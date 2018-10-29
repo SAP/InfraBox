@@ -698,7 +698,7 @@ class Scheduler(object):
             SELECT j.id, j.type, j.dependencies, j.definition
             FROM job j
             WHERE j.state = 'queued' and cluster_name = %s
-            ORDER BY j.created_at
+            ORDER BY j.created_at ASC
         ''', [os.environ['INFRABOX_CLUSTER_NAME']])
         jobs = cursor.fetchall()
         cursor.close()
@@ -920,7 +920,7 @@ class Scheduler(object):
                 continue
 
             last_state = result[0][0]
-            if last_state in ('killed', 'finished', 'error', 'failure'):
+            if last_state in ('killed', 'finished', 'error', 'failure', 'unstable'):
                 self.kube_delete_job(job_id)
                 continue
 
@@ -985,6 +985,21 @@ class Scheduler(object):
 
             if last_state == current_state:
                 continue
+
+            if current_state == 'finished':
+                # Overwrite to unstable if tests failed
+                cursor = self.conn.cursor()
+                cursor.execute("""
+                    SELECT count(*) as cnt
+                    FROM test_run
+                    WHERE job_id = %s
+                    AND state IN ('error', 'failure')
+                """, [job_id])
+                result = cursor.fetchone()
+                cursor.close()
+
+                if result[0]:
+                    current_state = 'unstable'
 
             cursor = self.conn.cursor()
             cursor.execute("""

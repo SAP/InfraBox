@@ -75,7 +75,7 @@ You would add a deployment to your job:
     "deployments": [{
         "type": "gcr",
         "host": "eu.gcr.io",
-        "repository": "<project-name>/<repo-name>",
+        "repository": "<project-id>/<repo-name>",
         "tag": "some optional tag",
         "target": "target build stage",
         "service_account": { "$secret": "GCP_SERVICE_ACCOUNT" },
@@ -92,7 +92,4 @@ Deployments are currently only supported for `docker` job types.
 |repository|true|string||Name of the repository|
 |tag|false|string|build\_\<NUMBER>|The tag of the image|
 |target|false|string||When building a Dockerfile with multiple build stages `target` can be used to specify an intermediate build stage by name as a final stage for the resulting image which should be deployed|
-|region|true|string||AWS Region|
 |service\_account|true|[Secret](/docs/job/secrets.md)||Secret containing the GCP `Service Account` with role `Storage Admin`|
-
-

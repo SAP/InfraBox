@@ -83,7 +83,7 @@ class Section {
 export default class Job {
     constructor (id, name, state,
             startDate, endDate, build, project,
-            dependencies, message, definition, nodeName, avgCpu) {
+            dependencies, message, definition, nodeName, avgCpu, restarted) {
         this.id = id
         this.name = name
         this.state = state
@@ -104,6 +104,7 @@ export default class Job {
         this.definition = definition
         this.nodeName = nodeName
         this.avgCpu = avgCpu
+        this.restarted = restarted
     }
 
     _getTime (d) {
