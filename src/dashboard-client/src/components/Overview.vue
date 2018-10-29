@@ -49,6 +49,11 @@
                     </md-table-row>
                 </md-table-body>
             </md-table>
+            <router-link to="/addproject/" style="color: inherit">
+                <md-button class="md-fab md-fab-bottom-right">
+                    <md-icon>add</md-icon>
+                </md-button>
+            </router-link>
         </md-table-card>
 
         <md-card class="main-card" v-if="!$store.state.projects.length">
@@ -68,12 +73,13 @@
 
                 <p class="md-body-2"><i class="fa fa-info-circle text-blue"></i> If you are completely new to InfraBox or need some further information have a look at the <a href="https://github.com/SAP/InfraBox/blob/master/docs/doc.md" target="_blank">documentation</a>.</p>
             </md-card-area>
+
+            <router-link to="/addproject/" style="color: inherit">
+                <md-button class="md-fab md-fab-bottom-right">
+                    <md-icon>add</md-icon>
+                </md-button>
+            </router-link>
         </md-card>
-        <router-link to="/addproject/" style="color: inherit">
-            <md-button class="md-fab md-fab-bottom-right">
-                <md-icon>add</md-icon>
-            </md-button>
-        </router-link>
     </div>
 </template>
 
