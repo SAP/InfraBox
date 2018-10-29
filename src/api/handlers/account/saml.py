@@ -118,3 +118,32 @@ class SamlMetadata(Resource):
         response = make_response(metadata, 200)
         response.headers["Content-Type"] = "application/xml"
         return response
+
+# Endpoint for SAML Single Logout / SLO (Callback)
+@api.route("/saml/logout")
+class SamlLogout(Resource):
+    def get(self):
+        auth = init_saml_auth()
+        try:
+            redirect_url = auth.process_slo()
+        except Exception as e:
+            logger.error("Single Logout failed: %s", e)
+            return redirect(get_root_url("global"))
+        errors = auth.get_errors()
+        if len(errors) != 0:
+            logger.error("Single Logout failed: %s", "; ".join(errors))
+            return redirect(get_root_url("global"))
+        
+        if redirect_url is None:
+            redirect_url = redirect_url = get_root_url("global")
+
+        response = redirect(redirect_url)
+        response.set_cookie("token", "", expires=0)
+        return response
+
+# Endpoint for initiating a SAML Single Logout / SLO
+@api.route("/saml/initiate-logout")
+class SamlInitiateLogout(Resource):
+    def get(self):
+        auth = init_saml_auth()
+        return redirect(auth.logout())

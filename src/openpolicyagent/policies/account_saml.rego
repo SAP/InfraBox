@@ -17,3 +17,13 @@ allow {
     api.method = "GET"
     api.path = ["saml", "metadata"]
 }
+
+allow {
+    api.method = "GET"
+    api.path = ["saml", "initiate-logout"]
+}
+
+allow {
+    api.method = "GET"
+    api.path = ["saml", "logout"]
+}
