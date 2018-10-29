@@ -13,6 +13,7 @@ from pyinfraboxutils.token import encode_user_token
 
 logger = get_logger("saml")
 
+get_env("INFRABOX_ACCOUNT_SAML_SETTINGS_PATH")
 get_env("INFRABOX_ACCOUNT_SAML_EMAIL_FORMAT")
 get_env("INFRABOX_ACCOUNT_SAML_NAME_FORMAT")
 get_env("INFRABOX_ACCOUNT_SAML_USERNAME_FORMAT")
@@ -29,7 +30,7 @@ def init_saml_auth():
         "query_string": request.query_string
         }
     
-    auth = OneLogin_Saml2_Auth(request_data, custom_base_path="src/api/handlers/account")
+    auth = OneLogin_Saml2_Auth(request_data, custom_base_path=get_env("INFRABOX_ACCOUNT_SAML_SETTINGS_PATH"))
     return auth
 
 def get_attribute_dict(saml_auth):
