@@ -43,7 +43,10 @@ class Parser(object):
             ts_name = 'None'
 
         for el in root:
-            if el.tag != 'testcase':
+            if el.tag == 'testsuite':
+                self.tests.append(self.parse_testsuite(el))
+                continue
+            elif el.tag != 'testcase':
                 continue
 
             error = root.find('error')
