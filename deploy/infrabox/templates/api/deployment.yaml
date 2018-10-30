@@ -46,11 +46,13 @@ spec:
                 {{ include "env_github" . | indent 16 }}
                 {{ include "env_github_secrets" . | indent 16 }}
                 {{ include "env_ldap" . | indent 16 }}
+                {{ include "env_saml" . | indent 16 }}
                 {{ include "env_version" . | indent 16 }}
                 {{ include "env_cluster" . | indent 16 }}
                 {{ include "env_account" . | indent 16 }}
                 {{ include "env_ha" . | indent 16 }}
                 {{ include "env_opa" . | indent 16 }}
+                {{ include "env_legal" . | indent16 }}
                 -
                     name: INFRABOX_GERRIT_ENABLED
                     value: {{ .Values.gerrit.enabled | quote }}

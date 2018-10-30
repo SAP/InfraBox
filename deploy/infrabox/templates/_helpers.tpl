@@ -309,6 +309,35 @@ https://{{- required "host is required" .Values.host -}}:{{- .Values.port -}}
 {{ end }}
 {{ end }}
 
+{{ define "env_saml" }}
+-
+    name: INFRABOX_ACCOUNT_SAML_ENABLED
+    value: {{ .Values.account.saml.enabled | quote }}
+{{ if .Values.account.saml.enabled }}
+-
+    name: INFRABOX_ACCOUNT_SAML_NAME_FORMAT
+    value: "{name}"
+-
+    name: INFRABOX_ACCOUNT_SAML_USERNAME_FORMAT
+    value: "{NameID}"
+-
+    name: INFRABOX_ACCOUNT_SAML_EMAIL_FORMAT
+    value: "{email}"
+-
+    name: INFRABOX_ACCOUNT_SAML_SETTINGS_PATH
+    value: "/src/api/helpers/account"
+{{ end }}
+{{ end }}
+
+{{ define "env_legal" }}
+-
+    name: INFRABOX_LEGAL_PRIVACY_URL
+    value: "https://www.sap.com/about/legal/privacy.html"
+-
+    name: INFRABOX_LEGAL_TERMS_OF_USE_URL
+    value: "https://www.sap.com/corporate/en/legal/terms-of-use.html"
+
+{{ end }}
 
 {{ define "env_github_secrets" }}
 {{ if .Values.github.enabled }}
