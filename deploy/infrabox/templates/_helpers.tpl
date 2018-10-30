@@ -332,10 +332,10 @@ https://{{- required "host is required" .Values.host -}}:{{- .Values.port -}}
 {{ define "env_legal" }}
 -
     name: INFRABOX_LEGAL_PRIVACY_URL
-    value: "https://www.sap.com/about/legal/privacy.html"
+    value: ""
 -
     name: INFRABOX_LEGAL_TERMS_OF_USE_URL
-    value: "https://www.sap.com/corporate/en/legal/terms-of-use.html"
+    value: ""
 
 {{ end }}
 
