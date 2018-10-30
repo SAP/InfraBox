@@ -252,56 +252,64 @@ account:
         # Enables SAML
         enabled: false
 
-        #Strict: In production, the strict parameter MUST be set as "true". Otherwise your environment is not secure and will be exposed to attacks.
+        # Define mapping of saml attributes to user details
+        format:
+            name: '{name}'
+            username: '{NameID}'
+            email: '{email}'
+
+        settings_path: 'src/api/handlers/account'
+
+        # Strict: In production, the strict parameter MUST be set as "true".
         strict: true
         # Enable debug mode (outputs errors).
         debug: false
         # Service Provider
         sp:
             # ID of SP (must be a URI)
-            entityId: # <REQUIRED>
+            entityId: # <REQUIRED> https://host/saml/metadata
             assertionConsumerService:
                 # callback url where the <Response> from the IdP will be returned
-                url: # <REQUIRED>
+                url: # <REQUIRED> https://host/saml/callback
                 # Type of SAML protocol binding for the idp-response
-                binding: # <REQUIRED>
+                binding: urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST
             singleLogoutService:
                 # callback url where the <Response> from the IdP will be returned
-                url: # <REQUIRED>
+                url: # <REQUIRED> https://host/saml/logout
                 # Type of SAML protocol binding for the idp-response
-                binding: # <REQUIRED>
-            #SAML Format
+                binding: urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect
+            # SAML Format
             NameIDFormat: # <REQUIRED>
-            #SP-Certificate
+            # SP certificate
             x509cert: # <REQUIRED>
-            #SP Private Key
+            # SP Private Key
             privateKey: # <REQUIRED>
 
         # Identity Provider
         idp:
-            # ID of IDP
+            # IdP entityID
             entityId: # <REQUIRED>
             singleSignOnService:
-                # url to sso
+                # url to sso service
                 url: # <REQUIRED>
                 # Type of SAML-Binding
-                binding: # <REQUIRED>
+                binding: urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect
             singleLogoutService:
-                # url to slo
+                # url to slo service
                 url: # <REQUIRED>
                 # Type of SAML protocol binding
-                binding: # <REQUIRED>
-            #IDP-Certificate
+                binding: urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect
+            # Public IdP certificate
             x509cert: # <REQUIRED>
 
-        #Advanced settings for saml-security
+        # Advanced settings for saml-security
         advanced:
             nameIdEncrypted: false
             authnRequestsSigned: true
             logoutRequestSigned: false
             logoutResponseSigned: false
             signMetadata: false
-            wantMessagesSigned: true
+            wantMessagesSigned: false
             wantAssertionsSigned: true
             wantAssertionsEncrypted: false
             wantNameId: true
@@ -314,7 +322,6 @@ account:
             metadataCacheDuration: null
             signatureAlgorithm: http://www.w3.org/2000/09/xmldsig#rsa-sha1
             digestAlgorithm: http://www.w3.org/2000/09/xmldsig#sha1
-}
 
 api:
     # Replicas for the API Server
@@ -352,3 +359,7 @@ cachet:
     endpoint: # <REQUIRED> i.e. https://status.example.com/api/v1
 
     api_token: # <REQUIRED>
+
+legal:
+    privacy_url: ""
+    terms_of_use_url: ""
