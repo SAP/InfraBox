@@ -5,7 +5,7 @@
         "logoutRequestSigned": false,
         "logoutResponseSigned": false,
         "signMetadata": false,
-        "wantMessagesSigned": true,
+        "wantMessagesSigned": false,
         "wantAssertionsSigned": true,
         "wantAssertionsEncrypted": false,
         "wantNameId": true,

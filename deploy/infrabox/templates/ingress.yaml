@@ -27,6 +27,14 @@
         servicePort: 8080
 {{ end }}
 
+{{ define "ing_saml"}}
+-
+    path: /saml
+    backend:
+        serviceName: infrabox-api
+        servicePort: 8080
+{{ end }}
+
 
 {{ if .Values.ingress.enabled }}
 apiVersion: extensions/v1beta1
@@ -65,6 +73,13 @@ spec:
                 {{ include "ing_github" . | indent 12 }}
             {{ else if eq .Values.cluster.name "master" }}
                 {{ include "ing_github" . | indent 12 }}
+            {{ end }}
+            {{ end }}
+            {{ if .Values.account.saml.enabled }}
+            {{ if .Values.ha.enabled }}
+                {{ include "ing_saml" . | indent 12 }}
+            {{ else if eq .Values.cluster.name "master" }}
+                {{ include "ing_saml" . | indent 12 }}
             {{ end }}
             {{ end }}
             -

@@ -51,6 +51,10 @@ services:
             # Account
             - INFRABOX_ACCOUNT_SIGNUP_ENABLED=true
             - INFRABOX_ACCOUNT_LDAP_ENABLED=false
+            - INFRABOX_ACCOUNT_SAML_ENABLED=false
+            # Legal
+            - INFRABOX_LEGAL_PRIVACY_URL=
+            - INFRABOX_LEGAL_TERMS_OF_USE_URL=
             # Github
             - INFRABOX_GITHUB_ENABLED=false
             - INFRABOX_GITHUB_LOGIN_ENABLED=false
