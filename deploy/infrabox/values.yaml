@@ -265,6 +265,11 @@ account:
                 url: # <REQUIRED>
                 # Type of SAML protocol binding for the idp-response
                 binding: # <REQUIRED>
+            singleLogoutService:
+                # callback url where the <Response> from the IdP will be returned
+                url: # <REQUIRED>
+                # Type of SAML protocol binding for the idp-response
+                binding: # <REQUIRED>
             #SAML Format
             NameIDFormat: # <REQUIRED>
             #SP-Certificate
@@ -280,6 +285,11 @@ account:
                 # url to sso
                 url: # <REQUIRED>
                 # Type of SAML-Binding
+                binding: # <REQUIRED>
+            singleLogoutService:
+                # url to slo
+                url: # <REQUIRED>
+                # Type of SAML protocol binding
                 binding: # <REQUIRED>
             #IDP-Certificate
             x509cert: # <REQUIRED>

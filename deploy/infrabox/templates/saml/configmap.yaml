@@ -14,6 +14,10 @@ data:
           "url": {{ required "account.saml.sp.assertionConsumerService.url is required" .Values.account.saml.sp.assertionConsumerService.url | quote }},
           "binding": {{ required "account.saml.sp.assertionConsumerService.binding is required" .Values.account.saml.sp.assertionConsumerService.binding | quote }},
         },
+        "singleLogoutService": {
+          "url": {{ required "account.saml.sp.singleLogoutService.url is required" .Values.account.saml.sp.singleLogoutService.url | quote }},
+          "binding": {{ required "account.saml.sp.singleLogoutService.binding is required" .Values.account.saml.sp.singleLogoutService.binding | quote }},
+        },
         "NameIDFormat": {{ required "account.saml.sp.NameIDFormat is required" .Values.account.saml.sp.NameIDFormat | quote }},
         "x509cert": {{ required "account.saml.sp.x509cert is required" .Values.account.saml.sp.x509cert | quote }},
         "privateKey": {{ required "account.saml.sp.privateKey is required" .Values.account.saml.sp.privateKey | quote }},
@@ -23,6 +27,10 @@ data:
         "singleSignOnService": {
           "url": {{ required "account.saml.idp.singleSignOnService.url is required" .Values.account.saml.idp.singleSignOnService.url | quote }},
           "binding": {{ required "account.saml.idp.singleSignOnService.binding is required" .Values.account.saml.idp.singleSignOnService.binding | quote }},
+        },
+        "singleLogoutService": {
+          "url": {{ required "account.saml.idp.singleLogoutService.url is required" .Values.account.saml.idp.singleLogoutService.url | quote }},
+          "binding": {{ required "account.saml.idp.singleLogoutService.binding is required" .Values.account.saml.idp.singleLogoutService.binding | quote }},
         },
         "x509cert": {{ required "account.saml.idp.x509cert is required" .Values.account.saml.idp.x509cert | quote }},
       }
