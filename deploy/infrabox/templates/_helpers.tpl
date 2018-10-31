@@ -316,26 +316,26 @@ https://{{- required "host is required" .Values.host -}}:{{- .Values.port -}}
 {{ if .Values.account.saml.enabled }}
 -
     name: INFRABOX_ACCOUNT_SAML_NAME_FORMAT
-    value: {{ required "account.saml.format.name is required" .Values.account.saml.format.name }}
+    value: {{ .Values.account.saml.format.name }}
 -
     name: INFRABOX_ACCOUNT_SAML_USERNAME_FORMAT
-    value: {{ required "account.saml.format.username is required" .Values.account.saml.format.username }}
+    value: {{ .Values.account.saml.format.username }}
 -
     name: INFRABOX_ACCOUNT_SAML_EMAIL_FORMAT
-    value: {{ required "account.saml.format.email is required" .Values.account.saml.format.email }}
+    value: {{ .Values.account.saml.format.email }}
 -
     name: INFRABOX_ACCOUNT_SAML_SETTINGS_PATH
-    value: {{ required "account.saml.settings_path is required" .Values.account.saml.settings_path }}
+    value: {{ .Values.account.saml.settings_path }}
 {{ end }}
 {{ end }}
 
 {{ define "env_legal" }}
 -
     name: INFRABOX_LEGAL_PRIVACY_URL
-    value: {{ required "legal.privacy_url is required" .Values.legal.privacy_url }}
+    value: {{ .Values.legal.privacy_url }}
 -
     name: INFRABOX_LEGAL_TERMS_OF_USE_URL
-    value: {{ required "legal.terms_of_use_url is required" .Values.legal.terms_of_use_url }}
+    value: {{ .Values.legal.terms_of_use_url }}
 
 {{ end }}
 

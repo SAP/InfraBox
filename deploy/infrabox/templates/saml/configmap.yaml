@@ -5,20 +5,21 @@ metadata:
   namespace: {{ template "system_namespace" . }}
 data:
   settings.json: |-
+    {{ if .Values.account.saml.enabled }}
     {
-      "strict": {{ required "account.saml.strict is required" .Values.account.saml.strict | quote }},
-      "debug": {{ required "account.saml.debug is required" .Values.account.saml.debug | quote }},
+      "strict": {{ .Values.account.saml.strict }},
+      "debug": {{ .Values.account.saml.debug }},
       "sp": {
-        "entityId": {{ required "account.saml.sp.entityId is required" .Values.account.saml.sp.entityId | quote }},
+        "entityId": {{ .Values.account.saml.sp.entityId }},
         "assertionConsumerService": {
-          "url": {{ required "account.saml.sp.assertionConsumerService.url is required" .Values.account.saml.sp.assertionConsumerService.url | quote }},
-          "binding": {{ required "account.saml.sp.assertionConsumerService.binding is required" .Values.account.saml.sp.assertionConsumerService.binding | quote }},
+          "url": {{  .Values.account.saml.sp.assertionConsumerService.url | quote }},
+          "binding": {{  .Values.account.saml.sp.assertionConsumerService.binding | quote }},
         },
         "singleLogoutService": {
-          "url": {{ required "account.saml.sp.singleLogoutService.url is required" .Values.account.saml.sp.singleLogoutService.url | quote }},
-          "binding": {{ required "account.saml.sp.singleLogoutService.binding is required" .Values.account.saml.sp.singleLogoutService.binding | quote }},
+          "url": {{ .Values.account.saml.sp.singleLogoutService.url | quote }},
+          "binding": {{ .Values.account.saml.sp.singleLogoutService.binding | quote }},
         },
-        "NameIDFormat": {{ required "account.saml.sp.NameIDFormat is required" .Values.account.saml.sp.NameIDFormat | quote }},
+        "NameIDFormat": {{ .Values.account.saml.sp.NameIDFormat | quote }},
         "x509cert": {{ required "account.saml.sp.x509cert is required" .Values.account.saml.sp.x509cert | quote }},
         "privateKey": {{ required "account.saml.sp.privateKey is required" .Values.account.saml.sp.privateKey | quote }},
       },
@@ -30,31 +31,34 @@ data:
         },
         "singleLogoutService": {
           "url": {{ required "account.saml.idp.singleLogoutService.url is required" .Values.account.saml.idp.singleLogoutService.url | quote }},
-          "binding": {{ required "account.saml.idp.singleLogoutService.binding is required" .Values.account.saml.idp.singleLogoutService.binding | quote }},
+          "binding": {{ .Values.account.saml.idp.singleLogoutService.binding | quote }},
         },
         "x509cert": {{ required "account.saml.idp.x509cert is required" .Values.account.saml.idp.x509cert | quote }},
       }
     }
+    {{ end }}
   advanced_settings.json: |-
+    {{ if .Values.account.saml.enabled }}
     {
       "security": {
-        "nameIdEncrypted": {{ required "account.saml.advanced.nameIdEncrypted is required" .Values.account.saml.advanced.nameIdEncrypted }},
-        "authnRequestsSigned": {{ required "account.saml.advanced.authnRequestsSigned is required" .Values.account.saml.advanced.authnRequestsSigned }},
-        "logoutRequestSigned": {{ required "account.saml.advanced.logoutRequestSigned is required" .Values.account.saml.advanced.logoutRequestSigned }},
-        "logoutResponseSigned": {{ required "account.saml.advanced.logoutResponseSigned is required" .Values.account.saml.advanced.logoutResponseSigned }},
-        "signMetadata": {{ required "account.saml.advanced.signMetadata is required" .Values.account.saml.advanced.signMetadata }},
-        "wantMessagesSigned": {{ required "account.saml.advanced.wantMessagesSigned is required" .Values.account.saml.advanced.wantMessagesSigned }},
-        "wantAssertionsSigned": {{ required "account.saml.advanced.wantAssertionsSigned is required" .Values.account.saml.advanced.wantAssertionsSigned }},
-        "wantAssertionsEncrypted": {{ required "account.saml.advanced.wantAssertionsEncrypted is required" .Values.account.saml.advanced.wantAssertionsEncrypted }},
-        "wantNameId": {{ required "account.saml.advanced.wantNameId is required" .Values.account.saml.advanced.wantNameId }},
-        "wantNameIdEncrypted": {{ required "account.saml.advanced.wantNameIdEncrypted is required" .Values.account.saml.advanced.wantNameIdEncrypted }},
-        "wantAttributeStatement": {{ required "account.saml.advanced.wantAttributeStatement is required" .Values.account.saml.advanced.wantAttributeStatement }},
-        "rejectUnsolicitedResponsesWithInResponseTo": {{ required "account.saml.advanced.rejectUnsolicitedResponsesWithInResponseTo is required" .Values.account.saml.advanced.rejectUnsolicitedResponsesWithInResponseTo }},
-        "requestedAuthnContext": {{ required "account.saml.advanced.requestedAuthnContext is required" .Values.account.saml.advanced.requestedAuthnContext }},
-        "requestedAuthnContextComparison": {{ required "account.saml.advanced.requestedAuthnContextComparison is required" .Values.account.saml.advanced.requestedAuthnContextComparison | quote }},
-        "metadataValidUntil": {{ required "account.saml.advanced.metadataValidUntil is required" .Values.account.saml.advanced.metadataValidUntil }},
-        "metadataCacheDuration": {{ required "account.saml.advanced.metadataCacheDuration is required" .Values.account.saml.advanced.metadataCacheDuration }},
-        "signatureAlgorithm": {{ required "account.saml.advanced.signatureAlgorithm is required" .Values.account.saml.advanced.signatureAlgorithm | quote }},
-        "digestAlgorithm": {{ required "account.saml.advanced.digestAlgorithm is required" .Values.account.saml.advanced.digestAlgorithm | quote }}
+        "nameIdEncrypted": {{ .Values.account.saml.advanced.nameIdEncrypted }},
+        "authnRequestsSigned": {{ .Values.account.saml.advanced.authnRequestsSigned }},
+        "logoutRequestSigned": {{ .Values.account.saml.advanced.logoutRequestSigned }},
+        "logoutResponseSigned": {{  .Values.account.saml.advanced.logoutResponseSigned }},
+        "signMetadata": {{ .Values.account.saml.advanced.signMetadata }},
+        "wantMessagesSigned": {{ .Values.account.saml.advanced.wantMessagesSigned }},
+        "wantAssertionsSigned": {{ .Values.account.saml.advanced.wantAssertionsSigned }},
+        "wantAssertionsEncrypted": {{ .Values.account.saml.advanced.wantAssertionsEncrypted }},
+        "wantNameId": {{ .Values.account.saml.advanced.wantNameId }},
+        "wantNameIdEncrypted": {{ .Values.account.saml.advanced.wantNameIdEncrypted }},
+        "wantAttributeStatement": {{ .Values.account.saml.advanced.wantAttributeStatement }},
+        "rejectUnsolicitedResponsesWithInResponseTo": {{ .Values.account.saml.advanced.rejectUnsolicitedResponsesWithInResponseTo }},
+        "requestedAuthnContext": {{ .Values.account.saml.advanced.requestedAuthnContext }},
+        "requestedAuthnContextComparison": {{ .Values.account.saml.advanced.requestedAuthnContextComparison | quote }},
+        "metadataValidUntil": {{ .Values.account.saml.advanced.metadataValidUntil }},
+        "metadataCacheDuration": {{ .Values.account.saml.advanced.metadataCacheDuration }},
+        "signatureAlgorithm": {{ .Values.account.saml.advanced.signatureAlgorithm | quote }},
+        "digestAlgorithm": {{ .Values.account.saml.advanced.digestAlgorithm | quote }}
+      }
     }
-}
+    {{ end }}
