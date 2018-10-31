@@ -77,4 +77,4 @@ saml:
         digestAlgorithm: http://www.w3.org/2000/09/xmldsig#sha1
 ```
 
-The format strings can be written using the [Python format string syntax](https://docs.python.org/2/library/string.html#format-string-syntax).
+The format strings can be written using the [Python format string syntax](https://docs.python.org/2/library/string.html#format-string-syntax). Used can be the NameID and all attributes provided by the IdP.

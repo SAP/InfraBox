@@ -52,7 +52,7 @@ spec:
                 {{ include "env_account" . | indent 16 }}
                 {{ include "env_ha" . | indent 16 }}
                 {{ include "env_opa" . | indent 16 }}
-                {{ include "env_legal" . | indent16 }}
+                {{ include "env_legal" . | indent 16 }}
                 -
                     name: INFRABOX_GERRIT_ENABLED
                     value: {{ .Values.gerrit.enabled | quote }}
