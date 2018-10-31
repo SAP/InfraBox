@@ -312,7 +312,7 @@ https://{{- required "host is required" .Values.host -}}:{{- .Values.port -}}
 {{ define "env_saml" }}
 -
     name: INFRABOX_ACCOUNT_SAML_ENABLED
-    value: {{ required "account.saml.enabled is required" .Values.account.saml.enabled | quote }}
+    value: {{ .Values.account.saml.enabled | quote }}
 {{ if .Values.account.saml.enabled }}
 -
     name: INFRABOX_ACCOUNT_SAML_NAME_FORMAT
