@@ -44,7 +44,7 @@ class Parser(object):
 
         for el in root:
             if el.tag == 'testsuite':
-                self.tests.append(self.parse_testsuite(el))
+                self.parse_testsuite(el)
                 continue
             elif el.tag != 'testcase':
                 continue
