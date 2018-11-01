@@ -48,3 +48,24 @@ If your images have to be pulled from a private registry you may configure the c
 |region|true|string||AWS Region|
 |access\_key\_id|true|[Secret](/docs/job/secrets.md)||Secret containing the AWS `Access Key ID`|
 |secret\_access\_key|true|[Secret](/docs/job/secrets.md)||Secret containing AWS `Secret Access Key`|
+
+### GCR
+```json
+{
+    "type": "docker",
+    ...
+    "registries": [{
+        "type": "gcr",
+        "host": "eu.gcr.io",
+        "repository": "<project-id>/<repo-name>",
+        "service_account": { "$secret": "GCP_SERVICE_ACCOUNT" },
+    }]
+}
+```
+
+| Name | Required | Type | Default | Description |
+|------|----------|------|---------|-------------|
+|type|true|string||Has to be "gcr"|
+|host|true|string||GCR endpoint i.e. us.gcr.io|
+|repository|true|string||Name of the repository|
+|service\_account|true|[Secret](/docs/job/secrets.md)||Secret containing the GCP `Service Account` with role `Storage Admin`|

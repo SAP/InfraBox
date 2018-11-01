@@ -1,0 +1,11 @@
+replicaCount: 1
+
+image:
+  repository: quay.io/infrabox/service-aks
+  tag: latest
+
+azure:
+  subscription_id:
+  tenant_id:
+  service_principal:
+  client_secret:
