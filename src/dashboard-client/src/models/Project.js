@@ -6,7 +6,7 @@ import router from '../router'
 import events from '../events'
 
 export default class Project {
-    constructor (name, id, type) {
+    constructor (name, id, type, userrole) {
         this.name = name
         this.id = id
         this.builds = []
@@ -16,14 +16,19 @@ export default class Project {
         this.secrets = null
         this.collaborators = null
         this.roles = null
+        this.userrole = userrole
         this.tokens = null
-        this.numQueuedJobs = 0
+        this.numQueuedJobs = 2
         this.numScheduledJobs = 0
         this.numRunningJobs = 0
     }
 
     isGit () {
         return this.type === 'github' || this.type === 'gerrit'
+    }
+
+    userHasAdminRights () {
+        return this.userrole === 'owner' || this.userrole === 'administrator'
     }
 
     getActiveBuilds () {

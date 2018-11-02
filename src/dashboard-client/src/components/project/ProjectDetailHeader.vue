@@ -77,7 +77,7 @@
                     <md-tab id="build-table" md-label="Builds" md-icon="view_module" :md-options="{new_badge: project.getActiveBuilds().length}" class="widget-container" :md-active="tabIndex==0">
                     </md-tab>
 
-                    <md-tab v-if="$store.state.user" id="project-settings" md-icon="settings" md-label="Settings" :md-active="tabIndex==1">
+                    <md-tab v-if="$store.state.user && project.userHasAdminRights()" id="project-settings" md-icon="settings" md-label="Settings" :md-active="tabIndex==1">
                     </md-tab>
                 </md-tabs>
                 <slot></slot>
