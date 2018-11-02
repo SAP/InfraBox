@@ -18,7 +18,7 @@ export default class Project {
         this.roles = null
         this.userrole = userrole
         this.tokens = null
-        this.numQueuedJobs = 2
+        this.numQueuedJobs = 0
         this.numScheduledJobs = 0
         this.numRunningJobs = 0
     }
