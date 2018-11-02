@@ -10,40 +10,40 @@
                 <md-subheader v-if="project.getActiveBuilds().length===1" style="padding-left=-10px;">Currently one running build.</md-subheader>
                 <md-subheader v-if="project.getActiveBuilds().length===0">Currently no running builds.</md-subheader>
                 <md-subheader v-if="project.getActiveBuilds().length>1">Currently {{ project.getActiveBuilds().length }} running builds.</md-subheader>
-                <md-layout class="m-b-sm m-r-xxl">
-                    <md-layout  md-align="start" md-vertical-align="start" md-flex-xsmall="100" md-flex-small="100" md-flex-medium="100" md-flex-large="100" md-flex-xlarge="100" md-hide-small>
-                        <md-button class="md-raised md-primary md-dense" v-on:click="project.builds[0].clearCache()">
+                <md-layout class="m-b-sm m-r-xxl" v-if="project.userHasDevRights()">
+                    <md-layout md-align="start" md-vertical-align="start" md-flex-xsmall="100" md-flex-small="100" md-flex-medium="100" md-flex-large="100" md-flex-xlarge="100" md-hide-small>
+                        <md-button v-if="project.userHasAdminRights()" class="md-raised md-primary md-dense" v-on:click="project.builds[0].clearCache()">
                             <md-icon>delete_sweep</md-icon><span class="m-l-xs">Clear Cache</span>
                             <md-tooltip md-direction="bottom">Clear Cache</md-tooltip>
                         </md-button>
-                        <md-button class="md-raised md-primary md-dense" v-on:click="triggerBuild()">
+                        <md-button v-if="project.userHasDevRights()" class="md-raised md-primary md-dense" v-on:click="triggerBuild()">
                             <md-icon>replay</md-icon><span class="m-l-xs">Trigger Build</span>
                             <md-tooltip md-direction="bottom">Trigger a new build</md-tooltip>
                         </md-button>
-                        <md-button class="md-raised md-primary md-dense" v-on:click="openDialog('confirmDeleteProject')">
+                        <md-button v-if="project.userHasOwnerRights()" class="md-raised md-primary md-dense" v-on:click="openDialog('confirmDeleteProject')">
                             <md-icon>delete_forever</md-icon><span class="m-l-xs">Delete Project</span>
                             <md-tooltip md-direction="bottom">Remove project permanently from InfraBox</md-tooltip>
                         </md-button>
                     </md-layout>
-                    <md-layout  md-align="start" md-vertical-align="start" md-flex-xsmall="100" md-flex-small="100" md-flex-medium="100" md-flex-large="100" md-flex-xlarge="100" md-hide-medium-and-up>
+                    <md-layout md-align="start" md-vertical-align="start" md-flex-xsmall="100" md-flex-small="100" md-flex-medium="100" md-flex-large="100" md-flex-xlarge="100" md-hide-medium-and-up>
                         <md-table-card class="clean-card">
                             <md-table>
                                 <md-table-body>
                                     <md-table-row style="border-top: none">
                                         <md-table-cell>
-                                            <div class="m-r-xl">
+                                            <div class="m-r-xl" v-if="project.userHasAdminRights()">
                                                 <md-button class="md-icon-button md-primary md-raised md-dense" v-on:click="project.builds[0].clearCache()">
                                                     <md-icon style="color: white">delete_sweep</md-icon>
                                                     <md-tooltip md-direction="bottom">Clear Cache</md-tooltip>
                                                 </md-button>
                                             </div>
-                                            <div class="m-r-xl">
+                                            <div class="m-r-xl" v-if="project.userHasDevRights()">
                                                 <md-button class="md-icon-button md-primary  md-raised md-dense" v-on:click="triggerBuild()">
                                                     <md-icon style="color: white">replay</md-icon>
                                                     <md-tooltip md-direction="bottom">Trigger a new build</md-tooltip>
                                                 </md-button>
                                             </div>
-                                            <div class="m-r-xl">
+                                            <div class="m-r-xl" v-if="project.userHasOwnerRights()">
                                                 <md-button class="md-icon-button md-primary md-raised md-dense" v-on:click="openDialog('confirmDeleteProject')">
                                                     <md-icon style="color: white">delete_forever</md-icon>
                                                     <md-tooltip md-direction="bottom">Remove project permanently from InfraBox</md-tooltip>

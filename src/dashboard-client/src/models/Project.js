@@ -27,8 +27,17 @@ export default class Project {
         return this.type === 'github' || this.type === 'gerrit'
     }
 
+    userHasOwnerRights () {
+        return this.userrole === 'Owner'
+    }
+
     userHasAdminRights () {
-        return this.userrole === 'owner' || this.userrole === 'administrator'
+        return this.userHasOwnerRights() || this.userrole === 'Administrator'
+    }
+
+    userHasDevRights () {
+        console.log(this.userHasAdminRights() || this.userrole === 'Developer')
+        return this.userHasAdminRights() || this.userrole === 'Developer'
     }
 
     getActiveBuilds () {
