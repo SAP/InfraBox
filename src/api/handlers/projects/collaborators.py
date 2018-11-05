@@ -7,6 +7,8 @@ from pyinfraboxutils.ibflask import OK
 from pyinfraboxutils.ibopa import opa_push_collaborator_data
 from pyinfraboxutils.ibrestplus import api, response_model
 
+from quotas.quotas import get_quota_value
+
 ns = api.namespace('Collaborators',
                    path='/api/v1/projects/<project_id>/collaborators',
                    description='Collaborator related operations')
@@ -57,6 +59,13 @@ class Collaborators(Resource):
         b = request.get_json()
         username = b['username']
         userrole = b['role'] if 'role' in b else 'Developer'
+
+        result = g.db.execute_one_dict("""
+            SELECT COUNT(*) as cnt FROM collaborator WHERE project_id = %s
+        """, [project_id])
+
+        if result['cnt'] > get_quota_value('max_collaborator_project', project_id):
+            abort(400, 'Too many collaborator by quotas.')
 
         # Prevent for now a project owner change
         # (Because with GitHub Integration the project owner's GitHub Token will be used)

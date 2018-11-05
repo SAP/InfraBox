@@ -18,11 +18,11 @@ def get_quota_value(name, object_id="default_value"):
                     SELECT value FROM public.quotas WHERE name = %s AND object_id = %s
     """, [name, object_id])
 
-    if quota_value is None:
+    if quota_value == [] or quota_value is None:
         quota_value = db.execute_one("""
-                    SELECT value FROM public.quotas WHERE name = %s
+                    SELECT value FROM public.quotas WHERE name = %s AND object_id = 'default_value'
     """, [name])
-    return quota_value
+    return quota_value[0]
 
 #TODO
 def get_current_data(name):

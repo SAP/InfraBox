@@ -12,6 +12,8 @@ from pyinfraboxutils.ibopa import opa_push_project_data, opa_push_collaborator_d
 
 from Crypto.PublicKey import RSA
 
+from quotas.quotas import get_quota_value
+
 ns = api.namespace('Projects',
                    path='/api/v1/projects',
                    description='Project related operations')
@@ -80,8 +82,8 @@ class Projects(Resource):
             AND co.user_id = %s
         ''', [user_id])
 
-        if projects['cnt'] > 50:
-            abort(400, 'too many projects')
+        if projects['cnt'] > get_quota_value('max_project_user', user_id):
+            abort(400, 'Too many projects by quotas.')
 
         project = g.db.execute_one_dict('''
             SELECT *

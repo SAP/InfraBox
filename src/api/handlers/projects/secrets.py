@@ -8,6 +8,7 @@ from pyinfrabox.utils import validate_uuid
 from pyinfraboxutils.ibflask import OK
 from pyinfraboxutils.ibrestplus import api, response_model
 from pyinfraboxutils.secrets import encrypt_secret
+from quotas.quotas import get_quota_value
 
 ns = api.namespace('Secrets',
                    path='/api/v1/projects/<project_id>/secrets',
@@ -55,8 +56,8 @@ class Secrets(Resource):
             SELECT COUNT(*) as cnt FROM secret WHERE project_id = %s
         """, [project_id])
 
-        if result['cnt'] > 50:
-            abort(400, 'Too many secrets.')
+        if result['cnt'] > get_quota_value('max_secret_project', project_id):
+            abort(400, 'Too many secrets by quotas.')
 
         r = g.db.execute_one("""
                     SELECT count(*) FROM secret
