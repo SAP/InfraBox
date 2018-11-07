@@ -299,6 +299,14 @@ function setAdminQuotas (state, quotas) {
     state.admin.quotas = quotas
 }
 
+function setAdminQuotasUsers (state, quotas) {
+    state.admin.quotas_users = quotas
+}
+
+function setAdminObjectsID (state, objects) {
+    state.admin.objects_id = objects
+}
+
 const mutations = {
     addProjects,
     addJobs,
@@ -320,6 +328,8 @@ const mutations = {
     setAdminUsers,
     setAdminProjects,
     setAdminQuotas,
+    setAdminQuotasUsers,
+    setAdminObjectsID,
     setArchive
 }
 

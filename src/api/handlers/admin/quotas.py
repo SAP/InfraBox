@@ -6,22 +6,24 @@ from pyinfraboxutils.ibflask import OK
 from pyinfraboxutils.ibrestplus import api
 from pyinfraboxutils.token import encode_project_token
 
-@api.route('/api/v1/admin/quotas', doc=False)
+@api.route('/api/v1/admin/quotas/<quota_type>', doc=False)
 class Quotas(Resource):
 
-    def get(self):
+    def get(self, quota_type):
         '''
         Returns quotas
         '''
+
         p = g.db.execute_many_dict('''
-            SELECT name, value, id, object_id
+            SELECT name, value, id, object_id, description
             FROM quotas
+            WHERE object_type = '%s'
             ORDER BY name
-        ''')
+        ''' % (quota_type))
 
         return p
 
-    def post(self):
+    def post(self, quota_type):
         '''
         Create new quota
         '''
@@ -39,9 +41,9 @@ class Quotas(Resource):
             return abort(400, 'Quota with such a name already exists.')
 
         result = g.db.execute_one_dict("""
-            INSERT INTO quotas (value, object_id, name)
-            VALUES (%s, %s, %s) RETURNING id
-        """, [b['value'], b['object_id'], b['name']])
+            INSERT INTO quotas (value, object_id, object_type, name, description)
+            VALUES (%s, %s, %s, %s, %s) RETURNING id
+        """, [b['value'], b['object_id'], quota_type, b['name'], b['description']])
 
         quota_id = result['id']
         quota = encode_project_token(quota_id, b['object_id'])
@@ -50,8 +52,38 @@ class Quotas(Resource):
 
         return OK('Successfully added quota.', {'quota': quota})
 
+@api.route('/api/v1/admin/quotas/users/<user_id>', doc=False)
+class QuotasUser(Resource):
 
-@api.route('/api/v1/admin/quotas/<quota_id>', doc=False)
+    def get(self, user_id):
+        '''
+        Returns quotas
+        '''
+        p = g.db.execute_many_dict('''
+            SELECT name, value, id, object_id, description
+            FROM quotas
+            WHERE object_id = %s OR object_id = 'default_value_user'
+            ORDER BY name
+        ''', [user_id])
+
+        return p
+
+@api.route('/api/v1/admin/quotas/objects_id/<object_type>', doc=False)
+class ObjectsID(Resource):
+
+    def get(self, object_type):
+        '''
+        Returns objects id
+        '''
+        p = g.db.execute_many_dict('''
+            SELECT id, name
+            FROM public.%s
+            ORDER BY name
+        ''' % (object_type))
+
+        return p
+
+@api.route('/api/v1/admin/quota/<quota_id>', doc=False)
 class Quota(Resource):
 
     def delete(self, quota_id):

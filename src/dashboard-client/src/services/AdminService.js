@@ -24,10 +24,30 @@ class AdminService {
             })
     }
 
-    loadQuotas () {
-        return NewAPIService.get(`admin/quotas/`)
+    loadQuotas (Quotatype) {
+        return NewAPIService.get(`admin/quotas/${Quotatype}`)
         .then((s) => {
             store.commit('setAdminQuotas', s)
+        })
+        .catch((err) => {
+            NotificationService.$emit('NOTIFICATION', new Notification(err))
+        })
+    }
+
+    loadQuotasUsers (id) {
+        return NewAPIService.get(`admin/quotas/users/${id}`)
+        .then((s) => {
+            store.commit('setAdminQuotasUsers', s)
+        })
+        .catch((err) => {
+            NotificationService.$emit('NOTIFICATION', new Notification(err))
+        })
+    }
+
+    loadObjectsID (Quotatype) {
+        return NewAPIService.get(`admin/quotas/objects_id/${Quotatype}`)
+        .then((s) => {
+            store.commit('setAdminObjectsID', s)
         })
         .catch((err) => {
             NotificationService.$emit('NOTIFICATION', new Notification(err))
