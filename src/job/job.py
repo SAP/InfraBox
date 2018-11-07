@@ -664,6 +664,8 @@ class RunJob(Job):
 
         collector = StatsCollector()
 
+        self._login_source_registries()
+
         try:
             try:
                 c.execute(['docker-compose', '-f', compose_file_new, 'rm'],
@@ -696,6 +698,8 @@ class RunJob(Job):
                           env=self.environment)
             except Exception as e:
                 logger.exception(e)
+
+        self._logout_source_registries()
 
         for service in compose_file_content['services']:
             image_name = get_registry_name() + '/' \
