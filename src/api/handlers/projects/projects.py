@@ -83,7 +83,7 @@ class Projects(Resource):
             AND co.user_id = %s
         ''', [user_id])
 
-        if projects['cnt'] > get_quota_value('max_project_user', user_id):
+        if projects['cnt'] > get_quota_value('max_project_user', user_id) - 1:
             abort(400, 'Too many projects by quotas.')
 
         project = g.db.execute_one_dict('''

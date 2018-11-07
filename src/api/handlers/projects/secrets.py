@@ -56,7 +56,7 @@ class Secrets(Resource):
             SELECT COUNT(*) as cnt FROM secret WHERE project_id = %s
         """, [project_id])
 
-        if result['cnt'] > get_quota_value('max_secret_project', project_id):
+        if result['cnt'] > get_quota_value('max_secret_project', project_id) - 1:
             abort(400, 'Too many secrets by quotas.')
 
         r = g.db.execute_one("""

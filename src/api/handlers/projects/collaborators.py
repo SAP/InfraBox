@@ -64,7 +64,7 @@ class Collaborators(Resource):
             SELECT COUNT(*) as cnt FROM collaborator WHERE project_id = %s
         """, [project_id])
 
-        if result['cnt'] > get_quota_value('max_collaborator_project', project_id):
+        if result['cnt'] > get_quota_value('max_collaborator_project', project_id) - 1:
             abort(400, 'Too many collaborator by quotas.')
 
         # Prevent for now a project owner change
