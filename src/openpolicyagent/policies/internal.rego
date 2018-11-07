@@ -4,6 +4,6 @@ package infrabox
 import input as api
 
 allow {
-    api.method = "GET"
+    api.method = "POST"
     api.path = ["internal", "api", "job", "consoleupdate"]
 }
