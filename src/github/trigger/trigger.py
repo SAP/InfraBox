@@ -188,9 +188,9 @@ class Trigger(object):
             self.execute('''
                 UPDATE "commit" SET tag = %s WHERE id = %s AND project_id = %s
             ''', [tag, c['id'], project_id], fetch=False)
-
-        if self.has_active_build(commit_id, project_id):
-            return
+        else:
+            if self.has_active_build(commit_id, project_id):
+                return
 
         if not result:
             status_url = repository['statuses_url'].format(sha=c['id'])
