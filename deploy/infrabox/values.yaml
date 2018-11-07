@@ -250,7 +250,7 @@ account:
 
 api:
     # Replicas for the API Server
-    replicas: 1
+    replicas: 2
 
 local_cache:
     # Enable a shared cache for all jobs running on the same machine
