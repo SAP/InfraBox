@@ -24,6 +24,7 @@ from pyinfraboxutils import dbpool
 
 import handlers
 import settings
+import internal
 
 import listeners.console
 import listeners.job
