@@ -25,7 +25,8 @@ project_model = api.model('Project', {
     'id': fields.String(required=True),
     'name': fields.String(required=True),
     'type': fields.String(required=True),
-    'public': fields.Boolean(required=True)
+    'public': fields.Boolean(required=True),
+    'userrole': fields.String(required=False)
 })
 
 add_project_schema = {
@@ -51,7 +52,7 @@ class Projects(Resource):
         Returns user's projects
         '''
         projects = g.db.execute_many_dict("""
-            SELECT p.id, p.name, p.type, p.public
+            SELECT p.id, p.name, p.type, p.public, co.role AS userrole
             FROM project p
             INNER JOIN collaborator co
             ON co.project_id = p.id
@@ -253,11 +254,19 @@ class ProjectName(Resource):
 
     @api.marshal_with(project_model)
     def get(self, project_name):
-        project = g.db.execute_one_dict('''
-            SELECT id, name, type, public
-            FROM project
-            WHERE name = %s
-        ''', [project_name])
+        if g.token and g.token["type"] == "user":
+            project = g.db.execute_one_dict('''
+                SELECT p.id, p.name, p.type, p.public, co.role AS userrole
+                FROM project p
+                LEFT JOIN collaborator co ON p.id = co.project_id AND co.user_id = %s
+                WHERE p.name = %s
+            ''', [g.token["user"]["id"], project_name])
+        else:
+            project = g.db.execute_one_dict('''
+                SELECT id, name, type, public
+                FROM project
+                WHERE name = %s
+            ''', [project_name])
 
         if not project:
             abort(404)
@@ -274,11 +283,20 @@ class Project(Resource):
         '''
         Returns a project
         '''
-        project = g.db.execute_one_dict('''
-            SELECT p.id, p.name, p.type, p.public
-            FROM project p
-            WHERE id = %s
-        ''', [project_id])
+
+        if g.token and g.token["type"] == "user":
+            project = g.db.execute_one_dict('''
+                SELECT p.id, p.name, p.type, p.public, co.role AS userrole
+                FROM project p
+                LEFT JOIN collaborator co ON p.id = co.project_id AND co.user_id = %s
+                WHERE p.id = %s
+            ''', [g.token["user"]["id"], project_id])
+        else:
+            project = g.db.execute_one_dict('''
+                SELECT p.id, p.name, p.type, p.public
+                FROM project p
+                WHERE id = %s
+            ''', [project_id])
 
         return project
 

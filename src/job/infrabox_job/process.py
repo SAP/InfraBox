@@ -29,3 +29,7 @@ class ApiConsole(object):
         h = "## " + h
         self.collect(h, show=show)
         self.collect(('=' * len(h)), show=False)
+
+    def print_failure(self, message):
+        message = "### [level=error] " + message
+        self.collect(message, show=True)

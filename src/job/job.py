@@ -664,6 +664,8 @@ class RunJob(Job):
 
         collector = StatsCollector()
 
+        self._login_source_registries()
+
         try:
             try:
                 c.execute(['docker-compose', '-f', compose_file_new, 'rm'],
@@ -696,6 +698,8 @@ class RunJob(Job):
                           env=self.environment)
             except Exception as e:
                 logger.exception(e)
+
+        self._logout_source_registries()
 
         for service in compose_file_content['services']:
             image_name = get_registry_name() + '/' \
@@ -857,6 +861,7 @@ class RunJob(Job):
                 logger.exception(ex)
                 raise Failure("Could not get exit code of container")
 
+            c.print_failure("Container run exited with error (exit code=%s)" % exit_code)
             c.header("Finalize", show=True)
             logger.exception(e)
             raise Failure("Container run exited with error (exit code=%s)" % exit_code)

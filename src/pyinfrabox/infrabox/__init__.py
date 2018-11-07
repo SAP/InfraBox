@@ -303,7 +303,8 @@ def parse_docker(d, path):
 
 def parse_docker_compose(d, path):
     check_allowed_properties(d, path, ("type", "name", "docker_compose_file", "depends_on",
-                                       "environment", "resources", "cache", "timeout", "cluster", "repository"))
+                                       "environment", "resources", "cache", "timeout", "cluster",
+                                       "repository", "registries"))
     check_required_properties(d, path, ("type", "name", "docker_compose_file", "resources"))
     check_name(d['name'], path + ".name")
     check_text(d['docker_compose_file'], path + ".docker_compose_file")
@@ -326,6 +327,9 @@ def parse_docker_compose(d, path):
 
     if 'environment' in d:
         parse_environment(d['environment'], path + ".environment")
+
+    if 'registries' in d:
+        parse_registries(d['registries'], path + '.registries')
 
 def parse_wait(d, path):
     check_allowed_properties(d, path, ("type", "name", "depends_on"))
