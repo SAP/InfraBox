@@ -857,6 +857,7 @@ class RunJob(Job):
                 logger.exception(ex)
                 raise Failure("Could not get exit code of container")
 
+            c.print_failure("Container run exited with error (exit code=%s)" % exit_code)
             c.header("Finalize", show=True)
             logger.exception(e)
             raise Failure("Container run exited with error (exit code=%s)" % exit_code)
