@@ -6,6 +6,11 @@ from pyinfraboxutils.ibflask import OK
 from pyinfraboxutils.ibrestplus import api
 from pyinfraboxutils.token import encode_project_token
 
+
+from pyinfraboxutils import get_logger
+logger = get_logger('api')
+
+
 @api.route('/api/v1/admin/quotas/<quota_type>', doc=False)
 class Quotas(Resource):
 
@@ -108,3 +113,39 @@ class Quota(Resource):
         g.db.commit()
 
         return OK('Successfully deleted quota.')
+
+
+
+    def post(self, quota_id):
+        '''
+        Update a quota
+        '''
+
+        b = request.get_json()
+
+        if not validate_uuid(quota_id):
+            abort(400, "Invalid quota uuid.")
+
+        num_tokens = g.db.execute_one("""
+            SELECT COUNT(*) FROM quotas
+            WHERE id = %s
+        """, [quota_id])[0]
+
+        if num_tokens == 0:
+            return abort(404, 'Such quota does not exist.')
+
+        g.db.execute('''
+            UPDATE quotas
+            SET value = %s,
+                description = %s
+            WHERE id = %s
+        ''', [str(b['value']), str(b['description']), quota_id])
+
+
+        g.db.commit()
+
+        return OK('Successfully updated quota.')
+
+
+        
+

@@ -43,13 +43,22 @@
                                     {{ quota.name }}
                                 </div>
                                 <div class="md-list-text-container">
-                                    {{ quota.value }}
+                                    <md-input-container class="m-r-sm">
+                                        <md-input type="number" :name="'newValue_' + quota.id + ''" :value="quota.value"></md-input>
+                                    </md-input-container>
                                 </div>
                                 <div class="md-list-text-container">
-                                    {{ quota.description }}
+                                    <md-input-container :name="'newDescription_' + quota.id + ''">
+                                        <md-textarea type="text" :value="quota.description"></md-textarea>
+                                    </md-input-container>
                                 </div>
                                 <div class="md-list-text-container">
                                     {{ quota.object_id }}
+                                </div>
+                                <div class="md-list-text-container">
+                                    <md-button class="md-icon-button md-dense" @click="updateQuota(quota.id)">
+                                        <md-icon>cached</md-icon>
+                                    </md-button>
                                 </div>
                                 <div v-if="!quota.object_id.startsWith('default_value')">
                                     <md-button type="submit" class="md-icon-button md-list-action" @click="deleteQuota(quota.id)">
@@ -133,6 +142,23 @@ export default {
                 NotificationService.$emit('NOTIFICATION', new Notification(response))
                 this.name = ''
                 this.value = ''
+                this._reloadQuotas()
+            })
+            .catch((err) => {
+                NotificationService.$emit('NOTIFICATION', new Notification(err))
+            })
+        },
+        updateQuota (quotaID) {
+            var nameNewValue = 'newValue_' + String(quotaID)
+            var newValue = document.getElementsByName(nameNewValue)[0].value
+            var nameNewDescription = 'newDescription_' + String(quotaID)
+            var newDescription = document.getElementsByName(nameNewDescription)[0].children[0].value
+
+            const d = {value: newValue, description: newDescription}
+
+            NewAPIService.post(`admin/quota/${quotaID}`, d)
+            .then((response) => {
+                NotificationService.$emit('NOTIFICATION', new Notification(response))
                 this._reloadQuotas()
             })
             .catch((err) => {
