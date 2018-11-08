@@ -36,7 +36,7 @@ data:
     [OUTPUT]
         Name  http
         Match *
-        Host infrabox-internal-api.{{ template "system_namespace" . }}
+        Host infrabox-api.{{ template "system_namespace" . }}
         Port 8080
-        URI /api/job/consoleupdate
+        URI /internal/api/job/consoleupdate
         Format json

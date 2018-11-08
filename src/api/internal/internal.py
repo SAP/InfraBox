@@ -1,31 +1,16 @@
 from datetime import datetime
 
-import eventlet
-from eventlet import wsgi
-eventlet.monkey_patch()
-
-from flask import jsonify, g, request
+from flask import g, request
 from flask_restplus import Resource
 
-from pyinfraboxutils import get_env, get_logger
-from pyinfraboxutils.ibflask import app
 from pyinfraboxutils.ibrestplus import api
-from pyinfraboxutils.db import connect_db
 
-logger = get_logger('api')
+ns = api.namespace('Internal',
+                   path='/internal/api',
+                   description='Project related operations')
 
-app.config['OPA_ENABLED'] = False
 
-@app.route('/ping')
-def ping():
-    return jsonify({'status': 200})
-
-@app.route('/v2/') # prevent 301 redirects
-@app.route('/v2')
-def v2():
-    return jsonify({'status': 200})
-
-@api.route("/api/job/consoleupdate", doc=False)
+@ns.route("/job/consoleupdate", doc=False)
 class ConsoleUpdate(Resource):
     def post(self):
         records = request.json
@@ -71,17 +56,3 @@ class ConsoleUpdate(Resource):
 
         return {}
 
-
-def main(): # pragma: no cover
-    get_env('INFRABOX_VERSION')
-    get_env('INFRABOX_DATABASE_HOST')
-    get_env('INFRABOX_DATABASE_USER')
-    get_env('INFRABOX_DATABASE_PASSWORD')
-    get_env('INFRABOX_DATABASE_PORT')
-    get_env('INFRABOX_DATABASE_DB')
-
-    connect_db()
-    wsgi.server(eventlet.listen(('0.0.0.0', 8080)), app)
-
-if __name__ == "__main__": # pragma: no cover
-    main()
