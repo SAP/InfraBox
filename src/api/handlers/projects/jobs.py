@@ -277,7 +277,8 @@ class JobRestart(Resource):
         jobs = []
         for j in restart_jobs:
             jobs += g.db.execute_many_dict('''
-                SELECT id, build_id, type, dockerfile, name, project_id, dependencies, repo, env_var, env_var_ref, build_arg, deployment, definition
+                SELECT id, build_id, type, dockerfile, name, project_id, dependencies,
+                       repo, env_var, env_var_ref, build_arg, deployment, definition, cluster_name
                 FROM job
                 WHERE id = %s;
             ''', [j])
@@ -317,8 +318,8 @@ class JobRestart(Resource):
         for j in jobs:
             g.db.execute('''
                 INSERT INTO job (state, id, build_id, type, dockerfile, name, project_id, dependencies, repo,
-                                 env_var, env_var_ref, build_arg, deployment, definition, restarted)
-                VALUES ('queued', %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, false);
+                                 env_var, env_var_ref, build_arg, deployment, definition, restarted, cluster_name)
+                VALUES ('queued', %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, false, %s);
                 INSERT INTO console (job_id, output)
                 VALUES (%s, %s);
             ''', [j['id'],
@@ -334,6 +335,7 @@ class JobRestart(Resource):
                   json.dumps(j['build_arg']),
                   json.dumps(j['deployment']),
                   json.dumps(j['definition']),
+                  j['cluster_name'],
                   j['id'],
                   msg])
         g.db.commit()
