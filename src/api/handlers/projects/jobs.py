@@ -335,8 +335,8 @@ class JobRestart(Resource):
                   json.dumps(j['build_arg']),
                   json.dumps(j['deployment']),
                   json.dumps(j['definition']),
-                  j['id'],
                   j['cluster_name'],
+                  j['id'],
                   msg])
         g.db.commit()
 
