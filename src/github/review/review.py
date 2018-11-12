@@ -147,7 +147,7 @@ def handle_job_update(conn, event):
                 ''', [])[0]['root_url']
 
     target_url = '%s/dashboard/#/project/%s/build/%s/%s/job/%s' % (dashboard_url,
-                                                                   project_name,
+                                                                   urllib.quote(project_name, safe=''),
                                                                    build_number,
                                                                    build_restartCounter,
                                                                    urllib.quote_plus(job_name).replace('+', '%20'))
