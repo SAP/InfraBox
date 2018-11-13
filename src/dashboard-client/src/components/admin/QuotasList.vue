@@ -8,67 +8,67 @@
         </md-card-header>
         <md-card-area>
             <md-list-item>
-                                <md-input-container class="m-r-sm">
-                                    <label>Quota Name</label>
-                                    <md-input v-model="name" required></md-input>
-                                </md-input-container>
-                                <md-input-container class="m-l-sm">
-                                    <label>Quota Value</label>
-                                    <md-textarea v-model="value" required></md-textarea>
-                                </md-input-container>
-                                <md-input-container class="m-l-sm">
-                                    <label>Description</label>
-                                    <md-textarea v-model="description"></md-textarea>
-                                </md-input-container>
-                                <md-input-container class="m-l-sm">
-                                    <div class="md-list-text-container">
-                                        <span> </span>
-                                        <span>
-                                            <md-input-container>
-                                                <label for="object_id">Object ID</label>
-                                                <md-select name="Object" id="quota_select" v-model="object_id">
-                                                    <md-option ref="object_id" v-for="r in objects_id" :value=r.id :key="r.id" class="bg-white">{{r.name}}</md-option>
-                                                </md-select>
-                                            </md-input-container>
-                                        </span>
-                                    </div>
-                                </md-input-container>
-                                <md-button class="md-icon-button md-list-action" @click="addQuota()">
-                                    <md-icon md-theme="running" class="md-primary">add_circle</md-icon>
-                                    <md-tooltip>Add new Quota</md-tooltip>
-                                </md-button>
-                            </md-list-item>
-                            <md-list-item v-for="quota in quotas" :key="quota.id">
-                                <div class="md-list-text-container">
-                                    {{ quota.name }}
-                                </div>
-                                <div class="md-list-text-container">
-                                    <md-input-container class="m-r-sm">
-                                        <md-input type="number" :name="'newValue_' + quota.id + ''" :value="quota.value"></md-input>
-                                    </md-input-container>
-                                </div>
-                                <div class="md-list-text-container">
-                                    <md-input-container :name="'newDescription_' + quota.id + ''">
-                                        <md-textarea type="text" :value="quota.description"></md-textarea>
-                                    </md-input-container>
-                                </div>
-                                <div class="md-list-text-container">
-                                    {{ quota.object_id }}
-                                </div>
-                                <div class="md-list-text-container">
-                                    <md-button class="md-icon-button md-dense" @click="updateQuota(quota.id)">
-                                        <md-icon>cached</md-icon>
-                                    </md-button>
-                                </div>
-                                <div v-if="!quota.object_id.startsWith('default_value')">
-                                    <md-button type="submit" class="md-icon-button md-list-action" @click="deleteQuota(quota.id)">
-                                        <md-icon class="md-primary">delete</md-icon>
-                                        <md-tooltip>Delete Quota permanently</md-tooltip>
-                                    </md-button>
-                                </div>
-                            </md-list-item>
-                            <!-- -->
-            </md-card-area>
+                <!-- Input for new quota -->
+                <md-input-container class="m-r-sm">
+                    <label>Quota Name</label>
+                    <md-input v-model="name" required></md-input>
+                </md-input-container>
+                <md-input-container class="m-l-sm">
+                    <label>Quota Value</label>
+                    <md-textarea v-model="value" required></md-textarea>
+                </md-input-container>
+                <md-input-container class="m-l-sm">
+                    <label>Description</label>
+                    <md-textarea v-model="description"></md-textarea>
+                </md-input-container>
+                <md-input-container class="m-l-sm">
+                    <div class="md-list-text-container">
+                        <span>
+                            <md-input-container>
+                                <label for="object_id">Object ID</label>
+                                    <md-select name="Object" id="quota_select" v-model="object_id">
+                                        <md-option ref="object_id" v-for="r in objects_id" :value=r.id :key="r.id" class="bg-white">{{r.name}}</md-option>
+                                    </md-select>
+                            </md-input-container>
+                        </span>
+                    </div>
+                </md-input-container>
+                <md-button class="md-icon-button md-list-action" @click="addQuota()">
+                    <md-icon md-theme="running" class="md-primary">add_circle</md-icon>
+                    <md-tooltip>Add new Quota</md-tooltip>
+                </md-button>
+            </md-list-item>
+            <!-- Quotas list -->
+            <md-list-item v-for="quota in quotas" :key="quota.id">
+                <div class="md-list-text-container">
+                    {{ quota.name }}
+                </div>
+                <div class="md-list-text-container">
+                    <md-input-container class="m-r-sm">
+                        <md-input type="number" :name="'newValue_' + quota.id + ''" :value="quota.value"></md-input>
+                    </md-input-container>
+                </div>
+                <div class="md-list-text-container">
+                    <md-input-container :name="'newDescription_' + quota.id + ''">
+                        <md-textarea type="text" :value="quota.description"></md-textarea>
+                    </md-input-container>
+                </div>
+                <div class="md-list-text-container">
+                    {{ quota.object_id }}
+                </div>
+                <div class="md-list-text-container">
+                    <md-button class="md-icon-button md-dense" @click="updateQuota(quota.id)">
+                        <md-icon>cached</md-icon>
+                    </md-button>
+                </div>
+                <div v-if="!quota.object_id.startsWith('default_value')">
+                    <md-button type="submit" class="md-icon-button md-list-action" @click="deleteQuota(quota.id)">
+                        <md-icon class="md-primary">delete</md-icon>
+                        <md-tooltip>Delete Quota permanently</md-tooltip>
+                    </md-button>
+                </div>
+            </md-list-item>
+        </md-card-area>
     </md-card>
 </template>
 
