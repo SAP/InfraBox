@@ -24,6 +24,7 @@ class ApiTestTemplate(unittest.TestCase):
 
         self.project_id = '1514af82-3c4f-4bb5-b1da-a89a0ced5e6f'
         self.user_id = '2514af82-3c4f-4bb5-b1da-a89a0ced5e6f'
+        self.admin_id = '00000000-0000-0000-0000-000000000000'
         self.repo_id = '3514af82-3c4f-4bb5-b1da-a89a0ced5e6f'
         self.build_id = '4514af82-3c4f-4bb5-b1da-a89a0ced5e6f'
         self.job_id = '1454af82-4c4f-4bb5-b1da-a54a0ced5e6f'
@@ -51,6 +52,11 @@ class ApiTestTemplate(unittest.TestCase):
                 INSERT INTO "user" (id, github_id, username, avatar_url)
                 VALUES (%s, %s, %s, 'url');
             """, [self.user_id, self.user_github_id, self.author_name])
+
+        TestClient.execute("""
+                INSERT INTO "user" (id, github_id, username, avatar_url)
+                VALUES (%s, %s, %s, 'url');
+            """, [self.admin_id, self.user_github_id, self.author_name])
 
         TestClient.execute("""
                 INSERT INTO project(id, name, type)
