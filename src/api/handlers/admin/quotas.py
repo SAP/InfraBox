@@ -10,6 +10,22 @@ from pyinfraboxutils.token import encode_project_token
 from pyinfraboxutils import get_logger
 logger = get_logger('api')
 
+@api.route('/api/v1/admin/quotas/name/<quota_name>', doc=False)
+class GetQuota(Resource):
+
+    def get(self, quota_name):
+        '''
+        Returns quota
+        '''
+
+        p = g.db.execute_many_dict('''
+            SELECT name, value, id, object_id, description
+            FROM quotas
+            WHERE name = '%s' AND object_id = 'default_value'
+            ORDER BY name
+        ''' % (quota_name))
+
+        return p[0]
 
 @api.route('/api/v1/admin/quotas/<quota_type>', doc=False)
 class Quotas(Resource):
