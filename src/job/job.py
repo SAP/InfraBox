@@ -310,7 +310,9 @@ class RunJob(Job):
         if self.deployments:
             self.console.collect("Deployments:", show=True)
             for d in self.deployments:
-                self.console.collect("%s" % d['host'], show=True)
+                tag = d.get('tag', 'build_%s' % self.build['build_number'])
+                v = "%s/%s:%s" % (d['host'], d['repository'], tag)
+                self.console.collect(v, show=True)
             self.console.collect("", show=True)
 
         self.get_source()
@@ -895,11 +897,11 @@ class RunJob(Job):
             memory_limit = os.environ['INFRABOX_JOB_RESOURCES_LIMITS_MEMORY']
             cmd += ['-m', '%sm' % memory_limit]
 
+            cmd += ['--build-arg', 'INFRABOX_BUILD_NUMBER=%s' % self.build['build_number']]
+
             if 'build_arguments' in self.job and self.job['build_arguments']:
                 for name, value in self.job['build_arguments'].iteritems():
                     cmd += ['--build-arg', '%s=%s' % (name, value)]
-
-            cmd += ['--build-arg', 'INFRABOX_BUILD_NUMBER=%s' % self.build['build_number']]
 
             if target:
                 cmd += ['--target', target]
