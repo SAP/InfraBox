@@ -337,13 +337,13 @@ export default class Job {
         return NewAPIService.get(`projects/${this.project.id}/jobs/${this.id}/restart`)
             .then((message) => {
                 NotificationService.$emit('NOTIFICATION', new Notification(message, 'done'))
-                let a = this.name.split('.')
-                let name = a[0] + '.'
+                let a = this.name.split(".")
+                let name = a[0] + "."
 
                 if (a.length > 1) {
                     name += (parseInt(a[1]) + 1).toString()
                 } else {
-                    name += '1'
+                    name += "1"
                 }
 
                 router.push(`/project/${this.project.name}/build/${this.build.number}/${this.build.restartCounter}/job/${name}`)
