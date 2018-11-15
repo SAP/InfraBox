@@ -12,10 +12,6 @@ class StateFormat {
     constructor (job) {
         this.jobState = job.state
         this.setFormat(job.state)
-
-        if (job.restarted) {
-            this.stateColor = 'dimgrey'
-        }
     }
 
     setFormat (js) {
@@ -172,7 +168,7 @@ class StateFormat {
 
 class GanttJob {
     constructor (id, name, dependencies, level,
-        state, projectName, buildNumber, buildRestartCounter, restarted) {
+        state, projectName, buildNumber, buildRestartCounter) {
         this.id = id
         this.name = name
         this.dependencies = dependencies
@@ -182,7 +178,6 @@ class GanttJob {
         this.buildNumber = buildNumber
         this.buildRestartCounter = buildRestartCounter
         this.parentElements = []
-        this.restarted = restarted
     }
 }
 
@@ -269,6 +264,10 @@ export class GanttChart {
     }
 
     addJob(j) {
+        if (j.restarted) {
+            return
+        }
+
         for (const job of this.jobs) {
             if (job.id === j.id) {
                 return
@@ -276,7 +275,7 @@ export class GanttChart {
         }
 
         const job = new GanttJob(j.id, j.name, j.dependencies, 0, j.state, j.project.name,
-                                 j.build.number, j.build.restartCounter, j.restarted)
+                                 j.build.number, j.build.restartCounter)
         this.jobs.push(job)
     }
 

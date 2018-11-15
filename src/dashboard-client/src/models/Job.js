@@ -337,14 +337,16 @@ export default class Job {
         return NewAPIService.get(`projects/${this.project.id}/jobs/${this.id}/restart`)
             .then((message) => {
                 NotificationService.$emit('NOTIFICATION', new Notification(message, 'done'))
+                let a = this.name.split(".")
+                let name = a[0] + "."
 
-                this.sections = []
-                this.currentSection = null
-                this.linesProcessed = 0
-                this.endDate = null
-                this.startDate = null
-                this.message = null
-                this.listenConsole()
+                if (a.length > 1) {
+                    name += (parseInt(a[1]) + 1).toString()
+                } else {
+                    name += "1"
+                }
+
+                router.push(`/project/${this.project.name}/build/${this.build.number}/${this.build.restartCounter}/job/${name}`)
             })
             .catch((err) => {
                 NotificationService.$emit('NOTIFICATION', new Notification(err))
