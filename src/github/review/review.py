@@ -94,7 +94,7 @@ def handle_job_update(conn, event):
 
     project_name = project['name']
     job_state = job['state']
-    job_name = job['name'].split(".")[0]
+    job_name = job['name']
     commit_sha = build['commit_id']
     build_id = build['id']
     build_number = build['build_number']
@@ -152,6 +152,7 @@ def handle_job_update(conn, event):
                                                                    build_restartCounter,
                                                                    urllib.quote_plus(job_name).replace('+', '%20'))
 
+    job_name = job_name.split(".")[0]
     payload = {
         "state": state,
         "target_url": target_url,

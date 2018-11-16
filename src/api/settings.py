@@ -3,6 +3,7 @@ import os
 from flask_restplus import Resource, fields
 
 from pyinfraboxutils.ibrestplus import api
+from pyinfraboxutils import get_root_url
 
 ns = api.namespace('Settings',
                    path='/api/v1/settings',
@@ -34,7 +35,7 @@ class Settings(Resource):
             'INFRABOX_GERRIT_ENABLED': os.environ['INFRABOX_GERRIT_ENABLED'] == 'true',
             'INFRABOX_ACCOUNT_SIGNUP_ENABLED': os.environ['INFRABOX_ACCOUNT_SIGNUP_ENABLED'] == 'true',
             'INFRABOX_ACCOUNT_LDAP_ENABLED': os.environ['INFRABOX_ACCOUNT_LDAP_ENABLED'] == 'true',
-            'INFRABOX_ROOT_URL': os.environ['INFRABOX_ROOT_URL'],
+            'INFRABOX_ROOT_URL': get_root_url('global'),
             'INFRABOX_GENERAL_REPORT_ISSUE_URL': os.environ['INFRABOX_GENERAL_REPORT_ISSUE_URL'],
             'INFRABOX_CLUSTER_NAME': os.environ['INFRABOX_CLUSTER_NAME'],
         }
