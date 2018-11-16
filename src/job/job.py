@@ -168,30 +168,18 @@ class RunJob(Job):
                 cmd += ['--single-branch', '-b', branch]
 
         cmd += [clone_url, mount_repo_dir]
-
-        exc = None
-        for _ in range(0, 3):
-            exc = None
-            try:
-                c.execute(cmd, show=True)
-                break
-            except Exception as e:
-                exc = e
-                time.sleep(5)
-
-        if exc:
-            raise exc
+        c.execute(cmd, show=True, retry=True)
 
         if ref:
             cmd = ['git', 'fetch', '--depth=10', clone_url, ref]
-            c.execute(cmd, cwd=mount_repo_dir, show=True)
+            c.execute(cmd, cwd=mount_repo_dir, show=True, retry=True)
 
         c.execute(['git', 'config', 'remote.origin.url', clone_url], cwd=mount_repo_dir, show=True)
         c.execute(['git', 'config', 'remote.origin.fetch', '+refs/heads/*:refs/remotes/origin/*'],
                   cwd=mount_repo_dir, show=True)
 
         if not clone_all:
-            c.execute(['git', 'fetch', 'origin', commit], cwd=mount_repo_dir, show=True)
+            c.execute(['git', 'fetch', 'origin', commit], cwd=mount_repo_dir, show=True, retry=True)
 
         cmd = ['git', 'checkout', '-qf', commit]
 
