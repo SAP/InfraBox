@@ -1,5 +1,7 @@
 import subprocess
 import sys
+import time
+import random
 
 class Failure(Exception):
     def __init__(self, message):
@@ -15,12 +17,23 @@ class ApiConsole(object):
             print line
             sys.stdout.flush()
 
-    def execute(self, command, cwd=None, shell=False, show=False, env=None, ignore_error=False, show_cmd=True):
-        if show_cmd:
-            self.collect(' '.join(command), show=show)
+    def execute(self, command, cwd=None, shell=False, show=False, env=None, ignore_error=False, show_cmd=True, retry=False):
+        for _ in range(0, 5):
+            if show_cmd:
+                self.collect(' '.join(command), show=show)
 
-        p = subprocess.Popen(command, cwd=cwd, env=env, shell=shell)
-        p.wait()
+            p = subprocess.Popen(command, cwd=cwd, env=env, shell=shell)
+            p.wait()
+
+            if p.returncode == 0:
+                return
+
+            if not retry:
+                break
+
+            t = random.randint(10, 100)
+            self.collect('Command failed, retrying in %s seconds' % t, show=show)
+            time.sleep(t)
 
         if p.returncode != 0 and not ignore_error:
             raise Exception('Command failed')
