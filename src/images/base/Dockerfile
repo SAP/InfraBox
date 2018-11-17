@@ -9,6 +9,8 @@ RUN    apt-get update -y \
         python-crypto \
         python-pyasn1 \
         python-ldap \
+        libxml2-dev \
+        libxmlsec1-dev \
     && pip install \
         psycopg2 \
         flask \
