@@ -309,6 +309,35 @@ https://{{- required "host is required" .Values.host -}}:{{- .Values.port -}}
 {{ end }}
 {{ end }}
 
+{{ define "env_saml" }}
+-
+    name: INFRABOX_ACCOUNT_SAML_ENABLED
+    value: {{ .Values.account.saml.enabled | quote }}
+{{ if .Values.account.saml.enabled }}
+-
+    name: INFRABOX_ACCOUNT_SAML_NAME_FORMAT
+    value: {{ .Values.account.saml.format.name }}
+-
+    name: INFRABOX_ACCOUNT_SAML_USERNAME_FORMAT
+    value: {{ .Values.account.saml.format.username }}
+-
+    name: INFRABOX_ACCOUNT_SAML_EMAIL_FORMAT
+    value: {{ .Values.account.saml.format.email }}
+-
+    name: INFRABOX_ACCOUNT_SAML_SETTINGS_PATH
+    value: {{ .Values.account.saml.settings_path }}
+{{ end }}
+{{ end }}
+
+{{ define "env_legal" }}
+-
+    name: INFRABOX_LEGAL_PRIVACY_URL
+    value: {{ .Values.legal.privacy_url }}
+-
+    name: INFRABOX_LEGAL_TERMS_OF_USE_URL
+    value: {{ .Values.legal.terms_of_use_url }}
+
+{{ end }}
 
 {{ define "env_github_secrets" }}
 {{ if .Values.github.enabled }}

@@ -235,7 +235,7 @@ class Login(Resource):
 
         token = encode_user_token(user_id)
         url = get_root_url('global') + '/dashboard/'
-        logger.error(url)
+        logger.debug("Redirecting GitHub user to %s", url)
         res = redirect(url)
         res.set_cookie('token', token)
         return res

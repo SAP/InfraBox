@@ -19,6 +19,9 @@ settings_model = api.model('User', {
     'INFRABOX_GENERAL_REPORT_ISSUE_URL': fields.String,
     'INFRABOX_CLUSTER_NAME': fields.String,
     'INFRABOX_GITHUB_LOGIN_ENABLED': fields.Boolean,
+    'INFRABOX_SSO_LOGIN_ENABLED': fields.Boolean,
+    'INFRABOX_LEGAL_PRIVACY_URL': fields.String,
+    'INFRABOX_LEGAL_TERMS_OF_USE_URL': fields.String
 })
 
 @ns.route('')
@@ -32,12 +35,15 @@ class Settings(Resource):
         github_enabled = os.environ['INFRABOX_GITHUB_ENABLED'] == 'true'
         o = {
             'INFRABOX_GITHUB_ENABLED': github_enabled,
+            'INFRABOX_SSO_LOGIN_ENABLED': os.environ['INFRABOX_ACCOUNT_SAML_ENABLED'] == 'true',
             'INFRABOX_GERRIT_ENABLED': os.environ['INFRABOX_GERRIT_ENABLED'] == 'true',
             'INFRABOX_ACCOUNT_SIGNUP_ENABLED': os.environ['INFRABOX_ACCOUNT_SIGNUP_ENABLED'] == 'true',
             'INFRABOX_ACCOUNT_LDAP_ENABLED': os.environ['INFRABOX_ACCOUNT_LDAP_ENABLED'] == 'true',
             'INFRABOX_ROOT_URL': get_root_url('global'),
             'INFRABOX_GENERAL_REPORT_ISSUE_URL': os.environ['INFRABOX_GENERAL_REPORT_ISSUE_URL'],
             'INFRABOX_CLUSTER_NAME': os.environ['INFRABOX_CLUSTER_NAME'],
+            'INFRABOX_LEGAL_PRIVACY_URL':  os.environ['INFRABOX_LEGAL_PRIVACY_URL'],
+            'INFRABOX_LEGAL_TERMS_OF_USE_URL':  os.environ['INFRABOX_LEGAL_TERMS_OF_USE_URL'],
         }
 
         if github_enabled:

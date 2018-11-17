@@ -151,3 +151,6 @@ After a few seconds you can open your browser and access `https://<YOUR_DOMAIN>`
 
 ## HA mode
 You can deploy multi cluster with [HA mode](/docs/install/ha_mode.md)
+
+## Legal
+You can provide a privacy and terms of use url. These links will show up in the footer.
