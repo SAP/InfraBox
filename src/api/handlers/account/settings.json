@@ -1,0 +1,30 @@
+{
+    "strict": true,
+    "debug": true,
+    "sp": {
+        "entityId": "http://localhost:8080",
+        "assertionConsumerService": {
+            "url": "http://localhost:8080/saml/callback",
+            "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"
+        },
+        "singleLogoutService": {
+            "url": "http://localhost:8080/saml/logout",
+            "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"
+        },
+        "NameIDFormat": "urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified",
+        "x509cert": "MIICxDCCAi2gAwIBAgIBADANBgkqhkiG9w0BAQ0FADB/MQswCQYDVQQGEwJ1czETMBEGA1UECAwKcGFuYW1hcGFuYTERMA8GA1UECgwIZGZhaGRhZmgxDzANBgNVBAMMBmhhZGZoZzENMAsGA1UEBwwEYWZkZzEQMA4GA1UECwwHYWdmZGZkYTEWMBQGCSqGSIb3DQEJARYHZ2FAZGZnYTAeFw0xODEwMjUxMjUzNTVaFw0xOTEwMjUxMjUzNTVaMH8xCzAJBgNVBAYTAnVzMRMwEQYDVQQIDApwYW5hbWFwYW5hMREwDwYDVQQKDAhkZmFoZGFmaDEPMA0GA1UEAwwGaGFkZmhnMQ0wCwYDVQQHDARhZmRnMRAwDgYDVQQLDAdhZ2ZkZmRhMRYwFAYJKoZIhvcNAQkBFgdnYUBkZmdhMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCmhtMOgRXtZuCOMyS9L9IIdHKpq1ujAhtJFMuc7HAin/z1cz3BBOvuOHebii1+kVf5OCH+DDzkBQGvQqh5ERzrSQyPheUbf2x+FW2G638hWanVXGsCVnREj9rh1NGIUTuDHpP/ns+ZdfFivYmiVFTnUwBXdCodHvrEcOWzxve/DwIDAQABo1AwTjAdBgNVHQ4EFgQU9NSNjwZltYN/i9+YVdrhjtT0F2AwHwYDVR0jBBgwFoAU9NSNjwZltYN/i9+YVdrhjtT0F2AwDAYDVR0TBAUwAwEB/zANBgkqhkiG9w0BAQ0FAAOBgQCVd6JHpCZcp8ERwjgjSR8F7VuytdCD+iwyG/ulWg4YFPuenvjrzdzUxv6I23ShHCqOr0BfuSgz/6ZfUhrgZxaL9RtbOZ54NV6nk6kcCNnjIR1ObFDjT3S79od1+I34ADD58Fxt/hLsBT7IstvzzpOLu6tcaJkOhz5dP90PEhrzig==",
+        "privateKey": "MIICeAIBADANBgkqhkiG9w0BAQEFAASCAmIwggJeAgEAAoGBAKaG0w6BFe1m4I4zJL0v0gh0cqmrW6MCG0kUy5zscCKf/PVzPcEE6+44d5uKLX6RV/k4If4MPOQFAa9CqHkRHOtJDI+F5Rt/bH4VbYbrfyFZqdVcawJWdESP2uHU0YhRO4Mek/+ez5l18WK9iaJUVOdTAFd0Kh0e+sRw5bPG978PAgMBAAECgYBqQAXz8CrkcUp/kGQ1jYhuOpZaaWorhJGSPIF5m2YkwX2twhy5xgEe2sp95FkIs4W1DrqplHdZaVRc1aQWsvOGqEuZAFVKzliS3KEnIUofxLt/8GenwRmPXwDc/0wWRyfDhc6Kl2xFTJCbLh+S7cwU/KYKk0B3SNSl8fZdAEeRuQJBANYWiGiDRAKMpMkOpn6inmwQHjwwkLWTqu1/R2cK4PIdvxG1MpeazAIYqkoGEY90foqMDoEAa8EonVDPYElNMoMCQQDHIKem0usDgvlEaWJDIxHKaIs2PwjXnsPi30eVB/MgUH8S8wOTxE14BcHLnSyjW4KCmxedhnQFKmlzFxXkNauFAkEAgUZ9/E43hSqUXuw/0Xw1GZ/qAgJ5f4u5zUvsO+avysP3mqPF9xH8Ws+2FJjxhaScvOCx6WftqWfzBtcSl3DMLQJBAIo0YefpT+/aAYO32NlcB8cCFE0MJujwamiWK6qGH/p3pBrUy9DNWC9LX5wgdJDUvJpFZniQjwney91zUmBX17kCQQCsufmJBaMkvA4Q3Un14gRYjpmQM7F1cFB6Ri5w8FIJbdvjVVkkG18M3M/DyGBfsY6bQyfDRKanaNxkFVie7VVG"
+    },
+    "idp": {
+        "entityId": "http://localhost:9080/simplesaml/saml2/idp/metadata.php",
+        "singleSignOnService": {
+            "url": "http://localhost:9080/simplesaml/saml2/idp/SSOService.php",
+            "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"
+        },
+        "singleLogoutService": {
+            "url": "http://localhost:9080/simplesaml/saml2/idp/SingleLogoutService.php",
+            "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"
+        },
+        "x509cert": "MIIDXTCCAkWgAwIBAgIJALmVVuDWu4NYMA0GCSqGSIb3DQEBCwUAMEUxCzAJBgNVBAYTAkFVMRMwEQYDVQQIDApTb21lLVN0YXRlMSEwHwYDVQQKDBhJbnRlcm5ldCBXaWRnaXRzIFB0eSBMdGQwHhcNMTYxMjMxMTQzNDQ3WhcNNDgwNjI1MTQzNDQ3WjBFMQswCQYDVQQGEwJBVTETMBEGA1UECAwKU29tZS1TdGF0ZTEhMB8GA1UECgwYSW50ZXJuZXQgV2lkZ2l0cyBQdHkgTHRkMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAzUCFozgNb1h1M0jzNRSCjhOBnR+uVbVpaWfXYIR+AhWDdEe5ryY+CgavOg8bfLybyzFdehlYdDRgkedEB/GjG8aJw06l0qF4jDOAw0kEygWCu2mcH7XOxRt+YAH3TVHa/Hu1W3WjzkobqqqLQ8gkKWWM27fOgAZ6GieaJBN6VBSMMcPey3HWLBmc+TYJmv1dbaO2jHhKh8pfKw0W12VM8P1PIO8gv4Phu/uuJYieBWKixBEyy0lHjyixYFCR12xdh4CA47q958ZRGnnDUGFVE1QhgRacJCOZ9bd5t9mr8KLaVBYTCJo5ERE8jymab5dPqe5qKfJsCZiqWglbjUo9twIDAQABo1AwTjAdBgNVHQ4EFgQUxpuwcs/CYQOyui+r1G+3KxBNhxkwHwYDVR0jBBgwFoAUxpuwcs/CYQOyui+r1G+3KxBNhxkwDAYDVR0TBAUwAwEB/zANBgkqhkiG9w0BAQsFAAOCAQEAAiWUKs/2x/viNCKi3Y6blEuCtAGhzOOZ9EjrvJ8+COH3Rag3tVBWrcBZ3/uhhPq5gy9lqw4OkvEws99/5jFsX1FJ6MKBgqfuy7yh5s1YfM0ANHYczMmYpZeAcQf2CGAaVfwTTfSlzNLsF2lW/ly7yapFzlYSJLGoVE+OHEu8g5SlNACUEfkXw+5Eghh+KzlIN7R6Q7r2ixWNFBC/jWf7NKUfJyX8qIG5md1YUeT6GBW9Bm2/1/RiO24JTaYlfLdKK9TYb8sG5B+OLab2DImG99CJ25RkAcSobWNF5zD0O6lgOo3cEdB/ksCq3hmtlC/DlLZ/D8CJ+7VuZnS1rR2naQ=="
+    }
+}

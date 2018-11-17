@@ -104,6 +104,14 @@
             </md-list>
         </md-sidenav>
         <router-view/>
+        <md-footer v-if="$store.state.settings.INFRABOX_LEGAL_PRIVACY_URL || $store.state.settings.INFRABOX_LEGAL_TERMS_OF_USE_URL">
+            <md-footer-copyright slot="copyright">
+                <div class="bg-md md-alignment-center-right p-md text-center">
+                    <a class="m-r-lg" target="_blank" rel="noopener noreferrer" v-bind:href="''+$store.state.settings.INFRABOX_LEGAL_PRIVACY_URL"  v-if="$store.state.settings.INFRABOX_LEGAL_PRIVACY_URL">Privacy</a>
+                    <a target="_blank" rel="noopener noreferrer" v-bind:href="''+$store.state.settings.INFRABOX_LEGAL_TERMS_OF_USE_URL"  v-if="$store.state.settings.INFRABOX_LEGAL_TERMS_OF_USE_URL">Terms of Use</a>
+                </div>
+            </md-footer-copyright>
+        </md-footer>
     </div>
 </template>
 
@@ -118,6 +126,7 @@ export default {
     components: {
         'ib-disconnect': Disconnect
     },
+    store,
     methods: {
         toggleLeftSidenav () {
             this.$refs.leftSidenav.toggle()
@@ -130,8 +139,7 @@ export default {
             this.toggleLeftSidenav()
             router.push('/login')
         }
-    },
-    store
+    }
 }
 </script>
 

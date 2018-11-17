@@ -60,6 +60,10 @@
     background-color: #293846;
 }
 
+.bg-md {
+    background-color: #263238;
+}
+
 .b-r {
     border-right-style: solid;
 }
