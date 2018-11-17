@@ -318,8 +318,6 @@ account:
             rejectUnsolicitedResponsesWithInResponseTo: false
             requestedAuthnContext: true
             requestedAuthnContextComparison: exact
-            metadataValidUntil: null
-            metadataCacheDuration: null
             signatureAlgorithm: http://www.w3.org/2000/09/xmldsig#rsa-sha1
             digestAlgorithm: http://www.w3.org/2000/09/xmldsig#sha1
 
