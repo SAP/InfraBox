@@ -1,3 +1,4 @@
+{{ if .Values.account.saml.enabled }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -5,7 +6,6 @@ metadata:
   namespace: {{ template "system_namespace" . }}
 data:
   settings.json: |-
-    {{ if .Values.account.saml.enabled }}
     {
       "strict": {{ .Values.account.saml.strict }},
       "debug": {{ .Values.account.saml.debug }},
@@ -36,9 +36,7 @@ data:
         "x509cert": {{ required "account.saml.idp.x509cert is required" .Values.account.saml.idp.x509cert | quote }},
       }
     }
-    {{ end }}
   advanced_settings.json: |-
-    {{ if .Values.account.saml.enabled }}
     {
       "security": {
         "nameIdEncrypted": {{ .Values.account.saml.advanced.nameIdEncrypted }},
@@ -61,4 +59,4 @@ data:
         "digestAlgorithm": {{ .Values.account.saml.advanced.digestAlgorithm | quote }}
       }
     }
-    {{ end }}
+{{ end }}

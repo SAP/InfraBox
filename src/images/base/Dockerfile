@@ -28,6 +28,7 @@ RUN    apt-get update -y \
         keystoneauth1==3.7.0 \
         python-swiftclient \
         python-cachetclient \
+        python-saml \
     && apt-get remove -y python-pip \
     && apt-get autoremove -y \
     && rm -rf /var/lib/apt/lists/*

@@ -316,13 +316,13 @@ https://{{- required "host is required" .Values.host -}}:{{- .Values.port -}}
 {{ if .Values.account.saml.enabled }}
 -
     name: INFRABOX_ACCOUNT_SAML_NAME_FORMAT
-    value: {{ .Values.account.saml.format.name }}
+    value: {{ .Values.account.saml.format.name | quote }}
 -
     name: INFRABOX_ACCOUNT_SAML_USERNAME_FORMAT
-    value: {{ .Values.account.saml.format.username }}
+    value: {{ .Values.account.saml.format.username | quote }}
 -
     name: INFRABOX_ACCOUNT_SAML_EMAIL_FORMAT
-    value: {{ .Values.account.saml.format.email }}
+    value: {{ .Values.account.saml.format.email | quote }}
 -
     name: INFRABOX_ACCOUNT_SAML_SETTINGS_PATH
     value: "/var/run/secrets/infrabox.net/saml"
@@ -330,17 +330,21 @@ https://{{- required "host is required" .Values.host -}}:{{- .Values.port -}}
 {{ end }}
 
 {{ define "mounts_saml" }}
+{{ if .Values.account.saml.enabled }}
 -
     name: saml
     mountPath: "/var/run/secrets/infrabox.net/saml"
     readOnly: true
 {{ end }}
+{{ end }}
 
 {{ define "volumes_saml" }}
+{{ if .Values.account.saml.enabled }}
 -
     name: saml
     configMap:
         name: infrabox-saml
+{{ end }}
 {{ end }}
 
 
