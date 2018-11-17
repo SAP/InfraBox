@@ -325,9 +325,24 @@ https://{{- required "host is required" .Values.host -}}:{{- .Values.port -}}
     value: {{ .Values.account.saml.format.email }}
 -
     name: INFRABOX_ACCOUNT_SAML_SETTINGS_PATH
-    value: {{ .Values.account.saml.settings_path }}
+    value: "/var/run/secrets/infrabox.net/saml"
 {{ end }}
 {{ end }}
+
+{{ define "mounts_saml" }}
+-
+    name: saml
+    mountPath: "/var/run/secrets/infrabox.net/saml"
+    readOnly: true
+{{ end }}
+
+{{ define "volumes_saml" }}
+-
+    name: saml
+    configMap:
+        name: infrabox-saml
+{{ end }}
+
 
 {{ define "env_legal" }}
 -
