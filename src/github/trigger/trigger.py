@@ -3,18 +3,22 @@ import hashlib
 import hmac
 from datetime import datetime
 
+import eventlet
+from eventlet import wsgi
+eventlet.monkey_patch()
+
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
-from flask import Response, Flask, request
+from flask import Response, request, g
+from pyinfraboxutils.ibflask import app
 
 from pyinfraboxutils import get_env, get_logger
 from pyinfraboxutils.db import connect_db
 
-app = Flask(__name__)
-
-app.config["MAX_CONTENT_LENGHT"] = 10 * 1024 * 1024
+app.config['MAX_CONTENT_LENGHT'] = 10 * 1024 * 1024
+app.config['OPA_ENABLED'] = False
 
 logger = get_logger("github")
 
@@ -75,20 +79,11 @@ def get_commits(url, token):
 
 
 class Trigger(object):
-    def __init__(self, conn):
-        self.conn = conn
-
     def execute(self, stmt, args=None, fetch=True):
-        cur = self.conn.cursor()
-        cur.execute(stmt, args)
+        if fetch:
+            return g.db.execute_many(stmt, args)
 
-        if not fetch:
-            cur.close()
-            return None
-
-        result = cur.fetchall()
-        cur.close()
-        return result
+        return g.db.execute(stmt, args)
 
     def get_owner_token(self, repo_id):
         return self.execute('''
@@ -269,7 +264,7 @@ class Trigger(object):
         if commit:
             self.create_push(commit, event['repository'], branch, tag)
 
-        self.conn.commit()
+        g.db.commit()
         return res(200, 'ok')
 
 
@@ -407,7 +402,7 @@ class Trigger(object):
                         clone_url,
                         build_id, project_id, None, env=env, fork=is_fork)
 
-        self.conn.commit()
+        g.db.commit()
 
         return res(200, 'ok')
 
@@ -416,7 +411,7 @@ def sign_blob(key, blob):
     return 'sha1=' + hmac.new(key, blob, hashlib.sha1).hexdigest()
 
 @app.route('/github/hook', methods=['POST'])
-def trigger_build(conn):
+def trigger_build():
     headers = dict(request.headers)
 
     if 'X-Github-Event' not in headers:
@@ -435,7 +430,7 @@ def trigger_build(conn):
     if signed != sig:
         return res(400, "X-Hub-Signature does not match blob signature")
 
-    trigger = Trigger(conn)
+    trigger = Trigger()
     if event == 'push':
         return trigger.handle_push(request.get_json())
     elif event == 'pull_request':
@@ -458,7 +453,7 @@ def main():
 
     connect_db() # Wait until DB is ready
 
-    app.run(host='0.0.0.0', port=8080)
+    wsgi.server(eventlet.listen(('0.0.0.0', 8080)), app)
 
 if __name__ == '__main__':
     main()
