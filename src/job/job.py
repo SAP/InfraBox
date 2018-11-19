@@ -186,8 +186,8 @@ class RunJob(Job):
         c.execute(cmd, cwd=mount_repo_dir, show=True)
 
         if submodules:
-            c.execute(['git', 'submodule', 'init'], cwd=mount_repo_dir, show=True)
-            c.execute(['git', 'submodule', 'update'], cwd=mount_repo_dir, show=True)
+            c.execute(['git', 'submodule', 'init'], cwd=mount_repo_dir, show=True, retry=True)
+            c.execute(['git', 'submodule', 'update'], cwd=mount_repo_dir, show=True, retry=True)
 
 
     def get_source(self):
