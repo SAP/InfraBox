@@ -1,0 +1,19 @@
+{{ if .Values.network_policies.enabled }}
+kind: NetworkPolicy
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: default-deny-all
+  namespace: {{ template "worker_namespace" . }}
+spec:
+  podSelector: {}
+  ingress: []
+---
+kind: NetworkPolicy
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: default-deny-all
+  namespace: {{ template "system_namespace" . }}
+spec:
+  podSelector: {}
+  ingress: []
+{{ end }}
