@@ -108,12 +108,9 @@ export default class Job {
     }
 
     _getTime (d) {
-        const parts = d.split(':')
-        const t = new Date()
-
-        t.setHours(parseInt(parts[0], 10))
-        t.setMinutes(parseInt(parts[1], 10))
-        t.setSeconds(parseInt(parts[2], 10))
+        // This date is only used to calculate duration and show local time in console log.
+        // We only care about time, so it's ok to ignore date.
+        const t = new Date('1970-01-01 ' + d + 'Z')
 
         return t
     }
@@ -184,6 +181,13 @@ export default class Job {
         idx = line.indexOf('|Step')
         if (idx >= 0 && idx < 10) {
             return this._addStepSection(line, date)
+        }
+
+        // Replace UTC time with local time
+        idx = line.indexOf('|')
+        if (idx > 0) {
+            let localTime = date.getHours() + ':' + date.getMinutes() + ':' + date.getSeconds()
+            line = localTime + line.substr(idx)
         }
 
         this.currentSection.addLine(line)
