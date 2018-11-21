@@ -27,6 +27,8 @@ class GetQuota(Resource):
 
         return p[0]
 
+
+
 @api.route('/api/v1/admin/quotas/<quota_type>', doc=False)
 class Quotas(Resource):
 
@@ -72,6 +74,22 @@ class Quotas(Resource):
         g.db.commit()
 
         return OK('Successfully added quota.', {'quota': quota})
+
+@api.route('/api/v1/admin/quotas/<quota_type>/<quota_id>', doc=False)
+class QuotasTypeId(Resource):
+
+    def get(self, quota_type, quota_id):
+        '''
+        Returns quotas
+        '''
+        p = g.db.execute_many_dict('''
+            SELECT name, value, id, object_id, description
+            FROM quotas
+            WHERE object_type = %s AND (object_id = %s OR object_id = 'default_value')
+            ORDER BY name
+        ''', [quota_type, quota_id])
+
+        return p
 
 @api.route('/api/v1/admin/quotas/users/<user_id>', doc=False)
 class QuotasUser(Resource):

@@ -27,6 +27,8 @@ from pyinfraboxutils.storage import storage
 from pyinfraboxutils.secrets import decrypt_secret
 from pyinfraboxutils import get_root_url
 
+from quotas.quotas import get_quota_value
+
 def allowed_file(filename, extensions):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in extensions
 
@@ -713,6 +715,17 @@ class CreateJobs(Resource):
             jobname_id[name] = job_id
 
         for job in jobs:
+
+            #Check quotas
+            if job['resources']['limits']['cpu'] > get_quota_value('max_cpu_job', project_id) - 1:
+                abort(400, 'Too many CPU for a job by quotas.')
+
+            if job['resources']['limits']['memory'] > get_quota_value('max_memory_job', project_id) - 1:
+                abort(400, 'Too many memory for a job by quotas.')
+
+            if 'timeout' in job and job['timeout'] > get_quota_value('max_timeout_job', project_id) - 1:
+                    abort(400, 'Too many timeout for a job by quotas.')
+
             job['env_var_refs'] = None
             job['env_vars'] = copy.deepcopy(base_env_var)
 

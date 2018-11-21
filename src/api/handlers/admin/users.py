@@ -8,7 +8,7 @@ class Users(Resource):
 
     def get(self):
         users = g.db.execute_many_dict('''
-            SELECT name, username, email, avatar_url
+            SELECT name, username, email, avatar_url, id
             FROM "user"
             ORDER BY name
         ''')
