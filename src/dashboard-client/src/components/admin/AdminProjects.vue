@@ -27,6 +27,9 @@
 						<md-table-head>
 						    Public
 						</md-table-head>
+						<md-table-head>
+						    Quotas
+						</md-table-head>
 					</md-table-row>
 				</md-table-header>
 				<md-table-body>
@@ -45,6 +48,9 @@
 						</md-table-cell>
 						<md-table-cell>
                             {{ p.public }}
+						</md-table-cell>
+						<md-table-cell>
+							<router-link :to="{name: 'AdminQuotas', params: {Quotatype: 'project', objectID: p.id}}">Edit quotas</router-link>
 						</md-table-cell>
 					</md-table-row>
 				</md-table-body>

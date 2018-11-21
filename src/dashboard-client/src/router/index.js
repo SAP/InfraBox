@@ -67,7 +67,8 @@ export default new Router({
         path: '/admin/quotas',
         name: 'AdminQuotas',
         component: AdminQuotas,
-        beforeEnter: loginGuard
+        beforeEnter: loginGuard,
+        props: true
     }, {
         path: '/project/:projectName',
         name: 'ProjectDetailBuilds',

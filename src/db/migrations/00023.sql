@@ -15,8 +15,8 @@ INSERT INTO quotas (value,object_id,"name",id,description,object_type) VALUES
 ,(50,'default_value','max_project_user','9bc4535f-c625-4333-91a0-28123352b243','max_project_user','user')
 ,(100,'default_value','max_cpu_job','7c5711a6-51a0-4542-bc6b-7b8276e6dcda','Max CPU wich a single job can have','project')
 ,(100,'default_value','max_runningjob_build','a421c213-0742-4995-8ff3-120b394525ce','Not yet implemented','project')
-,(100,'default_value','max_memory_job','781cdb24-7766-4b54-adc0-e616a276865a','Not yet implemented','project')
-,(100,'default_value','max_timeout_job','fe7044dd-b03e-413b-8c13-627d7d952add','Not yet implemented','project')
+,(2048,'default_value','max_memory_job','781cdb24-7766-4b54-adc0-e616a276865a','Not yet implemented','project')
+,(1000,'default_value','max_timeout_job','fe7044dd-b03e-413b-8c13-627d7d952add','Not yet implemented','project')
 ,(100,'default_value','max_runningbuild_project','d692755c-71e7-402c-825f-b26dbf260cca','Not yet implemented','project')
 ,(100,'default_value','max_runningjob_project','f5448b68-b18f-4274-b9ac-d9a4e3ce6977','Not yet implemented','project')
 ;

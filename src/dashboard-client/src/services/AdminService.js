@@ -44,6 +44,16 @@ class AdminService {
         })
     }
 
+    loadQuotasTypeID (type, id) {
+        return NewAPIService.get(`admin/quotas/${type}/${id}`)
+        .then((s) => {
+            store.commit('setAdminQuotas', s)
+        })
+        .catch((err) => {
+            NotificationService.$emit('NOTIFICATION', new Notification(err))
+        })
+    }
+
     loadObjectsID (Quotatype) {
         return NewAPIService.get(`admin/quotas/objects_id/${Quotatype}`)
         .then((s) => {

@@ -39,35 +39,60 @@
                 </md-button>
             </md-list-item>
             <!-- Quotas list -->
-            <md-list-item v-for="quota in quotas" :key="quota.id">
-                <div class="md-list-text-container">
-                    {{ quota.name }}
-                </div>
-                <div class="md-list-text-container">
-                    <md-input-container class="m-r-sm">
-                        <md-input type="number" :name="'newValue_' + quota.id + ''" :value="quota.value"></md-input>
-                    </md-input-container>
-                </div>
-                <div class="md-list-text-container">
-                    <md-input-container :name="'newDescription_' + quota.id + ''">
-                        <md-textarea type="text" :value="quota.description"></md-textarea>
-                    </md-input-container>
-                </div>
-                <div class="md-list-text-container">
-                    {{ quota.object_id }}
-                </div>
-                <div class="md-list-text-container">
-                    <md-button class="md-icon-button md-dense" @click="updateQuota(quota.id)">
-                        <md-icon>cached</md-icon>
-                    </md-button>
-                </div>
-                <div v-if="!quota.object_id.startsWith('default_value')">
-                    <md-button type="submit" class="md-icon-button md-list-action" @click="deleteQuota(quota.id)">
-                        <md-icon class="md-primary">delete</md-icon>
-                        <md-tooltip>Delete Quota permanently</md-tooltip>
-                    </md-button>
-                </div>
-            </md-list-item>
+            <md-table>
+				<md-table-header>
+					<md-table-row>
+						<md-table-head>
+                            Name
+                        </md-table-head>
+						<md-table-head>
+							Value
+						</md-table-head>
+						<md-table-head>
+							Description
+						</md-table-head>
+						<md-table-head>
+							Edit
+						</md-table-head>
+						<md-table-head>
+						    Delete
+						</md-table-head>
+					</md-table-row>
+				</md-table-header>
+                <md-table-body>
+                    <md-table-row v-for="quota in quotas" :key="quota.id">
+                        <!-- -->
+                        <md-table-cell>
+                            {{ quota.name }}
+                        </md-table-cell><!-- -->
+                        <md-table-cell>
+                            <md-input-container class="m-r-sm">
+                                <md-input type="number" :name="'newValue_' + quota.id + ''" :value="quota.value"></md-input>
+                            </md-input-container>
+                        </md-table-cell>
+                        <md-table-cell>
+                            <md-input-container :name="'newDescription_' + quota.id + ''">
+                                <md-textarea type="text" :value="quota.description"></md-textarea>
+                            </md-input-container>
+                        </md-table-cell>
+                        <!-- ->
+                        <div class="md-list-text-container">
+                            {{ quota.object_id }}
+                        </div><!- -->
+                        <md-table-cell>
+                            <md-button class="md-icon-button md-dense" @click="updateQuota(quota.id)">
+                                <md-icon>cached</md-icon>
+                            </md-button>
+                        </md-table-cell>
+                        <md-table-cell v-if="!quota.object_id.startsWith('default_value')">
+                            <md-button type="submit" class="md-icon-button md-list-action" @click="deleteQuota(quota.id)">
+                                <md-icon class="md-primary">delete</md-icon>
+                                <md-tooltip>Delete Quota permanently</md-tooltip>
+                            </md-button>
+                        </md-table-cell>
+                    </md-table-row>
+                </md-table-body>
+            </md-table>
         </md-card-area>
     </md-card>
 </template>
@@ -82,7 +107,7 @@ import AdminService from '../../services/AdminService'
 
 export default {
     name: 'AdminProejcts',
-    props: ['Quotatype'],
+    props: ['Quotatype', 'objectID'],
     store,
     data: () => ({
         quotas: [],
@@ -98,7 +123,12 @@ export default {
     }),
     created () {
         this._reloadQuotas()
-        this._reloadObjectsID()
+
+        if (this.objectID == null) {
+            this._reloadObjectsID()
+        } else {
+            this.objects_id = [{'id': this.objectID, 'name': 'current object'}]
+        }
         // this._reloadQuotasUser()
     },
     methods: {
@@ -111,9 +141,15 @@ export default {
             // this._reloadQuotasUser('00000000-0000-0000-0000-000000000000')
         },
         _reloadQuotas () {
-            return AdminService.loadQuotas(this.Quotatype).then(() => {
-                this.quotas = store.state.admin.quotas
-            })
+            if (this.objectID == null) {
+                return AdminService.loadQuotas(this.Quotatype).then(() => {
+                    this.quotas = store.state.admin.quotas
+                })
+            } else {
+                return AdminService.loadQuotasTypeID(this.Quotatype, this.objectID).then(() => {
+                    this.quotas = store.state.admin.quotas
+                })
+            }
         },
         _reloadQuotasUser (id) {
             return AdminService.loadQuotasUsers(id).then(() => {
