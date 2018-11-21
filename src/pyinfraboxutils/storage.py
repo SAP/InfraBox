@@ -52,17 +52,17 @@ class S3(object):
     def upload_archive(self, stream, key):
         return self._upload(stream, 'archive/%s' % key)
 
-    def download_source(self, key):
-        return self._download('upload/%s' % key)
+    def download_source(self, key, cleanup=True):
+        return self._download('upload/%s' % key, cleanup)
 
-    def download_output(self, key):
-        return self._download('output/%s' % key)
+    def download_output(self, key, cleanup=True):
+        return self._download('output/%s' % key, cleanup)
 
-    def download_archive(self, key):
-        return self._download('archive/%s' % key)
+    def download_archive(self, key, cleanup=True):
+        return self._download('archive/%s' % key, cleanup)
 
-    def download_cache(self, key):
-        return self._download('cache/%s' % key)
+    def download_cache(self, key, cleanup=True):
+        return self._download('cache/%s' % key, cleanup)
 
     def delete_cache(self, key):
         return self._delete('cache/%s' % key)
@@ -83,7 +83,7 @@ class S3(object):
             pass
 
 
-    def _download(self, key):
+    def _download(self, key, cleanup=True):
         client = self._get_client()
         try:
             result = client.get_object(Bucket=self.bucket,
@@ -95,7 +95,7 @@ class S3(object):
         with open(path, 'w+') as f:
             f.write(result['Body'].read())
 
-        if 'g' in globals():
+        if cleanup:
             @after_this_request
             def _remove_file(response):
                 if os.path.exists(path):
@@ -130,17 +130,17 @@ class GCS(object):
     def upload_archive(self, stream, key):
         self._upload(stream, 'archive/%s' % key)
 
-    def download_archive(self, key):
-        return self._download('archive/%s' % key)
+    def download_archive(self, key, cleanup=True):
+        return self._download('archive/%s' % key, cleanup)
 
-    def download_source(self, key):
-        return self._download('upload/%s' % key)
+    def download_source(self, key, cleanup=True):
+        return self._download('upload/%s' % key, cleanup)
 
-    def download_output(self, key):
-        return self._download('output/%s' % key)
+    def download_output(self, key, cleanup=True):
+        return self._download('output/%s' % key, cleanup)
 
-    def download_cache(self, key):
-        return self._download('cache/%s' % key)
+    def download_cache(self, key, cleanup=True):
+        return self._download('cache/%s' % key, cleanup)
 
     def delete_cache(self, key):
         return self._delete('cache/%s' % key)
@@ -160,7 +160,7 @@ class GCS(object):
         blob = bucket.blob(key)
         blob.upload_from_file(stream)
 
-    def _download(self, key):
+    def _download(self, key, cleanup=True):
         client = gcs.Client()
         bucket = client.get_bucket(self.bucket)
         blob = bucket.get_blob(key)
@@ -172,7 +172,7 @@ class GCS(object):
         with open(path, 'w+') as f:
             blob.download_to_file(f)
 
-        if 'g' in globals():
+        if cleanup:
             @after_this_request
             def _remove_file(response):
                 if os.path.exists(path):
@@ -197,17 +197,17 @@ class AZURE(object):
     def upload_archive(self, stream, key):
         return self._upload(stream, 'archive/%s' % key)
 
-    def download_source(self, key):
-        return self._download('upload/%s' % key)
+    def download_source(self, key, cleanup=True):
+        return self._download('upload/%s' % key, cleanup)
 
-    def download_output(self, key):
-        return self._download('output/%s' % key)
+    def download_output(self, key, cleanup=True):
+        return self._download('output/%s' % key, cleanup)
 
-    def download_archive(self, key):
-        return self._download('archive/%s' % key)
+    def download_archive(self, key, cleanup=True):
+        return self._download('archive/%s' % key, cleanup)
 
-    def download_cache(self, key):
-        return self._download('cache/%s' % key)
+    def download_cache(self, key, cleanup=True):
+        return self._download('cache/%s' % key, cleanup)
 
     def delete_cache(self, key):
         return self._delete('cache/%s' % key)
@@ -228,7 +228,7 @@ class AZURE(object):
         except:
             pass
 
-    def _download(self, key):
+    def _download(self, key, cleanup=True):
         client = self._get_client()
         path = '/tmp/%s' % uuid.uuid4()
         try:
@@ -238,7 +238,7 @@ class AZURE(object):
         except:
             return None
 
-        if 'g' in globals():
+        if cleanup:
             @after_this_request
             def _remove_file(response):
                 if os.path.exists(path):
@@ -272,17 +272,17 @@ class SWIFT(object):
     def upload_archive(self, stream, key):
         return self._upload(stream, 'archive/%s' % key)
 
-    def download_source(self, key):
-        return self._download('upload/%s' % key)
+    def download_source(self, key, cleanup=True):
+        return self._download('upload/%s' % key, cleanup)
 
-    def download_output(self, key):
-        return self._download('output/%s' % key)
+    def download_output(self, key, cleanup=True):
+        return self._download('output/%s' % key, cleanup)
 
-    def download_archive(self, key):
-        return self._download('archive/%s' % key)
+    def download_archive(self, key, cleanup=True):
+        return self._download('archive/%s' % key, cleanup)
 
-    def download_cache(self, key):
-        return self._download('cache/%s' % key)
+    def download_cache(self, key, cleanup=True):
+        return self._download('cache/%s' % key, cleanup)
 
     def delete_cache(self, key):
         return self._delete('cache/%s' % key)
@@ -305,7 +305,7 @@ class SWIFT(object):
         except:
             pass
 
-    def _download(self, key):
+    def _download(self, key, cleanup=True):
         client = self._get_client()
         path = '/tmp/%s' % uuid.uuid4()
         try:
@@ -315,7 +315,7 @@ class SWIFT(object):
         except:
             return None
 
-        if 'g' in globals():
+        if cleanup:
             @after_this_request
             def _remove_file(response):
                 if os.path.exists(path):
