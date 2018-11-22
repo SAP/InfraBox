@@ -8,6 +8,7 @@ from pyinfraboxutils import get_env, get_logger
 from pyinfraboxutils.ibflask import app
 
 logger = get_logger('state')
+app.config['OPA_ENABLED'] = False
 
 @app.route('/')
 def ping():
