@@ -3,13 +3,22 @@
         <md-layout md-column md-gutter md-flex-xsmall="5" md-flex-small="5" md-flex-medium="10" md-flex-large="25"></md-layout>
         <md-layout md-column md-gutter md-flex-xsmall="90" md-flex-small="90" md-flex-medium="80" md-flex-large="50">
             <md-card class="clean-card">
+
+                <md-card-header class="text-center">
+                    <div class="m-xl text-center">
+                        <img src="../../../static/logo_on_transparent.svg" width="50%">
+                    </div>
+                    <div class="md-subheading text-center">Welcome to InfraBox!</div>
+                </md-card-header>
                 <md-card-area>
-                    <md-card-header class="text-center">
-                        <div class="m-xl text-center">
-                            <img src="../../../static/logo_on_transparent.svg" width="50%">
-                        </div>
-                        <div class="md-subheading text-center">Welcome to InfraBox!</div>
-                    </md-card-header>
+                    <md-card-content class="m-xl" v-if="$store.state.settings.INFRABOX_SSO_LOGIN_ENABLED">
+                        <md-button md-theme="default"
+                            @click="loginSSO()"
+                            class="md-raised md-primary">
+                            <i class="fa fa-fw fa-building"></i><span> Login with SSO</span></md-button>
+                    </md-card-content>
+                </md-card-area>
+                <md-card-area>
                     <md-card-content class="m-xl">
                         <md-input-container :class="{'md-input-invalid': !mailValid}">
                             <md-input type="email" v-model="mail" name="email" @keyup.enter.native="login" required/>
@@ -95,6 +104,9 @@ export default {
             }).catch((err) => {
                 NotificationService.$emit('NOTIFICATION', new Notification(err))
             })
+        },
+        loginSSO () {
+            window.location.href = '/saml/auth'
         }
     }
 }

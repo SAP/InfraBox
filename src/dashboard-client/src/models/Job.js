@@ -108,12 +108,9 @@ export default class Job {
     }
 
     _getTime (d) {
-        const parts = d.split(':')
-        const t = new Date()
-
-        t.setHours(parseInt(parts[0], 10))
-        t.setMinutes(parseInt(parts[1], 10))
-        t.setSeconds(parseInt(parts[2], 10))
+        // This date is only used to calculate duration and show local time in console log.
+        // We only care about time, so it's ok to ignore date.
+        const t = new Date('1970-01-01 ' + d + 'Z')
 
         return t
     }
@@ -184,6 +181,13 @@ export default class Job {
         idx = line.indexOf('|Step')
         if (idx >= 0 && idx < 10) {
             return this._addStepSection(line, date)
+        }
+
+        // Replace UTC time with local time
+        idx = line.indexOf('|')
+        if (idx > 0) {
+            let localTime = date.getHours() + ':' + date.getMinutes() + ':' + date.getSeconds()
+            line = localTime + line.substr(idx)
         }
 
         this.currentSection.addLine(line)
@@ -337,14 +341,16 @@ export default class Job {
         return NewAPIService.get(`projects/${this.project.id}/jobs/${this.id}/restart`)
             .then((message) => {
                 NotificationService.$emit('NOTIFICATION', new Notification(message, 'done'))
+                let a = this.name.split('.')
+                let name = a[0] + '.'
 
-                this.sections = []
-                this.currentSection = null
-                this.linesProcessed = 0
-                this.endDate = null
-                this.startDate = null
-                this.message = null
-                this.listenConsole()
+                if (a.length > 1) {
+                    name += (parseInt(a[1]) + 1).toString()
+                } else {
+                    name += '1'
+                }
+
+                router.push(`/project/${this.project.name}/build/${this.build.number}/${this.build.restartCounter}/job/${name}`)
             })
             .catch((err) => {
                 NotificationService.$emit('NOTIFICATION', new Notification(err))

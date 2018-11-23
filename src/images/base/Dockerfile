@@ -9,6 +9,8 @@ RUN    apt-get update -y \
         python-crypto \
         python-pyasn1 \
         python-ldap \
+        libxml2-dev \
+        libxmlsec1-dev \
     && pip install \
         psycopg2 \
         flask \
@@ -27,8 +29,8 @@ RUN    apt-get update -y \
         azure-storage \
         keystoneauth1==3.7.0 \
         python-swiftclient \
-        bottle \
         python-cachetclient \
+        python-saml \
     && apt-get remove -y python-pip \
     && apt-get autoremove -y \
     && rm -rf /var/lib/apt/lists/*

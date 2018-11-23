@@ -43,6 +43,13 @@ spec:
                     serviceName: infrabox-api
                     servicePort: 8080
             {{ end }}
+            {{ if .Values.account.saml.enabled }}
+            -
+                path: /saml
+                backend:
+                    serviceName: infrabox-api
+                    servicePort: 8080
+            {{ end }}
             {{ if .Values.monitoring.enabled }}
             -
                 path: /grafana

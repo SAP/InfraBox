@@ -184,7 +184,12 @@ def handle_job_update(conn, event):
         update_vote = False
 
     c = conn.cursor()
-    c.execute('''SELECT state, count(*) FROM job WHERE build_id = %s GROUP BY state''', [build_id])
+    c.execute('''
+        SELECT state, count(*)
+        FROM job
+        WHERE build_id = %s
+        AND restarted = false
+        GROUP BY state''', [build_id])
     states = c.fetchall()
     c.close()
 

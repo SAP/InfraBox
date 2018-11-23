@@ -11,7 +11,6 @@ from pyinfrabox.utils import validate_uuid
 from pyinfraboxutils import get_logger, get_env, dbpool
 from pyinfraboxutils.db import DB, connect_db
 from pyinfraboxutils.token import decode
-from pyinfraboxutils.ibopa import opa_do_auth
 
 app = Flask(__name__)
 app.url_map.strict_slashes = False
@@ -139,6 +138,7 @@ def check_request_authorization():
         if original_method is not None:
             opa_input["input"]["original_method"] = original_method
 
+        from pyinfraboxutils.ibopa import opa_do_auth
         is_authorized = opa_do_auth(opa_input)
 
         if not is_authorized:

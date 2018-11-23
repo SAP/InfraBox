@@ -46,6 +46,7 @@ export INFRABOX_STORAGE_SWIFT_ENABLED=false
 # Account
 export INFRABOX_ACCOUNT_SIGNUP_ENABLED=true
 export INFRABOX_ACCOUNT_LDAP_ENABLED=false
+export INFRABOX_ACCOUNT_SAML_ENABLED=false
 
 # Github
 export INFRABOX_GITHUB_ENABLED=false
@@ -60,6 +61,10 @@ export INFRABOX_RSA_PUBLIC_KEY_PATH=../../infrabox/test/utils/id_rsa.pub
 
 #HA Mode
 export INFRABOX_HA_ENABLED=false
+
+#Legal
+export INFRABOX_LEGAL_PRIVACY_URL=https://www.sap.com/about/legal/privacy.html
+export INFRABOX_LEGAL_TERMS_OF_USE_URL=https://www.sap.com/corporate/en/legal/terms-of-use.html
 
 
 python server.py
