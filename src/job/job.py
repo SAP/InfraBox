@@ -523,24 +523,24 @@ class RunJob(Job):
             self.upload_badge_files()
             self.upload_archive()
 
+            # Compressing output
+            c.collect("Uploading /infrabox/output", show=True)
+            if os.path.isdir(self.infrabox_output_dir) and os.listdir(self.infrabox_output_dir):
+                storage_output_dir = os.path.join(self.storage_dir, self.job['id'])
+                os.makedirs(storage_output_dir)
+
+                storage_output_tar = os.path.join(storage_output_dir, 'output.tar.snappy')
+                self.compress(self.infrabox_output_dir, storage_output_tar)
+                file_size = os.stat(storage_output_tar).st_size
+
+                c.collect("Output size: %s kb" % (file_size / 1024), show=True)
+                self.post_file_to_api_server("/output", storage_output_tar, split=True)
+            else:
+                c.collect("Output is empty", show=True)
+
+            c.collect("", show=True)
+
         self.create_dynamic_jobs()
-
-        # Compressing output
-        c.collect("Uploading /infrabox/output", show=True)
-        if os.path.isdir(self.infrabox_output_dir) and os.listdir(self.infrabox_output_dir):
-            storage_output_dir = os.path.join(self.storage_dir, self.job['id'])
-            os.makedirs(storage_output_dir)
-
-            storage_output_tar = os.path.join(storage_output_dir, 'output.tar.snappy')
-            self.compress(self.infrabox_output_dir, storage_output_tar)
-            file_size = os.stat(storage_output_tar).st_size
-
-            c.collect("Output size: %s kb" % (file_size / 1024), show=True)
-            self.post_file_to_api_server("/output", storage_output_tar, split=True)
-        else:
-            c.collect("Output is empty", show=True)
-
-        c.collect("", show=True)
 
         # Compressing cache
         c.collect("Uploading /infrabox/cache", show=True)
