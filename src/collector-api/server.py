@@ -26,6 +26,9 @@ class Ping(Resource):
         return {'status': 200}
 
 def handle_entry(entry):
+    if 'kubernetes' not in entry:
+        return
+
     e = entry['kubernetes']
     pod_path = os.path.join(storage_path, e['pod_id'])
 
@@ -35,6 +38,9 @@ def handle_entry(entry):
     metadata_path = os.path.join(pod_path, "metadata.json")
     log_path = os.path.join(pod_path, e['container_name'] +".log")
 
+    logger.error(json.dumps(entry))
+    logger.error(metadata_path)
+    logger.error(log_path)
 
     if not os.path.exists(metadata_path):
         with open(metadata_path, 'w+') as metadata_file:
@@ -113,6 +119,9 @@ class PodLog(Resource):
 
 def main(): # pragma: no cover
     app.config['MAX_CONTENT_LENGTH'] = 1024 * 1024 * 1024 * 4
+
+    if not os.path.exists(storage_path):
+        os.makedirs(storage_path)
 
     port = int(os.environ.get('INFRABOX_PORT', 8080))
     logger.info('Starting Server on port %s', port)
