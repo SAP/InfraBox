@@ -9,7 +9,7 @@
         "resources": {
             "limits": {
                 "cpu": 1,
-                "memory": 1024
+                "memory": 2048
             }
         },
         "deployments": [
