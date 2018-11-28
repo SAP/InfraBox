@@ -4,7 +4,8 @@ import uuid
 
 import boto3
 from google.cloud import storage as gcs
-from flask import after_this_request
+from flask import after_this_request, g
+from flask import _app_ctx_stack as stack
 from azure.storage.blob import BlockBlobService
 from keystoneauth1 import session
 from keystoneauth1.identity import v3
@@ -17,6 +18,9 @@ USE_GCS = get_env('INFRABOX_STORAGE_GCS_ENABLED') == 'true'
 USE_AZURE = get_env('INFRABOX_STORAGE_AZURE_ENABLED') == 'true'
 USE_SWIFT = get_env('INFRABOX_STORAGE_SWIFT_ENABLED') == 'true'
 storage = None
+
+def in_flask_ctx():
+    return stack.top != None
 
 class S3(object):
     def __init__(self):
@@ -52,17 +56,17 @@ class S3(object):
     def upload_archive(self, stream, key):
         return self._upload(stream, 'archive/%s' % key)
 
-    def download_source(self, key, cleanup=True):
-        return self._download('upload/%s' % key, cleanup)
+    def download_source(self, key):
+        return self._download('upload/%s' % key)
 
-    def download_output(self, key, cleanup=True):
-        return self._download('output/%s' % key, cleanup)
+    def download_output(self, key):
+        return self._download('output/%s' % key)
 
-    def download_archive(self, key, cleanup=True):
-        return self._download('archive/%s' % key, cleanup)
+    def download_archive(self, key):
+        return self._download('archive/%s' % key)
 
-    def download_cache(self, key, cleanup=True):
-        return self._download('cache/%s' % key, cleanup)
+    def download_cache(self, key):
+        return self._download('cache/%s' % key)
 
     def delete_cache(self, key):
         return self._delete('cache/%s' % key)
@@ -83,7 +87,7 @@ class S3(object):
             pass
 
 
-    def _download(self, key, cleanup=True):
+    def _download(self, key):
         client = self._get_client()
         try:
             result = client.get_object(Bucket=self.bucket,
@@ -95,7 +99,7 @@ class S3(object):
         with open(path, 'w+') as f:
             f.write(result['Body'].read())
 
-        if cleanup:
+        if in_flask_ctx():
             @after_this_request
             def _remove_file(response):
                 if os.path.exists(path):
@@ -130,17 +134,17 @@ class GCS(object):
     def upload_archive(self, stream, key):
         self._upload(stream, 'archive/%s' % key)
 
-    def download_archive(self, key, cleanup=True):
-        return self._download('archive/%s' % key, cleanup)
+    def download_archive(self, key):
+        return self._download('archive/%s' % key)
 
-    def download_source(self, key, cleanup=True):
-        return self._download('upload/%s' % key, cleanup)
+    def download_source(self, key):
+        return self._download('upload/%s' % key)
 
-    def download_output(self, key, cleanup=True):
-        return self._download('output/%s' % key, cleanup)
+    def download_output(self, key):
+        return self._download('output/%s' % key)
 
-    def download_cache(self, key, cleanup=True):
-        return self._download('cache/%s' % key, cleanup)
+    def download_cache(self, key):
+        return self._download('cache/%s' % key)
 
     def delete_cache(self, key):
         return self._delete('cache/%s' % key)
@@ -160,7 +164,7 @@ class GCS(object):
         blob = bucket.blob(key)
         blob.upload_from_file(stream)
 
-    def _download(self, key, cleanup=True):
+    def _download(self, key):
         client = gcs.Client()
         bucket = client.get_bucket(self.bucket)
         blob = bucket.get_blob(key)
@@ -172,7 +176,7 @@ class GCS(object):
         with open(path, 'w+') as f:
             blob.download_to_file(f)
 
-        if cleanup:
+        if in_flask_ctx():
             @after_this_request
             def _remove_file(response):
                 if os.path.exists(path):
@@ -197,17 +201,17 @@ class AZURE(object):
     def upload_archive(self, stream, key):
         return self._upload(stream, 'archive/%s' % key)
 
-    def download_source(self, key, cleanup=True):
-        return self._download('upload/%s' % key, cleanup)
+    def download_source(self, key):
+        return self._download('upload/%s' % key)
 
-    def download_output(self, key, cleanup=True):
-        return self._download('output/%s' % key, cleanup)
+    def download_output(self, key):
+        return self._download('output/%s' % key)
 
-    def download_archive(self, key, cleanup=True):
-        return self._download('archive/%s' % key, cleanup)
+    def download_archive(self, key):
+        return self._download('archive/%s' % key)
 
-    def download_cache(self, key, cleanup=True):
-        return self._download('cache/%s' % key, cleanup)
+    def download_cache(self, key):
+        return self._download('cache/%s' % key)
 
     def delete_cache(self, key):
         return self._delete('cache/%s' % key)
@@ -228,7 +232,7 @@ class AZURE(object):
         except:
             pass
 
-    def _download(self, key, cleanup=True):
+    def _download(self, key):
         client = self._get_client()
         path = '/tmp/%s' % uuid.uuid4()
         try:
@@ -238,7 +242,7 @@ class AZURE(object):
         except:
             return None
 
-        if cleanup:
+        if in_flask_ctx():
             @after_this_request
             def _remove_file(response):
                 if os.path.exists(path):
@@ -272,17 +276,17 @@ class SWIFT(object):
     def upload_archive(self, stream, key):
         return self._upload(stream, 'archive/%s' % key)
 
-    def download_source(self, key, cleanup=True):
-        return self._download('upload/%s' % key, cleanup)
+    def download_source(self, key):
+        return self._download('upload/%s' % key)
 
-    def download_output(self, key, cleanup=True):
-        return self._download('output/%s' % key, cleanup)
+    def download_output(self, key):
+        return self._download('output/%s' % key)
 
-    def download_archive(self, key, cleanup=True):
-        return self._download('archive/%s' % key, cleanup)
+    def download_archive(self, key):
+        return self._download('archive/%s' % key)
 
-    def download_cache(self, key, cleanup=True):
-        return self._download('cache/%s' % key, cleanup)
+    def download_cache(self, key):
+        return self._download('cache/%s' % key)
 
     def delete_cache(self, key):
         return self._delete('cache/%s' % key)
@@ -305,7 +309,7 @@ class SWIFT(object):
         except:
             pass
 
-    def _download(self, key, cleanup=True):
+    def _download(self, key):
         client = self._get_client()
         path = '/tmp/%s' % uuid.uuid4()
         try:
@@ -315,7 +319,7 @@ class SWIFT(object):
         except:
             return None
 
-        if cleanup:
+        if in_flask_ctx():
             @after_this_request
             def _remove_file(response):
                 if os.path.exists(path):
