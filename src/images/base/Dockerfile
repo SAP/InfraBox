@@ -11,6 +11,8 @@ RUN    apt-get update -y \
         python-ldap \
         libxml2-dev \
         libxmlsec1-dev \
+        python-paramiko \
+        openssh-client \
     && pip install \
         psycopg2 \
         flask \
