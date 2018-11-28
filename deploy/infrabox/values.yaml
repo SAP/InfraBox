@@ -361,3 +361,6 @@ cachet:
 legal:
     privacy_url: ""
     terms_of_use_url: ""
+
+network_policies:
+    enabled: false
