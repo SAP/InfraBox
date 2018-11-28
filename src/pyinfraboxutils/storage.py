@@ -19,37 +19,28 @@ USE_AZURE = get_env('INFRABOX_STORAGE_AZURE_ENABLED') == 'true'
 USE_SWIFT = get_env('INFRABOX_STORAGE_SWIFT_ENABLED') == 'true'
 storage = None
 
-def clean_up(path):
-    if not stack.pop():
-        return
-    #inside a flask request
-    @after_this_request
-    def _remove_file(response):
-        if os.path.exists(path):
-            os.remove(path)
-        return response
-
-class S3(object):
+class Storage(object):
     def __init__(self):
-        url = ''
-
-        if get_env('INFRABOX_STORAGE_S3_SECURE') == 'true':
-            url = 'https://'
-        else:
-            url = 'http://'
-        url += get_env('INFRABOX_STORAGE_S3_ENDPOINT')
-        url += ':'
-        url += get_env('INFRABOX_STORAGE_S3_PORT')
-        self.url = url
-
-        self.bucket = get_env('INFRABOX_STORAGE_S3_BUCKET')
-        self.create_buckets()
+        return
 
     def _upload(self, stream, key):
-        client = self._get_client()
-        client.put_object(Body=stream,
-                          Bucket=self.bucket,
-                          Key=key)
+        return
+
+    def _download(self, key):
+        return
+
+    def _delete(self, key):
+        return
+
+    def _clean_up(self, path):
+        if not stack.pop():
+            return
+        # inside a flask request
+        @after_this_request
+        def _remove_file(response):
+            if os.path.exists(path):
+                os.remove(path)
+            return response
 
     def upload_project(self, stream, key):
         return self._upload(stream, 'upload/%s' % key)
@@ -77,6 +68,28 @@ class S3(object):
 
     def delete_cache(self, key):
         return self._delete('cache/%s' % key)
+
+class S3(Storage):
+    def __init__(self):
+        super(Storage, self).__init__()
+
+        if get_env('INFRABOX_STORAGE_S3_SECURE') == 'true':
+            url = 'https://'
+        else:
+            url = 'http://'
+        url += get_env('INFRABOX_STORAGE_S3_ENDPOINT')
+        url += ':'
+        url += get_env('INFRABOX_STORAGE_S3_PORT')
+        self.url = url
+
+        self.bucket = get_env('INFRABOX_STORAGE_S3_BUCKET')
+        self.create_buckets()
+
+    def _upload(self, stream, key):
+        client = self._get_client()
+        client.put_object(Body=stream,
+                          Bucket=self.bucket,
+                          Key=key)
 
     def create_buckets(self):
         client = self._get_client()
@@ -106,7 +119,7 @@ class S3(object):
         with open(path, 'w+') as f:
             f.write(result['Body'].read())
 
-        clean_up(path)
+        self._clean_up(path)
 
         return path
 
@@ -119,37 +132,10 @@ class S3(object):
 
         return client
 
-class GCS(object):
+class GCS(Storage):
     def __init__(self):
+        super(Storage, self).__init__()
         self.bucket = get_env('INFRABOX_STORAGE_GCS_BUCKET')
-
-
-    def upload_project(self, stream, key):
-        self._upload(stream, 'upload/%s' % key)
-
-    def upload_cache(self, stream, key):
-        self._upload(stream, 'cache/%s' % key)
-
-    def upload_output(self, stream, key):
-        self._upload(stream, 'output/%s' % key)
-
-    def upload_archive(self, stream, key):
-        self._upload(stream, 'archive/%s' % key)
-
-    def download_archive(self, key):
-        return self._download('archive/%s' % key)
-
-    def download_source(self, key):
-        return self._download('upload/%s' % key)
-
-    def download_output(self, key):
-        return self._download('output/%s' % key)
-
-    def download_cache(self, key):
-        return self._download('cache/%s' % key)
-
-    def delete_cache(self, key):
-        return self._delete('cache/%s' % key)
 
     def _delete(self, key):
         try:
@@ -178,40 +164,14 @@ class GCS(object):
         with open(path, 'w+') as f:
             blob.download_to_file(f)
 
-        clean_up(path)
+        self._clean_up(path)
 
         return path
 
-class AZURE(object):
+class AZURE(Storage):
     def __init__(self):
+        super(Storage, self).__init__()
         self.container = 'infrabox'
-
-    def upload_project(self, stream, key):
-        return self._upload(stream, 'upload/%s' % key)
-
-    def upload_cache(self, stream, key):
-        return self._upload(stream, 'cache/%s' % key)
-
-    def upload_output(self, stream, key):
-        return self._upload(stream, 'output/%s' % key)
-
-    def upload_archive(self, stream, key):
-        return self._upload(stream, 'archive/%s' % key)
-
-    def download_source(self, key):
-        return self._download('upload/%s' % key)
-
-    def download_output(self, key):
-        return self._download('output/%s' % key)
-
-    def download_archive(self, key):
-        return self._download('archive/%s' % key)
-
-    def download_cache(self, key):
-        return self._download('cache/%s' % key)
-
-    def delete_cache(self, key):
-        return self._delete('cache/%s' % key)
 
     def _upload(self, stream, key):
         client = self._get_client()
@@ -239,7 +199,7 @@ class AZURE(object):
         except:
             return None
 
-        clean_up(path)
+        self._clean_up(path)
 
         return path
 
@@ -248,40 +208,14 @@ class AZURE(object):
                                   account_key=get_env('INFRABOX_STORAGE_AZURE_ACCOUNT_KEY'))
         return client
 
-class SWIFT(object):
+class SWIFT(Storage):
     def __init__(self):
+        super(Storage, self).__init__()
         self.container = get_env('INFRABOX_STORAGE_SWIFT_CONTAINER_NAME')
         self.auth_url = get_env('INFRABOX_STORAGE_SWIFT_AUTH_URL')
         self.user_domain_name = get_env('INFRABOX_STORAGE_SWIFT_USER_DOMAIN_NAME')
         self.project_name = get_env('INFRABOX_STORAGE_SWIFT_PROJECT_NAME')
         self.project_domain_name = get_env('INFRABOX_STORAGE_SWIFT_PROJECT_DOMAIN_NAME')
-
-    def upload_project(self, stream, key):
-        return self._upload(stream, 'upload/%s' % key)
-
-    def upload_cache(self, stream, key):
-        return self._upload(stream, 'cache/%s' % key)
-
-    def upload_output(self, stream, key):
-        return self._upload(stream, 'output/%s' % key)
-
-    def upload_archive(self, stream, key):
-        return self._upload(stream, 'archive/%s' % key)
-
-    def download_source(self, key):
-        return self._download('upload/%s' % key)
-
-    def download_output(self, key):
-        return self._download('output/%s' % key)
-
-    def download_archive(self, key):
-        return self._download('archive/%s' % key)
-
-    def download_cache(self, key):
-        return self._download('cache/%s' % key)
-
-    def delete_cache(self, key):
-        return self._delete('cache/%s' % key)
 
     def _upload(self, stream, key):
         client = self._get_client()
@@ -311,7 +245,7 @@ class SWIFT(object):
         except:
             return None
 
-        clean_up(path)
+        self._clean_up(path)
 
         return path
 
