@@ -21,7 +21,6 @@ IMAGES = [
     {'name': 'github-trigger', 'depends_on': ['images-base']},
     {'name': 'github-review', 'depends_on': ['images-base']},
     {'name': 'collector-api'},
-    {'name': 'collector-fluentd'},
     {'name': 'job'},
     {'name': 'opa'},
     {'name': 'gc', 'depends_on': ['images-base']},
