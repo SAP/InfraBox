@@ -26,4 +26,7 @@ RUN \
 WORKDIR /app
 COPY --from=build-env /go/src/github.com/sap/infrabox/src/services/aks/tmp/_output/bin/aks /app/aks
 
+RUN addgroup -S infrabox && adduser -S -G infrabox infrabox
+USER infrabox
+
 ENTRYPOINT ./aks

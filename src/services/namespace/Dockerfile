@@ -15,4 +15,7 @@ FROM alpine:3.7
 WORKDIR /app
 COPY --from=build-env /go/src/github.com/sap/infrabox/src/services/namespace/tmp/_output/bin/namespace /app/namespace
 
+RUN addgroup -S infrabox && adduser -S -G infrabox infrabox
+USER infrabox
+
 ENTRYPOINT ./namespace

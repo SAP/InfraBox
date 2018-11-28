@@ -1,12 +1,9 @@
-FROM alpine:3.7
-
-RUN apk add --no-cache python3 py3-psycopg2 py3-requests py3-pip py3-cryptography ca-certificates && \
-    pip3 install PyJWT && \
-    apk del py3-pip
+ARG INFRABOX_BUILD_NUMBER
+FROM quay.io/infrabox/images-base:build_$INFRABOX_BUILD_NUMBER
 
 COPY src/scheduler/kubernetes scheduler
 COPY src/pyinfraboxutils /pyinfraboxutils
 
 ENV PYTHONPATH=/
 
-ENTRYPOINT ["python3", "scheduler/scheduler.py"]
+ENTRYPOINT ["python", "scheduler/scheduler.py"]

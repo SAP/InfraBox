@@ -1,4 +1,4 @@
-FROM nginx:1.10.2-alpine
+FROM nginx:1.15-alpine
 RUN apk add --no-cache curl python py-pip openssl && \
     pip install htpasswd && \
     apk del py-pip
