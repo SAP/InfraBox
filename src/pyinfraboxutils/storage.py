@@ -19,8 +19,15 @@ USE_AZURE = get_env('INFRABOX_STORAGE_AZURE_ENABLED') == 'true'
 USE_SWIFT = get_env('INFRABOX_STORAGE_SWIFT_ENABLED') == 'true'
 storage = None
 
-def in_flask_ctx():
-    return stack.top != None
+def clean_up(path):
+    if not stack.pop():
+        return
+    #inside a flask request
+    @after_this_request
+    def _remove_file(response):
+        if os.path.exists(path):
+            os.remove(path)
+        return response
 
 class S3(object):
     def __init__(self):
@@ -99,12 +106,7 @@ class S3(object):
         with open(path, 'w+') as f:
             f.write(result['Body'].read())
 
-        if in_flask_ctx():
-            @after_this_request
-            def _remove_file(response):
-                if os.path.exists(path):
-                    os.remove(path)
-                return response
+        clean_up(path)
 
         return path
 
@@ -176,12 +178,7 @@ class GCS(object):
         with open(path, 'w+') as f:
             blob.download_to_file(f)
 
-        if in_flask_ctx():
-            @after_this_request
-            def _remove_file(response):
-                if os.path.exists(path):
-                    os.remove(path)
-                return response
+        clean_up(path)
 
         return path
 
@@ -242,12 +239,7 @@ class AZURE(object):
         except:
             return None
 
-        if in_flask_ctx():
-            @after_this_request
-            def _remove_file(response):
-                if os.path.exists(path):
-                    os.remove(path)
-                return response
+        clean_up(path)
 
         return path
 
@@ -319,12 +311,7 @@ class SWIFT(object):
         except:
             return None
 
-        if in_flask_ctx():
-            @after_this_request
-            def _remove_file(response):
-                if os.path.exists(path):
-                    os.remove(path)
-                return response
+        clean_up(path)
 
         return path
 
