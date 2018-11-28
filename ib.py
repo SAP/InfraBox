@@ -6,8 +6,6 @@ import subprocess
 import logging
 import sys
 
-from Crypto.PublicKey import RSA
-
 logging.basicConfig(
     format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s',
     datefmt='%d-%m-%Y:%H:%M:%S',
@@ -23,11 +21,10 @@ IMAGES = [
     {'name': 'github-trigger', 'depends_on': ['images-base']},
     {'name': 'github-review', 'depends_on': ['images-base']},
     {'name': 'collector-api'},
-    {'name': 'collector-fluentd'},
     {'name': 'job'},
     {'name': 'opa'},
     {'name': 'gc', 'depends_on': ['images-base']},
-    {'name': 'scheduler-kubernetes'},
+    {'name': 'scheduler-kubernetes', 'depends_on': ['images-base']},
     {'name': 'api', 'depends_on': ['images-base']},
     {'name': 'build-dashboard-client'},
     {'name': 'static', 'depends_on': ['build-dashboard-client']},
@@ -126,32 +123,6 @@ def images_push(args):
             print('invalid type')
             sys.exit(1)
 
-def _setup_rsa_keys():
-    private_key_path = '/tmp/ib/run/rsa/id_rsa'
-    public_key_path = '/tmp/ib/run/rsa/id_rsa.pub'
-
-    key = RSA.generate(2048)
-
-    if not os.path.exists(private_key_path):
-        logger.warn('Private key does not exist: %s', private_key_path)
-        logger.warn('Recreating it')
-
-        if not os.path.exists(os.path.dirname(private_key_path)):
-            os.makedirs(os.path.dirname(private_key_path))
-
-        with open(private_key_path, 'w+') as s:
-            s.write(str(key.exportKey()))
-
-    if not os.path.exists(public_key_path):
-        logger.warn('Public key does not exist: %s', public_key_path)
-        logger.warn('Recreating it')
-
-        if not os.path.exists(os.path.dirname(public_key_path)):
-            os.makedirs(os.path.dirname(public_key_path))
-
-        with open(public_key_path, 'w+') as s:
-            s.write(str(key.publickey().exportKey()))
-
 def services_start(args):
     if args.service_name == 'storage':
         execute(['docker-compose', 'up'],
@@ -222,7 +193,7 @@ def main():
 
     images_build_parser = sub_images.add_parser('build')
     images_build_parser.set_defaults(func=images_build)
-    images_build_parser.add_argument("--registry", default='localhost:5000')
+    images_build_parser.add_argument("--registry", default='quay.io')
     images_build_parser.add_argument("--tag", default='latest')
     images_build_parser.add_argument("--filter", default='.*')
     images_build_parser.add_argument("--push", action='store_true', default=False)
@@ -230,7 +201,7 @@ def main():
 
     images_push_parser = sub_images.add_parser('push')
     images_push_parser.set_defaults(func=images_push)
-    images_push_parser.add_argument("--registry", default='localhost:5000')
+    images_push_parser.add_argument("--registry", default='quay.io')
     images_push_parser.add_argument("--tag", default='latest')
     images_push_parser.add_argument("--filter", default='.*')
     images_push_parser.add_argument("--type", default='registry')

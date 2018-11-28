@@ -11,6 +11,8 @@ RUN    apt-get update -y \
         python-ldap \
         libxml2-dev \
         libxmlsec1-dev \
+        python-paramiko \
+        openssh-client \
     && pip install \
         psycopg2 \
         flask \
@@ -25,6 +27,7 @@ RUN    apt-get update -y \
         future \
         bcrypt \
         pycrypto \
+        prometheus_client \
         azure-mgmt-resource \
         azure-storage \
         keystoneauth1==3.7.0 \
@@ -34,3 +37,6 @@ RUN    apt-get update -y \
     && apt-get remove -y python-pip \
     && apt-get autoremove -y \
     && rm -rf /var/lib/apt/lists/*
+
+RUN useradd -ms /bin/bash infrabox
+USER infrabox

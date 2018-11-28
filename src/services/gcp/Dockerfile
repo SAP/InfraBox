@@ -38,4 +38,7 @@ RUN apk --no-cache add \
 WORKDIR /app
 COPY --from=build-env /go/src/github.com/sap/infrabox/src/services/gcp/tmp/_output/bin/gcp /app/gcp
 
+RUN addgroup -S infrabox && adduser -S -G infrabox infrabox
+USER infrabox
+
 ENTRYPOINT ./gcp

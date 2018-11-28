@@ -24,7 +24,7 @@ pipenv shell
 To build all images run:
 
 ``` bash
-infrabox run
+infrabox run ib
 ./ib.py images build
 ```
 

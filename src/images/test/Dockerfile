@@ -38,3 +38,6 @@ RUN    apt-get update -y \
     && apt-get remove -y python-pip \
     && apt-get autoremove -y \
     && rm -rf /var/lib/apt/lists/*
+
+RUN useradd -ms /bin/bash infrabox
+USER infrabox

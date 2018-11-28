@@ -1,10 +1,9 @@
-FROM python:3
-
-RUN pip install psycopg2 prometheus_client
+ARG INFRABOX_BUILD_NUMBER
+FROM quay.io/infrabox/images-base:build_$INFRABOX_BUILD_NUMBER
 
 COPY src/metrics/ metrics/
 COPY src/pyinfraboxutils /pyinfraboxutils
 
 ENV PYTHONPATH=/
 
-CMD /metrics/server.py
+CMD python /metrics/server.py

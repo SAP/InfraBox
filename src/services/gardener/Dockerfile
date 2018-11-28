@@ -27,4 +27,7 @@ RUN apk --no-cache add \
 WORKDIR /app
 COPY --from=build-env /go/src/github.com/sap/infrabox/src/services/gardener/tmp/_output/bin/gardener /app/gardener
 
+RUN addgroup -S infrabox && adduser -S -G infrabox infrabox
+USER infrabox
+
 ENTRYPOINT ./gardener
