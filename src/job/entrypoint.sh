@@ -5,16 +5,11 @@ mkdir -p /data/tmp
 mkdir -p /data/repo
 mkdir -p ~/.ssh
 
-if [ ! -e /var/run/docker.sock ]; then
-    echo "Docker Daemon Config"
-    cat /etc/docker/daemon.json
-    echo ""
 
-    echo "Waiting for docker daemon to start up"
-
+function startDocker() {
     # Start docker daemon
     nohup dockerd-entrypoint.sh --storage-driver $INFRABOX_JOB_STORAGE_DRIVER --data-root /data/docker &> /tmp/dockerd.log &
-
+    sleep 5
     # Wait until daemon is ready
     COUNTER=0
     until docker version &> /dev/null; do
@@ -22,10 +17,35 @@ if [ ! -e /var/run/docker.sock ]; then
       sleep 1
 
       if [ $COUNTER -gt 60 ]; then
-        echo "Docker daemon not started" > '/dev/termination-log'
-        cat /tmp/dockerd.log >> /dev/termination-log
-        exit 1
+        return 1
       fi
+    done
+    return 0
+}
+
+
+if [ ! -e /var/run/docker.sock ]; then
+    echo "Docker Daemon Config"
+    cat /etc/docker/daemon.json
+    echo ""
+
+    echo "Waiting for docker daemon to start up"
+    CNT=0
+    while true; do
+        if [ $CNT -gt 3 ]; then
+            echo "Docker daemon not started" > '/dev/termination-log'
+            cat /tmp/dockerd.log >> /dev/termination-log
+            exit 1
+        fi
+        let CNT=CNT+1
+
+        if startDocker ; then
+            echo "Docker daemon stared."
+            break
+        eles
+            echo "Docker daemon not stared, retry"
+            sleep 60
+        fi
     done
 else
     echo "Using host docker daemon socket"
