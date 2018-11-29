@@ -89,6 +89,10 @@
                                     <md-icon>insert_drive_file</md-icon><span class="m-l-xs">Data Output</span>
                                     <md-tooltip md-direction="bottom">Data Output</md-tooltip>
                                 </md-button>
+                                <md-button class="md-raised md-primary md-dense" v-on:click="downloadAllArchive()" :disabled="job.state=='running'||job.state=='queued'||job.state=='scheduled'">
+                                    <md-icon>insert_drive_file</md-icon><span class="m-l-xs">All Archive</span>
+                                    <md-tooltip md-direction="bottom">All Archive</md-tooltip>
+                                </md-button>
                             </md-layout>
                             <md-layout  md-align="start" md-vertical-align="start" md-flex-xsmall="100" md-flex-small="100" md-flex-medium="100" md-flex-large="100" md-flex-xlarge="100" md-hide-large-and-up>
                                 <md-table-card class="clean-card">
@@ -133,6 +137,12 @@
                                                         <md-button class="md-icon-button md-primary md-raised md-dense" v-on:click="downloadDataOutput()" :disabled="job.state=='running'||job.state=='queued'||job.state=='scheduled'">
                                                             <md-icon style="color: white">insert_drive_file</md-icon>
                                                             <md-tooltip md-direction="bottom">Data Output</md-tooltip>
+                                                        </md-button>
+                                                    </div>
+                                                    <div class="m-r-xl">
+                                                        <md-button class="md-icon-button md-primary md-raised md-dense" v-on:click="downloadAllArchive()" :disabled="job.state=='running'||job.state=='queued'||job.state=='scheduled'">
+                                                            <md-icon style="color: white">insert_drive_file</md-icon>
+                                                            <md-tooltip md-direction="bottom">All Archive</md-tooltip>
                                                         </md-button>
                                                     </div>
                                                     <div class="m-r-xl">
@@ -310,6 +320,9 @@ export default {
         },
         downloadDataOutput () {
             this.job.downloadDataOutput()
+        },
+        downloadAllArchive () {
+            this.job.downloadAllArchive()
         }
     }
 }

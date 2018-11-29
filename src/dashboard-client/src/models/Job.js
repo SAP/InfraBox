@@ -309,6 +309,11 @@ export default class Job {
         NewAPIService.openAPIUrl(url)
     }
 
+    downloadAllArchive () {
+        const url = `projects/${this.project.id}/jobs/${this.id}/archive/download/all`
+        NewAPIService.openAPIUrl(url)
+    }
+
     downloadArchive (filename) {
         const url = `projects/${this.project.id}/jobs/${this.id}/archive/download?filename=${filename}`
         NewAPIService.openAPIUrl(url)
