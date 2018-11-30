@@ -106,6 +106,21 @@ allow {
     project_jobs_public(project_id)
 }
 
+# Allow GET /api/v1/projects/<project_id>/jobs/<job_id>/archive/download/all for collaborators
+allow {
+    api.method = "GET"
+    api.path = ["api", "v1", "projects", project_id, "jobs", _, "archive", "download", "all"]
+    api.token.type = "user"
+    project_jobs_collaborator([api.token.user.id, project_id])
+}
+
+# Allow GET /api/v1/projects/<project_id>/jobs/<job_id>/archive/download/all if project is public
+allow {
+    api.method = "GET"
+    api.path = ["api", "v1", "projects", project_id, "jobs", _, "archive", "download", "all"]
+    project_jobs_public(project_id)
+}
+
 # Allow GET /api/v1/projects/<project_id>/jobs/<job_id>/console for collaborators
 allow {
     api.method = "GET"
