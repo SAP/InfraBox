@@ -3,6 +3,7 @@ import Notification from '../models/Notification'
 import NotificationService from '../services/NotificationService'
 import NewAPIService from '../services/NewAPIService'
 import store from '../store'
+import router from '../router'
 const Convert = require('ansi-to-html')
 
 class Section {
