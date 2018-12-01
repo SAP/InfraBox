@@ -57,8 +57,15 @@ allow {
 allow {
     api.method = "POST"
     api.path = ["api", "job", suffix]
-    job_suffix := {"cache", "archive", "output", "create_jobs", "consoleupdate", "stats", "markup", "badge", "testresult"}
+    job_suffix := {"cache", "output", "create_jobs", "consoleupdate", "stats", "markup", "badge", "testresult"}
     suffix = job_suffix[_]
     api.token.type = "job"
     api.token.job.state = job_state[_]
+}
+
+# Allow POST access to /api/job/archive for valid job tokens (for service uploads)
+allow {
+    api.method = "POST"
+    api.path = ["api", "job", "archive"]
+    api.token.type = "job"
 }

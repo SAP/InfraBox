@@ -305,15 +305,11 @@ class JobRestart(Resource):
                 # First restart
                 j['name'] = j['name'] + '.1'
 
-        logger.error(json.dumps(old_id_job, indent=4))
-
         for j in jobs:
             for dep in j['dependencies']:
                 if dep['job-id'] in old_id_job:
                     dep['job'] = old_id_job[dep['job-id']]['name']
                     dep['job-id'] = old_id_job[dep['job-id']]['id']
-                else:
-                    logger.error('%s not found', dep['job'])
 
         for j in jobs:
             g.db.execute('''

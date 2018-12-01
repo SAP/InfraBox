@@ -16,6 +16,8 @@ import (
 	"strconv"
 	"strings"
 
+    goerrors "errors"
+
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/discovery/cached"
 	"k8s.io/client-go/dynamic"
@@ -425,6 +427,10 @@ func doCollectorRequest(cluster *RemoteCluster, log *logrus.Entry, endpoint stri
 		return nil, err
 	}
 
+    if resp.StatusCode != 200 {
+        return &bodyText, goerrors.New(string(bodyText))
+    }
+
 	return &bodyText, nil
 }
 
@@ -469,7 +475,10 @@ func uploadToArchive(cr *v1alpha1.GKECluster, log *logrus.Entry, data *[]byte, f
 	}
 
 	bodyText, err := ioutil.ReadAll(response.Body)
-	log.Info(string(bodyText))
+
+    if response.StatusCode != 200 {
+        return goerrors.New(string(bodyText))
+    }
 
 	return nil
 }
@@ -511,8 +520,6 @@ func retrieveLogs(cr *v1alpha1.GKECluster, cluster *RemoteCluster, log *logrus.E
 		log.Errorf("Failed to get collected pod list: %v", err)
 		return
 	}
-
-	log.Info(string(*data))
 
 	err = json.Unmarshal(*data, &pods)
 	if err != nil {
@@ -786,7 +793,7 @@ func newCollectorDeployment() *appsv1.Deployment {
 				Spec: v1.PodSpec{
 					Containers: []v1.Container{{
 						Name:  "api",
-						Image: "quay.io/infrabox/collector-api",
+                        Image: "quay.io/infrabox/collector-api",
 					}},
 				},
 			},
