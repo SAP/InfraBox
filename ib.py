@@ -20,7 +20,7 @@ IMAGES = [
     {'name': 'gerrit-review', 'depends_on': ['images-base']},
     {'name': 'github-trigger', 'depends_on': ['images-base']},
     {'name': 'github-review', 'depends_on': ['images-base']},
-    {'name': 'collector-api'},
+    {'name': 'collector-api', 'depends_on': ['images-base']},
     {'name': 'job'},
     {'name': 'opa'},
     {'name': 'gc', 'depends_on': ['images-base']},

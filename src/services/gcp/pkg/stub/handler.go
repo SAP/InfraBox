@@ -16,6 +16,8 @@ import (
 	"strconv"
 	"strings"
 
+    goerrors "errors"
+
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/discovery/cached"
 	"k8s.io/client-go/dynamic"
@@ -425,6 +427,10 @@ func doCollectorRequest(cluster *RemoteCluster, log *logrus.Entry, endpoint stri
 		return nil, err
 	}
 
+    if resp.StatusCode != 200 {
+        return &bodyText, goerrors.New(string(bodyText))
+    }
+
 	return &bodyText, nil
 }
 
@@ -469,7 +475,10 @@ func uploadToArchive(cr *v1alpha1.GKECluster, log *logrus.Entry, data *[]byte, f
 	}
 
 	bodyText, err := ioutil.ReadAll(response.Body)
-	log.Info(string(bodyText))
+
+    if response.StatusCode != 200 {
+        return goerrors.New(string(bodyText))
+    }
 
 	return nil
 }
@@ -512,8 +521,6 @@ func retrieveLogs(cr *v1alpha1.GKECluster, cluster *RemoteCluster, log *logrus.E
 		return
 	}
 
-	log.Info(string(*data))
-
 	err = json.Unmarshal(*data, &pods)
 	if err != nil {
 		log.Errorf("Failed to collected pod list: %v", err)
@@ -530,7 +537,7 @@ func retrieveLogs(cr *v1alpha1.GKECluster, cluster *RemoteCluster, log *logrus.E
 				continue
 			}
 
-			filename := "pod_" + pod.Namespace + "_" + pod.Pod + "_" + pod.PodID + ".txt"
+			filename := "pod_" + pod.Namespace + "_" + pod.Pod + "_" + container + ".txt"
 			err = uploadToArchive(cr, log, data, filename)
 			if err != nil {
 				log.Warningf("Failed to upload log to archive: %v", err)
@@ -569,6 +576,12 @@ func injectCollector(cluster *RemoteCluster, log *logrus.Entry) error {
 	err = client.Create(newCollectorService(), log)
 	if err != nil && !errors.IsAlreadyExists(err) {
 		log.Errorf("Failed to create collector service: %v", err)
+		return err
+	}
+
+	err = client.Create(newFluentbitConfigMap(), log)
+	if err != nil && !errors.IsAlreadyExists(err) {
+		log.Errorf("Failed to create collector fluentbit config map: %v", err)
 		return err
 	}
 
@@ -780,12 +793,65 @@ func newCollectorDeployment() *appsv1.Deployment {
 				Spec: v1.PodSpec{
 					Containers: []v1.Container{{
 						Name:  "api",
-						Image: "quay.io/infrabox/collector-api",
+                        Image: "quay.io/infrabox/collector-api",
 					}},
 				},
 			},
 		},
 	}
+}
+
+func newFluentbitConfigMap() *v1.ConfigMap{
+	return &v1.ConfigMap{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "ConfigMap",
+			APIVersion: "v1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "infrabox-fluent-bit",
+			Namespace: "infrabox-collector",
+		},
+        Data: map[string]string {
+            "parsers.conf": `
+[PARSER]
+    Name         docker_utf8
+    Format       json
+    Time_Key     time
+    Time_Format  %Y-%m-%dT%H:%M:%S.%L
+    Time_Keep    On
+    Decode_Field_as escaped_utf8 log do_next
+    Decode_Field_as escaped      log
+`,
+            "fluent-bit.conf": `
+[SERVICE]
+    Flush        2
+    Daemon       Off
+    Log_Level    info
+    Parsers_File parsers.conf
+[INPUT]
+    Name             tail
+    Path             /var/log/containers/*.log
+    Parser           docker_utf8
+    Tag              kube.*
+    Refresh_Interval 2
+    Mem_Buf_Limit    50MB
+    Skip_Long_Lines  On
+[FILTER]
+    Name                kubernetes
+    Match               kube.*
+    Kube_URL            https://kubernetes.default.svc.cluster.local:443
+    Kube_CA_File        /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+    Kube_Token_File     /var/run/secrets/kubernetes.io/serviceaccount/token
+[OUTPUT]
+    Name  http
+    Match *
+    Host infrabox-collector-api.infrabox-collector
+    Port 80
+    URI /api/log
+    Format json
+`,
+        },
+    }
 }
 
 func newCollectorDaemonSet() *appsv1.DaemonSet {
@@ -795,23 +861,23 @@ func newCollectorDaemonSet() *appsv1.DaemonSet {
 			APIVersion: "extensions/v1beta1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "infrabox-collector-fluentd",
+			Name:      "infrabox-collector-fluent-bit",
 			Namespace: "infrabox-collector",
 		},
 		Spec: appsv1.DaemonSetSpec{
 			Template: v1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: map[string]string{
-						"app": "fluentd.collector.infrabox.net",
+						"app": "fluentbit.collector.infrabox.net",
 					},
 				},
 				Spec: v1.PodSpec{
 					Containers: []v1.Container{{
-						Name:  "fluentd",
-						Image: "quay.io/infrabox/collector-fluentd",
+						Name:  "fluent-bit",
+                        Image: "fluent/fluent-bit:0.13",
 						Resources: v1.ResourceRequirements{
 							Limits: v1.ResourceList{
-								"memory": resource.MustParse("200Mi"),
+								"memory": resource.MustParse("100Mi"),
 							},
 							Requests: v1.ResourceList{
 								"cpu":    resource.MustParse("100m"),
@@ -825,10 +891,14 @@ func newCollectorDaemonSet() *appsv1.DaemonSet {
 							Name:      "varlibdockercontainers",
 							MountPath: "/var/lib/docker/containers",
 							ReadOnly:  true,
-						}},
-						Env: []v1.EnvVar{{
-							Name:  "INFRABOX_COLLECTOR_ENDPOINT",
-							Value: "http://infrabox-collector-api.infrabox-collector/api/log",
+						}, {
+							Name:      "config",
+							MountPath: "/fluent-bit/etc/parsers.conf",
+                            SubPath:   "parsers.conf",
+						}, {
+							Name:      "config",
+							MountPath: "/fluent-bit/etc/fluent-bit.conf",
+                            SubPath:   "fluent-bit.conf",
 						}},
 					}},
 					Volumes: []v1.Volume{{
@@ -843,6 +913,15 @@ func newCollectorDaemonSet() *appsv1.DaemonSet {
 						VolumeSource: v1.VolumeSource{
 							HostPath: &v1.HostPathVolumeSource{
 								Path: "/var/log",
+							},
+						},
+					}, {
+						Name: "config",
+						VolumeSource: v1.VolumeSource{
+							ConfigMap: &v1.ConfigMapVolumeSource{
+								LocalObjectReference: v1.LocalObjectReference{
+                                    Name: "infrabox-fluent-bit",
+                                },
 							},
 						},
 					}},
