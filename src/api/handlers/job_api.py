@@ -480,6 +480,16 @@ class Archive(Resource):
     def post(self):
         job_id = g.token['job']['id']
 
+        j = g.db.execute_one_dict('''
+            SELECT id
+            FROM job
+            WHERE id = %s
+            AND (state = 'running' OR end_date > NOW() - INTERVAL '5 minutes')
+        ''', [job_id])
+
+        if not j:
+            abort(401, 'Unauthorized')
+
         for f in request.files:
             stream = request.files[f].stream
             key = '%s/%s' % (job_id, f)
