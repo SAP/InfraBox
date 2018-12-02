@@ -273,7 +273,7 @@ https://{{- required "host is required" .Values.host -}}:{{- .Values.port -}}
     value: {{ required "gerrit.hostname is required" .Values.gerrit.hostname }}
 -
     name: INFRABOX_GERRIT_KEY_FILENAME
-    value: /root/.ssh/id_rsa
+    value: /home/infrabox/.ssh/id_rsa
 -
     name: INFRABOX_GERRIT_USERNAME
     value: {{ required "gerrit.username is required" .Values.gerrit.username }}
