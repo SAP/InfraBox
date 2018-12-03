@@ -491,7 +491,7 @@ class RunJob(Job):
         if not self.job['definition'].get('cache', {}).get('data', True):
             c.collect("Not downloading cache, because cache.data has been set to false", show=True)
         else:
-            self.get_file_from_api_server("/cache", storage_cache_tar)
+            self.get_file_from_api_server("/cache", storage_cache_tar, split=True)
 
             if os.path.isfile(storage_cache_tar):
                 c.collect("Unpacking cache", show=True)
@@ -553,7 +553,7 @@ class RunJob(Job):
                 file_size = os.stat(storage_cache_tar).st_size
 
                 c.collect("Output size: %s kb" % (file_size / 1024), show=True)
-                self.post_file_to_api_server('/cache', storage_cache_tar)
+                self.post_file_to_api_server('/cache', storage_cache_tar, split=True)
             else:
                 c.collect("Cache is empty", show=True)
         c.collect("", show=True)
