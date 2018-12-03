@@ -434,23 +434,18 @@ class Source(Resource):
 
         return send_file(f)
 
-cache_upload_parser = api.parser()
-cache_upload_parser.add_argument('cache.tar.snappy', location='files',
-                                 type=FileStorage, required=True)
-
 
 @api.route("/api/job/cache", doc=False)
 class Cache(Resource):
 
     def get(self):
+        g.release_db()
         project_id = g.token['project']['id']
         job_name = g.token['job']['name']
-
-        template = 'project_%s_job_%s.tar.snappy'
-        key = template % (project_id, job_name)
+        filename = request.args.get('filename', None)
+        template = 'project_%s_job_%s_%s'
+        key = template % (project_id, job_name, filename)
         key = key.replace('/', '_')
-
-        g.release_db()
 
         f = storage.download_cache(key)
 
@@ -459,18 +454,19 @@ class Cache(Resource):
 
         return send_file(f)
 
-    @api.expect(cache_upload_parser)
     def post(self):
+        g.release_db()
+
         project_id = g.token['project']['id']
         job_name = g.token['job']['name']
 
-        template = 'project_%s_job_%s.tar.snappy'
-        key = template % (project_id, job_name)
-        key = key.replace('/', '_')
+        for f, _ in request.files.items():
+            template = 'project_%s_job_%s_%s'
+            key = template % (project_id, job_name, f)
+            key = key.replace('/', '_')
+            stream = request.files[f].stream
+            storage.upload_cache(stream, key)
 
-        g.release_db()
-
-        storage.upload_cache(request.files['cache.tar.snappy'].stream, key)
         return jsonify({})
 
 
