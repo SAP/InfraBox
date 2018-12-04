@@ -12,6 +12,7 @@ import base64
 import traceback
 import urllib3
 import yaml
+import tarfile
 
 from pyinfrabox.infrabox import validate_json
 from pyinfrabox.docker_compose import create_from
@@ -318,13 +319,15 @@ class RunJob(Job):
 
     def upload_archive(self):
         c = self.console
+        archive_exists = False
+        testresult_exists = False
 
         if os.path.exists(self.infrabox_archive_dir):
             files = self.get_files_in_dir(self.infrabox_archive_dir)
 
             if files:
                 c.collect("Uploading /infrabox/upload/archive", show=True)
-
+                archive_exists = True
                 for f in files:
                     c.collect("%s" % f, show=True)
                     self.post_file_to_api_server("/archive", f, filename=f.replace(self.infrabox_upload_dir, ''))
@@ -333,9 +336,18 @@ class RunJob(Job):
             files = self.get_files_in_dir(self.infrabox_testresult_dir)
 
             if files:
-
+                testresult_exists = True
                 for f in files:
                     c.collect("%s" % f, show=True)
+
+        tar_file = os.path.join(self.infrabox_upload_dir, 'all_archives' + '.tar.gz')
+        with tarfile.open(tar_file, mode='w:gz') as archive:
+            if archive_exists:
+                archive.add(self.infrabox_archive_dir, arcname='archive')
+            if testresult_exists
+                archive.add(self.infrabox_testresult_dir, arcname='testresult')
+
+        self.post_file_to_api_server("/archive", tar_file)
 
 
     def upload_coverage_results(self):
