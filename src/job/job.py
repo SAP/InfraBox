@@ -344,7 +344,7 @@ class RunJob(Job):
         with tarfile.open(tar_file, mode='w:gz') as archive:
             if archive_exists:
                 archive.add(self.infrabox_archive_dir, arcname='archive')
-            if testresult_exists
+            if testresult_exists:
                 archive.add(self.infrabox_testresult_dir, arcname='testresult')
 
         self.post_file_to_api_server("/archive", tar_file)
