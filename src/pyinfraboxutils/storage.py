@@ -3,6 +3,7 @@ import os
 import uuid
 
 import boto3
+from botocore.errorfactory import ClientError
 from google.cloud import storage as gcs
 from flask import after_this_request
 from flask import _app_ctx_stack as stack
@@ -69,6 +70,9 @@ class Storage(object):
     def delete_cache(self, key):
         return self._delete('cache/%s' % key)
 
+    def exists(self, key):
+        return
+
 class S3(Storage):
     def __init__(self):
         super(Storage, self).__init__()
@@ -84,6 +88,14 @@ class S3(Storage):
 
         self.bucket = get_env('INFRABOX_STORAGE_S3_BUCKET')
         self.create_buckets()
+
+    def exists(self, key):
+        client = self._get_client()
+        try:
+            client.head_object(Bucket=self.bucket, Key=key)
+        except ClientError:
+            return False
+        return True
 
     def _upload(self, stream, key):
         client = self._get_client()
@@ -146,6 +158,12 @@ class GCS(Storage):
         except:
             pass
 
+    def exists(self, key):
+        client = gcs.Client()
+        bucket = client.get_bucket(self.bucket)
+        blob = bucket.blob(key)
+        return blob.exists()
+
     def _upload(self, stream, key):
         client = gcs.Client()
         bucket = client.get_bucket(self.bucket)
@@ -172,6 +190,10 @@ class AZURE(Storage):
     def __init__(self):
         super(Storage, self).__init__()
         self.container = 'infrabox'
+
+    def exists(self, key):
+        client = self._get_client()
+        return client.exists(container_name=self.container, blob_name=key)
 
     def _upload(self, stream, key):
         client = self._get_client()
@@ -216,6 +238,14 @@ class SWIFT(Storage):
         self.user_domain_name = get_env('INFRABOX_STORAGE_SWIFT_USER_DOMAIN_NAME')
         self.project_name = get_env('INFRABOX_STORAGE_SWIFT_PROJECT_NAME')
         self.project_domain_name = get_env('INFRABOX_STORAGE_SWIFT_PROJECT_DOMAIN_NAME')
+
+    def exists(self, key):
+        client = self._get_client()
+        try:
+            client.head_object(self.container, key)
+        except ClientException:
+            return False
+        return True
 
     def _upload(self, stream, key):
         client = self._get_client()
