@@ -558,7 +558,8 @@ class Output(Resource):
 
             g.release_db()
 
-            storage.upload_output(stream, key)
+            if not storage.exists(key):
+                storage.upload_output(stream, key)
 
             for c in clusters:
                 stream.seek(0)
