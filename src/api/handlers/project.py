@@ -298,9 +298,9 @@ class UploadRemote(Resource):
             abort(400, 'Project is not of type "upload"')
 
         key = '%s.zip' % build_id
-
-        stream = request.files['project.zip'].stream
-        storage.upload_project(stream, key)
+        if not storage.exists(key):
+            stream = request.files['project.zip'].stream
+            storage.upload_project(stream, key)
 
         return OK('successfully uploaded data')
 

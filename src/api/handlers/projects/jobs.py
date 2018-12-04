@@ -9,7 +9,7 @@ from io import BytesIO
 
 import requests
 
-from flask import g, abort, Response, send_file, request, after_this_request
+from flask import g, abort, Response, send_file, request, redirect
 from flask_restplus import Resource, fields
 
 from pyinfraboxutils import get_logger, get_env
@@ -394,9 +394,8 @@ class ArchiveDownload(Resource):
         job_cluster = result['cluster_name']
         key = '%s/%s' % (job_id, filename)
 
-        if os.environ['INFRABOX_CLUSTER_NAME'] == job_cluster:
-            f = storage.download_archive(key)
-        else:
+        f = storage.download_archive(key)
+        if not f and os.environ['INFRABOX_CLUSTER_NAME'] != job_cluster:
             c = g.db.execute_one_dict('''
                 SELECT *
                 FROM cluster
@@ -450,53 +449,7 @@ class ArchiveDownloadAll(Resource):
         '''
         Returns all archives
         '''
-        result = g.db.execute_one_dict('''
-                    SELECT archive
-                    FROM job
-                    WHERE   id = %s
-                        AND project_id = %s
-                ''', [job_id, project_id])
-
-        if not result or not result['archive']:
-            abort(404)
-
-        base_path = os.path.join('/tmp', str(uuid.uuid4()))
-        archive_dir = os.path.join(base_path, 'archive')
-        os.mkdir(base_path)
-        os.mkdir(archive_dir)
-
-        @after_this_request
-        def _remove_file(response):
-            if os.path.exists(base_path):
-                shutil.rmtree(base_path)
-            return response
-
-        for item in result['archive']:
-            filename = item['filename']
-            url = "%s/api/v1/projects/%s/jobs/%s/archive/download?filename=%s" % \
-                  (get_env('INFRABOX_ROOT_URL'), project_id, job_id, filename)
-            try:
-                token = encode_user_token(g.token['user']['id'])
-            except Exception:
-                #public project has no token here.
-                token = ""
-            headers = {'Authorization': 'bearer ' + token}
-
-            r = requests.get(url, headers=headers, timeout=120, verify=False)
-            if r.status_code != 200:
-                continue
-
-            with open(os.path.join(archive_dir, os.path.basename(filename)), 'w') as f:
-                f.write(r.content)
-
-        if not os.listdir(archive_dir):
-            abort(404)
-
-        tar_file = os.path.join(base_path, 'archive_%s' % job_id +'.tar.gz')
-        with tarfile.open(tar_file, mode='w:gz') as archive:
-            archive.add(archive_dir, arcname='archive')
-
-        return send_file(tar_file, as_attachment=True, attachment_filename=os.path.basename(tar_file))
+        return redirect("/api/v1/projects/%s/jobs/%s/archive/download?filename=all_archives.tar.gz" %(project_id, job_id))
 
 @ns.route('/<job_id>/console')
 @api.response(403, 'Not Authorized')
