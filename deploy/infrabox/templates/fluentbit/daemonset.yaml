@@ -17,9 +17,9 @@ spec:
         image: fluent/fluent-bit:0.13
         resources:
           limits:
-            memory: 100Mi
+            memory: 1000Mi
           requests:
-            cpu: 100m
+            cpu: 500m
             memory: 100Mi
         volumeMounts:
         - name: varlog
