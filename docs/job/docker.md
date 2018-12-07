@@ -30,7 +30,7 @@ The job type docker is one of the most important jobs. You can use it to run any
 |type|true|string||Has to be "docker" to run a single Docker container|
 |name|true|string||Name of the job|
 |docker_file|true|string||Path to the `Dockerfile`|
-|command|false|string||The command in [exec form](https://docs.docker.com/engine/reference/builder/#cmd) to be used when the container is run. Ignored if `build_only=false`|
+|command|false|string||The command in [exec form](https://docs.docker.com/engine/reference/builder/#cmd) to be used when the container is run. Ignored if `build_only=true`|
 |resources|true|[Resource Configuration](/docs/job/resources.md)||Specify the required resources for your job.|
 |build_only|true|boolean|true|If set to true the container will only be build but not run. Use it if you only want to build a container and push it to a registry. See here for how to push to a docker registry.|
 |build_context|false|string||Specify the docker build context. If not set the directory containing the `infrabox.json` file will be used.|
