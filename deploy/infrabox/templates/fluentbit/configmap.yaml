@@ -25,7 +25,7 @@ data:
         Parser           docker_utf8
         Tag              kube.*
         Refresh_Interval 2
-        Mem_Buf_Limit    50MB
+        Mem_Buf_Limit    200MB
         Skip_Long_Lines  On
     [FILTER]
         Name                kubernetes
