@@ -257,6 +257,14 @@ export default {
         'ib-tab': Tab,
         'ib-archive': Archive
     },
+    watch: {
+        '$route' (to, from) {
+            this.jobName = to.params.jobName
+            this.project = null
+            this.build = null
+            this.job = null
+        }
+    },
     data () {
         return {
             build: null,

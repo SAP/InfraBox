@@ -54,7 +54,7 @@ export default class Build {
         return NewAPIService.get(`projects/${this.project.id}/builds/${this.id}/restart`)
             .then((message) => {
                 NotificationService.$emit('NOTIFICATION', new Notification(message, 'done'))
-                router.push(`/project/${this.project.name}/build/${this.number}/${message.data.build.restartCounter}/`)
+                router.push(`/project/${encodeURIComponent(this.project.name)}/build/${this.number}/${message.data.build.restartCounter}/`)
             })
             .catch((err) => {
                 NotificationService.$emit('NOTIFICATION', new Notification(err))

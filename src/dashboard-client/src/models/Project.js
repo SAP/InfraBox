@@ -36,7 +36,6 @@ export default class Project {
     }
 
     userHasDevRights () {
-        console.log(this.userHasAdminRights() || this.userrole === 'Developer')
         return this.userHasAdminRights() || this.userrole === 'Developer'
     }
 
@@ -58,6 +57,10 @@ export default class Project {
             return new Promise((resolve) => { resolve(b) })
         }
 
+        return this._loadBuild(number, restartCounter)
+    }
+
+    _loadBuild (number, restartCounter) {
         return NewAPIService.get(`projects/${this.id}/builds/${number}/${restartCounter}`)
             .then((jobs) => {
                 this._addJobs(jobs)

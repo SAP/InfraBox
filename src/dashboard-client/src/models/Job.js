@@ -347,6 +347,8 @@ export default class Job {
         return NewAPIService.get(`projects/${this.project.id}/jobs/${this.id}/restart`)
             .then((message) => {
                 NotificationService.$emit('NOTIFICATION', new Notification(message, 'done'))
+                return this.project._loadBuild(this.build.number, this.build.restartCounter)
+            }).then((build) => {
                 let a = this.name.split('.')
                 let name = a[0] + '.'
 
@@ -356,7 +358,15 @@ export default class Job {
                     name += '1'
                 }
 
-                router.push(`/project/${this.project.name}/build/${this.build.number}/${this.build.restartCounter}/job/${name}`)
+                router.push({
+                    name: 'JobDetail',
+                    params: {
+                        projectName: encodeURIComponent(this.project.name),
+                        buildNumber: this.build.number,
+                        buildRestartCounter: this.build.restartCounter,
+                        jobName: encodeURIComponent(name)
+                    }
+                })
             })
             .catch((err) => {
                 NotificationService.$emit('NOTIFICATION', new Notification(err))
