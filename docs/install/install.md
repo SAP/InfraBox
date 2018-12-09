@@ -16,7 +16,7 @@ All you need ist:
 Run `infrabox install` and follow the instructions.
 
 # Manual Installation
-You can run InfraBox on any Kubernetes Cluster (1.9 and 1.10 are supported at the moment).
+You can run InfraBox on any Kubernetes Cluster with at least version 1.9.
 
 ## Prerequisites
 - [helm][helm] (at least 2.10)
