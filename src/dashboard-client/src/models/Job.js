@@ -4,6 +4,8 @@ import NotificationService from '../services/NotificationService'
 import NewAPIService from '../services/NewAPIService'
 import store from '../store'
 import router from '../router'
+import moment from 'moment'
+
 const Convert = require('ansi-to-html')
 
 class Section {
@@ -187,7 +189,7 @@ export default class Job {
         // Replace UTC time with local time
         idx = line.indexOf('|')
         if (idx > 0) {
-            let localTime = date.getHours() + ':' + date.getMinutes() + ':' + date.getSeconds()
+            let localTime = moment(date).format('HH:mm:ss')
             line = localTime + line.substr(idx)
         }
 
