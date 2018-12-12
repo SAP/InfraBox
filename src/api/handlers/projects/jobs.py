@@ -232,7 +232,7 @@ class JobRestart(Resource):
             abort(400, 'This job has been already restarted')
 
         jobs = g.db.execute_many_dict('''
-            SELECT state, id, dependencies
+            SELECT state, id, dependencies, restarted
             FROM job
             WHERE build_id = %s
             AND project_id = %s
@@ -247,6 +247,10 @@ class JobRestart(Resource):
                     continue
 
                 if not j['dependencies']:
+                    continue
+
+                #Avoid generating duplicate jobs. Fix #227(https://github.com/SAP/InfraBox/issues/227)
+                if j['restarted']:
                     continue
 
                 for dep in j['dependencies']:
