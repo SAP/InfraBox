@@ -508,6 +508,7 @@ def validate_json(d):
         return True
 
     jobs = {}
+    all_job_names = set([j['name'] for j in d['jobs']])
     for i in range(0, len(d['jobs'])):
         job = d['jobs'][i]
         job_name = job['name']
@@ -537,7 +538,7 @@ def validate_json(d):
             if job_name == parent_name:
                 raise ValidationError(path, "Job '%s' may not depend on itself" % parent_name)
 
-            if parent_name not in jobs:
+            if parent_name not in all_job_names:
                 raise ValidationError(path + ".depends_on", "Job '%s' not found" % parent_name)
 
             if parent_name in deps:
