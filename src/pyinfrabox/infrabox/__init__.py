@@ -509,6 +509,7 @@ def validate_json(d):
 
     jobs = {}
     all_job_names = set([j['name'] for j in d['jobs']])
+    all_deps = {}
     for i in range(0, len(d['jobs'])):
         job = d['jobs'][i]
         job_name = job['name']
@@ -545,5 +546,16 @@ def validate_json(d):
                 raise ValidationError(path + ".depends_on", "'%s' duplicate dependencies" % parent_name)
 
             deps[parent_name] = True
+
+        if deps:
+            all_deps[job_name] = deps
+
+    for job_name, deps in all_deps:
+        queue = list(deps.iterkeys())
+        for dep_job in queue:
+            if dep_job == job_name:
+                raise ValidationError("Circular dependency detected. Job %s <-> Job %s" % (job_name, dep_job))
+            if dep_job in all_deps:
+                queue.extend(all_deps[dep_job].iterkeys())
 
     return True

@@ -43,7 +43,7 @@ class TestDockerCompose(unittest.TestCase):
             }]
         }
 
-        self.raises_expect(d, "#jobs[0].depends_on: Job 'compile' not found")
+        validate_json(d)
 
     def test_dep_not_found(self):
         d = {
