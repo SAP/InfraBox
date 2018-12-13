@@ -43,7 +43,36 @@ class TestDockerCompose(unittest.TestCase):
             }]
         }
 
-        self.raises_expect(d, "#jobs[0].depends_on: Job 'compile' not found")
+        validate_json(d)
+
+    def test_dep_detect_circular_dependency(self):
+        d = {
+            "version": 1,
+            "jobs": [{
+                "type": "docker",
+                "name": "a",
+                "docker_file": "Dockerfile",
+                "resources": {"limits": {"cpu": 1, "memory": 1024}},
+                "build_only": False,
+                "depends_on": ["b"]
+            }, {
+                "type": "docker",
+                "name": "b",
+                "docker_file": "Dockerfile",
+                "build_only": False,
+                "depends_on": ["c"],
+                "resources": {"limits": {"cpu": 1, "memory": 1024}},
+            }, {
+                "type": "docker",
+                "name": "c",
+                "docker_file": "Dockerfile",
+                "build_only": False,
+                "depends_on": ["a"],
+                "resources": {"limits": {"cpu": 1, "memory": 1024}},
+            }]
+        }
+
+        self.raises_expect(d, "Jobs: Circular dependency detected.")
 
     def test_dep_not_found(self):
         d = {
