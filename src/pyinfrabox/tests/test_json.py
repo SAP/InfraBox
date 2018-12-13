@@ -72,7 +72,7 @@ class TestDockerCompose(unittest.TestCase):
             }]
         }
 
-        self.raises_expect(d, "Circular dependency detected.")
+        self.raises_expect(d, "Jobs: Circular dependency detected.")
 
     def test_dep_not_found(self):
         d = {
