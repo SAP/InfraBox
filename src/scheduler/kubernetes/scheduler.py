@@ -892,10 +892,12 @@ class Scheduler(object):
     def handle_inactive_cluster_queued_jobs(self):
         cursor = self.conn.cursor()
         cursor.execute("""
-                    UPDATE job SET cluster_name = null WHERE state = 'queued' AND cluster_name IN (
-                        SELECT name
-                          FROM cluster
-                          WHERE active = false OR enabled = false)
+                    UPDATE job SET cluster_name = null WHERE state = 'queued' 
+                        AND created_at < (NOW() - 5 * INTERVAL '1' MINUTE) 
+                        AND cluster_name IN (
+                            SELECT name
+                              FROM cluster
+                              WHERE active = false OR enabled = false)
                 """)
         cursor.close()
 
