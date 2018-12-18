@@ -6,6 +6,7 @@ import copy
 import urllib
 import random
 from datetime import datetime
+from io import BytesIO
 
 import requests
 
@@ -606,13 +607,42 @@ class OutputParent(Resource):
 
         key = "%s/%s" % (parent_job_id, filename)
 
-        g.release_db()
         f = storage.download_output(key)
 
+        if f:
+            g.release_db()
+            return send_file(f)
+
+        c = g.db.execute_one_dict('''
+            SELECT *
+            FROM cluster
+            WHERE name= (
+                SELECT cluster_name
+                FROM job
+                where id = %s)
+            ''', [parent_job_id])
+        g.release_db()
+
+        if c['name'] == os.environ['INFRABOX_CLUSTER_NAME']:
+            abort(404)
+
+        token = encode_job_token(job_id)
+        headers = {'Authorization': 'token ' + token}
+        url = '%s/api/job/output/%s?filename=%s' % (c['root_url'], parent_job_id, filename)
+
+        try:
+            r = requests.get(url, headers=headers, timeout=120, verify=False)
+            if r.status_code != 200:
+                f = None
+            else:
+                f = BytesIO(r.content)
+                f.seek(0)
+        except:
+            f = None
         if not f:
             abort(404)
 
-        return send_file(f)
+        return send_file(f, attachment_filename=filename)
 
 def find_leaf_jobs(jobs):
     parent_jobs = {}
