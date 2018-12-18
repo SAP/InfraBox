@@ -137,6 +137,11 @@ class Checker(object):
                 UPDATE cluster SET active=%s
                 WHERE name=%s
             """,[self.is_active, self.cluster_name])
+            if self.is_active:
+                cursor.execute("""
+                    UPDATE cluster SET last_active=NOW()
+                    WHERE name=%s
+                """,[self.cluster_name])
             cursor.close()
             self.logger.info("Set cluster %s active to %s. Reason: self check" % (self.cluster_name, self.is_active))
 

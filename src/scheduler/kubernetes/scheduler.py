@@ -893,11 +893,10 @@ class Scheduler(object):
         cursor = self.conn.cursor()
         cursor.execute("""
                     UPDATE job SET cluster_name = null WHERE state = 'queued' 
-                        AND created_at < (NOW() - 5 * INTERVAL '1' MINUTE) 
                         AND cluster_name IN (
                             SELECT name
                               FROM cluster
-                              WHERE active = false OR enabled = false)
+                              WHERE last_active < (NOW() - 10 * INTERVAL '1' MINUTE))
                 """)
         cursor.close()
 

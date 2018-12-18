@@ -623,8 +623,6 @@ class OutputParent(Resource):
             ''', [parent_job_id])
         g.release_db()
 
-        if not c or not c['active'] or not c['enabled']:
-            abort(404)
         if c['name'] == os.environ['INFRABOX_CLUSTER_NAME']:
             abort(404)
 
