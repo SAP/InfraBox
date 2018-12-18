@@ -188,7 +188,6 @@ export class GanttChart {
      box_padding = 10
      line_width = 2
      r = null
-     frame = null
      label = null
      labelOffset = 0
      maxChain = 0
@@ -424,42 +423,6 @@ export class GanttChart {
         })
 
         const hoverEnter = () => {
-            if (this.frame) {
-                this.frame.hide()
-            }
-
-            if (job.x + this.box_width < this.r.width - 2 * this.box_padding) {
-                this.frame = this.r['popup'](job.x + this.box_width, job.y +
-                    (this.box_height / 2), this.label, 'right')
-                this.frame.attr({
-                    'fill': 'white',
-                    'stroke': '#666',
-                    'stroke-width': 1,
-                    'fill-opacity': 0.6
-                })
-            } else {
-                this.frame = this.r['popup'](job.x, job.y + (this.box_height / 2), this.label, 'left')
-                this.frame.attr({
-                    'fill': 'white',
-                    'stroke': '#666',
-                    'stroke-width': 1,
-                    'fill-opacity': 1
-                })
-            }
-
-            this.label[0].attr({
-                'text': job.name,
-                'font-style': 'normal',
-                'fill': '#676a6c',
-                'font-weight': 'bold'
-            }).show()
-
-            this.label[1].attr({
-                'text': 'State: ' + job.state,
-                'font-style': 'normal',
-                'fill': '#676a6c'
-            }).show()
-
             for (const e of job.parentElements) {
                 if (!e.g) {
                     e.g = e.glow({ color: 'red', width: 2 })
@@ -511,6 +474,13 @@ export class GanttChart {
                     e.g = null
                 }
             }
+        })
+
+        job.text.click(() => {
+            router.push('/project/' + encodeURIComponent(job.projectName) +
+                        '/build/' + job.buildNumber +
+                        '/' + job.buildRestartCounter +
+                        '/job/' + encodeURIComponent(job.name))
         })
 
         job.shape.attr({
