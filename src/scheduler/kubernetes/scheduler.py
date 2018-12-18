@@ -896,7 +896,8 @@ class Scheduler(object):
                         AND cluster_name IN (
                             SELECT name
                               FROM cluster
-                              WHERE last_active < (NOW() - 10 * INTERVAL '1' MINUTE))
+                              WHERE enabled=FALSE 
+                              OR last_active < (NOW() - 10 * INTERVAL '1' MINUTE))
                 """)
         cursor.close()
 
