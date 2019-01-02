@@ -537,7 +537,7 @@
                 {
                     "type": "docker-registry",
                     "host": "quay.io/infrabox",
-                    "repository": "service-gcp",
+                    "repository": "service-gardener",
                     "username": "infrabox+infrabox_ci",
                     "password": {
                         "$secret": "QUAY_PASSWORD"
