@@ -67,7 +67,13 @@ class StatsCollector(object):
         client = docker.from_env(version="1.24", timeout=3)
         while True:
             time.sleep(1)
-            containers = client.containers.list()
+
+            containers = []
+            try:
+                containers = client.containers.list()
+            except:
+                pass
+
             with self.lock:
                 if not self.run:
                     return
