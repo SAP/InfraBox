@@ -676,6 +676,24 @@ class Scheduler(object):
         cpu -= 0.2
         self.logger.debug("Scheduling job to kubernetes")
 
+        cursor = self.conn.cursor()
+        cursor.execute('''
+            SELECT nodes, cpu_capacity, memory_capacity FROM cluster WHERE name = %s
+        ''', (os.environ['INFRABOX_CLUSTER_NAME'],))
+        c = cursor.fetchone()
+        cursor.close()
+
+        cpu_capacity = c[1] // c[0] - 1
+        memory_capacity = c[2] // c[0] // 1024 - 1024  #MB
+
+        if cpu > cpu_capacity or memory > memory_capacity:
+            err_msg = "Insufficient resource, please check job definition, current limit is %s cpu, %s memory" % (cpu_capacity, memory_capacity)
+            cursor = self.conn.cursor()
+            cursor.execute("UPDATE job SET state = 'error', message = %s WHERE id = %s", [err_msg, job_id])
+            cursor.close()
+            self.logger.info("Don't schedule job %s because insufficient resource." % job_id)
+            return
+
         services = None
 
         if definition and 'services' in definition:
@@ -892,11 +910,11 @@ class Scheduler(object):
     def handle_inactive_cluster_queued_jobs(self):
         cursor = self.conn.cursor()
         cursor.execute("""
-                    UPDATE job SET cluster_name = null WHERE state = 'queued' 
+                    UPDATE job SET cluster_name = null WHERE state = 'queued'
                         AND cluster_name IN (
                             SELECT name
                               FROM cluster
-                              WHERE enabled=FALSE 
+                              WHERE enabled=FALSE
                               OR last_active < (NOW() - 10 * INTERVAL '1' MINUTE))
                 """)
         cursor.close()
