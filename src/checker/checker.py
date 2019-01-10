@@ -5,17 +5,27 @@ import urllib3
 import random
 import string
 import uuid
-
 import requests
-
 import psycopg2
 import psycopg2.extensions
 
 from pyinfraboxutils import get_logger, get_env
 from pyinfraboxutils.storage import storage
 from pyinfraboxutils.db import connect_db
+from prometheus_client import Counter, Summary, start_http_server
 
-
+INFRABOX_API_DURATION = Summary(
+    'infrabox_api_duration_seconds', 
+    'Time spent processing request to InfraBox API')
+STORAGE_UPLOAD_DURATION = Summary(
+    'storage_upload_duration_seconds', 
+    'Time spent uploading file to storage')
+STORAGE_DOWNLOAD_DURATION = Summary(
+    'storage_download_duration_seconds', 
+    'Time spent downloading file to storage')
+DATABASE_SELECT1_DURATION = Summary(
+    'database_select1_duration_seconds', 
+    'Time spent executing "SELECT 1" into database')
 
 class Checker(object):
     def __init__(self, conn, args):
@@ -31,6 +41,15 @@ class Checker(object):
         self.check_result = True
         self.retry_times = 0
         self.max_retry_times = 3
+        self.infrabox_api_call_errors = Counter(
+            'infrabox_api_errors_total', 
+            'Errors in requests to InfraBox API')
+        self.storage_checker_errors = Counter(
+            'storage_checker_errors_total', 
+            'Errors uploding/downloading files to/from storage')
+        self.infrabox_dashboard_access_errors = Counter(
+            'infrabox_dashboard_access_errors_total', 
+            'Errors acessing dashboard')
 
     def _set_status(self, status):
         if self.is_active != status:
@@ -45,24 +64,32 @@ class Checker(object):
             self.logger.debug("http return status code: %d" % r.status_code)
             if r.status_code != 200:
                 self.check_result = False
+                self.infrabox_dashboard_access_errors.inc()
             self.logger.debug("check dashboard result: %s, retry times %s" % \
                               (self.check_result, self.retry_times))
         except Exception as e:
             self.logger.exception('Got exception on check dashboard')
             self.check_result = False
-
+            self.infrabox_dashboard_access_errors.inc()
+    
     def check_api(self):
         self.logger.debug('check api ping')
         try:
-            r = requests.head(self.root_url + '/api/ping', verify=False, timeout=5)
+            r = self._request_api_with_metrics()
             self.logger.debug("http return status code: %d" % r.status_code)
             if r.status_code != 200:
                 self.check_result = False
+                self.infrabox_api_call_errors.inc()
             self.logger.debug("check api result: %s, retry times %s" % \
                               (self.check_result, self.retry_times))
         except Exception as e:
             self.logger.exception('Got exception on check api')
             self.check_result = False
+            self.infrabox_api_call_errors.inc()
+
+    @INFRABOX_API_DURATION.time()
+    def _request_api_with_metrics(self):
+        return requests.head(self.root_url + '/api/ping', verify=False, timeout=5)
 
     def check_pods(self):
         self.logger.debug('check pods')
@@ -87,7 +114,6 @@ class Checker(object):
             self.logger.exception('Got exception on check pods')
             self.check_result = False
 
-
     def check_storage(self):
         self.logger.debug("check storage")
         contents = ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(15))
@@ -98,19 +124,19 @@ class Checker(object):
             f.write(contents)
         try:
             with open(path, 'rb') as f:
-                storage.upload_cache(f, file_name)
+                self._storage_upload_with_metrics(f, file_name)
 
             self.logger.debug("upload file %s" % \
                              path)
 
-            download_path = storage.download_cache(file_name)
+            download_path = self._storage_download_with_metrics(file_name)
 
             self.logger.debug("download file %s" % \
                               download_path)
         except Exception as e:
             self.logger.exception('Got exception on check storage')
+            self.storage_checker_errors.inc()
             self.check_result = False
-
         finally:
             self.logger.debug("check api result: %s, retry times %s" % \
                               (self.check_result, self.retry_times))
@@ -119,6 +145,20 @@ class Checker(object):
                     os.remove(f)
             storage.delete_cache(file_name)
 
+    @STORAGE_UPLOAD_DURATION.time()
+    def _storage_upload_with_metrics(self, f, file_name):
+        storage.upload_cache(f, file_name)
+
+    @STORAGE_DOWNLOAD_DURATION.time()
+    def _storage_download_with_metrics(self, file_name):
+        storage.download_cache(file_name)
+
+    @DATABASE_SELECT1_DURATION.time()
+    def check_database(self):
+        cursor = self.conn.cursor()
+        cursor.execute("SELECT 1")
+        cursor.fetchall()
+        cursor.close()
 
     def self_check(self):
         self.check_result = True
@@ -127,6 +167,7 @@ class Checker(object):
         self.check_dashboard()
         self.check_api()
         self.check_storage()
+        self.check_database()
 
         self._set_status(self.check_result)
 
@@ -167,7 +208,6 @@ class Checker(object):
             self.update_status()
             time.sleep(self.check_interval)
 
-
 def main():
     # Arguments
     parser = argparse.ArgumentParser(prog="checker.py")
@@ -193,9 +233,11 @@ def main():
     args.api_server = "https://" + get_env('INFRABOX_KUBERNETES_MASTER_HOST') \
                                  + ":" + get_env('INFRABOX_KUBERNETES_MASTER_PORT')
 
-
     conn = connect_db()
     conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
+
+    server_port = os.environ.get('INFRABOX_PORT', 8080)
+    start_http_server(server_port)
 
     checker = Checker(conn, args)
     checker.run()
