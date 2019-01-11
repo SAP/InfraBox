@@ -650,15 +650,16 @@ class RunJob(Job):
 
             image_name_latest = image_name + ':latest'
             build = compose_file_content['services'][service].get('build', None)
+            image = compose_file_content['services'][service].get('image', None)
 
             if build:
-                compose_file_content['services'][service]['image'] = image_name_latest
+                if not image:
+                    compose_file_content['services'][service]['image'] = image_name_latest
+
                 build['cache_from'] = [image_name_latest]
                 self.get_cached_image(image_name_latest)
 
-                if not build.get('args', None):
-                    build['args'] = []
-
+                build['args'] = build.get('args', [])
                 build['args'] += ['INFRABOX_BUILD_NUMBER=%s' % self.build['build_number']]
 
         with open(compose_file_new, "w+") as out:
@@ -710,12 +711,11 @@ class RunJob(Job):
                          + service
 
             image_name_latest = image_name + ':latest'
-
             build = compose_file_content['services'][service].get('build', None)
-            if build:
-                compose_file_content['services'][service]['image'] = service
 
-            self.cache_docker_image(image_name_latest, image_name_latest)
+            if build:
+                image = compose_file_content['services'][service]['image']
+                self.cache_docker_image(image, image_name_latest)
 
         return True
 
