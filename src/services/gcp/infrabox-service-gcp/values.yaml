@@ -3,3 +3,5 @@ replicaCount: 1
 image:
   repository: quay.io/infrabox/service-gcp
   tag: latest
+
+max_clusters: 30

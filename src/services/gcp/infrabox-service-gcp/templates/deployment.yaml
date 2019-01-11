@@ -34,6 +34,8 @@ spec:
           env:
           - name: WATCH_NAMESPACE
             value: infrabox-worker
+          - name: MAX_NUM_CLUSTERS
+            value: {{ .Values.max_clusters | quote }}
       volumes:
       - name: service-account
         secret:
