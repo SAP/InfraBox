@@ -76,6 +76,8 @@ func setDeletionConfirmation(shootInterface gardenV1beta1.ShootInterface, shootN
 	return nil
 }
 
+const confirmationAnnotationName = "confirmation.garden.sapcloud.io/deletion"
+
 func createDeletionConfirmationJPatch(shoot *v1beta1.Shoot) ([]byte, error) {
 	if shoot == nil {
 		return nil, errors.New("invalid shoot config given (nil)")
@@ -86,9 +88,9 @@ func createDeletionConfirmationJPatch(shoot *v1beta1.Shoot) ([]byte, error) {
 		return nil, errors.New("Couldn't marshal old shoot: " + err.Error())
 	}
 	if shoot.GetAnnotations() == nil {
-		shoot.Annotations = map[string]string{"confirmation.garden.sapcloud.io/deletion": "true"}
+		shoot.Annotations = map[string]string{confirmationAnnotationName: "true"}
 	} else {
-		shoot.GetAnnotations()["confirmation.garden.sapcloud.io/deletion"] = "true"
+		shoot.GetAnnotations()[confirmationAnnotationName] = "true"
 	}
 	tjson, err := json.Marshal(shoot)
 	if err != nil {
