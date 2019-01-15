@@ -23,3 +23,7 @@
 [[constraint]]
   name = "github.com/evanphx/json-patch"
   version = "v3.0.0"
+
+[[constraint]]
+  name = "github.com/stretchr/testify"
+  version = "v1.2.2"
