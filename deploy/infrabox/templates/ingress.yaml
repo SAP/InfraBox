@@ -52,6 +52,9 @@ metadata:
         nginx.ingress.kubernetes.io/session-cookie-name: "route"
         nginx.ingress.kubernetes.io/session-cookie-hash: "sha1"
         nginx.ingress.kubernetes.io/ssl-redirect: "true"
+        {{ if .Values.ingress.use_kube_lego }}
+        kubernetes.io/tls-acme: "true"
+        {{ end }}
 spec:
     rules:
     -
