@@ -70,7 +70,7 @@ ingress:
     enabled: true
 
     # Use Kube-Lego (tls-acme) annotation for TLS
-    use_kube_lego: true
+    use_kube_lego: false
 
 # Exactly one storage option has to be enabled
 storage:
