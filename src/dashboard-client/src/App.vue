@@ -1,6 +1,5 @@
 <template>
     <div id='app'>
-        <ib-disconnect></ib-disconnect>
         <ib-notifications></ib-notifications>
         <md-toolbar>
             <md-button v-if="$store.state.user" class="md-icon-button" @click="toggleLeftSidenav">
@@ -12,6 +11,10 @@
                 </a>
             </div>
             <h2 class="md-title" style="flex: 1"></h2>
+
+            <md-button v-if="$store.state.user && !connected" class="md-button" @click="reconnect" md-right>
+                <i class="fa fa-fw fa-bolt"></i> Disconnected
+            </md-button>
             <md-button v-if="!$store.state.user" class="md-button" @click="login" md-right>
                 <i class="fa fa-sign-in"></i> Login
             </md-button>
@@ -118,16 +121,30 @@
 <script>
 import store from './store'
 import router from './router'
-import Disconnect from './components/utils/Disconnect'
+import events from './events'
 import UserService from './services/UserService'
 
 export default {
     name: 'app',
-    components: {
-        'ib-disconnect': Disconnect
+    data () {
+        return {
+            connected: true
+        }
     },
     store,
+    created () {
+        events.$on('DISCONNECTED', () => {
+            this.connected = false
+        })
+
+        events.$on('CONNECTED', () => {
+            this.connected = true
+        })
+    },
     methods: {
+        reconnect () {
+            window.location.reload(false)
+        },
         toggleLeftSidenav () {
             this.$refs.leftSidenav.toggle()
         },
