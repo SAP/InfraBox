@@ -22,6 +22,9 @@ Vue.use(VueSocketio, socket)
 
 export default new Vue({
     sockets: {
+        connect () {
+            this.$emit('CONNECTED')
+        },
         disconnect () {
             this.$emit('DISCONNECTED')
         },
