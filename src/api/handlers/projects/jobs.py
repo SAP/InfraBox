@@ -381,7 +381,7 @@ class ArchiveDownload(Resource):
 
     def get(self, project_id, job_id):
         filename = request.args.get('filename', None)
-
+        force_download = request.args.get('view', "false") == "false"
         if not filename:
             abort(404)
 
@@ -422,7 +422,7 @@ class ArchiveDownload(Resource):
             logger.error(key)
             abort(404)
 
-        return send_file(f, as_attachment=True, attachment_filename=os.path.basename(filename))
+        return send_file(f, as_attachment=force_download, attachment_filename=os.path.basename(filename))
 
 @ns.route('/<job_id>/archive')
 @api.response(403, 'Not Authorized')
