@@ -317,8 +317,8 @@ export default class Job {
         NewAPIService.openAPIUrl(url)
     }
 
-    downloadArchive (filename) {
-        const url = `projects/${this.project.id}/jobs/${this.id}/archive/download?filename=${filename}`
+    downloadArchive (filename, view = false) {
+        const url = `projects/${this.project.id}/jobs/${this.id}/archive/download?filename=${filename}&view=${view}`
         NewAPIService.openAPIUrl(url)
             .catch((err) => {
                 NotificationService.$emit('NOTIFICATION', new Notification('It seems the archived file was deleted from the server'))
