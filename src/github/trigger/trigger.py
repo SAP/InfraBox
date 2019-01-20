@@ -11,7 +11,7 @@ import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
-from flask import Response, request, g
+from flask import request, g, jsonify
 from pyinfraboxutils.ibflask import app
 
 from pyinfraboxutils import get_env, get_logger
@@ -23,8 +23,7 @@ app.config['OPA_ENABLED'] = False
 logger = get_logger("github")
 
 def res(status, message):
-    Response.status = status
-    return {"message": message}
+    return jsonify({"message": message}), status
 
 def remove_ref(ref):
     return "/".join(ref.split("/")[2:])
@@ -189,7 +188,7 @@ class Trigger(object):
 
         if not result:
             status_url = repository['statuses_url'].format(sha=c['id'])
-            result = self.execute('''
+            self.execute('''
                 INSERT INTO "commit" (
                     id, message, repository_id, timestamp,
                     author_name, author_email, author_username,
@@ -200,7 +199,7 @@ class Trigger(object):
                     %s, %s, %s,
                     %s, %s, %s,
                     %s, %s, %s)
-                RETURNING id
+                ON CONFLICT DO NOTHING
             ''', [c['id'],
                   c['message'],
                   repo_id,
@@ -215,7 +214,7 @@ class Trigger(object):
                   branch,
                   project_id,
                   tag,
-                  status_url])
+                  status_url], fetch=False)
 
         build_id = self.create_build(commit_id, project_id)
         clone_url = repository['clone_url']
@@ -297,24 +296,29 @@ class Trigger(object):
             return res(200, 'no token')
 
 
-        commits = get_commits(event['pull_request']['commits_url'], token)
+        for _ in range(0, 3):
+            commits = get_commits(event['pull_request']['commits_url'], token)
+            hc = None
+            for commit in commits:
+                if commit['sha'] == event['pull_request']['head']['sha']:
+                    hc = commit
+                    break
 
-        hc = None
-        for commit in commits:
-            if commit['sha'] == event['pull_request']['head']['sha']:
-                hc = commit
-                break
+            if not hc:
+                # We might receive the pr event before the push event.
+                # this may lead to a situation that we cannot yet
+                # find the actual commit. Wait some time and retry.
+                eventlet.sleep(1)
 
         if not hc:
             logger.error('Head commit not found: %s', event['pull_request']['head']['sha'])
-            logger.error(json.dumps(commits, indent=4))
             return res(500, 'Internal Server Error')
 
         is_fork = event['pull_request']['head']['repo']['fork']
 
         result = self.execute('''
             SELECT id FROM pull_request WHERE project_id = %s and github_pull_request_id = %s
-        ''', [repo_id, event['pull_request']['id']])
+        ''', [project_id, event['pull_request']['id']])
 
         if not result:
             result = self.execute('''
@@ -327,13 +331,8 @@ class Trigger(object):
                   event['pull_request']['html_url']
                  ])
             pr_id = result[0][0]
-
-        result = self.execute('''
-            SELECT id
-            FROM "commit"
-            WHERE id = %s
-                AND project_id = %s
-        ''', [hc['sha'], project_id])
+        else:
+            pr_id = result[0][0]
 
         committer_login = None
         if hc.get('committer', None):
@@ -362,48 +361,67 @@ class Trigger(object):
             author_name = author.get('name', 'unkown')
             author_date = author.get('date', datetime.now())
 
-        if not result:
-            result = self.execute('''
-                INSERT INTO "commit" (
-                    id, message, repository_id, timestamp,
-                    author_name, author_email, author_username,
-                    committer_name, committer_email, committer_username, url, project_id,
-                    branch, pull_request_id, github_status_url)
-                VALUES (%s, %s, %s,
-                    %s, %s, %s,
-                    %s, %s, %s,
-                    %s, %s, %s,
-                    %s, %s, %s)
-                RETURNING id
-            ''', [hc['sha'], hc['commit']['message'],
-                  repo_id, author_date, author_name,
-                  author_email, author_login,
-                  hc['commit']['committer']['name'],
-                  hc['commit']['committer']['email'],
-                  committer_login, hc['html_url'], project_id, branch, pr_id,
-                  event['pull_request']['statuses_url']])
-        else:
+        commit_id = hc['sha']
+        result = self.execute('''
+            SELECT id
+            FROM "commit"
+            WHERE id = %s
+                AND project_id = %s
+        ''', [commit_id, project_id])
+
+        if result:
             if event['action'] == 'opened':
                 return res(200, 'build already triggered')
 
-        commit_id = result[0][0]
+        self.execute('''
+            INSERT INTO "commit" (
+                id, message, repository_id, timestamp,
+                author_name, author_email, author_username,
+                committer_name, committer_email, committer_username, url, project_id,
+                branch, pull_request_id, github_status_url)
+            VALUES (%s, %s, %s,
+                %s, %s, %s,
+                %s, %s, %s,
+                %s, %s, %s,
+                %s, %s, %s)
+            ON CONFLICT ON CONSTRAINT commit_pkey DO UPDATE
+                SET pull_request_id = %s
+        ''', [hc['sha'], hc['commit']['message'],
+              repo_id, author_date, author_name,
+              author_email, author_login,
+              hc['commit']['committer']['name'],
+              hc['commit']['committer']['email'],
+              committer_login, hc['html_url'], project_id, branch, pr_id,
+              event['pull_request']['statuses_url'], pr_id], fetch=False)
 
-        if self.has_active_build(commit_id, project_id):
-            return res(200, 'build already triggered')
+        # Abort jobs which are still running on the same PR
+        self.execute('''
+            INSERT INTO abort
+            SELECT j.id, null
+            FROM job j
+            JOIN build b
+            ON b.id = j.build_id
+            JOIN commit c
+            ON b.commit_id = c.id
+            AND b.project_id = c.project_id
+            WHERE
+                c.pull_request_id = %s AND
+                j.state in ('queued', 'scheduled', 'running') AND
+                c.id != %s
+        ''', [pr_id, commit_id], fetch=False)
 
-        build_id = self.create_build(commit_id, project_id)
+        if not self.has_active_build(commit_id, project_id):
+            build_id = self.create_build(commit_id, project_id)
+            clone_url = event['repository']['clone_url']
 
-        clone_url = event['repository']['clone_url']
+            if event['repository']['private']:
+                clone_url = event['repository']['ssh_url']
 
-        if event['repository']['private']:
-            clone_url = event['repository']['ssh_url']
-
-        self.create_job(event['pull_request']['head']['sha'],
-                        clone_url,
-                        build_id, project_id, None, env=env, fork=is_fork)
+            self.create_job(event['pull_request']['head']['sha'],
+                            clone_url,
+                            build_id, project_id, None, env=env, fork=is_fork)
 
         g.db.commit()
-
         return res(200, 'ok')
 
 
