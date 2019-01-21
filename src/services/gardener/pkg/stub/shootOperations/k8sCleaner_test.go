@@ -134,7 +134,7 @@ func TestCleanupNamespace_ReturnsErrorIfSomethingFailed(t *testing.T) {
 		pvcMock := addErrorDuringPvcDeletion(mockCtrl)
 		cleaner := NewK8sCleaner(nil, logrus.WithField("test", "test"))
 
-		_, err := cleaner.cleanupNamespace(namespace, pvcMock, cs.ExtensionsV1beta1().Ingresses(namespace), cs.CoreV1().Pods(namespace))
+		_, err := cleaner.cleanupNamespace(namespace, pvcMock, cs.ExtensionsV1beta1().Ingresses(namespace), cs.CoreV1().Pods(namespace), cs.AppsV1().Deployments(namespace), cs.BatchV1().Jobs(namespace), cs.AppsV1().StatefulSets(namespace))
 
 		require.New(t).Error(err)
 	})
@@ -146,7 +146,7 @@ func TestCleanupNamespace_ReturnsErrorIfSomethingFailed(t *testing.T) {
 		ingIfMock := addErrorDuringIngressDeletion(mockCtrl)
 		cleaner := NewK8sCleaner(nil, logrus.WithField("test", "test"))
 
-		_, err := cleaner.cleanupNamespace(namespace, cs.CoreV1().PersistentVolumeClaims(namespace), ingIfMock, cs.CoreV1().Pods(namespace))
+		_, err := cleaner.cleanupNamespace(namespace, cs.CoreV1().PersistentVolumeClaims(namespace), ingIfMock, cs.CoreV1().Pods(namespace), cs.AppsV1().Deployments(namespace), cs.BatchV1().Jobs(namespace), cs.AppsV1().StatefulSets(namespace))
 
 		require.New(t).Error(err)
 	})
@@ -158,7 +158,7 @@ func TestCleanupNamespace_ReturnsErrorIfSomethingFailed(t *testing.T) {
 		podIfMock := addErrorDuringPodDeletion(mockCtrl)
 		cleaner := NewK8sCleaner(nil, logrus.WithField("test", "test"))
 
-		_, err := cleaner.cleanupNamespace(namespace, cs.CoreV1().PersistentVolumeClaims(namespace), cs.ExtensionsV1beta1().Ingresses(namespace), podIfMock)
+		_, err := cleaner.cleanupNamespace(namespace, cs.CoreV1().PersistentVolumeClaims(namespace), cs.ExtensionsV1beta1().Ingresses(namespace), podIfMock, cs.AppsV1().Deployments(namespace), cs.BatchV1().Jobs(namespace), cs.AppsV1().StatefulSets(namespace))
 
 		require.New(t).Error(err)
 	})
