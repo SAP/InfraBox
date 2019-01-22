@@ -18,6 +18,7 @@ import (
 	uuid "github.com/satori/go.uuid"
 
 	"github.com/sap/infrabox/src/services/gcp/pkg/apis/gcp/v1alpha1"
+	"github.com/sap/infrabox/src/services/gcp/pkg/stub/cleaner"
 
 	goerrors "errors"
 
@@ -246,6 +247,10 @@ func deleteGKECluster(cr *v1alpha1.GKECluster, log *logrus.Entry) error {
 			retrieveLogs(cr, gkecluster, log)
 		}
 
+		if err := cleanupK8s(gkecluster, log); err != nil {
+			return err
+		}
+
 		// Cluster still exists, delete it
 		cmd := exec.Command("gcloud", "-q", "container", "clusters", "delete", cr.Status.ClusterName, "--async", "--zone", cr.Spec.Zone)
 		out, err := cmd.CombinedOutput()
@@ -287,6 +292,31 @@ func deleteGKECluster(cr *v1alpha1.GKECluster, log *logrus.Entry) error {
 	err = action.Delete(cr)
 	if err != nil && !errors.IsNotFound(err) {
 		log.Errorf("Failed to delete cr: %v", err)
+		return err
+	}
+
+	return nil
+}
+
+func cleanupK8s(cluster *RemoteCluster, log *logrus.Entry) error {
+	remoteClusterSdk, err := newRemoteClusterSDK(cluster)
+	if err != nil {
+		return err
+	}
+
+	cs, err := kubernetes.NewForConfig(remoteClusterSdk.kubeConfig)
+	if err != nil {
+		log.Errorf("Failed to create clientset from given kubeconfig: %v", err)
+		return err
+	}
+
+	err = cleaner.NewK8sCleaner(cs, log).Cleanup()
+	if cleaner.IsNotYetClean(err) { // that's normal especially when triggering the cleanup for the first time
+		log.Debugf("k8s isn't clean, yet")
+		return err
+
+	} else if err != nil {
+		log.Errorf("Failed to clean up k8s cluster: %v", err)
 		return err
 	}
 
@@ -604,7 +634,7 @@ func retrieveLogs(cr *v1alpha1.GKECluster, cluster *RemoteCluster, log *logrus.E
 }
 
 func injectCollector(cluster *RemoteCluster, log *logrus.Entry) error {
-	client, err := newRemoteClusterSDK(cluster, log)
+	client, err := newRemoteClusterSDK(cluster)
 
 	if err != nil {
 		log.Errorf("Failed to create remote cluster client: %v", err)
@@ -689,7 +719,7 @@ func (r *RemoteClusterSDK) Create(object types.Object, log *logrus.Entry) (err e
 	return nil
 }
 
-func newRemoteClusterSDK(cluster *RemoteCluster, log *logrus.Entry) (*RemoteClusterSDK, error) {
+func newRemoteClusterSDK(cluster *RemoteCluster) (*RemoteClusterSDK, error) {
 	caCrt, err := b64.StdEncoding.DecodeString(cluster.MasterAuth.ClusterCaCertificate)
 	clientKey, _ := b64.StdEncoding.DecodeString(cluster.MasterAuth.ClientKey)
 	clientCrt, _ := b64.StdEncoding.DecodeString(cluster.MasterAuth.ClientCertificate)
