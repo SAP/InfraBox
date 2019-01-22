@@ -8,6 +8,7 @@ import (
 
 	"github.com/gardener/gardener/pkg/apis/garden/v1beta1"
 	gardenClientSet "github.com/gardener/gardener/pkg/client/garden/clientset/versioned"
+	gardenV1Beta "github.com/gardener/gardener/pkg/client/garden/clientset/versioned/typed/garden/v1beta1"
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
@@ -70,7 +71,7 @@ func (so *ShootOperator) Sync(shootCluster *v1alpha1.ShootCluster) error {
 
 	if shootCluster.Status.Status == v1alpha1.ShootClusterStateShootReady {
 		// fetch kubecfg for shoot cluster
-		shootCredsSecret, err := so.fetchKubeconfigFor(shootCluster, clients)
+		shootCredsSecret, err := so.fetchShootCredsSecret(shootCluster, clients)
 		if err != nil {
 			shootCluster.Status.Status = v1alpha1.ShootClusterStateError
 			return err
@@ -116,7 +117,7 @@ func (so *ShootOperator) syncSecret(shootCluster *v1alpha1.ShootCluster, shootCr
 	return
 }
 
-func (so *ShootOperator) fetchKubeconfigFor(shootCluster *v1alpha1.ShootCluster, clientGetter k8sClientCache.ClientGetter) (*corev1.Secret, error) {
+func (so *ShootOperator) fetchShootCredsSecret(shootCluster *v1alpha1.ShootCluster, clientGetter k8sClientCache.ClientGetter) (*corev1.Secret, error) {
 	cfgPath := shootCluster.Status.ClusterName + ".kubeconfig"
 	secret, err := clientGetter.GetK8sClientSet().CoreV1().Secrets(shootCluster.Status.GardenerNamespace).Get(cfgPath, v1.GetOptions{})
 	if err != nil {
@@ -269,8 +270,20 @@ func (so *ShootOperator) Delete(shootCluster *v1alpha1.ShootCluster) error {
 		return fmt.Errorf("couldn't get k8s clientsets")
 	}
 
+	if exists, err := so.doesShootExist(clientGetter.GetGardenClientSet().GardenV1beta1().Shoots(shootCluster.Status.GardenerNamespace), shootCluster.Status.ClusterName); err != nil {
+		return err
+	} else if exists {
+		if err := so.cleanupK8s(shootCluster, clientGetter); err != nil {
+			return err
+		}
+	}
+
 	deleteShootCluster(clientGetter.GetGardenClientSet().GardenV1beta1().Shoots(shootCluster.Status.GardenerNamespace), shootCluster, so.log)
 
+	return so.removeFinalizerAndUpdate(shootCluster)
+}
+
+func (so *ShootOperator) removeFinalizerAndUpdate(shootCluster *v1alpha1.ShootCluster) error {
 	shootCluster.SetFinalizers([]string{})
 	if err := so.operatorSdk.Update(shootCluster); err != nil {
 		so.log.Errorf("Could not update shootCluster object (removing finalizers). err: %s", err)
@@ -278,8 +291,56 @@ func (so *ShootOperator) Delete(shootCluster *v1alpha1.ShootCluster) error {
 	} else {
 		so.log.Debugf("successfully deleted shootCluster %s", shootCluster.GetName())
 	}
+	return nil
+}
+
+func (so *ShootOperator) doesShootExist(shoots gardenV1Beta.ShootInterface, shootName string) (bool, error) {
+	_, err := shoots.Get(shootName, v1.GetOptions{})
+	if err == nil {
+		return true, nil
+
+	} else if apiErrors.IsNotFound(err) {
+		return false, nil
+	}
+
+	so.log.Errorf("couldn't check existence of shoot. err: %s", err.Error())
+	return false, err
+}
+
+func (so *ShootOperator) cleanupK8s(dhInfra *v1alpha1.ShootCluster, clientGetter k8sClientCache.ClientGetter) error {
+	cfg, err := so.fetchKubeconfigFor(dhInfra, clientGetter)
+	if err != nil {
+		if apiErrors.IsNotFound(err) { // can't cleanup if there is no kubeconfig
+			so.log.Debug("kubeconfig for shoot does not exist. Probably the shoot was deleted in the meantime. Skipping cleanup...")
+			return nil
+		}
+		dhInfra.Status.Status = v1alpha1.ShootClusterStateError
+		return err
+	}
+
+	shootClusterCs, err := so.csFactory.Create(cfg)
+	if err != nil {
+		return err
+	}
+
+	if err := NewK8sCleaner(shootClusterCs, so.log).Cleanup(); err != nil {
+		return err
+	}
 
 	return nil
+}
+
+func (so *ShootOperator) fetchKubeconfigFor(cluster *v1alpha1.ShootCluster, clientGetter k8sClientCache.ClientGetter) ([]byte, error) {
+	secret, err := so.fetchShootCredsSecret(cluster, clientGetter)
+	if err != nil {
+		return nil, err
+	}
+
+	if cfg, ok := secret.Data["kubeconfig"]; !ok {
+		return nil, fmt.Errorf("secret for '%s' does not have a kubeconfig", cluster.Status.ClusterName)
+	} else {
+		return cfg, nil
+	}
 }
 
 func CreateShootCluster(sdkops common.SdkOperations, gardenCs gardenClientSet.Interface, shootCluster *v1alpha1.ShootCluster, log *logrus.Entry) (*v1beta1.Shoot, error) {

@@ -2,7 +2,6 @@ package shootOperations
 
 import (
 	"encoding/json"
-	"github.com/sap/infrabox/src/services/gardener/pkg/stub/shootOperations/mocks"
 	"testing"
 	"time"
 
@@ -16,6 +15,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/sap/infrabox/src/services/gardener/pkg/apis/gardener/v1alpha1"
+	"github.com/sap/infrabox/src/services/gardener/pkg/stub/shootOperations/mocks"
 )
 
 func TestCreateDeletionConfirmationPatch_NilCfg(t *testing.T) {
@@ -62,8 +62,8 @@ func TestCreateDeletionConfirmationPatch_PatchContainsConfirmation(t *testing.T)
 
 	if patched.Annotations == nil {
 		t.Fatal("no annotation was created")
-	} else if v, ok := patched.GetAnnotations()["confirmation.gardener.sapcloud.io/deletion"]; !ok {
-		t.Fatal("no entry 'confirmation.gardener.sapcloud.io/deletion' created")
+	} else if v, ok := patched.GetAnnotations()[confirmationAnnotationName]; !ok {
+		t.Fatal("no entry 'confirmation.gardener.sapcloud.io/deletion' created. json patch is: ", string(merged))
 	} else if v != "true" {
 		t.Fatalf("invalid value created: %s", v)
 	}
