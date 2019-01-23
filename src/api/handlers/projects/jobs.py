@@ -2,8 +2,7 @@ import json
 import os
 import uuid
 import re
-import tarfile
-import shutil
+import mimetypes
 
 from io import BytesIO
 
@@ -19,6 +18,9 @@ from pyinfraboxutils.storage import storage
 from pyinfraboxutils.token import encode_user_token
 
 logger = get_logger('api')
+
+mimetypes.init()
+mimetypes.add_type("text/plain", ".log")
 
 ns = api.namespace('Jobs',
                    path='/api/v1/projects/<project_id>/jobs/',
@@ -421,8 +423,10 @@ class ArchiveDownload(Resource):
         if not f:
             logger.error(key)
             abort(404)
+        filename = os.path.basename(filename)
 
-        return send_file(f, as_attachment=force_download, attachment_filename=os.path.basename(filename))
+        return send_file(f, as_attachment=force_download, attachment_filename=filename,\
+                         mimetype=mimetypes.guess_type(filename)[0])
 
 @ns.route('/<job_id>/archive')
 @api.response(403, 'Not Authorized')
