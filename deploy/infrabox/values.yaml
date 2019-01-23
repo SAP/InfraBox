@@ -91,7 +91,7 @@ storage:
         # Region
         region: # <REQUIRED>
 
-        # Regeion endpoint
+        # Region endpoint
         endpoint: # <REQUIRED>
 
         # Region endpoint port
