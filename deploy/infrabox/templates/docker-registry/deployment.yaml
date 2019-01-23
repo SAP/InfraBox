@@ -72,7 +72,7 @@ spec:
                     value: {{ .Values.storage.s3.region }}
                 -
                     name: REGISTRY_STORAGE_S3_REGIONENDPOINT
-                    value: http://{{ .Values.storage.s3.endpoint }}:{{ .Values.storage.s3.port }}
+                    value: {{ .Values.storage.s3.endpoint }}:{{ .Values.storage.s3.port }}
                 -
                     name: REGISTRY_STORAGE_S3_SECURE
                     value: {{ .Values.storage.s3.secure | quote }}
