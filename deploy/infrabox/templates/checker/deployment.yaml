@@ -1,4 +1,4 @@
-{{ if .Values.ha.enabled }}
+{{ if or .Values.ha.enabled .Values.monitoring.enabled }}
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
@@ -28,6 +28,7 @@ spec:
                 {{ include "env_version" . | indent 16 }}
                 {{ include "env_cluster" . | indent 16 }}
                 {{ include "env_ha" . | indent 16 }}
+                {{ include "env_monitoring" . | indent 16 }}
                 {{ include "env_gcs" . | indent 16 }}
                 {{ include "env_s3" . | indent 16 }}
                 {{ include "env_azure" . | indent 16 }}

@@ -1,0 +1,15 @@
+{{ if .Values.monitoring.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: infrabox-checker
+  namespace: {{ template "system_namespace" . }}
+  labels:
+    app: infrabox
+spec:
+  selector:
+    matchLabels:
+      app: infrabox-checker
+  endpoints:
+  - port: web
+{{ end }}

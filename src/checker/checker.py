@@ -14,31 +14,36 @@ from pyinfraboxutils.storage import storage
 from pyinfraboxutils.db import connect_db
 from prometheus_client import Counter, Summary, start_http_server
 
-INFRABOX_API_DURATION = Summary(
-    'infrabox_api_duration_seconds', 
-    'Time spent processing request to InfraBox API')
-STORAGE_UPLOAD_DURATION = Summary(
-    'storage_upload_duration_seconds', 
-    'Time spent uploading file to storage')
-STORAGE_DOWNLOAD_DURATION = Summary(
-    'storage_download_duration_seconds', 
-    'Time spent downloading file to storage')
-DATABASE_SELECT1_DURATION = Summary(
-    'database_select1_duration_seconds', 
-    'Time spent executing "SELECT 1" into database')
-
 class Checker(object):
+
+    INFRABOX_API_DURATION = Summary(
+        'infrabox_api_duration_seconds', 
+        'Time spent processing request to InfraBox API')
+
+    STORAGE_UPLOAD_DURATION = Summary(
+        'storage_upload_duration_seconds', 
+        'Time spent uploading file to storage')
+
+    STORAGE_DOWNLOAD_DURATION = Summary(
+        'storage_download_duration_seconds', 
+        'Time spent downloading file to storage')
+
+    DATABASE_SELECT1_DURATION = Summary(
+        'database_select1_duration_seconds', 
+        'Time spent executing "SELECT 1" into database')
+
     def __init__(self, conn, args):
         self.conn = conn
         self.args = args
+        self.ha_enabled = get_env("INFRABOX_HA_ENABLED")
+        self.monitoring_enabled = get_env("INFRABOX_MONITORING_ENABLED")
         self.namespace = get_env("INFRABOX_GENERAL_SYSTEM_NAMESPACE")
         self.check_interval = int(get_env('INFRABOX_HA_CHECK_INTERVAL'))
         self.active_timeout = get_env('INFRABOX_HA_ACTIVE_TIMEOUT')
         self.cluster_name = get_env('INFRABOX_CLUSTER_NAME')
         self.logger = get_logger("checker")
         self.root_url = get_env("INFRABOX_ROOT_URL")
-        self.is_active = True
-        self.check_result = True
+        self.is_cluster_healthy = True
         self.retry_times = 0
         self.max_retry_times = 3
         self.infrabox_api_call_errors = Counter(
@@ -51,97 +56,82 @@ class Checker(object):
             'infrabox_dashboard_access_errors_total', 
             'Errors acessing dashboard')
 
-    def _set_status(self, status):
-        if self.is_active != status:
-            self.is_active = status
-            self.retry_times = 0
-        self.retry_times += 1
-
-    def check_dashboard(self):
-        self.logger.debug('check dashboard')
+    def _check_dashboard(self):
         try:
             r = requests.head(self.root_url, verify=False, timeout=5)
-            self.logger.debug("http return status code: %d" % r.status_code)
+            self.logger.debug("Dashboard checking - HTTP Status code: %d" % r.status_code)
             if r.status_code != 200:
-                self.check_result = False
                 self.infrabox_dashboard_access_errors.inc()
-            self.logger.debug("check dashboard result: %s, retry times %s" % \
-                              (self.check_result, self.retry_times))
+                return False
+            return True
         except Exception as e:
             self.logger.exception('Got exception on check dashboard')
-            self.check_result = False
             self.infrabox_dashboard_access_errors.inc()
+            return False
     
-    def check_api(self):
-        self.logger.debug('check api ping')
+    def _check_api(self):
         try:
             r = self._request_api_with_metrics()
-            self.logger.debug("http return status code: %d" % r.status_code)
+            self.logger.debug("Api checking - HTTP Status code: %d" % r.status_code)
             if r.status_code != 200:
-                self.check_result = False
                 self.infrabox_api_call_errors.inc()
-            self.logger.debug("check api result: %s, retry times %s" % \
-                              (self.check_result, self.retry_times))
+                return False
+            return True
         except Exception as e:
             self.logger.exception('Got exception on check api')
-            self.check_result = False
             self.infrabox_api_call_errors.inc()
+            return False
 
     @INFRABOX_API_DURATION.time()
     def _request_api_with_metrics(self):
         return requests.head(self.root_url + '/api/ping', verify=False, timeout=5)
 
-    def check_pods(self):
-        self.logger.debug('check pods')
+    def _check_pods(self):
         try:
             h = {'Authorization': 'Bearer %s' % self.args.token}
             r = requests.get(
                 self.args.api_server + '/api/v1/namespaces/%s/pods' % self.namespace,
                 headers=h, timeout=10, verify=False)
             if r.status_code != 200:
-                self.check_result = False
-                self.logger.debug('check pods requests response http code: %d' % r.status_code)
-                return
+                self.logger.debug('Pods checking - HTTP Status code: %d' % r.status_code)
+                return False
             pods = r.json()['items']
             for pod in pods:
                 if pod['status']['phase'] not in ['Running', 'Succeeded']:
-                    self.logger.debug('pod %s is in %s status' % \
-                                     (pod['metadata']['name'], pod['status']['phase']))
-                    self.check_result = False
-                    return
-            self.logger.debug('all pods are Running')
+                    self.logger.debug(
+                        'Pods checking - pod %s is in %s status' % \
+                        (pod['metadata']['name'], pod['status']['phase']))
+                    return False
+            return True
         except Exception as e:
             self.logger.exception('Got exception on check pods')
-            self.check_result = False
+            return False
 
-    def check_storage(self):
-        self.logger.debug("check storage")
+    def _create_random_file(self, file_name):
         contents = ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(15))
-        file_name = "checker_test_"+ str(uuid.uuid4())
-        path = "/tmp/" + file_name
-        download_path = ""
-        with open(path, 'w') as f:
+        file_path = "/tmp/" + file_name
+        with open(file_path, 'w') as f:
             f.write(contents)
+        return file_path
+
+    def _check_storage(self):
+        file_name = "checker_test_"+ str(uuid.uuid4())
+        file_path = self._create_random_file("checker_test_"+ str(uuid.uuid4()))
+        download_path = ""
         try:
-            with open(path, 'rb') as f:
+            with open(file_path, 'rb') as f:
                 self._storage_upload_with_metrics(f, file_name)
-
-            self.logger.debug("upload file %s" % \
-                             path)
-
+            self.logger.debug("Storage checking - Upload file %s" % file_path)
             download_path = self._storage_download_with_metrics(file_name)
-
-            self.logger.debug("download file %s" % \
-                              download_path)
+            self.logger.debug("Storage checking - Download file %s" %  download_path)
+            return True
         except Exception as e:
             self.logger.exception('Got exception on check storage')
             self.storage_checker_errors.inc()
-            self.check_result = False
+            return False
         finally:
-            self.logger.debug("check api result: %s, retry times %s" % \
-                              (self.check_result, self.retry_times))
-            for f in [path, download_path]:
-                if os.path.exists(f):
+            for f in [file_path, download_path]:
+                if f is not None and os.path.exists(f):
                     os.remove(f)
             storage.delete_cache(file_name)
 
@@ -154,22 +144,30 @@ class Checker(object):
         storage.download_cache(file_name)
 
     @DATABASE_SELECT1_DURATION.time()
-    def check_database(self):
-        cursor = self.conn.cursor()
-        cursor.execute("SELECT 1")
-        cursor.fetchall()
-        cursor.close()
+    def _check_database(self):
+        try:
+            cursor = self.conn.cursor()
+            cursor.execute("SELECT 1")
+            cursor.fetchall()
+            cursor.close()
+            return True
+        except Exception as e:
+             self.logger.exception('Exception checking database.')
+             return False
 
-    def self_check(self):
-        self.check_result = True
+    def _check_infrabox_status(self):
+        return (self._check_pods()
+            and self._check_dashboard()
+            and self._check_api()
+            and self._check_storage()
+            and self._check_database())
 
-        self.check_pods()
-        self.check_dashboard()
-        self.check_api()
-        self.check_storage()
-        self.check_database()
-
-        self._set_status(self.check_result)
+    def _update_cluster_status(self, is_checking_healthy):
+        
+        if self.is_cluster_healthy != is_checking_healthy:
+            self.is_cluster_healthy = is_checking_healthy
+            self.retry_times = 0
+        self.retry_times += 1
 
         if self.retry_times >= self.max_retry_times:
             self.retry_times = 0
@@ -177,16 +175,18 @@ class Checker(object):
             cursor.execute("""
                 UPDATE cluster SET active=%s
                 WHERE name=%s
-            """,[self.is_active, self.cluster_name])
-            if self.is_active:
+            """, [self.is_cluster_healthy, self.cluster_name])
+            if self.is_cluster_healthy:
                 cursor.execute("""
                     UPDATE cluster SET last_active=NOW()
                     WHERE name=%s
                 """,[self.cluster_name])
             cursor.close()
-            self.logger.info("Set cluster %s active to %s. Reason: self check" % (self.cluster_name, self.is_active))
+            self.logger.info(
+                "Set cluster %s active to %s. Reason: self check" % \
+                (self.cluster_name, self.is_cluster_healthy))
 
-    def update_status(self):
+    def _disable_clusters_with_outdated_active_time(self):
         cursor = self.conn.cursor()
         cursor.execute("""
             UPDATE cluster SET active=FALSE
@@ -198,21 +198,23 @@ class Checker(object):
         clusters = cursor.fetchall()
         cursor.close()
         for c in clusters:
-            self.logger.info("Set cluster %s to inactive. Reason: last update time is too old" % c[0])
+            self.logger.info("Set cluster %s to inactive. " 
+                "Reason: last update time is too old" % c[0])
 
     def run(self):
-        self.logger.info("Starting checker")
-
+        self.logger.info("Starting InfraBox Checker")
         while True:
-            self.self_check()
-            self.update_status()
+            is_checking_healthy = self._check_infrabox_status()
+            if self.ha_enabled:
+                self._update_cluster_status(is_checking_healthy)
+                self._disable_clusters_with_outdated_active_time()
             time.sleep(self.check_interval)
 
 def main():
-    # Arguments
     parser = argparse.ArgumentParser(prog="checker.py")
     args = parser.parse_args()
 
+    # Validate if env vars are setted 
     get_env('INFRABOX_VERSION')
     get_env('INFRABOX_CLUSTER_NAME')
     get_env('INFRABOX_DATABASE_DB')
@@ -226,18 +228,26 @@ def main():
 
     urllib3.disable_warnings()
 
-    # try to read from filesystem
+    logger = get_logger("checker_main")
+
+    # Try to read from filesystem
     with open('/var/run/secrets/kubernetes.io/serviceaccount/token', 'r') as f:
         args.token = str(f.read()).strip()
 
-    args.api_server = "https://" + get_env('INFRABOX_KUBERNETES_MASTER_HOST') \
-                                 + ":" + get_env('INFRABOX_KUBERNETES_MASTER_PORT')
+    kube_apiserver_host = get_env('INFRABOX_KUBERNETES_MASTER_HOST')    
+    kube_apiserver_port = get_env('INFRABOX_KUBERNETES_MASTER_PORT')
+
+    args.api_server = "https://" + kube_apiserver_host + ":" + kube_apiserver_port
 
     conn = connect_db()
     conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
 
-    server_port = os.environ.get('INFRABOX_PORT', 8080)
-    start_http_server(server_port)
+    is_monitoring_enabled = get_env("INFRABOX_MONITORING_ENABLED") == 'true'
+
+    if is_monitoring_enabled:
+        logger.info("Monitoring enabled. Starting HTTP server for metrics")
+        server_port = os.environ.get('INFRABOX_PORT', 8080)
+        start_http_server(server_port)
 
     checker = Checker(conn, args)
     checker.run()
