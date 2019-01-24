@@ -27,9 +27,10 @@ projects_projects_name_public(project){
     projects[i].public = true
 }
 
-projects_projects_name_collaborator([user, project]){
-    projects[i].name = project
-    collaborators[i].user_id = user
+projects_projects_name_collaborator([user_id, project_name]){
+    projects[i].name = project_name
+    collaborators[j].user_id = user_id
+    collaborators[j].project_id = projects[i].project_id
 }
 
 allow {
