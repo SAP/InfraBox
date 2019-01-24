@@ -54,7 +54,7 @@ allow {
     api.method = "GET"
     api.path = ["api", "v1", "projects", "name", project_name]
     api.token.type = "user"
-    projects_projects_collaborator([api.token.user.id, project_name])
+    projects_projects_name_collaborator([api.token.user.id, project_name])
 }
 
 allow {
