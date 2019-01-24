@@ -487,10 +487,9 @@ https://{{- .Values.ha.global_host -}}:{{- .Values.ha.global_port -}}
 {{- end -}}
 
 {{ define "env_ha" }}
--
-    name: INFRABOX_HA_ENABLED
+-   name: INFRABOX_HA_ENABLED
     value: {{ .Values.ha.enabled | quote }}
-{{ if .Values.ha.enabled }}
+{{ if or .Values.ha.enabled .Values.monitoring.enabled  }}
 -   name: INFRABOX_HA_CHECK_INTERVAL
     value: {{ .Values.ha.check_interval | quote }}
 -   name: INFRABOX_HA_ACTIVE_TIMEOUT
@@ -498,6 +497,11 @@ https://{{- .Values.ha.global_host -}}:{{- .Values.ha.global_port -}}
 -   name: INFRABOX_HA_GLOBAL_URL
     value: {{ template "ha_global_url" . }}
 {{ end }}
+{{ end }}
+
+{{ define "env_monitoring" }}
+-   name: INFRABOX_MONITORING_ENABLED
+    value: {{ .Values.monitoring.enabled | quote }}
 {{ end }}
 
 {{ define "env_cachet" }}

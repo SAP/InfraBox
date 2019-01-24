@@ -1,0 +1,15 @@
+{{ if .Values.monitoring.enabled }}
+kind: Service
+apiVersion: v1
+metadata:
+  name: infrabox-checker
+  namespace: {{ template "system_namespace" . }}
+  labels:
+    app: infrabox-checker
+spec:
+  selector:
+    app: infrabox-checker
+  ports:
+  - name: web
+    port: 8080
+{{ end }}
