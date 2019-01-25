@@ -8,7 +8,7 @@ The job type docker is one of the most important jobs. You can use it to run any
         "type": "docker",
         "name": "build",
         "docker_file": "infrabox/build-and-test/Dockerfile",
-        "command": ["echo", "hello world"]
+        "command": ["echo", "hello world"],
         "resources": { "limits": { "cpu": 1, "memory": 1024 } },
         "build_only": false,
         "build_context": "...",
