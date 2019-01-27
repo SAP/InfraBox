@@ -622,7 +622,8 @@ class RunJob(Job):
             ]
 
             for v in compose_file_content['services'][service].get('volumes', []):
-                v = v.replace('/infrabox/context', self.mount_repo_dir)
+                if isinstance(v, basestring):
+                    v = v.replace('/infrabox/context', self.mount_repo_dir)
                 service_volumes.append(v)
 
             # Mount /infrabox/context to the build context of the service if build.context
