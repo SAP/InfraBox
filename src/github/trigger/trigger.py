@@ -406,7 +406,7 @@ class Trigger(object):
             AND b.project_id = c.project_id
             WHERE
                 c.pull_request_id = %s AND
-                j.state in ('queued', 'scheduled', 'running') AND
+                j.state in ('scheduled', 'running') AND
                 c.id != %s
         ''', [pr_id, commit_id], fetch=False)
 

@@ -108,7 +108,7 @@ def handle_patchset_created_project(conn, event, project_id, project_name):
         AND b.project_id = c.project_id
         WHERE
             c.url = %s AND
-            j.state in ('queued', 'scheduled', 'running')
+            j.state in ('scheduled', 'running')
     ''', [url])
     c.close()
     conn.commit()
