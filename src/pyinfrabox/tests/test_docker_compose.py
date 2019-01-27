@@ -37,3 +37,6 @@ class TestDockerCompose(unittest.TestCase):
 
     def test_valid_1(self):
         create_from('./tests/test/valid_1.yml')
+
+    def test_volume_parsing(self):
+        create_from('./tests/test/volume_parsing.yaml')
