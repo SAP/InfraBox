@@ -30,7 +30,7 @@
                 <h3 class="md-subhead card-title"><strong>Test suite:</strong> {{ data.test.suite }}</h3>
             </md-card-header-text>
             <md-toolbar class="md-transparent">
-                <md-chip class="m-r-sm">{{ data.test.duration }} ms</md-chip>
+                <md-chip class="m-r-sm">{{ data.duration }} {{ data.unit }}</md-chip>
                 <ib-state-circle-big :state="data.test.state"></ib-state-circle-big>
             </md-toolbar>
             </md-card-header>
@@ -82,6 +82,26 @@ import tauCharts from 'taucharts'
 import 'taucharts/build/development/plugins/tauCharts.legend'
 import 'taucharts/build/development/plugins/tauCharts.tooltip'
 
+function getBestUnit (d) {
+    if (d < 1000) {
+        return 'ms'
+    } else if (d < 1000 * 60) {
+        return 's'
+    } else {
+        return 'm'
+    }
+}
+
+function convertDuration (d, unit) {
+    if (unit === 'ms') {
+        return d
+    } else if (unit === 's') {
+        return Math.round(d / 1000)
+    } else {
+        return Math.round(d / (1000 * 60))
+    }
+}
+
 export default {
     name: 'JobDetail',
     store,
@@ -103,6 +123,8 @@ export default {
                 let build = null
                 let project = null
                 let test = null
+                let unit = 'ms'
+                let duration = 0
                 return ProjectService
                     .findProjectByName(decodeURIComponent(this.projectName))
                     .then((p) => {
@@ -116,6 +138,8 @@ export default {
                     .then((j) => {
                         job = j
                         test = j.getTest(this.testName, this.suiteName)
+                        unit = getBestUnit(test.duration)
+                        duration = convertDuration(test.duration, unit)
                         return test.loadHistory()
                     })
                     .then((j) => {
@@ -123,7 +147,7 @@ export default {
                         for (let h of test.history) {
                             this.history.push({
                                 'build_number': h.build_number,
-                                'duration': h.duration,
+                                'duration': convertDuration(h.duration, unit),
                                 'result': h.state
                             })
                         }
@@ -132,7 +156,9 @@ export default {
                             project,
                             build,
                             job,
-                            test
+                            test,
+                            unit,
+                            duration
                         }
                     })
             },
@@ -166,7 +192,7 @@ export default {
                                 duration: {
                                     label: 'Duration',
                                     format: (x) => {
-                                        return (x + ' ms')
+                                        return (x + ' ' + this.data.unit)
                                     }
                                 },
                                 result: {
@@ -229,4 +255,3 @@ export default {
     float: left;
 }
 </style>
-
