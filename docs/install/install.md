@@ -118,8 +118,8 @@ InfraBox uses a RSA key to sign certain information for security reasons. You ne
 ```bash
 mkdir /tmp/infrabox-config
 cd /tmp/infrabox-config
-ssh-keygen -N '' -t rsa -f id_rsa
-ssh-keygen -f id_rsa.pub -e -m pem > id_rsa.pem
+ssh-keygen -t rsa -b 4096 -m PEM -f jwtRS256.key
+openssl rsa -in jwtRS256.key -pubout -outform PEM -out jwtRS256.key.pub
 ```
 
 ## Configure InfraBox
@@ -129,10 +129,12 @@ InfraBox uses `helm` for deploying. Create a `my_values.yaml` for your custom op
 ```bash
 cat >my_values.yaml <<EOL
 admin:
-  private_key: $(base64 -w 0 ./id_rsa)
-  public_key: $(base64 -w 0 ./id_rsa.pem)
+  private_key: $(base64 -w 0 ./jwtRS256.key)
+  public_key: $(base64 -w 0 ./jwtRS256.key.pub)
 EOL
 ```
+
+If you get an error `base64: invalid option -- w` (e.g. on macOS), change the `-w` to `-b` in the `base64` subcommand.
 
 Add all the necessary configurations options as described in the earlier steps.
 If you forget some the installation will fail with some message like `a.b.c is required`.
