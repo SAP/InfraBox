@@ -150,7 +150,7 @@ class RunJob(Job):
 
         return result
 
-    def clone_repo(self, commit, clone_url, branch, ref, clone_all, sub_path=None, submodules=True):
+    def clone_repo(self, commit, clone_url, branch, ref, full_history, sub_path=None, submodules=True):
         c = self.console
         mount_repo_dir = self.mount_repo_dir
 
@@ -162,7 +162,7 @@ class RunJob(Job):
 
         cmd = ['git', 'clone']
 
-        if not clone_all:
+        if not full_history:
             cmd += ['--depth=10']
 
             if branch:
@@ -172,14 +172,19 @@ class RunJob(Job):
         c.execute(cmd, show=True, retry=True)
 
         if ref:
-            cmd = ['git', 'fetch', '--depth=10', clone_url, ref]
+            cmd = ['git', 'fetch']
+
+            if not full_history:
+                cmd += ['--depth=10']
+
+            cmd += [clone_url, ref]
             c.execute(cmd, cwd=mount_repo_dir, show=True, retry=True)
 
         c.execute(['git', 'config', 'remote.origin.url', clone_url], cwd=mount_repo_dir, show=True)
         c.execute(['git', 'config', 'remote.origin.fetch', '+refs/heads/*:refs/remotes/origin/*'],
                   cwd=mount_repo_dir, show=True)
 
-        if not clone_all:
+        if not full_history:
             c.execute(['git', 'fetch', 'origin', commit], cwd=mount_repo_dir, show=True, retry=True)
 
         cmd = ['git', 'checkout', '-qf', commit]
@@ -198,7 +203,7 @@ class RunJob(Job):
             repo = self.job['repo']
             clone_url = repo['clone_url']
             branch = repo.get('branch', None)
-            clone_all = repo.get('full_history', False)
+            full_history = repo.get('full_history', False)
             ref = repo.get('ref', None)
 
             definition = self.job['definition']
@@ -215,7 +220,7 @@ class RunJob(Job):
             if not repo_clone:
                 return
 
-            self.clone_repo(commit, clone_url, branch, ref, clone_all, submodules=repo_submodules)
+            self.clone_repo(commit, clone_url, branch, ref, full_history, submodules=repo_submodules)
         elif self.project['type'] == 'upload':
             c.collect("Downloading Source")
             storage_source_zip = os.path.join(self.storage_dir, 'source.zip')
@@ -1105,7 +1110,12 @@ class RunJob(Job):
         for job in data['jobs']:
             job['id'] = str(uuid.uuid4())
             job['avg_duration'] = 0
-            job['repo'] = repo
+
+            if job.get('repo', None):
+                job['repo'].update(repo)
+            else:
+                job['repo'] = repo
+
             job['infrabox_context'] = os.path.normpath(infrabox_context)
 
             if parent_name != '':
@@ -1153,7 +1163,7 @@ class RunJob(Job):
                     "clone_url": job['clone_url'],
                     "commit": job['commit'],
                     "infrabox_file": ib_file,
-                    "clone_all": True,
+                    "full_history": True,
                     "branch": job.get('branch', None)
                 }
 
