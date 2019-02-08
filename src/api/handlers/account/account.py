@@ -36,7 +36,7 @@ class Login(Resource):
         '''
         b = request.get_json()
 
-        email = b['email']
+        email = b['email'].lower()
         password = b['password']
 
         user = g.db.execute_one_dict('''
@@ -80,7 +80,7 @@ class Register(Resource):
 
         b = request.get_json()
 
-        email = b['email']
+        email = b['email'].lower()
         password1 = b['password1']
         password2 = b['password2']
         username = b['username']

@@ -79,7 +79,7 @@ class Login(Resource):
     def post(self):
         b = request.get_json()
 
-        email = b['email']
+        email = b['email'].lower()
         password = b['password']
 
         user = g.db.execute_one_dict('''

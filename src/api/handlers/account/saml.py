@@ -29,7 +29,7 @@ def init_saml_auth():
         "post_data": request.form.copy(),
         "query_string": request.query_string
         }
-    
+
     auth = OneLogin_Saml2_Auth(request_data, custom_base_path=get_env("INFRABOX_ACCOUNT_SAML_SETTINGS_PATH"))
     return auth
 
@@ -69,7 +69,7 @@ class SamlCallback(Resource):
         if len(errors) != 0:
             logger.error("Authentication failed: %s", "; ".join(errors))
             abort(500, "Authentication failed")
-        
+
         if not auth.is_authenticated():
             logger.error("User returned unauthorized from IdP")
             abort(401, "Unauthorized")
@@ -77,7 +77,7 @@ class SamlCallback(Resource):
         attributes = get_attribute_dict(auth)
         logger.debug("User data: %s", attributes)
 
-        email = format_user_field(get_env("INFRABOX_ACCOUNT_SAML_EMAIL_FORMAT"), attributes)
+        email = format_user_field(get_env("INFRABOX_ACCOUNT_SAML_EMAIL_FORMAT"), attributes).lower()
 
         # Check if user already exists in database
         user = g.db.execute_one_dict("""
@@ -97,13 +97,13 @@ class SamlCallback(Resource):
         token = encode_user_token(user["id"])
 
         g.db.commit()
-        
+
         redirect_url = get_root_url("global") + "/dashboard/"
         logger.debug("Redirecting authenticated user to %s", redirect_url)
         response = redirect(redirect_url)
         response.set_cookie("token", token)
         return response
-        
+
 @api.route("/saml/metadata")
 class SamlMetadata(Resource):
     def get(self):
@@ -111,7 +111,7 @@ class SamlMetadata(Resource):
         settings = auth.get_settings()
         metadata = settings.get_sp_metadata()
         metadata_errors = settings.validate_metadata(metadata)
-        
+
         if len(metadata_errors) != 0:
             logger.error("SP Metadata contains errors: %s", "; ".join(metadata_errors))
             abort(500)
@@ -134,7 +134,7 @@ class SamlLogout(Resource):
         if len(errors) != 0:
             logger.error("Single Logout failed: %s", "; ".join(errors))
             return redirect(get_root_url("global"))
-        
+
         if redirect_url is None:
             redirect_url = redirect_url = get_root_url("global")
 
