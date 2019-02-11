@@ -999,10 +999,12 @@ class RunJob(Job):
                 c.header("Deploying", show=True)
                 self.deploy_image(image_name_build, d)
 
+        self.build_docker_image(image_name_build, image_name_latest)
+
         if not self.job.get('build_only', True):
-            self.build_docker_image(image_name_build, image_name_latest)
             self.run_docker_container(image_name_build)
-            self.deploy_images(image_name_build)
+
+        self.deploy_images(image_name_build)
 
         c.header("Finalize", show=True)
 
