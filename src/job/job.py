@@ -87,10 +87,6 @@ class RunJob(Job):
         self.infrabox_coverage_dir = os.path.join(self.infrabox_upload_dir, 'coverage')
         makedirs(self.infrabox_coverage_dir)
 
-        # <data_dir>/upload/markdown is mounted in the job to /infrabox/upload/markdown
-        self.infrabox_markdown_dir = os.path.join(self.infrabox_upload_dir, 'markdown')
-        makedirs(self.infrabox_markdown_dir)
-
         # <data_dir>/upload/markup is mounted in the job to /infrabox/upload/markup
         self.infrabox_markup_dir = os.path.join(self.infrabox_upload_dir, 'markup')
         makedirs(self.infrabox_markup_dir)
@@ -396,19 +392,6 @@ class RunJob(Job):
             except Exception as e:
                 self.console.collect("Failed to parse test result: %s" % e, show=True)
 
-
-    def upload_markdown_files(self):
-        c = self.console
-        if not os.path.exists(self.infrabox_markdown_dir):
-            return
-
-        files = self.get_files_in_dir(self.infrabox_markdown_dir, ending=".md")
-        for f in files:
-            c.collect("%s" % f, show=True)
-
-            file_name = os.path.basename(f)
-            self.post_file_to_api_server("/markdown", f, filename=file_name)
-
     def upload_markup_files(self):
         c = self.console
         if not os.path.exists(self.infrabox_markup_dir):
@@ -535,7 +518,6 @@ class RunJob(Job):
         finally:
             self.upload_coverage_results()
             self.upload_test_results()
-            self.upload_markdown_files()
             self.upload_markup_files()
             self.upload_badge_files()
             self.upload_archive()
@@ -602,9 +584,6 @@ class RunJob(Job):
             service_coverage_dir = os.path.join(self.infrabox_coverage_dir, service)
             makedirs(service_coverage_dir)
 
-            service_markdown_dir = os.path.join(self.infrabox_markdown_dir, service)
-            makedirs(service_markdown_dir)
-
             service_markup_dir = os.path.join(self.infrabox_markup_dir, service)
             makedirs(service_markup_dir)
 
@@ -619,7 +598,6 @@ class RunJob(Job):
                 "%s:/infrabox/inputs" % self.infrabox_inputs_dir,
                 "%s:/infrabox/output" % service_output_dir,
                 "%s:/infrabox/upload/testresult" % service_testresult_dir,
-                "%s:/infrabox/upload/markdown" % service_markdown_dir,
                 "%s:/infrabox/upload/markup" % service_markup_dir,
                 "%s:/infrabox/upload/badge" % service_badge_dir,
                 "%s:/infrabox/upload/coverage" % service_coverage_dir,
