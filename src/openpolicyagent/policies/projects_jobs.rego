@@ -6,7 +6,7 @@ import data.infrabox.collaborators.collaborators
 import data.infrabox.projects.projects
 
 project_jobs_collaborator([user, project_id]) {
-    collaborators[i].project_id = project
+    collaborators[i].project_id = project_id
     collaborators[i].user_id = user
 }
 
