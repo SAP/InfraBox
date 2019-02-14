@@ -6,7 +6,7 @@
                 <md-icon>menu</md-icon>
             </md-button>
             <div style="width: 110px">
-                <a href="/">
+                <a href="/dashboard/">
                     <img src="../static/logo_white_on_transparent.png" style="flex: 1" />
                 </a>
             </div>
