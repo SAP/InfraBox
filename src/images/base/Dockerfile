@@ -34,6 +34,7 @@ RUN    apt-get update -y \
         python-swiftclient \
         python-cachetclient \
         python-saml \
+        croniter \
     && apt-get remove -y python-pip \
     && apt-get autoremove -y \
     && rm -rf /var/lib/apt/lists/*

@@ -10,6 +10,9 @@
             <ib-project-tokens :project="project"></ib-project-tokens>
         </md-layout>
         <md-layout md-column md-gutter md-flex-xsmall="100" md-flex-small="100" md-flex-medium="100" md-flex-large="100" md-flex-xlarge="100">
+            <ib-project-cronjobs :project="project"></ib-project-cronjobs>
+        </md-layout>
+        <md-layout md-column md-gutter md-flex-xsmall="100" md-flex-small="100" md-flex-medium="100" md-flex-large="100" md-flex-xlarge="100">
             <ib-project-badges :project="project"></ib-project-badges>
         </md-layout>
     </md-layout>
@@ -20,6 +23,7 @@ import ProjectSecrets from './Secrets'
 import ProjectTokens from './Tokens'
 import ProjectCollaborators from './Collaborators'
 import ProjectBadges from './Badges'
+import ProjectCronJobs from './Cron'
 
 export default {
     props: ['project'],
@@ -27,7 +31,8 @@ export default {
         'ib-project-secrets': ProjectSecrets,
         'ib-project-tokens': ProjectTokens,
         'ib-project-collaborators': ProjectCollaborators,
-        'ib-project-badges': ProjectBadges
+        'ib-project-badges': ProjectBadges,
+        'ib-project-cronjobs': ProjectCronJobs
     }
 }
 </script>

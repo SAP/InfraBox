@@ -255,6 +255,79 @@ trigger_model = api.model('Trigger', {
     'env': fields.List(fields.Nested(env_model))
 })
 
+def trigger_build(project_id):
+    body = request.get_json()
+    branch_or_sha = body.get('branch_or_sha', None)
+    env = body.get('env', None)
+
+    project = g.db.execute_one('''
+        SELECT type
+        FROM project
+        WHERE id = %s
+    ''', [project_id])
+
+    if not project:
+        abort(404, 'project not found')
+
+    project_type = project[0]
+
+    r = g.db.execute_one('''
+        SELECT max(build_number) + 1 AS build_no
+        FROM build AS b
+        WHERE b.project_id = %s
+    ''', [project_id])
+    build_no = r[0]
+
+    if not build_no:
+        build_no = 1
+
+    new_build_id = None
+    new_build_number = None
+
+    if project_type in ('gerrit', 'github'):
+        repo = g.db.execute_one('''
+            SELECT id, name, clone_url, private
+            FROM repository
+            WHERE project_id = %s
+        ''', [project_id])
+
+        if not repo:
+            abort(404, 'repo not found')
+
+        repo_id = repo[0]
+
+        if project_type == 'github':
+            commit = create_github_commit(project_id, repo_id, branch_or_sha)
+            (new_build_id, new_build_number) = create_git_job(commit,
+                                                                build_no,
+                                                                project_id,
+                                                                repo,
+                                                                project_type,
+                                                                env)
+        elif project_type == 'gerrit':
+            commit = create_gerrit_commit(project_id, repo_id, branch_or_sha)
+            (new_build_id, new_build_number) = create_git_job(commit,
+                                                                build_no,
+                                                                project_id,
+                                                                repo,
+                                                                project_type,
+                                                                env)
+    elif project_type == 'upload':
+        (new_build_id, new_build_number) = create_upload_job(project_id, build_no, env)
+    else:
+        abort(404)
+
+    g.db.commit()
+
+    data = {
+        'build': {
+            'id': new_build_id,
+            'build_number': new_build_number,
+            'restartCounter': 1
+        }
+    }
+
+    return OK('Build triggered', data)
 
 @ns.route('/trigger')
 @api.response(403, 'Not Authorized')
@@ -267,75 +340,4 @@ class Trigger(Resource):
         '''
         Trigger a new build
         '''
-        body = request.get_json()
-        branch_or_sha = body.get('branch_or_sha', None)
-        env = body.get('env', None)
-
-        project = g.db.execute_one('''
-            SELECT type
-            FROM project
-            WHERE id = %s
-        ''', [project_id])
-
-        if not project:
-            abort(404, 'project not found')
-
-        project_type = project[0]
-
-        r = g.db.execute_one('''
-            SELECT max(build_number) + 1 AS build_no
-            FROM build AS b
-            WHERE b.project_id = %s
-        ''', [project_id])
-        build_no = r[0]
-
-        if not build_no:
-            build_no = 1
-
-        new_build_id = None
-        new_build_number = None
-
-        if project_type in ('gerrit', 'github'):
-            repo = g.db.execute_one('''
-                SELECT id, name, clone_url, private
-                FROM repository
-                WHERE project_id = %s
-            ''', [project_id])
-
-            if not repo:
-                abort(404, 'repo not found')
-
-            repo_id = repo[0]
-
-            if project_type == 'github':
-                commit = create_github_commit(project_id, repo_id, branch_or_sha)
-                (new_build_id, new_build_number) = create_git_job(commit,
-                                                                  build_no,
-                                                                  project_id,
-                                                                  repo,
-                                                                  project_type,
-                                                                  env)
-            elif project_type == 'gerrit':
-                commit = create_gerrit_commit(project_id, repo_id, branch_or_sha)
-                (new_build_id, new_build_number) = create_git_job(commit,
-                                                                  build_no,
-                                                                  project_id,
-                                                                  repo,
-                                                                  project_type,
-                                                                  env)
-        elif project_type == 'upload':
-            (new_build_id, new_build_number) = create_upload_job(project_id, build_no, env)
-        else:
-            abort(404)
-
-        g.db.commit()
-
-        data = {
-            'build': {
-                'id': new_build_id,
-                'build_number': new_build_number,
-                'restartCounter': 1
-            }
-        }
-
-        return OK('Build triggered', data)
+        return trigger_build(project_id)

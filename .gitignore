@@ -1,4 +1,5 @@
 tags
+.vscode
 node_modules/
 public/components
 src/dashboard/run_server.sh

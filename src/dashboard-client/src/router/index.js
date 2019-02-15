@@ -19,10 +19,14 @@ import UserService from '../services/UserService'
 Vue.use(Router)
 
 let loginGuard = function (to, from, next) {
-    if (UserService.isLoggedIn()) {
+    if (process.env.NODE_ENV === 'development') {
         next()
     } else {
-        next('/login')
+        if (UserService.isLoggedIn()) {
+            next()
+        } else {
+            next('/login')
+        }
     }
 }
 
