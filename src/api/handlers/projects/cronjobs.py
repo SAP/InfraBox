@@ -3,10 +3,11 @@ import re
 from flask import request, g, abort
 from flask_restplus import Resource, fields
 
-
 from pyinfrabox.utils import validate_uuid
 from pyinfraboxutils.ibflask import OK
 from pyinfraboxutils.ibrestplus import api, response_model
+
+from croniter import croniter
 
 ns = api.namespace('CronJobs',
                    path='/api/v1/projects/<project_id>/cronjobs',
@@ -61,6 +62,9 @@ class CronJobs(Resource):
         if not CronJobs.name_pattern.match(b['name']):
             abort(400, 'CronJob name must be not empty alphanumeric string.')
 
+        if not croniter.is_valid('%s %s %s %s %s' % (b['minute'], b['hour'], b['day_month'], b['month'], b['day_week'])):
+            abort(400, 'Invalid input expression')
+
         result = g.db.execute_one_dict("""
             SELECT COUNT(*) as cnt FROM cronjob WHERE project_id = %s
         """, [project_id])
@@ -74,7 +78,7 @@ class CronJobs(Resource):
                 """, [project_id, b['name']])
 
         if r[0] > 0:
-            abort(400, 'CronJob with this name already exist.')
+            abort(400, 'CronJob with this name already exist')
 
         g.db.execute('''
             INSERT INTO cronjob (project_id, name, minute, hour, day_month, month, day_week, sha) VALUES(%s, %s, %s, %s, %s, %s, %s, %s)

@@ -44,9 +44,27 @@
                             </md-button>
                         </md-list-item>
                         <md-list-item v-for="cron in project.cronjobs" :key="cron.id">
-                            <div class="md-list-text-container">
-                                {{ cron.name }}: {{ cron.minute }} {{ cron.hour }} {{ cron.day_month }} {{ cron.month }} {{ cron.day_week }} {{ cron.sha }}
-                            </div>
+                            <md-input-container class="m-l-sm">
+                                {{ cron.name }}
+                            </md-input-container>
+                            <md-input-container class="m-l-sm">
+                                {{ cron.minute }}
+                            </md-input-container>
+                            <md-input-container class="m-l-sm">
+                                {{ cron.hour }}
+                            </md-input-container>
+                            <md-input-container class="m-l-sm">
+                                {{ cron.day_month }}
+                            </md-input-container>
+                            <md-input-container class="m-l-sm">
+                                {{ cron.month }}
+                            </md-input-container>
+                            <md-input-container class="m-l-sm">
+                                {{ cron.day_week }}
+                            </md-input-container>
+                            <md-input-container class="m-l-sm">
+                                {{ cron.sha }}
+                            </md-input-container>
                             <md-button type="submit" class="md-icon-button md-list-action" @click="deleteCronJob(cron.id)">
                                 <md-icon class="md-primary">delete</md-icon>
                                 <md-tooltip>Delete Cron Job permanently</md-tooltip>
