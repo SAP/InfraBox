@@ -186,6 +186,12 @@ function addJobs (state, jobs) {
     }
 }
 
+function setSSHKeys (state, data) {
+    const project = data.project
+    const sshkeys = data.sshkeys
+    project.sshkeys = sshkeys
+}
+
 function setCronJobs (state, data) {
     const project = data.project
     const cronjobs = data.cronjobs
@@ -308,6 +314,7 @@ const mutations = {
     addJobs,
     setSecrets,
     setCronJobs,
+    setSSHKeys,
     setCollaborators,
     setRoles,
     setTokens,

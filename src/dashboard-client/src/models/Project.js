@@ -207,6 +207,23 @@ export default class Project {
             })
     }
 
+    _loadSSHKeys () {
+        if (this.cronjobs) {
+            return
+        }
+
+        this._reloadSSHKeys()
+    }
+
+    _reloadSSHKeys () {
+        return NewAPIService.get(`projects/${this.id}/sshkeys`)
+            .then((sshkeys) => {
+                store.commit('setSSHKeys', { project: this, sshkeys: sshkeys })
+            })
+            .catch((err) => {
+                NotificationService.$emit('NOTIFICATION', new Notification(err))
+            })
+    }
     _loadRoles () {
         if (this.roles) {
             return

@@ -1,13 +1,16 @@
 <template>
     <md-layout md-row>
-        <md-layout md-column md-gutter md-flex-xsmall="100" md-flex-small="50" md-flex-medium="50" md-flex-large="33" md-flex-xlarge="33" class="b-r thin-border">
+        <md-layout md-column md-gutter md-flex-xsmall="100" md-flex-small="50" md-flex-medium="50" md-flex-large="50" md-flex-xlarge="50" class="b-r thin-border">
             <ib-project-secrets :project="project"></ib-project-secrets>
         </md-layout>
-        <md-layout md-column md-gutter md-flex-xsmall="100" md-flex-small="50" md-flex-medium="50" md-flex-large="33" md-flex-xlarge="33" class="b-r thin-border">
+        <md-layout md-column md-gutter md-flex-xsmall="100" md-flex-small="50" md-flex-medium="50" md-flex-large="50" md-flex-xlarge="50" class="b-r thin-border">
             <ib-project-collaborators :project="project"></ib-project-collaborators>
         </md-layout>
-        <md-layout md-column md-gutter md-flex-xsmall="100" md-flex-small="50" md-flex-medium="50" md-flex-large="33" md-flex-xlarge="33">
+        <md-layout md-column md-gutter md-flex-xsmall="100" md-flex-small="50" md-flex-medium="50" md-flex-large="50" md-flex-xlarge="50">
             <ib-project-tokens :project="project"></ib-project-tokens>
+        </md-layout>
+        <md-layout md-column md-gutter md-flex-xsmall="100" md-flex-small="50" md-flex-medium="50" md-flex-large="50" md-flex-xlarge="50">
+            <ib-project-sshkeys :project="project"></ib-project-sshkeys>
         </md-layout>
         <md-layout md-column md-gutter md-flex-xsmall="100" md-flex-small="100" md-flex-medium="100" md-flex-large="100" md-flex-xlarge="100">
             <ib-project-cronjobs :project="project"></ib-project-cronjobs>
@@ -24,6 +27,7 @@ import ProjectTokens from './Tokens'
 import ProjectCollaborators from './Collaborators'
 import ProjectBadges from './Badges'
 import ProjectCronJobs from './Cron'
+import ProjectSSHKeys from './SSHKeys'
 
 export default {
     props: ['project'],
@@ -32,7 +36,8 @@ export default {
         'ib-project-tokens': ProjectTokens,
         'ib-project-collaborators': ProjectCollaborators,
         'ib-project-badges': ProjectBadges,
-        'ib-project-cronjobs': ProjectCronJobs
+        'ib-project-cronjobs': ProjectCronJobs,
+        'ib-project-sshkeys': ProjectSSHKeys
     }
 }
 </script>
