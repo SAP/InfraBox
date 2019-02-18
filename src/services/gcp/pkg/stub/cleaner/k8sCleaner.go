@@ -161,7 +161,7 @@ func (cc *clusterCleaner) cleanupNamespace(ns string, pvcIf corev1.PersistentVol
 	}()
 
 	isClean = true
-	for i := 0; i < 5; i++ {
+	for i := 0; i < 6; i++ {
 		r := <-results
 		isClean = isClean && r.isClean
 		if r.err != nil && err == nil {

@@ -225,13 +225,15 @@ func syncGKECluster(cr *v1alpha1.GKECluster, log *logrus.Entry) (*v1alpha1.GKECl
 }
 
 func deleteGKECluster(cr *v1alpha1.GKECluster, log *logrus.Entry) error {
-	cr.Status.Status = "pending"
-	cr.Status.Message = "deleting"
+	if cr.Status.Status != "deleting" {
+		cr.Status.Status = "deleting"
+		cr.Status.Message = "collecting logs"
 
-	err := action.Update(cr)
-	if err != nil {
-		log.Errorf("Failed to update status: %v", err)
-		return err
+		err := action.Update(cr)
+		if err != nil {
+			log.Errorf("Failed to update status: %v", err)
+			return err
+		}
 	}
 
 	// Get the GKE Cluster
@@ -242,23 +244,41 @@ func deleteGKECluster(cr *v1alpha1.GKECluster, log *logrus.Entry) error {
 	}
 
 	if gkecluster != nil {
-		if gkecluster.Status == "RUNNING" {
+		if cr.Status.Message == "collecting logs" {
 			// only try it once when the cluster is still running
 			retrieveLogs(cr, gkecluster, log)
+
+			cr.Status.Message = "cleaning cluster"
+			err := action.Update(cr)
+			if err != nil {
+				log.Errorf("Failed to update status: %v", err)
+				return err
+			}
 		}
 
-		if err := cleanupK8s(gkecluster, log); err != nil {
-			return err
+		if cr.Status.Message == "cleaning cluster" {
+			if err := cleanupK8s(gkecluster, log); err != nil {
+				return err
+			}
+
+			cr.Status.Message = "deleting cluster"
+			err := action.Update(cr)
+			if err != nil {
+				log.Errorf("Failed to update status: %v", err)
+				return err
+			}
 		}
 
 		// Cluster still exists, delete it
-		cmd := exec.Command("gcloud", "-q", "container", "clusters", "delete", cr.Status.ClusterName, "--async", "--zone", cr.Spec.Zone)
-		out, err := cmd.CombinedOutput()
+		if cr.Status.Message == "deleting cluster" {
+			cmd := exec.Command("gcloud", "-q", "container", "clusters", "delete", cr.Status.ClusterName, "--async", "--zone", cr.Spec.Zone)
+			out, err := cmd.CombinedOutput()
 
-		if err != nil {
-			log.Errorf("Failed to delete cluster: %v", err)
-			log.Error(string(out))
-			return err
+			if err != nil {
+				log.Errorf("Failed to delete cluster: %v", err)
+				log.Error(string(out))
+				return err
+			}
 		}
 
 		return nil
