@@ -61,7 +61,7 @@ func TestDeletePersistentVolumes_FailsOnError(t *testing.T) {
 		pvcMock.EXPECT().List(gomock.Any()).Return(nil, fmt.Errorf("fooerror"))
 
 		cleaner := NewK8sCleaner(nil, logrus.WithField("test", "test"))
-		err := cleaner.deletePersistentVolumes(pvcMock)
+		_, err := cleaner.deletePersistentVolumes(pvcMock)
 		require.New(t).Error(err)
 	})
 
@@ -82,7 +82,7 @@ func TestDeletePersistentVolumes_FailsOnError(t *testing.T) {
 
 		cleaner := NewK8sCleaner(nil, logrus.WithField("test", "test"))
 
-		err := cleaner.deletePersistentVolumes(pvcMock)
+		_, err := cleaner.deletePersistentVolumes(pvcMock)
 		require.New(t).Error(err)
 	})
 
@@ -102,7 +102,7 @@ func TestDeletePersistentVolumes_FailsOnError(t *testing.T) {
 
 		cleaner := NewK8sCleaner(nil, logrus.WithField("test", "test"))
 
-		err := cleaner.deletePersistentVolumes(pvcMock)
+		_, err := cleaner.deletePersistentVolumes(pvcMock)
 		require.New(t).Error(err)
 	})
 }
@@ -120,8 +120,9 @@ func TestCleanupCluster_IfClusterIsEmpty_ReturnsEmptyCluster(t *testing.T) {
 
 	cleaner := NewK8sCleaner(cs, logrus.WithField("test", "test"))
 
-	err := cleaner.Cleanup()
+	isClean, err := cleaner.Cleanup()
 	require.New(t).NoError(err)
+	require.True(t, isClean)
 }
 
 func TestCleanupNamespace_ReturnsErrorIfSomethingFailed(t *testing.T) {
@@ -134,7 +135,7 @@ func TestCleanupNamespace_ReturnsErrorIfSomethingFailed(t *testing.T) {
 		pvcMock := addErrorDuringPvcDeletion(mockCtrl)
 		cleaner := NewK8sCleaner(nil, logrus.WithField("test", "test"))
 
-		_, err := cleaner.cleanupNamespace(namespace, pvcMock, cs.ExtensionsV1beta1().Ingresses(namespace), cs.CoreV1().Pods(namespace), cs.AppsV1().Deployments(namespace), cs.BatchV1().Jobs(namespace), cs.AppsV1().StatefulSets(namespace))
+		_, err := cleaner.cleanupNamespace(namespace, pvcMock, cs.ExtensionsV1beta1().Ingresses(namespace), cs.CoreV1().Pods(namespace), cs.AppsV1().Deployments(namespace), cs.BatchV1().Jobs(namespace), cs.AppsV1().StatefulSets(namespace), cs.AppsV1().DaemonSets(namespace))
 
 		require.New(t).Error(err)
 	})
@@ -146,7 +147,7 @@ func TestCleanupNamespace_ReturnsErrorIfSomethingFailed(t *testing.T) {
 		ingIfMock := addErrorDuringIngressDeletion(mockCtrl)
 		cleaner := NewK8sCleaner(nil, logrus.WithField("test", "test"))
 
-		_, err := cleaner.cleanupNamespace(namespace, cs.CoreV1().PersistentVolumeClaims(namespace), ingIfMock, cs.CoreV1().Pods(namespace), cs.AppsV1().Deployments(namespace), cs.BatchV1().Jobs(namespace), cs.AppsV1().StatefulSets(namespace))
+		_, err := cleaner.cleanupNamespace(namespace, cs.CoreV1().PersistentVolumeClaims(namespace), ingIfMock, cs.CoreV1().Pods(namespace), cs.AppsV1().Deployments(namespace), cs.BatchV1().Jobs(namespace), cs.AppsV1().StatefulSets(namespace), cs.AppsV1().DaemonSets(namespace))
 
 		require.New(t).Error(err)
 	})
@@ -158,7 +159,7 @@ func TestCleanupNamespace_ReturnsErrorIfSomethingFailed(t *testing.T) {
 		podIfMock := addErrorDuringPodDeletion(mockCtrl)
 		cleaner := NewK8sCleaner(nil, logrus.WithField("test", "test"))
 
-		_, err := cleaner.cleanupNamespace(namespace, cs.CoreV1().PersistentVolumeClaims(namespace), cs.ExtensionsV1beta1().Ingresses(namespace), podIfMock, cs.AppsV1().Deployments(namespace), cs.BatchV1().Jobs(namespace), cs.AppsV1().StatefulSets(namespace))
+		_, err := cleaner.cleanupNamespace(namespace, cs.CoreV1().PersistentVolumeClaims(namespace), cs.ExtensionsV1beta1().Ingresses(namespace), podIfMock, cs.AppsV1().Deployments(namespace), cs.BatchV1().Jobs(namespace), cs.AppsV1().StatefulSets(namespace), cs.AppsV1().DaemonSets(namespace))
 
 		require.New(t).Error(err)
 	})
@@ -204,10 +205,10 @@ func TestCleanAllNamespace_DoesNotCleanupInSystemNamespace(t *testing.T) {
 	}
 
 	cleaner := NewK8sCleaner(cs, logrus.WithField("test", "test"))
-	err := cleaner.cleanAllNamespaces(cs)
-	require.Equal(t, errNotYetClean, err) // first try will report notCleanYet
+	isClean, _ := cleaner.cleanAllNamespaces(cs)
+	require.Equal(t, isClean, false)
 
-	pvcList, err := cs.CoreV1().PersistentVolumeClaims(v1.NamespaceSystem).List(v1.ListOptions{})
+	pvcList, _ := cs.CoreV1().PersistentVolumeClaims(v1.NamespaceSystem).List(v1.ListOptions{})
 	assert.NotEqual(t, 0, len(pvcList.Items))
 }
 
@@ -468,7 +469,7 @@ func TestCleanup_FailsIfNoNamespacesCanBeRead(t *testing.T) {
 	cc := NewK8sCleaner(cs, logrus.WithField("test", "test"))
 	cc.nsIf = nsMock
 
-	err := cc.Cleanup()
+	_, err := cc.Cleanup()
 	require.Error(t, err)
 }
 
@@ -484,6 +485,6 @@ func TestCleanup_FailsIfPersistentVolumeCleanupFails(t *testing.T) {
 	cc := NewK8sCleaner(cs, logrus.WithField("test", "test"))
 	cc.pvIf = pvMock
 
-	err := cc.Cleanup()
+	_, err := cc.Cleanup()
 	require.Error(t, err)
 }

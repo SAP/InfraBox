@@ -257,12 +257,17 @@ func deleteGKECluster(cr *v1alpha1.GKECluster, log *logrus.Entry) error {
 		}
 
 		if cr.Status.Message == "cleaning cluster" {
-			if err := cleanupK8s(gkecluster, log); err != nil {
+			isClean, err := cleanupK8s(gkecluster, log)
+			if err != nil {
 				return err
 			}
 
+			if !isClean {
+				return nil
+			}
+
 			cr.Status.Message = "deleting cluster"
-			err := action.Update(cr)
+			err = action.Update(cr)
 			if err != nil {
 				log.Errorf("Failed to update status: %v", err)
 				return err
@@ -318,29 +323,20 @@ func deleteGKECluster(cr *v1alpha1.GKECluster, log *logrus.Entry) error {
 	return nil
 }
 
-func cleanupK8s(cluster *RemoteCluster, log *logrus.Entry) error {
+func cleanupK8s(cluster *RemoteCluster, log *logrus.Entry) (bool, error) {
 	remoteClusterSdk, err := newRemoteClusterSDK(cluster)
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	cs, err := kubernetes.NewForConfig(remoteClusterSdk.kubeConfig)
 	if err != nil {
 		log.Errorf("Failed to create clientset from given kubeconfig: %v", err)
-		return err
+		return false, err
 	}
 
-	err = cleaner.NewK8sCleaner(cs, log).Cleanup()
-	if cleaner.IsNotYetClean(err) { // that's normal especially when triggering the cleanup for the first time
-		log.Debugf("k8s isn't clean, yet")
-		return err
-
-	} else if err != nil {
-		log.Errorf("Failed to clean up k8s cluster: %v", err)
-		return err
-	}
-
-	return nil
+	isClean, err := cleaner.NewK8sCleaner(cs, log).Cleanup()
+	return isClean, err
 }
 
 func (h *Handler) Handle(ctx types.Context, event types.Event) error {
