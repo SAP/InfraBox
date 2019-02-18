@@ -11,7 +11,6 @@ Some of InfraBox' features are:
 - [Set resource limits (CPU and memory) for each task](https://github.com/SAP/infrabox-examples)
 - [GitHub integration](docs/install/configure/github.md)
 - [Gerrit integration](docs/install/configure/gerrit.md)
-- GitLab (coming soon)
 - [LDAP support](docs/install/configure/ldap.md)
 - [Periodically schedule builds](docs/cronjobs.md)
 - [and many more, see our examples](https://github.com/SAP/infrabox-examples)

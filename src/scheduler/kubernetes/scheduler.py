@@ -16,6 +16,7 @@ import psycopg2.extensions
 from pyinfraboxutils import get_logger, get_env
 from pyinfraboxutils.db import connect_db
 from pyinfraboxutils.token import encode_job_token
+from pyinfraboxutils.secrets import decrypt_secret
 
 class APIException(Exception):
     def __init__(self, result):
@@ -586,7 +587,7 @@ class Scheduler(object):
         project_type = result[0]
         project_id = result[1]
 
-        private_key = None
+        private_key = ''
         if project_type == 'github':
             cursor = self.conn.cursor()
             cursor.execute('''
@@ -616,10 +617,30 @@ class Scheduler(object):
                 }, {
                     'name': 'INFRABOX_GIT_HOSTNAME',
                     'value': os.environ['INFRABOX_GERRIT_HOSTNAME']
-                }, {
-                    'name': 'INFRABOX_GIT_PRIVATE_KEY',
-                    'value': key.read()
                 }]
+
+                private_key = key.read()
+
+        cursor = self.conn.cursor()
+        cursor.execute('''
+            SELECT s.value
+            FROM secret s
+            JOIN sshkey k
+            ON k.secret_id = s.id
+            WHERE k.project_id = %s
+            AND s.project_id = %s
+        ''', [project_id, project_id])
+        result = cursor.fetchall()
+        cursor.close()
+
+        for r in result:
+            private_key += '\n%s' decrypt_secret(r[0])
+
+        if private_key:
+            env += [{
+                'name': 'INFRABOX_GIT_PRIVATE_KEY',
+                'value': private_key
+            }]
 
         root_url = os.environ['INFRABOX_ROOT_URL']
 
