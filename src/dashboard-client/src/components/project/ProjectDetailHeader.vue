@@ -132,8 +132,10 @@ export default {
             const projectName = encodeURIComponent(this.project.name)
 
             if (index === 0) {
+                console.log(`/project/${projectName}`)
                 router.push(`/project/${projectName}`)
             } else {
+                console.log(`/project/${projectName}/settings`)
                 router.push(`/project/${projectName}/settings`)
             }
         }

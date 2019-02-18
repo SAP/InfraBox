@@ -186,6 +186,12 @@ function addJobs (state, jobs) {
     }
 }
 
+function setCronJobs (state, data) {
+    const project = data.project
+    const cronjobs = data.cronjobs
+    project.cronjobs = cronjobs
+}
+
 function setSecrets (state, data) {
     const project = data.project
     const secrets = data.secrets
@@ -301,6 +307,7 @@ const mutations = {
     addProjects,
     addJobs,
     setSecrets,
+    setCronJobs,
     setCollaborators,
     setRoles,
     setTokens,

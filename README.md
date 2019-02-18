@@ -13,6 +13,7 @@ Some of InfraBox' features are:
 - [Gerrit integration](docs/install/configure/gerrit.md)
 - GitLab (coming soon)
 - [LDAP support](docs/install/configure/ldap.md)
+- [Periodically schedule builds](docs/cronjobs.md)
 - [and many more, see our examples](https://github.com/SAP/infrabox-examples)
 
 ## Want to see it in action?

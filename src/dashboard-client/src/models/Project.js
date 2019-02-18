@@ -14,6 +14,7 @@ export default class Project {
         this.state = 'finished'
         this.type = type
         this.secrets = null
+        this.cronjobs = null
         this.collaborators = null
         this.roles = null
         this.userrole = userrole
@@ -182,6 +183,24 @@ export default class Project {
         return NewAPIService.get(`projects/${this.id}/secrets`)
             .then((secrets) => {
                 store.commit('setSecrets', { project: this, secrets: secrets })
+            })
+            .catch((err) => {
+                NotificationService.$emit('NOTIFICATION', new Notification(err))
+            })
+    }
+
+    _loadCronJobs () {
+        if (this.cronjobs) {
+            return
+        }
+
+        this._reloadCronJobs()
+    }
+
+    _reloadCronJobs () {
+        return NewAPIService.get(`projects/${this.id}/cronjobs`)
+            .then((cronjobs) => {
+                store.commit('setCronJobs', { project: this, cronjobs: cronjobs })
             })
             .catch((err) => {
                 NotificationService.$emit('NOTIFICATION', new Notification(err))

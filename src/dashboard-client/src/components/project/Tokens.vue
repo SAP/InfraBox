@@ -20,9 +20,9 @@
                     </md-button>
                 </md-list-item>
                 <md-list-item  v-for="token in project.tokens" :key="token.id">
-                    <div class="md-list-text-container">
+                    <md-input-container class="m-r-xl">
                         {{ token.description }}
-                    </div>
+                    </md-input-container>
                     <md-button type="submit" class="md-icon-button md-list-action" @click="project.deleteToken(token.id)">
                         <md-icon class="md-primary">delete</md-icon>
                         <md-tooltip>Delete token permanently</md-tooltip>

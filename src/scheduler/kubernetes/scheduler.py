@@ -8,6 +8,7 @@ import copy
 from datetime import datetime
 
 import requests
+from croniter import croniter
 
 import psycopg2
 import psycopg2.extensions
@@ -919,6 +920,61 @@ class Scheduler(object):
                 """)
         cursor.close()
 
+    def handle_cron_jobs(self):
+        cursor = self.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cursor.execute("begin")
+
+        try:
+            cursor.execute("""
+                SELECT *
+                FROM cronjob
+            """)
+            cronjobs = cursor.fetchall()
+
+            for c in cronjobs:
+                base = c['last_trigger']
+                i = croniter('%s %s %s %s %s' % (c['minute'], c['hour'], c['day_month'], c['month'], c['day_week']), base)
+
+                next_trigger = i.get_next(datetime)
+
+                if next_trigger > datetime.now():
+                    # still in future
+                    continue
+
+                cursor.execute('''
+                    UPDATE cronjob
+                    SET last_trigger = now()
+                    WHERE id = %s
+                ''', [c['id']])
+
+                trigger = {
+                    'branch_or_sha': c['sha'],
+                    'env': [{
+                        'name': 'INFRABOX_TRIGGER',
+                        'value': 'true'
+                    }]
+                }
+
+                project_id = c['project_id']
+                cursor.execute("commit")
+
+                try:
+                    r = requests.post('http://infrabox-api.infrabox-system:8080/internal/api/projects/%s/trigger' % project_id, json=trigger, timeout=10)
+                except:
+                    cursor.execute('begin')
+                    cursor.execute('''
+                        UPDATE cronjob
+                        SET last_trigger = %s
+                        WHERE id = %s
+                    ''', [c['last_trigger'], c['id']])
+                    cursor.execute('comit')
+                break
+        except Exception as e:
+            self.logger.error(e)
+            cursor.execute("rollback")
+        finally:
+            cursor.close()
+
     def handle_orphaned_jobs(self):
         self.logger.debug("Handling orphaned jobs")
 
@@ -1155,6 +1211,7 @@ class Scheduler(object):
             self.handle_timeouts()
             self.handle_aborts()
             self.handle_orphaned_jobs()
+            self.handle_cron_jobs()
             self.handle_inactive_cluster_queued_jobs()
         except Exception as e:
             self.logger.exception(e)

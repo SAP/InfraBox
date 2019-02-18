@@ -24,9 +24,9 @@
                             </md-button>
                         </md-list-item>
                         <md-list-item v-for="secret in project.secrets" :key="secret.id">
-                            <div class="md-list-text-container">
+                            <md-input-container class="m-l-sm">
                                 {{ secret.name }}
-                            </div>
+                            </md-input-container>
                             <md-button type="submit" class="md-icon-button md-list-action" @click="deleteSecret(secret.id)">
                                 <md-icon class="md-primary">delete</md-icon>
                                 <md-tooltip>Delete secret permanently</md-tooltip>
