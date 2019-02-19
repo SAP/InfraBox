@@ -137,27 +137,7 @@ func TestCleanupNamespace_ReturnsErrorIfSomethingFailed(t *testing.T) {
 
 		_, err := cleaner.cleanupNamespace(namespace,
 			ingIfMock,
-			cs.CoreV1().Pods(namespace),
 			cs.AppsV1().Deployments(namespace),
-			cs.BatchV1().Jobs(namespace),
-			cs.AppsV1().StatefulSets(namespace),
-			cs.AppsV1beta1().StatefulSets(namespace),
-			cs.AppsV1beta2().StatefulSets(namespace),
-			cs.AppsV1().DaemonSets(namespace))
-
-		require.New(t).Error(err)
-	})
-
-	t.Run("failure during pod cleaning", func(t *testing.T) {
-		cs := k8sFake.NewSimpleClientset()
-		mockCtrl := gomock.NewController(t)
-		defer mockCtrl.Finish()
-		podIfMock := addErrorDuringPodDeletion(mockCtrl)
-		cleaner := NewK8sCleaner(nil, logrus.WithField("test", "test"))
-
-		_, err := cleaner.cleanupNamespace(namespace,
-			cs.ExtensionsV1beta1().Ingresses(namespace),
-			podIfMock, cs.AppsV1().Deployments(namespace),
 			cs.BatchV1().Jobs(namespace),
 			cs.AppsV1().StatefulSets(namespace),
 			cs.AppsV1beta1().StatefulSets(namespace),
@@ -178,12 +158,6 @@ func addErrorDuringPvcDeletion(mockCtrl *gomock.Controller) *mocks.MockPersisten
 	pvcMock := mocks.NewMockPersistentVolumeClaimInterface(mockCtrl)
 	pvcMock.EXPECT().List(gomock.Any()).Return(nil, fmt.Errorf("fooerror"))
 	return pvcMock
-}
-
-func addErrorDuringPodDeletion(mockCtrl *gomock.Controller) *mocks.MockPodInterface {
-	podIfMock := mocks.NewMockPodInterface(mockCtrl)
-	podIfMock.EXPECT().List(gomock.Any()).Return(nil, fmt.Errorf("fooerror"))
-	return podIfMock
 }
 
 func TestCleanAllNamespace_DoesNotCleanupInSystemNamespace(t *testing.T) {
@@ -323,7 +297,6 @@ func TestCleanAllPvcInNamespace_FailsOnError(t *testing.T) {
 		fillWithBasicMetadata(&claim, namespace)
 		list := []corev1.PersistentVolumeClaim{claim}
 		pvcMock.EXPECT().List(gomock.Any()).Return(&corev1.PersistentVolumeClaimList{Items: list}, nil)
-		pvcMock.EXPECT().Update(gomock.Any()).Return(nil, nil)
 
 		pvcMock.EXPECT().DeleteCollection(gomock.Any(), gomock.Any()).Return(fmt.Errorf("fooerror"))
 

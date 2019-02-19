@@ -50,16 +50,21 @@ func (cc *clusterCleaner) Cleanup() (bool, error) {
 	if isClean, err := cc.cleanAllNamespaces(cc.clientSet); err != nil {
 		cc.log.Error("couldn't clean all namespaces: ", err.Error())
 		return false, err
+	} else if !isClean { // only cleanup pods, pvc, and pv if all stateful sets, deployments, ... are gone
+		return false, nil
+	}
 
-	} else if !isClean { // only cleanup pvc and pv if all pods, stateful sets, deployments, ... are gone
+	if isClean, err := cc.cleanPodsInAllNamespaces(cc.clientSet); err != nil {
+		cc.log.Error("couldn't remove all pods: ", err.Error())
+		return false, nil
+	} else if !isClean { // only cleanup pvc after all pods are gone
 		return false, nil
 	}
 
 	if isClean, err := cc.cleanPvcsInAllNamespaces(cc.clientSet); err != nil {
-		return false, nil
-
-	} else if !isClean { // only cleanup pv if all claims are gone
 		cc.log.Error("couldn't remove all persistent volume claims: ", err.Error())
+		return false, nil
+	} else if !isClean { // only cleanup pv after all claims are gone
 		return false, nil
 	}
 
@@ -101,6 +106,35 @@ func (cc *clusterCleaner) cleanPvcsInAllNamespaces(clientSet kubernetes.Interfac
 
 }
 
+func (cc *clusterCleaner) cleanPodsInAllNamespaces(clientSet kubernetes.Interface) (bool, error) {
+	namespaces, err := cc.nsIf.List(v1.ListOptions{})
+	if err != nil {
+		cc.log.Error("couldn't enlist all namespaces. err: ", err)
+		return false, err
+	}
+
+	outChan := make(chan *helperResultStruct, len(namespaces.Items))
+	for _, ns := range namespaces.Items {
+		if ns.GetName() == v1.NamespaceSystem {
+			continue
+		}
+		go func(nsName string, pvcIf corev1.PersistentVolumeClaimInterface, out chan *helperResultStruct) {
+			isClean, err := cc.cleanAllPodsInNamespace(ns.GetName(), clientSet.CoreV1().Pods(ns.GetName()))
+			out <- &helperResultStruct{isClean, err}
+		}(ns.GetName(), clientSet.CoreV1().PersistentVolumeClaims(ns.GetName()), outChan)
+	}
+
+	numExpectedResults := len(namespaces.Items) - 1
+	allClean, err := cc.collectResults(time.Minute, numExpectedResults, outChan)
+
+	if err != nil {
+		return false, err
+	}
+
+	return allClean, nil
+
+}
+
 type helperResultStruct struct {
 	isClean bool
 	err     error
@@ -122,7 +156,6 @@ func (cc *clusterCleaner) cleanAllNamespaces(clientSet kubernetes.Interface) (bo
 		go func(nsName string,
 			pvcIf corev1.PersistentVolumeClaimInterface,
 			ingIf v1beta1.IngressInterface,
-			podIf corev1.PodInterface,
 			deplIf typedAppV1.DeploymentInterface,
 			jobIf typedBatchV1.JobInterface,
 			statefulSetIf typedAppV1.StatefulSetInterface,
@@ -131,13 +164,12 @@ func (cc *clusterCleaner) cleanAllNamespaces(clientSet kubernetes.Interface) (bo
 			dsIf typedAppV1.DaemonSetInterface,
 			out chan *helperResultStruct) {
 
-			isClean, err := cc.cleanupNamespace(nsName, ingIf, podIf, deplIf, jobIf, statefulSetIf, v1Beta1StatefulSetIf, v1Beta2StatefulSetIf, dsIf)
+			isClean, err := cc.cleanupNamespace(nsName, ingIf, deplIf, jobIf, statefulSetIf, v1Beta1StatefulSetIf, v1Beta2StatefulSetIf, dsIf)
 			out <- &helperResultStruct{isClean, err}
 
 		}(ns.GetName(),
 			clientSet.CoreV1().PersistentVolumeClaims(ns.GetName()),
 			clientSet.ExtensionsV1beta1().Ingresses(ns.GetName()),
-			clientSet.CoreV1().Pods(ns.GetName()),
 			clientSet.AppsV1().Deployments(ns.GetName()),
 			clientSet.BatchV1().Jobs(ns.GetName()),
 			clientSet.AppsV1().StatefulSets(ns.GetName()),
@@ -177,7 +209,6 @@ func (cc *clusterCleaner) collectResults(toDur time.Duration, numExpectedResults
 
 func (cc *clusterCleaner) cleanupNamespace(ns string,
 	ingIf v1beta1.IngressInterface,
-	podIf corev1.PodInterface,
 	deplIf typedAppV1.DeploymentInterface,
 	jobIf typedBatchV1.JobInterface,
 	statefulSetIf typedAppV1.StatefulSetInterface,
@@ -222,13 +253,8 @@ func (cc *clusterCleaner) cleanupNamespace(ns string,
 		results <- &helperResultStruct{jobClean, podErr}
 	}()
 
-	go func() {
-		podClean, podErr := cc.cleanAllPodsInNamespace(ns, podIf)
-		results <- &helperResultStruct{podClean, podErr}
-	}()
-
 	isClean = true
-	for i := 0; i < 8; i++ {
+	for i := 0; i < 7; i++ {
 		r := <-results
 		isClean = isClean && r.isClean
 		if r.err != nil && err == nil {
@@ -251,8 +277,9 @@ func (cc *clusterCleaner) cleanAllPvcInNamespace(ns string, pvcIf corev1.Persist
 		return true, nil
 	}
 
+	now := time.Now()
 	for i := range list.Items {
-		if err := cc.enablePvcForceDelete(&list.Items[i], ns, pvcIf); err != nil {
+		if err := cc.enablePvcForceDelete(&list.Items[i], now, ns, pvcIf); err != nil {
 			return false, err
 		}
 	}
@@ -265,16 +292,23 @@ func (cc *clusterCleaner) cleanAllPvcInNamespace(ns string, pvcIf corev1.Persist
 	return false, nil
 }
 
-func (cc *clusterCleaner) enablePvcForceDelete(claim *apiCoreV1.PersistentVolumeClaim, ns string, pvcIf corev1.PersistentVolumeClaimInterface) error {
-	var dgp int64 = 0
-	claim.SetDeletionGracePeriodSeconds(&dgp)
-	claim.SetFinalizers([]string{})
+func (cc *clusterCleaner) enablePvcForceDelete(claim *apiCoreV1.PersistentVolumeClaim, now time.Time, ns string, pvcIf corev1.PersistentVolumeClaimInterface) error {
+	if claim.GetDeletionTimestamp() == nil {
+		return nil
+	}
 
-	cc.log.Debugf("enable force-delete for pvc '%s' in namespace %s ", claim.GetName(), ns)
-	claim.SetFinalizers([]string{})
-	if _, err := pvcIf.Update(claim); err != nil {
-		cc.log.Debugf("couldn't remove finalizers from pvc '%s' in namespace %s. err: %s", claim.GetName(), ns, err.Error())
-		return err
+	durSinceDeletion := now.Sub(claim.GetDeletionTimestamp().Time)
+	if durSinceDeletion > deletionPeriodTolerance {
+		var dgp int64 = 0
+		claim.SetDeletionGracePeriodSeconds(&dgp)
+		claim.SetFinalizers([]string{})
+
+		cc.log.Debugf("stateful set '%s' in namespace %s is marked for deletion but wasn't deleted since %s ago. Will try to delete them", claim.GetName(), ns, durSinceDeletion.String())
+		claim.SetFinalizers([]string{})
+		if _, err := pvcIf.Update(claim); err != nil {
+			cc.log.Debugf("couldn't remove finalizers from stateful set '%s' in namespace %s. err: %s", claim.GetName(), ns, err.Error())
+			return err
+		}
 	}
 
 	return nil
@@ -287,7 +321,7 @@ type CollectionDeleter interface {
 func (cc *clusterCleaner) cleanAllStatefulSetInNamespace(ns string, statefulSetIf typedAppV1.StatefulSetInterface) (bool, error) {
 	list, err := statefulSetIf.List(v1.ListOptions{})
 	if err != nil {
-		cc.log.Errorf("couldn't list all persistent volume claims in the namespace %s. err: %s", ns, err.Error())
+		cc.log.Errorf("couldn't list all v1 stateful sets in the namespace %s. err: %s", ns, err.Error())
 		return false, err
 	}
 	if len(list.Items) == 0 {
@@ -302,28 +336,28 @@ func (cc *clusterCleaner) cleanAllStatefulSetInNamespace(ns string, statefulSetI
 	}
 
 	if err := statefulSetIf.DeleteCollection(nil, v1.ListOptions{}); err != nil {
-		cc.log.Error("couldn't delete all persistent volume claims. err: ", err)
+		cc.log.Error("couldn't delete all v1 stateful sets. err: ", err)
 		return false, err
 	}
 
 	return false, nil
 }
 
-func (cc *clusterCleaner) enableStatefulSetForceDeleteIfNecessary(claim *appV1.StatefulSet, now time.Time, ns string, statefulSetIf typedAppV1.StatefulSetInterface) error {
-	if claim.GetDeletionTimestamp() == nil {
+func (cc *clusterCleaner) enableStatefulSetForceDeleteIfNecessary(statefulSet *appV1.StatefulSet, now time.Time, ns string, statefulSetIf typedAppV1.StatefulSetInterface) error {
+	if statefulSet.GetDeletionTimestamp() == nil {
 		return nil
 	}
 
-	durSinceDeletion := now.Sub(claim.GetDeletionTimestamp().Time)
+	durSinceDeletion := now.Sub(statefulSet.GetDeletionTimestamp().Time)
 	if durSinceDeletion > deletionPeriodTolerance {
 		var dgp int64 = 0
-		claim.SetDeletionGracePeriodSeconds(&dgp)
-		claim.SetFinalizers([]string{})
+		statefulSet.SetDeletionGracePeriodSeconds(&dgp)
+		statefulSet.SetFinalizers([]string{})
 
-		cc.log.Debugf("stateful set '%s' in namespace %s is marked for deletion but wasn't deleted since %s ago. Will try to delete them", claim.GetName(), ns, durSinceDeletion.String())
-		claim.SetFinalizers([]string{})
-		if _, err := statefulSetIf.Update(claim); err != nil {
-			cc.log.Debugf("couldn't remove finalizers from stateful set '%s' in namespace %s. err: %s", claim.GetName(), ns, err.Error())
+		cc.log.Debugf("v1 stateful set '%s' in namespace %s is marked for deletion but wasn't deleted since %s ago. Will try to delete them", statefulSet.GetName(), ns, durSinceDeletion.String())
+		statefulSet.SetFinalizers([]string{})
+		if _, err := statefulSetIf.Update(statefulSet); err != nil {
+			cc.log.Debugf("couldn't remove finalizers from stateful set '%s' in namespace %s. err: %s", statefulSet.GetName(), ns, err.Error())
 			return err
 		}
 	}
@@ -334,7 +368,7 @@ func (cc *clusterCleaner) enableStatefulSetForceDeleteIfNecessary(claim *appV1.S
 func (cc *clusterCleaner) cleanAllV1Beta1StatefulSetInNamespace(ns string, statefulSetIf appsV1beta1.StatefulSetInterface) (bool, error) {
 	list, err := statefulSetIf.List(v1.ListOptions{})
 	if err != nil {
-		cc.log.Errorf("couldn't list all persistent volume claims in the namespace %s. err: %s", ns, err.Error())
+		cc.log.Errorf("couldn't list all v1beta1 stateful sets in the namespace %s. err: %s", ns, err.Error())
 		return false, err
 	}
 	if len(list.Items) == 0 {
@@ -349,7 +383,7 @@ func (cc *clusterCleaner) cleanAllV1Beta1StatefulSetInNamespace(ns string, state
 	}
 
 	if err := statefulSetIf.DeleteCollection(nil, v1.ListOptions{}); err != nil {
-		cc.log.Error("couldn't delete all persistent volume claims. err: ", err)
+		cc.log.Error("couldn't delete all v1beta1 stateful sets. err: ", err)
 		return false, err
 	}
 
@@ -367,7 +401,7 @@ func (cc *clusterCleaner) enableV1Beta1StatefulSetForceDeleteIfNecessary(claim *
 		claim.SetDeletionGracePeriodSeconds(&dgp)
 		claim.SetFinalizers([]string{})
 
-		cc.log.Debugf("stateful set '%s' in namespace %s is marked for deletion but wasn't deleted since %s ago. Will try to delete them", claim.GetName(), ns, durSinceDeletion.String())
+		cc.log.Debugf("v1beta1 stateful set '%s' in namespace %s is marked for deletion but wasn't deleted since %s ago. Will try to delete them", claim.GetName(), ns, durSinceDeletion.String())
 		claim.SetFinalizers([]string{})
 		if _, err := statefulSetIf.Update(claim); err != nil {
 			cc.log.Debugf("couldn't remove finalizers from stateful set '%s' in namespace %s. err: %s", claim.GetName(), ns, err.Error())
@@ -381,7 +415,7 @@ func (cc *clusterCleaner) enableV1Beta1StatefulSetForceDeleteIfNecessary(claim *
 func (cc *clusterCleaner) cleanAllV1Beta2StatefulSetInNamespace(ns string, statefulSetIf appsV1beta2.StatefulSetInterface) (bool, error) {
 	list, err := statefulSetIf.List(v1.ListOptions{})
 	if err != nil {
-		cc.log.Errorf("couldn't list all persistent volume claims in the namespace %s. err: %s", ns, err.Error())
+		cc.log.Errorf("couldn't list all v1beta2 stateful sets in the namespace %s. err: %s", ns, err.Error())
 		return false, err
 	}
 	if len(list.Items) == 0 {
@@ -396,7 +430,7 @@ func (cc *clusterCleaner) cleanAllV1Beta2StatefulSetInNamespace(ns string, state
 	}
 
 	if err := statefulSetIf.DeleteCollection(nil, v1.ListOptions{}); err != nil {
-		cc.log.Error("couldn't delete all persistent volume claims. err: ", err)
+		cc.log.Error("couldn't delete all v1beta2 stateful sets. err: ", err)
 		return false, err
 	}
 
@@ -414,7 +448,7 @@ func (cc *clusterCleaner) enableV1Beta2StatefulSetForceDeleteIfNecessary(claim *
 		claim.SetDeletionGracePeriodSeconds(&dgp)
 		claim.SetFinalizers([]string{})
 
-		cc.log.Debugf("stateful set '%s' in namespace %s is marked for deletion but wasn't deleted since %s ago. Will try to delete them", claim.GetName(), ns, durSinceDeletion.String())
+		cc.log.Debugf("v1beta2 stateful set '%s' in namespace %s is marked for deletion but wasn't deleted since %s ago. Will try to delete them", claim.GetName(), ns, durSinceDeletion.String())
 		claim.SetFinalizers([]string{})
 		if _, err := statefulSetIf.Update(claim); err != nil {
 			cc.log.Debugf("couldn't remove finalizers from stateful set '%s' in namespace %s. err: %s", claim.GetName(), ns, err.Error())
