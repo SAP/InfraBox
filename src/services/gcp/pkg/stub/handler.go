@@ -273,9 +273,9 @@ func deleteGKECluster(cr *v1alpha1.GKECluster, log *logrus.Entry) error {
 					return err
 				}
 
-			} else { // cluster was cleaned before -> check if it happened more than 1 min ago
+			} else { // cluster was cleaned before -> check if it happened more than 5 mins ago
 				t, err := time.Parse(time.RFC1123, cr.Status.FirstCleanedAt)
-				if err != nil && time.Since(t).Minutes() >= 1.0 {
+				if err != nil && time.Since(t).Minutes() >= 5.0 {
 					cr.Status.Message = "deleting cluster"
 					if err = action.Update(cr); err != nil {
 						log.Errorf("Failed to update status: %v", err)
