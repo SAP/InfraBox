@@ -107,9 +107,9 @@ def handle_patchset_created_project(conn, event, project_id, project_name):
         ON b.commit_id = c.id
         AND b.project_id = c.project_id
         WHERE
-            c.url = %s AND
+            c.gerrit_change_id = %s AND
             j.state in ('scheduled', 'running')
-    ''', [url])
+    ''', [event['change']['id']])
     c.close()
     conn.commit()
 
@@ -120,18 +120,18 @@ def handle_patchset_created_project(conn, event, project_id, project_name):
             INSERT INTO "commit" (
                 id, message, repository_id, timestamp,
                 author_name, author_email, author_username,
-                committer_name, committer_email, committer_username, url, branch, project_id, tag)
+                committer_name, committer_email, committer_username, url, branch, project_id, tag, gerrit_change_id)
             VALUES (%s, %s, %s,
                 %s, %s, %s,
                 %s, %s, %s,
-                %s, %s, %s, %s, %s)
+                %s, %s, %s, %s, %s, %s)
             RETURNING *
                 ''', (sha, event['change']['commitMessage'],
                       repository_id, datetime.datetime.now(),
                       event['change']['owner'].get('name', 'unknown'),
                       '', event['change']['owner']['username'], '', '', '',
                       url,
-                      event['change']['branch'], project_id, None))
+                      event['change']['branch'], project_id, None, event['change']['id']))
         result = c.fetchone()
         c.close()
         commit = result
