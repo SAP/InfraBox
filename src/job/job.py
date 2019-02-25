@@ -44,6 +44,7 @@ class RunJob(Job):
         Job.__init__(self)
         self.console = console
         self.storage_dir = '/data/tmp/storage'
+        self.error = None
 
         if os.path.exists(self.storage_dir):
             shutil.rmtree(self.storage_dir)
@@ -738,13 +739,15 @@ class RunJob(Job):
         c = self.console
         if not self.deployments:
             return
-
-        c.header("Deploying", show=True)
+        header = False
 
         for dep in self.deployments:
-            target = dep.get('target', None)
-
-            if not target:
+            if dep.get('target', None):
+                continue
+            if dep.get("always_push", False) or not self.error:
+                if not header:
+                    c.header("Deploying", show=True)
+                    header = True
                 self.deploy_image(image_name, dep)
 
     def login_docker_registry(self):
@@ -848,7 +851,7 @@ class RunJob(Job):
                 raise Failure("Could not get exit code of container")
 
             c.print_failure("Container run exited with error (exit code=%s)" % exit_code)
-            c.header("Finalize", show=True)
+            c.header("Error", show=True)
             logger.exception(e)
             raise Failure("Container run exited with error (exit code=%s)" % exit_code)
 
@@ -903,16 +906,21 @@ class RunJob(Job):
     def run_job_docker_image(self, c):
         image_name = self.job['definition']['image'].replace('$INFRABOX_BUILD_NUMBER', str(self.build['build_number']))
 
-        if self.job.get('definition', {}).get('run', True):
-            self._login_source_registries()
-            self.run_docker_container(image_name)
-            self._logout_source_registries()
-        else:
-            self._login_source_registries()
-            self.run_docker_pull(image_name)
-            self._logout_source_registries()
+        try:
+            if self.job.get('definition', {}).get('run', True):
+                self._login_source_registries()
+                self.run_docker_container(image_name)
+                self._logout_source_registries()
+            else:
+                self._login_source_registries()
+                self.run_docker_pull(image_name)
+                self._logout_source_registries()
+        except Exception as e:
+            self.error = e
 
         self.deploy_images(image_name)
+        if self.error:
+            raise self.error
         c.header("Finalize", show=True)
 
     def _login_registry(self, reg):
@@ -970,7 +978,7 @@ class RunJob(Job):
             for d in self.deployments:
                 target = d.get('target', None)
 
-                if not target and not self.job.get('build_only', True):
+                if not target:
                     continue
 
                 self.build_docker_image(image_name_build, image_name_latest, target=target)
@@ -979,12 +987,19 @@ class RunJob(Job):
 
         self.build_docker_image(image_name_build, image_name_latest)
 
-        if not self.job.get('build_only', True):
-            self.run_docker_container(image_name_build)
+        try:
+            if not self.job.get('build_only', True):
+                self.run_docker_container(image_name_build)
+        except Exception as e:
+            self.error = e
 
         self.deploy_images(image_name_build)
 
         c.header("Finalize", show=True)
+        if self.error:
+            raise self.error
+
+
 
     def get_cached_image(self, image_name_latest):
         c = self.console
