@@ -340,7 +340,7 @@ def parse_wait(d, path):
         parse_depends_on(d['depends_on'], path + ".depends_on")
 
 def parse_deployment_docker_registry(d, path):
-    check_allowed_properties(d, path, ("type", "host", "repository", "username", "password", "tag", "target"))
+    check_allowed_properties(d, path, ("type", "host", "repository", "username", "password", "tag", "target", "always_push"))
     check_required_properties(d, path, ("type", "host", "repository"))
     check_text(d['host'], path + ".host")
     check_text(d['repository'], path + ".repository")
