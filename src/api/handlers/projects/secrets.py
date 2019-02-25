@@ -96,6 +96,14 @@ class Secret(Resource):
         if num_secrets == 0:
             return abort(400, 'Such secret does not exist.')
 
+        num_keys = g.db.execute_one("""
+            SELECT COUNT(*) FROM sshkey
+            WHERE project_id = %s and secret_id = %s
+        """, [project_id, secret_id])[0]
+
+        if num_keys == 0:
+            return abort(400, 'Secret is still used SSH Key.')
+
         g.db.execute("""
             DELETE FROM secret WHERE project_id = %s and id = %s
         """, [project_id, secret_id])
