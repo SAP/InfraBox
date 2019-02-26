@@ -90,7 +90,7 @@ func (cc *clusterCleaner) cleanPvcsInAllNamespaces(clientSet kubernetes.Interfac
 			continue
 		}
 		go func(nsName string, pvcIf corev1.PersistentVolumeClaimInterface, out chan *helperResultStruct) {
-			isClean, err := cc.cleanAllPvcInNamespace(ns.GetName(), clientSet.CoreV1().PersistentVolumeClaims(ns.GetName()))
+			isClean, err := cc.cleanAllPvcInNamespace(nsName, pvcIf)
 			out <- &helperResultStruct{isClean, err}
 		}(ns.GetName(), clientSet.CoreV1().PersistentVolumeClaims(ns.GetName()), outChan)
 	}
@@ -118,10 +118,10 @@ func (cc *clusterCleaner) cleanPodsInAllNamespaces(clientSet kubernetes.Interfac
 		if ns.GetName() == v1.NamespaceSystem {
 			continue
 		}
-		go func(nsName string, pvcIf corev1.PersistentVolumeClaimInterface, out chan *helperResultStruct) {
-			isClean, err := cc.cleanAllPodsInNamespace(ns.GetName(), clientSet.CoreV1().Pods(ns.GetName()))
+		go func(nsName string, podIf corev1.PodInterface, out chan *helperResultStruct) {
+			isClean, err := cc.cleanAllPodsInNamespace(nsName, podIf)
 			out <- &helperResultStruct{isClean, err}
-		}(ns.GetName(), clientSet.CoreV1().PersistentVolumeClaims(ns.GetName()), outChan)
+		}(ns.GetName(), clientSet.CoreV1().Pods(ns.GetName()), outChan)
 	}
 
 	numExpectedResults := len(namespaces.Items) - 1
@@ -268,14 +268,19 @@ func (cc *clusterCleaner) cleanupNamespace(ns string,
 const deletionPeriodTolerance = time.Minute
 
 func (cc *clusterCleaner) cleanAllPvcInNamespace(ns string, pvcIf corev1.PersistentVolumeClaimInterface) (bool, error) {
+	cc.log.Debug("clean all pvc in ns ", ns)
+
 	list, err := pvcIf.List(v1.ListOptions{})
 	if err != nil {
 		cc.log.Errorf("couldn't list all persistent volume claims in the namespace %s. err: %s", ns, err.Error())
 		return false, err
 	}
 	if len(list.Items) == 0 {
+		cc.log.Debug("no pvcs are left in ns ", ns)
 		return true, nil
 	}
+
+	cc.log.Debugf("remove %d pvcs in ns ", len(list.Items), ns)
 
 	now := time.Now()
 	for i := range list.Items {
@@ -648,14 +653,18 @@ func (cc *clusterCleaner) enableJobForceDeleteIfNecessary(job *batchV1.Job, now 
 }
 
 func (cc *clusterCleaner) cleanAllPodsInNamespace(ns string, podIf corev1.PodInterface) (bool, error) {
+	cc.log.Debug("clean all pods in ns ", ns)
 	list, err := podIf.List(v1.ListOptions{})
 	if err != nil {
 		cc.log.Errorf("couldn't list all pods in the namespace %s. err: %s", ns, err.Error())
 		return false, err
 	}
 	if len(list.Items) == 0 {
+		cc.log.Debug("no pods are left in ns ", ns)
 		return true, nil
 	}
+
+	cc.log.Debugf("remove %d pods in ns ", len(list.Items), ns)
 
 	now := time.Now()
 	for i := range list.Items {
@@ -691,6 +700,8 @@ func (cc *clusterCleaner) enablePodForceDeleteIfNecessary(pod *apiCoreV1.Pod, no
 }
 
 func (cc *clusterCleaner) deletePersistentVolumes(pvIf corev1.PersistentVolumeInterface) (bool, error) {
+	cc.log.Debug("clean up all pv")
+
 	list, err := pvIf.List(v1.ListOptions{})
 	if err != nil {
 		cc.log.Error("couldn't list all persistent volume claims. err: ", err)
@@ -698,8 +709,11 @@ func (cc *clusterCleaner) deletePersistentVolumes(pvIf corev1.PersistentVolumeIn
 	}
 
 	if len(list.Items) == 0 {
+		cc.log.Debugf("no pvs are left")
 		return true, nil
 	}
+
+	cc.log.Debugf("remove %d pvs", len(list.Items))
 
 	// we try a force-delete -> remove finalizers if existent
 	now := time.Now()
