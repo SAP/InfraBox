@@ -14,6 +14,7 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
+	"time"
 
 	uuid "github.com/satori/go.uuid"
 
@@ -257,20 +258,40 @@ func deleteGKECluster(cr *v1alpha1.GKECluster, log *logrus.Entry) error {
 		}
 
 		if cr.Status.Message == "cleaning cluster" {
-			isClean, err := cleanupK8s(gkecluster, log)
-			if err != nil {
-				return err
-			}
+			if cr.Status.FirstCleanedAt == "" {
+				isClean, err := cleanupK8s(gkecluster, log)
+				if err != nil {
+					return err
+				} else if !isClean { // don't proceed if cluster isn't clean
+					return nil
+				}
 
-			if !isClean {
-				return nil
-			}
+				if err = setAndUpdateFirstCleaned(cr, log); err != nil {
+					return err
+				}
 
-			cr.Status.Message = "deleting cluster"
-			err = action.Update(cr)
-			if err != nil {
-				log.Errorf("Failed to update status: %v", err)
-				return err
+			} else { // cluster was cleaned before -> check if it happened more than 5 mins ago
+				t, err := time.Parse(time.RFC1123, cr.Status.FirstCleanedAt)
+				if err != nil {
+					log.Debugf("couldn't parse stored timestamp ('%s', err: %s) => reset it", cr.Status.FirstCleanedAt, err.Error())
+					if err = setAndUpdateFirstCleaned(cr, log); err != nil {
+						log.Errorf("couldn't set first cleaned timestamp: %v", err)
+						return err
+					}
+				} else {
+					waitDur := time.Minute * 5
+					sinceFirstCleaned := time.Since(t).Truncate(time.Second)
+					if sinceFirstCleaned < waitDur {
+						log.Debugf("timestamp FirstCleaned: %s => %s since then. Wait until %s have elapsed since first cleaning", cr.Status.FirstCleanedAt, sinceFirstCleaned, waitDur)
+					} else {
+						log.Debug("timestamp FirstCleaned: %s => %s since then. Proceed with deleting cluster", cr.Status.FirstCleanedAt, sinceFirstCleaned)
+						cr.Status.Message = "deleting cluster"
+						if err = action.Update(cr); err != nil {
+							log.Errorf("Failed to update status: %v", err)
+							return err
+						}
+					}
+				}
 			}
 		}
 
@@ -321,6 +342,16 @@ func deleteGKECluster(cr *v1alpha1.GKECluster, log *logrus.Entry) error {
 	}
 
 	return nil
+}
+
+func setAndUpdateFirstCleaned(cr *v1alpha1.GKECluster, log *logrus.Entry) error {
+	cr.Status.FirstCleanedAt = time.Now().Format(time.RFC1123)
+	log.Debug("set first-cleaned timestamp to ", cr.Status.FirstCleanedAt)
+	err := action.Update(cr)
+	if err != nil {
+		log.Errorf("Failed to update status: %v", err)
+	}
+	return err
 }
 
 func cleanupK8s(cluster *RemoteCluster, log *logrus.Entry) (bool, error) {
