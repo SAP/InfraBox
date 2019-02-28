@@ -24,7 +24,7 @@
                                     <md-input-container>
                                         <label for="secret_select">Secret</label>
                                         <md-select name="secret_select" id="secret_select" v-model="secret">
-                                            <md-option v-for="s in project.secrets" :value=r :key="s.name" class="bg-white">{{s.name}}</md-option>
+                                            <md-option v-for="s in project.secrets" :value="s.name" :key="s.name" class="bg-white">{{s.name}}</md-option>
                                         </md-select>
                                     </md-input-container>
                                 </span>
