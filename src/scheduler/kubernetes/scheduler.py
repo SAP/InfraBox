@@ -971,7 +971,7 @@ class Scheduler(object):
                 trigger = {
                     'branch_or_sha': c['sha'],
                     'env': [{
-                        'name': 'INFRABOX_TRIGGER',
+                        'name': 'INFRABOX_CRONJOB',
                         'value': 'true'
                     }]
                 }
