@@ -7,8 +7,6 @@ from pyinfrabox.utils import validate_uuid
 from pyinfraboxutils.ibflask import OK
 from pyinfraboxutils.ibrestplus import api, response_model
 
-from croniter import croniter
-
 ns = api.namespace('SSHKeys',
                    path='/api/v1/projects/<project_id>/sshkeys',
                    description='SSH Key related operations')
@@ -53,7 +51,7 @@ class SSHKeys(Resource):
         '''
         b = request.get_json()
 
-        if not CronJobs.name_pattern.match(b['name']):
+        if not SSHKeys.name_pattern.match(b['name']):
             abort(400, 'CronJob name must be not empty alphanumeric string.')
 
         result = g.db.execute_one_dict("""

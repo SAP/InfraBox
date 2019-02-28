@@ -42,7 +42,7 @@
                             <md-input-container class="m-l-sm">
                                 {{ k.secret }}
                             </md-input-container>
-                            <md-button class="md-icon-button md-list-action" @click="project.removeSSHKey(co)">
+                            <md-button class="md-icon-button md-list-action" @click="deleteSSHKey(co)">
                                 <md-icon class="md-primary">delete</md-icon>
                                 <md-tooltip>Remove sshkey</md-tooltip>
                             </md-button>
@@ -66,7 +66,7 @@ export default {
         this.project._loadSSHKeys()
     },
     methods: {
-        deleteSSHKEY (id) {
+        deleteSSHKey (id) {
             NewAPIService.delete(`projects/${this.project.id}/sshkeys/${id}`)
             .then((response) => {
                 NotificationService.$emit('NOTIFICATION', new Notification(response))
@@ -76,7 +76,7 @@ export default {
                 NotificationService.$emit('NOTIFICATION', new Notification(err))
             })
         },
-        addCronJob () {
+        addSSHKey () {
             const d = {
                 name: this.name,
                 secret: this.secret
