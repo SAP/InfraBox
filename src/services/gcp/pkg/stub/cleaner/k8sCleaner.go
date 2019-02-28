@@ -178,7 +178,7 @@ func (cc *clusterCleaner) cleanAllNamespaces(clientSet kubernetes.Interface) (bo
 			clientSet.AppsV1().DaemonSets(ns.GetName()), outChan)
 	}
 
-	numExpectedResults := len(namespaces.Items) - 1
+	numExpectedResults := len(namespaces.Items) - 1 // -1 because the system namespace gets ignored
 	allClean, err := cc.collectResults(time.Minute, numExpectedResults, outChan)
 
 	if err != nil {
@@ -191,7 +191,7 @@ func (cc *clusterCleaner) cleanAllNamespaces(clientSet kubernetes.Interface) (bo
 func (cc *clusterCleaner) collectResults(toDur time.Duration, numExpectedResults int, outChan chan *helperResultStruct) (bool, error) {
 	timeout := time.After(toDur)
 	allClean := true
-	for i := 0; i < numExpectedResults; i++ { // -1 because the system namespace gets ignored
+	for i := 0; i < numExpectedResults; i++ {
 		select {
 		case <-timeout:
 			return false, fmt.Errorf("timeout during clearing %d namespaces", numExpectedResults)
@@ -270,7 +270,7 @@ const deletionPeriodTolerance = time.Minute
 func (cc *clusterCleaner) cleanAllPvcInNamespace(ns string, pvcIf corev1.PersistentVolumeClaimInterface) (bool, error) {
 	cc.log.Debug("clean all pvc in ns ", ns)
 
-	list, err := pvcIf.List(v1.ListOptions{})
+	list, err := pvcIf.List(v1.ListOptions{IncludeUninitialized: true})
 	if err != nil {
 		cc.log.Errorf("couldn't list all persistent volume claims in the namespace %s. err: %s", ns, err.Error())
 		return false, err
@@ -289,7 +289,8 @@ func (cc *clusterCleaner) cleanAllPvcInNamespace(ns string, pvcIf corev1.Persist
 		}
 	}
 
-	if err := pvcIf.DeleteCollection(nil, v1.ListOptions{}); err != nil {
+	delPol := v1.DeletePropagationForeground
+	if err := pvcIf.DeleteCollection(&v1.DeleteOptions{PropagationPolicy: &delPol}, v1.ListOptions{IncludeUninitialized: true}); err != nil {
 		cc.log.Error("couldn't delete all persistent volume claims. err: ", err)
 		return false, err
 	}
@@ -324,7 +325,7 @@ type CollectionDeleter interface {
 }
 
 func (cc *clusterCleaner) cleanAllStatefulSetInNamespace(ns string, statefulSetIf typedAppV1.StatefulSetInterface) (bool, error) {
-	list, err := statefulSetIf.List(v1.ListOptions{})
+	list, err := statefulSetIf.List(v1.ListOptions{IncludeUninitialized: true})
 	if err != nil {
 		cc.log.Errorf("couldn't list all v1 stateful sets in the namespace %s. err: %s", ns, err.Error())
 		return false, err
@@ -340,7 +341,8 @@ func (cc *clusterCleaner) cleanAllStatefulSetInNamespace(ns string, statefulSetI
 		}
 	}
 
-	if err := statefulSetIf.DeleteCollection(nil, v1.ListOptions{}); err != nil {
+	delPol := v1.DeletePropagationForeground
+	if err := statefulSetIf.DeleteCollection(&v1.DeleteOptions{PropagationPolicy: &delPol}, v1.ListOptions{IncludeUninitialized: true}); err != nil {
 		cc.log.Error("couldn't delete all v1 stateful sets. err: ", err)
 		return false, err
 	}
@@ -371,7 +373,7 @@ func (cc *clusterCleaner) enableStatefulSetForceDeleteIfNecessary(statefulSet *a
 }
 
 func (cc *clusterCleaner) cleanAllV1Beta1StatefulSetInNamespace(ns string, statefulSetIf appsV1beta1.StatefulSetInterface) (bool, error) {
-	list, err := statefulSetIf.List(v1.ListOptions{})
+	list, err := statefulSetIf.List(v1.ListOptions{IncludeUninitialized: true})
 	if err != nil {
 		cc.log.Errorf("couldn't list all v1beta1 stateful sets in the namespace %s. err: %s", ns, err.Error())
 		return false, err
@@ -387,7 +389,8 @@ func (cc *clusterCleaner) cleanAllV1Beta1StatefulSetInNamespace(ns string, state
 		}
 	}
 
-	if err := statefulSetIf.DeleteCollection(nil, v1.ListOptions{}); err != nil {
+	delPol := v1.DeletePropagationForeground
+	if err := statefulSetIf.DeleteCollection(&v1.DeleteOptions{PropagationPolicy: &delPol}, v1.ListOptions{IncludeUninitialized: true}); err != nil {
 		cc.log.Error("couldn't delete all v1beta1 stateful sets. err: ", err)
 		return false, err
 	}
@@ -418,7 +421,7 @@ func (cc *clusterCleaner) enableV1Beta1StatefulSetForceDeleteIfNecessary(claim *
 }
 
 func (cc *clusterCleaner) cleanAllV1Beta2StatefulSetInNamespace(ns string, statefulSetIf appsV1beta2.StatefulSetInterface) (bool, error) {
-	list, err := statefulSetIf.List(v1.ListOptions{})
+	list, err := statefulSetIf.List(v1.ListOptions{IncludeUninitialized: true})
 	if err != nil {
 		cc.log.Errorf("couldn't list all v1beta2 stateful sets in the namespace %s. err: %s", ns, err.Error())
 		return false, err
@@ -434,7 +437,8 @@ func (cc *clusterCleaner) cleanAllV1Beta2StatefulSetInNamespace(ns string, state
 		}
 	}
 
-	if err := statefulSetIf.DeleteCollection(nil, v1.ListOptions{}); err != nil {
+	delPol := v1.DeletePropagationForeground
+	if err := statefulSetIf.DeleteCollection(&v1.DeleteOptions{PropagationPolicy: &delPol}, v1.ListOptions{IncludeUninitialized: true}); err != nil {
 		cc.log.Error("couldn't delete all v1beta2 stateful sets. err: ", err)
 		return false, err
 	}
@@ -465,7 +469,7 @@ func (cc *clusterCleaner) enableV1Beta2StatefulSetForceDeleteIfNecessary(claim *
 }
 
 func (cc *clusterCleaner) cleanAllIngressInNamespace(ns string, ingIf v1beta1.IngressInterface) (bool, error) {
-	list, err := ingIf.List(v1.ListOptions{})
+	list, err := ingIf.List(v1.ListOptions{IncludeUninitialized: true})
 	if err != nil {
 		cc.log.Errorf("couldn't list all ingresses in the namespace %s. err: %s", ns, err.Error())
 		return false, err
@@ -481,7 +485,8 @@ func (cc *clusterCleaner) cleanAllIngressInNamespace(ns string, ingIf v1beta1.In
 		}
 	}
 
-	if err := ingIf.DeleteCollection(nil, v1.ListOptions{}); err != nil {
+	delPol := v1.DeletePropagationForeground
+	if err := ingIf.DeleteCollection(&v1.DeleteOptions{PropagationPolicy: &delPol}, v1.ListOptions{IncludeUninitialized: true}); err != nil {
 		cc.log.Error("couldn't delete all ingresses. err: ", err)
 		return false, err
 	}
@@ -512,7 +517,7 @@ func (cc *clusterCleaner) enableIngressForceDeleteIfNecessary(ingress *apiExtV1B
 }
 
 func (cc *clusterCleaner) cleanAllDeploymentsInNamespace(ns string, deplIf typedAppV1.DeploymentInterface) (bool, error) {
-	list, err := deplIf.List(v1.ListOptions{})
+	list, err := deplIf.List(v1.ListOptions{IncludeUninitialized: true})
 	if err != nil {
 		cc.log.Errorf("couldn't list all deployments in the namespace %s. err: %s", ns, err.Error())
 		return false, err
@@ -528,7 +533,8 @@ func (cc *clusterCleaner) cleanAllDeploymentsInNamespace(ns string, deplIf typed
 		}
 	}
 
-	if err := deplIf.DeleteCollection(nil, v1.ListOptions{}); err != nil {
+	delPol := v1.DeletePropagationForeground
+	if err := deplIf.DeleteCollection(&v1.DeleteOptions{PropagationPolicy: &delPol}, v1.ListOptions{IncludeUninitialized: true}); err != nil {
 		cc.log.Error("couldn't delete all deployments. err: ", err)
 		return false, err
 	}
@@ -537,7 +543,7 @@ func (cc *clusterCleaner) cleanAllDeploymentsInNamespace(ns string, deplIf typed
 }
 
 func (cc *clusterCleaner) cleanAllDaemonsetsInNamespace(ns string, deplIf typedAppV1.DaemonSetInterface) (bool, error) {
-	list, err := deplIf.List(v1.ListOptions{})
+	list, err := deplIf.List(v1.ListOptions{IncludeUninitialized: true})
 	if err != nil {
 		cc.log.Errorf("couldn't list all daemonsets in the namespace %s. err: %s", ns, err.Error())
 		return false, err
@@ -553,7 +559,8 @@ func (cc *clusterCleaner) cleanAllDaemonsetsInNamespace(ns string, deplIf typedA
 		}
 	}
 
-	if err := deplIf.DeleteCollection(nil, v1.ListOptions{}); err != nil {
+	delPol := v1.DeletePropagationForeground
+	if err := deplIf.DeleteCollection(&v1.DeleteOptions{PropagationPolicy: &delPol}, v1.ListOptions{IncludeUninitialized: true}); err != nil {
 		cc.log.Error("couldn't delete all daemonset. err: ", err)
 		return false, err
 	}
@@ -606,7 +613,7 @@ func (cc *clusterCleaner) enableDeploymentsForceDeleteIfNecessary(deployment *ap
 }
 
 func (cc *clusterCleaner) cleanAllJobsInNamespace(ns string, jobIf typedBatchV1.JobInterface) (bool, error) {
-	list, err := jobIf.List(v1.ListOptions{})
+	list, err := jobIf.List(v1.ListOptions{IncludeUninitialized: true})
 	if err != nil {
 		cc.log.Errorf("couldn't list all deployments in the namespace %s. err: %s", ns, err.Error())
 		return false, err
@@ -622,7 +629,8 @@ func (cc *clusterCleaner) cleanAllJobsInNamespace(ns string, jobIf typedBatchV1.
 		}
 	}
 
-	if err := jobIf.DeleteCollection(nil, v1.ListOptions{}); err != nil {
+	delPol := v1.DeletePropagationForeground
+	if err := jobIf.DeleteCollection(&v1.DeleteOptions{PropagationPolicy: &delPol}, v1.ListOptions{IncludeUninitialized: true}); err != nil {
 		cc.log.Error("couldn't delete all jobs. err: ", err)
 		return false, err
 	}
@@ -654,7 +662,7 @@ func (cc *clusterCleaner) enableJobForceDeleteIfNecessary(job *batchV1.Job, now 
 
 func (cc *clusterCleaner) cleanAllPodsInNamespace(ns string, podIf corev1.PodInterface) (bool, error) {
 	cc.log.Debug("clean all pods in ns ", ns)
-	list, err := podIf.List(v1.ListOptions{})
+	list, err := podIf.List(v1.ListOptions{IncludeUninitialized: true})
 	if err != nil {
 		cc.log.Errorf("couldn't list all pods in the namespace %s. err: %s", ns, err.Error())
 		return false, err
@@ -673,7 +681,8 @@ func (cc *clusterCleaner) cleanAllPodsInNamespace(ns string, podIf corev1.PodInt
 		}
 	}
 
-	if err := podIf.DeleteCollection(nil, v1.ListOptions{}); err != nil {
+	delPol := v1.DeletePropagationForeground
+	if err := podIf.DeleteCollection(&v1.DeleteOptions{PropagationPolicy: &delPol}, v1.ListOptions{IncludeUninitialized: true}); err != nil {
 		cc.log.Error("couldn't delete all pods. err: ", err)
 		return false, err
 	}
@@ -702,7 +711,7 @@ func (cc *clusterCleaner) enablePodForceDeleteIfNecessary(pod *apiCoreV1.Pod, no
 func (cc *clusterCleaner) deletePersistentVolumes(pvIf corev1.PersistentVolumeInterface) (bool, error) {
 	cc.log.Debug("clean up all pv")
 
-	list, err := pvIf.List(v1.ListOptions{})
+	list, err := pvIf.List(v1.ListOptions{IncludeUninitialized: true})
 	if err != nil {
 		cc.log.Error("couldn't list all persistent volume claims. err: ", err)
 		return false, err
@@ -723,7 +732,8 @@ func (cc *clusterCleaner) deletePersistentVolumes(pvIf corev1.PersistentVolumeIn
 		}
 	}
 
-	if err := pvIf.DeleteCollection(nil, v1.ListOptions{}); err != nil {
+	delPol := v1.DeletePropagationForeground
+	if err := pvIf.DeleteCollection(&v1.DeleteOptions{PropagationPolicy: &delPol}, v1.ListOptions{IncludeUninitialized: true}); err != nil {
 		cc.log.Error("couldn't delete all persistent volumes. err: ", err)
 		return false, err
 	}
