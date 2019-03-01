@@ -81,7 +81,9 @@ kubectl get pods
 To install the service in your Kubernetes cluster you have to first create a AWS Service Account and configure gardener to use it (secretBindingRef). Next, create a kubeconfig which this service will use to communicate with Gardener. Create a secret containing the kubeconfig:
 
 ```bash
-kubectl -n infrabox-system create secret generic infrabox-service-gardener-sa --from-file ./garden_kubeconfig
+#gardener config file name has to be gardener.conf
+kubectl -n infrabox-system create secret generic infrabox-service-gardener-sa --from-file ./gardener.conf
+kubectl -n infrabox-worker create secret generic infrabox-service-gardener-sa --from-file ./gardener.conf
 ```
 
 The names of the secret and the secretBindingRef can be chosen arbitrarily. The service will read the names from the environment variables mentioned below. The name of the kubeconfig entry within the secret (`garden_kubeconfig`) is mandatory.
