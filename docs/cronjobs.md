@@ -14,7 +14,7 @@ InfraBox will schedule a new build for the specified time on the given branch or
 To build/test a certain project every night you may do it like this:
 
 - Name: nightly
-- Minute:       `*`
+- Minute:       `0`
 - Hour:         `3`
 - Day of month: `*`
 - Month:        `*`
