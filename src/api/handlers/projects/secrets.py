@@ -101,7 +101,7 @@ class Secret(Resource):
             WHERE project_id = %s and secret_id = %s
         """, [project_id, secret_id])[0]
 
-        if num_keys == 0:
+        if num_keys != 0:
             return abort(400, 'Secret is still used SSH Key.')
 
         g.db.execute("""
