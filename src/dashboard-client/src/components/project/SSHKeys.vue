@@ -54,6 +54,10 @@
 </template>
 
 <script>
+import NewAPIService from '../../services/NewAPIService'
+import NotificationService from '../../services/NotificationService'
+import Notification from '../../models/Notification'
+
 export default {
     props: ['project'],
     data: () => {
@@ -85,7 +89,7 @@ export default {
             .then((response) => {
                 NotificationService.$emit('NOTIFICATION', new Notification(response))
                 this.name = ''
-                this.minute = ''
+                this.secret = ''
                 this.project._reloadSSHKeys()
             })
             .catch((err) => {

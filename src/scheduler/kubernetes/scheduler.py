@@ -605,9 +605,6 @@ class Scheduler(object):
             }, {
                 'name': 'INFRABOX_GIT_HOSTNAME',
                 'value': 'github.com'
-            }, {
-                'name': 'INFRABOX_GIT_PRIVATE_KEY',
-                'value': private_key
             }]
         elif project_type == 'gerrit':
             with open('/tmp/gerrit/id_rsa') as key:
