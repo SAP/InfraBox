@@ -77,7 +77,7 @@ export default {
                         return null
                     }
                 } else if (this.field === 'cluster') {
-                    if (j.definition) {
+                    if (j.definition && j.definition.cluster) {
                         return j.definition.cluster.name
                     } else {
                         return null
