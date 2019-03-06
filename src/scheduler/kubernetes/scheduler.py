@@ -970,6 +970,9 @@ class Scheduler(object):
                     'env': [{
                         'name': 'INFRABOX_CRONJOB',
                         'value': 'true'
+                    }, {
+                        'name': 'INFRABOX_CRONJOB_NAME',
+                        'value': c['name']
                     }]
                 }
 
