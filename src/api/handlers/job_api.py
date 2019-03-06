@@ -751,7 +751,7 @@ class CreateJobs(Resource):
 
         for job in jobs:
             job['env_var_refs'] = None
-            job['env_vars'] = copy.deepcopy(base_env_var)
+            job['env_vars'] = {}
 
             if job['type'] == "wait":
                 continue
@@ -778,8 +778,8 @@ class CreateJobs(Resource):
                     if isinstance(value, dict):
                         env_var_ref_name = value['$secret']
                         result = g.db.execute_many("""
-                                    SELECT value FROM secret WHERE name = %s and project_id = %s
-                                    """, [env_var_ref_name, project_id])
+                            SELECT value FROM secret WHERE name = %s and project_id = %s
+                        """, [env_var_ref_name, project_id])
 
                         if not result:
                             abort(400, "Secret '%s' not found" % env_var_ref_name)
@@ -789,10 +789,9 @@ class CreateJobs(Resource):
 
                         job['env_var_refs'][ename] = env_var_ref_name
                     else:
-                        if not job['env_vars']:
-                            job['env_vars'] = {}
-
                         job['env_vars'][ename] = value
+
+            job['env_vars'].update(base_env_var)
 
         jobs.sort(key=lambda k: k.get('avg_duration', 0), reverse=True)
 
