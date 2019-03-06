@@ -38,7 +38,7 @@
                         <md-table-cell><div v-if="j.definition && j.definition.resources">{{ j.definition.resources.limits.cpu }} CPU</div></md-table-cell>
                         <md-table-cell v-if="j.avgCpu"><div>{{ j.avgCpu }} CPU</div></md-table-cell>
                         <md-table-cell v-if="!j.avgCpu"><div>N/A</div></md-table-cell>
-                        <md-table-cell><div v-if="j.definition&& j.definition.resources">{{ j.definition.resources.limits.memory }} MiB </div></md-table-cell>
+                        <md-table-cell><div v-if="j.definition && j.definition.resources">{{ j.definition.resources.limits.memory }} MiB </div></md-table-cell>
                         <md-table-cell v-if="j.definition && j.definition.cluster">{{ j.definition.cluster.name }}</md-table-cell>
                         <md-table-cell v-if="!j.definition || !j.definition.cluster"></md-table-cell>
                         <md-table-cell>{{ j.nodeName }}</md-table-cell>
@@ -64,7 +64,19 @@ export default {
     computed: {
         joblist: function () {
             let a = _.sortBy(this.jobs, (j) => {
-                if (this.field === 'cluster') {
+                if (this.field === 'cpu') {
+                    if (j.definition) {
+                        return j.definition.resources.limits.cpu
+                    } else {
+                        return null
+                    }
+                } else if (this.field === 'memory') {
+                    if (j.definition) {
+                        return j.definition.resources.limits.memory
+                    } else {
+                        return null
+                    }
+                } else if (this.field === 'cluster') {
                     if (j.definition) {
                         return j.definition.cluster.name
                     } else {
@@ -99,4 +111,3 @@ export default {
 
 <style scoped>
 </style>
-
