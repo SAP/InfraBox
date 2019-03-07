@@ -28,7 +28,7 @@
                                                     <ib-date :date="build.startDate"></ib-date></span>
                                                 </md-table-cell>
                                                 <md-table-cell>
-                                                    <span><i class="fa fa-clock-o fa-fw" aria-hidden="true"></i><strong> Duration</strong>
+                                                    <span><i class="fas fa-clock fa-fw" aria-hidden="true"></i><strong> Duration</strong>
                                                     <ib-duration :start="build.startDate" :end="build.endDate"></ib-duration></span>
                                                 </md-table-cell>
                                                 <md-table-cell v-if="build.commit">
@@ -40,7 +40,7 @@
                                                     {{ build.commit.author_name }}</span>
                                                 </md-table-cell>
                                                 <md-table-cell v-if="build.commit">
-                                                    <span><i class="fa fa-code-fork fa-fw" aria-hidden="true"></i><strong> Branch</strong><br/>
+                                                    <span><i class="fas fa-code-branch fa-fw" aria-hidden="true"></i><strong> Branch</strong><br/>
                                                     {{ build.commit.branch }}</span>
                                                 </md-table-cell>
                                         </md-table-row>
@@ -103,7 +103,7 @@
                                                                     <ib-date :date="build.startDate"></ib-date></span>
                                                                 </md-menu-item>
                                                                 <md-menu-item class="bg-white">
-                                                                    <span><i class="fa fa-clock-o fa-fw" aria-hidden="true"></i><strong> Duration</strong>
+                                                                    <span><i class="fas fa-clock fa-fw" aria-hidden="true"></i><strong> Duration</strong>
                                                                     <ib-duration :start="build.startDate" :end="build.endDate"></ib-duration></span>
                                                                 </md-menu-item>
                                                                 <md-menu-item class="bg-white" v-if="build.commit">
@@ -115,7 +115,7 @@
                                                                     {{ build.commit.author_name }}</span>
                                                                 </md-menu-item>
                                                                 <md-menu-item class="bg-white" v-if="build.commit">
-                                                                    <span><i class="fa fa-code-fork fa-fw" aria-hidden="true"></i><strong> Branch</strong><br/>
+                                                                    <span><i class="fas fa-code-branch fa-fw" aria-hidden="true"></i><strong> Branch</strong><br/>
                                                                     {{ build.commit.branch }}</span>
                                                                 </md-menu-item>
                                                             </md-menu-content>

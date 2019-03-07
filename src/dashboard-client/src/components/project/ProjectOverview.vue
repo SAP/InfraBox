@@ -82,7 +82,7 @@
                         <md-table-cell><ib-date :date="project.builds[0].startDate"></ib-date></md-table-cell>
                     </md-table-row>
                     <md-table-row>
-                        <md-table-cell class="md-body-2"><i class="fa fa-fw fa-clock-o"></i><span class="p-l-md">Duration</span></md-table-cell>
+                        <md-table-cell class="md-body-2"><i class="fas fa-fw fa-clock"></i><span class="p-l-md">Duration</span></md-table-cell>
                         <md-table-cell>
                             <ib-duration :start="project.builds[0].startDate" :end="project.builds[0].endDate"></ib-duration>
                         </md-table-cell>
