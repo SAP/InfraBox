@@ -791,7 +791,8 @@ class CreateJobs(Resource):
                     else:
                         job['env_vars'][ename] = value
 
-            job['env_vars'].update(base_env_var)
+            if base_env_var:
+                job['env_vars'].update(base_env_var)
 
         jobs.sort(key=lambda k: k.get('avg_duration', 0), reverse=True)
 
