@@ -631,7 +631,7 @@ class Scheduler(object):
         cursor.close()
 
         for r in result:
-            private_key += '\n%s' % decrypt_secret(r[0])
+            private_key = decrypt_secret(r[0])
 
         if private_key:
             env += [{

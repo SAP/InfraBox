@@ -22,6 +22,7 @@ export default class Project {
         this.numQueuedJobs = 0
         this.numScheduledJobs = 0
         this.numRunningJobs = 0
+        this.sshkeys = null
     }
 
     isGit () {
@@ -218,7 +219,7 @@ export default class Project {
     }
 
     _loadSSHKeys () {
-        if (this.cronjobs) {
+        if (this.sshkeys) {
             return
         }
 

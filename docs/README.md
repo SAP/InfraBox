@@ -26,6 +26,7 @@
 - [Repository](/docs/job/repository.md): Options to configure the git clone behavior
 - [Deploy a docker image](/docs/job/deployments.md): Push a docker image to a registry
 - [Private registry](/docs/job/source_registry.md): Pull images from a private registry
+- [Private repositories](/docs/job/private_repo.md): Configure SSH Keys for accessing private repositories
 
 ## API Documentation
 - [REST API](https://rebilly.github.io/ReDoc/?url=https://infrabox.ninja/api/swagger.json)

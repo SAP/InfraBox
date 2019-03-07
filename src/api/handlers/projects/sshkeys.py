@@ -72,8 +72,8 @@ class SSHKeys(Resource):
             WHERE project_id = %s
         """, [project_id])
 
-        if result['cnt'] > 50:
-            abort(400, 'Too many sshkeys.')
+        if result['cnt'] > 0:
+            abort(400, 'Too many sshkeys')
 
         r = g.db.execute_one("""
             SELECT count(*)

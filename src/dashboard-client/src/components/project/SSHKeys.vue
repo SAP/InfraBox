@@ -42,7 +42,7 @@
                             <div class="md-input-container m-r-xl md-theme-white">
                                 {{ k.secret }}
                             </div>
-                            <md-button class="md-icon-button md-list-action" @click="deleteSSHKey(co)">
+                            <md-button class="md-icon-button md-list-action" @click="deleteSSHKey(k.id)">
                                 <md-icon class="md-primary">delete</md-icon>
                                 <md-tooltip>Remove sshkey</md-tooltip>
                             </md-button>
