@@ -1,0 +1,1 @@
+ALTER TABLE "build" ADD COLUMN is_cronjob BOOLEAN DEFAULT false;

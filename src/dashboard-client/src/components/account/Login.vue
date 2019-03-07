@@ -40,7 +40,7 @@
                         v-if="$store.state.settings.INFRABOX_GITHUB_LOGIN_ENABLED"
                         md-theme="default"
                         class="md-raised md-primary">
-                        <i class="fa fa-fw fa-github"></i>
+                        <i class="fab fa-fw fa-github"></i>
                         <span> Login with GitHub</span>
                     </md-button>
                     <div v-if="$store.state.settings.INFRABOX_GITHUB_ENABLED && $store.state.settings.INFRABOX_ACCOUNT_SIGNUP_ENABLED">

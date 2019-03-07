@@ -981,6 +981,14 @@ class Scheduler(object):
 
                 try:
                     r = requests.post('http://infrabox-api.infrabox-system:8080/internal/api/projects/%s/trigger' % project_id, json=trigger, timeout=10)
+
+                    cursor.execute('begin')
+                    cursor.execute('''
+                        UPDATE build 
+                        SET is_cronjob = true
+                        WHERE id = %s
+                    ''', [r['build']['id']])
+                    cursor.execute('commit')
                 except:
                     cursor.execute('begin')
                     cursor.execute('''
@@ -988,7 +996,7 @@ class Scheduler(object):
                         SET last_trigger = %s
                         WHERE id = %s
                     ''', [c['last_trigger'], c['id']])
-                    cursor.execute('comit')
+                    cursor.execute('commit')
                 break
         except Exception as e:
             self.logger.error(e)

@@ -53,7 +53,7 @@ class Jobs(Resource):
                 b.id as build_id,
                 b.build_number as build_number,
                 b.restart_counter as build_restart_counter,
-                true as build_is_cronjob,
+                b.is_cronjob as build_is_cronjob,
                 -- project
                 p.id as project_id,
                 p.name as project_name,
@@ -118,7 +118,8 @@ class Jobs(Resource):
                 'build': {
                     'id': j['build_id'],
                     'build_number': j['build_number'],
-                    'restart_counter': j['build_restart_counter']
+                    'restart_counter': j['build_restart_counter'],
+                    'is_cronjob': j['build_is_cronjob']
                 },
                 'project': {
                     'id': j['project_id'],

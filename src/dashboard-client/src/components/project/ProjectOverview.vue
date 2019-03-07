@@ -3,7 +3,7 @@
         <md-card-header>
             <md-card-header-text>
                 <div class="md-title">
-                    <span v-if="project.isGit()"><i class="fa fa-github"></i></span>
+                    <span v-if="project.isGit()"><i class="fab fa-github"></i></span>
                     <span v-if="!project.isGit()"><i class="fa fa-home"></i></span>
                     <router-link :to="{name: 'ProjectDetailBuilds', params: {projectName: encodeURIComponent(project.name)}}" class="m-l-xs">{{ project.name }}</router-link>
                 </div>

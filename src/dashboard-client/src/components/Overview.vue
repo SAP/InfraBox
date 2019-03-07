@@ -17,7 +17,7 @@
                 <md-table-body>
                     <md-table-row v-for="project of $store.state.projects" :key="project.id">
                         <md-table-cell width="40px">
-                            <span v-if="project.isGit()" style="font-size:150%"><i class="fa fa-fw fa-github"></i></span>
+                            <span v-if="project.isGit()" style="font-size:150%"><i class="fab fa-fw fa-github"></i></span>
                             <span v-if="!project.isGit()"><i class="fa fa-fw fa-home"></i></span>
                         </md-table-cell>
                         <md-table-cell width="40px">

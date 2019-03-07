@@ -20,7 +20,7 @@
                           </md-button>
 
                           <md-button v-if="$store.state.settings.INFRABOX_GITHUB_ENABLED" @click="type = 'github'">
-                            <i class="fa fa-fw fa-github"></i><span> GitHub</span>
+                            <i class="fab fa-fw fa-github"></i><span> GitHub</span>
                           </md-button>
 
                           <md-button v-if="$store.state.settings.INFRABOX_GERRIT_ENABLED" @click="type = 'gerrit'">

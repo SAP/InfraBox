@@ -90,6 +90,7 @@ function handleJobUpdate (state, event) {
         build = new Build(event.data.build.id,
                           event.data.build.build_number,
                           event.data.build.restart_counter,
+                          event.data.build.is_cronjob,
                           commit, event.data.pull_request,
                           project)
 

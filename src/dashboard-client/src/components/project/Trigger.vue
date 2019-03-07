@@ -7,7 +7,7 @@
                         <router-link :to="{name: 'ProjectDetailBuilds', params: {
                             projectName: encodeURIComponent(project.name)
                         }}">
-                            <span v-if="project.isGit()"><i class="fa fa-github"></i></span>
+                            <span v-if="project.isGit()"><i class="fab fa-github"></i></span>
                             <span v-if="!project.isGit()"><i class="fa fa-home"></i></span>
                             {{ project.name }}
                         </router-link>: Trigger Build

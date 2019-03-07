@@ -4,7 +4,7 @@ import Notification from '../models/Notification'
 import router from '../router'
 
 export default class Build {
-    constructor (id, number, restartCounter, commit, pr, project) {
+    constructor (id, number, restartCounter, isCronjob, commit, pr, project) {
         this.id = id
         this.number = number
         this.restartCounter = restartCounter
@@ -18,6 +18,7 @@ export default class Build {
         this.numQueuedJobs = 0
         this.numScheduledJobs = 0
         this.numRunningJobs = 0
+        this.isCronjob = isCronjob
     }
 
     getJob (jobId) {

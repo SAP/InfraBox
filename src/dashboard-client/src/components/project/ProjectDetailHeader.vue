@@ -6,7 +6,7 @@
                     <h3 class="md-title card-title">
                         <md-layout>
                             <md-layout md-vertical-align="center">
-                                <span class="p-r-xs" v-if="project.isGit()"><i class="fa fa-fw fa-github"></i></span>
+                                <span class="p-r-xs" v-if="project.isGit()"><i class="fab fa-fw fa-github"></i></span>
                                 <span v-if="!project.isGit()"><i class="fa fa-fw fa-home"></i></span>
                                 {{ project.name }}
                             </md-layout>

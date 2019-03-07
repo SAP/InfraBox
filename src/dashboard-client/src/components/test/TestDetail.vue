@@ -6,7 +6,7 @@
                 <h3 class="md-title card-title">
                 <router-link :to="{name: 'ProjectDetailBuilds', params: {
                     projectName: encodeURIComponent(data.project.name)}}">
-                    <span v-if="data.project.isGit()"><i class="fa fa-github"></i></span>
+                    <span v-if="data.project.isGit()"><i class="fab fa-github"></i></span>
                     <span v-if="!data.project.isGit()"><i class="fa fa-home"></i></span>
                     {{ data.project.name }}
                 </router-link>

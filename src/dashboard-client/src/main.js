@@ -11,7 +11,6 @@ import router from './router'
 import store from './store'
 
 import 'vue-material/dist/vue-material.css'
-import 'font-awesome/css/font-awesome.css'
 import '../static/css/infrabox.css'
 import 'taucharts/build/production/tauCharts.default.min.css'
 

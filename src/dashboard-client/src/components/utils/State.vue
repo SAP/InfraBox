@@ -14,7 +14,7 @@
         </span>
         <span v-if="state=='running'">
             <div class="bg-running circle-icon">
-                <i class="fa fa-fw fa-dot-circle-o"></i>
+                <i class="far fa-fw fa-dot-circle"></i>
                 <md-tooltip>{{ state }}</md-tooltip>
             </div>
         </span>

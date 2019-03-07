@@ -9,7 +9,7 @@
                                 <router-link :to="{name: 'ProjectDetailBuilds', params: {
                                     projectName: project.name
                                 }}">
-                                    <span v-if="project.isGit()"><i class="fa fa-fw fa-github"></i></span>
+                                    <span v-if="project.isGit()"><i class="fab fa-fw fa-github"></i></span>
                                     <span v-if="!project.isGit()"><i class="fa fa-fw fa-home"></i></span>
                                     {{ project.name }}
                                 </router-link>

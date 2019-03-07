@@ -21,6 +21,10 @@
                 <md-tooltip>Pull request</md-tooltip>
             </a>
         </div>
+        <div v-if="build.isCronjob">
+            <i class="fa fa-calendar-check"></i>
+            <md-tooltip>Triggered by Cronjob</md-tooltip>
+        </div>
     </div>
 </template>
 
