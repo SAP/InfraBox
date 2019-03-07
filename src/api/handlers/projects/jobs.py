@@ -45,10 +45,7 @@ class Jobs(Resource):
             build_to = r['max'] + 1
 
         if not build_from:
-            build_from = max(build_to - 50, 0)
-
-        print('from', build_from)
-        print('to', build_to)
+            build_from = max(build_to - 10, 0)
 
         jobs = g.db.execute_many_dict('''
             SELECT
@@ -56,6 +53,7 @@ class Jobs(Resource):
                 b.id as build_id,
                 b.build_number as build_number,
                 b.restart_counter as build_restart_counter,
+                true as build_is_cronjob,
                 -- project
                 p.id as project_id,
                 p.name as project_name,

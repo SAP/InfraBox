@@ -56,7 +56,7 @@
                 :md-page="page"
                 md-label="Builds"
                 md-separator="of"
-                :md-page-options="[20, 50]"
+                :md-page-options="[10, 25, 50]"
                 @pagination="onPagination">
             </md-table-pagination>
         </md-table-card>
@@ -69,7 +69,7 @@ export default {
     data: () => {
         return {
             page: 1,
-            size: 20,
+            size: 10,
             total: 0
         }
     },
