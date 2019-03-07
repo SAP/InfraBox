@@ -51,6 +51,16 @@ export default class Project {
         return builds
     }
 
+    loadBuilds (from, to) {
+        return NewAPIService.get(`projects/${this.id}/jobs/?from=${from}&to=${to}`)
+            .then((jobs) => {
+                this._addJobs(jobs)
+            })
+            .catch((err) => {
+                NotificationService.$emit('NOTIFICATION', new Notification(err))
+            })
+    }
+
     getBuild (number, restartCounter) {
         const b = this._getBuild(number, restartCounter)
 

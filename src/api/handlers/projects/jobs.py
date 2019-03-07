@@ -32,37 +32,25 @@ ns = api.namespace('Jobs',
 class Jobs(Resource):
 
     def get(self, project_id):
+        build_from = request.args.get('from', None)
+        build_to = request.args.get('to', None)
+
+        if not build_to:
+            r = g.db.execute_one_dict('''
+                SELECT max(build_number) as max
+                FROM build
+                WHERE project_id = %s
+            ''', [project_id])
+
+            build_to = r['max'] + 1
+
+        if not build_from:
+            build_from = max(build_to - 50, 0)
+
+        print('from', build_from)
+        print('to', build_to)
+
         jobs = g.db.execute_many_dict('''
-            WITH github_builds AS (
-                --- get the last 10 builds for each branch
-                SELECT builds.id, builds.project_id, builds.commit_id, null::uuid as source_upload_id, build_number, restart_counter FROM (
-                    SELECT b.id, c.id as commit_id, p.id as project_id, ROW_NUMBER() OVER(PARTITION BY p.id ORDER BY build_number DESC, restart_counter DESC) AS r, build_number, restart_counter
-                    FROM build b
-                    INNER JOIN project p
-                        ON b.project_id = %(pid)s
-                        AND p.id = %(pid)s
-                        AND p.type in ('github', 'gerrit')
-                    LEFT OUTER JOIN commit c
-                        ON b.commit_id = c.id
-                        AND c.project_id = %(pid)s
-                ) builds
-                WHERE builds.r <= 10
-            ), upload_builds AS (
-                --- get the last 10 builds
-                SELECT builds.id, builds.project_id, null::character varying as commit_id, builds.source_upload_id, build_number, restart_counter  FROM (
-                    SELECT b.id, p.id as project_id, source_upload_id, ROW_NUMBER() OVER(PARTITION BY p.id ORDER BY build_number DESC, restart_counter DESC) AS r, build_number, restart_counter
-                    FROM build b
-                    INNER JOIN project p
-                        ON p.id = %(pid)s
-                        AND b.project_id = p.id
-                        AND p.type = 'upload'
-                ) builds
-                WHERE builds.r <= 10
-            ), builds AS (
-                SELECT * FROM github_builds
-                UNION ALL
-                SELECT * FROM upload_builds
-            )
             SELECT
                 -- build
                 b.id as build_id,
@@ -106,7 +94,7 @@ class Jobs(Resource):
                 -- pull_request
                 pr.title as pull_request_title,
                 pr.url as pull_request_url
-                FROM builds b
+                FROM build b
                 INNER JOIN job j
                 ON b.id = j.build_id
                 INNER JOIN project p
@@ -121,8 +109,10 @@ class Jobs(Resource):
                 ON c.pull_request_id = pr.id
                 WHERE j.project_id = %(pid)s
                 AND b.project_id = %(pid)s
+                AND b.build_number < %(to)s
+                AND b.build_number >= %(from)s
                 ORDER BY j.created_at DESC
-        ''', {'pid': project_id})
+        ''', {'pid': project_id, 'from': build_from, 'to': build_to})
 
         result = []
         for j in jobs:

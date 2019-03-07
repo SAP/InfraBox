@@ -15,7 +15,7 @@
                 </md-table-header>
 
                 <md-table-body>
-                    <md-table-row v-for="b in project.builds" :key="b.id">
+                    <md-table-row v-for="b in builds" :key="b.id">
                         <md-table-cell>
                             <ib-state :state="b.state"></ib-state>
                         </md-table-cell>
@@ -50,13 +50,71 @@
                     </md-table-row>
                 </md-table-body>
             </md-table>
+            <md-table-pagination
+                :md-size="size"
+                :md-total="total"
+                :md-page="page"
+                md-label="Builds"
+                md-separator="of"
+                :md-page-options="[20, 50]"
+                @pagination="onPagination">
+            </md-table-pagination>
         </md-table-card>
     </div>
 </template>
 
 <script>
 export default {
-    props: ['project']
+    props: ['project'],
+    data: () => {
+        return {
+            page: 1,
+            size: 20,
+            total: 0
+        }
+    },
+    computed: {
+        builds () {
+            if (this.project.builds.length === 0) {
+                return
+            }
+            const maxBuildNumber = this.project.builds[0].number
+            this.total = maxBuildNumber
+
+            const p = this.page - 1
+            const to = maxBuildNumber - (p * this.size) + 1
+            const from = to - this.size
+
+            let builds = []
+            let foundFrom = maxBuildNumber
+            for (let b of this.project.builds) {
+                if (from <= b.number && b.number < to) {
+                    builds.push(b)
+
+                    if (b.number < foundFrom) {
+                        foundFrom = b.number
+                    }
+                }
+            }
+
+            if (foundFrom !== from) {
+                this.project.loadBuilds(from, to)
+            }
+
+            return builds
+        }
+    },
+    methods: {
+        onPagination (opt) {
+            if (this.size !== opt.size) {
+                this.page = 1
+            } else {
+                this.page = opt.page
+            }
+
+            this.size = opt.size
+        }
+    }
 }
 </script>
 
@@ -64,5 +122,4 @@ export default {
 .no-shadow {
     box-shadow: 0px 0px 0px #888888;
 }
-
 </style>
