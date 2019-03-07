@@ -40,7 +40,7 @@ def __handle_event(event, socketio):
             return
 
         build = db.execute_one_dict('''
-            SELECT id, build_number, restart_counter, commit_id
+            SELECT id, build_number, restart_counter, commit_id, is_cronjob
             FROM build
             WHERE id = %s
         ''', [build_id])
