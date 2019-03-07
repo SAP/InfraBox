@@ -44,27 +44,27 @@
                             </md-button>
                         </md-list-item>
                         <md-list-item v-for="cron in project.cronjobs" :key="cron.id">
-                            <md-input-container class="m-l-sm">
+                            <div class="md-input-container m-r-xl md-theme-white">
                                 {{ cron.name }}
-                            </md-input-container>
-                            <md-input-container class="m-l-sm">
+                            </div>
+                            <div class="md-input-container m-r-xl md-theme-white">
                                 {{ cron.minute }}
-                            </md-input-container>
-                            <md-input-container class="m-l-sm">
+                            </div>
+                            <div class="md-input-container m-r-xl md-theme-white">
                                 {{ cron.hour }}
-                            </md-input-container>
-                            <md-input-container class="m-l-sm">
+                            </div>
+                            <div class="md-input-container m-r-xl md-theme-white">
                                 {{ cron.day_month }}
-                            </md-input-container>
-                            <md-input-container class="m-l-sm">
+                            </div>
+                            <div class="md-input-container m-r-xl md-theme-white">
                                 {{ cron.month }}
-                            </md-input-container>
-                            <md-input-container class="m-l-sm">
+                            </div>
+                            <div class="md-input-container m-r-xl md-theme-white">
                                 {{ cron.day_week }}
-                            </md-input-container>
-                            <md-input-container class="m-l-sm">
+                            </div>
+                            <div class="md-input-container m-r-xl md-theme-white">
                                 {{ cron.sha }}
-                            </md-input-container>
+                            </div>
                             <md-button type="submit" class="md-icon-button md-list-action" @click="deleteCronJob(cron.id)">
                                 <md-icon class="md-primary">delete</md-icon>
                                 <md-tooltip>Delete Cron Job permanently</md-tooltip>

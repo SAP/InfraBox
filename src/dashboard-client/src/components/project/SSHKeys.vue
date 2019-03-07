@@ -36,12 +36,12 @@
                             </md-button>
                         </md-list-item>
                         <md-list-item v-for="k in project.sshkeys" :key="k.id">
-                            <md-input-container class="m-l-sm">
+                            <div class="md-input-container m-r-xl md-theme-white">
                                 {{ k.name }}
-                            </md-input-container>
-                            <md-input-container class="m-l-sm">
+                            </div>
+                            <div class="md-input-container m-r-xl md-theme-white">
                                 {{ k.secret }}
-                            </md-input-container>
+                            </div>
                             <md-button class="md-icon-button md-list-action" @click="deleteSSHKey(co)">
                                 <md-icon class="md-primary">delete</md-icon>
                                 <md-tooltip>Remove sshkey</md-tooltip>
