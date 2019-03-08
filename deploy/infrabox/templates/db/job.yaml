@@ -4,9 +4,6 @@ kind: Job
 metadata:
     name: infrabox-db-migration
     namespace: {{ template "system_namespace" . }}
-    annotations:
-        "helm.sh/hook": "post-install,pre-upgrade"
-        "helm.sh/hook-delete-policy": "before-hook-creation"
 spec:
     template:
         metadata:
