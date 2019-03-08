@@ -75,7 +75,7 @@
 
                 <md-list-item class="navi-link">
                     <a href="#" class="md-list-item-container md-button" v-on:click="logout()">
-                        <md-icon><i class="fa fa-sign-out fa-fw"></i></md-icon>
+                        <md-icon><i class="fas fa-sign-out-alt fa-fw"></i></md-icon>
                         <span>Logout</span>
                     </a>
                 </md-list-item>
