@@ -40,7 +40,7 @@ def opa_push_collaborator_data(db):
     collaborators = db.execute_many_dict("""
         SELECT user_id, project_id, role FROM collaborator
     """)
-    payload = json.dumps({'collaborators': collaborators})
+    payload = json.dumps({'collaborators': collaborators}, indent=4)
     opa_push_data(COLLABORATOR_DATA_DEST_URL, payload)
 
 def opa_push_project_data(db):
@@ -48,7 +48,7 @@ def opa_push_project_data(db):
         SELECT id, public, name FROM project
     """
     )
-    payload = json.dumps({"projects": projects})
+    payload = json.dumps({"projects": projects}, indent=4)
     opa_push_data(PROJECT_DATA_DEST_URL, payload)
 
 def opa_push_all():

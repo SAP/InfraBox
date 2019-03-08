@@ -30,7 +30,7 @@ projects_projects_name_public(project){
 projects_projects_name_collaborator([user_id, project_name]){
     projects[i].name = project_name
     collaborators[j].user_id = user_id
-    collaborators[j].project_id = projects[i].project_id
+    collaborators[j].project_id = projects[i].id
 }
 
 allow {
@@ -64,6 +64,7 @@ allow {
     api.token.type = "user"
     projects_projects_collaborator([api.token.user.id, project])
 }
+
 allow {
     api.method = "GET"
     api.path = ["api", "v1", "projects", project]
