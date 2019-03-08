@@ -2,7 +2,7 @@
     <span>
         <span v-if="state=='queued'">
             <div class="bg-light circle-icon">
-                <i class="fa fa-fw fa-pause-circle-o"></i>
+                <i class="far fa-fw fa-pause-circle"></i>
                 <md-tooltip>{{ state }}</md-tooltip>
             </div>
         </span>
