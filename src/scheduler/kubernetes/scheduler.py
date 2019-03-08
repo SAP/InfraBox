@@ -529,9 +529,11 @@ class Scheduler(object):
         self.pipeline_controller = PipelineInvocationController(args)
 
     def handle_function_invocations(self):
+        self.logger.info("handle function invocations")
         self.function_controller.handle()
 
     def handle_pipeline_invocations(self):
+        self.logger.info("handle pipeline invocations")
         self.pipeline_controller.handle()
 
     def kube_delete_job(self, job_id):
@@ -831,6 +833,7 @@ class Scheduler(object):
             self.schedule_job(job_id, cpu, memory)
 
     def handle_aborts(self):
+        self.logger.info("handle aborts")
         cursor = self.conn.cursor()
         cursor.execute('''
             SELECT j.id, a.user_id
@@ -874,6 +877,7 @@ class Scheduler(object):
             cursor.close()
 
     def handle_timeouts(self):
+        self.logger.info("handle timeouts")
         cursor = self.conn.cursor()
         cursor.execute('''
             SELECT j.id FROM job j
@@ -927,6 +931,8 @@ class Scheduler(object):
 
 
     def handle_inactive_cluster_queued_jobs(self):
+        self.logger.info("handle inactive cluster queue")
+
         cursor = self.conn.cursor()
         cursor.execute("""
                     UPDATE job SET cluster_name = null WHERE state = 'queued'
@@ -939,6 +945,8 @@ class Scheduler(object):
         cursor.close()
 
     def handle_cron_jobs(self):
+        self.logger.info("handle cron jobs")
+
         cursor = self.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         cursor.execute("begin")
 
@@ -1009,7 +1017,7 @@ class Scheduler(object):
             cursor.close()
 
     def handle_orphaned_jobs(self):
-        self.logger.debug("Handling orphaned jobs")
+        self.logger.info("handle orphaned jobs")
 
         h = {'Authorization': 'Bearer %s' % self.args.token}
         r = requests.get(self.args.api_server + '/apis/core.infrabox.net/v1alpha1/namespaces/%s/ibpipelineinvocations' % self.namespace,
@@ -1239,8 +1247,8 @@ class Scheduler(object):
         self.update_cluster_state()
 
         try:
-            self.handle_timeouts()
             self.handle_aborts()
+            self.handle_timeouts()
             self.handle_orphaned_jobs()
             self.handle_function_invocations()
             self.handle_pipeline_invocations()
