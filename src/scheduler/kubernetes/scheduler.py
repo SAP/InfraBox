@@ -520,7 +520,7 @@ class FunctionInvocationController(Controller):
         return fi
 
 class Scheduler(object):
-    def __init__(self, conn, args):
+    def __init__(self, args):
         self.conn = conn
         self.args = args
         self.namespace = get_env("INFRABOX_GENERAL_WORKER_NAMESPACE")
@@ -1239,11 +1239,11 @@ class Scheduler(object):
         self.update_cluster_state()
 
         try:
-            self.handle_function_invocations()
-            self.handle_pipeline_invocations()
             self.handle_timeouts()
             self.handle_aborts()
             self.handle_orphaned_jobs()
+            self.handle_function_invocations()
+            self.handle_pipeline_invocations()
             self.handle_cron_jobs()
             self.handle_inactive_cluster_queued_jobs()
         except Exception as e:
@@ -1268,7 +1268,13 @@ class Scheduler(object):
         self.logger.info("Starting scheduler")
 
         while True:
+            conn = connect_db()
+            conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
+
+            self.conn = conn
             self.handle()
+            self.conn.close()
+
             time.sleep(1)
 
 def main():
@@ -1295,10 +1301,7 @@ def main():
 
     os.environ['REQUESTS_CA_BUNDLE'] = '/var/run/secrets/kubernetes.io/serviceaccount/ca.crt'
 
-    conn = connect_db()
-    conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
-
-    scheduler = Scheduler(conn, args)
+    scheduler = Scheduler(args)
     scheduler.run()
 
 if __name__ == "__main__":
