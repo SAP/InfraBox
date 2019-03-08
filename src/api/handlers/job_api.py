@@ -749,6 +749,21 @@ class CreateJobs(Resource):
             job_id = job['id']
             jobname_id[name] = job_id
 
+        result = g.db.execute_one("""
+            SELECT count(*) cnt
+            FROM job
+            WHERE build_id = (
+                SELECT build_id
+                FROM job
+                WHERE id = %s
+            )
+        """, [parent_job_id])
+
+        total_jobs = result[0] + len(jobs)
+
+        if total_jobs > 100:
+            abort(400, 'Too many jobs, you may not have more than 100 jobs per build')
+
         for job in jobs:
             job['env_var_refs'] = None
             job['env_vars'] = {}
