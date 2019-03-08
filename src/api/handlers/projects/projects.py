@@ -271,6 +271,36 @@ class ProjectName(Resource):
 
         return project
 
+change_visibility_schema = {
+    'type': "object",
+    'properties': {
+        'private': {'type': "boolean"},
+    },
+    'required': ["private"]
+}
+
+change_visibility_model = api.schema_model('ChangeVisibility', change_visibility_schema)
+
+@ns.route('/<project_id>/visibility')
+@api.response(403, 'Not Authorized')
+class Project(Resource):
+
+    @api.expect(change_visibility_model)
+    @api.response(200, 'Success', response_model)
+    def post(self, project_id):
+        '''
+        Change projects visibility
+        '''
+        b = request.get_json()
+        private = b['private']
+
+        g.db.execute('''
+            UPDATE project
+            SET public = %s
+            WHERE id = %s
+        ''', [not private, project_id])
+
+        return OK('updated visibility')
 
 @ns.route('/<project_id>')
 @api.response(403, 'Not Authorized')

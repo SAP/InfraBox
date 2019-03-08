@@ -77,3 +77,10 @@ allow {
     api.token.type = "user"
     projects_projects_owner([api.token.user.id, project])
 }
+
+allow {
+    api.method = "POST"
+    api.path = ["api", "v1", "projects", project, "visibility"]
+    api.token.type = "user"
+    projects_projects_owner([api.token.user.id, project])
+}

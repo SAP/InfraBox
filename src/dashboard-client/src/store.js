@@ -169,7 +169,7 @@ function addProjects (state, projects) {
             continue
         }
 
-        p = new Project(project.name, project.id, project.type, project.userrole)
+        p = new Project(project.name, project.id, project.type, project.userrole, project.public)
         state.projects.push(p)
 
         state.projects = _.sortBy(state.projects, function (i) { return i.name.toLowerCase() })

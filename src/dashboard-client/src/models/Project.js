@@ -6,7 +6,7 @@ import router from '../router'
 import events from '../events'
 
 export default class Project {
-    constructor (name, id, type, userrole) {
+    constructor (name, id, type, userrole, pub) {
         this.name = name
         this.id = id
         this.builds = []
@@ -23,6 +23,7 @@ export default class Project {
         this.numScheduledJobs = 0
         this.numRunningJobs = 0
         this.sshkeys = null
+        this.public = pub
     }
 
     isGit () {
