@@ -724,13 +724,19 @@ class CreateJobs(Resource):
         if not jobs:
             return "No jobs"
 
-        result = g.db.execute_one("SELECT env_var, build_id FROM job WHERE id = %s", [parent_job_id])
+        result = g.db.execute_one("""
+            SELECT env_var, build_id
+            FROM job
+            WHERE id = %s
+            AND name = 'Create Jobs'
+        """, [parent_job_id])
+
         base_env_var = result[0]
         build_id = result[1]
 
         # Get some project info
         result = g.db.execute_one("""
-            SELECT co.user_id, b.build_number, j.project_id FROM collaborator co
+            SELECT b.build_number, j.project_id FROM collaborator co
             INNER JOIN job j
                 ON j.project_id = co.project_id
                 AND co.role = 'Owner'
@@ -739,8 +745,8 @@ class CreateJobs(Resource):
                 ON b.id = j.build_id
         """, [parent_job_id])
 
-        build_number = result[1]
-        project_id = result[2]
+        build_number = result[0]
+        project_id = result[1]
 
         # name->id mapping
         jobname_id = {}
@@ -766,7 +772,7 @@ class CreateJobs(Resource):
 
         for job in jobs:
             job['env_var_refs'] = None
-            job['env_vars'] = copy.deepcopy(base_env_var)
+            job['env_vars'] = None
 
             if job['type'] == "wait":
                 continue
@@ -793,8 +799,8 @@ class CreateJobs(Resource):
                     if isinstance(value, dict):
                         env_var_ref_name = value['$secret']
                         result = g.db.execute_many("""
-                                    SELECT value FROM secret WHERE name = %s and project_id = %s
-                                    """, [env_var_ref_name, project_id])
+                            SELECT value FROM secret WHERE name = %s and project_id = %s
+                        """, [env_var_ref_name, project_id])
 
                         if not result:
                             abort(400, "Secret '%s' not found" % env_var_ref_name)
@@ -808,6 +814,9 @@ class CreateJobs(Resource):
                             job['env_vars'] = {}
 
                         job['env_vars'][ename] = value
+
+            if base_env_var:
+                job['env_vars'].update(base_env_var)
 
         jobs.sort(key=lambda k: k.get('avg_duration', 0), reverse=True)
 
