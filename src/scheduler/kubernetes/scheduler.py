@@ -521,7 +521,6 @@ class FunctionInvocationController(Controller):
 
 class Scheduler(object):
     def __init__(self, args):
-        self.conn = conn
         self.args = args
         self.namespace = get_env("INFRABOX_GENERAL_WORKER_NAMESPACE")
         self.logger = get_logger("scheduler")
