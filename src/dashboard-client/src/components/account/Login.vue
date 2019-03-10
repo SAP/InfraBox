@@ -30,7 +30,7 @@
                             <md-input type="password" v-model="password" name="password" @keyup.enter.native="login" required></md-input>
                             <span v-if="!pwValid" class="md-error">Invalid Password</span>
                         </md-input-container>
-                        <md-button :disabled="!mailValid || !pwValid" class="md-raised md-primary" @click="login"><i class="fa fa-fw fa-sign-in"></i><span> Login</span></md-button>
+                        <md-button :disabled="!mailValid || !pwValid" class="md-raised md-primary" @click="login"><i class="fas fa-fw fa-sign-in-alt"></i><span> Login</span></md-button>
                     </md-card-content>
                 </md-card-area>
                 <md-card-content class="m-xl" v-if="$store.state.settings.INFRABOX_GITHUB_ENABLED || $store.state.settings.INFRABOX_ACCOUNT_SIGNUP_ENABLED">
