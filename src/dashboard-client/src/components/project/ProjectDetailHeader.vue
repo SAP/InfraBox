@@ -7,7 +7,7 @@
                         <md-layout>
                             <md-layout md-vertical-align="center">
                                 <span class="p-r-xs" v-if="project.isGit()"><i class="fab fa-fw fa-github"></i></span>
-                                <span v-if="!project.isGit()"><i class="fa fa-fw fa-home"></i></span>
+                                <span v-if="!project.isGit()"><i class="fas fa-fw fa-home"></i></span>
                                 {{ project.name }}
                             </md-layout>
                         </md-layout>
@@ -84,7 +84,7 @@
             </md-card-area>
         </md-card>
         <md-dialog md-open-from="#custom" md-close-to="#custom" ref="confirmDeleteProject">
-            <md-dialog-title><i class="fa fa-fw fa-exclamation-circle" aria-hidden="true"></i><span> Do you really want to delete this project?</span></md-dialog-title>
+            <md-dialog-title><i class="fas fa-fw fa-exclamation-circle" aria-hidden="true"></i><span> Do you really want to delete this project?</span></md-dialog-title>
             <md-dialog-content>Your project will be permanently removed from InfraBox. Your builds and metadata cannot be restored.</md-dialog-content>
                 <md-dialog-actions>
                 <md-button md-theme="running" class="md-primary" @click="closeDialog('confirmDeleteProject')">Cancel</md-button>

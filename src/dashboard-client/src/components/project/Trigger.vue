@@ -8,7 +8,7 @@
                             projectName: encodeURIComponent(project.name)
                         }}">
                             <span v-if="project.isGit()"><i class="fab fa-github"></i></span>
-                            <span v-if="!project.isGit()"><i class="fa fa-home"></i></span>
+                            <span v-if="!project.isGit()"><i class="fas fa-home"></i></span>
                             {{ project.name }}
                         </router-link>: Trigger Build
                     </h3>
@@ -16,7 +16,7 @@
             </md-card-header>
             <md-card-area>
                 <form novalidate @submit.stop.prevent="submit" class="m-xl">
-                    <div class="md-body-2 p-t-lg m-b-md"><i class="fa fa-fw fa-rocket"></i> Branch or Sha to trigger:</div>
+                    <div class="md-body-2 p-t-lg m-b-md"><i class="fas fa-fw fa-rocket"></i> Branch or Sha to trigger:</div>
                     <div class="m-l-md m-r-xl">
                         <md-input-container class="m-r-xl">
                             <label>Branch or Sha</label>
@@ -24,7 +24,7 @@
                         </md-input-container>
                     </div>
                     <md-list md-theme="white" class="m-t-md m-b-md ">
-                        <div class="m-t-md m-b-md"><span class="md-body-2"><i class="fa fa-fw fa-sticky-note-o"></i> Environment Variables </span>(optional):</div>
+                        <div class="m-t-md m-b-md"><span class="md-body-2"><i class="fas fa-fw fa-sticky-note-o"></i> Environment Variables </span>(optional):</div>
                         <md-list-item class="m-r-xl">
                             <md-input-container class="m-r-sm">
                                 <label>Variable Name</label>
@@ -51,7 +51,7 @@
                     <md-button
                         md-theme="running"
                         class="md-raised md-primary"
-                        @click="trigger()"><i class="fa fa-fw fa-rocket"></i> Trigger</md-button>
+                        @click="trigger()"><i class="fas fa-fw fa-rocket"></i> Trigger</md-button>
                 </form>
             </md-card-area>
         </md-card>

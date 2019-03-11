@@ -455,6 +455,7 @@ export class GanttChart {
         job.text = this.r.text(x, y, nodeState.stateIcon)
         job.text.attr({
             'font-family': 'FontAwesome',
+            'font-weight': 900,
             'font-size': this.symbolSize,
             'font-style': 'normal',
             'fill': 'white',
@@ -609,7 +610,7 @@ export default {
         let draw = () => {
             this.chart.setJobs(this.jobs)
             this.chart.draw()
-            this.redraw = setTimeout(draw, 2000)
+            //this.redraw = setTimeout(draw, 20000)
         }
         this.redraw = setTimeout(draw, 200)
     },

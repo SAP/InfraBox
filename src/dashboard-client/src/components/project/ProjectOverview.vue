@@ -4,7 +4,7 @@
             <md-card-header-text>
                 <div class="md-title">
                     <span v-if="project.isGit()"><i class="fab fa-github"></i></span>
-                    <span v-if="!project.isGit()"><i class="fa fa-home"></i></span>
+                    <span v-if="!project.isGit()"><i class="fas fa-home"></i></span>
                     <router-link :to="{name: 'ProjectDetailBuilds', params: {projectName: encodeURIComponent(project.name)}}" class="m-l-xs">{{ project.name }}</router-link>
                 </div>
                 <md-subheader v-if="project.getActiveBuilds().length===1" style="padding-left=-10px;">Currently one running build.</md-subheader>
@@ -62,23 +62,23 @@
             <md-table>
                 <md-table-body v-if="project.builds.length != 0">
                     <md-table-row>
-                        <md-table-cell class="md-body-2"><i class="fa fa-fw fa-cube"></i><span class="p-l-md">Jobs</span></md-table-cell>
+                        <md-table-cell class="md-body-2"><i class="fas fa-fw fa-cube"></i><span class="p-l-md">Jobs</span></md-table-cell>
                         <md-table-cell>{{ project.numQueuedJobs }} / {{ project.numScheduledJobs }} / {{ project.numRunningJobs }}
                             <md-tooltip>{{ project.numQueuedJobs }} queued / {{ project.numScheduledJobs }} scheduled / {{ project.numRunningJobs }} running </md-tooltip></md-table-cell>
                     </md-table-row>
 
                     <md-table-row>
-                        <md-table-cell class="md-body-2"><i class="fa fa-fw fa-circle-thin"></i><span class="p-l-md">State</span></md-table-cell>
+                        <md-table-cell class="md-body-2"><i class="fas fa-fw fa-circle-thin"></i><span class="p-l-md">State</span></md-table-cell>
                         <md-table-cell><ib-state :state="project.builds[0].state"></ib-state></md-table-cell>
                     </md-table-row>
                     <md-table-row>
-                        <md-table-cell class="md-body-2"><i class="fa fa-fw fa-cubes"></i><span class="p-l-md">Build</span></md-table-cell>
+                        <md-table-cell class="md-body-2"><i class="fas fa-fw fa-cubes"></i><span class="p-l-md">Build</span></md-table-cell>
                         <md-table-cell>
                             {{ project.builds[0].number }}.{{ project.builds[0].restartCounter }}
                         </md-table-cell>
                     </md-table-row>
                     <md-table-row>
-                        <md-table-cell class="md-body-2"><i class="fa fa-fw fa-calendar"></i><span class="p-l-md"> Started</span></md-table-cell>
+                        <md-table-cell class="md-body-2"><i class="fas fa-fw fa-calendar"></i><span class="p-l-md"> Started</span></md-table-cell>
                         <md-table-cell><ib-date :date="project.builds[0].startDate"></ib-date></md-table-cell>
                     </md-table-row>
                     <md-table-row>
@@ -91,7 +91,7 @@
             </md-table>
         </md-card-content>
         <md-dialog md-open-from="#custom" md-close-to="#custom" ref="confirmDeleteProject">
-            <md-dialog-title><i class="fa fa-fw fa-exclamation-circle" aria-hidden="true"></i><span> Do you really want to delete this project?</span></md-dialog-title>
+            <md-dialog-title><i class="fas fa-fw fa-exclamation-circle" aria-hidden="true"></i><span> Do you really want to delete this project?</span></md-dialog-title>
             <md-dialog-content>Your project will be permanently removed from InfraBox. Your builds and metadata cannot be restored.</md-dialog-content>
                 <md-dialog-actions>
                 <md-button md-theme="running" class="md-primary" @click="closeDialog('confirmDeleteProject')">Cancel</md-button>

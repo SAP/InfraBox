@@ -18,7 +18,7 @@
                     <md-table-row v-for="project of $store.state.projects" :key="project.id">
                         <md-table-cell width="40px">
                             <span v-if="project.isGit()" style="font-size:150%"><i class="fab fa-fw fa-github"></i></span>
-                            <span v-if="!project.isGit()"><i class="fa fa-fw fa-home"></i></span>
+                            <span v-if="!project.isGit()"><i class="fas fa-fw fa-home"></i></span>
                         </md-table-cell>
                         <md-table-cell width="40px">
                             <div v-if="project.builds && project.builds[0]">
@@ -60,7 +60,7 @@
             <md-card-header class="main-card-header">
                 <md-card-header-text>
                     <h3 class="md-title card-title">
-                        <span><i class="fa fa-handshake-o"></i></span>
+                        <span><i class="fas fa-handshake-o"></i></span>
                         Welcome to InfraBox!
                     </h3>
                 </md-card-header-text>
@@ -68,10 +68,10 @@
             <md-card-area class="m-xl">
                 <p class="md-body-2">Please set up your first project before you can use the full InfraBox functionality:</p>
                 <router-link to="/addproject/" style="color: inherit">
-                    <md-button md-theme="running" class="md-raised md-primary m-lg"><i class="fa fa-plus"></i> Add project</md-button>
+                    <md-button md-theme="running" class="md-raised md-primary m-lg"><i class="fas fa-plus"></i> Add project</md-button>
                 </router-link>
 
-                <p class="md-body-2"><i class="fa fa-info-circle text-blue"></i> If you are completely new to InfraBox or need some further information have a look at the <a href="https://github.com/SAP/InfraBox/blob/master/docs/doc.md" target="_blank">documentation</a>.</p>
+                <p class="md-body-2"><i class="fas fa-info-circle text-blue"></i> If you are completely new to InfraBox or need some further information have a look at the <a href="https://github.com/SAP/InfraBox/blob/master/docs/doc.md" target="_blank">documentation</a>.</p>
             </md-card-area>
 
             <router-link to="/addproject/" style="color: inherit">

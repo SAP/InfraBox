@@ -3,7 +3,7 @@
             <span>
                 <img :src="badgeUrl" height="20px" />
                 <md-button class="md-icon-button" @click="openDialog(dialog_id)" style="padding-left:-16px; margin-left: -16px">
-                    <i class="fa fa-fw fa-file-code-o" style="font-size: 19px; color: #757575"></i>
+                    <i class="fas fa-fw fa-file-code-o" style="font-size: 19px; color: #757575"></i>
                 </md-button>
             </span>
         <md-dialog md-open-from="#fab" md-close-to="#fab" :ref="dialog_id" width="100%">

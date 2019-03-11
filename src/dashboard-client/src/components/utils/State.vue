@@ -8,7 +8,7 @@
         </span>
         <span v-if="state=='scheduled'">
             <div class="bg-light circle-icon">
-                <i class="fa fa-fw fa-th-list"></i>
+                <i class="fas fa-fw fa-th-list"></i>
                 <md-tooltip>{{ state }}</md-tooltip>
             </div>
         </span>
@@ -20,37 +20,37 @@
         </span>
         <span v-if="state=='finished' || state=='ok'">
             <div class="bg-success circle-icon">
-                <i class="fa fa-fw fa-check"></i>
+                <i class="fas fa-fw fa-check"></i>
             </div>
             <md-tooltip>{{ state }}</md-tooltip>
         </span>
         <span v-if="state=='skipped'">
             <div class="bg-light circle-icon">
-                <i class="fa fa-fw fa-share"></i>
+                <i class="fas fa-fw fa-share"></i>
                 <md-tooltip>{{ state }}</md-tooltip>
             </div>
         </span>
         <span v-if="state=='failure'">
             <div class="bg-failure circle-icon">
-                <i class="fa fa-fw fa-bolt"></i>
+                <i class="fas fa-fw fa-bolt"></i>
                 <md-tooltip>{{ state }}</md-tooltip>
             </div>
         </span>
         <span v-if="state=='unstable'">
             <div class="bg-unstable circle-icon">
-                <i class="fa fa-fw fa-bolt"></i>
+                <i class="fas fa-fw fa-bolt"></i>
                 <md-tooltip>{{ state }}</md-tooltip>
             </div>
         </span>
         <span v-if="state=='error'">
             <div class="bg-error circle-icon">
-                <i class="fa fa-fw fa-bomb"></i>
+                <i class="fas fa-fw fa-bomb"></i>
                 <md-tooltip>{{ state }}</md-tooltip>
             </div>
         </span>
         <span v-if="state=='killed'">
             <div class="bg-light circle-icon">
-                <i class="fa fa-fw fa-ban"></i>
+                <i class="fas fa-fw fa-ban"></i>
                 <md-tooltip>{{ state }}</md-tooltip>
             </div>
         </span>

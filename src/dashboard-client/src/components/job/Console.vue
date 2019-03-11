@@ -3,7 +3,7 @@
         <md-table-card class="console-table">
             <md-layout  md-column  md-align="center" width="100%" v-if="job.message">
                 <md-card :md-theme="job.state" class="md-primary p-t-xs p-b-xs p-l-md p-r-md font-roboto">
-                    <span><i class="fa fa-exclamation-triangle p-r-sm"></i> {{ job.message }}</span>
+                    <span><i class="fas fa-exclamation-triangle p-r-sm"></i> {{ job.message }}</span>
                 </md-card>
             </md-layout>
             <md-table>
@@ -38,11 +38,11 @@
                         </md-table-cell>
                         <md-table-cell class="console-table text-top text-right dont-wrap">
                             <div v-if="section.labels['error']" class="bg-failure circle-icon">
-                                <i class="fa fa-fw fa-exclamation-circle"></i>
+                                <i class="fas fa-fw fa-exclamation-circle"></i>
                                 <md-tooltip>{{ section.labels.error }} Errors</md-tooltip>
                             </div>
                             <div v-if="section.labels['warning']" class="bg-warning circle-icon">
-                                <i class="fa fa-fw fa-exclamation-circle"></i>
+                                <i class="fas fa-fw fa-exclamation-circle"></i>
                                 <md-tooltip>{{ section.labels.warning }} Warnings</md-tooltip>
                             </div>
                         </md-table-cell>

@@ -13,10 +13,10 @@
             <h2 class="md-title" style="flex: 1"></h2>
 
             <md-button v-if="$store.state.user && !connected" class="md-button" @click="reconnect" md-right>
-                <i class="fa fa-fw fa-bolt"></i> Disconnected
+                <i class="fas fa-fw fa-bolt"></i> Disconnected
             </md-button>
             <md-button v-if="!$store.state.user" class="md-button" @click="login" md-right>
-                <i class="fa fa-sign-in"></i> Login
+                <i class="fas fa-sign-in"></i> Login
             </md-button>
             <div v-if="$store.state.user" md-right>
                 {{ $store.state.user.username }} | {{ $store.state.settings.INFRABOX_CLUSTER_NAME }}
@@ -32,14 +32,14 @@
                 <md-list-item>
                     <router-link to="/" style="color: inherit">
                         <span @click="toggleLeftSidenav()">
-                            <md-icon><i class="fa fa-th-large fa-fw"></i></md-icon>
+                            <md-icon><i class="fas fa-th-large fa-fw"></i></md-icon>
                             <span class="fix-list">Overview</span>
                         </span>
                     </router-link>
                 </md-list-item>
 
                 <md-list-item>
-                    <md-icon><i class="fa fa-fw fa-cubes fa-fw"></i></md-icon>
+                    <md-icon><i class="fas fa-fw fa-cubes fa-fw"></i></md-icon>
                     <span>Projects</span>
                     <md-list-expand>
                         <md-list>
@@ -47,7 +47,7 @@
                                 <router-link :to="{name: 'ProjectDetailBuilds', params: {projectName: encodeURIComponent(project.name)}}">
                                     <span @click="toggleLeftSidenav()">
                                         <i v-if="project.isGit()" class="fab fa-github"></i>
-                                        <i v-if="!project.isGit()" class="fa fa-home"></i>{{ project.name }}
+                                        <i v-if="!project.isGit()" class="fas fa-home"></i>{{ project.name }}
                                     </span>
                                 </router-link>
                             </md-list-item>
@@ -59,7 +59,7 @@
                     <a href="https://github.com/SAP/infrabox/tree/master/docs"
                        class="md-list-item-container md-button"
                        target="_blank" @click="toggleLeftSidenav()">
-                        <md-icon><i class="fa fa-book fa-fw"></i></md-icon>
+                        <md-icon><i class="fas fa-book fa-fw"></i></md-icon>
                         <span>Docs</span>
                     </a>
                 </md-list-item>
@@ -68,7 +68,7 @@
                     <a :href="$store.state.settings.INFRABOX_GENERAL_REPORT_ISSUE_URL"
                        class="md-list-item-container md-button"
                        target="_blank" @click="toggleLeftSidenav()">
-                        <md-icon><i class="fa fa-bug fa-fw"></i></md-icon>
+                        <md-icon><i class="fas fa-bug fa-fw"></i></md-icon>
                         <span>Report Issue</span>
                     </a>
                 </md-list-item>
@@ -81,14 +81,14 @@
                 </md-list-item>
 
                 <md-list-item v-if="$store.state.user.isAdmin()">
-                    <md-icon><i class="fa fa-fw fa-unlock"></i></md-icon>
+                    <md-icon><i class="fas fa-fw fa-unlock"></i></md-icon>
                     <span>Admin</span>
                     <md-list-expand>
                         <md-list>
                             <md-list-item class="md-inset">
                                 <router-link :to="{name: 'AdminProjects'}">
                                     <span @click="toggleLeftSidenav()">
-                                        <i class="fa fa-cubes"></i>
+                                        <i class="fas fa-cubes"></i>
                                         Projects
                                     </span>
                                 </router-link>
@@ -96,7 +96,7 @@
                             <md-list-item class="md-inset">
                                 <router-link :to="{name: 'AdminUsers'}">
                                     <span @click="toggleLeftSidenav()">
-                                        <i class="fa fa-users"></i>
+                                        <i class="fas fa-users"></i>
                                         Users
                                     </span>
                                 </router-link>

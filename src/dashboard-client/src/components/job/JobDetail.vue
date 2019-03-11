@@ -8,7 +8,7 @@
                             <md-layout md-vertical-align="center">
                                 <router-link :to="{name: 'ProjectDetailBuilds', params: {projectName: encodeURIComponent(project.name)}}">
                                     <span v-if="project.isGit()"><i class="fab fa-github"></i></span>
-                                    <span v-if="!project.isGit()"><i class="fa fa-home"></i></span>
+                                    <span v-if="!project.isGit()"><i class="fas fa-home"></i></span>
                                     {{ project.name }}
                                 </router-link>
                                 / <router-link :to="{name: 'BuildDetailGraph', params: {
@@ -29,7 +29,7 @@
                                                     <ib-state :state="job.state"></ib-state>
                                                 </md-table-cell>
                                                 <md-table-cell style="text-align: left !important">
-                                                    <span><i class="fa fa-calendar fa-fw" aria-hidden="true"></i><strong> Started</strong>
+                                                    <span><i class="fas fa-calendar fa-fw" aria-hidden="true"></i><strong> Started</strong>
                                                     <ib-date :date="job.startDate"></ib-date></span>
                                                 </md-table-cell>
                                                 <md-table-cell>
@@ -37,11 +37,11 @@
                                                     <ib-duration :start="job.startDate" :end="job.endDate"></ib-duration></span>
                                                 </md-table-cell>
                                                 <md-table-cell v-if="build.commit">
-                                                    <span><i class="fa fa-list-ol fa-fw" aria-hidden="true"></i><strong> Change</strong>
+                                                    <span><i class="fas fa-list-ol fa-fw" aria-hidden="true"></i><strong> Change</strong>
                                                     <ib-gitjobtype :build="build" :showTitle="true"></ib-gitjobtype></span>
                                                 </md-table-cell>
                                                 <md-table-cell v-if="build.commit">
-                                                    <span><i class="fa fa-user fa-fw" aria-hidden="true"></i><strong> Author</strong><br/>
+                                                    <span><i class="fas fa-user fa-fw" aria-hidden="true"></i><strong> Author</strong><br/>
                                                     {{ build.commit.author_name }}</span>
                                                 </md-table-cell>
                                                 <md-table-cell v-if="build.commit">
@@ -153,7 +153,7 @@
                                                             </md-button>
                                                             <md-menu-content class="bg-white">
                                                                 <md-menu-item class="bg-white">
-                                                                    <span><i class="fa fa-calendar fa-fw" aria-hidden="true"></i><strong> Started</strong>
+                                                                    <span><i class="fas fa-calendar fa-fw" aria-hidden="true"></i><strong> Started</strong>
                                                                     <ib-date :date="job.startDate"></ib-date></span>
                                                                 </md-menu-item>
                                                                 <md-menu-item class="bg-white">
@@ -161,11 +161,11 @@
                                                                     <ib-duration :start="job.startDate" :end="job.endDate"></ib-duration></span>
                                                                 </md-menu-item>
                                                                 <md-menu-item class="bg-white" v-if="build.commit">
-                                                                    <span><i class="fa fa-list-ol fa-fw" aria-hidden="true"></i><strong> Change</strong>
+                                                                    <span><i class="fas fa-list-ol fa-fw" aria-hidden="true"></i><strong> Change</strong>
                                                                     <ib-gitjobtype :build="build"></ib-gitjobtype></span>
                                                                 </md-menu-item>
                                                                 <md-menu-item class="bg-white" v-if="build.commit">
-                                                                    <span><i class="fa fa-user fa-fw" aria-hidden="true"></i><strong> Author</strong><br/>
+                                                                    <span><i class="fas fa-user fa-fw" aria-hidden="true"></i><strong> Author</strong><br/>
                                                                     {{ build.commit.author_name }}</span>
                                                                 </md-menu-item>
                                                                 <md-menu-item class="bg-white" v-if="build.commit">

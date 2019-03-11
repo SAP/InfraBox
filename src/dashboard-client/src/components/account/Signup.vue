@@ -31,7 +31,7 @@
                             <md-input type="password" v-model="password2" name="password2" required></md-input>
                             <span v-if="!pwValid2" class="md-error">Invalid Password</span>
                         </md-input-container>
-                        <md-button :disabled="!usernameValid || !mailValid || !pwValid1 || !pwValid2" class="md-raised md-primary" @click="signup()"><i class="fa fa-fw fa-sign-in"></i><span> Signup</span></md-button>
+                        <md-button :disabled="!usernameValid || !mailValid || !pwValid1 || !pwValid2" class="md-raised md-primary" @click="signup()"><i class="fas fa-fw fa-sign-in"></i><span> Signup</span></md-button>
                     </md-card-content>
                 </md-card-area>
             </md-card>

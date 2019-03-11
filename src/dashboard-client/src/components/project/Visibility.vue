@@ -9,11 +9,11 @@
         </md-card-header>
         <md-card-area>
             <md-button v-if="project.public" @click="makePrivate">
-                <i class="fa fa-fw fa-user"></i><span> Make Private</span>
+                <i class="fas fa-fw fa-user"></i><span> Make Private</span>
             </md-button>
 
             <md-button v-if="!project.public" @click="makePublic">
-                <i class="fa fa-fw fa-users"></i><span> Make Public</span>
+                <i class="fas fa-fw fa-users"></i><span> Make Public</span>
             </md-button>
         </md-card-area>
     </md-card>

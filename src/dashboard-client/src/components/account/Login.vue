@@ -15,7 +15,7 @@
                         <md-button md-theme="default"
                             @click="loginSSO()"
                             class="md-raised md-primary">
-                            <i class="fa fa-fw fa-building"></i><span> Login with SSO</span></md-button>
+                            <i class="fas fa-fw fa-building"></i><span> Login with SSO</span></md-button>
                     </md-card-content>
                 </md-card-area>
                 <md-card-area>
@@ -50,7 +50,7 @@
                         v-if="$store.state.settings.INFRABOX_ACCOUNT_SIGNUP_ENABLED"
                         @click="signup()"
                         class="md-raised md-primary">
-                        <i class="fa fa-fw fa-user-plus"></i><span> Signup</span></md-button>
+                        <i class="fas fa-fw fa-user-plus"></i><span> Signup</span></md-button>
                 </md-card-content>
             </md-card>
         </md-layout>
