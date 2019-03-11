@@ -149,7 +149,7 @@ def create_gerrit_commit(project_id, repo_id, branch_or_sha):
         'branch_or_sha': branch_or_sha,
         'project': repo_name
     }
-    r = requests.post('http://localhost:8082/api/v1/commit', data=data)
+    r = requests.post('http://localhost:8082/api/v1/commit', json=data)
     commit = r.json()
 
     if r.status_code != 200:

@@ -2,7 +2,7 @@ import os
 import json
 
 import paramiko
-from flask import Flask, request, Response
+from flask import Flask, request, Response, jsonify
 
 app = Flask(__name__)
 
@@ -52,7 +52,7 @@ def get_sha(branch_or_sha, client, project):
 
 @app.route('/api/v1/commit', methods=['POST'])
 def get_commit():
-    query = dict(request.form)
+    query = request.get_json()
 
     project = query.get('project', None)
     if not project:
@@ -88,7 +88,7 @@ def get_commit():
 
     client.close()
 
-    return {
+    return jsonify({
         "sha": change['currentPatchSet']['revision'],
         "branch": branch,
         "url": change['url'],
@@ -101,7 +101,7 @@ def get_commit():
             "email": change['owner']['email']
         },
         "message": change['commitMessage']
-    }
+    })
 
 def main():
     get_env('INFRABOX_VERSION')
