@@ -42,7 +42,10 @@ class Jobs(Resource):
                 WHERE project_id = %s
             ''', [project_id])
 
-            build_to = r['max'] + 1
+            if not r:
+                build_to = 1
+            else:
+                build_to = r['max'] + 1
 
         if not build_from:
             build_from = max(build_to - 10, 0)
