@@ -727,7 +727,7 @@ class CreateJobs(Resource):
         result = g.db.execute_one("""
             SELECT env_var, build_id
             FROM job
-            WHERE id = %s
+            WHERE build_id = (SELECT build_id FROM job WHERE id = %s)
             AND name = 'Create Jobs'
         """, [parent_job_id])
 
