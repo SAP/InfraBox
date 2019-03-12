@@ -796,6 +796,9 @@ class CreateJobs(Resource):
                 for ename in job['environment']:
                     value = job['environment'][ename]
 
+                    if not job['env_vars']:
+                        job['env_vars'] = {}
+
                     if isinstance(value, dict):
                         env_var_ref_name = value['$secret']
                         result = g.db.execute_many("""
@@ -810,9 +813,6 @@ class CreateJobs(Resource):
 
                         job['env_var_refs'][ename] = env_var_ref_name
                     else:
-                        if not job['env_vars']:
-                            job['env_vars'] = {}
-
                         job['env_vars'][ename] = value
 
             if base_env_var:
