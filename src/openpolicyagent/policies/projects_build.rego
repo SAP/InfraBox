@@ -71,6 +71,12 @@ allow {
 
 allow {
     api.method = "GET"
+    api.path = ["api", "v1", "projects", project, "builds"]
+    build_project_public( project )
+}
+
+allow {
+    api.method = "GET"
     api.path = ["api", "v1", "projects", project, "builds", _]
     api.token.type = "project"
     api.token.project.id = project
