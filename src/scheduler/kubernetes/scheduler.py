@@ -354,7 +354,7 @@ class PipelineInvocationController(Controller):
         elif first_state.get('terminated', None):
             pi['status']['message'] = ""
             pi['status']['state'] = "running"
-            pi['status']['startTime'] = first_state['terminated']['startedAt']
+            pi['status']['startTime'] = first_state['terminated'].get('startedAt', str(datetime.now()))
 
         all_terminated = True
 
@@ -365,8 +365,8 @@ class PipelineInvocationController(Controller):
         if all_terminated:
             pi['status']['message'] = ""
             pi['status']['state'] = "finalizing"
-            pi['status']['startTime'] = first_state['terminated']['startedAt']
-            pi['status']['completionTime'] = pi['status']['stepStatuses'][-1]['state']['terminated']['finishedAt']
+            pi['status']['startTime'] = first_state['terminated'].get('startedAt', str(datetime.now()))
+            pi['status']['completionTime'] = pi['status']['stepStatuses'][-1]['state']['terminated'].get('finishedAt', str(datetime.now()))
 
         return pi
 
