@@ -791,13 +791,13 @@ class CreateJobs(Resource):
 
             job['avg_duration'] = avg_duration
 
+            if not job['env_vars']:
+                job['env_vars'] = {}
+
             # Handle environment vars
             if 'environment' in job:
                 for ename in job['environment']:
                     value = job['environment'][ename]
-
-                    if not job['env_vars']:
-                        job['env_vars'] = {}
 
                     if isinstance(value, dict):
                         env_var_ref_name = value['$secret']
