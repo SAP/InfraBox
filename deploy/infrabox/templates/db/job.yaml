@@ -4,9 +4,13 @@ kind: Job
 metadata:
     name: infrabox-db-migration
     namespace: {{ template "system_namespace" . }}
+    {{ if .Values.database.cloudsql.enabled }}
+    # The cloudsql proxy does not stop and helm would time out
+    {{ else }}
     annotations:
         "helm.sh/hook": "post-install,pre-upgrade"
         "helm.sh/hook-delete-policy": "before-hook-creation"
+    {{ end }}
 spec:
     template:
         metadata:
