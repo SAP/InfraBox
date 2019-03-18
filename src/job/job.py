@@ -884,6 +884,10 @@ class RunJob(Job):
             memory_limit = os.environ['INFRABOX_JOB_RESOURCES_LIMITS_MEMORY']
             cmd += ['-m', '%sm' % memory_limit]
 
+            # Labels
+            cmd += ['--label', 'net.infrabox.job.id=%s' % self.job['id']]
+
+            # Build args
             cmd += ['--build-arg', 'INFRABOX_BUILD_NUMBER=%s' % self.build['build_number']]
 
             if 'build_arguments' in self.job and self.job['build_arguments']:
