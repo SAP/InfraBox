@@ -141,7 +141,12 @@ function handleJobUpdate (state, event) {
             d.avg_cpu,
             d.restarted
         )
-        build.jobs.push(job)
+
+        let jobs = build.jobs
+        jobs.push(job)
+        jobs = _.sortBy(jobs, (j) => { return j.name })
+
+        build.jobs = jobs
         state.jobs[d.id] = job
     } else {
         job.name = d.name
