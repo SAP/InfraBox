@@ -945,7 +945,7 @@ class RunJob(Job):
                     sa.write(reg['service_account'])
 
                 c.execute(['gcloud', 'auth', 'activate-service-account', '--key-file', '/tmp/gcr_sa.json'], show=True)
-                c.execute(['gcloud', 'docker', '-a'], show=True)
+                c.execute(['gcloud', 'auth', 'configure-docker'], show=True)
             elif reg['type'] == 'docker-registry' and 'username' in reg:
                 cmd = ['docker', 'login', '-u', reg['username'], '-p', reg['password']]
 
