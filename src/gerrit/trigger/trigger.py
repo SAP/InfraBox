@@ -114,7 +114,7 @@ def handle_patchset_created_project(conn, event, project_id, project_name):
     conn.commit()
 
     if not commit:
-        url = event['change']['url'] + "/" + str(event['patchSet']['number'])
+        url = event['change']['url'] 
         c = conn.cursor()
         c.execute('''
             INSERT INTO "commit" (
