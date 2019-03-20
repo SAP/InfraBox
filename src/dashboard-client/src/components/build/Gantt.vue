@@ -454,7 +454,7 @@ export class GanttChart {
 
         job.text = this.r.text(x, y, nodeState.stateIcon)
         job.text.attr({
-            'font-family': 'FontAwesome',
+            'font-family': 'Font Awesome\ 5 Free',
             'font-weight': 900,
             'font-size': this.symbolSize,
             'font-style': 'normal',
