@@ -75,6 +75,13 @@ export default class Build {
     _updateBuildState () {
         this.state = 'finished'
 
+        let states = {
+            'error': false,
+            'killed': false,
+            'failure': false,
+            'unstable': false
+        }
+
         for (let j of this.jobs) {
             if (j.restarted) {
                 continue
@@ -82,12 +89,20 @@ export default class Build {
 
             if (j.state === 'queued' || j.state === 'scheduled' || j.state === 'running') {
                 this.state = 'running'
-                break
+                return
             }
 
-            if (j.state === 'error' || j.state === 'failure' || j.state === 'unstable' || j.state === 'killed') {
-                this.state = j.state
-            }
+            states[j.state] = true
+        }
+
+        if (states.killed) {
+            this.state = 'killed'
+        } else if (states.error) {
+            this.state = 'error'
+        } else if (states.failure) {
+            this.state = 'failure'
+        } else if (states.unstable) {
+            this.state = 'unstable'
         }
     }
 
