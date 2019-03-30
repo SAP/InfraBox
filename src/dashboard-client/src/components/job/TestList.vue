@@ -87,7 +87,7 @@ export default {
             this.onPagination({ size: this.size, page: this.page })
         },
         convert (duration) {
-            return moment.utc(duration).format('mm:ss.SSS')
+            return moment.utc(duration).format('hh:mm:ss')
         }
     }
 }
