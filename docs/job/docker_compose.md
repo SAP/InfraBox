@@ -27,3 +27,6 @@ Sometimes you want to start multiple containers to test your application. For th
 |timeout|false|integer|3600|Timeout in seconds after which the job should be killed. Timeout starts when the job is set to running|
 |depends_on|false|[Dependency Configuration](/docs/job/dependencies.md)|[]|Jobs may have dependencies. You can list all jobs which should finish before the current job may be executed.|
 |environment|false|[Environment Variables](/docs/job/env_vars.md)|{}|Can be used to set environment variables for the job.|
+
+## Sharing files between containers
+InfraBox automatically mounts a shared volume into all containers at `/infrabox/shared`. You may use it to exchange data between your containers.

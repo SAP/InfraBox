@@ -80,6 +80,10 @@ class RunJob(Job):
         self.infrabox_upload_dir = os.path.join(self.mount_data_dir, 'upload')
         makedirs(self.infrabox_upload_dir)
 
+        # <data_dir>/shared is mounted in the job to /infrabox/shared for docker_compose jobs
+        self.infrabox_shared_dir = os.path.join(self.mount_data_dir, 'shared')
+        makedirs(self.infrabox_shared_dir)
+
         # <data_dir>/upload/testresult is mounted in the job to /infrabox/upload/testresult
         self.infrabox_testresult_dir = os.path.join(self.infrabox_upload_dir, 'testresult')
         makedirs(self.infrabox_testresult_dir)
@@ -603,6 +607,7 @@ class RunJob(Job):
                 "%s:/infrabox/upload/badge" % service_badge_dir,
                 "%s:/infrabox/upload/coverage" % service_coverage_dir,
                 "%s:/infrabox/upload/archive" % service_archive_dir,
+                "%s:/infrabox/shared" % self.infrabox_shared_dir,
             ]
 
             for v in compose_file_content['services'][service].get('volumes', []):
