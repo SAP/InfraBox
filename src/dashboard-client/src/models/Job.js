@@ -113,7 +113,7 @@ export default class Job {
     _getTime (d) {
         // This date is only used to calculate duration and show local time in console log.
         // We only care about time, so it's ok to ignore date.
-        const t = new Date('1970-01-01 ' + d + 'Z')
+        const t = new Date('1970-01-01T' + d + 'Z')
 
         return t
     }
