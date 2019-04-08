@@ -48,7 +48,7 @@ class Test(unittest.TestCase):
                         VALUES(%s, 'SECRET_ENV', %s)''', (self.project_id, encrypt_secret('hello world')))
         conn.commit()
 
-        os.environ['INFRABOX_CLI_TOKEN'] = encode_project_token(self.token_id, self.project_id)
+        os.environ['INFRABOX_CLI_TOKEN'] = encode_project_token(self.token_id, self.project_id, 'myproject')
         self.root_url = os.environ['INFRABOX_ROOT_URL']
 
     def _api_get(self, url):

@@ -16,12 +16,13 @@ def encode_user_token(user_id):
 
         return jwt.encode(data, key=s.read(), algorithm='RS256')
 
-def encode_project_token(token_id, project_id):
+def encode_project_token(token_id, project_id, name):
     with open(private_key_path) as s:
         data = {
             'id': token_id,
             'project': {
-                'id': project_id
+                'id': project_id,
+                'name': name
             },
             'type': 'project'
         }

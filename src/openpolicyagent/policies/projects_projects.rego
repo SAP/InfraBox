@@ -41,7 +41,7 @@ allow {
 
 allow {
     api.method = "POST"
-    api.path = ["api", "v1", "projects",]
+    api.path = ["api", "v1", "projects"]
     api.token.type = "user"
 }
 
@@ -56,6 +56,13 @@ allow {
     api.path = ["api", "v1", "projects", "name", project_name]
     api.token.type = "user"
     projects_projects_name_collaborator([api.token.user.id, project_name])
+}
+
+allow {
+    api.method = "GET"
+    api.path = ["api", "v1", "projects", "name", project_name]
+    api.token.type = "project"
+    api.token.project.name = project_name
 }
 
 allow {

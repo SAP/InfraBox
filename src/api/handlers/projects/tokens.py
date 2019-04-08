@@ -55,7 +55,7 @@ class Tokens(Resource):
         """, [b['description'], b['scope_push'], b['scope_pull'], project_id])
 
         token_id = result['id']
-        token = encode_project_token(token_id, project_id)
+        token = encode_project_token(token_id, project_id, 'myproject')
 
         g.db.commit()
 

@@ -342,7 +342,7 @@ if enable_upload_forward:
                 stream.seek(0)
                 url = '%s/api/v1/projects/%s/upload/%s/' % (c['root_url'], project_id, build_id)
                 files = {'project.zip': stream}
-                token = encode_project_token(g.token['id'], project_id)
+                token = encode_project_token(g.token['id'], project_id, 'myproject')
                 headers = {'Authorization': 'bearer ' + token}
                 logger.info('Also uploading to %s', url)
 

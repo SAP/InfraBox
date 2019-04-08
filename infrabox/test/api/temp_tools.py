@@ -69,7 +69,7 @@ class TestClient:
 
     @staticmethod
     def get_project_authorization(token_id, project_id):  # pragma: no cover
-        project_token = encode_project_token(token_id, project_id)
+        project_token = encode_project_token(token_id, project_id, 'myproject')
         h = {'Authorization': 'token %s' % project_token}
         return h
 
@@ -120,7 +120,7 @@ class TestClient:
 
         return r
 
-    
+
     @staticmethod
     def opa_push():
         opa_push_all()
