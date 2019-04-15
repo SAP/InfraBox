@@ -502,7 +502,7 @@ class Output(Resource):
 
         return send_file(f, attachment_filename=key)
 
-@ns.route('/<job_id>/testruns', doc=False)
+@ns.route('/<job_id>/testruns')
 @api.response(403, 'Not Authorized')
 class Testruns(Resource):
 
