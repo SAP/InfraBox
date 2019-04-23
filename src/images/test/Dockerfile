@@ -2,6 +2,7 @@ FROM debian:9.6-slim
 
 RUN    apt-get update -y \
     && apt-get install -y \
+        libpq-dev \
         python \
         python-pip \
         python-six \

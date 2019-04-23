@@ -16,9 +16,25 @@ spec:
             {{ include "imagePullSecret" . | indent 8 }}
             containers:
             -
-                name: static
+                {{ if .Values.dev.enabled }}
+                image: node:8.9
+                command: ["/infrabox/dashboard/run_dev.sh"]
+                {{ else }}
                 image: {{ include "image_repository" . }}/static:{{ include "image_tag" . }}
+                {{ end }}
+                name: static
                 imagePullPolicy: Always
+                {{ if .Values.dev.enabled }}
+                volumeMounts:
+                -
+                    name: code
+                    mountPath: "/infrabox/dashboard"
+                    subPath: src/dashboard-client
+                {{ end }}
+            volumes:
+                {{ if .Values.dev.enabled }}
+                {{ include "volumes_dev" . | indent 16 }}
+                {{ end }}
 {{ end }}
 
 {{ if .Values.ha.enabled }}
@@ -26,4 +42,3 @@ spec:
 {{ else if eq .Values.cluster.name "master" }}
     {{ include "static_deployment" . }}
 {{ end }}
-

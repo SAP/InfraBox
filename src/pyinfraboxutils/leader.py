@@ -35,7 +35,7 @@ def is_leader(conn, service_name, cluster_name=None, exit=True):
     leader = _is_leader(conn, service_name, cluster_name)
 
     if not leader:
-        logger.info('Not the leader anymore')
+        logger.warning('Not the leader anymore')
         if exit:
             sys.exit(1)
         else:
@@ -50,7 +50,7 @@ def elect_leader(conn, service_name, cluster_name=None):
             logger.info("I'm the leader")
             return True
         else:
-            logger.info("Not the leader, retrying")
+            logger.warning("Not the leader, retrying")
             time.sleep(5)
 
 def is_active(conn, cluster_name):

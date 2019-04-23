@@ -25,7 +25,7 @@ class Builds(Resource):
         Returns the latest 100 builds of the project
         '''
         p = g.db.execute_many_dict('''
-            SELECT id, build_number, restart_counter
+            SELECT id, build_number, restart_counter, is_cronjob
             FROM build
             WHERE project_id = %s
             ORDER BY build_number DESC, restart_counter DESC

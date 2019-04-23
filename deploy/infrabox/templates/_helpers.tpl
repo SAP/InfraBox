@@ -413,6 +413,9 @@ https://{{- required "host is required" .Values.host -}}:{{- .Values.port -}}
     name: INFRABOX_GENERAL_DONT_CHECK_CERTIFICATES
     value: {{ default "false" .Values.general.dont_check_certificates | quote }}
 -
+    name: INFRABOX_DEV
+    value: {{ .Values.dev.enabled | quote }}
+-
     name: INFRABOX_GENERAL_WORKER_NAMESPACE
     value: {{ template "worker_namespace" . }}
 -
@@ -427,7 +430,8 @@ https://{{- required "host is required" .Values.host -}}:{{- .Values.port -}}
 -
     name: INFRABOX_GENERAL_REPORT_ISSUE_URL
     value: {{ .Values.general.report_issue_url }}
--   name: INFRABOX_LOG_LEVEL
+-
+    name: INFRABOX_LOG_LEVEL
     value: {{ .Values.general.log_level }}
 {{ end }}
 
@@ -512,4 +516,13 @@ https://{{- .Values.ha.global_host -}}:{{- .Values.ha.global_port -}}
     value: {{ .Values.cachet.api_token }}
 -   name: INFRABOX_CACHET_ENDPOINT
     value: {{ .Values.cachet.endpoint | quote }}
+{{ end }}
+
+{{ define "volumes_dev" }}
+{{ if .Values.dev.enabled }}
+-
+    name: code
+    hostPath:
+        path: {{ .Values.dev.repo_path }}
+{{ end }}
 {{ end }}

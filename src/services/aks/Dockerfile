@@ -18,7 +18,7 @@ ENV PATH $PATH:/usr/local/bin
 RUN \
   apk update && \
   apk add bash py-pip && \
-  apk add --virtual=build gcc libffi-dev musl-dev openssl-dev python-dev make && \
+  apk add --virtual=build linux-headers gcc libffi-dev musl-dev openssl-dev python-dev make && \
   pip install azure-cli && \
   apk del --purge build && \
   az aks install-cli

@@ -246,7 +246,7 @@ class Projects(Resource):
 
         return OK('Project added')
 
-@ns.route('/name/<project_name>', doc=True)
+@ns.route('/name/<project_name>')
 @api.response(403, 'Not Authorized')
 class ProjectName(Resource):
 

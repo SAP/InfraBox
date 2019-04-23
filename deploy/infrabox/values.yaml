@@ -367,3 +367,6 @@ legal:
 
 network_policies:
     enabled: false
+
+dev:
+    enabled: false
