@@ -46,6 +46,16 @@ spec:
                     mountPath: "/infrabox/api"
                     subPath: src/api
                     readOnly: true
+                -
+                    name: code
+                    mountPath: "/infrabox/pyinfraboxutils"
+                    subPath: src/pyinfraboxutils
+                    readOnly: true
+                -
+                    name: code
+                    mountPath: "/infrabox/pyinfrabox"
+                    subPath: src/pyinfrabox
+                    readOnly: true
                 {{ end }}
                 env:
                 {{ include "env_database" . | indent 16 }}

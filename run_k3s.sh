@@ -60,14 +60,10 @@ _installInfrabox() {
 
     if [ ! -f /tmp/id_rsa ]; then
         ssh-keygen -N '' -t rsa -f /tmp/id_rsa
-    fi
-
-    if [ ! -f /tmp/id_rsa.pem ]; then
-        ssh-keygen -f id_rsa.pub -e -m pem > /tmp/id_rsa.pem
+        ssh-keygen -f /tmp/id_rsa.pub -e -m pem > /tmp/id_rsa.pem
     fi
 
     echo "## Install infrabox"
-
 	cat >/tmp/my_values.yaml <<EOL
 port: 30443
 admin:
@@ -104,11 +100,12 @@ job:
 account:
     signup:
         enabled: true
+api:
+    replicas: 1
 dev:
   enabled: true
   repo_path: $DIR
 EOL
-
     helm install --namespace infrabox-system -f /tmp/my_values.yaml --name infrabox --wait .
     popd
 }

@@ -10,7 +10,7 @@
                         <md-table-head v-if="project.isGit()">Branch</md-table-head>
                         <md-table-head>Start Time</md-table-head>
                         <md-table-head>Duration</md-table-head>
-                        <md-table-head v-if="project.isGit()">Type</md-table-head>
+                        <md-table-head>Type</md-table-head>
                     </md-table-row>
                 </md-table-header>
 
@@ -42,10 +42,8 @@
                         <md-table-cell>
                             <ib-duration :start="b.startDate" :end="b.endDate"></ib-duration>
                         </md-table-cell>
-                        <md-table-cell v-if="project.isGit()">
-                            <span v-if="b.commit">
-                                <ib-gitjobtype :build="b"></ib-gitjobtype>
-                            </span>
+                        <md-table-cell>
+                            <ib-gitjobtype :build="b"></ib-gitjobtype>
                         </md-table-cell>
                     </md-table-row>
                 </md-table-body>

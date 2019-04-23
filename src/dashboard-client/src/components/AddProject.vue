@@ -4,7 +4,7 @@
             <md-card-header class="main-card-header">
                     <md-card-header-text>
                         <h3 class="md-title">
-                            <i class="fas fa-plus-circle"></i>
+                            <i class="fa fa-plus-circle"></i>
                             <span> Add Project</span>
                         </h3>
                     </md-card-header-text>
@@ -16,15 +16,15 @@
                     <div class="m-t-xxl m-b-xxl">
                         <md-button-toggle md-single>
                           <md-button class="md-toggle" @click="type = 'upload'">
-                            <i class="fas fa-fw fa-upload"></i><span> Upload</span>
+                            <i class="fa fa-fw fa-upload"></i><span> Upload</span>
                           </md-button>
 
                           <md-button v-if="$store.state.settings.INFRABOX_GITHUB_ENABLED" @click="type = 'github'">
-                            <i class="fab fa-fw fa-github"></i><span> GitHub</span>
+                            <i class="fa fa-fw fa-github"></i><span> GitHub</span>
                           </md-button>
 
                           <md-button v-if="$store.state.settings.INFRABOX_GERRIT_ENABLED" @click="type = 'gerrit'">
-                            <i class="fas fa-fw fa-binoculars"></i><span> Gerrit</span>
+                            <i class="fa fa-fw fa-binoculars"></i><span> Gerrit</span>
                           </md-button>
                         </md-button-toggle>
                     </div>
@@ -60,8 +60,8 @@
                                         <md-table-cell class="md-body-2">{{ r.name }}</md-table-cell>
                                         <md-table-cell>{{ r.owner.login }}</md-table-cell>
                                         <md-table-cell>
-                                            <i v-if="r.private" class="fas fa-fw fa-home fa-2x"></i>
-                                            <i v-if="!r.private" class="fas fa-fw fa-globe fa-2x"></i>
+                                            <i v-if="r.private" class="fa fa-fw fa-home fa-2x"></i>
+                                            <i v-if="!r.private" class="fa fa-fw fa-globe fa-2x"></i>
                                         </md-table-cell>
                                         <md-table-cell><ib-date :date="r.created_at"></ib-date></md-table-cell>
                                         <md-table-cell>{{ r.open_issues_count }}</md-table-cell>
@@ -80,11 +80,11 @@
                     <div class="m-t-xxl m-b-xxl">
                         <md-button-toggle md-single>
                           <md-button class="md-toggle" @click="priv = true">
-                            <i class="fas fa-fw fa-user"></i><span> Private</span>
+                            <i class="fa fa-fw fa-user"></i><span> Private</span>
                           </md-button>
 
                           <md-button @click="priv = false">
-                            <i class="fas fa-fw fa-users"></i><span> Public</span>
+                            <i class="fa fa-fw fa-users"></i><span> Public</span>
                           </md-button>
                         </md-button-toggle>
                     </div>
