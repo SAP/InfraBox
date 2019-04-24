@@ -22,6 +22,7 @@ cronjob_model = api.model('CronJob', {
     'month': fields.String(required=True),
     'day_week': fields.String(required=True),
     'sha': fields.String(required=True),
+    'infrabox_file': fields.String(required=True, max_length=255),
 })
 
 add_cronjob_model = api.model('AddCronJob', {
@@ -32,6 +33,7 @@ add_cronjob_model = api.model('AddCronJob', {
     'month': fields.String(required=True, max_length=255),
     'day_week': fields.String(required=True, max_length=255),
     'sha': fields.String(required=True, max_length=255),
+    'infrabox_file': fields.String(required=True, max_length=255),
 })
 
 @ns.route('/')
@@ -81,8 +83,8 @@ class CronJobs(Resource):
             abort(400, 'CronJob with this name already exist')
 
         g.db.execute('''
-            INSERT INTO cronjob (project_id, name, minute, hour, day_month, month, day_week, sha) VALUES(%s, %s, %s, %s, %s, %s, %s, %s)
-        ''', [project_id, b['name'], b['minute'], b['hour'], b['day_month'], b['month'], b['day_week'], b['sha']])
+            INSERT INTO cronjob (project_id, name, minute, hour, day_month, month, day_week, sha, infrabox_file) VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s)
+        ''', [project_id, b['name'], b['minute'], b['hour'], b['day_month'], b['month'], b['day_week'], b['sha'], b['infrabox_file']])
 
         g.db.commit()
 

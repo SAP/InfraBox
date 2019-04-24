@@ -38,6 +38,10 @@
                                 <label>sha</label>
                                 <md-input v-model="sha" required></md-input>
                             </md-input-container>
+                            <md-input-container class="m-l-sm">
+                                <label>infrabox.json path</label>
+                                <md-input v-model="infrabox_file" required></md-input>
+                            </md-input-container>
                             <md-button class="md-icon-button md-list-action" @click="addCronJob()">
                                 <md-icon md-theme="running" class="md-primary">add_circle</md-icon>
                                 <md-tooltip>Add new Cron Job</md-tooltip>
@@ -65,6 +69,9 @@
                             <div class="md-input-container m-r-xl md-theme-white">
                                 {{ cron.sha }}
                             </div>
+                            <div class="md-input-container m-r-xl md-theme-white">
+                                {{ cron.infrabox_file }}
+                            </div>
                             <md-button type="submit" class="md-icon-button md-list-action" @click="deleteCronJob(cron.id)">
                                 <md-icon class="md-primary">delete</md-icon>
                                 <md-tooltip>Delete Cron Job permanently</md-tooltip>
@@ -90,7 +97,8 @@ export default {
         day_month: '',
         month: '',
         day_week: '',
-        sha: ''
+        sha: '',
+        infrabox_file: 'infrabox.json'
     }),
     created () {
         this.project._loadCronJobs()
@@ -114,7 +122,8 @@ export default {
                 day_month: this.day_month,
                 month: this.month,
                 day_week: this.day_week,
-                sha: this.sha
+                sha: this.sha,
+                infrabox_file: this.infrabox_file
             }
             NewAPIService.post(`projects/${this.project.id}/cronjobs`, d)
             .then((response) => {
@@ -126,6 +135,7 @@ export default {
                 this.month = ''
                 this.day_week = ''
                 this.sha = ''
+                this.infrabox_file = 'infrabox.json'
                 this.project._reloadCronJobs()
             })
             .catch((err) => {

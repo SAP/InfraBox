@@ -245,11 +245,17 @@ class RunJob(Job):
     def main_create_jobs(self):
         c = self.console
 
-        ib_file = find_infrabox_file(self.mount_repo_dir)
+        ib_file = self.job['definition'].get('infrabox_file')
+
+        if not ib_file:
+            ib_file = find_infrabox_file(self.mount_repo_dir)
+        else:
+            ib_file = os.path.join(self.mount_repo_dir, ib_file)
+
         if not ib_file:
             raise Failure("infrabox file not found")
 
-        c.header("Parsing infrabox file", show=True)
+        c.header("Parsing infrabox file: %s" % ib_file, show=True)
         data = self.parse_infrabox_file(ib_file)
         self.check_file_exist(data, self.mount_repo_dir)
 
