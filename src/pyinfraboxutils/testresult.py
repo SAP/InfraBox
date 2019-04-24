@@ -1,4 +1,5 @@
 from xml.etree import ElementTree
+import uuid
 
 RESULT_MAPPING = {
     'failure': 'fail',
@@ -67,7 +68,7 @@ class Parser(object):
 
         tc = {
             "measurements":  [],
-            "name": el.attrib['name'],
+            "name": el.attrib.get('name', str(uuid.uuid4())),
             "status":  'ok',
             "suite": suite,
             "duration": duration
