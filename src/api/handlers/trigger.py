@@ -158,7 +158,7 @@ def create_gerrit_commit(project_id, repo_id, branch_or_sha):
     insert_commit(project_id, repo_id, commit)
     return commit
 
-def create_git_job(commit, build_no, project_id, repo, project_type, env):
+def create_git_job(commit, build_no, project_id, repo, project_type, env, infrabox_file):
     build = g.db.execute_one('''
         INSERT INTO build (commit_id, build_number, project_id)
         VALUES (%s, %s, %s)
@@ -182,6 +182,7 @@ def create_git_job(commit, build_no, project_id, repo, project_type, env):
 
     definition = {
         'build_only': False,
+        'infrabox_file': infrabox_file,
         'resources': {
             'limits': {
                 'memory': 1024,
@@ -200,7 +201,7 @@ def create_git_job(commit, build_no, project_id, repo, project_type, env):
     return (build['id'], build['build_number'])
 
 
-def create_upload_job(project_id, build_no, env):
+def create_upload_job(project_id, build_no, env, infrabox_file):
     last_build = g.db.execute_one('''
         SELECT source_upload_id
         FROM build
@@ -228,6 +229,7 @@ def create_upload_job(project_id, build_no, env):
 
     definition = {
         'build_only': False,
+        'infrabox_file': infrabox_file,
         'resources': {
             'limits': {
                 'memory': 1024,
@@ -258,6 +260,7 @@ trigger_model = api.model('Trigger', {
 def trigger_build(project_id):
     body = request.get_json()
     branch_or_sha = body.get('branch_or_sha', None)
+    infrabox_file = body.get('infrabox_file', 'infrabox.json')
     env = body.get('env', None)
 
     project = g.db.execute_one('''
@@ -303,7 +306,8 @@ def trigger_build(project_id):
                                                                 project_id,
                                                                 repo,
                                                                 project_type,
-                                                                env)
+                                                                env,
+                                                                infrabox_file)
         elif project_type == 'gerrit':
             commit = create_gerrit_commit(project_id, repo_id, branch_or_sha)
             (new_build_id, new_build_number) = create_git_job(commit,
@@ -311,9 +315,10 @@ def trigger_build(project_id):
                                                                 project_id,
                                                                 repo,
                                                                 project_type,
-                                                                env)
+                                                                env,
+                                                                infrabox_file)
     elif project_type == 'upload':
-        (new_build_id, new_build_number) = create_upload_job(project_id, build_no, env)
+        (new_build_id, new_build_number) = create_upload_job(project_id, build_no, env, infrabox_file)
     else:
         abort(404)
 
