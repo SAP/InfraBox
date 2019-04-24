@@ -35,7 +35,7 @@ job_model = api.model('JobModel', {
     'resources': fields.Nested(resource_model),
     'message': fields.String,
     'docker_file': fields.String,
-    'depends_on': fields.Nested(dependency_model),
+    'depends_on': fields.List(fields.Nested(dependency_model)),
 })
 
 @ns.route('')

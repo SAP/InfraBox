@@ -108,7 +108,7 @@ export default {
 
         handleIcon (i) {
             const color = this.getColor(i.color)
-            let s = '<i class="fas '
+            let s = '<i class="fa '
             s += i.name
             s += '" style="color:'
             s += color
@@ -220,9 +220,9 @@ export default {
         handleElement (elem) {
             switch (elem.type) {
             case 'h1':
-                return '<h1 class="custom-box"><i class="fas fa-cubes m-r-sm"></i>' + this.handleString(elem.text) + '</h1>\n'
+                return '<h1 class="custom-box"><i class="fa fa-cubes m-r-sm"></i>' + this.handleString(elem.text) + '</h1>\n'
             case 'h2':
-                return '<h2 class="custom-box"><i class="fas fa-cube m-r-sm"></i> ' + this.handleString(elem.text) + '</h2>\n'
+                return '<h2 class="custom-box"><i class="fa fa-cube m-r-sm"></i> ' + this.handleString(elem.text) + '</h2>\n'
             case 'h3':
                 return '<h3 class="custom-box">' + this.handleString(elem.text) + '</h3>\n'
             case 'h4':

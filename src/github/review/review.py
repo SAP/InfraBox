@@ -6,6 +6,9 @@ import urllib
 import requests
 import psycopg2
 
+import urllib3
+urllib3.disable_warnings()
+
 from pyinfraboxutils import get_logger, get_env, get_root_url
 from pyinfraboxutils.db import connect_db
 from pyinfraboxutils.leader import elect_leader, is_leader, is_active

@@ -19,7 +19,6 @@ spec:
             {{ if .Values.gerrit.enabled }}
             -
                 image: {{ include "image_repository" . }}/gerrit-api:{{ include "image_tag" . }}
-                imagePullPolicy: Always
                 name: gerrit-api
                 env:
                 {{ include "env_general" . | indent 16 }}
@@ -31,12 +30,31 @@ spec:
             -
                 name: api
                 image: {{ include "image_repository" . }}/api:{{ include "image_tag" . }}
-                imagePullPolicy: Always
+                {{ if .Values.dev.enabled }}
+                command: ["/infrabox/api/run_dev.sh"]
+                {{ end }}
                 volumeMounts:
                 {{ include "mounts_rsa_public" . | indent 16 }}
                 {{ include "mounts_rsa_private" . | indent 16 }}
                 {{ include "mounts_gcs" . | indent 16 }}
                 {{ include "mounts_saml" . | indent 16 }}
+                {{ if .Values.dev.enabled }}
+                -
+                    name: code
+                    mountPath: "/infrabox/api"
+                    subPath: src/api
+                    readOnly: true
+                -
+                    name: code
+                    mountPath: "/infrabox/pyinfraboxutils"
+                    subPath: src/pyinfraboxutils
+                    readOnly: true
+                -
+                    name: code
+                    mountPath: "/infrabox/pyinfrabox"
+                    subPath: src/pyinfrabox
+                    readOnly: true
+                {{ end }}
                 env:
                 {{ include "env_database" . | indent 16 }}
                 {{ include "env_gcs" . | indent 16 }}
@@ -63,3 +81,4 @@ spec:
                 {{ include "volumes_gcs" . | indent 16 }}
                 {{ include "volumes_gerrit" . | indent 16 }}
                 {{ include "volumes_saml" . | indent 16 }}
+                {{ include "volumes_dev" . | indent 16 }}

@@ -17,7 +17,6 @@ spec:
             -
                 name: cluster-status
                 image: {{ include "image_repository" . }}/cluster-status:{{ include "image_tag" . }}
-                imagePullPolicy: Always
                 env:
                 {{ include "env_database" . | indent 16 }}
             volumes:

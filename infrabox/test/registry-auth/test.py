@@ -120,7 +120,7 @@ class AccountTestCase(unittest.TestCase):
         if not project_token:
             project_token = self.project_token
 
-        token = encode_project_token(project_token, self.project_id)
+        token = encode_project_token(project_token, self.project_id, 'myproject')
         h = {'Authorization': 'Basic %s' % base64.b64encode('infrabox:%s' % token)}
         return h
 

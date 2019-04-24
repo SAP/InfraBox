@@ -20,7 +20,6 @@ spec:
             -
                 name: gerrit-trigger
                 image: {{ include "image_repository" . }}/gerrit-trigger:{{ include "image_tag"  . }}
-                imagePullPolicy: Always
                 env:
                 {{ include "env_database" . | indent 16 }}
                 {{ include "env_gerrit" . | indent 16 }}

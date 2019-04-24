@@ -6,8 +6,8 @@
                 <h3 class="md-title card-title">
                 <router-link :to="{name: 'ProjectDetailBuilds', params: {
                     projectName: encodeURIComponent(data.project.name)}}">
-                    <span v-if="data.project.isGit()"><i class="fab fa-github"></i></span>
-                    <span v-if="!data.project.isGit()"><i class="fas fa-home"></i></span>
+                    <span v-if="data.project.isGit()"><i class="fa fa-github"></i></span>
+                    <span v-if="!data.project.isGit()"><i class="fa fa-home"></i></span>
                     {{ data.project.name }}
                 </router-link>
                 / <router-link :to="{name: 'BuildDetailGraph', params: {
@@ -40,7 +40,7 @@
                         <div style="width: 100%; margin: 16px">
                             <md-card class="clean-card">
                                 <md-card-header>
-                                    <h2><i class="fas fa-fw fa-history"></i> Test history</h2>
+                                    <h2><i class="fa fa-fw fa-history"></i> Test history</h2>
                                 </md-card-header>
                                 <md-card-content>
                                     <div id="chart-test-results" class="chart"></div>
@@ -50,7 +50,7 @@
                         <div style="width: 100%; margin: 16px">
                             <md-card v-if="data.test.message">
                                 <md-card-header class="main-card-header">
-                                    <div class="md-title"><i class="fas fa-fw fa-envelope"></i> Message</div>
+                                    <div class="md-title"><i class="fa fa-fw fa-envelope"></i> Message</div>
                                 </md-card-header>
                                 <md-card-content>
                                     <pre class="p-t-md">{{ data.test.message }}</pre>
@@ -58,7 +58,7 @@
                             </md-card>
                             <md-card v-if="data.test.stack" class="m-b-lg">
                                 <md-card-header class="main-card-header">
-                                    <div class="md-title"><i class="fas fa-fw fa-bug"></i> Stacktrace</div>
+                                    <div class="md-title"><i class="fa fa-fw fa-bug"></i> Stacktrace</div>
                                 </md-card-header>
                                 <md-card-content>
                                     <pre class="p-t-md">{{ data.test.stack }}</pre>

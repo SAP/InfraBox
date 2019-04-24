@@ -20,7 +20,6 @@ spec:
             -
                 name: gc
                 image: {{ include "image_repository" . }}/gc:{{ include "image_tag" . }}
-                imagePullPolicy: Always
                 env:
                 {{ include "env_database" . | indent 16 }}
                 {{ include "env_general" . | indent 16 }}

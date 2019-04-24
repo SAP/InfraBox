@@ -22,7 +22,7 @@
             </a>
         </div>
         <div v-if="build.isCronjob">
-            <i class="fas fa-calendar-check"></i>
+            <i class="fa fa-calendar-check-o"></i>
             <md-tooltip>Triggered by Cronjob</md-tooltip>
         </div>
     </div>

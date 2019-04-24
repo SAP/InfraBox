@@ -19,7 +19,6 @@ spec:
             -
                 name: grafana
                 image: grafana/grafana:5.1.4
-                imagePullPolicy: Always
                 env:
                 {{ include "env_database" . | indent 16 }}
                 -

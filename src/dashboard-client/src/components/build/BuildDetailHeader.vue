@@ -9,8 +9,8 @@
                                 <router-link :to="{name: 'ProjectDetailBuilds', params: {
                                     projectName: project.name
                                 }}">
-                                    <span v-if="project.isGit()"><i class="fab fa-fw fa-github"></i></span>
-                                    <span v-if="!project.isGit()"><i class="fas fa-fw fa-home"></i></span>
+                                    <span v-if="project.isGit()"><i class="fa fa-fw fa-github"></i></span>
+                                    <span v-if="!project.isGit()"><i class="fa fa-fw fa-home"></i></span>
                                     {{ project.name }}
                                 </router-link>
                                 / Build {{ build.number }}.{{ build.restartCounter }}
@@ -24,23 +24,23 @@
                                                    <ib-state :state="build.state"></ib-state>
                                                 </md-table-cell>
                                                 <md-table-cell style="text-align: left !important">
-                                                    <span><i class="fas fa-calendar fa-fw" aria-hidden="true"></i><strong> Started</strong>
+                                                    <span><i class="fa fa-calendar fa-fw" aria-hidden="true"></i><strong> Started</strong>
                                                     <ib-date :date="build.startDate"></ib-date></span>
                                                 </md-table-cell>
                                                 <md-table-cell>
-                                                    <span><i class="fas fa-clock fa-fw" aria-hidden="true"></i><strong> Duration</strong>
+                                                    <span><i class="fa fa-clock-o fa-fw" aria-hidden="true"></i><strong> Duration</strong>
                                                     <ib-duration :start="build.startDate" :end="build.endDate"></ib-duration></span>
                                                 </md-table-cell>
                                                 <md-table-cell v-if="build.commit">
-                                                    <span><i class="fas fa-list-ol fa-fw" aria-hidden="true"></i><strong> Commit</strong>
+                                                    <span><i class="fa fa-list-ol fa-fw" aria-hidden="true"></i><strong> Commit</strong>
                                                     <a target="_blank" :href="build.commit.url"><ib-commit-sha :sha="build.commit.id"></ib-commit-sha></a></span>
                                                 </md-table-cell>
                                                 <md-table-cell v-if="build.commit">
-                                                    <span><i class="fas fa-user fa-fw" aria-hidden="true"></i><strong> Author</strong><br/>
+                                                    <span><i class="fa fa-user fa-fw" aria-hidden="true"></i><strong> Author</strong><br/>
                                                     {{ build.commit.author_name }}</span>
                                                 </md-table-cell>
                                                 <md-table-cell v-if="build.commit">
-                                                    <span><i class="fas fa-code-branch fa-fw" aria-hidden="true"></i><strong> Branch</strong><br/>
+                                                    <span><i class="fa fa-code-fork fa-fw" aria-hidden="true"></i><strong> Branch</strong><br/>
                                                     {{ build.commit.branch }}</span>
                                                 </md-table-cell>
                                         </md-table-row>
@@ -99,23 +99,23 @@
                                                             </md-button>
                                                             <md-menu-content class="bg-white">
                                                                 <md-menu-item class="bg-white">
-                                                                    <span><i class="fas fa-calendar fa-fw" aria-hidden="true"></i><strong> Started</strong>
+                                                                    <span><i class="fa fa-calendar fa-fw" aria-hidden="true"></i><strong> Started</strong>
                                                                     <ib-date :date="build.startDate"></ib-date></span>
                                                                 </md-menu-item>
                                                                 <md-menu-item class="bg-white">
-                                                                    <span><i class="fas fa-clock fa-fw" aria-hidden="true"></i><strong> Duration</strong>
+                                                                    <span><i class="fa fa-clock-o fa-fw" aria-hidden="true"></i><strong> Duration</strong>
                                                                     <ib-duration :start="build.startDate" :end="build.endDate"></ib-duration></span>
                                                                 </md-menu-item>
                                                                 <md-menu-item class="bg-white" v-if="build.commit">
-                                                                    <span><i class="fas fa-list-ol fa-fw" aria-hidden="true"></i><strong> Commit</strong>
+                                                                    <span><i class="fa fa-list-ol fa-fw" aria-hidden="true"></i><strong> Commit</strong>
                                                                     <a target="_blank" :href="build.commit.url"><ib-commit-sha :sha="build.commit.id"></ib-commit-sha></a></span>
                                                                 </md-menu-item>
                                                                 <md-menu-item class="bg-white" v-if="build.commit">
-                                                                    <span><i class="fas fa-user fa-fw" aria-hidden="true"></i><strong> Author</strong><br/>
+                                                                    <span><i class="fa fa-user fa-fw" aria-hidden="true"></i><strong> Author</strong><br/>
                                                                     {{ build.commit.author_name }}</span>
                                                                 </md-menu-item>
                                                                 <md-menu-item class="bg-white" v-if="build.commit">
-                                                                    <span><i class="fas fa-code-branch fa-fw" aria-hidden="true"></i><strong> Branch</strong><br/>
+                                                                    <span><i class="fa fa-code-fork fa-fw" aria-hidden="true"></i><strong> Branch</strong><br/>
                                                                     {{ build.commit.branch }}</span>
                                                                 </md-menu-item>
                                                             </md-menu-content>

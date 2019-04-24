@@ -11,7 +11,7 @@ import requests
 from flask import g, abort, Response, send_file, request, redirect
 from flask_restplus import Resource, fields
 
-from pyinfraboxutils import get_logger, get_env
+from pyinfraboxutils import get_logger
 from pyinfraboxutils.ibflask import OK
 from pyinfraboxutils.ibrestplus import api, response_model
 from pyinfraboxutils.storage import storage
@@ -42,7 +42,7 @@ class Jobs(Resource):
                 WHERE project_id = %s
             ''', [project_id])
 
-            if not r:
+            if not r or not r['max']:
                 build_to = 1
             else:
                 build_to = r['max'] + 1

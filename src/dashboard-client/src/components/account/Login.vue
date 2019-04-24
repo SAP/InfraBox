@@ -15,7 +15,7 @@
                         <md-button md-theme="default"
                             @click="loginSSO()"
                             class="md-raised md-primary">
-                            <i class="fas fa-fw fa-building"></i><span> Login with SSO</span></md-button>
+                            <i class="fa fa-fw fa-building"></i><span> Login with SSO</span></md-button>
                     </md-card-content>
                 </md-card-area>
                 <md-card-area>
@@ -30,7 +30,7 @@
                             <md-input type="password" v-model="password" name="password" @keyup.enter.native="login" required></md-input>
                             <span v-if="!pwValid" class="md-error">Invalid Password</span>
                         </md-input-container>
-                        <md-button :disabled="!mailValid || !pwValid" class="md-raised md-primary" @click="login"><i class="fas fa-fw fa-sign-in-alt"></i><span> Login</span></md-button>
+                        <md-button :disabled="!mailValid || !pwValid" class="md-raised md-primary" @click="login"><i class="fa fa-fw fa-sign-in"></i><span> Login</span></md-button>
                     </md-card-content>
                 </md-card-area>
                 <md-card-content class="m-xl" v-if="$store.state.settings.INFRABOX_GITHUB_ENABLED || $store.state.settings.INFRABOX_ACCOUNT_SIGNUP_ENABLED">
@@ -40,7 +40,7 @@
                         v-if="$store.state.settings.INFRABOX_GITHUB_LOGIN_ENABLED"
                         md-theme="default"
                         class="md-raised md-primary">
-                        <i class="fab fa-fw fa-github"></i>
+                        <i class="fa fa-fw fa-github"></i>
                         <span> Login with GitHub</span>
                     </md-button>
                     <div v-if="$store.state.settings.INFRABOX_GITHUB_ENABLED && $store.state.settings.INFRABOX_ACCOUNT_SIGNUP_ENABLED">
@@ -50,7 +50,7 @@
                         v-if="$store.state.settings.INFRABOX_ACCOUNT_SIGNUP_ENABLED"
                         @click="signup()"
                         class="md-raised md-primary">
-                        <i class="fas fa-fw fa-user-plus"></i><span> Signup</span></md-button>
+                        <i class="fa fa-fw fa-user-plus"></i><span> Signup</span></md-button>
                 </md-card-content>
             </md-card>
         </md-layout>

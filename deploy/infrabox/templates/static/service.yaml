@@ -13,4 +13,8 @@ spec:
         name: http-web
         protocol: TCP
         port: 80
+        {{ if .Values.dev.enabled }}
+        targetPort: 8080
+        {{ else }}
         targetPort: 80
+        {{ end }}
