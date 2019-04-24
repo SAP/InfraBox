@@ -445,7 +445,6 @@ class FunctionInvocationController(Controller):
         # Create a batch job
         job = {
             'name': 'function',
-            'imagePullPolicy': 'Always',
             'image': f['spec']['image'],
             'resources': f['spec']['resources'],
             'env': f['spec']['env'],
@@ -1002,7 +1001,7 @@ class Scheduler(object):
                 if r:
                     cursor.execute('begin')
                     cursor.execute('''
-                        UPDATE build 
+                        UPDATE build
                         SET is_cronjob = true
                         WHERE id = %s
                     ''', [r.json()['data']['build']['id']])

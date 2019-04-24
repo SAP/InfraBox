@@ -467,7 +467,6 @@ https://{{- required "host is required" .Values.host -}}:{{- .Values.port -}}
 {{ define "containers_opa" }}
 -
     image: {{ include "image_repository" . }}/opa:{{ include "image_tag" . }}
-    imagePullPolicy: Always
     name: opa
 {{ end }}
 

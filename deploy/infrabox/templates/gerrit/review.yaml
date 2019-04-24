@@ -20,7 +20,6 @@ spec:
             -
                 name: gerrit-review
                 image: {{ include "image_repository" . }}/gerrit-review:{{ include "image_tag"  . }}
-                imagePullPolicy: Always
                 env:
                 {{ include "env_database" . | indent 16 }}
                 {{ include "env_ha" . | indent 16 }}

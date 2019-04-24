@@ -23,7 +23,6 @@ spec:
                 image: {{ include "image_repository" . }}/static:{{ include "image_tag" . }}
                 {{ end }}
                 name: static
-                imagePullPolicy: Always
                 {{ if .Values.dev.enabled }}
                 volumeMounts:
                 -

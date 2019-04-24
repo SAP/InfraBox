@@ -128,6 +128,8 @@ InfraBox uses `helm` for deploying. Create a `my_values.yaml` for your custom op
 
 ```bash
 cat >my_values.yaml <<EOL
+image:
+  tag: 1.1.5 # chose a released version
 admin:
   private_key: $(base64 -w 0 ./jwtRS256.key)
   public_key: $(base64 -w 0 ./jwtRS256.key.pub)

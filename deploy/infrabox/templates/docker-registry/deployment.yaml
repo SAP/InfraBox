@@ -19,7 +19,6 @@ spec:
             -
                 name: auth
                 image: {{ include "image_repository" . }}/docker-registry-auth:{{ include "image_tag"  . }}
-                imagePullPolicy: Always
                 env:
                 {{ include "env_database" . | indent 16 }}
                 {{ include "env_docker_registry" . | indent 16 }}
@@ -30,7 +29,6 @@ spec:
             -
                 name: nginx
                 image: {{ include "image_repository" . }}/docker-registry-nginx:{{ include "image_tag"  . }}
-                imagePullPolicy: Always
                 env:
                 {{ include "env_docker_registry" . | indent 16 }}
                 -
@@ -43,7 +41,6 @@ spec:
             -
                 name: registry
                 image: registry:2.6.2
-                imagePullPolicy: Always
                 env:
                 -
                     name: REGISTRY_HTTP_HOST

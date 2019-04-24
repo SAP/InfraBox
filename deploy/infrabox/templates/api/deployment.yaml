@@ -19,7 +19,6 @@ spec:
             {{ if .Values.gerrit.enabled }}
             -
                 image: {{ include "image_repository" . }}/gerrit-api:{{ include "image_tag" . }}
-                imagePullPolicy: Always
                 name: gerrit-api
                 env:
                 {{ include "env_general" . | indent 16 }}
@@ -31,7 +30,6 @@ spec:
             -
                 name: api
                 image: {{ include "image_repository" . }}/api:{{ include "image_tag" . }}
-                imagePullPolicy: Always
                 {{ if .Values.dev.enabled }}
                 command: ["/infrabox/api/run_dev.sh"]
                 {{ end }}

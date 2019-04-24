@@ -24,7 +24,9 @@ image:
     # by all hosts which run your kubernetes cluster.
     repository: quay.io/infrabox
 
-    tag: latest
+    # Chose a build or version tag, latest should not be used for production systems
+    # to ensure all containers are running the same version.
+    tag: 1.1.5
 
     private_repo: false
 
