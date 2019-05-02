@@ -23,7 +23,7 @@ InfraBox can show your testresult on a tab at the job detail view. This gives yo
 # Upload Coverage Result
 InfraBox can show your coverage results on a tab at the job detail view. To use this feature you only have to copy your coverage file to `/infrabox/upload/coverage`. We will try to auto detect the format of your file. Currently supported file formats are:
 
-- covertura (xml)
+- cobertura (xml)
 - clover (xml)
 
 # Dynamic Workflows
