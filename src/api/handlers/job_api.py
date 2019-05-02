@@ -1033,11 +1033,8 @@ class Badge(Resource):
         r = g.db.execute_one(""" SELECT count(*) FROM job_badge WHERE job_id = %s
                              """, [job_id])
 
-        if r[0] > 0:
-            abort(403, "Forbidden")
-
-        if len(request.files) > 10:
-            abort(400, "Too many uploads")
+        if r[0] + len(request.files) > 10:
+            abort(403, "Forbidden. Badge count exceeds limit: 10")
 
         path = '/tmp/%s.json' % uuid.uuid4()
 
