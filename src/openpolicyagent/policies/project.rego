@@ -36,7 +36,7 @@ allow {
     api.token.project.id = project_id
 }
 
-# Allow GET access to /api/v1/projects/<project_id>/(state.svg|tests.svg|badges.svg) for collaborators
+# Allow GET access to /api/v1/projects/<project_id>/(state.svg|tests.svg|badge.svg) for collaborators
 allow {
     api.method = "GET"
     api.path = ["api", "v1", "projects", project_id, svg_image]
@@ -46,7 +46,7 @@ allow {
     project_collaborator([api.token.user.id, project_id])
 }
 
-# Allow GET access to /api/v1/projects/<project_id>/(state.svg|tests.svg|badges.svg) if project is public
+# Allow GET access to /api/v1/projects/<project_id>/(state.svg|tests.svg|badge.svg) if project is public
 allow {
     api.method = "GET"
     api.path = ["api", "v1", "projects", project_id, svg_image]
@@ -55,7 +55,7 @@ allow {
     project_public(project_id)
 }
 
-# Allow GET access to /api/v1/projects/<project_id>/(state.svg|tests.svg|badges.svg) for project tokens
+# Allow GET access to /api/v1/projects/<project_id>/(state.svg|tests.svg|badge.svg) for project tokens
 allow {
     api.method = "GET"
     api.path = ["api", "v1", "projects", project_id, svg_image]

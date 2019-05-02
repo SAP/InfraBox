@@ -230,7 +230,7 @@ class Badge(Resource):
                 JOIN job j
                     ON j.id = jb.job_id
                     AND j.project_id = %s
-                    AND j.state = 'finished'
+                    AND j.state in ('finished', 'unstable')
                     AND j.name = %s
                     AND jb.subject = %s
                 JOIN build b
@@ -250,7 +250,7 @@ class Badge(Resource):
                 JOIN job j
                     ON j.id = jb.job_id
                     AND j.project_id = %s
-                    AND j.state = 'finished'
+                    AND j.state in ('finished', 'unstable')
                     AND j.name = %s
                     AND jb.subject = %s
                 JOIN build b
