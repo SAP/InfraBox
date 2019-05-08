@@ -266,7 +266,7 @@ class Badge(Resource):
         status = urllib.quote(badge['status'])
         subject = urllib.quote(subject)
 
-        return get_badge('https://img.shields.io/badge/%s-%s-%s.svg' % (subject,
+        return get_badge('https://img.shields.io/static/v1.svg?label=%s&message=%s&color=%s' % (subject,
                                                                         status,
                                                                         badge['color']))
 
