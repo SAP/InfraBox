@@ -47,15 +47,20 @@ def nocache(view):
 
     return update_wrapper(no_cache, view)
 
-def get_badge(url):
+def get_badge(subject, status, color):
+    subject = urllib.quote(subject)
+    status = urllib.quote(status)
+    color = urllib.quote(color)
+
+    url = 'https://img.shields.io/static/v1.svg?label=%s&message=%s&color=%s' % (subject, status, color)
+
     resp = requests.get(url)
 
     excluded_headers = ['content-encoding', 'content-length', 'transfer-encoding', 'connection']
     headers = [(name, value) for (name, value) in resp.raw.headers.items()
                if name.lower() not in excluded_headers]
 
-    response = Response(resp.content, resp.status_code, headers)
-    return response
+    return Response(resp.content, resp.status_code, headers)
 
 @ns.route('/state.svg')
 @api.doc(security=[])
@@ -122,8 +127,7 @@ class State(Resource):
                 status = state
                 color = 'red'
 
-        url = 'https://img.shields.io/badge/infrabox-%s-%s.svg' % (status, color)
-        return get_badge(url)
+        return get_badge('infrabox', status, color)
 
 @ns.route('/tests.svg')
 @api.doc(security=[])
@@ -202,8 +206,7 @@ class Tests(Resource):
         total = int(r['success']) + int(r['failure']) + int(r['error'])
         status = '%s / %s' % (r['success'], total)
 
-        return get_badge('https://img.shields.io/badge/infrabox-%s-%s.svg' % (status,
-                                                                              'brightgreen'))
+        return get_badge('infrabox', status, 'brightgreen')
 
 @ns.route('/badge.svg')
 @api.doc(security=[])
@@ -263,12 +266,7 @@ class Badge(Resource):
         if not badge:
             abort(404)
 
-        status = urllib.quote(badge['status'])
-        subject = urllib.quote(subject)
-
-        return get_badge('https://img.shields.io/badge/%s-%s-%s.svg' % (subject,
-                                                                        status,
-                                                                        badge['color']))
+        return get_badge(subject, badge['status'], badge['color'])
 
 
 upload_parser = api.parser()
