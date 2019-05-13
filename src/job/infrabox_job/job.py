@@ -245,6 +245,7 @@ class Job(object):
         self.console.collect('Uploading %s' % path, show=True)
 
         message = None
+        retry_time = 10
 
         for _ in xrange(0, 5):
             message = None
@@ -255,11 +256,13 @@ class Job(object):
                                   files=files, timeout=600, verify=self.verify)
             except Exception as e:
                 message = str(e)
-                time.sleep(5)
+                retry_time *= 2
+                time.sleep(retry_time)
                 continue
 
             if r.status_code != 200:
-                time.sleep(5)
+                retry_time *= 2
+                time.sleep(retry_time)
                 message = r.text
 
                 try:
