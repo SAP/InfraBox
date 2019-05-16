@@ -531,6 +531,15 @@ class TestHistory(Resource):
         if not test or not suite:
             abort(404)
 
+        j = g.db.execute_one_dict("""
+            SELECT id FROM job
+            WHERE id = %s 
+                AND project_id = %s
+        """, [job_id, project_id])
+
+        if not j:
+            abort(404)
+
         results = g.db.execute_many_dict('''
 	    SELECT
 		b.build_number,
@@ -542,11 +551,8 @@ class TestHistory(Resource):
 	    FROM test_run tr
 	    INNER JOIN job j
 		ON j.id = tr.job_id
-		AND j.name = (SELECT name FROM job WHERE id = %s)
-		AND j.project_id = tr.project_id
 	    INNER JOIN build b
 		ON b.id = j.build_id
-		AND b.project_id = j.project_id
 	    LEFT OUTER JOIN measurement m
 		ON tr.id = m.test_run_id
 		AND m.project_id = b.project_id
