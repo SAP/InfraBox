@@ -171,7 +171,7 @@ class AllJobNodeGauge:
 
         self._request_possible_node = "SELECT distinct node_name FROM job"
 
-        self._request_per_node = "SELECT node_name, state, count(id) " \
+        self._request_per_node = "SELECT node_name, state, count(*) " \
                                    "FROM job WHERE node_name is not null GROUP BY node_name, state"
 
         self._possible_combination = dict()
