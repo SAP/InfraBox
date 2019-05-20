@@ -14,27 +14,47 @@ ns = api.namespace('Builds',
 
 
 def restart_build(project_id, build_id):
-    user_id = g.token['user']['id']
+    username_or_token = None
 
-    build = g.db.execute_one_dict('''
-        SELECT b.*
-        FROM build b
-        INNER JOIN collaborator co
-            ON b.id = %s
-            AND b.project_id = co.project_id
-            AND co.project_id = %s
-            AND co.user_id = %s
-    ''', [build_id, project_id, user_id])
+    if g.token['type'] == 'user':
+        user_id = g.token['user']['id']
+
+        build = g.db.execute_one_dict('''
+            SELECT b.*
+            FROM build b
+            INNER JOIN collaborator co
+                ON b.id = %s
+                AND b.project_id = co.project_id
+                AND co.project_id = %s
+                AND co.user_id = %s
+        ''', [build_id, project_id, user_id])
+
+        result = g.db.execute_one_dict('''
+            SELECT username
+            FROM "user"
+            WHERE id = %s
+        ''', [user_id])
+        username_or_token = result['username']
+    else:
+        if g.token['project']['id'] != project_id:
+            abort(400)
+
+        build = g.db.execute_one_dict('''
+            SELECT *
+            FROM build 
+            WHERE id = %s
+                AND project_id = %s
+        ''', [build_id, project_id])
+
+        result = g.db.execute_one_dict('''
+                    SELECT description
+                    FROM auth_token
+                    WHERE id = %s
+                ''', [g.token['id']])
+        username_or_token = "project token " + result['description']
 
     if not build:
         abort(404)
-
-    result = g.db.execute_one_dict('''
-        SELECT username
-        FROM "user"
-        WHERE id = %s
-    ''', [user_id])
-    username = result['username']
 
     result = g.db.execute_one_dict('''
         SELECT max(restart_counter) as restart_counter
@@ -77,7 +97,7 @@ def restart_build(project_id, build_id):
         definition = json.dumps(definition)
 
     job_id = str(uuid.uuid4())
-    msg = 'Build restarted by %s\n' % username
+    msg = 'Build restarted by %s\n' % username_or_token
     g.db.execute('''
         INSERT INTO job (id, state, build_id, type,
             name, project_id, dockerfile, repo, env_var, definition, cluster_name)

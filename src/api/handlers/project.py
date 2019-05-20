@@ -139,6 +139,8 @@ class Tests(Resource):
         Tests badge
         '''
         branch = request.args.get('branch', None)
+        job_name = request.args.get('job_name', '%')
+
         p = g.db.execute_one_dict('''
             SELECT type FROM project WHERE id = %s
         ''', [project_id])
@@ -175,8 +177,9 @@ class Tests(Resource):
                                 ORDER BY j.created_at DESC
                                 LIMIT 1
                             )
+                            AND j.name LIKE %s
                     )
-            ''', [project_id, project_id, project_id, project_id, branch])
+            ''', [project_id, project_id, project_id, project_id, branch, job_name])
         else:
             r = g.db.execute_one_dict('''
                 SELECT
@@ -200,8 +203,9 @@ class Tests(Resource):
                                 ORDER BY j.created_at DESC
                                 LIMIT 1
                             )
+                            AND j.name LIKE %s
                     )
-            ''', [project_id, project_id, project_id, project_id])
+            ''', [project_id, project_id, project_id, project_id, job_name])
 
         total = int(r['success']) + int(r['failure']) + int(r['error'])
         status = '%s / %s' % (r['success'], total)

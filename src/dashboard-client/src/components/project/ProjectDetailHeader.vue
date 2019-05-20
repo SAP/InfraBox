@@ -121,7 +121,7 @@ export default {
             ProjectService.deleteProject(this.project.id)
         },
         triggerBuild () {
-            router.push(`/project/${this.project.name}/trigger`)
+            router.push('/project/' + encodeURIComponent(this.project.name) + '/trigger')
         },
         tabSelected (index) {
             if (this.index === null) {

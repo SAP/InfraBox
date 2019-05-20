@@ -47,20 +47,23 @@ allow {
 
 allow {
     api.method = "GET"
-    api.path = ["api", "v1", "projects", "name", project_name]
+    array.slice(api.path, 0, 4) = ["api", "v1", "projects", "name"]
+    project_name := concat("/", array.slice(api.path, 4, count(api.path)))
     projects_projects_name_public(project_name)
 }
 
 allow {
     api.method = "GET"
-    api.path = ["api", "v1", "projects", "name", project_name]
+    array.slice(api.path, 0, 4) = ["api", "v1", "projects", "name"]
+    project_name := concat("/", array.slice(api.path, 4, count(api.path)))
     api.token.type = "user"
     projects_projects_name_collaborator([api.token.user.id, project_name])
 }
 
 allow {
     api.method = "GET"
-    api.path = ["api", "v1", "projects", "name", project_name]
+    array.slice(api.path, 0, 4) = ["api", "v1", "projects", "name"]
+    project_name := concat("/", array.slice(api.path, 4, count(api.path)))
     api.token.type = "project"
     api.token.project.name = project_name
 }
