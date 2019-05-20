@@ -767,8 +767,8 @@ class CreateJobs(Resource):
 
         total_jobs = result[0] + len(jobs)
 
-        if total_jobs > 100:
-            abort(400, 'Too many jobs, you may not have more than 100 jobs per build')
+        if total_jobs > 200:
+            abort(400, 'Too many jobs, you may not have more than 200 jobs per build')
 
         for job in jobs:
             job['env_var_refs'] = None
