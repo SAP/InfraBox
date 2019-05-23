@@ -561,7 +561,7 @@ class TestHistory(Resource):
 		AND tr.project_id = %s
 	    ORDER BY b.build_number, b.restart_counter
 	    LIMIT 30
-        ''', [job_id, test, suite, project_id])
+        ''', [test, suite, project_id])
 
         current_build = None
         result = []
