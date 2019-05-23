@@ -762,7 +762,7 @@ class CreateJobs(Resource):
                 SELECT build_id
                 FROM job
                 WHERE id = %s
-            ) AND state in ['running', 'queued', 'scheduled']
+            ) AND state in ('running', 'queued', 'scheduled')
         """, [parent_job_id])
 
         total_jobs = result[0] + len(jobs)
