@@ -244,17 +244,16 @@ func deleteRemoteCluster(cr *v1alpha1.GKECluster, log *logrus.Entry) error {
 }
 
 func collectLogs(c *RemoteCluster, cr *v1alpha1.GKECluster, log *logrus.Entry, started chan int) {
-    done := make(chan error)
-
     logPath := path.Join("/tmp", cr.Status.ClusterName)
     err := os.Mkdir(logPath, os.ModePerm)
     if err != nil {
         log.Warningf("Failed to create pod logs dir, won't collect pod logs %v", err)
-        started <- 1
+        close(started)
         return
     }
-    started <- 1
+    close(started)
 
+    done := make(chan error)
     go retrieveLogs(cr, c, log, logPath, done)
 
     defer func() {
@@ -267,7 +266,6 @@ func collectLogs(c *RemoteCluster, cr *v1alpha1.GKECluster, log *logrus.Entry, s
         select {
         case <-time.After(time.Minute * 5):
             log.Infof("timeout collecting logs for %s", cr.Status.ClusterName)
-            close(done)
             return
         case <-done:
             log.Infof("finished collecting logs for %s", cr.Status.ClusterName)
@@ -325,7 +323,7 @@ func checkTimeout(cr *v1alpha1.GKECluster, log *logrus.Entry) error {
         if sinceFirstCleaned < waitDur {
             log.Debugf("timestamp FirstCleaned: %s => %s since then. Wait until %s have elapsed since first cleaning", cr.Status.FirstCleanedAt, sinceFirstCleaned, waitDur)
         } else {
-            log.Debug("timestamp FirstCleaned: %s => %s since then. Proceed with deleting cluster", cr.Status.FirstCleanedAt, sinceFirstCleaned)
+            log.Debugf("timestamp FirstCleaned: %s => %s since then. Proceed with deleting cluster", cr.Status.FirstCleanedAt, sinceFirstCleaned)
             cr.Status.Message = "deleting cluster"
             if err = action.Update(cr); err != nil {
                 log.Errorf("Failed to update status: %v", err)
@@ -375,13 +373,7 @@ func deleteGKECluster(cr *v1alpha1.GKECluster, log *logrus.Entry) error {
 
         started := make(chan int)
         go collectLogs(gkecluster, cr, log, started)
-        select {
-        case <-time.After(time.Second * 5):
-            break
-        case <-started:
-            break
-        }
-        close(started)
+        <- started
     }
 
     switch cr.Status.Message {
@@ -707,15 +699,7 @@ type CollectedPod struct {
 
 func retrieveLogs(cr *v1alpha1.GKECluster, cluster *RemoteCluster, log *logrus.Entry, logPath string, done chan error) {
     log.Infof("Collecting data from GKE cluster %s", cluster.Name)
-    defer func() {
-        // avoid close chan repeatedly
-        select {
-        case <-time.After(time.Millisecond * 100):
-            close(done)
-        case <-done:
-            break
-        }
-    }()
+    defer close(done)
 
     annotations := cr.GetAnnotations()
     _, ok := annotations["infrabox.net/root-url"]
@@ -763,7 +747,7 @@ func retrieveLogs(cr *v1alpha1.GKECluster, cluster *RemoteCluster, log *logrus.E
             filename := "pod_" + pod.Namespace + "_" + pod.Pod + "_" + container + ".txt"
             filename = path.Join(logPath, filename)
             if err := ioutil.WriteFile(filename, *data, os.ModePerm); err != nil {
-                log.Warningf("Failed to write pod logs: %v", err)
+                log.Debugf("Failed to write pod logs: %v", err)
                 continue
             }
         }
@@ -772,13 +756,13 @@ func retrieveLogs(cr *v1alpha1.GKECluster, cluster *RemoteCluster, log *logrus.E
     archivePath := path.Join(logPath, "pods_log.zip")
     err = archiver.Archive([]string{logPath}, archivePath)
     if err != nil {
-        log.Warningf("Failed to archive log: %v", err)
+        log.Debugf("Failed to archive log: %v", err)
         return
     }
 
     archiveData, err := ioutil.ReadFile(archivePath)
     if err != nil {
-        log.Warningf("Failed to archive log: %v", err)
+        log.Debugf("Failed to archive log: %v", err)
         return
     }
     err = uploadToArchive(cr, log, &archiveData, archivePath)
