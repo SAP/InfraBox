@@ -14,7 +14,10 @@ class ApiConsole(object):
 
     def collect(self, line, show=False):
         if show:
-            print line
+            try:
+                print line
+            except UnicodeEncodeError:
+                print line.encode('utf-8')
             sys.stdout.flush()
 
     def execute(self, command, cwd=None, shell=False, show=False, env=None, ignore_error=False, show_cmd=True, retry=False):
