@@ -1,7 +1,10 @@
 #!/usr/bin/python
 #pylint: disable=too-many-lines,attribute-defined-outside-init,too-many-public-methods,too-many-locals
-import os
 import sys
+reload(sys)
+sys.setdefaultencoding('utf-8')
+
+import os
 import shutil
 import time
 import json
