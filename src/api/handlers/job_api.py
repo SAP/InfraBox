@@ -388,7 +388,10 @@ class Job(Resource):
 
         if env_vars:
             for name, value in env_vars.iteritems():
-                data['env_vars'][name] = str(value)
+                try:
+                    data['env_vars'][name] = str(value)
+                except UnicodeEncodeError:
+                    data['env_vars'][name] = value.encode('utf-8')
 
         if env_var_refs:
             for name, value in env_var_refs.iteritems():
