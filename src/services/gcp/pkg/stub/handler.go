@@ -670,7 +670,7 @@ func retrieveLogs(cr *v1alpha1.GKECluster, cluster *RemoteCluster, log *logrus.E
 				continue
 			}
 
-			filename := "pod_" + pod.Namespace + "_" + pod.Pod + "_" + container + ".txt"
+			filename := "pod_" + pod.Namespace + "_" + pod.Pod + "_" + container + ".log"
 			err = uploadToArchive(cr, log, data, filename)
 			if err != nil {
 				log.Warningf("Failed to upload log to archive: %v", err)
