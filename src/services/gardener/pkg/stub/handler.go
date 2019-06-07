@@ -424,7 +424,7 @@ func retrieveLogs(cr *v1alpha1.ShootCluster, cluster *RemoteCluster, log *logrus
 				continue
 			}
 
-			filename := "pod_" + pod.Namespace + "_" + pod.Pod + "_" + container + ".txt"
+			filename := "pod_" + pod.Namespace + "_" + pod.Pod + "_" + container + ".log"
 			err = uploadToArchive(cr, log, data, filename)
 			if err != nil {
 				log.Warningf("Failed to upload log to archive: %v", err)
@@ -492,8 +492,8 @@ func newFluentbitConfigMap() *v1.ConfigMap{
 			Name:      "infrabox-fluent-bit",
 			Namespace: "infrabox-collector",
 		},
-        Data: map[string]string {
-            "parsers.conf": `
+		Data: map[string]string {
+			"parsers.conf": `
 [PARSER]
     Name         docker_utf8
     Format       json
@@ -503,7 +503,7 @@ func newFluentbitConfigMap() *v1.ConfigMap{
     Decode_Field_as escaped_utf8 log do_next
     Decode_Field_as escaped      log
 `,
-            "fluent-bit.conf": `
+			"fluent-bit.conf": `
 [SERVICE]
     Flush        2
     Daemon       Off
@@ -531,8 +531,8 @@ func newFluentbitConfigMap() *v1.ConfigMap{
     URI /api/log
     Format json
 `,
-        },
-    }
+		},
+	}
 }
 
 func newCollectorNamespace() *v1.Namespace {
@@ -648,7 +648,7 @@ func newCollectorDaemonSet() *appsv1.DaemonSet {
 				Spec: v1.PodSpec{
 					Containers: []v1.Container{{
 						Name:  "fluent-bit",
-                        Image: "fluent/fluent-bit:0.13",
+						Image: "fluent/fluent-bit:0.13",
 						Resources: v1.ResourceRequirements{
 							Limits: v1.ResourceList{
 								"memory": resource.MustParse("100Mi"),
@@ -668,11 +668,11 @@ func newCollectorDaemonSet() *appsv1.DaemonSet {
 						}, {
 							Name:      "config",
 							MountPath: "/fluent-bit/etc/parsers.conf",
-                            SubPath:   "parsers.conf",
+							SubPath:   "parsers.conf",
 						}, {
 							Name:      "config",
 							MountPath: "/fluent-bit/etc/fluent-bit.conf",
-                            SubPath:   "fluent-bit.conf",
+							SubPath:   "fluent-bit.conf",
 						}},
 					}},
 					Volumes: []v1.Volume{{
@@ -694,8 +694,8 @@ func newCollectorDaemonSet() *appsv1.DaemonSet {
 						VolumeSource: v1.VolumeSource{
 							ConfigMap: &v1.ConfigMapVolumeSource{
 								LocalObjectReference: v1.LocalObjectReference{
-                                    Name: "infrabox-fluent-bit",
-                                },
+									Name: "infrabox-fluent-bit",
+								},
 							},
 						},
 					}},
