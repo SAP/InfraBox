@@ -12,7 +12,6 @@ from prometheus_client import Gauge, start_http_server
 # A little python web server which collect datas overtime from the PostgreSQL Infrabox database
 
 def execute_sql(conn, stmt, params):
-
     c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
     c.execute(stmt, params)
     result = c.fetchall()
@@ -22,7 +21,8 @@ def execute_sql(conn, stmt, params):
 
 class AllocatedRscGauge:
     def __init__(self, name, conn):
-        self._gauge = Gauge(name, "A gauge of allocated ressources of running jobs over time", ['cluster', 'rsc', 'project'])
+        self._gauge = Gauge(name, "A gauge of allocated ressources of running jobs over time",
+                            ['cluster', 'rsc', 'project'])
         self._request_per_cluster = '''
             SELECT foo.cluster_name,
                    (SELECT name FROM project WHERE id= foo.project_id),
@@ -84,7 +84,7 @@ class AllocatedRscGauge:
         tmp_possible_project = execute_sql(conn, self._request_possible_projects, None)
 
         if AllocatedRscGauge._different_instance_list(self._possible_cluster, tmp_possible_cluster) or \
-                AllocatedRscGauge._different_instance_list(self._possible_project, tmp_possible_project):
+            AllocatedRscGauge._different_instance_list(self._possible_project, tmp_possible_project):
             print("=== DICT UPDATE - AVOIDABLE COST ===")
             for cluster in self._possible_cluster:
                 if cluster[0]:
@@ -164,15 +164,15 @@ class AllocatedRscGauge:
 
 class AllJobNodeGauge:
     def __init__(self, name):
-        self._gauge = Gauge(name, "A gauge of current ammount of all jobs",
-                              ['state', 'node'])
+        self._gauge = Gauge(name, "A gauge of current amount of all jobs",
+                            ['state', 'node'])
 
         self._request_possible_states = "SELECT distinct state FROM job"
 
         self._request_possible_node = "SELECT distinct node_name FROM job"
 
-        self._request_per_node = "SELECT node_name, state, count(*) " \
-                                   "FROM job WHERE node_name is not null GROUP BY node_name, state"
+        self._request_per_node = "SELECT node_name, state, count(id) " \
+                                 "FROM job WHERE node_name is not null GROUP BY node_name, state"
 
         self._possible_combination = dict()
         self._count_to_reset_nodes = 0
@@ -222,8 +222,8 @@ class AllJobNodeGauge:
 
 class ActiveJobClusterGauge:
     def __init__(self, name):
-        self._gauge = Gauge(name, "A gauge of current ammount of active jobs per cluster",
-                              ['state', 'cluster'])
+        self._gauge = Gauge(name, "A gauge of current amount of active jobs per cluster",
+                            ['state', 'cluster'])
         self._request_per_cluster = """
             SELECT cluster_name,
                 count(id) filter(WHERE state = 'running'),
@@ -259,6 +259,234 @@ class ActiveJobClusterGauge:
             self._gauge.labels(state="scheduled", cluster="'%'").set(total[2])
 
 
+class CPUCapacity:
+    def __init__(self, name):
+        self._gauge = Gauge(name, "A gauge of cpu capacity per cluster",
+                            ['cluster'])
+        self._cpu_per_cluster = """
+            SELECT cpu_capacity, name FROM cluster
+        """
+
+    def update(self, conn):
+        per_cluster = execute_sql(conn, self._cpu_per_cluster, None)
+
+        for cluster_values in per_cluster:
+            self._gauge.labels(cluster=cluster_values['name']).set(cluster_values['cpu_capacity'])
+
+
+class CPUUsage:
+    def __init__(self, name):
+        self._gauge = Gauge(name, "CPU usage per cluster",
+                            ['cluster'])
+        self._cpu_per_cluster = """
+            SELECT cluster_name, sum((j.definition#>>'{resources,limits,cpu}')::float::float*100) cpu_usage
+			FROM job j 
+			WHERE j.state = 'running'
+			GROUP BY cluster_name
+        """
+
+    def update(self, conn):
+        per_cluster = execute_sql(conn, self._cpu_per_cluster, None)
+
+        for cluster_values in per_cluster:
+            self._gauge.labels(cluster=cluster_values['cluster_name']).set(cluster_values['cpu_usage'])
+
+
+class MemoryCapacity:
+    def __init__(self, name):
+        self._gauge = Gauge(name, "A gauge of memory capacity per cluster",
+                            ['cluster'])
+        self._memory_per_cluster = """
+             SELECT memory_capacity, name 
+             FROM cluster
+             GROUP BY name
+        """
+
+    def update(self, conn):
+        per_cluster = execute_sql(conn, self._memory_per_cluster, None)
+
+        for cluster_values in per_cluster:
+            self._gauge.labels(cluster=cluster_values['name']).set(cluster_values['memory_capacity'])
+
+
+class MemoryUsage:
+    def __init__(self, name):
+        self._gauge = Gauge(name, "Memory usage per cluster",
+                            ['cluster'])
+        self._memory_per_cluster = """
+            SELECT cluster_name, sum((j.definition#>>'{resources,limits,memory}')::float::float*100) memory_usage
+            FROM job j
+            WHERE j.state = 'running'
+            GROUP BY cluster_name  
+        """
+
+    def update(self, conn):
+        per_cluster = execute_sql(conn, self._memory_per_cluster, None)
+
+        for cluster_values in per_cluster:
+            self._gauge.labels(cluster=cluster_values['cluster_name']).set(cluster_values['memory_usage'])
+
+
+class NodesCount:
+    def __init__(self, name):
+        self._gauge = Gauge(name, "A gauge of the quantity of nodes per cluster",
+                            ['cluster'])
+        self._nodes_per_cluster = """
+            SELECT nodes, name 
+            FROM cluster
+            GROUP BY name
+        """
+
+    def update(self, conn):
+        per_cluster = execute_sql(conn, self._nodes_per_cluster, None)
+
+        for cluster_values in per_cluster:
+            self._gauge.labels(cluster=cluster_values['name']).set(cluster_values['nodes'])
+
+
+class UserCount:
+    def __init__(self, name):
+        self._gauge = Gauge(name, "The total number of users registered in the database",
+                            ['cluster'])
+        self._user_total = """
+          SELECT count(id) as user_amount
+                FROM public.user
+        """
+
+    def update(self, conn):
+        per_cluster = execute_sql(conn, self._user_total, None)
+
+        for cluster_values in per_cluster:
+            self._gauge.labels(cluster=cluster_values['user_amount']).set(cluster_values['user_amount'])
+
+
+class ClusterCount:
+    def __init__(self, name):
+        self._gauge = Gauge(name, "A gauge of the amount of clusters",
+                            ['cluster'])
+        self._amount_of_clusters = """
+            SELECT count(name) as cluster_amount
+            FROM cluster
+            
+        """
+
+    def update(self, conn):
+        per_cluster = execute_sql(conn, self._amount_of_clusters, None)
+
+        for cluster_values in per_cluster:
+            self._gauge.labels(cluster=cluster_values['cluster_amount']).set(cluster_values['cluster_amount'])
+
+
+class ProjectCount:
+    def __init__(self, name):
+        self._gauge = Gauge(name, "The total number of projects registered in the database",
+                            ['cluster'])
+        self._projects_amount = """
+          SELECT count(id) as project_amount, type
+                FROM project
+                GROUP BY type
+        """
+
+    def update(self, conn):
+        per_cluster = execute_sql(conn, self._projects_amount, None)
+
+        for cluster_values in per_cluster:
+            self._gauge.labels(cluster=cluster_values['type']).set(cluster_values['project_amount'])
+
+
+class NodeList:
+    #returns zero values, but works
+
+    def __init__(self, name):
+        self._gauge = Gauge(name,
+                            "List of the node_name referenced by the job table for this cluster. This table only shows Node with active job (ie running, queued, scheduled)",
+                            ['cluster'])
+        self._nodes_per_cluster = """
+            SELECT node_name, count(id) as job_amount
+			FROM job 
+			WHERE node_name is not null 
+			AND state IN ('running') 
+			GROUP BY node_name
+        """
+
+    def update(self, conn):
+        per_cluster = execute_sql(conn, self._nodes_per_cluster, None)
+
+        for cluster_values in per_cluster:
+            self._gauge.labels(cluster=cluster_values['node_name']).set(cluster_values['job_amount'])
+
+
+class BuildInspector:
+    #doesn't work
+    def __init__(self, name):
+        self._gauge = Gauge(name,
+                            "A list of all the jobs of the inspected build.",
+                            ['cluster'])
+        self._resources_per_job = """
+            select name, id, (j.definition#>>'{resources,limits,memory}')::float as memory, (j.definition#>>'{resources,limits,cpu}')::float as cpu
+            from job j
+        """
+
+    def update(self, conn):
+        per_cluster = execute_sql(conn, self._resources_per_job, None)
+        print(per_cluster)
+
+        for cluster_values in per_cluster:
+            print(cluster_values)
+            self._gauge.labels(cluster=cluster_values['name']).set(cluster_values['memory'])
+
+
+class BuildsTimeRange:
+    #not yet tested, but doesn't show errors
+    def __init__(self, name):
+        self._gauge = Gauge(name,
+                            "The number of builds of this project which have jobs with their end date in the specified time range (TR). "
+                            "The default time range is the last week.",
+                            ['project'])
+        self._builds_per_project = """
+            SELECT count(DISTINCT build_id) as build_amount
+            FROM job
+            WHERE state NOT IN ('running', 'scheduled', 'queued')
+        """
+    # GROUP BY project_name, not just name
+    #not as it should be
+    def update(self, conn):
+        per_project = execute_sql(conn, self._builds_per_project, None)
+
+        for project_values in per_project:
+            self._gauge.labels(project=project_values['build_amount']).set(project_values['build_amount'])
+
+class Job_Inspector_CPU_Use:
+    #not yet tested
+    #not finished yet
+    #doing this with JSON?
+    def __init__(self, name):
+        self._gauge = Gauge(name,
+                            "Graphical representation of the CPU frequency of the job as registered in the database.",
+                            ['job'])
+        self._cpu_per_job = """
+            SELECT
+            cpu::float*1024 as cpu
+            FROM (
+            select to_timestamp((elm)::text::int) as date, elm::text as cpu from (
+         select
+             j.stats as elm
+        FROM
+            job j
+           ) as foo2 order by date asc
+          ) as foo
+  
+        """
+
+    def update(self, conn):
+        per_job = execute_sql(conn, self._cpu_per_job, None)
+
+        for job_values in per_job:
+            self._gauge.labels(job=job_values['cpu']).set(job_values['cpu'])
+
+
+
+
 def start_server(init_wait_time, threshold, port):
     """
     A little utility which try to launch the server, is used at least one time.
@@ -288,7 +516,7 @@ def main():
     get_env('INFRABOX_DATABASE_PASSWORD')
     get_env('INFRABOX_DATABASE_HOST')
     get_env('INFRABOX_DATABASE_PORT')
-    server_port = os.environ.get('INFRABOX_PORT', 8080)
+    server_port = os.environ.get('INFRABOX_PORT', 8000)
 
     # Copied from review.py, could be changed over time
     conn = connect_db()
@@ -301,12 +529,38 @@ def main():
     active_job_gauge = ActiveJobClusterGauge('job_active_current_count')
     rsc_gauge = AllocatedRscGauge('rsc_current_count', conn)
     all_job_gauge = AllJobNodeGauge('job_all_node_count')
-
+    cpu_capacity = CPUCapacity('cpu_capacity_per_cluster')
+    cpu_usage = CPUUsage('cpu_usage_per_cluster')
+    memory_capacity = MemoryCapacity('memory_capacity_per_cluster')
+    memory_usage = MemoryUsage('memory_usage_per_cluster')
+    nodes_quantity = NodesCount('nodes_quantity_per_cluster')
+    user_count = UserCount('user_amount')
+    cluster_count = ClusterCount('cluster_amount')
+    project_count = ProjectCount('project_amount')
+    node_list = NodeList('node_list_per_cluster')
+    build_inspector = BuildInspector('jobs_of_build')
+    builds__over_time_range = BuildsTimeRange('builds_over_time_range')
+    job_cpu = Job_Inspector_CPU_Use('cpu_per_job')
     while running:
         try:
-            active_job_gauge.update(conn)
-            rsc_gauge.update(conn)
-            all_job_gauge.update(conn)
+            # active_job_gauge.update(conn)
+            # rsc_gauge.update(conn)
+            # all_job_gauge.update(conn)
+            print('test')
+            cpu_capacity.update(conn)
+            cpu_usage.update(conn)
+            memory_capacity.update(conn)
+            memory_usage.update(conn)
+            nodes_quantity.update(conn)
+            user_count.update(conn)
+            cluster_count.update(conn)
+            project_count.update(conn)
+            node_list.update(conn)
+            builds__over_time_range.update(conn)
+          #doesn't work  build_inspector.update(conn)
+            job_cpu.update(conn)
+
+
         except psycopg2.OperationalError:
             # the db connection closed unexpectedly
             conn = connect_db()
@@ -318,3 +572,5 @@ def main():
 if __name__ == '__main__':
     running = True
     main()
+
+
