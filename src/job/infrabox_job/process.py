@@ -8,6 +8,12 @@ class Failure(Exception):
         super(Failure, self).__init__(message)
         self.message = message
 
+
+class Error(Exception):
+    def __init__(self, message):
+        super(Error, self).__init__(message)
+        self.message = message
+
 class ApiConsole(object):
     def __init__(self):
         pass

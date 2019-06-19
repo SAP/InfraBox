@@ -18,6 +18,10 @@ from pyinfraboxutils.db import connect_db
 from pyinfraboxutils.token import encode_job_token
 from pyinfraboxutils.secrets import decrypt_secret
 
+# This error code should be aligned with src/job/job.py
+ERR_EXIT_FAILURE = 1
+ERR_EXIT_ERROR = 2
+
 class APIException(Exception):
     def __init__(self, result):
         super(APIException, self).__init__("API Server Error (%s)" % result.status_code)
@@ -510,7 +514,7 @@ class FunctionInvocationController(Controller):
             elif pod['status']['phase'] == 'Failed':
                 fi['status']['state'] = {
                     'terminated': {
-                        'exitCode': 200,
+                        'exitCode': ERR_EXIT_ERROR,
                         'reason': pod['status'].get('reason', None),
                         'message': pod['status'].get('message', None)
                     }
@@ -1078,7 +1082,8 @@ class Scheduler(object):
                         if exit_code == 0:
                             current_state = 'finished'
                         else:
-                            current_state = 'failure'
+                            if exit_code == ERR_EXIT_FAILURE:
+                                current_state = 'failure'
                             message = stepStatus['state']['terminated'].get('message', None)
 
                             if not message:
