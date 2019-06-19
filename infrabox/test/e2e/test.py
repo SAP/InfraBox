@@ -216,7 +216,7 @@ class Test(unittest.TestCase):
     def test_docker_compose_invalid_compose_file(self):
         self.run_it('/infrabox/context/infrabox/test/e2e/tests/docker_compose_invalid_compose_file')
         self.expect_job('Create Jobs',
-                        state='failure',
+                        state='error',
                         message='version not found')
 
     def test_failed_job(self):
@@ -229,7 +229,7 @@ class Test(unittest.TestCase):
 
     def test_workflow_recursive(self):
         self.run_it('/infrabox/context/infrabox/test/e2e/tests/workflow_recursive')
-        self.expect_job('Create Jobs', state='failure', message='Recursive include detected')
+        self.expect_job('Create Jobs', state='error', message='Recursive include detected')
 
     def test_workflow_simple_job(self):
         self.run_it('/infrabox/context/infrabox/test/e2e/tests/workflow_simple_job')
@@ -256,7 +256,7 @@ class Test(unittest.TestCase):
 
     def test_secure_env_not_found(self):
         self.run_it('/infrabox/context/infrabox/test/e2e/tests/docker_secure_env_not_found')
-        self.expect_job('Create Jobs', state='failure', message="Secret 'UNKNOWN_SECRET' not found")
+        self.expect_job('Create Jobs', state='error', message="Secret 'UNKNOWN_SECRET' not found")
 
     def test_insecure_env(self):
         self.run_it('/infrabox/context/infrabox/test/e2e/tests/docker_insecure_env')

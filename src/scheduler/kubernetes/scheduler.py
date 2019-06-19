@@ -401,7 +401,7 @@ class PipelineInvocationController(Controller):
         if state in (None, '', 'preparing'):
             pi = self._sync_prepare(pi)
 
-        if state in ('running', 'scheduling'):
+        if state in ('running', 'scheduling', 'pending'):
             pi = self._sync_run(pi)
 
         if state == 'finalizing':
@@ -911,7 +911,7 @@ class Scheduler(object):
             # Update state
             cursor = self.conn.cursor()
             cursor.execute("""
-                UPDATE job SET state = 'killed', end_date = current_timestamp, message = 'Aborted due to timeout'
+                UPDATE job SET state = 'failure', end_date = current_timestamp, message = 'Aborted due to timeout'
                 WHERE id = %s and state = 'running' """, (job_id,))
             cursor.close()
 

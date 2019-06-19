@@ -31,6 +31,7 @@
     color: #ffffff;
 }
 
+.bg-error,
 .bg-failure {
     background-color: #b71c1c;
     color: #ffffff;
@@ -46,7 +47,7 @@
     color: #ffffff;
 }
 
-.bg-error,
+
 .bg-black {
     background-color: black;
     color: #ffffff;

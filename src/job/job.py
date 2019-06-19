@@ -1280,6 +1280,15 @@ def main():
             out.write(e.message)
 
         sys.exit(ERR_EXIT_FAILURE)
+
+    except Error as e:
+        j.console.header('Error', show=True)
+        j.console.collect(e.message, show=True)
+
+        with open('/dev/termination-log', 'w+') as out:
+            out.write(e.message)
+
+        sys.exit(ERR_EXIT_ERROR)
     except:
         if j:
             j.console.header('An error occured', show=True)
