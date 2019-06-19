@@ -359,6 +359,9 @@ class PipelineInvocationController(Controller):
             pi['status']['message'] = ""
             pi['status']['state'] = "running"
             pi['status']['startTime'] = first_state['terminated'].get('startedAt', str(datetime.now()))
+        elif first_state.get('pending', None):
+            pi['status']['message'] = first_state['pending'].get('message', None)
+            pi['status']['state'] = 'pending'
 
         all_terminated = True
 
@@ -517,6 +520,13 @@ class FunctionInvocationController(Controller):
                         'exitCode': ERR_EXIT_ERROR,
                         'reason': pod['status'].get('reason', None),
                         'message': pod['status'].get('message', None)
+                    }
+                }
+            elif pod['status']['phase'] == 'Pending':
+                fi['status']['state'] = {
+                    'pending': {
+                        'reason': pod['status']['conditions'][-1].get('reason', None),
+                        'message': pod['status']['conditions'][-1].get('message', None)
                     }
                 }
 
@@ -1040,7 +1050,7 @@ class Scheduler(object):
             job_id = name
 
             cursor = self.conn.cursor()
-            cursor.execute('''SELECT state FROM job where id = %s''', (job_id,))
+            cursor.execute('''SELECT state, message FROM job where id = %s''', (job_id,))
             result = cursor.fetchall()
             cursor.close()
 
@@ -1050,6 +1060,7 @@ class Scheduler(object):
                 continue
 
             last_state = result[0][0]
+            last_message = result[0][1]
             if last_state in ('killed', 'finished', 'error', 'failure', 'unstable'):
                 self.kube_delete_job(job_id)
                 continue
@@ -1066,7 +1077,7 @@ class Scheduler(object):
                 s = status.get('state', "preparing")
                 message = status.get('message', None)
 
-                if s in ["preparing", "scheduling"] and last_state in ["queued", "scheduled"]:
+                if s in ["preparing", "scheduling", "pending"] and last_state in ["queued", "scheduled"]:
                     current_state = 'scheduled'
 
                 if s in ["running", "finalizing"]:
@@ -1115,6 +1126,16 @@ class Scheduler(object):
                 end_date = status.get('completionTime', None)
 
             if last_state == current_state:
+
+                if message != last_message:
+                    cursor = self.conn.cursor()
+                    cursor.execute("""
+                                    UPDATE job SET
+                                        message = %s
+                                    WHERE id = %s
+                                """, (message, job_id))
+                    cursor.close()
+
                 continue
 
             if current_state == 'finished':

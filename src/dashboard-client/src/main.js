@@ -159,7 +159,7 @@ Vue.material.registerTheme({
         primary: {
             color: 'grey',
             hue: 300,
-            textColor: 'white'
+            textColor: 'black'
         },
         accent: {
             color: 'cyan',
