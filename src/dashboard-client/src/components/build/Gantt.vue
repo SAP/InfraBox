@@ -25,8 +25,8 @@ class StateFormat {
             this.stateIcon = '\uf0e7'
             this.stateColor = '#b7ad1c'
         } else if (js === 'error') {
-            this.stateIcon = '\uf1e2'
-            this.stateColor = 'black'
+            this.stateIcon = '\uf0e7'
+            this.stateColor = '#b71c1c'
         } else if (js === 'queued') {
             this.stateIcon = '\uf04c'
             this.stateColor = 'lightgrey'

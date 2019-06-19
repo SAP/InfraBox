@@ -911,7 +911,7 @@ class Scheduler(object):
             # Update state
             cursor = self.conn.cursor()
             cursor.execute("""
-                UPDATE job SET state = 'error', end_date = current_timestamp, message = 'Aborted due to timeout'
+                UPDATE job SET state = 'killed', end_date = current_timestamp, message = 'Aborted due to timeout'
                 WHERE id = %s and state = 'running' """, (job_id,))
             cursor.close()
 
