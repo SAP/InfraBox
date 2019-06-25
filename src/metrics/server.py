@@ -391,7 +391,7 @@ class ProjectCount:
         per_cluster = execute_sql(conn, self._projects_amount, None)
 
         for cluster_values in per_cluster:
-            self._gauge.labels(cluster=cluster_values['type']).set(cluster_values['project_amount'])
+            self._gauge.labels(cluster=cluster_values['project_amount']).set(cluster_values['type'])
 
 
 class NodeList:
