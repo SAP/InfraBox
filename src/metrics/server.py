@@ -543,9 +543,9 @@ def main():
     job_cpu = Job_Inspector_CPU_Use('cpu_per_job')
     while running:
         try:
-            # active_job_gauge.update(conn)
-            # rsc_gauge.update(conn)
-            # all_job_gauge.update(conn)
+            active_job_gauge.update(conn)
+            rsc_gauge.update(conn)
+            all_job_gauge.update(conn)
             print('test')
             cpu_capacity.update(conn)
             cpu_usage.update(conn)
