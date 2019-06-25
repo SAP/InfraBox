@@ -7,7 +7,7 @@ import time
 import shutil
 import requests
 
-from infrabox_job.process import Failure
+from infrabox_job.process import Failure, Error
 
 class Job(object):
     def __init__(self):
@@ -47,13 +47,13 @@ class Job(object):
                     except:
                         pass
 
-                    raise Failure(msg)
+                    raise Error(msg)
                 elif r.status_code == 200:
                     break
                 else:
                     # Retry on any other error
                     continue
-            except Failure:
+            except Error:
                 raise
             except Exception as e:
                 print(e)
@@ -110,7 +110,7 @@ class Job(object):
                 except:
                     pass
 
-                raise Failure(msg)
+                raise Error(msg)
 
             self.console.collect('Failed to connect to API, retrying.', show=True)
             time.sleep(3)
@@ -203,7 +203,7 @@ class Job(object):
                 continue
 
         if message:
-            raise Failure('Failed to download file: %s' % message)
+            raise Error('Failed to download file: %s' % message)
 
         if r.status_code != 200:
             msg = r.text
@@ -213,7 +213,7 @@ class Job(object):
             except:
                 pass
 
-            raise Failure('Failed to download file(%s): %s' % (r.status_code, msg))
+            raise Error('Failed to download file(%s): %s' % (r.status_code, msg))
 
     def post_file_to_api_server(self, url, path, filename=None, split=False):
         if not filename:
@@ -269,4 +269,4 @@ class Job(object):
             else:
                 return
 
-        raise Failure('Failed to upload file: %s' % message)
+        raise Error('Failed to upload file: %s' % message)

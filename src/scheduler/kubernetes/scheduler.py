@@ -18,6 +18,10 @@ from pyinfraboxutils.db import connect_db
 from pyinfraboxutils.token import encode_job_token
 from pyinfraboxutils.secrets import decrypt_secret
 
+# This error code should be aligned with src/job/job.py
+ERR_EXIT_FAILURE = 1
+ERR_EXIT_ERROR = 2
+
 class APIException(Exception):
     def __init__(self, result):
         super(APIException, self).__init__("API Server Error (%s)" % result.status_code)
@@ -355,6 +359,9 @@ class PipelineInvocationController(Controller):
             pi['status']['message'] = ""
             pi['status']['state'] = "running"
             pi['status']['startTime'] = first_state['terminated'].get('startedAt', str(datetime.now()))
+        elif first_state.get('pending', None):
+            pi['status']['message'] = first_state['pending'].get('message', None)
+            pi['status']['state'] = 'pending'
 
         all_terminated = True
 
@@ -394,7 +401,7 @@ class PipelineInvocationController(Controller):
         if state in (None, '', 'preparing'):
             pi = self._sync_prepare(pi)
 
-        if state in ('running', 'scheduling'):
+        if state in ('running', 'scheduling', 'pending'):
             pi = self._sync_run(pi)
 
         if state == 'finalizing':
@@ -510,9 +517,16 @@ class FunctionInvocationController(Controller):
             elif pod['status']['phase'] == 'Failed':
                 fi['status']['state'] = {
                     'terminated': {
-                        'exitCode': 200,
+                        'exitCode': ERR_EXIT_ERROR,
                         'reason': pod['status'].get('reason', None),
                         'message': pod['status'].get('message', None)
+                    }
+                }
+            elif pod['status']['phase'] == 'Pending':
+                fi['status']['state'] = {
+                    'pending': {
+                        'reason': pod['status']['conditions'][-1].get('reason', None),
+                        'message': pod['status']['conditions'][-1].get('message', None)
                     }
                 }
 
@@ -897,7 +911,7 @@ class Scheduler(object):
             # Update state
             cursor = self.conn.cursor()
             cursor.execute("""
-                UPDATE job SET state = 'error', end_date = current_timestamp, message = 'Aborted due to timeout'
+                UPDATE job SET state = 'failure', end_date = current_timestamp, message = 'Aborted due to timeout'
                 WHERE id = %s and state = 'running' """, (job_id,))
             cursor.close()
 
@@ -1036,7 +1050,7 @@ class Scheduler(object):
             job_id = name
 
             cursor = self.conn.cursor()
-            cursor.execute('''SELECT state FROM job where id = %s''', (job_id,))
+            cursor.execute('''SELECT state, message FROM job where id = %s''', (job_id,))
             result = cursor.fetchall()
             cursor.close()
 
@@ -1046,6 +1060,7 @@ class Scheduler(object):
                 continue
 
             last_state = result[0][0]
+            last_message = result[0][1]
             if last_state in ('killed', 'finished', 'error', 'failure', 'unstable'):
                 self.kube_delete_job(job_id)
                 continue
@@ -1062,7 +1077,7 @@ class Scheduler(object):
                 s = status.get('state', "preparing")
                 message = status.get('message', None)
 
-                if s in ["preparing", "scheduling"] and last_state in ["queued", "scheduled"]:
+                if s in ["preparing", "scheduling", "pending"] and last_state in ["queued", "scheduled"]:
                     current_state = 'scheduled'
 
                 if s in ["running", "finalizing"]:
@@ -1078,7 +1093,8 @@ class Scheduler(object):
                         if exit_code == 0:
                             current_state = 'finished'
                         else:
-                            current_state = 'failure'
+                            if exit_code == ERR_EXIT_FAILURE:
+                                current_state = 'failure'
                             message = stepStatus['state']['terminated'].get('message', None)
 
                             if not message:
@@ -1110,6 +1126,16 @@ class Scheduler(object):
                 end_date = status.get('completionTime', None)
 
             if last_state == current_state:
+
+                if message != last_message:
+                    cursor = self.conn.cursor()
+                    cursor.execute("""
+                                    UPDATE job SET
+                                        message = %s
+                                    WHERE id = %s
+                                """, (message, job_id))
+                    cursor.close()
+
                 continue
 
             if current_state == 'finished':
