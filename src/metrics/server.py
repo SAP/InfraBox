@@ -558,7 +558,7 @@ def main():
             node_list.update(conn)
             builds__over_time_range.update(conn)
           #doesn't work  build_inspector.update(conn)
-            job_cpu.update(conn)
+           # job_cpu.update(conn)
 
 
         except psycopg2.OperationalError:
