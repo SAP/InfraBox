@@ -349,7 +349,7 @@ class UserCount:
         self._gauge = Gauge(name, "The total number of users registered in the database",
                             ['cluster'])
         self._user_total = """
-          SELECT count(id) as user_amount
+          SELECT count(id) as user_amount, name
                 FROM public.user
         """
 
@@ -357,7 +357,7 @@ class UserCount:
         per_cluster = execute_sql(conn, self._user_total, None)
 
         for cluster_values in per_cluster:
-            self._gauge.labels(cluster=cluster_values['user_amount']).set(cluster_values['user_amount'])
+            self._gauge.labels(cluster=cluster_values['name']).set(cluster_values['user_amount'])
 
 
 class ClusterCount:
