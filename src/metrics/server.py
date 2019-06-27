@@ -351,6 +351,7 @@ class UserCount:
         self._user_total = """
           SELECT count(id) as user_amount, name
                 FROM public.user
+                GROUP BY name
         """
 
     def update(self, conn):
@@ -365,16 +366,17 @@ class ClusterCount:
         self._gauge = Gauge(name, "A gauge of the amount of clusters",
                             ['cluster'])
         self._amount_of_clusters = """
-            SELECT count(name) as cluster_amount
+            SELECT count(name) as cluster_amount, name
             FROM cluster
-            
+            Group by name
         """
 
     def update(self, conn):
         per_cluster = execute_sql(conn, self._amount_of_clusters, None)
-
+        print(per_cluster)
         for cluster_values in per_cluster:
-            self._gauge.labels(cluster=cluster_values['cluster_amount']).set(cluster_values['cluster_amount'])
+            print(cluster_values)
+            self._gauge.labels(cluster=cluster_values['name']).set(cluster_values['cluster_amount'])
 
 
 class ProjectCount:
@@ -534,8 +536,8 @@ def main():
     memory_capacity = MemoryCapacity('memory_capacity_per_cluster')
     memory_usage = MemoryUsage('memory_usage_per_cluster')
     nodes_quantity = NodesCount('nodes_quantity_per_cluster')
-    user_count = UserCount('user_amount')
-    cluster_count = ClusterCount('cluster_amount')
+    user_count = UserCount('user_amount') #works
+    cluster_count = ClusterCount('cluster_amount') #works
     project_count = ProjectCount('project_amount')
     node_list = NodeList('node_list_per_cluster')
     build_inspector = BuildInspector('jobs_of_build')
@@ -558,7 +560,7 @@ def main():
             node_list.update(conn)
             builds__over_time_range.update(conn)
           #doesn't work  build_inspector.update(conn)
-           # job_cpu.update(conn)
+            # job_cpu.update(conn)
 
 
         except psycopg2.OperationalError:
