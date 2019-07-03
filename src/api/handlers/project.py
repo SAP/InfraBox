@@ -198,14 +198,16 @@ class Tests(Resource):
                                 FROM build b
                                 INNER JOIN job j
                                 ON b.id = j.build_id
+                                    AND j.state in ('finished', 'unstable')
                                     AND b.project_id = %s
                                     AND j.project_id = %s
-                                ORDER BY j.created_at DESC
+                                    AND j.name LIKE %s
+                                ORDER BY j.end_date DESC
                                 LIMIT 1
                             )
                             AND j.name LIKE %s
                     )
-            ''', [project_id, project_id, project_id, project_id, job_name])
+            ''', [project_id, project_id, project_id, project_id, job_name, job_name])
 
         total = int(r['success']) + int(r['failure']) + int(r['error'])
         status = '%s / %s' % (r['success'], total)
