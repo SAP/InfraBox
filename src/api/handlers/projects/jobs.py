@@ -533,7 +533,7 @@ class TestHistory(Resource):
 
         j = g.db.execute_one_dict("""
             SELECT id FROM job
-            WHERE id = %s 
+            WHERE id = %s
                 AND project_id = %s
         """, [job_id, project_id])
 
@@ -636,14 +636,13 @@ def compact(s):
 
         count = 1
         for count in range(1, c + 1):
-            if not s:
-                break
-
-            l = s.pop()
-            r['mem'] += l['mem']
+            l = s.pop(0)
+            r['mem'] += max(r['mem'], l['mem'])
             r['cpu'] += l['cpu']
             r['date'] += l['date']
 
+            if not s:
+                break
 
         r['mem'] = r['mem'] / count
         r['cpu'] = r['cpu'] / count
