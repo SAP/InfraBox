@@ -210,7 +210,6 @@ class RunJob(Job):
             repo = self.job['repo']
             clone_url = repo['clone_url']
             branch = repo.get('branch', None)
-            full_history = repo.get('full_history', False)
             ref = repo.get('ref', None)
 
             definition = self.job['definition']
@@ -221,6 +220,7 @@ class RunJob(Job):
             def_repo = definition.get('repository', {})
             repo_clone = def_repo.get('clone', True)
             repo_submodules = def_repo.get('submodules', True)
+            full_history = def_repo.get('full_history', False)
 
             commit = repo['commit']
 
