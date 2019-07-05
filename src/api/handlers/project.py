@@ -198,7 +198,7 @@ class Tests(Resource):
                                 ORDER BY j.created_at DESC
                                 LIMIT 1
                             )
-                            AND j.name LIKE %s
+                            AND j.name LIKE CONCAT(%s, '%')
                     )
             ''', [project_id, project_id, project_id, project_id, branch, job_name])
         elif build_number and build_restart_count:
@@ -222,12 +222,12 @@ class Tests(Resource):
                                     AND j.state in ('finished', 'unstable')
                                     AND b.project_id = %s
                                     AND j.project_id = %s
-                                    AND j.name LIKE %s
+                                    AND j.name LIKE CONCAT(%s, '%')
                                     AND b.build_number = %s
                                     AND b.restart_counter = %s
                                     LIMIT 1
                             )
-                            AND j.name LIKE %s
+                            AND j.name LIKE CONCAT(%s, '%')
                     )
             ''', [project_id, project_id, project_id, project_id, job_name, build_number, build_restart_count, job_name])
         else:
@@ -251,11 +251,11 @@ class Tests(Resource):
                                     AND j.state in ('finished', 'unstable')
                                     AND b.project_id = %s
                                     AND j.project_id = %s
-                                    AND j.name LIKE %s
+                                    AND j.name LIKE CONCAT(%s, '%')
                                 ORDER BY j.end_date DESC
                                 LIMIT 1
                             )
-                            AND j.name LIKE %s
+                            AND j.name LIKE CONCAT(%s, '%')
                     )
             ''', [project_id, project_id, project_id, project_id, job_name, job_name])
 
