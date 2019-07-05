@@ -28,6 +28,8 @@ Template         | Meaning                   | Optional
 `<subject>`      | Badge subject             | False
 `<job_name>`     | Fully-qualified job name  | False
 `<branch>`       | Git branch                | True
+`<build_number>` | Build number i.e. `432`   | True
+`<build_restart_counter>` | Restart counter, default `1` | True
 
 
 Additionally, there are also two job-independent badges:
@@ -36,4 +38,3 @@ Additionally, there are also two job-independent badges:
 - `<infrabox-url>/api/v1/projects/<project-id>/tests.svg?branch=<branch>&job_name=<job_name>` showing the amount of passing jobs of given job for the build
 
 Markdown code suitable for embedding can be retrieved from the "Settings" tab of your project (requires administrator privileges).
-
