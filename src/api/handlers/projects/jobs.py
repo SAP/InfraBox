@@ -197,7 +197,12 @@ class JobRestart(Resource):
         '''
         Restart job
         '''
-        user_id = g.token['user']['id']
+        user_id = None
+        if g.token['type'] == 'user':
+            user_id = g.token['user']['id']
+        elif g.token['type'] == 'project':
+            if g.token['project']['id'] != project_id:
+                abort(400, "invalid project token")
 
         job = g.db.execute_one_dict('''
             SELECT state, type, build_id, restarted
@@ -265,13 +270,21 @@ class JobRestart(Resource):
             if j['state'] not in restart_states and j['state'] not in ('skipped', 'queued'):
                 abort(400, 'Some children jobs are still running')
 
-        result = g.db.execute_one_dict('''
-            SELECT username
-            FROM "user"
-            WHERE id = %s
-        ''', [user_id])
-        username = result['username']
-        msg = 'Job restarted by %s\n' % username
+        if user_id is not None:
+            result = g.db.execute_one_dict('''
+                SELECT username
+                FROM "user"
+                WHERE id = %s
+            ''', [user_id])
+            username_or_token = result['username']
+        else:
+            result = g.db.execute_one_dict('''
+                                SELECT description
+                                FROM auth_token
+                                WHERE id = %s
+                            ''', [g.token['id']])
+            username_or_token = "project token " + result['description']
+        msg = 'Job restarted by %s\n' % username_or_token
 
         # Clone Jobs and adjust dependencies
         jobs = []
