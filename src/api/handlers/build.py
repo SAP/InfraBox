@@ -38,6 +38,12 @@ class Builds(Resource):
         else:
             cronjob = None
 
+        if build_from:
+            build_from = int(build_from)
+
+        if build_to:
+            build_to = int(build_to)
+
         if not build_to:
             r = g.db.execute_one_dict('''
                 SELECT max(build_number) as max
@@ -53,8 +59,8 @@ class Builds(Resource):
         if not build_from:
             build_from = max(build_to - 10, 0)
 
-        if build_to - build_from > 500:
-            build_from = build_to - 500
+        if build_to - build_from > 200:
+            build_from = build_to - 200
 
         p = g.db.execute_many_dict('''
             SELECT b.id, b.build_number, b.restart_counter, b.is_cronjob

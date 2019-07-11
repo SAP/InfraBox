@@ -33,7 +33,7 @@
                             <md-select name="state" id="state" v-model="form.state">
                                 <md-option value="" class="bg-white">Any</md-option>
                                 <md-option value="running" class="bg-white">Running</md-option>
-                                <md-option value="failed" class="bg-white">Failed</md-option>
+                                <md-option value="failure" class="bg-white">Failure</md-option>
                                 <md-option value="unstable" class="bg-white">Unstable</md-option>
                                 <md-option value="killed" class="bg-white">Killed</md-option>
                                 <md-option value="error" class="bg-white">Error</md-option>
@@ -43,6 +43,10 @@
                         <md-button class="md-icon-button md-list-action" @click="doSearch()">
                             <md-icon md-theme="running" class="md-primary">search</md-icon>
                             <md-tooltip>Search</md-tooltip>
+                        </md-button>
+                        <md-button class="md-icon-button md-list-action" @click="resetSearch()">
+                            <md-icon md-theme="running" class="md-primary">clear</md-icon>
+                            <md-tooltip>Clear</md-tooltip>
                         </md-button>
                     </md-list-item>
                 </md-list>
@@ -97,7 +101,7 @@
                     </md-table-row>
                 </md-table-body>
             </md-table>
-            <md-table-pagination
+            <md-table-pagination v-if="!this.search.search">
                 :md-size="size"
                 :md-total="total"
                 :md-page="page"
@@ -152,7 +156,11 @@ export default {
 
             const p = this.page - 1
             const to = maxBuildNumber - (p * this.size) + 1
-            const from = to - this.size
+            let from = to - this.size
+
+            if (from < 0) {
+                from = 0
+            }
 
             let builds = []
             let foundFrom = maxBuildNumber
@@ -177,7 +185,6 @@ export default {
                         continue
                     }
 
-                    console.log(this.search.from)
                     if (this.search.from && b.number < this.search.from) {
                         continue
                     }
@@ -216,6 +223,10 @@ export default {
             }
 
             this.size = opt.size
+        },
+
+        resetSearch () {
+            this.search.search = false
         },
 
         doSearch () {
