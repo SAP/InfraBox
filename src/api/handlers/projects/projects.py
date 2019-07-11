@@ -300,6 +300,7 @@ class Project(Resource):
             WHERE id = %s
         ''', [not private, project_id])
 
+        g.db.commit()
         return OK('updated visibility')
 
 @ns.route('/<project_id>')

@@ -1,5 +1,54 @@
 <template>
     <div>
+        <md-card md-theme="white" class="full-height clean-card">
+            <md-card-area>
+                <md-list class="m-t-md m-b-md">
+                    <md-list-item>
+                        <md-input-container class="m-r-sm">
+                            <label>From Build Number</label>
+                            <md-input v-model="form.from"></md-input>
+                        </md-input-container>
+                        <md-input-container class="m-r-sm">
+                            <label>To Build Number</label>
+                            <md-input v-model="form.to"></md-input>
+                        </md-input-container>
+                        <md-input-container class="m-r-sm">
+                            <label>Sha</label>
+                            <md-input v-model="form.sha"></md-input>
+                        </md-input-container>
+                        <md-input-container class="m-l-sm">
+                            <label>Branch</label>
+                            <md-input v-model="form.branch"></md-input>
+                        </md-input-container>
+                        <md-input-container>
+                            <label>Cronjob</label>
+                            <md-select name="cronjob" id="cronjob" v-model="form.cronjob">
+                                <md-option value="" class="bg-white">Any</md-option>
+                                <md-option value="true" class="bg-white">Yes</md-option>
+                                <md-option value="false" class="bg-white">No</md-option>
+                            </md-select>
+                        </md-input-container>
+                        <md-input-container>
+                            <label>State</label>
+                            <md-select name="state" id="state" v-model="form.state">
+                                <md-option value="" class="bg-white">Any</md-option>
+                                <md-option value="running" class="bg-white">Running</md-option>
+                                <md-option value="failed" class="bg-white">Failed</md-option>
+                                <md-option value="unstable" class="bg-white">Unstable</md-option>
+                                <md-option value="killed" class="bg-white">Killed</md-option>
+                                <md-option value="error" class="bg-white">Error</md-option>
+                                <md-option value="finished" class="bg-white">Finished</md-option>
+                            </md-select>
+                        </md-input-container>
+                        <md-button class="md-icon-button md-list-action" @click="doSearch()">
+                            <md-icon md-theme="running" class="md-primary">search</md-icon>
+                            <md-tooltip>Search</md-tooltip>
+                        </md-button>
+                    </md-list-item>
+                </md-list>
+            </md-card-area>
+        </md-card>
+
         <md-table-card class="clean-card add-overflow">
             <md-table class="min-medium">
                 <md-table-header>
@@ -62,13 +111,35 @@
 </template>
 
 <script>
+
 export default {
     props: ['project'],
     data: () => {
         return {
             page: 1,
             size: 10,
-            total: 0
+            total: 0,
+
+            form: {
+                from: null,
+                to: null,
+                sha: null,
+                branch: null,
+                cronjob: '',
+                startDate: null,
+                state: ''
+            },
+
+            search: {
+                from: null,
+                to: null,
+                sha: null,
+                branch: null,
+                cronjob: null,
+                startDate: null,
+                search: false,
+                state: null
+            }
         }
     },
     computed: {
@@ -85,18 +156,52 @@ export default {
 
             let builds = []
             let foundFrom = maxBuildNumber
-            for (let b of this.project.builds) {
-                if (from <= b.number && b.number < to) {
-                    builds.push(b)
 
-                    if (b.number < foundFrom) {
-                        foundFrom = b.number
+            if (this.search.search) {
+                this.project.loadBuilds(this.search.from || 0, this.search.to || maxBuildNumber, this.search.sha, this.search.branch, this.search.cronjob)
+
+                for (let b of this.project.builds) {
+                    if (this.search.branch && b.commit && b.commit.branch !== this.search.branch) {
+                        continue
+                    }
+
+                    if (this.search.sha && b.commit && b.commit.id !== this.search.sha) {
+                        continue
+                    }
+
+                    if (this.search.cronjob && String(b.isCronjob) !== this.search.cronjob) {
+                        continue
+                    }
+
+                    if (this.search.state && b.state !== this.search.state) {
+                        continue
+                    }
+
+                    console.log(this.search.from)
+                    if (this.search.from && b.number < this.search.from) {
+                        continue
+                    }
+
+                    if (this.search.to && b.number > this.search.to) {
+                        continue
+                    }
+
+                    builds.push(b)
+                }
+            } else {
+                for (let b of this.project.builds) {
+                    if (from <= b.number && b.number < to) {
+                        builds.push(b)
+
+                        if (b.number < foundFrom) {
+                            foundFrom = b.number
+                        }
                     }
                 }
-            }
 
-            if (foundFrom !== from) {
-                this.project.loadBuilds(from, to)
+                if (foundFrom !== from) {
+                    this.project.loadBuilds(from, to, this.search.sha, this.search.branch, this.search.cronjob)
+                }
             }
 
             return builds
@@ -111,6 +216,18 @@ export default {
             }
 
             this.size = opt.size
+        },
+
+        doSearch () {
+            this.search = {
+                from: this.form.from,
+                to: this.form.to,
+                sha: this.form.sha,
+                branch: this.form.branch,
+                cronjob: this.form.cronjob,
+                state: this.form.state,
+                search: true
+            }
         }
     }
 }

@@ -229,7 +229,8 @@ class Tests(Resource):
                             )
                             AND j.name LIKE CONCAT(%s, '%')
                     )
-            ''', [project_id, project_id, project_id, project_id, job_name, build_number, build_restart_count, job_name])
+            ''', [project_id, project_id, project_id, project_id,
+                  job_name, build_number, build_restart_count, job_name])
         else:
             r = g.db.execute_one_dict('''
                 SELECT

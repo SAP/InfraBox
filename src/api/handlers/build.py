@@ -1,4 +1,4 @@
-from flask import g
+from flask import g, request
 from flask_restplus import Resource, fields
 
 from pyinfraboxutils.ibrestplus import api
@@ -22,15 +22,58 @@ class Builds(Resource):
     @api.marshal_list_with(build_model)
     def get(self, project_id):
         '''
-        Returns the latest 100 builds of the project
+        Returns builds
         '''
+
+        build_from = request.args.get('from', None)
+        build_to = request.args.get('to', None)
+        sha = request.args.get('sha', None)
+        branch = request.args.get('branch', None)
+        cronjob = request.args.get('cronjob', None)
+
+        if cronjob == "true":
+            cronjob = True
+        elif cronjob == "false":
+            cronjob = False
+        else:
+            cronjob = None
+
+        if not build_to:
+            r = g.db.execute_one_dict('''
+                SELECT max(build_number) as max
+                FROM build
+                WHERE project_id = %s
+            ''', [project_id])
+
+            if not r or not r['max']:
+                build_to = 1
+            else:
+                build_to = r['max'] + 1
+
+        if not build_from:
+            build_from = max(build_to - 10, 0)
+
         p = g.db.execute_many_dict('''
-            SELECT id, build_number, restart_counter, is_cronjob
-            FROM build
-            WHERE project_id = %s
+            SELECT b.id, b.build_number, b.restart_counter, b.is_cronjob
+            FROM build b
+            LEFT OUTER JOIN commit c
+            ON b.commit_id = c.id
+            WHERE b.project_id = %(pid)s
+            AND b.build_number < %(to)s
+            AND b.build_number >= %(from)s
+            AND (%(sha)s IS NULL OR c.id = %(sha)s)
+            AND (%(branch)s IS NULL OR c.branch = %(branch)s)
+            AND (%(cronjob)s IS NULL OR b.is_cronjob = %(cronjob)s)
             ORDER BY build_number DESC, restart_counter DESC
-            LIMIT 100
-        ''', [project_id])
+        ''', {
+            'pid': project_id,
+            'from': build_from,
+            'to': build_to,
+            'sha': sha,
+            'branch': branch,
+            'cronjob': cronjob,
+        })
+
         return p
 
 @ns.route('/<build_id>')

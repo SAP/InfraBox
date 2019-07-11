@@ -34,6 +34,17 @@ class Jobs(Resource):
     def get(self, project_id):
         build_from = request.args.get('from', None)
         build_to = request.args.get('to', None)
+        sha = request.args.get('sha', None)
+        branch = request.args.get('branch', None)
+        cronjob = request.args.get('cronjob', None)
+        state = request.args.get('state', None)
+
+        if cronjob == "true":
+            cronjob = True
+        elif cronjob == "false":
+            cronjob = False
+        else:
+            cronjob = None
 
         if not build_to:
             r = g.db.execute_one_dict('''
@@ -112,8 +123,20 @@ class Jobs(Resource):
                 AND b.project_id = %(pid)s
                 AND b.build_number < %(to)s
                 AND b.build_number >= %(from)s
+                AND (%(sha)s IS NULL OR c.id = %(sha)s)
+                AND (%(branch)s IS NULL OR c.branch = %(branch)s)
+                AND (%(cronjob)s IS NULL OR b.is_cronjob = %(cronjob)s)
+                AND (%(state)s IS NULL OR j.state = %(state)s)
                 ORDER BY j.created_at DESC
-        ''', {'pid': project_id, 'from': build_from, 'to': build_to})
+        ''', {
+            'pid': project_id,
+            'from': build_from,
+            'to': build_to,
+            'sha': sha,
+            'branch': branch,
+            'cronjob': cronjob,
+            'state': state
+        })
 
         result = []
         for j in jobs:
@@ -426,8 +449,8 @@ class ArchiveDownload(Resource):
             f.seek(0)
 
         if not f:
-            logger.error(key)
             abort(404)
+
         filename = os.path.basename(filename)
 
         return send_file(f, as_attachment=force_download, attachment_filename=filename,\

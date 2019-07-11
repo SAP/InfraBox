@@ -8,7 +8,7 @@ export default class Build {
         this.id = id
         this.number = number
         this.restartCounter = restartCounter
-        this.state = null
+        this.state = 'finished'
         this.jobs = []
         this.commit = commit
         this.startDate = null
@@ -73,8 +73,6 @@ export default class Build {
     }
 
     _updateBuildState () {
-        this.state = 'finished'
-
         let states = {
             'error': false,
             'killed': false,
@@ -96,13 +94,21 @@ export default class Build {
         }
 
         if (states.killed) {
-            this.state = 'killed'
+            if (this.state !== 'killed') {
+                this.state = 'killed'
+            }
         } else if (states.error) {
-            this.state = 'error'
+            if (this.state !== 'error') {
+                this.state = 'error'
+            }
         } else if (states.failure) {
-            this.state = 'failure'
+            if (this.state !== 'failure') {
+                this.state = 'failure'
+            }
         } else if (states.unstable) {
-            this.state = 'unstable'
+            if (this.state !== 'unstable') {
+                this.state = 'unstable'
+            }
         }
     }
 
