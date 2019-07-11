@@ -53,6 +53,9 @@ class Builds(Resource):
         if not build_from:
             build_from = max(build_to - 10, 0)
 
+        if build_to - build_from > 500:
+            build_from = build_to - 500
+
         p = g.db.execute_many_dict('''
             SELECT b.id, b.build_number, b.restart_counter, b.is_cronjob
             FROM build b

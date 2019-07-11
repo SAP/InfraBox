@@ -61,6 +61,9 @@ class Jobs(Resource):
         if not build_from:
             build_from = max(build_to - 10, 0)
 
+        if build_to - build_from > 500:
+            build_from = build_to - 500
+
         jobs = g.db.execute_many_dict('''
             SELECT
                 -- build
