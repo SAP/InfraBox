@@ -108,8 +108,9 @@ def handle_patchset_created_project(conn, event, project_id, project_name):
         AND b.project_id = c.project_id
         WHERE
             c.gerrit_change_id = %s AND
-            j.state in ('scheduled', 'running')
-    ''', [event['change']['id']])
+            j.state in ('scheduled', 'running') AND
+            c.branch = %s
+    ''', [event['change']['id'], event['change']['branch']])
     c.close()
     conn.commit()
 
