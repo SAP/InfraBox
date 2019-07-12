@@ -101,7 +101,7 @@
                     </md-table-row>
                 </md-table-body>
             </md-table>
-            <md-table-pagination v-if="!this.search.search">
+            <md-table-pagination v-if="!this.search.search"
                 :md-size="size"
                 :md-total="total"
                 :md-page="page"
@@ -149,7 +149,7 @@ export default {
     computed: {
         builds () {
             if (this.project.builds.length === 0) {
-                return
+                return []
             }
             const maxBuildNumber = this.project.builds[0].number
             this.total = maxBuildNumber
