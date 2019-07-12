@@ -190,9 +190,7 @@ class RunJob(Job):
         c.execute(['git', 'config', 'remote.origin.url', clone_url], cwd=mount_repo_dir, show=True)
         c.execute(['git', 'config', 'remote.origin.fetch', '+refs/heads/*:refs/remotes/origin/*'],
                   cwd=mount_repo_dir, show=True)
-
-        if not full_history:
-            c.execute(['git', 'fetch', 'origin', commit], cwd=mount_repo_dir, show=True, retry=True)
+        c.execute(['git', 'fetch', 'origin', commit], cwd=mount_repo_dir, show=True, retry=True)
 
         cmd = ['git', 'checkout', '-qf', commit]
 
