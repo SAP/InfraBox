@@ -220,6 +220,7 @@ class AllJobNodeGauge:
                     self._gauge.labels(node=node, state=state).set(0)
 
 
+
 class ActiveJobClusterGauge:
     def __init__(self, name):
         self._gauge = Gauge(name, "A gauge of current amount of active jobs per cluster",
@@ -260,6 +261,7 @@ class ActiveJobClusterGauge:
 
 
 class CPUCapacity:
+
     def __init__(self, name):
         self._gauge = Gauge(name, "A gauge of cpu capacity per cluster",
                             ['cluster'])
@@ -279,7 +281,8 @@ class CPUUsage:
         self._gauge = Gauge(name, "CPU usage per cluster",
                             ['cluster'])
         self._cpu_per_cluster = """
-            SELECT cluster_name, sum((j.definition#>>'{resources,limits,cpu}')::float::float*100) cpu_usage
+            SELECT cluster_name, 
+            sum((j.definition#>>'{resources,limits,cpu}')::float::float*100) cpu_usage
 			FROM job j 
 			WHERE j.state = 'running'
 			GROUP BY cluster_name
@@ -404,10 +407,10 @@ class NodeList:
                             "List of the node_name referenced by the job table for this cluster. This table only shows Node with active job (ie running, queued, scheduled)",
                             ['cluster'])
         self._nodes_per_cluster = """
-            SELECT node_name, count(id) as job_amount
+            SELECT node_name, count(id) FILTER(WHERE state = 'running') as job_amount
 			FROM job 
 			WHERE node_name is not null 
-			AND state IN ('running') 
+			AND state IN ('running', 'scheduled', 'queued')
 			GROUP BY node_name
         """
 
@@ -442,18 +445,28 @@ class BuildsTimeRange:
     #not yet tested, but doesn't show errors
     def __init__(self, name):
         self._gauge = Gauge(name,
-                            "The number of builds of this project which have jobs with their end date in the specified time range (TR). "
-                            "The default time range is the last week.",
+                            "Average of the Success Rate of each build of the project.. ",
                             ['project'])
-        self._builds_per_project = """
-            SELECT count(DISTINCT build_id) as build_amount
-            FROM job
-            WHERE state NOT IN ('running', 'scheduled', 'queued')
+        self._request_per_project = """
+            SELECT AVG(foo.success_rate_7d) FROM (
+SELECT 
+  CASE
+	  count(j.id) filter (where j.state NOT IN ('running', 'scheduled', 'queued'))
+  WHEN
+	  0
+  THEN
+		NULL
+  ELSE 
+		(count(j.id) filter (where j.state = 'finished'))::float / (count(j.id) filter (where j.state NOT IN ('running', 'scheduled', 'queued')))::float
+  END as success_rate_7d
+FROM job j
+WHERE $__timeFilter(j.end_date) AND j.project_id = (select id from project where name = '[[pname]]')
+GROUP BY build_id) as foo
         """
     # GROUP BY project_name, not just name
     #not as it should be
     def update(self, conn):
-        per_project = execute_sql(conn, self._builds_per_project, None)
+        per_project = execute_sql(conn, self._request_per_project, None)
 
         for project_values in per_project:
             self._gauge.labels(project=project_values['build_amount']).set(project_values['build_amount'])
@@ -486,7 +499,152 @@ class Job_Inspector_CPU_Use:
         for job_values in per_job:
             self._gauge.labels(job=job_values['cpu']).set(job_values['cpu'])
 
+class Job_Memory:
+    def __init__(self, name, conn):
+        self._gauge = Gauge(name, "A gauge of allocated ressources of running jobs over time",
+                            ['job'])
+        self._request_total = """
+  mem::float as used,
+  mem_j_limit as job_limit
+FROM (
+  elm::jsonb->>'mem'::text as mem, mem_j_limit from (
+    select
+      jsonb_array_elements(j.stats::jsonb->'[[id]]') as elm, sum((definition#>>'{resources,limits,memory}')::integer) as mem_j_limit
+    FROM
+      job j
+    ) as foo2 
+) as foo
+        """
 
+        self._request_possible_job = "SELECT DISTINCT name FROM job  ORDER BY  name"
+        self._possible_combination = None
+        self._possible_job = None
+        self._count_to_update = 10
+        self._create_combination_dict(conn)
+
+    # Welche Typumwandlungen brauche ich
+    # brauch ich die Zeit?
+    def _create_combination_dict(self, conn):
+        """
+        Completely rewrite the combination dict based on the occurrences of the request results without any
+        data loss checks made on old cluster or project occurrences.
+        """
+        self._possible_job = execute_sql(conn, self._request_possible_job, None)
+
+        self._possible_combination = dict()
+        for job in self._possible_job:
+            if job[0]:
+                project_dict = dict()
+                for project in self._possible_project:
+                    if project[0]:
+                        project_dict[project[0]] = True
+                self._possible_combination[cluster[0]] = project_dict
+
+    def _update_combination_dict(self, conn):
+        """
+        Check if the dict must be updated with new values and updates it if necessary.
+        To do so we overwrite old values as well as the new ones => check before.
+
+        IT DOES NOT set old values to True (the existence test among list is not efficient),
+        we still need to reset all the values by calling _reset_combination_dict
+        """
+        tmp_possible_cluster = execute_sql(conn, self._request_possible_job, None)
+
+        if AllocatedRscGauge._different_instance_list(self._possible_job, tmp_possible_job):
+            print("=== DICT UPDATE - AVOIDABLE COST ===")
+            for cluster in self._possible_cluster:
+                if cluster[0]:
+                    project_dict = self._possible_combination.get(cluster[0])
+                    if not project_dict:
+                        project_dict = dict()
+                        self._possible_combination[cluster[0]] = project_dict
+                    for project in self._possible_project:
+                        if project[0]:
+                            project_dict[project[0]] = True
+
+    def _reset_combination_dict(self):
+        """
+        Set all the occurrences of the combination dict to True in order to detect which values to set to 0
+        because they are missing in the request result
+        """
+        for project_dict in self._possible_combination.values():
+            for project_name in project_dict.keys():
+                project_dict[project_name] = True
+
+    @staticmethod
+    def _different_instance_list(first, second):
+        """
+        Return True if the given contains a difference in there occurrences.
+        Used to detect if we should update the combination dictionary.
+        Example : a new project or a new cluster appeared in the DB
+        """
+        length = len(first)
+        if length != len(second):
+            return True
+        else:
+            for i in range(length):
+                if first[i][0] != second[i][0]:
+                    return True
+        return False
+
+    def update(self, conn):
+        total = execute_sql(conn, self._request_total, None)
+        if self._count_to_update == 0:
+            self._update_combination_dict(conn)
+            self._count_to_update = 10
+        self._reset_combination_dict()
+        self._set_values(total)
+        self._count_to_update -= 1
+
+    def _set_values(self, per_cluster, total):
+
+        for row in total:
+            project_dict = self._possible_combination.get("'%'")
+            if project_dict and project_dict.get(row[0]):
+                project_dict[row[0]] = False
+
+            self._gauge.labels(rsc="mem", cluster="'%'", project=row[0]).set(row[1])
+            self._gauge.labels(rsc="cpu", cluster="'%'", project=row[0]).set(row[2])
+
+        for cluster, project_dict in self._possible_combination.items():
+            to_delete = []
+            for project, not_used in project_dict.items():
+                if not_used:
+                    to_delete.append(project)
+                    self._gauge.labels(rsc="mem", cluster=cluster, project=project).set(0)
+                    self._gauge.labels(rsc="cpu", cluster=cluster, project=project).set(0)
+
+            # Maybe it was the last occurrence ever of this datas. We delete it in order to keep the combination dict
+            # as small as possible (would be running for entire weeks maybe)
+            for maybe_last_occurrence in to_delete:
+                del project_dict[maybe_last_occurrence]
+
+
+class Jobs_success_rate:
+    def __init__(self, name):
+        self._gauge = Gauge(name, "Success rate for all the jobs of the project.",
+                            ['cluster', 'project'])
+        self._request_per_project = """
+            SELECT 
+  CASE
+	  count(j.id) filter (where j.state NOT IN ('running', 'scheduled', 'queued'))
+  WHEN
+	  0
+  THEN
+		NULL
+  ELSE 
+		(count(j.id) filter (where j.state = 'finished'))::float / (count(j.id) filter (where j.state NOT IN ('running', 'scheduled', 'queued')))::float
+  END as success_rate_7d
+FROM job j
+WHERE $__timeFilter(j.end_date) AND j.project_id = (select id from project where name = '[[pname]]')
+        """
+
+    def update(self, conn):
+        per_cluster = execute_sql(conn, self._amount_of_clusters, None)
+        print(per_cluster)
+        for cluster_values in per_cluster:
+            print(cluster_values)
+            self._gauge.labels(cluster=cluster_values['name']).set(cluster_values['cluster_amount'])
 
 
 def start_server(init_wait_time, threshold, port):
@@ -543,6 +701,9 @@ def main():
     build_inspector = BuildInspector('jobs_of_build')
     builds__over_time_range = BuildsTimeRange('builds_over_time_range')
     job_cpu = Job_Inspector_CPU_Use('cpu_per_job')
+    #job_memory = Job_Memoy_Gauge('job_memory')
+
+
     while running:
         try:
             active_job_gauge.update(conn)
@@ -557,10 +718,11 @@ def main():
             user_count.update(conn)
             cluster_count.update(conn)
             project_count.update(conn)
-            node_list.update(conn)
-            builds__over_time_range.update(conn)
+            #node_list.update(conn)
+            #builds__over_time_range.update(conn)
           #doesn't work  build_inspector.update(conn)
             # job_cpu.update(conn)
+         #   job_memory.update(conn)
 
 
         except psycopg2.OperationalError:
