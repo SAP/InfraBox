@@ -26,6 +26,21 @@
   version = "v1.1.0"
 
 [[projects]]
+  digest = "1:ba9a3ee3359edeeec2c6c1ddb6976db4b7ca6ad045e73b43471e32f01b5786e4"
+  name = "github.com/dsnet/compress"
+  packages = [
+    ".",
+    "bzip2",
+    "bzip2/internal/sais",
+    "internal",
+    "internal/errors",
+    "internal/prefix",
+  ]
+  pruneopts = ""
+  revision = "da652975a8eea9fa0735aba8056747a751db0bd3"
+  version = "v0.0.1"
+
+[[projects]]
   digest = "1:1f8d5d186d2f0da45060d0383dcf4c165f17bcc3d309f3a509e7df206c5a4f37"
   name = "github.com/emicklei/go-restful"
   packages = [
@@ -116,6 +131,14 @@
   pruneopts = ""
   revision = "b4deda0973fb4c70b50d226b1af49f3da59f5265"
   version = "v1.1.0"
+
+[[projects]]
+  digest = "1:6a6322a15aa8e99bd156fbba0aae4e5d67b4bb05251d860b348a45dfdcba9cce"
+  name = "github.com/golang/snappy"
+  packages = ["."]
+  pruneopts = ""
+  revision = "2a8bb927dd31d8daada140a5d09578521ce5c36a"
+  version = "v0.0.1"
 
 [[projects]]
   branch = "master"
@@ -212,6 +235,14 @@
   revision = "60711f1a8329503b04e1c88535f419d0bb440bff"
 
 [[projects]]
+  digest = "1:e26c759de83ce6fe27f99082458a7ad9fcc51a95215b4f5bbacd1345b61bc6ba"
+  name = "github.com/mholt/archiver"
+  packages = ["."]
+  pruneopts = ""
+  revision = "d572b2e8b82726cee9476d1b9d63a7fe9b601ff1"
+  version = "v3.1.1"
+
+[[projects]]
   digest = "1:0c0ff2a89c1bb0d01887e1dac043ad7efbf3ec77482ef058ac423d13497e16fd"
   name = "github.com/modern-go/concurrent"
   packages = ["."]
@@ -226,6 +257,14 @@
   pruneopts = ""
   revision = "1df9eeb2bb81f327b96228865c5687bc2194af3f"
   version = "1.0.0"
+
+[[projects]]
+  digest = "1:b93a939355dc613ca1c23bf39f6d4c207da431a31dd8af001cc334ad24cab9d3"
+  name = "github.com/nwaples/rardecode"
+  packages = ["."]
+  pruneopts = ""
+  revision = "cc3e4b2381762c56dbcdf9f93be03349a1dc1c14"
+  version = "v1.0.0"
 
 [[projects]]
   branch = "master"
@@ -259,6 +298,17 @@
   pruneopts = ""
   revision = "5f041e8faa004a95c88a202771f4cc3e991971e6"
   version = "v2.0.1"
+
+[[projects]]
+  digest = "1:02e6dc9c030387868a684f7754fd88c98ae9fc04c27f04aedceae998f00b9bbf"
+  name = "github.com/pierrec/lz4"
+  packages = [
+    ".",
+    "internal/xxh32",
+  ]
+  pruneopts = ""
+  revision = "d705d4371bfccdf47f10e45584e896026c83616f"
+  version = "v2.2.3"
 
 [[projects]]
   digest = "1:256484dbbcd271f9ecebc6795b2df8cad4c458dd0f5fd82a8c2fa0c29f233411"
@@ -302,6 +352,27 @@
   pruneopts = ""
   revision = "ffdc059bfe9ce6a4e144ba849dbedead332c6053"
   version = "v1.3.0"
+
+[[projects]]
+  digest = "1:cc4c87dc4fa2a87abd2a0901cbd8c0ca10a4a83929d62947de0ad111ab830e01"
+  name = "github.com/ulikunitz/xz"
+  packages = [
+    ".",
+    "internal/hash",
+    "internal/xlog",
+    "lzma",
+  ]
+  pruneopts = ""
+  revision = "6f934d456d51e742b4eeab20d925a827ef22320a"
+  version = "v0.5.6"
+
+[[projects]]
+  branch = "master"
+  digest = "1:5d5ea0c53c32b0465b910eb1d98b045c2f14c416880c54dd5356a1c6b4569041"
+  name = "github.com/xi2/xz"
+  packages = ["."]
+  pruneopts = ""
+  revision = "48954b6210f8d154cb5f8484d3a3e1f83489309e"
 
 [[projects]]
   branch = "master"
@@ -565,6 +636,7 @@
   analyzer-version = 1
   input-imports = [
     "github.com/golang/mock/gomock",
+    "github.com/mholt/archiver",
     "github.com/operator-framework/operator-sdk/pkg/sdk",
     "github.com/operator-framework/operator-sdk/pkg/sdk/action",
     "github.com/operator-framework/operator-sdk/pkg/sdk/handler",
@@ -576,6 +648,8 @@
     "github.com/stretchr/testify/assert",
     "github.com/stretchr/testify/require",
     "k8s.io/api/apps/v1",
+    "k8s.io/api/apps/v1beta1",
+    "k8s.io/api/apps/v1beta2",
     "k8s.io/api/batch/v1",
     "k8s.io/api/core/v1",
     "k8s.io/api/extensions/v1beta1",
@@ -597,6 +671,8 @@
     "k8s.io/client-go/kubernetes",
     "k8s.io/client-go/kubernetes/fake",
     "k8s.io/client-go/kubernetes/typed/apps/v1",
+    "k8s.io/client-go/kubernetes/typed/apps/v1beta1",
+    "k8s.io/client-go/kubernetes/typed/apps/v1beta2",
     "k8s.io/client-go/kubernetes/typed/batch/v1",
     "k8s.io/client-go/kubernetes/typed/core/v1",
     "k8s.io/client-go/kubernetes/typed/extensions/v1beta1",

@@ -20,6 +20,10 @@ spec:
         release: {{ .Release.Name }}
     spec:
       serviceAccountName: infrabox-service-gcp
+      {{ if .Values.imagePullSecret }}
+      imagePullSecrets:
+        - name: {{ .Values.imagePullSecret }}
+      {{ end }}
       containers:
         - name: {{ .Chart.Name }}
           command: ["./gcp"]
@@ -36,6 +40,8 @@ spec:
             value: infrabox-worker
           - name: MAX_NUM_CLUSTERS
             value: {{ .Values.max_clusters | quote }}
+          - name: LOG_LEVEL
+            value: {{ .Values.log_level | quote }}
       volumes:
       - name: service-account
         secret:

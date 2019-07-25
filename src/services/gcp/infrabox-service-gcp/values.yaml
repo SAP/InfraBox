@@ -4,4 +4,9 @@ image:
   repository: quay.io/infrabox/service-gcp
   tag: latest
 
+imagePullSecret:
+
 max_clusters: 30
+
+# info | debug | warn | error
+log_level: info
