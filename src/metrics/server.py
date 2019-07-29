@@ -676,7 +676,7 @@ def main():
     get_env('INFRABOX_DATABASE_PASSWORD')
     get_env('INFRABOX_DATABASE_HOST')
     get_env('INFRABOX_DATABASE_PORT')
-    server_port = os.environ.get('INFRABOX_PORT', 8000)
+    server_port = os.environ.get('INFRABOX_PORT', 8080)
 
     # Copied from review.py, could be changed over time
     conn = connect_db()
@@ -709,7 +709,6 @@ def main():
             active_job_gauge.update(conn)
             rsc_gauge.update(conn)
             all_job_gauge.update(conn)
-            print('test')
             cpu_capacity.update(conn)
             cpu_usage.update(conn)
             memory_capacity.update(conn)
@@ -729,6 +728,7 @@ def main():
             # the db connection closed unexpectedly
             conn = connect_db()
             conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
+
         # experimental value
         time.sleep(1.3)
 
