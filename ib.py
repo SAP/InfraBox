@@ -37,6 +37,7 @@ IMAGES = [
     {'name': 'service-gcp'},
     {'name': 'service-namespace'},
     {'name': 'metrics'},
+    {'name': 'metrics-json'},
     {'name': 'checker', 'depends_on': ['images-base']},
     {'name': 'cluster-status', 'depends_on': ['images-base']},
     {'name': 'status-cachet', 'depends_on': ['images-base']},

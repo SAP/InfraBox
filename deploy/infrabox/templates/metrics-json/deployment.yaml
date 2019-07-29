@@ -1,0 +1,29 @@
+{{ if .Values.monitoring.enabled }}
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+    name: infrabox-metrics-json
+    namespace: {{ template "system_namespace" . }}
+    labels:
+        app: infrabox-metrics-json
+spec:
+    replicas: 1
+    template:
+        metadata:
+            labels:
+                app: infrabox-metrics-json
+        spec:
+            {{ include "imagePullSecret" . | indent 8 }}
+            terminationGracePeriodSeconds: 0
+            containers:
+            {{ include "containers_database" . | indent 12 }}
+            -
+                name: metrics-json
+                image: {{ include "image_repository" . }}/metrics-json:{{ include "image_tag" . }}
+                env:
+                {{ include "env_database" . | indent 16 }}
+                {{ include "env_general" . | indent 16 }}
+                {{ include "env_version" . | indent 16 }}
+            volumes:
+                {{ include "volumes_database" . | indent 16 }}
+{{ end }}
