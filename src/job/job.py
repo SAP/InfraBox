@@ -218,7 +218,9 @@ class RunJob(Job):
             def_repo = definition.get('repository', {})
             repo_clone = def_repo.get('clone', True)
             repo_submodules = def_repo.get('submodules', True)
-            full_history = def_repo.get('full_history', False)
+            full_history = def_repo.get('full_history', None)
+            if full_history is None:
+                full_history = repo.get('full_history', False)
 
             commit = repo['commit']
 
