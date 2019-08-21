@@ -282,7 +282,7 @@ class CPUUsage:
                             ['cluster'])
         self._cpu_per_cluster = """
             SELECT cluster_name, 
-            sum((j.definition#>>'{resources,limits,cpu}')::float::float*100) cpu_usage
+            sum((j.definition#>>'{resources,limits,cpu}')::float::float) cpu_usage
 			FROM job j 
 			WHERE j.state = 'running'
 			GROUP BY cluster_name
@@ -736,5 +736,3 @@ def main():
 if __name__ == '__main__':
     running = True
     main()
-
-

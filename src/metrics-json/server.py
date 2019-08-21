@@ -121,7 +121,7 @@ LEFT JOIN
             r = g.db.execute_many("""
 select p.name as p_name, b.build_number, b.restart_counter, j.name as j_name, (j.definition#>>'{resources,limits,memory}')::float as memory, (j.definition#>>'{resources,limits,cpu}')::float as cpu, j.id 
 from project p, build b, job j 
-where p.id = j.project_id AND b.id = j.build_id AND b.id =%(bid)s
+where p.id = j.project_id AND b.id = j.build_id AND b.id = %(bid)s
             """, {
                 'bid': d['scopedVars']['bid']['value']
             })
