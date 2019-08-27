@@ -62,6 +62,7 @@ type MasterAuth struct {
 type RemoteCluster struct {
     Name       string
     Status     string
+    Zone       string
     Endpoint   string
     MasterAuth MasterAuth
 }
@@ -551,6 +552,69 @@ func getRemoteClusters(log *logrus.Entry) ([]RemoteCluster, error) {
 
     if err != nil {
         log.Errorf("Could not list clusters: %v", err)
+        return nil, err
+    }
+
+    var gkeclusters []RemoteCluster
+    err = json.Unmarshal(out, &gkeclusters)
+
+    if err != nil {
+        log.Errorf("Could not parse cluster list: %v", err)
+        return nil, err
+    }
+
+    return gkeclusters, nil
+}
+
+func GcLoop(maxAge string, interval int, log *logrus.Entry) {
+    log.Infof("Entering gc loop")
+
+    for ;; {
+        go cleanUpClusters(maxAge, log)
+        time.Sleep(time.Duration(int(time.Second) * interval))
+    }
+}
+
+func cleanUpClusters(maxAge string, log *logrus.Entry) {
+    log.Infof("Starting GC")
+
+    clusters, err := getOutdatedClusters(maxAge, log)
+    if err != nil {
+        log.Error("Error get outdated clusters")
+        return
+    }
+
+    log.Debug("Start clean up clusters")
+
+    for _, cluster := range clusters {
+        if cluster.Status == "STOPPING" {
+            continue
+        }
+
+        if _, err := cleanupK8s(&cluster, log); err != nil {
+            log.Errorf("Error clean up cluster: %v", err)
+        }
+
+        log.Infof("Deleting cluster %s", cluster.Name)
+        cmd := exec.Command("gcloud", "-q", "container", "clusters", "delete", cluster.Name, "--async", "--zone", cluster.Zone)
+        out, err := cmd.CombinedOutput()
+        if err != nil {
+            log.Errorf("Failed to delete cluster: %v", err)
+            log.Error(string(out))
+        }
+    }
+
+    log.Info("GC done")
+}
+
+func getOutdatedClusters(maxAge string, log *logrus.Entry) ([]RemoteCluster, error) {
+    cmd := exec.Command("bash", "-c", "gcloud container clusters list " +
+        "--filter='createTime<-P" + maxAge + " AND name:ib-*' --format json")
+
+    out, err := cmd.Output()
+
+    if err != nil {
+        log.Errorf("Could not list outdated clusters: %v, %v", err, out)
         return nil, err
     }
 
