@@ -145,9 +145,8 @@ class PipelineInvocationController(Controller):
 
     def _get_pipeline(self, pi):
         if pi['spec']['pipelineName'] not in self.pipelines:
-            url = '%s/apis/core.infrabox.net/v1alpha1/namespaces/%s/ibpipelines/%s' % (self.args.api_server,
-                                                                                       pi['metadata']['namespace'],
-                                                                                       pi['spec']['pipelineName'])
+            url = '%s/apis/core.infrabox.net/v1alpha1/ibpipelines/%s' % (self.args.api_server,
+                                                                          pi['spec']['pipelineName'])
             self.pipelines[pi['spec']['pipelineName']] = self._get(url)
 
         return copy.deepcopy(self.pipelines[pi['spec']['pipelineName']])
@@ -416,9 +415,8 @@ class FunctionInvocationController(Controller):
 
     def _get_function(self, fi):
         if fi['spec']['functionName'] not in self.functions:
-            url = '%s/apis/core.infrabox.net/v1alpha1/namespaces/%s/ibfunctions/%s' % (self.args.api_server,
-                                                                                       self.namespace,
-                                                                                       fi['spec']['functionName'])
+            url = '%s/apis/core.infrabox.net/v1alpha1/ibfunctions/%s' % (self.args.api_server,
+                                                                         fi['spec']['functionName'])
             self.functions[fi['spec']['functionName']] = self._get(url)
 
         return copy.deepcopy(self.functions[fi['spec']['functionName']])
