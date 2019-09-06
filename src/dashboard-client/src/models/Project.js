@@ -35,7 +35,7 @@ export default class Project {
     }
 
     userHasAdminRights () {
-        return this.userHasOwnerRights() || this.userrole === 'Administrator'
+        return this.userHasOwnerRights() || this.userrole === 'Administrator' || store.state.user.isAdmin()
     }
 
     userHasDevRights () {
