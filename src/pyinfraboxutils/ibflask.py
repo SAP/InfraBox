@@ -109,7 +109,7 @@ def get_token():
 
             return token
         else:
-            logger.warn('Invalid auth header format')
+            logger.debug('Invalid auth header format')
             return None
     elif cookie:
         token = cookie

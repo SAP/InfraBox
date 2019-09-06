@@ -29,7 +29,7 @@
 - [Private repositories](/docs/job/private_repo.md): Configure SSH Keys for accessing private repositories
 
 ## API Documentation
-- [REST API](https://rebilly.github.io/ReDoc/?url=https://infrabox.ninja/api/swagger.json)
+- [REST API](https://redocly.github.io/redoc/?url=https://infrabox.ninja/api/swagger.json)
 
 ## Extending InfraBox
 - [Custom Services](/docs/services/custom_services.md)

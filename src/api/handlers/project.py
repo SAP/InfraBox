@@ -80,6 +80,9 @@ class State(Resource):
 
         project_type = p['type']
 
+        build_number = request.args.get('build_number', None)
+        build_restart_count = request.args.get('build_restart_counter', 1)
+
         rows = None
         if request.args.get('branch', None) and project_type in ('github', 'gerrit'):
             rows = g.db.execute_many_dict('''
@@ -97,6 +100,18 @@ class State(Resource):
                     LIMIT 1
                 )
             ''', [project_id, project_id, request.args['branch']])
+        elif build_number and build_restart_count:
+            rows = g.db.execute_many_dict('''
+                SELECT state FROM job j
+                WHERE j.project_id = %s
+                AND j.build_id = (
+                    SELECT id
+                    FROM build
+                    WHERE project_id = %s
+                    AND build_number = %s
+                    AND restart_counter = %s
+                )
+            ''', [project_id, project_id, build_number, build_restart_count])
         else:
             rows = g.db.execute_many_dict('''
                 SELECT state FROM job j
@@ -127,6 +142,10 @@ class State(Resource):
                 status = state
                 color = 'red'
 
+            if state == 'unstable':
+                status = state
+                color = 'yellow'
+
         return get_badge('infrabox', status, color)
 
 @ns.route('/tests.svg')
@@ -140,6 +159,8 @@ class Tests(Resource):
         '''
         branch = request.args.get('branch', None)
         job_name = request.args.get('job_name', '%')
+        build_number = request.args.get('build_number', None)
+        build_restart_count = request.args.get('build_restart_counter', 1)
 
         p = g.db.execute_one_dict('''
             SELECT type FROM project WHERE id = %s
@@ -177,9 +198,39 @@ class Tests(Resource):
                                 ORDER BY j.created_at DESC
                                 LIMIT 1
                             )
-                            AND j.name LIKE %s
+                            AND j.name LIKE CONCAT(%s, '%')
                     )
             ''', [project_id, project_id, project_id, project_id, branch, job_name])
+        elif build_number and build_restart_count:
+            r = g.db.execute_one_dict('''
+                SELECT
+                    count(CASE WHEN tr.state = 'ok' THEN 1 END) success,
+                    count(CASE WHEN tr.state = 'failure' THEN 1 END) failure,
+                    count(CASE WHEN tr.state = 'error' THEN 1 END) error,
+                    count(CASE WHEN tr.state = 'skipped' THEN 1 END) skipped
+                FROM test_run tr
+                WHERE  tr.project_id = %s
+                    AND tr.job_id IN (
+                        SELECT j.id
+                        FROM job j
+                        WHERE j.project_id = %s
+                            AND j.build_id = (
+                                SELECT b.id
+                                FROM build b
+                                INNER JOIN job j
+                                ON b.id = j.build_id
+                                    AND j.state in ('finished', 'unstable')
+                                    AND b.project_id = %s
+                                    AND j.project_id = %s
+                                    AND j.name LIKE CONCAT(%s, '%')
+                                    AND b.build_number = %s
+                                    AND b.restart_counter = %s
+                                    LIMIT 1
+                            )
+                            AND j.name LIKE CONCAT(%s, '%')
+                    )
+            ''', [project_id, project_id, project_id, project_id,
+                  job_name, build_number, build_restart_count, job_name])
         else:
             r = g.db.execute_one_dict('''
                 SELECT
@@ -198,14 +249,16 @@ class Tests(Resource):
                                 FROM build b
                                 INNER JOIN job j
                                 ON b.id = j.build_id
+                                    AND j.state in ('finished', 'unstable')
                                     AND b.project_id = %s
                                     AND j.project_id = %s
-                                ORDER BY j.created_at DESC
+                                    AND j.name LIKE CONCAT(%s, '%')
+                                ORDER BY j.end_date DESC
                                 LIMIT 1
                             )
-                            AND j.name LIKE %s
+                            AND j.name LIKE CONCAT(%s, '%')
                     )
-            ''', [project_id, project_id, project_id, project_id, job_name])
+            ''', [project_id, project_id, project_id, project_id, job_name, job_name])
 
         total = int(r['success']) + int(r['failure']) + int(r['error'])
         status = '%s / %s' % (r['success'], total)
@@ -224,6 +277,9 @@ class Badge(Resource):
         job_name = request.args.get('job_name', None)
         subject = request.args.get('subject', None)
         branch = request.args.get('branch', None)
+        build_number = request.args.get('build_number', None)
+        build_restart_count = request.args.get('build_restart_counter', 1)
+
         p = g.db.execute_one_dict('''
             SELECT type FROM project WHERE id = %s
         ''', [project_id])
@@ -250,6 +306,22 @@ class Badge(Resource):
                 ORDER BY j.end_date desc
                 LIMIT 1
             ''', [project_id, job_name, subject, project_id, branch])
+        elif build_number and build_restart_count:
+            badge = g.db.execute_one_dict('''
+                SELECT status, color
+                FROM job_badge jb
+                JOIN job j
+                    ON j.id = jb.job_id
+                    AND j.project_id = %s
+                    AND j.state in ('finished', 'unstable')
+                    AND j.name = %s
+                    AND jb.subject = %s
+                JOIN build b
+                    ON j.build_id = b.id
+                    AND b.project_id = %s
+                    AND b.build_number = %s
+                    AND b.restart_counter = %s
+            ''', [project_id, job_name, subject, project_id, build_number, build_number])
         else:
             badge = g.db.execute_one_dict('''
                 SELECT status, color

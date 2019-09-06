@@ -35,7 +35,7 @@ export default class Project {
     }
 
     userHasAdminRights () {
-        return this.userHasOwnerRights() || this.userrole === 'Administrator'
+        return this.userHasOwnerRights() || this.userrole === 'Administrator' || store.state.user.isAdmin()
     }
 
     userHasDevRights () {
@@ -53,8 +53,22 @@ export default class Project {
         return builds
     }
 
-    loadBuilds (from, to) {
-        return NewAPIService.get(`projects/${this.id}/jobs/?from=${from}&to=${to}`)
+    loadBuilds (from, to, sha, branch, cronjob) {
+        let url = `projects/${this.id}/jobs/?from=${from}&to=${to}`
+
+        if (sha) {
+            url += `&sha=${sha}`
+        }
+
+        if (branch) {
+            url += `&branch=${branch}`
+        }
+
+        if (cronjob) {
+            url += `&cronjob=${cronjob}`
+        }
+
+        return NewAPIService.get(url)
             .then((jobs) => {
                 this._addJobs(jobs)
             })

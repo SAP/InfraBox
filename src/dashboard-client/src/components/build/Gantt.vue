@@ -25,8 +25,8 @@ class StateFormat {
             this.stateIcon = '\uf0e7'
             this.stateColor = '#b7ad1c'
         } else if (js === 'error') {
-            this.stateIcon = '\uf1e2'
-            this.stateColor = 'black'
+            this.stateIcon = '\uf12a'
+            this.stateColor = '#b71c1c'
         } else if (js === 'queued') {
             this.stateIcon = '\uf04c'
             this.stateColor = 'lightgrey'
@@ -194,6 +194,8 @@ export class GanttChart {
      label_visible = true
      symbolSize = 0
      svg_width = 0
+     jobs_pos_map = {}
+     parents_count = {}
 
     constructor() {
         this.symbolSize = this.box_height * 0.7
@@ -214,15 +216,14 @@ export class GanttChart {
 
      createRaphael() {
         const height = this.jobs.length * (this.box_height + this.box_padding) + this.box_padding
-        if (document.getElementById("build-graph")) {
-            this.svg_width = document.getElementById("build-graph").offsetWidth;
+        if (document.getElementById("holder")) {
+            this.svg_width = document.getElementById("holder").offsetWidth;
             this.svg_width = this.svg_width * 0.95;
         }
 
         if (this.r) {
             this.r.clear()
             this.r.setSize(this.svg_width, height)
-            //document.getElementById("holder").innerHTML = "";
         } else {
             this.r = Raphael('holder', this.svg_width, height)
         }
@@ -242,10 +243,8 @@ export class GanttChart {
     }
 
     findJobPosById(id) {
-        for (let i = 0; i < this.jobs.length; ++i) {
-            if (this.jobs[i].id === id) {
-                return i
-            }
+        if (id in this.jobs_pos_map) {
+            return this.jobs_pos_map[id]
         }
 
         return null
@@ -281,12 +280,16 @@ export class GanttChart {
      sortJobs() {
         const all_jobs = this.jobs
         this.jobs = []
+        this.jobs_pos_map = {}
+        this.parents_count = {}
 
         // Find Start
         for (let i = 0; i < all_jobs.length; ++i) {
             const job = all_jobs[i]
             if (!job.dependencies || !job.dependencies.length) {
+                this.jobs_pos_map[job.id] = this.jobs.length
                 this.jobs.push(job)
+
                 all_jobs.splice(i, 1)
                 break
             }
@@ -317,6 +320,7 @@ export class GanttChart {
                     }
 
                     if (found_all_deps && found_parent) {
+                        this.jobs_pos_map[job.id] = this.jobs.length
                         this.jobs.push(job)
                         all_jobs.splice(i, 1)
                         updated = true
@@ -331,6 +335,7 @@ export class GanttChart {
         }
 
         for (const j of all_jobs) {
+            this.jobs_pos_map[j.id] = this.jobs.length
             this.jobs.push(j)
         }
 
@@ -339,6 +344,7 @@ export class GanttChart {
             job.level = this.countParents(job)
             job.pos = i
         }
+
     }
 
     getX(job) {
@@ -360,30 +366,26 @@ export class GanttChart {
     }
 
     countParents(job) {
-        if (job.dependencies.length === 0) {
-            return 0
-        } else {
-            let c = 0
-            for (const dep of job.dependencies) {
-                for (const j of this.jobs) {
-                    if (j.id !== dep['job-id']) {
-                        continue
-                    }
+        if (job.id in this.parents_count) {
+            return this.parents_count[job.id]
+        }
 
-                    const r = this.countParents(j) + 1
+        let c = 0
+        for (const dep of job.dependencies) {
 
-                    if (r > c) {
-                        c = r
+            const r = this.countParents(this.jobs[this.findJobPosById(dep['job-id'])]) + 1
 
-                        if (r > this.maxChain) {
-                            this.maxChain = r
-                        }
-                    }
+            if (r > c) {
+                c = r
+
+                if (r > this.maxChain) {
+                    this.maxChain = r
                 }
             }
 
-            return c
         }
+        this.parents_count[job.id] = c
+        return c
     }
 
     createNode(x, y, job) {
@@ -510,7 +512,7 @@ export class GanttChart {
             }
         }
 
-        if (this.maxChain !== 0) {
+      if (this.maxChain !== 0) {
             this.box_width =
                 (this.svg_width - this.labelOffset -
                     (this.maxChain + 2) * this.box_padding) / (this.maxChain + 1)
@@ -534,7 +536,7 @@ export class GanttChart {
             this.createNode(x, y, job)
         }
 
-        for (const job of this.jobs) {
+      for (const job of this.jobs) {
             job.level = this.countParents(job)
 
             for (const dep of job.dependencies) {
@@ -578,7 +580,7 @@ export class GanttChart {
             }
         }
 
-        // Draw background table
+      // Draw background table
         for (let i = 0; i < this.jobs.length; i++) {
             if ((i % 2) === 0) {
                 const job = this.jobs[i]
@@ -590,7 +592,7 @@ export class GanttChart {
             }
         }
 
-        this.label = this.r.set()
+      this.label = this.r.set()
         const txt = { fill: '#fff' }
         const txt1 = { fill: '#fff' }
         this.label.push(this.r.text(60, 12, 'InfraBox').attr(txt))
@@ -606,15 +608,15 @@ export default {
     },
     props: ['jobs'],
     mounted () {
-        let draw = () => {
             this.chart.setJobs(this.jobs)
             this.chart.draw()
-            this.redraw = setTimeout(draw, 2000)
-        }
-        this.redraw = setTimeout(draw, 200)
     },
-    beforeDestroy () {
-        clearTimeout(this.redraw)
+
+    watch : {
+      jobs () {
+        this.chart.setJobs(this.jobs)
+        this.chart.draw()
+      }
     }
 }
 

@@ -34,6 +34,23 @@ class Jobs(Resource):
     def get(self, project_id):
         build_from = request.args.get('from', None)
         build_to = request.args.get('to', None)
+        sha = request.args.get('sha', None)
+        branch = request.args.get('branch', None)
+        cronjob = request.args.get('cronjob', None)
+        state = request.args.get('state', None)
+
+        if cronjob == "true":
+            cronjob = True
+        elif cronjob == "false":
+            cronjob = False
+        else:
+            cronjob = None
+
+        if build_from:
+            build_from = int(build_from)
+
+        if build_to:
+            build_to = int(build_to)
 
         if not build_to:
             r = g.db.execute_one_dict('''
@@ -49,6 +66,9 @@ class Jobs(Resource):
 
         if not build_from:
             build_from = max(build_to - 10, 0)
+
+        if build_to - build_from > 200:
+            build_from = build_to - 200
 
         jobs = g.db.execute_many_dict('''
             SELECT
@@ -112,8 +132,20 @@ class Jobs(Resource):
                 AND b.project_id = %(pid)s
                 AND b.build_number < %(to)s
                 AND b.build_number >= %(from)s
+                AND (%(sha)s IS NULL OR c.id = %(sha)s)
+                AND (%(branch)s IS NULL OR c.branch = %(branch)s)
+                AND (%(cronjob)s IS NULL OR b.is_cronjob = %(cronjob)s)
+                AND (%(state)s IS NULL OR j.state = %(state)s)
                 ORDER BY j.created_at DESC
-        ''', {'pid': project_id, 'from': build_from, 'to': build_to})
+        ''', {
+            'pid': project_id,
+            'from': build_from,
+            'to': build_to,
+            'sha': sha,
+            'branch': branch,
+            'cronjob': cronjob,
+            'state': state
+        })
 
         result = []
         for j in jobs:
@@ -197,7 +229,12 @@ class JobRestart(Resource):
         '''
         Restart job
         '''
-        user_id = g.token['user']['id']
+        user_id = None
+        if g.token['type'] == 'user':
+            user_id = g.token['user']['id']
+        elif g.token['type'] == 'project':
+            if g.token['project']['id'] != project_id:
+                abort(400, "invalid project token")
 
         job = g.db.execute_one_dict('''
             SELECT state, type, build_id, restarted
@@ -265,13 +302,21 @@ class JobRestart(Resource):
             if j['state'] not in restart_states and j['state'] not in ('skipped', 'queued'):
                 abort(400, 'Some children jobs are still running')
 
-        result = g.db.execute_one_dict('''
-            SELECT username
-            FROM "user"
-            WHERE id = %s
-        ''', [user_id])
-        username = result['username']
-        msg = 'Job restarted by %s\n' % username
+        if user_id is not None:
+            result = g.db.execute_one_dict('''
+                SELECT username
+                FROM "user"
+                WHERE id = %s
+            ''', [user_id])
+            username_or_token = result['username']
+        else:
+            result = g.db.execute_one_dict('''
+                                SELECT description
+                                FROM auth_token
+                                WHERE id = %s
+                            ''', [g.token['id']])
+            username_or_token = "project token " + result['description']
+        msg = 'Job restarted by %s\n' % username_or_token
 
         # Clone Jobs and adjust dependencies
         jobs = []
@@ -413,8 +458,8 @@ class ArchiveDownload(Resource):
             f.seek(0)
 
         if not f:
-            logger.error(key)
             abort(404)
+
         filename = os.path.basename(filename)
 
         return send_file(f, as_attachment=force_download, attachment_filename=filename,\
@@ -533,7 +578,7 @@ class TestHistory(Resource):
 
         j = g.db.execute_one_dict("""
             SELECT id FROM job
-            WHERE id = %s 
+            WHERE id = %s
                 AND project_id = %s
         """, [job_id, project_id])
 
@@ -561,7 +606,7 @@ class TestHistory(Resource):
 		AND tr.project_id = %s
 	    ORDER BY b.build_number, b.restart_counter
 	    LIMIT 30
-        ''', [job_id, test, suite, project_id])
+        ''', [test, suite, project_id])
 
         current_build = None
         result = []
@@ -636,14 +681,13 @@ def compact(s):
 
         count = 1
         for count in range(1, c + 1):
-            if not s:
-                break
-
-            l = s.pop()
-            r['mem'] += l['mem']
+            l = s.pop(0)
+            r['mem'] += max(r['mem'], l['mem'])
             r['cpu'] += l['cpu']
             r['date'] += l['date']
 
+            if not s:
+                break
 
         r['mem'] = r['mem'] / count
         r['cpu'] = r['cpu'] / count

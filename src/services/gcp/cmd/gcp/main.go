@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"context"
+	"os"
 	"runtime"
 	"os/exec"
 	"io/ioutil"
@@ -24,7 +25,7 @@ func printVersion() {
 func main() {
 	printVersion()
 
-    gcpserviceaccount := "/var/run/infrabox.net/gcp/service_account.json"
+	gcpserviceaccount := "/var/run/infrabox.net/gcp/service_account.json"
 
 	logrus.Info("Activating GCP service account")
 	authCmd := exec.Command("gcloud", "auth", "activate-service-account", "--key-file", gcpserviceaccount)
@@ -57,10 +58,23 @@ func main() {
 	if err != nil {
 		logrus.Fatalf("Failed to get watch gcp: %v", err)
 	}
-	resyncPeriod := 5
+	resyncPeriod := 20
 	logrus.Infof("Watching %s, %s, %s, %d", resource, kind, namespace, resyncPeriod)
 
-    logrus.SetLevel(logrus.WarnLevel)
+	logLevel := os.Getenv("LOG_LEVEL")
+
+	switch logLevel {
+	case "debug":
+		logrus.SetLevel(logrus.DebugLevel)
+	case "info":
+		logrus.SetLevel(logrus.InfoLevel)
+	case "warn":
+		logrus.SetLevel(logrus.WarnLevel)
+	case "error":
+		logrus.SetLevel(logrus.ErrorLevel)
+	default:
+		logrus.SetLevel(logrus.InfoLevel)
+	}
 
 	sdk.Watch(resource, kind, namespace, resyncPeriod)
 	sdk.Handle(stub.NewHandler())

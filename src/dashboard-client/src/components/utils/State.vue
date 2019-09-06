@@ -44,7 +44,7 @@
         </span>
         <span v-if="state=='error'">
             <div class="bg-error circle-icon">
-                <i class="fa fa-fw fa-bomb"></i>
+                <i class="fa fa-fw fa-exclamation"></i>
                 <md-tooltip>{{ state }}</md-tooltip>
             </div>
         </span>

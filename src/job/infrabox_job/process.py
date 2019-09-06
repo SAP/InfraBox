@@ -8,13 +8,22 @@ class Failure(Exception):
         super(Failure, self).__init__(message)
         self.message = message
 
+
+class Error(Exception):
+    def __init__(self, message):
+        super(Error, self).__init__(message)
+        self.message = message
+
 class ApiConsole(object):
     def __init__(self):
         pass
 
     def collect(self, line, show=False):
         if show:
-            print line
+            try:
+                print line
+            except UnicodeEncodeError:
+                print line.encode('utf-8')
             sys.stdout.flush()
 
     def execute(self, command, cwd=None, shell=False, show=False, env=None, ignore_error=False, show_cmd=True, retry=False):

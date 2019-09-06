@@ -359,14 +359,13 @@ export default class Job {
                 } else {
                     name += '1'
                 }
-
                 router.push({
                     name: 'JobDetail',
                     params: {
                         projectName: encodeURIComponent(this.project.name),
                         buildNumber: this.build.number,
                         buildRestartCounter: this.build.restartCounter,
-                        jobName: encodeURIComponent(name)
+                        jobName: name
                     }
                 })
             })

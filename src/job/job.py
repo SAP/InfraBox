@@ -1,7 +1,10 @@
 #!/usr/bin/python
 #pylint: disable=too-many-lines,attribute-defined-outside-init,too-many-public-methods,too-many-locals
-import os
 import sys
+reload(sys)
+sys.setdefaultencoding('utf-8')
+
+import os
 import shutil
 import time
 import json
@@ -18,7 +21,7 @@ from pyinfrabox.infrabox import validate_json
 from pyinfrabox.docker_compose import create_from
 
 from infrabox_job.stats import StatsCollector
-from infrabox_job.process import ApiConsole, Failure
+from infrabox_job.process import ApiConsole, Failure, Error
 from infrabox_job.job import Job
 from infrabox_job import find_infrabox_file
 
@@ -29,6 +32,9 @@ from pyinfraboxutils import get_logger
 
 urllib3.disable_warnings()
 logger = get_logger('scheduler')
+
+ERR_EXIT_FAILURE = 1
+ERR_EXIT_ERROR = 2
 
 def makedirs(path):
     os.makedirs(path)
@@ -184,9 +190,7 @@ class RunJob(Job):
         c.execute(['git', 'config', 'remote.origin.url', clone_url], cwd=mount_repo_dir, show=True)
         c.execute(['git', 'config', 'remote.origin.fetch', '+refs/heads/*:refs/remotes/origin/*'],
                   cwd=mount_repo_dir, show=True)
-
-        if not full_history:
-            c.execute(['git', 'fetch', 'origin', commit], cwd=mount_repo_dir, show=True, retry=True)
+        c.execute(['git', 'fetch', 'origin', commit], cwd=mount_repo_dir, show=True, retry=True)
 
         cmd = ['git', 'checkout', '-qf', commit]
 
@@ -204,7 +208,6 @@ class RunJob(Job):
             repo = self.job['repo']
             clone_url = repo['clone_url']
             branch = repo.get('branch', None)
-            full_history = repo.get('full_history', False)
             ref = repo.get('ref', None)
 
             definition = self.job['definition']
@@ -215,6 +218,9 @@ class RunJob(Job):
             def_repo = definition.get('repository', {})
             repo_clone = def_repo.get('clone', True)
             repo_submodules = def_repo.get('submodules', True)
+            full_history = def_repo.get('full_history', None)
+            if full_history is None:
+                full_history = repo.get('full_history', False)
 
             commit = repo['commit']
 
@@ -253,7 +259,7 @@ class RunJob(Job):
             ib_file = os.path.join(self.mount_repo_dir, ib_file)
 
         if not ib_file:
-            raise Failure("infrabox file not found")
+            raise Error("infrabox file not found")
 
         c.header("Parsing infrabox file: %s" % ib_file, show=True)
         data = self.parse_infrabox_file(ib_file)
@@ -731,7 +737,7 @@ class RunJob(Job):
         build_context = os.path.join(self.mount_repo_dir, build_context)
 
         if not build_context.startswith(self.mount_repo_dir):
-            raise Failure('Invalid build_context: %s' % build_context)
+            raise Error('Invalid build_context: %s' % build_context)
 
         return os.path.normpath(build_context)
 
@@ -914,7 +920,7 @@ class RunJob(Job):
             c.execute(cmd, cwd=cwd, show=True)
             self.cache_docker_image(image_name, cache_image)
         except Exception as e:
-            raise Failure("Failed to build the image: %s" % e)
+            raise Error("Failed to build the image: %s" % e)
 
         self._logout_source_registries()
 
@@ -966,7 +972,7 @@ class RunJob(Job):
 
                 c.execute(cmd, show=False)
         except Exception as e:
-            raise Failure("Failed to login to registry: " + e.message)
+            raise Error("Failed to login to registry: " + e.message)
 
     def _logout_registry(self, reg):
         c = self.console
@@ -1062,7 +1068,7 @@ class RunJob(Job):
             try:
                 validate_json(data)
             except Exception as e:
-                raise Failure(e.__str__())
+                raise Error(e.__str__())
 
             return data
 
@@ -1081,13 +1087,13 @@ class RunJob(Job):
                 try:
                     create_from(p)
                 except Exception as e:
-                    raise Failure("%s: %s" % (p, e.message))
+                    raise Error("%s: %s" % (p, e.message))
 
             if job_type == "workflow":
                 workflowfile = job['infrabox_file']
                 p = os.path.join(infrabox_context, workflowfile)
                 if not os.path.exists(p):
-                    raise Failure("%s does not exist" % p)
+                    raise Error("%s does not exist" % p)
 
     def rewrite_depends_on(self, data):
         for job in data['jobs']:
@@ -1160,10 +1166,10 @@ class RunJob(Job):
                     ib_path = os.path.join(new_repo_path, ib_file)
 
                 if not ib_path:
-                    raise Failure("infrabox file not found in %s" % new_repo_path)
+                    raise Error("infrabox file not found in %s" % new_repo_path)
 
                 if ib_path in infrabox_paths:
-                    raise Failure("Recursive include detected")
+                    raise Error("Recursive include detected")
 
                 infrabox_paths[ib_path] = True
                 c.collect("file: %s" % ib_path)
@@ -1196,7 +1202,7 @@ class RunJob(Job):
                 c.collect("file: %s" % p)
 
                 if p in infrabox_paths:
-                    raise Failure("Recursive include detected")
+                    raise Error("Recursive include detected")
 
                 infrabox_paths[p] = True
 
@@ -1273,7 +1279,16 @@ def main():
         with open('/dev/termination-log', 'w+') as out:
             out.write(e.message)
 
-        sys.exit(1)
+        sys.exit(ERR_EXIT_FAILURE)
+
+    except Error as e:
+        j.console.header('Error', show=True)
+        j.console.collect(e.message, show=True)
+
+        with open('/dev/termination-log', 'w+') as out:
+            out.write(e.message)
+
+        sys.exit(ERR_EXIT_ERROR)
     except:
         if j:
             j.console.header('An error occured', show=True)
@@ -1283,7 +1298,7 @@ def main():
             with open('/dev/termination-log', 'w+') as out:
                 out.write(msg)
 
-        sys.exit(1)
+        sys.exit(ERR_EXIT_ERROR)
 
 if __name__ == "__main__":
     main()
