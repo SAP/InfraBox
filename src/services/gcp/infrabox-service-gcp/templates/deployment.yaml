@@ -42,6 +42,15 @@ spec:
             value: {{ .Values.max_clusters | quote }}
           - name: LOG_LEVEL
             value: {{ .Values.log_level | quote }}
+          - name: GC_ENABLED
+            value: {{ .Values.gc_enabled | quote }}
+          {{ if .Values.gc_enabled }}
+          - name: GC_CLUSTER_MAX_AGE
+            value: {{ .Values.gc_cluster_max_age | quote }}
+          - name: GC_INTERVAL
+            value: {{ .Values.gc_interval | quote }}
+          {{ end }}
+
       volumes:
       - name: service-account
         secret:

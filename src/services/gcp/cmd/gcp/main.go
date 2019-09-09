@@ -7,6 +7,7 @@ import (
 	"runtime"
 	"os/exec"
 	"io/ioutil"
+	"strconv"
 
 	stub "github.com/sap/infrabox/src/services/gcp/pkg/stub"
 	sdk "github.com/operator-framework/operator-sdk/pkg/sdk"
@@ -74,6 +75,23 @@ func main() {
 		logrus.SetLevel(logrus.ErrorLevel)
 	default:
 		logrus.SetLevel(logrus.InfoLevel)
+	}
+
+	if os.Getenv("GC_ENABLED") == "true" {
+		logrus.Infof("GC enabled")
+		gcClusterMaxAge := os.Getenv("GC_CLUSTER_MAX_AGE")
+
+		if gcClusterMaxAge == "" {
+			gcClusterMaxAge = "1D"
+		}
+
+		gcInterval, err := strconv.Atoi(os.Getenv("GC_INTERVAL"));
+		if err != nil {
+			gcInterval = 3600
+		}
+
+		log := logrus.WithField("scope", "GC")
+		go stub.GcLoop(gcClusterMaxAge, gcInterval, log)
 	}
 
 	sdk.Watch(resource, kind, namespace, resyncPeriod)

@@ -8,5 +8,14 @@ imagePullSecret:
 
 max_clusters: 30
 
+# clean up outdated cluster to save resources
+gc_enabled: true
+
+# example: 1D (1 day), 12H (12 hours)
+gc_cluster_max_age: 1D
+
+# seconds
+gc_interval: 3600
+
 # info | debug | warn | error
 log_level: info
