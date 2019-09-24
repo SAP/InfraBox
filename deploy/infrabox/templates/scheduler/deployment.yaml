@@ -33,6 +33,14 @@ spec:
                 -
                     name: INFRABOX_KUBERNETES_MASTER_PORT
                     value: "443"
+{{ if .Values.job.mem_soft_limit_enabled }}
+                -
+                    name: INFRABOX_JOB_MEM_SOFT_LIMIT_ENABLED
+                    value: {{ .Values.job.mem_soft_limit_enabled | quote }}
+                -
+                    name: INFRABOX_JOB_MEM_HARD_LIMIT
+                    value: {{ .Values.job.mem_hard_limit | quote }}
+{{ end }}
                 volumeMounts:
                 {{ include "mounts_rsa_private" . | indent 16 }}
                 {{ include "mounts_gerrit" . | indent 16 }}

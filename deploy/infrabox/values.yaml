@@ -351,6 +351,10 @@ job:
 
     storage_driver: overlay
 
+    mem_soft_limit_enabled: false
+
+    mem_hard_limit: 8G
+
 monitoring:
     # Enable InfraBox Monitoring. Requires prometheus-operator to be available.
     enabled: false

@@ -792,7 +792,12 @@ class RunJob(Job):
 
         # Memory limit
         memory_limit = os.environ['INFRABOX_JOB_RESOURCES_LIMITS_MEMORY']
-        cmd += ['-m', '%sm' % memory_limit]
+        if os.environ.get('INFRABOX_JOB_MEM_SOFT_LIMIT_ENABLED', "false") == "true":
+            mem_hard_limit = os.environ.get('INFRABOX_JOB_MEM_HARD_LIMIT', "31G")
+            cmd += ['--memory-reservation', '%sm' % memory_limit]
+            cmd += ['-m', mem_hard_limit]
+        else:
+            cmd += ['-m', '%sm' % memory_limit]
 
         # repo mount
         cmd += ['-v', '%s:/infrabox' % self.mount_data_dir]

@@ -521,12 +521,13 @@ class FunctionInvocationController(Controller):
                     }
                 }
             elif pod['status']['phase'] == 'Pending':
-                fi['status']['state'] = {
-                    'pending': {
-                        'reason': pod['status']['conditions'][-1].get('reason', None),
-                        'message': pod['status']['conditions'][-1].get('message', None)
+                if len(pod['status'].get('conditions', [])) > 0:
+                    fi['status']['state'] = {
+                        'pending': {
+                            'reason': pod['status']['conditions'][-1].get('reason', None),
+                            'message': pod['status']['conditions'][-1].get('message', None)
+                        }
                     }
-                }
 
         return fi
 
@@ -583,6 +584,19 @@ class Scheduler(object):
             'name': 'INFRABOX_JOB_RESOURCES_LIMITS_CPU',
             'value': str(cpu)
         }]
+
+        mem_soft_limit_enabled = os.environ.get('INFRABOX_JOB_MEM_SOFT_LIMIT_ENABLED', "false") == "true"
+        mem_hard_limit = os.environ.get('INFRABOX_JOB_MEM_HARD_LIMIT', "31G")
+
+        if mem_soft_limit_enabled:
+            env.append({
+                'name': 'INFRABOX_JOB_MEM_SOFT_LIMIT_ENABLED',
+                'value': "true"
+            })
+            env.append({
+                'name': 'INFRABOX_JOB_MEM_HARD_LIMIT',
+                'value': mem_hard_limit
+            })
 
         # Get ssh key for private repos
         cursor = self.conn.cursor()
@@ -662,6 +676,20 @@ class Scheduler(object):
                 s['metadata']['annotations']['infrabox.net/job-token'] = job_token
                 s['metadata']['annotations']['infrabox.net/root-url'] = root_url
 
+        resources = {
+            'requests': {
+                'memory': '%sMi' % mem,
+                'cpu': cpu
+            },
+            'limits': {
+                'memory': '%sMi' % mem,
+                'cpu': cpu
+            }
+        }
+
+        if mem_soft_limit_enabled:
+            resources['limits']['memory'] = mem_hard_limit
+
         job = {
             'apiVersion': 'core.infrabox.net/v1alpha1',
             'kind': 'IBPipelineInvocation',
@@ -673,12 +701,7 @@ class Scheduler(object):
                 'services': services,
                 'steps': {
                     'run': {
-                        'resources': {
-                            'limits': {
-                                'memory': '%sMi' % mem,
-                                'cpu': cpu
-                            }
-                        },
+                        'resources': resources,
                         'env': env,
                     }
                 }
@@ -755,7 +778,6 @@ class Scheduler(object):
         if not jobs:
             # No queued job
             return
-
         # check dependecies
         for j in jobs:
             job_id = j[0]
