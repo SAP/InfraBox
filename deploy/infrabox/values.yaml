@@ -355,6 +355,8 @@ job:
 
     mem_hard_limit: 8G
 
+    cpu_ratio: 1
+
 monitoring:
     # Enable InfraBox Monitoring. Requires prometheus-operator to be available.
     enabled: false

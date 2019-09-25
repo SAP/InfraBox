@@ -33,6 +33,9 @@ spec:
                 -
                     name: INFRABOX_KUBERNETES_MASTER_PORT
                     value: "443"
+                -
+                    name: INFRABOX_JOB_CPU_RATIO
+                    value: {{ .Values.job.cpu_ratio | quote }}
 {{ if .Values.job.mem_soft_limit_enabled }}
                 -
                     name: INFRABOX_JOB_MEM_SOFT_LIMIT_ENABLED

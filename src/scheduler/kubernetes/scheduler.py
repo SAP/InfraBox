@@ -587,6 +587,7 @@ class Scheduler(object):
 
         mem_soft_limit_enabled = os.environ.get('INFRABOX_JOB_MEM_SOFT_LIMIT_ENABLED', "false") == "true"
         mem_hard_limit = os.environ.get('INFRABOX_JOB_MEM_HARD_LIMIT', "31G")
+        cpu_ratio = int(os.environ.get('INFRABOX_JOB_CPU_RATIO', "1"))
 
         if mem_soft_limit_enabled:
             env.append({
@@ -683,7 +684,7 @@ class Scheduler(object):
             },
             'limits': {
                 'memory': '%sMi' % mem,
-                'cpu': cpu
+                'cpu': (cpu+0.2) * cpu_ratio
             }
         }
 
