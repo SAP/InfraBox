@@ -75,6 +75,11 @@ spec:
                 -
                     name: INFRABOX_GERRIT_ENABLED
                     value: {{ .Values.gerrit.enabled | quote }}
+{{ if .Values.job.weighted_cluster_assignment }}
+                -
+                    name: INFRABOX_WEIGHTED_CLUSTER_ASSIGNMENT
+                    value: {{ .Values.job.weighted_cluster_assignment | quote }}
+{{ end }}
             volumes:
                 {{ include "volumes_database" . | indent 16 }}
                 {{ include "volumes_rsa" . | indent 16 }}
