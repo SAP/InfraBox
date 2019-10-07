@@ -1171,7 +1171,7 @@ class Scheduler(object):
     def get_default_cluster(self):
         cursor = self.conn.cursor()
         cursor.execute("""
-            SELECT name, labels
+            SELECT name, labels, weight
             FROM cluster
             WHERE active = true AND
                   enabled = true
@@ -1181,13 +1181,26 @@ class Scheduler(object):
 
         random.shuffle(result)
 
+        possible_clusters = []
+        total_weight = 0
         for row in result:
             cluster_name = row[0]
             labels = row[1]
 
             for l in labels:
                 if l == 'default':
-                    return cluster_name
+                    if os.environ.get('INFRABOX_WEIGHTED_CLUSTER_ASSIGNMENT', 'true') != 'true':
+                        return cluster_name
+                    possible_clusters.append(row)
+                    total_weight += row['weight']
+
+        r = random.randrange(0, total_weight)
+        l = n = 0
+        for c in possible_clusters:
+            n = l + c['weight']
+            if r >= l and r < n:
+                return c['name']
+            l = n
 
         return None
 

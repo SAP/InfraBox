@@ -665,7 +665,7 @@ def find_leaf_jobs(jobs):
 class CreateJobs(Resource):
     def get_target_cluster(self, clusters, cluster_selector):
         possible_clusters = []
-        total_nodes = 0
+        total_weight = 0
         for c in clusters:
             matches = True
             for s in cluster_selector:
@@ -677,12 +677,12 @@ class CreateJobs(Resource):
                 if os.environ.get('INFRABOX_WEIGHTED_CLUSTER_ASSIGNMENT', 'true') != 'true':
                     return c['name']
                 possible_clusters.append(c)
-                total_nodes += c['nodes']
+                total_weight += c['weight']
 
-        r = random.randrange(0, total_nodes)
+        r = random.randrange(0, total_weight)
         l = n = 0
         for c in possible_clusters:
-            n = l + c['nodes']
+            n = l + c['weight']
             if r >= l and r < n:
                 return c['name']
             l = n
@@ -691,7 +691,7 @@ class CreateJobs(Resource):
 
     def assign_cluster(self, jobs):
         clusters = g.db.execute_many_dict('''
-            SELECT name, labels, nodes
+            SELECT name, labels, weight
             FROM cluster
             WHERE active = true
             AND enabled = true
