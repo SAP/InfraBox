@@ -351,6 +351,8 @@ job:
 
     storage_driver: overlay
 
+    weighted_cluster_assignment: false
+
 monitoring:
     # Enable InfraBox Monitoring. Requires prometheus-operator to be available.
     enabled: false
