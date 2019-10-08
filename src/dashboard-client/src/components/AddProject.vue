@@ -9,7 +9,7 @@
                         </h3>
                     </md-card-header-text>
             </md-card-header>
-        <md-stepper @completed="addProject">
+        <md-stepper @completed="addProject" @change="stepperChange">
             <md-theme md-name="running">
                 <md-step :md-editable="true">
                     <h3>Select project type</h3>
@@ -113,7 +113,7 @@ export default {
         selectRepo: false
     }),
     created () {
-        UserService.loadRepos()
+        // UserService.loadRepos()
     },
     watch: {
         projName () {
@@ -140,6 +140,11 @@ export default {
             }
 
             ProjectService.addProject(this.projName, this.priv, this.type, repoName)
+        },
+        stepperChange (value) {
+            if (value === 1 && this.type === 'github') {
+                UserService.loadRepos()
+            }
         },
         selectGithubRepo (r) {
             this.githubRepo = r
