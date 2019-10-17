@@ -5,7 +5,7 @@ InfraBox is a continuous integration system. It's well suited for cloud native a
 
 [![Introduction to InfraBox](https://img.youtube.com/vi/O8N2U7d404I/0.jpg)](https://www.youtube.com/watch?v=O8N2U7d404I)
 
-Some of InfraBox' features are:
+Some of InfraBox's features are:
 
 - [Static and dynamic workflows](https://github.com/SAP/infrabox-examples)
 - [Set resource limits (CPU and memory) for each task](https://github.com/SAP/infrabox-examples)
