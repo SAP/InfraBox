@@ -1,0 +1,1 @@
+ALTER TABLE "commit" ALTER COLUMN "message" TYPE TEXT;
