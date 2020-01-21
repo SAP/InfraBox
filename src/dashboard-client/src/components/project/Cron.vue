@@ -106,13 +106,13 @@ export default {
     methods: {
         deleteCronJob (id) {
             NewAPIService.delete(`projects/${this.project.id}/cronjobs/${id}`)
-            .then((response) => {
-                NotificationService.$emit('NOTIFICATION', new Notification(response))
-                this.project._reloadCronJobs()
-            })
-            .catch((err) => {
-                NotificationService.$emit('NOTIFICATION', new Notification(err))
-            })
+                .then((response) => {
+                    NotificationService.$emit('NOTIFICATION', new Notification(response))
+                    this.project._reloadCronJobs()
+                })
+                .catch((err) => {
+                    NotificationService.$emit('NOTIFICATION', new Notification(err))
+                })
         },
         addCronJob () {
             const d = {
@@ -126,21 +126,21 @@ export default {
                 infrabox_file: this.infrabox_file
             }
             NewAPIService.post(`projects/${this.project.id}/cronjobs`, d)
-            .then((response) => {
-                NotificationService.$emit('NOTIFICATION', new Notification(response))
-                this.name = ''
-                this.minute = ''
-                this.hour = ''
-                this.day_month = ''
-                this.month = ''
-                this.day_week = ''
-                this.sha = ''
-                this.infrabox_file = 'infrabox.json'
-                this.project._reloadCronJobs()
-            })
-            .catch((err) => {
-                NotificationService.$emit('NOTIFICATION', new Notification(err))
-            })
+                .then((response) => {
+                    NotificationService.$emit('NOTIFICATION', new Notification(response))
+                    this.name = ''
+                    this.minute = ''
+                    this.hour = ''
+                    this.day_month = ''
+                    this.month = ''
+                    this.day_week = ''
+                    this.sha = ''
+                    this.infrabox_file = 'infrabox.json'
+                    this.project._reloadCronJobs()
+                })
+                .catch((err) => {
+                    NotificationService.$emit('NOTIFICATION', new Notification(err))
+                })
         }
     }
 }

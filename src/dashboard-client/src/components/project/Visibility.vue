@@ -31,23 +31,23 @@ export default {
         makePublic () {
             console.log(this.project)
             NewAPIService.post(`projects/${this.project.id}/visibility/`, {private: false})
-            .then((response) => {
-                NotificationService.$emit('NOTIFICATION', new Notification(response))
-                this.project.public = true
-            })
-            .catch((err) => {
-                NotificationService.$emit('NOTIFICATION', new Notification(err))
-            })
+                .then((response) => {
+                    NotificationService.$emit('NOTIFICATION', new Notification(response))
+                    this.project.public = true
+                })
+                .catch((err) => {
+                    NotificationService.$emit('NOTIFICATION', new Notification(err))
+                })
         },
         makePrivate () {
             NewAPIService.post(`projects/${this.project.id}/visibility/`, {private: true})
-            .then((response) => {
-                NotificationService.$emit('NOTIFICATION', new Notification(response))
-                this.project.public = false
-            })
-            .catch((err) => {
-                NotificationService.$emit('NOTIFICATION', new Notification(err))
-            })
+                .then((response) => {
+                    NotificationService.$emit('NOTIFICATION', new Notification(response))
+                    this.project.public = false
+                })
+                .catch((err) => {
+                    NotificationService.$emit('NOTIFICATION', new Notification(err))
+                })
         }
     }
 }
