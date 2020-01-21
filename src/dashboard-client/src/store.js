@@ -87,12 +87,13 @@ function handleJobUpdate (state, event) {
     // Update Build
     let build = findBuild(project, event.data.build.id)
     if (!build) {
-        build = new Build(event.data.build.id,
-                          event.data.build.build_number,
-                          event.data.build.restart_counter,
-                          event.data.build.is_cronjob,
-                          commit, event.data.pull_request,
-                          project)
+        build = new Build(
+            event.data.build.id,
+            event.data.build.build_number,
+            event.data.build.restart_counter,
+            event.data.build.is_cronjob,
+            commit, event.data.pull_request,
+            project)
 
         let builds = [build]
 

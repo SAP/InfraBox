@@ -84,9 +84,10 @@ class Section {
 }
 
 export default class Job {
-    constructor (id, name, state,
-            startDate, endDate, build, project,
-            dependencies, message, definition, nodeName, avgCpu, restarted) {
+    constructor (
+        id, name, state,
+        startDate, endDate, build, project,
+        dependencies, message, definition, nodeName, avgCpu, restarted) {
         this.id = id
         this.name = name
         this.state = state
