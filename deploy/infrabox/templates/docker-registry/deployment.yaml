@@ -40,7 +40,7 @@ spec:
                 volumeMounts:
             -
                 name: registry
-                image: registry:2.6.2
+                image: registry:2.7.1
                 env:
                 -
                     name: REGISTRY_HTTP_HOST
@@ -155,6 +155,12 @@ spec:
                     mountPath: /etc/infrabox/gcs
                     readOnly: true
                 {{ end }}
+                livenessProbe:
+                    httpGet:
+                        path: /v2/
+                        port: 5000
+                    initialDelaySeconds: 60
+                    periodSeconds: 60
 
             volumes:
                 {{ include "volumes_database" . | indent 16 }}
