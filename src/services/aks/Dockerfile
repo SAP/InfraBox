@@ -19,8 +19,8 @@ RUN \
   apk update && \
   apk add bash py-pip libssl1.0 && \
   apk add --virtual=build linux-headers gcc libffi-dev musl-dev openssl-dev python-dev make && \
-  pip install -U pip && \
-  pip install azure-cli && \
+  python -m pip install -U "pip!=20.0" && \
+  python -m pip install azure-cli && \
   apk del --purge build && \
   az aks install-cli
 
