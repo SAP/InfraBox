@@ -111,72 +111,72 @@ export default class Project {
 
     deleteToken (id) {
         return NewAPIService.delete(`projects/${this.id}/tokens/${id}`)
-        .then((response) => {
-            NotificationService.$emit('NOTIFICATION', new Notification(response, 'done'))
-            this._reloadTokens()
-        })
-        .catch((err) => {
-            NotificationService.$emit('NOTIFICATION', new Notification(err))
-        })
+            .then((response) => {
+                NotificationService.$emit('NOTIFICATION', new Notification(response, 'done'))
+                this._reloadTokens()
+            })
+            .catch((err) => {
+                NotificationService.$emit('NOTIFICATION', new Notification(err))
+            })
     }
 
     addToken (description) {
         const d = { description: description, scope_pull: true, scope_push: true }
         return NewAPIService.post(`projects/${this.id}/tokens`, d)
-        .then((response) => {
-            const token = response.data.token
-            this._reloadTokens()
-            return token
-        })
-        .catch((err) => {
-            NotificationService.$emit('NOTIFICATION', new Notification(err))
-        })
+            .then((response) => {
+                const token = response.data.token
+                this._reloadTokens()
+                return token
+            })
+            .catch((err) => {
+                NotificationService.$emit('NOTIFICATION', new Notification(err))
+            })
     }
 
     triggerBuild (branchOrSha, env) {
         const d = { branch_or_sha: branchOrSha, env: env }
         return NewAPIService.post(`projects/${this.id}/trigger`, d)
-        .then((r) => {
-            NotificationService.$emit('NOTIFICATION', new Notification(r))
-            const d = r.data
-            router.push(`/project/${this.name}/build/${d.build.build_number}/${d.build.restartCounter}/`)
-        })
-        .catch((err) => {
-            NotificationService.$emit('NOTIFICATION', new Notification(err))
-        })
+            .then((r) => {
+                NotificationService.$emit('NOTIFICATION', new Notification(r))
+                const d = r.data
+                router.push(`/project/${this.name}/build/${d.build.build_number}/${d.build.restartCounter}/`)
+            })
+            .catch((err) => {
+                NotificationService.$emit('NOTIFICATION', new Notification(err))
+            })
     }
 
     addCollaborator (username, role) {
         const d = { username: username, role: role }
         return NewAPIService.post(`projects/${this.id}/collaborators`, d)
-        .then((response) => {
-            NotificationService.$emit('NOTIFICATION', new Notification(response))
-            this._reloadCollaborators()
-        })
-        .catch((err) => {
-            NotificationService.$emit('NOTIFICATION', new Notification(err))
-        })
+            .then((response) => {
+                NotificationService.$emit('NOTIFICATION', new Notification(response))
+                this._reloadCollaborators()
+            })
+            .catch((err) => {
+                NotificationService.$emit('NOTIFICATION', new Notification(err))
+            })
     }
 
     updateCollaborator (co) {
         const d = { role: co.role }
         return NewAPIService.put(`projects/${this.id}/collaborators/${co.id}`, d)
-        .then((response) => {
-            NotificationService.$emit('NOTIFICATION', new Notification(response))
-            this._reloadCollaborators()
-        })
-        .catch((err) => {
-            NotificationService.$emit('NOTIFICATION', new Notification(err))
-            this._reloadCollaborators()
-        })
+            .then((response) => {
+                NotificationService.$emit('NOTIFICATION', new Notification(response))
+                this._reloadCollaborators()
+            })
+            .catch((err) => {
+                NotificationService.$emit('NOTIFICATION', new Notification(err))
+                this._reloadCollaborators()
+            })
     }
 
     _loadJobs () {
         return NewAPIService.get(`projects/${this.id}/jobs/`)
-        .then((response) => {
-            store.commit('addJobs', response)
-            events.listenJobs(this)
-        })
+            .then((response) => {
+                store.commit('addJobs', response)
+                events.listenJobs(this)
+            })
     }
 
     _loadCollaborators () {

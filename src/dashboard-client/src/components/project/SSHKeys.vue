@@ -72,13 +72,13 @@ export default {
     methods: {
         deleteSSHKey (id) {
             NewAPIService.delete(`projects/${this.project.id}/sshkeys/${id}`)
-            .then((response) => {
-                NotificationService.$emit('NOTIFICATION', new Notification(response))
-                this.project._reloadSSHKeys()
-            })
-            .catch((err) => {
-                NotificationService.$emit('NOTIFICATION', new Notification(err))
-            })
+                .then((response) => {
+                    NotificationService.$emit('NOTIFICATION', new Notification(response))
+                    this.project._reloadSSHKeys()
+                })
+                .catch((err) => {
+                    NotificationService.$emit('NOTIFICATION', new Notification(err))
+                })
         },
         addSSHKey () {
             const d = {
@@ -86,15 +86,15 @@ export default {
                 secret: this.secret
             }
             NewAPIService.post(`projects/${this.project.id}/sshkeys`, d)
-            .then((response) => {
-                NotificationService.$emit('NOTIFICATION', new Notification(response))
-                this.name = ''
-                this.secret = ''
-                this.project._reloadSSHKeys()
-            })
-            .catch((err) => {
-                NotificationService.$emit('NOTIFICATION', new Notification(err))
-            })
+                .then((response) => {
+                    NotificationService.$emit('NOTIFICATION', new Notification(response))
+                    this.name = ''
+                    this.secret = ''
+                    this.project._reloadSSHKeys()
+                })
+                .catch((err) => {
+                    NotificationService.$emit('NOTIFICATION', new Notification(err))
+                })
         }
     }
 }

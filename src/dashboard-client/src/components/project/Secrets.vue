@@ -55,26 +55,26 @@ export default {
     methods: {
         deleteSecret (id) {
             NewAPIService.delete(`projects/${this.project.id}/secrets/${id}`)
-            .then((response) => {
-                NotificationService.$emit('NOTIFICATION', new Notification(response))
-                this.project._reloadSecrets()
-            })
-            .catch((err) => {
-                NotificationService.$emit('NOTIFICATION', new Notification(err))
-            })
+                .then((response) => {
+                    NotificationService.$emit('NOTIFICATION', new Notification(response))
+                    this.project._reloadSecrets()
+                })
+                .catch((err) => {
+                    NotificationService.$emit('NOTIFICATION', new Notification(err))
+                })
         },
         addSecret () {
             const d = { name: this.name, value: this.value }
             NewAPIService.post(`projects/${this.project.id}/secrets`, d)
-            .then((response) => {
-                NotificationService.$emit('NOTIFICATION', new Notification(response))
-                this.name = ''
-                this.value = ''
-                this.project._reloadSecrets()
-            })
-            .catch((err) => {
-                NotificationService.$emit('NOTIFICATION', new Notification(err))
-            })
+                .then((response) => {
+                    NotificationService.$emit('NOTIFICATION', new Notification(response))
+                    this.name = ''
+                    this.value = ''
+                    this.project._reloadSecrets()
+                })
+                .catch((err) => {
+                    NotificationService.$emit('NOTIFICATION', new Notification(err))
+                })
         }
     }
 }

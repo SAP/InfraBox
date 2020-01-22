@@ -71,10 +71,10 @@ export default {
     methods: {
         addToken () {
             this.project.addToken(this.description)
-            .then((token) => {
-                this.token = token
-                this.$refs['dialog'].open()
-            })
+                .then((token) => {
+                    this.token = token
+                    this.$refs['dialog'].open()
+                })
             this.description = ''
         }
     }
