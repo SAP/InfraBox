@@ -154,7 +154,7 @@ class V2Repos(Resource):
         token = user['github_api_token']
 
         page = request.args.get('page', 1)
-        per_page = request.args.get('page', 50)
+        per_page = request.args.get('per_page', 50)
         github_repos_response = get_github_api('/user/repos?visibility=all&page={page}&per_page={per_page}'
                                                .format(page=page, per_page=per_page),
                                                token, raw_result=True)
