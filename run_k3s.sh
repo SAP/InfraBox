@@ -59,8 +59,15 @@ _installInfrabox() {
     pushd deploy/infrabox
 
     if [ ! -f /tmp/id_rsa ]; then
-        ssh-keygen -N '' -t rsa -f /tmp/id_rsa
+        ssh-keygen -N '' -t rsa -m pem -f /tmp/id_rsa
         ssh-keygen -f /tmp/id_rsa.pub -e -m pem > /tmp/id_rsa.pem
+    fi
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        priv_key_b64=$(base64 -b 0 /tmp/id_rsa)
+        pub_key_b64=$(base64 -b 0 /tmp/id_rsa.pem)
+    else
+        priv_key_b64=$(base64 -w 0 /tmp/id_rsa)
+        pub_key_b64=$(base64 -w 0 /tmp/id_rsa.pem)
     fi
 
     echo "## Install infrabox"
@@ -69,8 +76,8 @@ port: 30443
 admin:
   email: admin@admin.com
   password: Admin123!
-  private_key: $(base64 -w 0 /tmp/id_rsa)
-  public_key: $(base64 -w 0 /tmp/id_rsa.pem)
+  private_key: ${priv_key_b64}
+  public_key: ${pub_key_b64}
 general:
   dont_check_certificates: true
 database:
