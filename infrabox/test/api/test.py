@@ -18,19 +18,18 @@ from pyinfraboxutils.storage import storage
 
 if __name__ == '__main__':
     storage.create_buckets()
-
     with open('results.xml', 'wb') as output:
         suite = unittest.TestSuite()
         #unittest.main(testRunner=xmlrunner.XMLTestRunner(output=output))
-        suite.addTest(unittest.TestLoader().loadTestsFromTestCase(ProjectTest))
-        suite.addTest(unittest.TestLoader().loadTestsFromTestCase(TriggerTest))
-        suite.addTest(unittest.TestLoader().loadTestsFromTestCase(JobApiTest))
-        suite.addTest(unittest.TestLoader().loadTestsFromTestCase(BuildTest))
-        suite.addTest(unittest.TestLoader().loadTestsFromTestCase(JobTest))
-        suite.addTest(unittest.TestLoader().loadTestsFromTestCase(CollaboratorsTest))
-        suite.addTest(unittest.TestLoader().loadTestsFromTestCase(TokensTest))
-        suite.addTest(unittest.TestLoader().loadTestsFromTestCase(SecretsTest))
-        suite.addTest(unittest.TestLoader().loadTestsFromTestCase(UserTest))
+        suite.addTests(unittest.TestLoader().loadTestsFromTestCase(ProjectTest))
+        suite.addTests(unittest.TestLoader().loadTestsFromTestCase(TriggerTest))
+        suite.addTests(unittest.TestLoader().loadTestsFromTestCase(JobApiTest))
+        suite.addTests(unittest.TestLoader().loadTestsFromTestCase(BuildTest))
+        suite.addTests(unittest.TestLoader().loadTestsFromTestCase(JobTest))
+        suite.addTests(unittest.TestLoader().loadTestsFromTestCase(CollaboratorsTest))
+        suite.addTests(unittest.TestLoader().loadTestsFromTestCase(TokensTest))
+        suite.addTests(unittest.TestLoader().loadTestsFromTestCase(SecretsTest))
+        suite.addTests(unittest.TestLoader().loadTestsFromTestCase(UserTest))
 
         testRunner = XMLTestRunner(output=output)
         #unittest.main(testRunner = XMLTestRunner(output=output),

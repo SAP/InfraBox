@@ -2,13 +2,14 @@ import uuid
 import urllib
 import os
 import json
+import mimetypes
 
 from datetime import datetime
 from functools import wraps, update_wrapper
 
 import requests
 
-from flask import g, request, abort, make_response, Response
+from flask import g, request, abort, make_response, Response, send_file
 from flask_restplus import Resource, fields
 
 from werkzeug.datastructures import FileStorage
@@ -349,6 +350,87 @@ upload_parser = api.parser()
 upload_parser.add_argument('project.zip', location='files',
                            type=FileStorage, required=True)
 
+@ns.route('/archive')
+@api.response(403, 'Not Authorized')
+class Archive(Resource):
+    def get(self, project_id):
+        job_name = request.args.get('job_name', None)
+        filename = request.args.get('filename', None)
+        branch = request.args.get('branch', None)
+        if not filename or not job_name:
+            abort(404)
+
+        p = g.db.execute_one_dict('''
+            SELECT type, name FROM project WHERE id = %s
+        ''', [project_id])
+        project_type = p['type']
+        project_name = p['name']
+
+        result = None
+
+        if branch and project_type in ('github', 'gerrit'):
+            result = g.db.execute_one_dict('''
+                SELECT j.id, name, c.id commit_id, b.build_number, b.restart_counter, c.branch
+                FROM (
+                    SELECT id, name, unnest(archive) AS archive, definition->>'name' AS realname, start_date, build_id
+                    FROM job
+                    WHERE project_id = %s
+                ) j
+                JOIN build b ON b.id = j.build_id
+                JOIN "commit" c ON b.commit_id = c.id
+                WHERE archive->>'filename' = %s AND realname = %s AND c.branch = %s
+                ORDER BY start_date DESC;
+            ''', [project_id, filename, job_name, branch])
+        else:
+            result = g.db.execute_one_dict('''
+                SELECT j.id, name, c.id commit_id, b.build_number, b.restart_counter, c.branch
+                FROM (
+                    SELECT id, name, unnest(archive) AS archive, definition->>'name' AS realname, start_date, build_id
+                    FROM job
+                    WHERE project_id = %s
+                ) j
+                JOIN build b ON b.id = j.build_id
+                LEFT JOIN commit c ON b.commit_id = c.id
+                WHERE archive->>'filename' = %s AND realname = %s
+                ORDER BY start_date DESC;
+            ''', [project_id, filename, job_name])
+
+        if not result:
+            abort(404)
+
+        job_id = result['id']
+
+        build_number = '{build_number}.{restart_counter}'.format(
+            build_number=result['build_number'], restart_counter=result['restart_counter']
+        )
+        root_url = get_root_url('global')
+        build_url = '%s/dashboard/#/project/%s/build/%s/%s' % (root_url,
+                                                               project_name,
+                                                               result['build_number'],
+                                                               result['restart_counter'])
+        job_url = '%s/job/%s' % (build_url, result['name'])
+
+        headers = {
+            'Infrabox-Build-Number': build_number,
+            'Infrabox-Build-Url': build_url,
+            'Infrabox-Job-Url': job_url,
+        }
+        if result['branch']:
+            headers['Infrabox-Branch'] = result['branch']
+        if result['commit_id']:
+            headers['Infrabox-Commit'] = result['commit_id']
+
+        f = storage.download_archive('%s/%s' % (job_id, filename))
+
+        if not f:
+            abort(404)
+
+        filename = os.path.basename(filename)
+
+        resp = make_response(send_file(f, attachment_filename=filename,
+                                       mimetype=mimetypes.guess_type(filename)[0]))
+        resp.headers = headers
+        return resp
 
 @ns.route('/upload/<build_id>/')
 @api.expect(upload_parser)
