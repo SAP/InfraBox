@@ -17,7 +17,7 @@ RUN    apt-get update -y \
         nose \
         pyyaml \
         coverage \
-        xmlrunner \
+        unittest-xml-reporting \
         mock \
         codecov \
         flask \
