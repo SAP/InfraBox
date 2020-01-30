@@ -27,6 +27,7 @@ class ApiTestTemplate(unittest.TestCase):
         self.repo_id = '3514af82-3c4f-4bb5-b1da-a89a0ced5e6f'
         self.build_id = '4514af82-3c4f-4bb5-b1da-a89a0ced5e6f'
         self.job_id = '1454af82-4c4f-4bb5-b1da-a54a0ced5e6f'
+        self.job_id_2 = '1554af82-4c4f-4bb5-b1da-a54a0ced5e6f'
         self.token_id = '2bbc6c34-11dd-448c-a678-7209a071b12a'
         self.job_name = 'test_job_name1'
         self.sha = 'd670460b4b4aece5915caf5c68d12f560a9fe3e4'
@@ -76,6 +77,13 @@ class ApiTestTemplate(unittest.TestCase):
                 }
             }
         }
+
+        TestClient.execute("""
+                INSERT INTO job (id, state, build_id, type, name, project_id,
+                                dockerfile, cluster_name, definition)
+                VALUES (%s, 'queued', %s, 'create_job_matrix',
+                        %s, %s, '', 'master', %s);
+            """, [self.job_id_2, self.build_id, "Create Jobs", self.project_id, json.dumps(definition)])
 
         TestClient.execute("""
                 INSERT INTO job (id, state, build_id, type, name, project_id,

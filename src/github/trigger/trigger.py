@@ -356,9 +356,9 @@ class Trigger(object):
 
         if hc['commit'].get('author', None):
             author = hc['commit']['author']
-            author_email = author.get('email', 'unkown')
-            author_login = author.get('login', 'unkown')
-            author_name = author.get('name', 'unkown')
+            author_email = author.get('email', 'unknown')
+            author_login = author.get('login', 'unknown')
+            author_name = author.get('name', 'unknown')
             author_date = author.get('date', datetime.now())
 
         commit_id = hc['sha']
