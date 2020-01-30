@@ -58,7 +58,7 @@ class JobApiTest(ApiTestTemplate):
                             content_type='multipart/form-data')
         self.assertEqual(r, {})
 
-        r = TestClient.get(self.url_ns + '/cache', self.job_headers)
+        r = TestClient.get(self.url_ns + '/cache?filename=%s' % filename, headers=self.job_headers)
         actual_cache_size = stat(file_path).st_size
         received_cache_size = TestUtils.get_stream_file_size(r.data)
 
