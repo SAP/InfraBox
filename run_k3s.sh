@@ -91,7 +91,7 @@ storage:
     enabled: true
     endpoint: infrabox-minio.infrabox-system
     port: '9000'
-    region: us-east1
+    region: us-east-1
     secret_access_key: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
     secure: false
 job:
