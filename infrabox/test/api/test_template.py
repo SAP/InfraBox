@@ -23,11 +23,14 @@ class ApiTestTemplate(unittest.TestCase):
         TestClient.execute('TRUNCATE auth_token')
 
         self.project_id = '1514af82-3c4f-4bb5-b1da-a89a0ced5e6f'
+        self.project_id_github = '1614af82-3c4f-4bb5-b1da-a89a0ced5e6f'
+        self.project_id_no_collab = '1714af82-3c4f-4bb5-b1da-a89a0ced5e6f'
         self.user_id = '2514af82-3c4f-4bb5-b1da-a89a0ced5e6f'
         self.repo_id = '3514af82-3c4f-4bb5-b1da-a89a0ced5e6f'
         self.build_id = '4514af82-3c4f-4bb5-b1da-a89a0ced5e6f'
         self.job_id = '1454af82-4c4f-4bb5-b1da-a54a0ced5e6f'
         self.job_id_2 = '1554af82-4c4f-4bb5-b1da-a54a0ced5e6f'
+        self.job_id_running = '1554af82-4c4f-4bb5-b1da-a42a0ced5e6f'
         self.token_id = '2bbc6c34-11dd-448c-a678-7209a071b12a'
         self.job_name = 'test_job_name1'
         self.sha = 'd670460b4b4aece5915caf5c68d12f560a9fe3e4'
@@ -57,6 +60,16 @@ class ApiTestTemplate(unittest.TestCase):
                 INSERT INTO project(id, name, type)
                 VALUES (%s, 'testproject', 'upload');
             """, [self.project_id])
+
+        TestClient.execute("""
+                INSERT INTO project(id, name, type)
+                VALUES (%s, 'testproject_archive_github', 'github');
+            """, [self.project_id_github])
+
+        TestClient.execute("""
+                INSERT INTO project(id, name, type)
+                VALUES (%s, 'testproject_archive_no_collab', 'upload');
+            """, [self.project_id_no_collab])
 
         TestClient.execute('''
             INSERT INTO auth_token (id, description, scope_push, scope_pull, project_id)
@@ -91,6 +104,23 @@ class ApiTestTemplate(unittest.TestCase):
                 VALUES (%s, 'queued', %s, 'run_docker_compose',
                         %s, %s, '', 'master', %s);
             """, [self.job_id, self.build_id, self.job_name, self.project_id, json.dumps(definition)])
+
+        definition_running = {
+            'build_only': True,
+            'name': 'running_job',
+            'resources': {
+                'limits': {
+                    'cpu': 1,
+                    'memory': 512
+                }
+            }
+        }
+        TestClient.execute("""
+                INSERT INTO job (id, state, build_id, type, name, project_id,
+                                dockerfile, cluster_name, definition)
+                VALUES (%s, 'running', %s, 'run_docker_compose',
+                        'running_job', %s, '', 'master', %s);
+            """, [self.job_id_running, self.build_id, self.project_id, json.dumps(definition_running)])
 
         TestClient.execute("""
                 INSERT INTO build (id, project_id, build_number, commit_id, source_upload_id)

@@ -65,6 +65,32 @@ allow {
     api.token.project.id = project_id
 }
 
+#Allow GET access to /api/v1/projects/<project_id>/archive for collaborators
+allow {
+    api.method = "GET"
+    api.path = ["api", "v1", "projects", project_id, "archive"]
+
+    api.token.type = "user"
+    project_collaborator([api.token.user.id, project_id])
+}
+
+#Allow GET access to /api/v1/projects/<project_id>/archive if project is public
+allow {
+    api.method = "GET"
+    api.path = ["api", "v1", "projects", project_id, "archive"]
+
+    project_public(project_id)
+}
+
+#Allow GET access to /api/v1/projects/<project_id>/archive for project tokens
+allow {
+    api.method = "GET"
+    api.path = ["api", "v1", "projects", project_id, "archive"]
+
+    api.token.type = "project"
+    api.token.project.id = project_id
+}
+
 # Allow POST access to /api/v1/projects/<project_id>/upload/<build_id>/ for project tokens
 allow {
     api.method = "POST"
