@@ -383,6 +383,9 @@ class Job(Resource):
         if data['commit']['tag']:
             data['env_vars']['INFRABOX_GIT_TAG'] = data['commit']['tag']
 
+        if data['commit'].get('id', None):
+            data['env_vars']['INFRABOX_COMMIT_ID'] = data['commit']['id']
+
         if pull_request_id:
             data['env_vars']['INFRABOX_GITHUB_PULL_REQUEST'] = "true"
 
