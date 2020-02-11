@@ -104,6 +104,7 @@ export default class Job {
         this.archive = []
         this.currentSection = null
         this.linesProcessed = 0
+        this.hasLogsAvailable = false
         this.message = message
         this.definition = definition
         this.nodeName = nodeName
@@ -196,6 +197,10 @@ export default class Job {
 
         this.currentSection.addLine(line)
         this.linesProcessed++
+
+        if (!this.hasLogsAvailable) {
+            this.hasLogsAvailable = true
+        }
     }
 
     _addLines (lines) {

@@ -81,7 +81,7 @@
                                     <md-icon>file_download</md-icon><span class="m-l-xs">Run Local</span>
                                     <md-tooltip md-direction="bottom">Run Local</md-tooltip>
                                 </md-button>
-                                <md-button class="md-raised md-primary md-dense" v-on:click="downloadOutput()" :disabled="job.state=='running'||job.state=='queued'||job.state=='scheduled'">
+                                <md-button class="md-raised md-primary md-dense" v-on:click="downloadOutput()" :disabled="!job.hasLogsAvailable&&(job.state=='running'||job.state=='queued'||job.state=='scheduled')">
                                     <md-icon>subtitles</md-icon><span class="m-l-xs">Console Output</span>
                                     <md-tooltip md-direction="bottom">Console Output</md-tooltip>
                                 </md-button>
@@ -128,7 +128,7 @@
                                                         </md-button>
                                                     </div>
                                                     <div class="m-r-xl">
-                                                        <md-button class="md-icon-button md-primary md-raised md-dense" v-on:click="downloadOutput()" :disabled="job.state=='running'||job.state=='queued'||job.state=='scheduled'">
+                                                        <md-button class="md-icon-button md-primary md-raised md-dense" v-on:click="downloadOutput()" :disabled="!job.hasLogsAvailable&&(job.state=='running'||job.state=='queued'||job.state=='scheduled')">
                                                             <md-icon style="color: white">subtitles</md-icon>
                                                             <md-tooltip md-direction="bottom">Console Output</md-tooltip>
                                                         </md-button>
