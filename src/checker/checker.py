@@ -12,6 +12,7 @@ import psycopg2.extensions
 from pyinfraboxutils import get_logger, get_env
 from pyinfraboxutils.storage import storage
 from pyinfraboxutils.db import connect_db
+from pyinfraboxutils.slack import SlackHook
 from prometheus_client import Counter, Summary, start_http_server
 
 class Checker(object):
@@ -55,6 +56,7 @@ class Checker(object):
         self.infrabox_dashboard_access_errors = Counter(
             'infrabox_dashboard_access_errors_total', 
             'Errors acessing dashboard')
+        self.slack = CheckerSlackHook.get_from_env(self.logger)
 
     def _check_dashboard(self):
         try:
@@ -173,9 +175,20 @@ class Checker(object):
             self.retry_times = 0
             cursor = self.conn.cursor()
             cursor.execute("""
-                UPDATE cluster SET active=%s
-                WHERE name=%s
+                UPDATE cluster c SET active=%s
+                FROM cluster prev
+                WHERE c.name=%s
+                RETURNING c.active active, prev.active prev_active
             """, [self.is_cluster_healthy, self.cluster_name])
+            state_update = cursor.fetchall()
+            if state_update and self.slack:
+                if state_update[0][0] != state_update[0][1]:
+                    self.logger.info("State change of cluster %s detected. Posting to slack [%s -> %s]",
+                                     self.cluster_name, state_update[0][1], state_update[0][0])
+                    if state_update[0][0]:
+                        self.slack.notify_up(self.cluster_name, "self-check")
+                    else:
+                        self.slack.notify_down(self.cluster_name, "self-check")
             if self.is_cluster_healthy:
                 cursor.execute("""
                     UPDATE cluster SET last_active=NOW()
@@ -198,8 +211,10 @@ class Checker(object):
         clusters = cursor.fetchall()
         cursor.close()
         for c in clusters:
-            self.logger.info("Set cluster %s to inactive. " 
-                "Reason: last update time is too old" % c[0])
+            self.logger.info("Set cluster %s to inactive. "
+                             "Reason: last update time is too old" % c[0])
+            if self.slack:
+                self.slack.notify_down(c[0], "inactivity")
 
     def run(self):
         self.logger.info("Starting InfraBox Checker")
@@ -209,6 +224,36 @@ class Checker(object):
                 self._update_cluster_status(is_checking_healthy)
                 self._disable_clusters_with_outdated_active_time()
             time.sleep(self.check_interval)
+
+
+class CheckerSlackHook(SlackHook):
+    def __init__(self, hook_url, logger):
+        super(CheckerSlackHook, self).__init__(hook_url)
+        self.logger = logger
+
+    def notify_up(self, cluster_name, reason):
+        message = ":arrow_up_green: InfraBox cluster *{}* was activated by checker! [{}]".format(cluster_name, reason)
+        return self._send_wrap_exception(message)
+
+    def notify_down(self, cluster_name, reason):
+        message = ":arrow_down_red: InfraBox cluster *{}* was deactivated by checker! [{}]".format(cluster_name, reason)
+        return self._send_wrap_exception(message)
+
+    def _send_wrap_exception(self, message):
+        try:
+            self.send_status(message)
+        except Exception as e:
+            self.logger.exception("Error posting update to slack hook.")
+            return False
+        return True
+
+    @classmethod
+    def get_from_env(cls, logger):
+        try:
+            return cls(get_env("INFRABOX_CHECKER_SLACK_HOOK_URL"), logger)
+        except:
+            return None
+
 
 def main():
     parser = argparse.ArgumentParser(prog="checker.py")
