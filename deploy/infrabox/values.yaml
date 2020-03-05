@@ -46,6 +46,8 @@ ha:
 
     global_port: 443
 
+    checker_slack_hook: #<checker will report cluster status changes here if set>
+
 cluster:
     # Unique name of all clusters which are connected to the
     # same postgresql database

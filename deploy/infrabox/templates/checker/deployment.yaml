@@ -38,12 +38,31 @@ spec:
                 -
                     name: INFRABOX_KUBERNETES_MASTER_PORT
                     value: "443"
+                -   name: INFRABOX_CHECKER_SLACK_HOOK_URL
+                    valueFrom:
+                        secretKeyRef:
+                            name: infrabox-checker
+                            key: slack_hook_url
+                            optional: true
                 volumeMounts:
                 {{ include "mounts_rsa_private" . | indent 16 }}
                 {{ include "mounts_rsa_public" . | indent 16 }}
                 {{ include "mounts_gcs" . | indent 16 }}
+                {{ if .Values.dev.enabled }}
+                -
+                    name: code
+                    mountPath: "/checker"
+                    subPath: src/checker
+                    readOnly: true
+                -
+                    name: code
+                    mountPath: "/pyinfraboxutils"
+                    subPath: src/pyinfraboxutils
+                    readOnly: true
+                {{ end }}
             volumes:
                 {{ include "volumes_database" . | indent 16 }}
                 {{ include "volumes_rsa" . | indent 16 }}
                 {{ include "volumes_gcs" . | indent 16 }}
+                {{ include "volumes_dev" . | indent 16 }}
 {{ end }}
