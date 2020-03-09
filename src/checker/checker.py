@@ -177,7 +177,7 @@ class Checker(object):
             cursor.execute("""
                 UPDATE cluster c SET active=%s
                 FROM cluster prev
-                WHERE c.name=%s
+                WHERE c.name=%s AND prev.name=c.name
                 RETURNING c.active active, prev.active prev_active
             """, [self.is_cluster_healthy, self.cluster_name])
             state_update = cursor.fetchall()
