@@ -190,7 +190,12 @@ class RunJob(Job):
         c.execute(['git', 'config', 'remote.origin.url', clone_url], cwd=mount_repo_dir, show=True)
         c.execute(['git', 'config', 'remote.origin.fetch', '+refs/heads/*:refs/remotes/origin/*'],
                   cwd=mount_repo_dir, show=True)
-        c.execute(['git', 'fetch', 'origin', commit], cwd=mount_repo_dir, show=True, retry=True)
+        try:
+            c.execute(['git', 'fetch', 'origin', commit], cwd=mount_repo_dir, show=True, retry=False)
+        except Exception:
+            c.collect("failed fetching commit: %s, trying to fetch full history and retry" % commit)
+            c.execute(['git', 'fetch'], cwd=mount_repo_dir, show=True, retry=True)
+            c.execute(['git', 'fetch', 'origin', commit], cwd=mount_repo_dir, show=True, retry=True)
 
         cmd = ['git', 'checkout', '-qf', commit]
 
