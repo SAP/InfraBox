@@ -1,5 +1,6 @@
 from flask import g, request
 from flask_restplus import Resource
+from pyinfraboxutils.ibflask import OK
 
 from pyinfraboxutils.ibrestplus import api
 
@@ -29,3 +30,5 @@ class Clusters(Resource):
             SET enabled=%s
             WHERE name=%s
         ''', [body['enabled'], body['name']])
+
+        return OK("OK")

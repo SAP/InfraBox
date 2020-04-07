@@ -101,6 +101,14 @@
                                     </span>
                                 </router-link>
                             </md-list-item>
+                            <md-list-item class="md-inset">
+                                  <router-link :to="{name: 'AdminClusters'}">
+                                      <span @click="toggleLeftSidenav()">
+                                          <i class="fa fa-server"></i>
+                                          Clusters
+                                      </span>
+                                  </router-link>
+                              </md-list-item>
                         </md-list>
                     </md-list-expand>
                 </md-list-item>
