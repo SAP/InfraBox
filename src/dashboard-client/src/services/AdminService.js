@@ -35,11 +35,11 @@ class AdminService {
     }
 
     updateCluster (name, enabled) {
-      const payload = {
-        name: name,
-        enabled: enabled
-      }
-      return NewAPIService.post(`admin/clusters/`, payload)
+        const payload = {
+            name: name,
+            enabled: enabled
+        }
+        return NewAPIService.post(`admin/clusters/`, payload)
             .then(() => {
                 store.commit('updateAdminCluster', payload)
             })
@@ -47,7 +47,6 @@ class AdminService {
                 NotificationService.$emit('NOTIFICATION', new Notification(err))
             })
     }
-
 }
 
 export default new AdminService()

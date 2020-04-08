@@ -1,5 +1,5 @@
-from flask import g, request
-from flask_restplus import Resource
+from flask import g, request, jsonify
+from flask_restplus import Resource, fields
 from pyinfraboxutils.ibflask import OK
 
 from pyinfraboxutils.ibrestplus import api
@@ -15,12 +15,12 @@ class Clusters(Resource):
 
     def get(self):
         clusters = g.db.execute_many_dict('''
-            SELECT name, active, enabled, last_update, last_active
+            SELECT name, active, enabled, last_update::text, last_active::text
             FROM "cluster"
             ORDER BY name
         ''')
 
-        return clusters
+        return jsonify(clusters)
 
     @api.expect(cluster_setting_model, validate=True)
     def post(self):

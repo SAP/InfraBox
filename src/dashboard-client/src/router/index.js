@@ -15,7 +15,6 @@ import AdminUsers from '@/components/admin/AdminUsers'
 import AdminProjects from '@/components/admin/AdminProjects'
 import AdminClusters from '@/components/admin/AdminClusters'
 
-
 import UserService from '../services/UserService'
 
 Vue.use(Router)

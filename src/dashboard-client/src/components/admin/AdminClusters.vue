@@ -77,7 +77,7 @@ export default {
         setCluster (name) {
             const c = this.s.find(c => c.name === name)
             AdminService.updateCluster(c.name, c.enabled).then(() => {
-              NotificationService.$emit('NOTIFICATION', new Notification({message: `cluster ${c.name} is ${c.enabled ? "enabled": "disabled"}` }))
+                NotificationService.$emit('NOTIFICATION', new Notification({ message: `cluster ${c.name} is ${c.enabled ? 'enabled' : 'disabled'}` }))
             })
         }
     }

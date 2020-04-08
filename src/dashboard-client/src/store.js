@@ -321,7 +321,7 @@ function setAdminClusters (state, clusters) {
     state.admin.clusters = clusters
 }
 
-function updateAdminCluster(state, payload) {
+function updateAdminCluster (state, payload) {
     const { name, enabled } = payload
     const cluster = state.admin.clusters.find(c => c.name === name)
     cluster.enabled = enabled
