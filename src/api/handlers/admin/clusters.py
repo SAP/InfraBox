@@ -26,9 +26,10 @@ class Clusters(Resource):
     def post(self):
         body = request.get_json()
         g.db.execute('''
-            UPDATE clusters
+            UPDATE cluster
             SET enabled=%s
             WHERE name=%s
         ''', [body['enabled'], body['name']])
+        g.db.commit()
 
         return OK("OK")

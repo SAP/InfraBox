@@ -4,7 +4,7 @@
 			<md-card-header-text>
 				<h3 class="md-title card-title">
 					<md-layout>
-						<md-layout md-vertical-align="center">Projects</md-layout>
+						<md-layout md-vertical-align="center">Clusters</md-layout>
 					</md-layout>
 				</h3>
 			</md-card-header-text>
@@ -38,13 +38,13 @@
                             {{ c.active }}
 						</md-table-cell>
 						<md-table-cell>
-                  <md-switch v-model="c.enabled" v-on:change="setCluster(c.name)"></md-switch>
+                  <md-switch v-model="c.enabled" v-on:change="setCluster(c.name, $event)"></md-switch>
 						</md-table-cell>
 						<md-table-cell>
-                            {{ c.last_active }}
+                            {{ moment(c.last_active) }}
 						</md-table-cell>
 						<md-table-cell>
-                            {{ c.last_update }}
+                            {{ moment(c.last_update) }}
 						</md-table-cell>
 					</md-table-row>
 				</md-table-body>
@@ -55,6 +55,7 @@
 </template>
 
 <script>
+import moment from 'moment'
 import store from '../../store'
 import AdminService from '../../services/AdminService'
 import NotificationService from '../../services/NotificationService'
@@ -70,14 +71,21 @@ export default {
     },
     created () {
         AdminService.loadClusters().then(() => {
-            this.clusters = store.state.clusters
+            this.clusters = store.state.admin.clusters
         })
     },
     methods: {
-        setCluster (name) {
-            const c = this.s.find(c => c.name === name)
-            AdminService.updateCluster(c.name, c.enabled).then(() => {
+        moment (v) {
+            return moment(v).format('MMMM Do, hh:mm:ss')
+        },
+
+        setCluster (name, e) {
+            const c = this.clusters.find(c => c.name === name)
+            AdminService.updateCluster(c.name, e).then(() => {
+                console.log(c.name, e)
                 NotificationService.$emit('NOTIFICATION', new Notification({ message: `cluster ${c.name} is ${c.enabled ? 'enabled' : 'disabled'}` }))
+            }).catch((err) => {
+                NotificationService.$emit('NOTIFICATION', new Notification(err))
             })
         }
     }
