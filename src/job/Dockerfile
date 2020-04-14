@@ -33,7 +33,6 @@ RUN apk add --no-cache \
 COPY src/job /job
 
 COPY src/job/ecr_login.sh /usr/local/bin/
-COPY src/job/get_compose_exit_code.sh /usr/local/bin/
 COPY src/job/entrypoint.sh /usr/local/bin/
 
 COPY src/pyinfrabox /pyinfrabox
