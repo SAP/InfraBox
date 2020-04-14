@@ -111,7 +111,6 @@ _installMinio() {
     echo "## Install minio"
     helm install \
         --set serviceType=ClusterIP,replicas=1,persistence.enabled=false \
-        --set image.tag=RELEASE.2020-01-25T02-50-51Z \
         -n infrabox-minio \
         --namespace infrabox-system \
         --wait \
