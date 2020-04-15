@@ -353,7 +353,7 @@ class RunJob(Job):
                 archive_exists = True
                 for f in files:
                     c.collect("%s" % f, show=True)
-                    self.post_file_to_api_server("/archive", f, filename=f.replace(self.infrabox_upload_dir, ''))
+                    self.post_file_to_api_server("/archive", f, filename=f.replace(self.infrabox_upload_dir+'/', ''))
 
         if os.path.exists(self.infrabox_testresult_dir):
             files = self.get_files_in_dir(self.infrabox_testresult_dir)
@@ -406,7 +406,7 @@ class RunJob(Job):
         files = self.get_files_in_dir(self.infrabox_testresult_dir, ending=".xml")
         for f in files:
             c.collect("%s" % f, show=True)
-            self.post_file_to_api_server("/archive", f, filename=f.replace(self.infrabox_upload_dir, ''))
+            self.post_file_to_api_server("/archive", f, filename=f.replace(self.infrabox_upload_dir+'/', ''))
 
             try:
                 converted_result = self.convert_test_result(f)
@@ -695,7 +695,6 @@ class RunJob(Job):
             c.execute(['docker-compose', '-f', compose_file_new, 'up',
                        '--abort-on-container-exit'], env=self.environment, show=True, cwd=cwd)
             c.execute(['docker-compose', '-f', compose_file_new, 'ps'], env=self.environment, cwd=cwd, show=True)
-            c.execute(['get_compose_exit_code.sh', compose_file_new], env=self.environment, cwd=cwd, show=True)
         except:
             raise Failure("Failed to build and run container")
         finally:

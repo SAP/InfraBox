@@ -13,6 +13,7 @@ import JobDetail from '@/components/job/JobDetail'
 import TestDetail from '@/components/test/TestDetail'
 import AdminUsers from '@/components/admin/AdminUsers'
 import AdminProjects from '@/components/admin/AdminProjects'
+import AdminClusters from '@/components/admin/AdminClusters'
 
 import UserService from '../services/UserService'
 
@@ -65,6 +66,11 @@ export default new Router({
         path: '/admin/users',
         name: 'AdminUsers',
         component: AdminUsers,
+        beforeEnter: loginGuard
+    }, {
+        path: '/admin/clusters',
+        name: 'AdminClusters',
+        component: AdminClusters,
         beforeEnter: loginGuard
     }, {
         path: '/project/:projectName',

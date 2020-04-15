@@ -23,6 +23,30 @@ class AdminService {
                 NotificationService.$emit('NOTIFICATION', new Notification(err))
             })
     }
+
+    loadClusters () {
+        return NewAPIService.get(`admin/clusters/`)
+            .then((s) => {
+                store.commit('setAdminClusters', s)
+            })
+            .catch((err) => {
+                NotificationService.$emit('NOTIFICATION', new Notification(err))
+            })
+    }
+
+    updateCluster (name, enabled) {
+        const payload = {
+            name: name,
+            enabled: enabled
+        }
+        return NewAPIService.post(`admin/clusters/`, payload)
+            .then(() => {
+                store.commit('updateAdminCluster', payload)
+            })
+            .catch((err) => {
+                NotificationService.$emit('NOTIFICATION', new Notification(err))
+            })
+    }
 }
 
 export default new AdminService()

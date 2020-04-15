@@ -17,7 +17,8 @@ const state = {
     settings: {},
     admin: {
         projects: [],
-        users: []
+        users: [],
+        clusters: []
     }
 }
 
@@ -316,6 +317,16 @@ function setAdminProjects (state, projects) {
     state.admin.projects = projects
 }
 
+function setAdminClusters (state, clusters) {
+    state.admin.clusters = clusters
+}
+
+function updateAdminCluster (state, payload) {
+    const { name, enabled } = payload
+    const cluster = state.admin.clusters.find(c => c.name === name)
+    cluster.enabled = enabled
+}
+
 const mutations = {
     addProjects,
     addJobs,
@@ -338,6 +349,8 @@ const mutations = {
     setTabs,
     setAdminUsers,
     setAdminProjects,
+    setAdminClusters,
+    updateAdminCluster,
     setArchive
 }
 
