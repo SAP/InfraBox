@@ -15,6 +15,7 @@ user_model = api.model('User', {
     'name': fields.String,
     'email': fields.String,
     'id': fields.String,
+    'role': fields.String(enum=['user', 'devops', 'admin'])
 })
 
 @ns.route('')
@@ -29,7 +30,7 @@ class User(Resource):
         '''
 
         user = g.db.execute_one_dict('''
-            SELECT github_id, username, avatar_url, name, email, id
+            SELECT github_id, username, avatar_url, name, email, id, role
             FROM "user"
             WHERE id = %s
         ''', [g.token['user']['id']])
