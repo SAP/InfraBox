@@ -1,5 +1,5 @@
 from flask import g, abort, request
-from flask_restplus import Resource
+from flask_restplus import Resource, fields
 from pyinfraboxutils.ibflask import OK
 
 from pyinfraboxutils.ibrestplus import api
@@ -14,7 +14,7 @@ class Users(Resource):
 
     def get(self):
         users = g.db.execute_many_dict('''
-            SELECT name, username, email, avatar_url, role
+            SELECT id, name, username, email, avatar_url, role
             FROM "user"
             ORDER BY name
         ''')
@@ -29,7 +29,7 @@ class Users(Resource):
         if body['id'] == '00000000-0000-0000-0000-000000000000':
             abort(403, "can't change role for Admin")
         g.db.execute('''
-                   UPDATE user
+                   UPDATE "user"
                    SET role=%s
                    WHERE id=%s
                ''', [body['role'], body['id']])
