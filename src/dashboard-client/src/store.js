@@ -327,6 +327,12 @@ function updateAdminCluster (state, payload) {
     cluster.enabled = enabled
 }
 
+function setAdminUserRole (state, payload) {
+    const { id, role } = payload
+    const user = state.admin.users.find(c => c.id === id)
+    user.role = role
+}
+
 const mutations = {
     addProjects,
     addJobs,
@@ -348,6 +354,7 @@ const mutations = {
     setStats,
     setTabs,
     setAdminUsers,
+    setAdminUserRole,
     setAdminProjects,
     setAdminClusters,
     updateAdminCluster,

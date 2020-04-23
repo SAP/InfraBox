@@ -61,7 +61,8 @@ class UserService {
                     d.name,
                     d.email,
                     d.github_id,
-                    d.id)
+                    d.id,
+                    d.role)
                 store.commit('setUser', u)
                 ProjectService.init()
             })

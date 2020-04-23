@@ -1,5 +1,5 @@
 export default class User {
-    constructor (username, avatarUrl, name, email, githubId, id) {
+    constructor (username, avatarUrl, name, email, githubId, id, role) {
         this.githubRepos = []
         this.username = username
         this.avatarUrl = avatarUrl
@@ -7,6 +7,7 @@ export default class User {
         this.email = email
         this.githubId = githubId
         this.id = id
+        this.role = role
     }
 
     hasGithubAccount () {
@@ -14,6 +15,10 @@ export default class User {
     }
 
     isAdmin () {
-        return this.id === '00000000-0000-0000-0000-000000000000'
+        return this.role === 'admin'
+    }
+
+    hasWriteAccess () {
+        return this.role === 'devops' || this.isAdmin()
     }
 }
