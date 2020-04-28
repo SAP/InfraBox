@@ -108,8 +108,8 @@ def configure_admin(conn):
 
     cur = conn.cursor()
     cur.execute('''
-        INSERT into "user" (id, username, name, email, password)
-        VALUES ('00000000-0000-0000-0000-000000000000', 'Admin', 'Admin', %s, %s)
+        INSERT into "user" (id, username, name, email, password, role)
+        VALUES ('00000000-0000-0000-0000-000000000000', 'Admin', 'Admin', %s, %s, 'admin')
         ON CONFLICT (id) DO UPDATE
         SET email = %s,
             password = %s

@@ -9,7 +9,7 @@ from pyinfraboxutils import dbpool
 
 logger = get_logger('OPA')
 
-OPA_AUTH_URL = "http://%s:%s/v1/data/infrabox/allow" % (get_env('INFRABOX_OPA_HOST'), get_env('INFRABOX_OPA_PORT'))
+OPA_AUTH_URL = "http://%s:%s/v1/data/infrabox/authz" % (get_env('INFRABOX_OPA_HOST'), get_env('INFRABOX_OPA_PORT'))
 COLLABORATOR_DATA_DEST_URL = "http://%s:%s/v1/data/infrabox/collaborators" % (get_env('INFRABOX_OPA_HOST'), get_env('INFRABOX_OPA_PORT'))
 PROJECT_DATA_DEST_URL = "http://%s:%s/v1/data/infrabox/projects" % (get_env('INFRABOX_OPA_HOST'), get_env('INFRABOX_OPA_PORT'))
 

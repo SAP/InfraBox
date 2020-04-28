@@ -187,11 +187,10 @@ def normalize_token(token):
 
     # Validate user token
     if token["type"] == "user":
-        if not validate_user_token(token):
-            return None
+        return validate_user_token(token)
 
     # Validate project_token
-    if token["type"] == "project":
+    elif token["type"] == "project":
         if not validate_project_token(token):
             return None
 
@@ -220,15 +219,16 @@ def enrich_job_token(token):
 
 def validate_user_token(token):
     if not ("user" in token and "id" in token["user"] and validate_uuid(token['user']['id'])):
-        return False
+        return None
 
     u = g.db.execute_one('''
-        SELECT id FROM "user" WHERE id = %s
+        SELECT id, role FROM "user" WHERE id = %s
     ''', [token['user']['id']])
     if not u:
         logger.warn('user not found')
-        return False
-    return True
+        return None
+    token['user']['role'] = u[1]
+    return token
 
 def validate_project_token(token):
     if not ("project" in token and "id" in token['project'] and validate_uuid(token['project']['id'])

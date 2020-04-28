@@ -34,6 +34,20 @@ class AdminService {
             })
     }
 
+    setUserRole (userId, role) {
+        const payload = {
+            id: userId,
+            role: role
+        }
+        return NewAPIService.post(`admin/users/`, payload)
+            .then(() => {
+                store.commit('setAdminUserRole', payload)
+            })
+            .catch((err) => {
+                NotificationService.$emit('NOTIFICATION', new Notification(err))
+            })
+    }
+
     updateCluster (name, enabled) {
         const payload = {
             name: name,
