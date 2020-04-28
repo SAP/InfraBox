@@ -1,14 +1,14 @@
 <template>
-	<md-card class="main-card">
-		<md-card-header class="main-card-header fix-padding">
-			<md-card-header-text>
-				<h3 class="md-title card-title">
-					<md-layout>
-						<md-layout md-vertical-align="center">Users</md-layout>
-					</md-layout>
-				</h3>
-			</md-card-header-text>
-		</md-card-header>
+    <md-card class="main-card">
+        <md-card-header class="main-card-header fix-padding">
+            <md-card-header-text>
+                <h3 class="md-title card-title">
+                    <md-layout>
+                        <md-layout md-vertical-align="center">Users</md-layout>
+                    </md-layout>
+                </h3>
+            </md-card-header-text>
+        </md-card-header>
 
     <md-card md-theme="white" class="full-height clean-card">
             <md-card-area>
@@ -48,24 +48,24 @@
             </md-card-area>
         </md-card>
 
-		<md-table-card class="clean-card">
-			<md-table>
-				<md-table-header>
-					<md-table-row>
-						<md-table-head>Name</md-table-head>
+        <md-table-card class="clean-card">
+            <md-table>
+                <md-table-header>
+                    <md-table-row>
+                        <md-table-head>Name</md-table-head>
                         <md-table-head>User</md-table-head>
-						<md-table-head>Role</md-table-head>
-						<md-table-head>Email</md-table-head>
-					</md-table-row>
-				</md-table-header>
-				<md-table-body>
-					<md-table-row v-for="u in users" :key="u.id">
-						<md-table-cell>
+                        <md-table-head>Role</md-table-head>
+                        <md-table-head>Email</md-table-head>
+                    </md-table-row>
+                </md-table-header>
+                <md-table-body>
+                    <md-table-row v-for="u in users" :key="u.id">
+                        <md-table-cell>
                             <img :src="u.avatar_url" /> {{ u.name }}
                         </md-table-cell>
-						<md-table-cell>
+                        <md-table-cell>
                             {{ u.username }}
-						</md-table-cell>
+                        </md-table-cell>
                         <md-table-cell>
                             <md-select v-model="u.role" name="role" id="u.id" v-on:change="setUserRole(u.id, $event)" :disabled="!isAdmin()">
                                 <md-option value="user">User</md-option>
@@ -73,24 +73,24 @@
                                 <md-option value="admin">Admin</md-option>
                             </md-select>
                         </md-table-cell>
-						<md-table-cell>
+                        <md-table-cell>
                             {{ u.email }}
-						</md-table-cell>
-					</md-table-row>
-				</md-table-body>
-			</md-table>
+                        </md-table-cell>
+                    </md-table-row>
+                </md-table-body>
+            </md-table>
 
-			<md-table-pagination v-if="!this.search.search"
+            <md-table-pagination v-if="!this.search.search"
                 :md-size="size"
                 :md-total="total"
                 :md-page="page"
                 md-label="Users"
                 md-separator="of"
                 :md-page-options="[20, 50]"
-			@pagination="onPagination">
+            @pagination="onPagination">
             </md-table-pagination>
-		</md-table-card>
-	</md-card>
+        </md-table-card>
+    </md-card>
 </template>
 
 <script>
