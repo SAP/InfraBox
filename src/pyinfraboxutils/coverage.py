@@ -3,6 +3,7 @@ import uuid
 import json
 import os
 import xml.etree.ElementTree
+import itertools, functools
 
 class File(object):
     def __init__(self, name):
@@ -305,14 +306,8 @@ class Parser(object):
                     self.files += p.files
 
         tmp_files = []
-        while self.files != []:
-            f1 = self.files.pop(0)
-
-            for f in self.files:
-                if f.name == f1.name:
-                    f1 = f1 + f
-                    self.files.remove(f)
-
-            tmp_files.append(f1)
+        get_filename = lambda f: f.name
+        for _, group in itertools.groupby(sorted(self.files, key=get_filename), key=get_filename):
+            tmp_files.append(functools.reduce(lambda a,b : a+b, group))
 
         self.files = tmp_files
