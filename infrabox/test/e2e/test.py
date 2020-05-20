@@ -13,6 +13,18 @@ import xmlrunner
 from pyinfraboxutils.db import connect_db, DB
 from pyinfraboxutils.token import encode_project_token
 from pyinfraboxutils.secrets import encrypt_secret
+from temp_tools import TestClient
+from job_test import JobTest
+
+
+class RestartJobTest(JobTest):
+    
+    def test_restart_job(self):
+        # /api/v1/projects/{PROJECT_ID}/jobs/{INFRABOX_JOB_ID}/restart
+        r = TestClient.get('/api/v1/projects/%s/jobs/%s/restart' % (self.project_id, self.job_id),
+                           TestClient.get_project_authorization(self.token_id, self.project_id))
+        self.assertNotEqual(r['id'], self.job_id)
+
 
 class Test(unittest.TestCase):
     job_id = '1514af82-3c4f-4bb5-b1da-a89a0ced5e6f'
@@ -157,6 +169,17 @@ class Test(unittest.TestCase):
             for p in parents:
                 self.assertTrue(p in actual_parents, data)
 
+    def restart_job(self, restart_job_name, state='finished', expara=None):
+        j = self._get_job(restart_job_name)
+        data = json.dumps(j, indent=4)
+
+        self.assertEqual(j['state'], state, data)
+
+
+
+
+
+
 
     def run_it(self, cwd):
         command = ['infrabox', '--ca-bundle', 'false', 'push']
@@ -266,7 +289,14 @@ class Test(unittest.TestCase):
         self.run_it('/infrabox/context/infrabox/test/e2e/tests/infrabox_yaml')
         self.expect_job('hello-world')
 
+    def test_restart_job(self):
+        self.run_it('/infrabox/context/infrabox/test/e2e/tests/test_restart_job')
+        suite = unittest.TestSuite()
+        suite.addTests(unittest.TestLoader().loadTestsFromTestCase(RestartJobTest))
+        self.expect_job('test-2', parents=['test-1.1'])
+
 def main():
+
     root_url = os.environ['INFRABOX_ROOT_URL']
 
     urllib3.disable_warnings()
