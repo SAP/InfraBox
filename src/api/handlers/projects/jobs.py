@@ -229,6 +229,14 @@ class JobRestart(Resource):
         '''
         Restart job
         '''
+        # restart single job only
+        # request like: 
+        # https://infrabox.datahub.only.sap/api/v1/projects/{PROJECT_ID}/jobs/{INFRABOX_JOB_ID}/restart?single=true
+        restart_single = request.args.get('single', None)
+        restart_dependency = True
+        if restart_single == 'true':
+            restart_dependency = False
+
         user_id = None
         if g.token['type'] == 'user':
             user_id = g.token['user']['id']
@@ -271,7 +279,7 @@ class JobRestart(Resource):
 
         restart_jobs = [job_id]
 
-        while True:
+        while True and restart_dependency:
             found = False
             for j in jobs:
                 if j['id'] in restart_jobs:
