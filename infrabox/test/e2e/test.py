@@ -13,17 +13,6 @@ import xmlrunner
 from pyinfraboxutils.db import connect_db, DB
 from pyinfraboxutils.token import encode_project_token
 from pyinfraboxutils.secrets import encrypt_secret
-from job_test import JobTest
-
-
-#class RestartJobTest(JobTest):
-#    
-#    def test_restart_job(self):
-#        # /api/v1/projects/{PROJECT_ID}/jobs/{INFRABOX_JOB_ID}/restart
-#        r = TestClient.get('/api/v1/projects/%s/jobs/%s/restart' % (self.project_id, self.job_id),
-#                           TestClient.get_project_authorization(self.token_id, self.project_id))
-#        self.assertNotEqual(r['id'], self.job_id)
-
 
 class Test(unittest.TestCase):
     job_id = '1514af82-3c4f-4bb5-b1da-a89a0ced5e6f'
