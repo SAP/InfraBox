@@ -13,18 +13,16 @@ import xmlrunner
 from pyinfraboxutils.db import connect_db, DB
 from pyinfraboxutils.token import encode_project_token
 from pyinfraboxutils.secrets import encrypt_secret
-sys.path.insert(0,'../lib')
-from temp_tools import TestClient
 from job_test import JobTest
 
 
-class RestartJobTest(JobTest):
-    
-    def test_restart_job(self):
-        # /api/v1/projects/{PROJECT_ID}/jobs/{INFRABOX_JOB_ID}/restart
-        r = TestClient.get('/api/v1/projects/%s/jobs/%s/restart' % (self.project_id, self.job_id),
-                           TestClient.get_project_authorization(self.token_id, self.project_id))
-        self.assertNotEqual(r['id'], self.job_id)
+#class RestartJobTest(JobTest):
+#    
+#    def test_restart_job(self):
+#        # /api/v1/projects/{PROJECT_ID}/jobs/{INFRABOX_JOB_ID}/restart
+#        r = TestClient.get('/api/v1/projects/%s/jobs/%s/restart' % (self.project_id, self.job_id),
+#                           TestClient.get_project_authorization(self.token_id, self.project_id))
+#        self.assertNotEqual(r['id'], self.job_id)
 
 
 class Test(unittest.TestCase):
@@ -170,17 +168,23 @@ class Test(unittest.TestCase):
             for p in parents:
                 self.assertTrue(p in actual_parents, data)
 
-    def restart_job(self, restart_job_name, state='finished', expara=None):
-        j = self._get_job(restart_job_name)
-        data = json.dumps(j, indent=4)
-
-        self.assertEqual(j['state'], state, data)
-
-
-
-
-
-
+    def restart_job(self, restart_job_name, expara=None):
+        #/api/v1/projects/{PROJECT_ID}/jobs/{INFRABOX_JOB_ID}/restart
+        jobs = self._get_jobs()
+        for j in jobs:
+            if j['name'] == restart_job_name:
+                url = '%s/api/v1/projects/%s/jobs/%s/restart' % (self.root_url, self.project_id, j['id'])
+                if expara:
+                    url = '%s?%s' % (url, expara)
+                r = self._api_get(url)
+                try:
+                    if r.status_code == 200 and r.json()['status'] == 200:
+                        return True
+                except:
+                    print("restart job failed: ")
+                    print(r)
+                    raise
+        return False
 
     def run_it(self, cwd):
         command = ['infrabox', '--ca-bundle', 'false', 'push']
@@ -292,9 +296,12 @@ class Test(unittest.TestCase):
 
     def test_restart_job(self):
         self.run_it('/infrabox/context/infrabox/test/e2e/tests/test_restart_job')
-        suite = unittest.TestSuite()
-        suite.addTests(unittest.TestLoader().loadTestsFromTestCase(RestartJobTest))
-        self.expect_job('test-2', parents=['test-1.1'])
+        self.expect_job('test-2')
+        self.restart_job('test-1')
+        self.expect_job('test-1.1')
+        # restart single job
+        self.restart_job('test-1.1', 'single=true')
+        self.expect_job('test-2.1', parents=['test-1.2'])
 
 def main():
 
