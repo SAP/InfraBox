@@ -18,7 +18,7 @@ WORKDIR /project
 RUN curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl && \
     chmod +x /project/kubectl
 
-RUN curl -LO https://storage.googleapis.com/kubernetes-helm/helm-v2.10.0-linux-amd64.tar.gz && \
+RUN curl -LO https://storage.googleapis.com/kubernetes-helm/helm-v2.16.6-linux-amd64.tar.gz && \
     tar xvf helm-v2.10.0-linux-amd64.tar.gz && \
     mv ./linux-amd64/helm ./helm && \
     rm -rf linux-amd64 && \
