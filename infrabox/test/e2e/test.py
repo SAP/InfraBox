@@ -286,8 +286,9 @@ class Test(unittest.TestCase):
     def test_restart_job(self):
         self.run_it('/infrabox/context/infrabox/test/e2e/tests/test_restart_job')
         self.expect_job('test-2')
-        #self.restart_job('test-1')
-        #self.expect_job('test-1.1')
+        self.restart_job('test-1')
+        time.sleep(60)
+        self.expect_job('test-1.1')
         # restart single job
         #self.restart_job('test-1.1', 'single=true')
         #self.expect_job('test-2.1', parents=['test-1.2'])
