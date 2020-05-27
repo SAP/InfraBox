@@ -230,7 +230,7 @@ class JobRestart(Resource):
         Restart job
         '''
         # restart single job only
-        # request like: 
+        # request like:
         # https://infrabox.datahub.only.sap/api/v1/projects/{PROJECT_ID}/jobs/{INFRABOX_JOB_ID}/restart?single=true
         restart_single = request.args.get('single', None)
         restart_dependency = True
@@ -278,8 +278,10 @@ class JobRestart(Resource):
         ''', [build_id, project_id])
 
         restart_jobs = [job_id]
+        update_dep_jobs = []
 
-        while True and restart_dependency:
+        #while True and restart_dependency:
+        while True:
             found = False
             for j in jobs:
                 if j['id'] in restart_jobs:
@@ -297,7 +299,10 @@ class JobRestart(Resource):
 
                     if dep_id in restart_jobs:
                         found = True
-                        restart_jobs.append(j['id'])
+                        if not restart_dependency:
+                            update_dep_jobs.append(j['id'])
+                        else:
+                            restart_jobs.append(j['id'])
                         break
 
             if not found:
@@ -335,6 +340,19 @@ class JobRestart(Resource):
                 FROM job
                 WHERE id = %s;
             ''', [j])
+        logger.debug('## jobs:')
+        logger.debug(str(jobs))
+        ## restart single jobs
+        upd_jobs = []
+        for j in update_dep_jobs:
+            upd_jobs += g.db.execute_many_dict('''
+                SELECT id, build_id, type, dockerfile, name, project_id, dependencies,
+                       repo, env_var, env_var_ref, build_arg, deployment, definition, cluster_name
+                FROM job
+                WHERE id = %s;
+            ''', [j])
+        logger.debug('## upd_jobs:')
+        logger.debug(str(upd_jobs))
 
         old_id_job = {}
         for j in jobs:
@@ -363,6 +381,21 @@ class JobRestart(Resource):
                 if dep['job-id'] in old_id_job:
                     dep['job'] = old_id_job[dep['job-id']]['name']
                     dep['job-id'] = old_id_job[dep['job-id']]['id']
+
+        ## restart single jobs
+        for j in upd_jobs:
+            for dep in j['dependencies']:
+                if dep['job-id'] in old_id_job:
+                    dep['job'] = old_id_job[dep['job-id']]['name']
+                    dep['job-id'] = old_id_job[dep['job-id']]['id']
+
+        ## add denpendency for single job restart also
+        # jobs + upd_jobs
+        for u_j in upd_jobs:
+            for j in jobs:
+                if u_j['id'] == j['id']:
+                    continue
+                jobs.append(u_j)
 
         for j in jobs:
             g.db.execute('''
