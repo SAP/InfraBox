@@ -290,8 +290,9 @@ class Test(unittest.TestCase):
         time.sleep(60)
         self.expect_job('test-1.1')
         # restart single job
-        #self.restart_job('test-1.1', 'single=true')
-        #self.expect_job('test-2.1', parents=['test-1.2'])
+        self.restart_job('test-1.1', 'single=true')
+        time.sleep(60)
+        self.expect_job('test-2.1', parents=['test-1.2'])
 
 def main():
 
