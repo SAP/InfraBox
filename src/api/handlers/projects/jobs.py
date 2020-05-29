@@ -381,6 +381,8 @@ class JobRestart(Resource):
                 if dep['job-id'] in old_id_job:
                     dep['job'] = old_id_job[dep['job-id']]['name']
                     dep['job-id'] = old_id_job[dep['job-id']]['id']
+            logger.debug('## dep in jobs:')
+            logger.debug(str(dep))
 
         ## restart single jobs
         for j in upd_jobs:
@@ -388,14 +390,16 @@ class JobRestart(Resource):
                 if dep['job-id'] in old_id_job:
                     dep['job'] = old_id_job[dep['job-id']]['name']
                     dep['job-id'] = old_id_job[dep['job-id']]['id']
+            logger.debug('## dep in upd_jobs:')
+            logger.debug(str(dep))
 
         ## add denpendency for single job restart also
         # jobs + upd_jobs
-        for u_j in upd_jobs:
-            for j in jobs:
-                if u_j['id'] == j['id']:
-                    continue
-                jobs.append(u_j)
+        # for u_j in upd_jobs:
+        #     for j in jobs:
+        #         if u_j['id'] == j['id']:
+        #             continue
+        #         jobs.append(u_j)
 
         for j in jobs:
             g.db.execute('''
