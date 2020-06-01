@@ -287,12 +287,16 @@ class Test(unittest.TestCase):
         self.run_it('/infrabox/context/infrabox/test/e2e/tests/test_restart_job')
         self.expect_job('test-2')
         self.restart_job('test-1')
-        time.sleep(60)
-        self.expect_job('test-1.1')
+        time.sleep(90)
+        self.expect_job('test-2.1', parents='test-1.1')
+
+    def test_restart_single_job_without_dep(self):
+        self.run_it('/infrabox/context/infrabox/test/e2e/tests/test_restart_job')
         # restart single job
-        self.restart_job('test-1.1', 'single=true')
+        print("## restart single job only")
+        self.restart_job('test-1', 'single=true')
         time.sleep(60)
-        self.expect_job('test-2.1', parents=['test-1.2'])
+        self.expect_job('test-2', parents=['test-1.1'])
 
 def main():
 

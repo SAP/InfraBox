@@ -278,7 +278,6 @@ class JobRestart(Resource):
         ''', [build_id, project_id])
 
         restart_jobs = [job_id]
-        update_dep_jobs = []
 
         #while True and restart_dependency:
         while True:
@@ -299,22 +298,21 @@ class JobRestart(Resource):
 
                     if dep_id in restart_jobs:
                         found = True
-                        if not restart_dependency:
-                            update_dep_jobs.append(j['id'])
-                        else:
-                            restart_jobs.append(j['id'])
+                        restart_jobs.append(j['id'])
                         break
 
             if not found:
                 break
 
+        # get all jobs, filter the jobs marked to be restarted, check the status is running or not
         for j in jobs:
             if j['id'] not in restart_jobs:
                 continue
 
             if j['state'] not in restart_states and j['state'] not in ('skipped', 'queued'):
                 abort(400, 'Some children jobs are still running')
-
+       
+        # print mssage for the restart operator
         if user_id is not None:
             result = g.db.execute_one_dict('''
                 SELECT username
@@ -332,6 +330,7 @@ class JobRestart(Resource):
         msg = 'Job restarted by %s\n' % username_or_token
 
         # Clone Jobs and adjust dependencies
+        # get jobs that marked as restart from table job
         jobs = []
         for j in restart_jobs:
             jobs += g.db.execute_many_dict('''
@@ -340,22 +339,25 @@ class JobRestart(Resource):
                 FROM job
                 WHERE id = %s;
             ''', [j])
-        logger.debug('## jobs:')
+        logger.debug('## get jobs that marked as restart from table job:')
         logger.debug(str(jobs))
-        ## restart single jobs
-        upd_jobs = []
-        for j in update_dep_jobs:
-            upd_jobs += g.db.execute_many_dict('''
-                SELECT id, build_id, type, dockerfile, name, project_id, dependencies,
-                       repo, env_var, env_var_ref, build_arg, deployment, definition, cluster_name
-                FROM job
-                WHERE id = %s;
-            ''', [j])
-        logger.debug('## upd_jobs:')
-        logger.debug(str(upd_jobs))
+
+        # get job thet restart it self only.
+        single_job = []
+        single_job += g.db.execute_many_dict('''
+            SELECT id, build_id, type, dockerfile, name, project_id, dependencies,
+                    repo, env_var, env_var_ref, build_arg, deployment, definition, cluster_name
+            FROM job
+            WHERE id = %s;
+        ''', [job_id])
 
         old_id_job = {}
-        for j in jobs:
+        if restart_dependency:
+            loop_jobs = jobs
+        else:
+            # restart single job only
+            loop_jobs = single_job
+        for j in loop_jobs:
             # Mark old jobs a restarted
             g.db.execute('''
                 UPDATE job
@@ -384,24 +386,12 @@ class JobRestart(Resource):
             logger.debug('## dep in jobs:')
             logger.debug(str(dep))
 
-        ## restart single jobs
-        for j in upd_jobs:
-            for dep in j['dependencies']:
-                if dep['job-id'] in old_id_job:
-                    dep['job'] = old_id_job[dep['job-id']]['name']
-                    dep['job-id'] = old_id_job[dep['job-id']]['id']
-            logger.debug('## dep in upd_jobs:')
-            logger.debug(str(dep))
-
-        ## add denpendency for single job restart also
-        # jobs + upd_jobs
-        # for u_j in upd_jobs:
-        #     for j in jobs:
-        #         if u_j['id'] == j['id']:
-        #             continue
-        #         jobs.append(u_j)
-
-        for j in jobs:
+        if restart_dependency:
+            loop_jobs = jobs
+        else:
+            # instert the single job only
+            loop_jobs = single_job
+        for j in loop_jobs:
             g.db.execute('''
                 INSERT INTO job (state, id, build_id, type, dockerfile, name, project_id, dependencies, repo,
                                  env_var, env_var_ref, build_arg, deployment, definition, restarted, cluster_name)
