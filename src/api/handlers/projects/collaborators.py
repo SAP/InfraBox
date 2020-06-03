@@ -1,7 +1,7 @@
 from uuid import UUID
 
 from flask import request, g, abort
-from flask_restplus import Resource, fields
+from flask_restx import Resource, fields
 
 from pyinfraboxutils.ibflask import OK
 from pyinfraboxutils.ibopa import opa_push_collaborator_data

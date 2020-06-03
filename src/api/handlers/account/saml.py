@@ -2,7 +2,7 @@ from urlparse import urlparse
 
 from flask import g, request, abort, redirect, make_response
 
-from flask_restplus import Resource
+from flask_restx import Resource
 
 from onelogin.saml2.auth import OneLogin_Saml2_Auth
 from onelogin.saml2.utils import OneLogin_Saml2_Utils

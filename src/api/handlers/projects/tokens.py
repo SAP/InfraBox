@@ -1,5 +1,5 @@
 from flask import request, g, abort
-from flask_restplus import Resource, fields
+from flask_restx import Resource, fields
 
 from pyinfrabox.utils import validate_uuid
 from pyinfraboxutils.ibflask import OK

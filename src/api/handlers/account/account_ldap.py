@@ -2,7 +2,7 @@ import os
 
 from flask import g, request, abort
 
-from flask_restplus import Resource, fields
+from flask_restx import Resource, fields
 
 import ldap
 import bcrypt

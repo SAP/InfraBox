@@ -1,5 +1,5 @@
 from flask import g
-from flask_restplus import Resource
+from flask_restx import Resource
 
 from pyinfraboxutils.ibrestplus import api
 

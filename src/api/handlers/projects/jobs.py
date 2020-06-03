@@ -9,7 +9,7 @@ from io import BytesIO
 import requests
 
 from flask import g, abort, Response, send_file, request, redirect
-from flask_restplus import Resource, fields
+from flask_restx import Resource, fields
 
 from pyinfraboxutils import get_logger
 from pyinfraboxutils.ibflask import OK

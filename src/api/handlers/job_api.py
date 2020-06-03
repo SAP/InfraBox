@@ -11,7 +11,7 @@ from io import BytesIO
 import requests
 
 from flask import jsonify, request, send_file, g, after_this_request, abort
-from flask_restplus import Resource
+from flask_restx import Resource
 
 from werkzeug.datastructures import FileStorage
 

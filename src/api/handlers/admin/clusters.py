@@ -1,5 +1,5 @@
 from flask import g, request, jsonify
-from flask_restplus import Resource, fields
+from flask_restx import Resource, fields
 from pyinfraboxutils.ibflask import OK
 
 from pyinfraboxutils.ibrestplus import api

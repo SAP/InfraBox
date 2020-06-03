@@ -5,7 +5,7 @@ import sys
 import json
 
 from flask import Flask, request, send_from_directory, abort, Response
-from flask_restplus import Resource, Api
+from flask_restx import Resource, Api
 
 import eventlet
 eventlet.monkey_patch()

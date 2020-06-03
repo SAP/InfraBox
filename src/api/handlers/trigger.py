@@ -3,7 +3,7 @@ import json
 import datetime
 import requests
 
-from flask_restplus import Resource, fields
+from flask_restx import Resource, fields
 from flask import abort, request, g
 
 from pyinfraboxutils.ibflask import OK
