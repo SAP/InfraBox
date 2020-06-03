@@ -23,6 +23,13 @@
                             <md-input required v-model="branch_or_sha"></md-input>
                         </md-input-container>
                     </div>
+                    <div v-if="project.type=='github'" class="md-body-2 p-t-lg m-b-md"><i class="fa fa-fw fa-rocket"></i> GitHub branch (only needed when triggering for specific sha):</div>
+                    <div v-if="project.type=='github'" class="m-l-md m-r-xl">
+                        <md-input-container class="m-r-xl">
+                            <label>Branch</label>
+                            <md-input required v-model="branch"></md-input>
+                        </md-input-container>
+                    </div>
                     <md-list md-theme="white" class="m-t-md m-b-md ">
                         <div class="m-t-md m-b-md"><span class="md-body-2"><i class="fa fa-fw fa-sticky-note-o"></i> Environment Variables </span>(optional):</div>
                         <md-list-item class="m-r-xl">
@@ -70,12 +77,13 @@ export default {
         branch_or_sha: null,
         name: null,
         value: null,
-        envVars: []
+        envVars: [],
+        branch: ''
     }),
     store,
     methods: {
         trigger () {
-            this.project.triggerBuild(this.branch_or_sha, this.envVars)
+            this.project.triggerBuild(this.branch_or_sha, this.envVars, this.branch)
         },
         deleteEnvVar (id) {
         },
