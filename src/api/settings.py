@@ -1,6 +1,6 @@
 import os
 
-from flask_restplus import Resource, fields
+from flask_restx import Resource, fields
 
 from pyinfraboxutils.ibrestplus import api
 from pyinfraboxutils import get_root_url

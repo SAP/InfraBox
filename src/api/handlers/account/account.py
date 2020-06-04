@@ -3,7 +3,7 @@ from email.utils import parseaddr
 
 from flask import g, request, abort
 
-from flask_restplus import Resource, fields
+from flask_restx import Resource, fields
 
 import bcrypt
 

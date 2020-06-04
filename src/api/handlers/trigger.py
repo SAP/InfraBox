@@ -3,7 +3,7 @@ import json
 import datetime
 import requests
 
-from flask_restplus import Resource, fields
+from flask_restx import Resource, fields
 from flask import abort, request, g
 
 from pyinfraboxutils.ibflask import OK
@@ -38,11 +38,10 @@ def get_sha_for_branch(owner, repo, branch_or_sha, token):
     sha = result['commit']['sha']
     return sha
 
-def get_github_commit(owner, token, repo, branch_or_sha):
+def get_github_commit(owner, token, repo, branch_or_sha, branch):
     # Check if it's a branch
     sha = get_sha_for_branch(owner, repo, branch_or_sha, token)
 
-    branch = None
     if sha:
         branch = branch_or_sha
     else:
@@ -108,7 +107,7 @@ def insert_commit(project_id, repo_id, commit):
           None
          ])
 
-def create_github_commit(project_id, repo_id, branch_or_sha):
+def create_github_commit(project_id, repo_id, branch_or_sha, branch):
     r = g.db.execute_one('''
         SELECT github_owner, name
         FROM repository
@@ -131,7 +130,7 @@ def create_github_commit(project_id, repo_id, branch_or_sha):
     ''', [repo_id])
     github_api_token = u[0]
 
-    commit = get_github_commit(github_owner, github_api_token, repo_name, branch_or_sha)
+    commit = get_github_commit(github_owner, github_api_token, repo_name, branch_or_sha, branch)
 
     insert_commit(project_id, repo_id, commit)
     return commit
@@ -254,7 +253,8 @@ env_model = api.model('EnvVar', {
 
 trigger_model = api.model('Trigger', {
     'branch_or_sha': fields.String(required=True, description='Branch or sha'),
-    'env': fields.List(fields.Nested(env_model))
+    'env': fields.List(fields.Nested(env_model)),
+    'branch': fields.String(description='branch if sha submitted (GitHub only)')
 })
 
 def trigger_build(project_id):
@@ -262,6 +262,7 @@ def trigger_build(project_id):
     branch_or_sha = body.get('branch_or_sha', None)
     infrabox_file = body.get('infrabox_file', 'infrabox.json')
     env = body.get('env', None)
+    branch = body.get('branch', None)
 
     project = g.db.execute_one('''
         SELECT type
@@ -300,23 +301,23 @@ def trigger_build(project_id):
         repo_id = repo[0]
 
         if project_type == 'github':
-            commit = create_github_commit(project_id, repo_id, branch_or_sha)
+            commit = create_github_commit(project_id, repo_id, branch_or_sha, branch)
             (new_build_id, new_build_number) = create_git_job(commit,
-                                                                build_no,
-                                                                project_id,
-                                                                repo,
-                                                                project_type,
-                                                                env,
-                                                                infrabox_file)
+                                                              build_no,
+                                                              project_id,
+                                                              repo,
+                                                              project_type,
+                                                              env,
+                                                              infrabox_file)
         elif project_type == 'gerrit':
             commit = create_gerrit_commit(project_id, repo_id, branch_or_sha)
             (new_build_id, new_build_number) = create_git_job(commit,
-                                                                build_no,
-                                                                project_id,
-                                                                repo,
-                                                                project_type,
-                                                                env,
-                                                                infrabox_file)
+                                                              build_no,
+                                                              project_id,
+                                                              repo,
+                                                              project_type,
+                                                              env,
+                                                              infrabox_file)
     elif project_type == 'upload':
         (new_build_id, new_build_number) = create_upload_job(project_id, build_no, env, infrabox_file)
     else:

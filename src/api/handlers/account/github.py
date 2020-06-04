@@ -4,7 +4,7 @@ import requests
 
 from flask import g, request, abort, redirect
 
-from flask_restplus import Resource
+from flask_restx import Resource
 
 from pyinfraboxutils import get_logger, get_root_url
 from pyinfraboxutils.ibrestplus import api

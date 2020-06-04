@@ -133,8 +133,8 @@ export default class Project {
             })
     }
 
-    triggerBuild (branchOrSha, env) {
-        const d = { branch_or_sha: branchOrSha, env: env }
+    triggerBuild (branchOrSha, env, branch) {
+        const d = { branch_or_sha: branchOrSha, env: env, branch: branch }
         return NewAPIService.post(`projects/${this.id}/trigger`, d)
             .then((r) => {
                 NotificationService.$emit('NOTIFICATION', new Notification(r))

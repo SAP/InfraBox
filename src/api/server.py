@@ -12,7 +12,7 @@ import flask_socketio
 import socketio
 
 from flask import request, abort, g, jsonify
-from flask_restplus import Resource
+from flask_restx import Resource
 from requests.exceptions import RequestException
 
 from pyinfraboxutils import get_env, get_logger

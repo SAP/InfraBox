@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from flask import g, request
-from flask_restplus import Resource
+from flask_restx import Resource
 
 from pyinfraboxutils.ibrestplus import api, response_model
 from api.handlers.trigger import trigger_model, trigger_build

@@ -2,7 +2,7 @@ import json
 import uuid
 
 from flask import g, abort
-from flask_restplus import Resource
+from flask_restx import Resource
 
 from pyinfraboxutils.ibrestplus import api, response_model
 from pyinfraboxutils.ibflask import OK

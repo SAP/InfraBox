@@ -1,6 +1,6 @@
 #pylint: disable=unused-argument
 from flask import g, jsonify, abort, send_file
-from flask_restplus import Resource, fields
+from flask_restx import Resource, fields
 
 from pyinfraboxutils.ibflask import check_job_belongs_to_project
 from pyinfraboxutils.ibrestplus import api
