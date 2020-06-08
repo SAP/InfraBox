@@ -18,7 +18,7 @@ RUN    apt-get update -y \
     && pip install \
         psycopg2 \
         flask \
-        flask_restplus \
+        flask-restx \
         flask_socketio \
         requests==2.18.4 \
         PyJWT \
@@ -31,7 +31,7 @@ RUN    apt-get update -y \
         pycrypto \
         prometheus_client \
         azure-mgmt-resource \
-        azure-storage \
+        azure-storage==0.36.0 \
         keystoneauth1==3.7.0 \
         python-swiftclient \
         python-cachetclient \

@@ -10,7 +10,7 @@ from functools import wraps, update_wrapper
 import requests
 
 from flask import g, request, abort, make_response, Response, send_file
-from flask_restplus import Resource, fields
+from flask_restx import Resource, fields
 
 from werkzeug.datastructures import FileStorage
 

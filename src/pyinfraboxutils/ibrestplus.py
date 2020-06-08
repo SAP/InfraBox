@@ -1,4 +1,4 @@
-from flask_restplus import Api, abort as restplus_abort, Resource, fields
+from flask_restx import Api, abort as restplus_abort, Resource, fields
 from pyinfraboxutils.ibflask import app
 
 authorizations = {

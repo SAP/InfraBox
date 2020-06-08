@@ -2,7 +2,7 @@ import os
 import requests
 
 from flask import g, abort, request
-from flask_restplus import Resource, fields
+from flask_restx import Resource, fields
 
 from pyinfrabox.utils import validate_uuid
 from pyinfraboxutils import get_logger, get_root_url
