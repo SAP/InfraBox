@@ -157,6 +157,23 @@ class Test(unittest.TestCase):
             for p in parents:
                 self.assertTrue(p in actual_parents, data)
 
+    def restart_job(self, restart_job_name, expara=None):
+        #/api/v1/projects/{PROJECT_ID}/jobs/{INFRABOX_JOB_ID}/restart
+        jobs = self._get_jobs()
+        for j in jobs:
+            if j['name'] == restart_job_name:
+                url = '%s/api/v1/projects/%s/jobs/%s/restart' % (self.root_url, self.project_id, j['id'])
+                if expara:
+                    url = '%s?%s' % (url, expara)
+                r = self._api_get(url)
+                try:
+                    if r.status_code == 200 and r.json()['status'] == 200:
+                        return True
+                except:
+                    print("restart job failed: ")
+                    print(r)
+                    raise
+        return False
 
     def run_it(self, cwd):
         command = ['infrabox', '--ca-bundle', 'false', 'push']
@@ -266,7 +283,23 @@ class Test(unittest.TestCase):
         self.run_it('/infrabox/context/infrabox/test/e2e/tests/infrabox_yaml')
         self.expect_job('hello-world')
 
+    def test_restart_job(self):
+        self.run_it('/infrabox/context/infrabox/test/e2e/tests/test_restart_job')
+        self.expect_job('test-2')
+        self.restart_job('test-1')
+        time.sleep(90)
+        self.expect_job('test-2.1', parents='test-1.1')
+
+    def test_restart_single_job_without_dep(self):
+        self.run_it('/infrabox/context/infrabox/test/e2e/tests/test_restart_job')
+        # restart single job
+        print("## restart single job only")
+        self.restart_job('test-1', 'single=true')
+        time.sleep(60)
+        self.expect_job('test-2', parents=['test-1.1'])
+
 def main():
+
     root_url = os.environ['INFRABOX_ROOT_URL']
 
     urllib3.disable_warnings()

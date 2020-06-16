@@ -229,6 +229,14 @@ class JobRestart(Resource):
         '''
         Restart job
         '''
+        # restart single job only
+        # request like:
+        # https://infrabox.datahub.only.sap/api/v1/projects/{PROJECT_ID}/jobs/{INFRABOX_JOB_ID}/restart?single=true
+        restart_single = request.args.get('single', None)
+        restart_dependency = True
+        if restart_single == 'true':
+            restart_dependency = False
+
         user_id = None
         if g.token['type'] == 'user':
             user_id = g.token['user']['id']
@@ -295,6 +303,7 @@ class JobRestart(Resource):
             if not found:
                 break
 
+        # get all jobs, filter the jobs marked to be restarted, check the status is running or not
         for j in jobs:
             if j['id'] not in restart_jobs:
                 continue
@@ -302,6 +311,7 @@ class JobRestart(Resource):
             if j['state'] not in restart_states and j['state'] not in ('skipped', 'queued'):
                 abort(400, 'Some children jobs are still running')
 
+        # print mssage for the restart operator
         if user_id is not None:
             result = g.db.execute_one_dict('''
                 SELECT username
@@ -319,6 +329,7 @@ class JobRestart(Resource):
         msg = 'Job restarted by %s\n' % username_or_token
 
         # Clone Jobs and adjust dependencies
+        # get jobs that marked as restart from table job
         jobs = []
         for j in restart_jobs:
             jobs += g.db.execute_many_dict('''
@@ -327,9 +338,25 @@ class JobRestart(Resource):
                 FROM job
                 WHERE id = %s;
             ''', [j])
+        logger.debug('## get jobs that marked as restart from table job:')
+        logger.debug(str(jobs))
+
+        # get job thet restart it self only.
+        single_job = []
+        single_job += g.db.execute_many_dict('''
+            SELECT id, build_id, type, dockerfile, name, project_id, dependencies,
+                    repo, env_var, env_var_ref, build_arg, deployment, definition, cluster_name
+            FROM job
+            WHERE id = %s;
+        ''', [job_id])
 
         old_id_job = {}
-        for j in jobs:
+        if restart_dependency:
+            loop_jobs = jobs
+        else:
+            # restart single job only
+            loop_jobs = single_job
+        for j in loop_jobs:
             # Mark old jobs a restarted
             g.db.execute('''
                 UPDATE job
@@ -355,8 +382,15 @@ class JobRestart(Resource):
                 if dep['job-id'] in old_id_job:
                     dep['job'] = old_id_job[dep['job-id']]['name']
                     dep['job-id'] = old_id_job[dep['job-id']]['id']
+            logger.debug('## dep in jobs:')
+            logger.debug(str(dep))
 
-        for j in jobs:
+        if restart_dependency:
+            loop_jobs = jobs
+        else:
+            # instert the single job only
+            loop_jobs = single_job
+        for j in loop_jobs:
             g.db.execute('''
                 INSERT INTO job (state, id, build_id, type, dockerfile, name, project_id, dependencies, repo,
                                  env_var, env_var_ref, build_arg, deployment, definition, restarted, cluster_name)
@@ -380,6 +414,20 @@ class JobRestart(Resource):
                   j['id'],
                   msg])
         g.db.commit()
+
+        ## when restart single job, update the following jobs which depend on it
+        if not restart_dependency:
+            for j in jobs:
+                if j['id'] not in [job_id]:
+                    g.db.execute('''
+                        UPDATE job 
+                        SET dependencies = %s 
+                        WHERE id = %s;
+                    ''', [
+                        json.dumps(j['dependencies']),
+                        j['id']
+                    ])
+                    g.db.commit()
 
         return OK('Successfully restarted job')
 

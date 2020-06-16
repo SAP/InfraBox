@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "jobs": [
+    {
+      "type": "docker",
+      "name": "test-1",
+      "docker_file": "Dockerfile",
+      "build_only": false,
+      "resources": {
+        "limits": {
+          "cpu": 1,
+          "memory": 1024
+        }
+      }
+    },
+    {
+      "type": "docker",
+      "name": "test-2",
+      "docker_file": "Dockerfile",
+      "build_only": false,
+      "resources": {
+        "limits": {
+          "cpu": 1,
+          "memory": 1024
+        }
+      },
+      "depends_on": [
+        {
+          "job": "test-1",
+          "on": [
+            "*"
+          ]
+        }
+      ]
+    }
+  ]
+}
