@@ -19,6 +19,15 @@ login_model = api.model('Login', {
 
 logger = get_logger('ldap')
 
+ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_NEVER)
+
+def ldap_conn(ldap_server):
+    connect = ldap.initialize(ldap_server)
+    connect.set_option(ldap.OPT_REFERRALS, 0)
+
+    return connect
+
+
 def authenticate(email, password):
     ldap_server = os.environ['INFRABOX_ACCOUNT_LDAP_URL']
     ldap_user = os.environ['INFRABOX_ACCOUNT_LDAP_DN']
@@ -28,7 +37,8 @@ def authenticate(email, password):
     search_filter = "(mail=%s)" % str(email)
     user_dn = None
 
-    connect = ldap.initialize(ldap_server)
+    connect = ldap_conn(ldap_server)
+
     try:
         connect.bind_s(ldap_user, ldap_password)
         result = connect.search_s(ldap_base_dn, ldap.SCOPE_SUBTREE, search_filter, attrlist=['dn'])
@@ -47,8 +57,8 @@ def authenticate(email, password):
     if not user_dn:
         abort(400, 'Invalid email/password combination')
 
+    connect = ldap_conn(ldap_server)
     try:
-        connect = ldap.initialize(ldap_server)
         connect.bind_s(user_dn, password)
         result = connect.search_s(ldap_base_dn,
                                   ldap.SCOPE_SUBTREE,
