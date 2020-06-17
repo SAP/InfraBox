@@ -55,7 +55,7 @@ class Secrets(Resource):
             SELECT COUNT(*) as cnt FROM secret WHERE project_id = %s
         """, [project_id])
 
-        if result['cnt'] > 50:
+        if result['cnt'] > 200:
             abort(400, 'Too many secrets.')
 
         r = g.db.execute_one("""
