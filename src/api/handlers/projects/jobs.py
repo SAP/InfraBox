@@ -394,7 +394,7 @@ class JobRerun(Resource):
         '''
         # restart single job only
         # request like:
-        #   https://infrabox.datahub.only.sap/api/v1/projects/{PROJECT_ID}/jobs/{INFRABOX_JOB_ID}/rerun
+        # https://infrabox.datahub.only.sap/api/v1/projects/{PROJECT_ID}/jobs/{INFRABOX_JOB_ID}/rerun
 
         user_id = None
         if g.token['type'] == 'user':
