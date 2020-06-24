@@ -405,7 +405,7 @@ class JobRerun(Resource):
 
         logger.debug('Prepare to rerun job %s of project %s' % (job_id, project_id))
         job = g.db.execute_one_dict('''
-            SELECT state, type, build_id, restarted
+            SELECT state, type, build_id, restarted, dependencies
             FROM job
             WHERE id = %s
             AND project_id = %s
