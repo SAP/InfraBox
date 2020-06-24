@@ -430,6 +430,22 @@ class JobRerun(Resource):
         if restarted:
             abort(400, 'This job has been already restarted')
 
+        # while the parent job is in running state, skip rerun current job
+        parent_jobs = job['dependencies']
+        for j in parent_jobs:
+            j_id = j['job-id']
+            p_job = g.db.execute_one_dict('''
+            SELECT state, type, build_id, restarted
+            FROM job
+            WHERE id = %s
+            AND project_id = %s
+            ''', [j_id, project_id])
+            if not p_job:
+                abort(404)
+            if p_job['state'] in ['queued','running']:
+                abort(400, 'Job %s has executing parent job' % job_id)
+        # while the parent job is in running state, skip rerun current job
+
         jobs = g.db.execute_many_dict('''
             SELECT state, id, dependencies, restarted
             FROM job
