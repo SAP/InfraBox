@@ -539,6 +539,7 @@ class JobRerun(Resource):
             logger.debug('## dep in jobs:')
             logger.debug(str(dep))
 
+        loop_jobs = single_job
         for j in loop_jobs:
             g.db.execute('''
                 INSERT INTO job (state, id, build_id, type, dockerfile, name, project_id, dependencies, repo,
