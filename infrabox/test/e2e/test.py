@@ -306,11 +306,11 @@ class Test(unittest.TestCase):
         self.expect_job('test-2.1', parents=['test-1.1'])
 
     def test_rerun_job(self):
-        self.run_it('/infrabox/context/infrabox/test/e2e/tests/test_rerun_job')
+        self.run_it('/infrabox/context/infrabox/test/e2e/tests/test_restart_job')
         # restart a single job
-        print("## rerun a single job")
         self.rerun_job('test-1')
-        time.sleep(60)
+        time.sleep(90)
+        self.expect_job('test-1.1')
         self.expect_job('test-2', parents=['test-1.1'])
 
 def main():
