@@ -57,6 +57,21 @@ allow {
     valid_project_token([api.token, project_id])
 }
 
+# Allow GET /api/v1/projects/<project_id>/jobs/<job_id>/rerun for collaborators
+allow {
+    api.method = "GET"
+    api.path = ["api", "v1", "projects", project_id, "jobs", _, "rerun"]
+    api.token.type = "user"
+    project_jobs_collaborator([api.token.user.id, project_id])
+}
+
+# Allow GET /api/v1/projects/<project_id>/jobs/<job_id>/rerun for valid project token
+allow {
+    api.method = "GET"
+    api.path = ["api", "v1", "projects", project_id, "jobs", _, "rerun"]
+    valid_project_token([api.token, project_id])
+}
+
 # Allow GET /api/v1/projects/<project_id>/jobs/<job_id>/abort for collaborators
 allow {
     api.method = "GET"
