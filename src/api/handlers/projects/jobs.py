@@ -405,7 +405,7 @@ class JobRerun(Resource):
 
         logger.debug('Prepare to rerun job %s of project %s' % (job_id, project_id))
         job = g.db.execute_one_dict('''
-            SELECT state, type, build_id, restarted, dependencies
+            SELECT state, type, build_id, restarted, dependencies, name
             FROM job
             WHERE id = %s
             AND project_id = %s
@@ -443,7 +443,7 @@ class JobRerun(Resource):
             if not p_job:
                 abort(404)
             if p_job['state'] in ['queued','running']:
-                abort(400, 'Job %s has executing parent job' % job_id)
+                abort(400, 'Job %s(%s) has executing parent job' % (job_id, job['name']))
         # while the parent job is in running state, skip rerun current job
 
         jobs = g.db.execute_many_dict('''
