@@ -526,8 +526,7 @@ class JobRerun(Resource):
         ''', [job_id])
 
         old_id_job = {}
-        loop_jobs = single_job
-        for j in loop_jobs:
+        for j in single_job:
             # Mark old jobs a restarted
             g.db.execute('''
                 UPDATE job
@@ -557,8 +556,7 @@ class JobRerun(Resource):
             logger.debug('## dep in jobs:')
             logger.debug(str(dep))
 
-        loop_jobs = single_job
-        for j in loop_jobs:
+        for j in single_job:
             g.db.execute('''
                 INSERT INTO job (state, id, build_id, type, dockerfile, name, project_id, dependencies, repo,
                                  env_var, env_var_ref, build_arg, deployment, definition, restarted, cluster_name)
