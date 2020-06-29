@@ -124,12 +124,15 @@ class Collaborator(Resource):
                     AND project_id = %s
                     LIMIT 1
                 """, [str(user_id), project_id])
-     
+
         if not collaborator:
             abort(400, 'Specified user is not in collaborators list.')
 
         if collaborator[0] == 'Owner':
-            abort(400, 'The project must have an owner.')
+            if count_owner(project_id) <= 1:
+                abort(400, 'The project must have an owner.')
+            if not is_valid_admin(project_id, g.token['user']['id']):
+                abort(400, 'Not authorized to change owner')
          
 
         b = request.get_json()
@@ -178,7 +181,10 @@ class Collaborator(Resource):
             return OK('Specified user is not in collaborators list.')
 
         if collaborator[0] == 'Owner':
-            abort(400, "It's not allowed to delete the owner of the project.")
+            if count_owner(project_id) <= 1:
+                abort(400, "It's not allowed to delete the only owner of the project.")
+            if not is_valid_admin(project_id, g.token['user']['id']):
+                abort(400, 'Not authorized to change owner')
 
         g.db.execute(
             """
@@ -192,3 +198,41 @@ class Collaborator(Resource):
         opa_push_collaborator_data(g.db)
 
         return OK('Successfully removed user.')
+
+
+def count_owner(project_id):
+    cnt = g.db.execute_one(
+        """
+        SELECT count(*) from collaborator
+        WHERE project_id = %s 
+        AND role = 'Owner'
+    """, [project_id])
+    return int(cnt[0])
+
+
+def is_valid_admin(project_id, user_id):
+    user_role = g.db.execute_one(
+        """
+        SELECT role 
+        FROM "user" 
+        WHERE id = %s
+        """, [str(user_id)])
+
+    if not user_role:
+        return False
+
+    if user_role[0] == "admin":
+        return True
+
+    collaborator = g.db.execute_one(
+        """
+        SELECT role FROM collaborator
+        WHERE user_id = %s
+        AND project_id = %s
+        LIMIT 1
+    """, [str(user_id), project_id])
+
+    if not collaborator:
+        return False
+
+    return collaborator[0] == "Owner"
