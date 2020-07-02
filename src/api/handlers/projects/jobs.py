@@ -383,6 +383,218 @@ class JobRestart(Resource):
 
         return OK('Successfully restarted job')
 
+@ns.route('/<job_id>/rerun')
+@api.response(403, 'Not Authorized')
+class JobRerun(Resource):
+
+    @api.response(200, 'Success', response_model)
+    def get(self, project_id, job_id):
+        '''
+        Rerun a single job without running jobs depend on it
+        '''
+        # restart single job only
+        # request like:
+        # https://infrabox.datahub.only.sap/api/v1/projects/{PROJECT_ID}/jobs/{INFRABOX_JOB_ID}/rerun
+
+        user_id = None
+        if g.token['type'] == 'user':
+            user_id = g.token['user']['id']
+        elif g.token['type'] == 'project':
+            if g.token['project']['id'] != project_id:
+                abort(400, "invalid project token")
+
+        logger.debug('Prepare to rerun job %s of project %s' % (job_id, project_id))
+        job = g.db.execute_one_dict('''
+            SELECT state, type, build_id, restarted, dependencies, name
+            FROM job
+            WHERE id = %s
+            AND project_id = %s
+        ''', [job_id, project_id])
+
+        if not job:
+            abort(404)
+
+        job_type = job['type']
+        job_state = job['state']
+        build_id = job['build_id']
+        restarted = job['restarted']
+
+        if job_type not in ('run_project_container', 'run_docker_compose'):
+            abort(400, 'Job type cannot be restarted')
+
+        restart_states = ('error', 'failure', 'finished', 'killed', 'unstable')
+
+        if job_state not in restart_states:
+            abort(400, 'Job in state %s cannot be restarted' % job_state)
+
+        if restarted:
+            abort(400, 'This job has been already restarted')
+
+        # while the parent job is in running state, skip rerun current job
+        parent_jobs = job['dependencies']
+        for j in parent_jobs:
+            j_id = j['job-id']
+            p_job = g.db.execute_one_dict('''
+            SELECT state, type, build_id, restarted
+            FROM job
+            WHERE id = %s
+            AND project_id = %s
+            ''', [j_id, project_id])
+            if not p_job:
+                abort(404)
+            if p_job['state'] in ['queued','running']:
+                abort(400, 'Job %s(%s) has executing parent job' % (job_id, job['name']))
+        # while the parent job is in running state, skip rerun current job
+
+        jobs = g.db.execute_many_dict('''
+            SELECT state, id, dependencies, restarted
+            FROM job
+            WHERE build_id = %s
+            AND project_id = %s
+        ''', [build_id, project_id])
+
+        restart_jobs = [job_id]
+
+        while True:
+            found = False
+            for j in jobs:
+                if j['id'] in restart_jobs:
+                    continue
+
+                if not j['dependencies']:
+                    continue
+
+                if j['restarted']:
+                    continue
+
+                for dep in j['dependencies']:
+                    dep_id = dep['job-id']
+
+                    if dep_id in restart_jobs:
+                        found = True
+                        restart_jobs.append(j['id'])
+                        break
+
+            if not found:
+                break
+
+        # get all jobs, filter the jobs marked to be restarted, check the status is running or not
+        for j in jobs:
+            if j['id'] not in restart_jobs:
+                continue
+
+            if j['state'] not in restart_states and j['state'] not in ('skipped', 'queued'):
+                abort(400, 'Some children jobs are still running')
+
+        # print mssage for the restart operator
+        if user_id is not None:
+            result = g.db.execute_one_dict('''
+                SELECT username
+                FROM "user"
+                WHERE id = %s
+            ''', [user_id])
+            username_or_token = result['username']
+        else:
+            result = g.db.execute_one_dict('''
+                                SELECT description
+                                FROM auth_token
+                                WHERE id = %s
+                            ''', [g.token['id']])
+            username_or_token = "project token " + result['description']
+        msg = 'Job restarted by %s\n' % username_or_token
+
+        # Clone Jobs and adjust dependencies
+        # get jobs that marked as restart from table job
+        jobs = []
+        for j in restart_jobs:
+            jobs += g.db.execute_many_dict('''
+                SELECT id, build_id, type, dockerfile, name, project_id, dependencies,
+                       repo, env_var, env_var_ref, build_arg, deployment, definition, cluster_name
+                FROM job
+                WHERE id = %s;
+            ''', [j])
+        logger.debug('## get jobs that marked as restart from table job:')
+        logger.debug(str(jobs))
+
+        # get job thet restart it self only.
+        single_job = []
+        single_job += g.db.execute_many_dict('''
+            SELECT id, build_id, type, dockerfile, name, project_id, dependencies,
+                    repo, env_var, env_var_ref, build_arg, deployment, definition, cluster_name
+            FROM job
+            WHERE id = %s;
+        ''', [job_id])
+
+        old_id_job = {}
+        for j in single_job:
+            # Mark old jobs a restarted
+            g.db.execute('''
+                UPDATE job
+                SET restarted = true
+                WHERE id = %s;
+            ''', [j['id']])
+
+            # Create new ID for the new jobs
+            old_id_job[j['id']] = j
+            j['id'] = str(uuid.uuid4())
+
+            m = re.search('(.*)\.([0-9]+)', j['name'])
+            if m:
+                # was already restarted
+                c = int(m.group(2))
+                j['name'] = '%s.%s' % (m.group(1), c+1)
+            else:
+                # First restart
+                j['name'] = j['name'] + '.1'
+            logger.debug('new jod id: %s, new job name: %s' % (j['id'], j['name']))
+
+        for j in jobs:
+            for dep in j['dependencies']:
+                if dep['job-id'] in old_id_job:
+                    dep['job'] = old_id_job[dep['job-id']]['name']
+                    dep['job-id'] = old_id_job[dep['job-id']]['id']
+            logger.debug('## dep in jobs:')
+            logger.debug(str(dep))
+
+        for j in single_job:
+            g.db.execute('''
+                INSERT INTO job (state, id, build_id, type, dockerfile, name, project_id, dependencies, repo,
+                                 env_var, env_var_ref, build_arg, deployment, definition, restarted, cluster_name)
+                VALUES ('queued', %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, false, %s);
+                INSERT INTO console (job_id, output)
+                VALUES (%s, %s);
+            ''', [j['id'],
+                  j['build_id'],
+                  j['type'],
+                  j['dockerfile'],
+                  j['name'],
+                  j['project_id'],
+                  json.dumps(j['dependencies']),
+                  json.dumps(j['repo']),
+                  json.dumps(j['env_var']),
+                  json.dumps(j['env_var_ref']),
+                  json.dumps(j['build_arg']),
+                  json.dumps(j['deployment']),
+                  json.dumps(j['definition']),
+                  j['cluster_name'],
+                  j['id'],
+                  msg])
+        g.db.commit()
+
+        for j in jobs:
+            if j['id'] not in [job_id]:
+                g.db.execute('''
+                    UPDATE job 
+                    SET dependencies = %s 
+                    WHERE id = %s;
+                ''', [
+                    json.dumps(j['dependencies']),
+                    j['id']
+                ])
+                g.db.commit()
+
+        return OK('Successfully restarted job')
+
 @ns.route('/<job_id>/abort')
 @api.response(403, 'Not Authorized')
 class JobAbort(Resource):
