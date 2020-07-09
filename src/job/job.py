@@ -299,7 +299,7 @@ class RunJob(Job):
 
         # Show environment
         self.console.collect("Environment:", show=True)
-        for name, value in self.env_vars.iteritems():
+        for name, value in self.env_vars.items():
             self.console.collect("%s=%s" % (name, value), show=True)
 
         self.console.collect("", show=True)
@@ -307,7 +307,7 @@ class RunJob(Job):
         # Show secrets
         if self.secrets:
             self.console.collect("Secrets:", show=True)
-            for name, _ in self.secrets.iteritems():
+            for name, _ in self.secrets.items():
                 self.console.collect("%s=*****" % name, show=True)
             self.console.collect("", show=True)
 
@@ -628,7 +628,7 @@ class RunJob(Job):
             ]
 
             for v in compose_file_content['services'][service].get('volumes', []):
-                if isinstance(v, basestring):
+                if isinstance(v, str):
                     v = v.replace('/infrabox/context', self.mount_repo_dir)
                 service_volumes.append(v)
 
@@ -809,7 +809,7 @@ class RunJob(Job):
             cmd += ['-v', "/local-cache:/infrabox/local-cache"]
 
         # add env vars
-        for name, value in self.environment.iteritems():
+        for name, value in self.environment.items():
             cmd += ['-e', '%s=%s' % (name, value)]
 
         # add resource env vars
@@ -912,7 +912,7 @@ class RunJob(Job):
             cmd += ['--build-arg', 'INFRABOX_BUILD_NUMBER=%s' % self.build['build_number']]
 
             if 'build_arguments' in self.job and self.job['build_arguments']:
-                for name, value in self.job['build_arguments'].iteritems():
+                for name, value in self.job['build_arguments'].items():
                     cmd += ['--build-arg', '%s=%s' % (name, value)]
 
             if target:
@@ -1142,7 +1142,7 @@ class RunJob(Job):
                 job['name'] = parent_name + "/" + job['name']
 
                 deps = job.get('depends_on', [])
-                for x in xrange(0, len(deps)):
+                for x in range(0, len(deps)):
                     deps[x]['job'] = parent_name + "/" + deps[x]['job']
 
             job_name = job['name']
@@ -1233,7 +1233,7 @@ class RunJob(Job):
 
                 # overwrite env vars if set
                 if 'environment' in job:
-                    for n, v in job['environment'].iteritems():
+                    for n, v in job['environment'].items():
                         if 'environment' not in s:
                             s['environment'] = {}
 

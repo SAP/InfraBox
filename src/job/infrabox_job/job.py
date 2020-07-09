@@ -175,7 +175,7 @@ class Job(object):
         message = None
 
         r = None
-        for _ in xrange(0, 20):
+        for _ in range(0, 20):
             try:
                 message = None
                 r = requests.get("%s%s" % (self.api_server, url),
@@ -244,7 +244,7 @@ class Job(object):
         message = None
         retry_time = 10
 
-        for _ in xrange(0, 5):
+        for _ in range(0, 5):
             message = None
             files = {filename: open(path)}
             try:
