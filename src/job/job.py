@@ -1,8 +1,6 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #pylint: disable=too-many-lines,attribute-defined-outside-init,too-many-public-methods,too-many-locals
 import sys
-reload(sys)
-sys.setdefaultencoding('utf-8')
 
 import os
 import shutil

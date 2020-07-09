@@ -41,5 +41,4 @@ COPY src/pyinfraboxutils /pyinfraboxutils
 ENV PYTHONPATH=/utils:/
 ENV PATH=/utils:$PATH
 
-RUN chmod +x /usr/local/bin/entrypoint.sh
-CMD /usr/local/bin/entrypoint.sh
+ENTRYPOINT [ "/usr/local/bin/entrypoint.sh" ]
