@@ -33,17 +33,17 @@ if [ ! -e /var/run/docker.sock ]; then
     CNT=0
     while true; do
         if [ $CNT -gt 3 ]; then
-            echo "Docker daemon not started" > '/dev/termination-log'
-            cat /tmp/dockerd.log >> /dev/termination-log
+            echo "Docker daemon not started" | tee '/dev/termination-log'
+            cat /tmp/dockerd.log | tee -a /dev/termination-log
             exit 1
         fi
         let CNT=CNT+1
 
         if startDocker ; then
-            echo "Docker daemon stared."
+            echo "Docker daemon started."
             break
-        eles
-            echo "Docker daemon not stared, retry"
+        else
+            echo "Docker daemon not started, retry"
             sleep 60
         fi
     done
