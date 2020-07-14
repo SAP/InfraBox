@@ -136,11 +136,11 @@ class RunJob(Job):
             json.dump(o, out)
 
     def compress(self, source, output):
-        cmd = "tar -cf - --directory %s . | pv -L 500m | python -m snappy -c - %s" % (source, output)
+        cmd = "tar -cf - --directory %s . | pv -L 500m | python3 -m snappy -c - %s" % (source, output)
         self.console.execute(cmd, cwd=source, show=True, shell=True, show_cmd=False)
 
     def uncompress(self, source, output):
-        cmd = "python -m snappy -d %s - | tar -xf - -C %s" % (source, output)
+        cmd = "python3 -m snappy -d %s - | tar -xf - -C %s" % (source, output)
         self.console.execute(cmd, cwd=output, show=True, shell=True, show_cmd=False)
 
     def get_files_in_dir(self, d, ending=None):
