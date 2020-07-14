@@ -246,7 +246,7 @@ class Job(object):
 
         for _ in range(0, 5):
             message = None
-            files = {filename: open(path)}
+            files = {filename: open(path, "rb")}
             try:
                 r = requests.post("%s%s" % (self.api_server, url),
                                   headers=self.get_headers(),
