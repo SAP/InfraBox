@@ -1,0 +1,11 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: InfraBox
+Source: https://github.com/sap/InfraBox
+
+Files: *
+Copyright:  2018-2020 SAP SE or an SAP affiliate company and InfraBox contributors
+License: Apache-2.0
+
+Files: src/services/aks/pkg/apis/azure/v1alpha1
+Copyright: Copyright The Kubernetes Authors.
+License: Apache-2.0
