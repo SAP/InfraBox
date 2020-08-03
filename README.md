@@ -1,5 +1,7 @@
 # <a href="http://www.infrabox.net"><img src="src\dashboard-client\static\logo_compact_transparent.png" width="200"></a>
 [![Build Status](https://infraboxci.datahub.sapcloud.io/api/v1/projects/deb14c11-dcbe-41f0-ade8-9d26e87266c3/state.svg?branch=master)](https://infraboxci.datahub.sapcloud.io/dashboard/#/project/sap-infrabox)
+[![REUSE status](https://api.reuse.software/badge/github.com/SAP/InfraBox)](https://api.reuse.software/info/github.com/SAP/InfraBox)
+
 
 InfraBox is a continuous integration system. It's well suited for cloud native applications and has [native support for kubernetes](https://github.com/SAP/infrabox-examples/tree/master/kubernetes). Watch our short introduction video:
 
