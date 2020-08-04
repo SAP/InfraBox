@@ -362,16 +362,6 @@ class Trigger(object):
             author_date = author.get('date', datetime.now())
 
         commit_id = hc['sha']
-        result = self.execute('''
-            SELECT id
-            FROM "commit"
-            WHERE id = %s
-                AND project_id = %s
-        ''', [commit_id, project_id])
-
-        if result:
-            if event['action'] == 'opened':
-                return res(200, 'build already triggered')
 
         self.execute('''
             INSERT INTO "commit" (
