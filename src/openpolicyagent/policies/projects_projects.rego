@@ -65,7 +65,8 @@ allow {
     array.slice(api.path, 0, 4) = ["api", "v1", "projects", "name"]
     project_name := concat("/", array.slice(api.path, 4, count(api.path)))
     api.token.type = "project"
-    api.token.project.name = project_name
+    projects[i].id = api.token.project.id
+    projects[i].name = project_name
 }
 
 allow {
