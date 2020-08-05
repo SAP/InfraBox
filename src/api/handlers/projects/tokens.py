@@ -39,6 +39,13 @@ class Tokens(Resource):
         '''
         Create new token
         '''
+        project_name = g.db.execute_one("""
+            SELECT name FROM project
+            WHERE id = %s
+        """, [project_id])
+        if not project_name:
+            return abort(400, 'Invalid project id.')
+
         b = request.get_json()
 
         result = g.db.execute_one("""
@@ -55,7 +62,7 @@ class Tokens(Resource):
         """, [b['description'], b['scope_push'], b['scope_pull'], project_id])
 
         token_id = result['id']
-        token = encode_project_token(token_id, project_id, 'myproject')
+        token = encode_project_token(token_id, project_id, project_name)
 
         g.db.commit()
 
