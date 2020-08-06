@@ -146,8 +146,13 @@ class Trigger(object):
             SELECT count(*)
             FROM job
             JOIN build ON job.build_id = build.id
-            JOIN "commit" ON build.commit_id = "commit".id and build.project_id = commit.project_id
-            WHERE "commit".id = %s AND commit.project_id = %s AND job.state IN ('running', 'queued', 'scheduled')
+            JOIN "commit" ON build.commit_id = "commit".id and build.project_id = "commit".project_id
+            LEFT JOIN "abort" ON "abort".job_id = job.id
+            WHERE
+                "commit".id = %s AND
+                "commit".project_id = %s AND
+                job.state IN ('running', 'queued', 'scheduled') AND
+                "abort".job_id IS NULL
             GROUP BY job.state
         ''', [commit_id, project_id])
 
