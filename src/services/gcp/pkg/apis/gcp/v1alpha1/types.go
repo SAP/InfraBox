@@ -26,6 +26,8 @@ type GKEClusterSpec struct {
 	MinNodes            int32  `json:"minNodes,omitempty"`
 	ClusterVersion      string `json:"clusterVersion,omitempty"`
 	Zone                string `json:"zone"`
+	ServiceCidr         string `json:"serviceCidr,omitempty"`
+	ClusterCidr         string `json:"clusterCidr,omitempty"`
 }
 
 type GKEClusterStatus struct {
