@@ -170,6 +170,16 @@ func createCluster(cr *v1alpha1.GKECluster, log *logrus.Entry) (*v1alpha1.GKEClu
         args = append(args, "--cluster-version", version)
     }
 
+    args = append(args, "--enable-ip-alias")
+    if cr.Spec.ClusterCidr == "" {
+        cr.Spec.ClusterCidr = "/18"
+        args = append(args, "--cluster-ipv4-cidr", cr.Spec.ClusterCidr)
+    }
+    if cr.Spec.ServiceCidr == "" {
+        cr.Spec.ServiceCidr = "/18"
+        args = append(args, "--services-ipv4-cidr", cr.Spec.ServiceCidr)
+    }
+
     cmd := exec.Command("gcloud", args...)
     out, err := cmd.CombinedOutput()
 
