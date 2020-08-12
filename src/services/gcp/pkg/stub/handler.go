@@ -171,6 +171,8 @@ func createCluster(cr *v1alpha1.GKECluster, log *logrus.Entry) (*v1alpha1.GKEClu
     }
 
     args = append(args, "--enable-ip-alias")
+    args = append(args, "--create-subnetwork", "")
+
     if cr.Spec.ClusterCidr == "" {
         cr.Spec.ClusterCidr = "/18"
         args = append(args, "--cluster-ipv4-cidr", cr.Spec.ClusterCidr)
