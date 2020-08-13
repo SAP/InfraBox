@@ -16,7 +16,7 @@ The InfraBox AKS Service can be used to dynamically provision a Kubernetes Clust
         },
         "services": [{
             "apiVersion": "azure.service.infrabox.net/v1alpha1",
-            "kind": "AKCluster",
+            "kind": "AKSCluster",
             "metadata": {
                 "name": "my-cluster"
             },
