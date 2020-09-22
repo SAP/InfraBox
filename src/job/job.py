@@ -694,7 +694,10 @@ class RunJob(Job):
 
             c.execute(['docker-compose', '-f', compose_file_new, 'up',
                        '--abort-on-container-exit'], env=self.environment, show=True, cwd=cwd)
-            c.execute(['docker-compose', '-f', compose_file_new, 'ps'], env=self.environment, cwd=cwd, show=True)
+            try:
+                c.execute(['docker-compose', '-f', compose_file_new, 'ps'], env=self.environment, cwd=cwd, show=True)
+            except Exception as e:
+                logger.exception(e)
         except:
             raise Failure("Failed to build and run container")
         finally:
