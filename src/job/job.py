@@ -697,6 +697,7 @@ class RunJob(Job):
             try:
                 c.execute(['docker-compose', '-f', compose_file_new, 'ps'], env=self.environment, cwd=cwd, show=True)
             except Exception as e:
+                # ignore 'docker-compose ps' fail
                 logger.exception(e)
         except:
             raise Failure("Failed to build and run container")
