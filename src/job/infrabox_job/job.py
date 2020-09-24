@@ -53,8 +53,8 @@ class Job(object):
                 else:
                     # Retry on any other error
                     continue
-            except Error:
-                raise
+            except Error as e:
+                raise e
             except Exception as e:
                 print(e)
 
