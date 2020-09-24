@@ -58,7 +58,7 @@ if [ ! -z "$INFRABOX_GIT_PRIVATE_KEY" ]; then
     chmod 600 ~/.ssh/id_rsa
     echo "StrictHostKeyChecking no" > ~/.ssh/config
     ssh-add ~/.ssh/id_rsa
-    ssh-keyscan -p $INFRABOX_GIT_PORT $INFRABOX_GIT_HOSTNAME >> ~/.ssh/known_hosts
+    ssh-keyscan -p $INFRABOX_GIT_PORT $INFRABOX_GIT_HOSTNAME >> ~/.ssh/known_hosts || true
 else
     echo "No private key configured"
 fi
