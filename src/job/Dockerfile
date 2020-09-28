@@ -7,7 +7,7 @@ RUN apk add --no-cache \
     python3 \
     python3-dev \
     py3-jwt \
-    py-pip \
+    py3-pip \
     py-requests \
     py-crcmod \
     g++ \
@@ -19,8 +19,8 @@ RUN apk add --no-cache \
     docker-compose \
     openssh-client \
     git && \
-    pip install docker awscli pyyaml && \
-    pip install future python-snappy && \
+    pip3 install docker awscli pyyaml && \
+    pip3 install future python-snappy && \
     apk del py-pip python3-dev g++ && \
     curl -O https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-${CLOUD_SDK_VERSION}-linux-x86_64.tar.gz && \
     tar xzf google-cloud-sdk-${CLOUD_SDK_VERSION}-linux-x86_64.tar.gz && \
