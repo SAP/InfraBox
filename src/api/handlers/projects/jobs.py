@@ -72,6 +72,12 @@ class Jobs(Resource):
                 build_limit = 10
             else:
                 build_limit = build_to - build_from
+        else:
+            try:
+                build_limit = int(build_limit)
+            except:
+                build_limit = 10
+
         build_limit = min(50, build_limit)
 
         #if build_to - build_from > 200:

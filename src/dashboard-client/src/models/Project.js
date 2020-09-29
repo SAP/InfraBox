@@ -53,7 +53,7 @@ export default class Project {
         return builds
     }
 
-    loadBuilds (from, to, sha, branch, cronjob) {
+    loadBuilds (from, to, sha, branch, cronjob, buildLimit) {
         let url = `projects/${this.id}/jobs/?from=${from}&to=${to}`
 
         if (sha) {
@@ -66,6 +66,10 @@ export default class Project {
 
         if (cronjob) {
             url += `&cronjob=${cronjob}`
+        }
+
+        if (buildLimit) {
+            url += `&build_limit=${buildLimit}`
         }
 
         return NewAPIService.get(url)
