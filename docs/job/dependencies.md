@@ -65,4 +65,4 @@ Suppose we have the following job definition:
 }
 ```
 
-If the the parent job would create the file `/infrabox/output/hello_world.txt`, then the child job would be able to access it at run time (i.e. when the child job container is running) under `/infrabox/inputs/parent/hello_world.txt`. The file is also available at build time (i.e. when building a Docker image for the child job): Infrabox would add the file at `.infrabox/inputs/parent/hello_world.xt` on the repo root and it can be referenced on the child job's Dockerfile.
+If the the parent job would create the file `/infrabox/output/hello_world.txt`, then the child job would be able to access it at run time (i.e. when the child job container is running) under `/infrabox/inputs/parent/hello_world.txt`. The file is also available at build time (i.e. when building a Docker image for the child job): Infrabox would add the file at `.infrabox/inputs/parent/hello_world.txt` on the repo root and it can be referenced on the child job's Dockerfile.
