@@ -155,7 +155,7 @@ class RunJob(Job):
 
         return result
 
-    def clone_repo(self, commit, clone_url, branch, ref, full_history, sub_path=None, submodules=True):
+    def clone_repo(self, commit, clone_url, branch, ref, full_history, sub_path=None, submodules=True, token=None):
         c = self.console
         mount_repo_dir = self.mount_repo_dir
 
@@ -164,6 +164,10 @@ class RunJob(Job):
 
         if os.environ['INFRABOX_GENERAL_DONT_CHECK_CERTIFICATES'] == 'true':
             c.execute(('git', 'config', '--global', 'http.sslVerify', 'false'), show=True)
+
+        if token and clone_url.startswith("http"):
+            schema, url = clone_url.split("://")
+            clone_url = schema + "://" + token + '@' + url
 
         cmd = ['git', 'clone']
 
@@ -174,7 +178,7 @@ class RunJob(Job):
                 cmd += ['--single-branch', '-b', branch]
 
         cmd += [clone_url, mount_repo_dir]
-        c.execute(cmd, show=True, retry=True)
+        c.execute_mask(cmd, show=True, retry=True, mask=token)
 
         if ref:
             cmd = ['git', 'fetch']
@@ -183,9 +187,9 @@ class RunJob(Job):
                 cmd += ['--depth=10']
 
             cmd += [clone_url, ref]
-            c.execute(cmd, cwd=mount_repo_dir, show=True, retry=True)
+            c.execute_mask(cmd, cwd=mount_repo_dir, show=True, retry=True, mask=token)
 
-        c.execute(['git', 'config', 'remote.origin.url', clone_url], cwd=mount_repo_dir, show=True)
+        c.execute_mask(['git', 'config', 'remote.origin.url', clone_url], cwd=mount_repo_dir, show=True, mask=token)
         c.execute(['git', 'config', 'remote.origin.fetch', '+refs/heads/*:refs/remotes/origin/*'],
                   cwd=mount_repo_dir, show=True)
         try:
@@ -222,6 +226,9 @@ class RunJob(Job):
             repo_clone = def_repo.get('clone', True)
             repo_submodules = def_repo.get('submodules', True)
             full_history = def_repo.get('full_history', None)
+            github_token = def_repo.get('github_api_token', None)
+            if not github_token:
+                github_token = self.repository.get('github_api_token', None)
             if full_history is None:
                 full_history = repo.get('full_history', False)
 
@@ -230,7 +237,7 @@ class RunJob(Job):
             if not repo_clone:
                 return
 
-            self.clone_repo(commit, clone_url, branch, ref, full_history, submodules=repo_submodules)
+            self.clone_repo(commit, clone_url, branch, ref, full_history, submodules=repo_submodules, token=github_token)
         elif self.project['type'] == 'upload':
             c.collect("Downloading Source")
             storage_source_zip = os.path.join(self.storage_dir, 'source.zip')
@@ -1157,7 +1164,11 @@ class RunJob(Job):
                 c.execute(['rm', '-rf', new_repo_path])
                 os.makedirs(new_repo_path)
 
-                self.clone_repo(job['commit'], clone_url, branch, None, True, sub_path)
+                github_token = repo.get('github_api_token', None)
+                if not github_token:
+                    github_token = self.repository.get('github_api_token', None)
+
+                self.clone_repo(job['commit'], clone_url, branch, None, True, sub_path, token=github_token)
 
                 c.header("Parsing infrabox file", show=True)
                 ib_file = job.get('infrabox_file', None)
@@ -1181,7 +1192,8 @@ class RunJob(Job):
                     "commit": job['commit'],
                     "infrabox_file": ib_file,
                     "full_history": True,
-                    "branch": job.get('branch', None)
+                    "branch": job.get('branch', None),
+                    "github_api_token": self.repository.get('github_api_token', None)
                 }
 
                 new_infrabox_context = os.path.dirname(ib_path)
