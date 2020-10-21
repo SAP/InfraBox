@@ -405,6 +405,18 @@ class Trigger(object):
                 c.id != %s
         ''', [pr_id, commit_id], fetch=False)
 
+        if event['action'] in ['opened', 'reopened']:
+            self.execute('''
+            INSERT INTO abort
+            SELECT j.id, null
+            FROM job j
+            JOIN build b
+            ON b.id = j.build_id
+            WHERE 
+                b.commit_id = %s AND 
+                j.state in ('scheduled', 'running')
+            ''', [commit_id], fetch=False)
+
         if not self.has_active_build(commit_id, project_id):
             build_id = self.create_build(commit_id, project_id)
             clone_url = event['repository']['clone_url']
