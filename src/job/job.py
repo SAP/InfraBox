@@ -178,7 +178,7 @@ class RunJob(Job):
                 cmd += ['--single-branch', '-b', branch]
 
         cmd += [clone_url, mount_repo_dir]
-        c.execute(cmd, show=True, retry=True)
+        c.execute_mask(cmd, show=True, retry=True, mask=token)
 
         if ref:
             cmd = ['git', 'fetch']
@@ -187,9 +187,9 @@ class RunJob(Job):
                 cmd += ['--depth=10']
 
             cmd += [clone_url, ref]
-            c.execute(cmd, cwd=mount_repo_dir, show=False, retry=True)
+            c.execute_mask(cmd, cwd=mount_repo_dir, show=True, retry=True, mask=token)
 
-        c.execute(['git', 'config', 'remote.origin.url', clone_url], cwd=mount_repo_dir, show=False)
+        c.execute_mask(['git', 'config', 'remote.origin.url', clone_url], cwd=mount_repo_dir, show=True, mask=token)
         c.execute(['git', 'config', 'remote.origin.fetch', '+refs/heads/*:refs/remotes/origin/*'],
                   cwd=mount_repo_dir, show=True)
         try:
@@ -1168,7 +1168,7 @@ class RunJob(Job):
                 if not github_token:
                     github_token = self.repository.get('github_api_token', None)
 
-                self.clone_repo(job['commit'], clone_url, branch, None, True, sub_path, github_token)
+                self.clone_repo(job['commit'], clone_url, branch, None, True, sub_path, token=github_token)
 
                 c.header("Parsing infrabox file", show=True)
                 ib_file = job.get('infrabox_file', None)
