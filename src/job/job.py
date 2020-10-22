@@ -1164,7 +1164,13 @@ class RunJob(Job):
                 c.execute(['rm', '-rf', new_repo_path])
                 os.makedirs(new_repo_path)
 
-                github_token = repo.get('github_api_token', None)
+                github_token = None
+                if job.get('repo', None):
+                    try:
+                        github_token = job['repo'].get('github_api_token', None)
+                    except:
+                        pass
+
                 if not github_token:
                     github_token = self.repository.get('github_api_token', None)
 
