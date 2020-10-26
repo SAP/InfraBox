@@ -34,6 +34,8 @@ logger = get_logger('scheduler')
 ERR_EXIT_FAILURE = 1
 ERR_EXIT_ERROR = 2
 
+BUILD_ARGS = ('GITHUB_OAUTH_TOKEN', 'GITHUB_BASE_URL')
+
 def makedirs(path):
     os.makedirs(path)
     os.chmod(path, 0o777)
@@ -296,6 +298,29 @@ class RunJob(Job):
             with open(p, 'w+') as f:
                 f.write("started")
 
+    def config_github(self):
+        if os.environ.get('INFRABOX_GITHUB_ENABLED') == "false":
+            self.console.collect("Github not enabled", show=True)
+            return
+        if not self.enable_token_access:
+            self.console.collect("Github token not configured", show=True)
+        token = self.repository.get('github_api_token', None)
+        github_url = "https://" + self.github_host
+
+        if token:
+            self.console.collect("GITHUB_OAUTH_TOKEN=********", show=True)
+            github_url = "https://" + token + '@' + self.github_host
+            self.console.collect("GITHUB_BASE_URL=" + github_url.replace(token, '********'), show=True)
+        else:
+            self.console.collect("GITHUB_BASE_URL=" + github_url, show=True)
+
+        cmd = ["git", "config", "--global", 'url."' + github_url + '".insteadOf', '"https://' + self.github_host + '"']
+        if token:
+            self.console.execute_mask(cmd, show=True, mask=token)
+            self.environment['GITHUB_OAUTH_TOKEN'] = token
+
+        self.environment['GITHUB_BASE_URL'] = github_url
+
     def main(self):
         self.load_data()
         # Date
@@ -332,6 +357,7 @@ class RunJob(Job):
                 self.console.collect(v, show=True)
             self.console.collect("", show=True)
 
+        self.config_github()
         self.get_source()
         self.create_infrabox_directories()
 
@@ -673,6 +699,10 @@ class RunJob(Job):
 
                 build['args'] = build.get('args', [])
                 build['args'] += ['INFRABOX_BUILD_NUMBER=%s' % self.build['build_number']]
+                for arg in BUILD_ARGS:
+                    if self.environment.get(arg, None):
+                        build['args'] += ['%s=%s' % (arg, self.environment[arg])]
+
 
         with open(compose_file_new, "w+") as out:
             json.dump(compose_file_content, out)
@@ -690,8 +720,8 @@ class RunJob(Job):
 
 
             self.environment['PATH'] = os.environ['PATH']
-            c.execute(['docker-compose', '-f', compose_file_new, 'build'],
-                      show=True, env=self.environment)
+            c.execute_mask(['docker-compose', '-f', compose_file_new, 'build'],
+                      show=True, env=self.environment, mask=self.repository.get('github_api_token', None))
             c.header("Run docker-compose", show=True)
 
 
@@ -919,13 +949,17 @@ class RunJob(Job):
                 for name, value in self.job['build_arguments'].items():
                     cmd += ['--build-arg', '%s=%s' % (name, value)]
 
+            for arg in BUILD_ARGS:
+                if self.environment.get(arg, None):
+                    cmd += ['--build-arg', '%s=%s' % (arg, self.environment[arg])]
+
             if target:
                 cmd += ['--target', target]
             elif cache_from:
                 cmd += ['--cache-from', cache_image]
 
             cwd = self._get_build_context_current_job()
-            c.execute(cmd, cwd=cwd, show=True)
+            c.execute_mask(cmd, cwd=cwd, show=True, mask=self.repository.get('github_api_token', None))
             self.cache_docker_image(image_name, cache_image)
         except Exception as e:
             raise Error("Failed to build the image: %s" % e)

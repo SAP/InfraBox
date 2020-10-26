@@ -27,6 +27,8 @@ class Job(object):
         self.source_upload = None
         self.deployments = None
         self.registries = None
+        self.github_host = os.environ.get('GITHUB_HOST', "")
+        self.enable_token_access = os.environ.get('GITHUB_ENABLE_TOKEN_ACCESS', False)
 
     def load_data(self):
         while True:
@@ -76,6 +78,8 @@ class Job(object):
             self.source_upload = data['source_upload']
 
         self.deployments = data['deployments']
+
+        self.enable_token_access = self.enable_token_access and self.repository.get('github_api_token', None)
 
     def get_headers(self):
         return {

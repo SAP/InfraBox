@@ -387,6 +387,20 @@ https://{{- required "host is required" .Values.host -}}:{{- .Values.port -}}
     value: {{ include "image_tag" . }}
 {{ end }}
 
+{{ define "github_access" }}
+-
+    name: INFRABOX_GITHUB_ENABLED
+    value: {{ .Values.github.enabled | quote }}
+{{- if .Values.github.enabled }}
+-
+    name: GITHUB_HOST
+    value: {{ .Values.github.host }}
+-
+    name: GITHUB_ENABLE_TOKEN_ACCESS
+    value: {{ .Values.github.token_access | quote}}
+{{ end }}
+{{ end }}
+
 {{ define "env_cluster" }}
 -
     name: INFRABOX_CLUSTER_NAME
