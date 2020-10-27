@@ -16,6 +16,7 @@ spec:
     env:
     {{ include "env_general" . | indent 4 }}
     {{ include "env_cluster" . | indent 4 }}
+    {{ include "github_access" . | indent 4 }}
     -
         name: INFRABOX_JOB_STORAGE_DRIVER
         value: {{ .Values.job.storage_driver }}

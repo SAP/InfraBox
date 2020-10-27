@@ -233,6 +233,11 @@ github:
     # Github API URL
     api_url: https://api.github.com
 
+    host: github.com
+
+    token_access: false
+
+
 # General Account configuration
 account:
     signup:
