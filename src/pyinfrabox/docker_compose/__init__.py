@@ -26,7 +26,8 @@ def handle_service(name, d, r):
             'container_name',
             'depends_on',
             'entrypoint',
-            'links'
+            'links',
+            'hostname'
         ]
 
         if key in allowed_fields:
