@@ -76,7 +76,7 @@ func setDeletionConfirmation(shootInterface gardenV1beta1.ShootInterface, shootN
 	return nil
 }
 
-const confirmationAnnotationName = "confirmation.garden.sapcloud.io/deletion"
+const confirmationAnnotationName = "confirmation.gardener.cloud/deletion"
 
 func createDeletionConfirmationJPatch(shoot *v1beta1.Shoot) ([]byte, error) {
 	if shoot == nil {
