@@ -891,7 +891,7 @@ class RunJob(Job):
                 # Find out if container build was failed
                 out = subprocess.check_output(['docker', 'images', '-q', image_name]).strip()
                 if not out:
-                    raise Failure("Could not build image of container")
+                    raise Failure("Error running container")
             except Exception as ex:
                 logger.exception(ex)
                 raise Failure("Error while executing subprocess 'docker images -q %s'" % image_name)
