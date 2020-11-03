@@ -351,6 +351,7 @@ class Trigger(object):
             "GITHUB_PULL_REQUEST_BASE_REF": event['pull_request']['base']['ref'],
             "GITHUB_PULL_REQUEST_BASE_SHA": event['pull_request']['base']['sha'],
             "GITHUB_PULL_REQUEST_BASE_REPO_CLONE_URL": event['pull_request']['base']['repo']['clone_url'],
+            "GITHUB_PULL_REQUEST_LABELS": ','.join(event['pull_request']['labels']),
             "GITHUB_REPOSITORY_FULL_NAME": event['repository']['full_name']
         })
 
