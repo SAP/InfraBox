@@ -894,7 +894,7 @@ class RunJob(Job):
                     raise Failure("Error running container")
             except Exception as ex:
                 logger.exception(ex)
-                raise Failure("Error while executing subprocess 'docker images -q %s'" % image_name)
+                raise Failure("Error running container")
             try:
                 # Find out if container was killed due to oom
                 out = subprocess.check_output(['docker', 'inspect', container_name,
