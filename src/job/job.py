@@ -888,6 +888,14 @@ class RunJob(Job):
                 c.execute(("docker", "commit", container_name, image_name))
         except Exception as e:
             try:
+                # Find out if container build was failed
+                out = subprocess.check_output(['docker', 'images', '-q', image_name]).strip()
+                if not out:
+                    raise Failure("Error running container")
+            except Exception as ex:
+                logger.exception(ex)
+                raise Failure("Error running container")
+            try:
                 # Find out if container was killed due to oom
                 out = subprocess.check_output(['docker', 'inspect', container_name,
                                                '-f', '{{.State.OOMKilled}}']).strip()

@@ -945,7 +945,7 @@ def compact(s):
         count = 1
         for count in range(1, c + 1):
             l = s.pop(0)
-            r['mem'] += max(r['mem'], l['mem'])
+            r['mem'] += l['mem']
             r['cpu'] += l['cpu']
             r['date'] += l['date']
 
