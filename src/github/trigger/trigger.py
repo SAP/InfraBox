@@ -457,6 +457,8 @@ def trigger_build():
 
     trigger = Trigger()
     if event == 'push':
+        # delay push event in case push and pr event comes at the same time
+        eventlet.sleep(4)
         return trigger.handle_push(request.get_json())
     elif event == 'pull_request':
         return trigger.handle_pull_request(request.get_json())
