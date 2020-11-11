@@ -402,7 +402,7 @@ class Trigger(object):
             AND b.project_id = c.project_id
             WHERE
                 c.pull_request_id = %s AND
-                j.state in ('scheduled', 'running') AND
+                j.state in ('scheduled', 'running', 'queued') AND
                 c.id != %s
         ''', [pr_id, commit_id], fetch=False)
 
@@ -415,7 +415,7 @@ class Trigger(object):
             ON b.id = j.build_id
             WHERE 
                 b.commit_id = %s AND 
-                j.state in ('scheduled', 'running')
+                j.state in ('scheduled', 'running', 'queued')
             ''', [commit_id], fetch=False)
 
         if not self.has_active_build(commit_id, project_id):
@@ -458,6 +458,8 @@ def trigger_build():
 
     trigger = Trigger()
     if event == 'push':
+        # delay push event in case push and pr event comes at the same time
+        eventlet.sleep(4)
         return trigger.handle_push(request.get_json())
     elif event == 'pull_request':
         return trigger.handle_pull_request(request.get_json())
