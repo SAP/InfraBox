@@ -100,7 +100,11 @@ export default {
                 password: this.password
             }).then(() => {
                 UserService.login()
-                location.href = this.$route.query.redirect
+                if (this.$route.query.redirect !== undefined) {
+                    location.href = this.$route.query.redirect
+                } else {
+                    router.reload()
+                }
             }).catch((err) => {
                 NotificationService.$emit('NOTIFICATION', new Notification(err))
             })
