@@ -103,7 +103,7 @@ export default {
                 if (this.$route.query.redirect !== undefined) {
                     location.href = this.$route.query.redirect
                 } else {
-                    router.reload()
+                    location.reload()
                 }
             }).catch((err) => {
                 NotificationService.$emit('NOTIFICATION', new Notification(err))
