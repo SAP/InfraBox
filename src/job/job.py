@@ -14,6 +14,7 @@ import traceback
 import urllib3
 import yaml
 import tarfile
+import signal
 
 from pyinfrabox.infrabox import validate_json
 from pyinfrabox.docker_compose import create_from
@@ -499,9 +500,24 @@ class RunJob(Job):
                 total_size += os.path.getsize(fp)
         return total_size
 
+    def finalize_upload(self):
+        self.upload_coverage_results()
+        self.upload_test_results()
+        self.upload_markup_files()
+        self.upload_badge_files()
+        self.upload_archive()
+
+    def handle_abort(self, signum, sigframe):
+        if not self.aborted:
+            self.aborted = True
+            self.console.collect("##Aborted", show=True)
+            self.finalize_upload()
+
     def main_run_job(self):
         c = self.console
         self.create_jobs_json()
+
+        signal.signal(signal.SIGTERM, self.handle_abort)
 
         # base dir for inputs
         storage_inputs_dir = os.path.join(self.storage_dir, 'inputs')
@@ -569,11 +585,9 @@ class RunJob(Job):
         except:
             raise
         finally:
-            self.upload_coverage_results()
-            self.upload_test_results()
-            self.upload_markup_files()
-            self.upload_badge_files()
-            self.upload_archive()
+            if self.aborted:
+                return
+            self.finalize_upload()
 
             # Compressing output
             c.collect("Uploading /infrabox/output", show=True)
