@@ -157,7 +157,10 @@ export default {
             this.$refs.leftSidenav.toggle()
         },
         login () {
-            router.push('/login')
+            router.push({
+                path: '/login',
+                query: {redirect: location.href}
+            })
         },
         logout () {
             UserService.logout()
