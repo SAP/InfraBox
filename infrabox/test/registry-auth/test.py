@@ -3,7 +3,6 @@ eventlet.monkey_patch()
 
 import unittest
 import json
-import base64
 from auth import server
 import xmlrunner
 import psycopg2
@@ -58,12 +57,12 @@ class AccountTestCase(unittest.TestCase):
         self.assertEqual(r['status'], 401)
 
     def test_header_no_password(self):
-        h = {'Authorization': 'Basic %s' % base64.b64encode('infrabox'.encode('utf-8'))}
+        h = {'Authorization': 'Basic %s' % 'infrabox'}
         r = self.get('/v2', h)
         self.assertEqual(r['status'], 401)
 
     def test_header_no_password_2(self):
-        h = {'Authorization': 'Basic %s' % base64.b64encode('infrabox:2'.encode('utf-8'))}
+        h = {'Authorization': 'Basic %s' % 'infrabox:2'}
         r = self.get('/v2', h)
         self.assertEqual(r['status'], 401)
 
@@ -121,7 +120,7 @@ class AccountTestCase(unittest.TestCase):
             project_token = self.project_token
 
         token = encode_project_token(project_token, self.project_id, 'myproject').decode('utf-8')
-        h = {'Authorization': 'Basic %s' % base64.b64encode('infrabox:%s' % token)}
+        h = {'Authorization': 'Basic %s' % ('infrabox:%s' % token)}
         return h
 
     def get(self, url, headers=None, method='GET'): # pragma: no cover
