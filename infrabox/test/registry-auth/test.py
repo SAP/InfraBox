@@ -57,7 +57,7 @@ class AccountTestCase(unittest.TestCase):
         self.assertEqual(r['status'], 401)
 
     def test_header_no_password(self):
-        h = {'Authorization': 'Basic %s' % 'infrabox'}
+        h = {'Authorization': 'Basic %s' % 'infrabox'.encode('utf-8')}
         r = self.get('/v2', h)
         self.assertEqual(r['status'], 401)
 
