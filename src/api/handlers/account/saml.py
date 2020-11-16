@@ -1,4 +1,4 @@
-from urlparse import urlparse
+from urllib.parse import urlparse
 
 from flask import g, request, abort, redirect, make_response
 
@@ -36,7 +36,7 @@ def init_saml_auth():
 def get_attribute_dict(saml_auth):
     attributes = {}
     nested_attribute_dict = saml_auth.get_attributes()
-    for attribute_name, nested_attribute in nested_attribute_dict.items():
+    for attribute_name, nested_attribute in list(nested_attribute_dict.items()):
         if len(nested_attribute) > 0:
             attributes[attribute_name] = nested_attribute[0]
     attributes["NameID"] = saml_auth.get_nameid()

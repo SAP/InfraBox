@@ -3,7 +3,7 @@ import os
 import json
 import uuid
 import copy
-import urllib
+import urllib.request, urllib.parse, urllib.error
 import random
 from datetime import datetime
 from io import BytesIO
@@ -344,8 +344,8 @@ class Job(Resource):
         root_url = get_root_url("global")
 
         # Default env vars
-        project_name = urllib.quote_plus(data['project']['name']).replace('+', '%20')
-        job_name = urllib.quote_plus(data['job']['name']).replace('+', '%20')
+        project_name = urllib.parse.quote_plus(data['project']['name']).replace('+', '%20')
+        job_name = urllib.parse.quote_plus(data['job']['name']).replace('+', '%20')
         build_url = "%s/dashboard/#/project/%s/build/%s/%s" % (root_url,
                                                                project_name,
                                                                data['build']['build_number'],
@@ -390,14 +390,14 @@ class Job(Resource):
             data['env_vars']['INFRABOX_GITHUB_PULL_REQUEST'] = "true"
 
         if env_vars:
-            for name, value in env_vars.iteritems():
+            for name, value in env_vars.items():
                 try:
                     data['env_vars'][name] = str(value)
                 except UnicodeEncodeError:
                     data['env_vars'][name] = value.encode('utf-8')
 
         if env_var_refs:
-            for name, value in env_var_refs.iteritems():
+            for name, value in env_var_refs.items():
                 secret = get_secret(value)
 
                 if secret is None:
@@ -467,7 +467,7 @@ class Cache(Resource):
         project_id = g.token['project']['id']
         job_name = g.token['job']['name']
 
-        for f, _ in request.files.items():
+        for f, _ in list(request.files.items()):
             template = 'project_%s_job_%s_%s'
             key = template % (project_id, job_name, f)
             key = key.replace('/', '_')
@@ -520,7 +520,7 @@ class Output(Resource):
     def post(self):
         job_id = g.token['job']['id']
 
-        for f, _ in request.files.items():
+        for f, _ in list(request.files.items()):
             key = "%s/%s" % (job_id, f)
 
             stream = request.files[f].stream
@@ -942,7 +942,7 @@ class Stats(Resource):
         stats = request.json['stats']
         s = 0
         c = 0
-        for _, values in stats.items():
+        for _, values in list(stats.items()):
             for v in values:
                 c += 1
                 s += v['cpu']
@@ -1000,7 +1000,7 @@ class Markup(Resource):
             delete_file(path)
             return response
 
-        for name, f in request.files.iteritems():
+        for name, f in request.files.items():
             try:
                 if not allowed_file(f.filename, ("json",)):
                     abort(400, "Filetype not allowed")
@@ -1049,7 +1049,7 @@ class Badge(Resource):
             delete_file(path)
             return response
 
-        for _, f in request.files.iteritems():
+        for _, f in request.files.items():
             if not allowed_file(f.filename, ("json")):
                 abort(400, "Filetype not allowed")
 

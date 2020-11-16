@@ -73,7 +73,7 @@ class Test(unittest.TestCase):
             return result.json()[0]
         except:
             print("Get build failed: ")
-            print(result.text)
+            print((result.text))
             raise
 
     def _get_jobs(self):
@@ -322,7 +322,7 @@ def main():
     print("Connecting to DB")
     connect_db() # Wait for DB
 
-    print("ROOT_URL: %s" % root_url)
+    print(("ROOT_URL: %s" % root_url))
     while True:
         time.sleep(1)
         r = None
@@ -332,7 +332,7 @@ def main():
             if r.status_code in (200, 404):
                 break
 
-            print(r.text)
+            print((r.text))
         except Exception as e:
             print(e)
 
