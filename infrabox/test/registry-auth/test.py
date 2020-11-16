@@ -58,12 +58,12 @@ class AccountTestCase(unittest.TestCase):
         self.assertEqual(r['status'], 401)
 
     def test_header_no_password(self):
-        h = {'Authorization': 'Basic %s' % base64.b64encode('infrabox')}
+        h = {'Authorization': 'Basic %s' % base64.b64encode('infrabox'.encode('utf-8'))}
         r = self.get('/v2', h)
         self.assertEqual(r['status'], 401)
 
     def test_header_no_password_2(self):
-        h = {'Authorization': 'Basic %s' % base64.b64encode('infrabox:2')}
+        h = {'Authorization': 'Basic %s' % base64.b64encode('infrabox:2'.encode('utf-8'))}
         r = self.get('/v2', h)
         self.assertEqual(r['status'], 401)
 
@@ -120,7 +120,7 @@ class AccountTestCase(unittest.TestCase):
         if not project_token:
             project_token = self.project_token
 
-        token = encode_project_token(project_token, self.project_id, 'myproject').encode('utf-8')
+        token = encode_project_token(project_token, self.project_id, 'myproject').decode('utf-8')
         h = {'Authorization': 'Basic %s' % base64.b64encode('infrabox:%s' % token)}
         return h
 
