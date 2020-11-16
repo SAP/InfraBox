@@ -120,7 +120,7 @@ class AccountTestCase(unittest.TestCase):
         if not project_token:
             project_token = self.project_token
 
-        token = encode_project_token(project_token, self.project_id, 'myproject')
+        token = encode_project_token(project_token, self.project_id, 'myproject').encode('utf-8')
         h = {'Authorization': 'Basic %s' % base64.b64encode('infrabox:%s' % token)}
         return h
 
@@ -131,7 +131,7 @@ class AccountTestCase(unittest.TestCase):
         r = self.app.get(url, headers=headers)
 
         if r.mimetype == 'application/json':
-            return json.loads(r.data)
+            return json.loads(r.data.decode('utf-8'))
 
         return r
 
