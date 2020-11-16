@@ -3,6 +3,7 @@ eventlet.monkey_patch()
 
 import unittest
 import json
+import base64
 from auth import server
 import xmlrunner
 import psycopg2
@@ -57,12 +58,12 @@ class AccountTestCase(unittest.TestCase):
         self.assertEqual(r['status'], 401)
 
     def test_header_no_password(self):
-        h = {'Authorization': 'Basic %s' % 'infrabox'.encode('utf-8')}
+        h = {'Authorization': 'Basic %s' % base64.b64encode('infrabox'.encode("utf-8"))}
         r = self.get('/v2', h)
         self.assertEqual(r['status'], 401)
 
     def test_header_no_password_2(self):
-        h = {'Authorization': 'Basic %s' % 'infrabox:2'}
+        h = {'Authorization': 'Basic %s' % base64.b64encode('infrabox:2'.encode("utf-8"))}
         r = self.get('/v2', h)
         self.assertEqual(r['status'], 401)
 
@@ -119,8 +120,8 @@ class AccountTestCase(unittest.TestCase):
         if not project_token:
             project_token = self.project_token
 
-        token = encode_project_token(project_token, self.project_id, 'myproject').decode('utf-8')
-        h = {'Authorization': 'Basic %s' % ('infrabox:%s' % token)}
+        token = encode_project_token(project_token, self.project_id, 'myproject')
+        h = {'Authorization': 'Basic %s' % base64.b64encode(('infrabox:%s' % token).encode("utf-8"))}
         return h
 
     def get(self, url, headers=None, method='GET'): # pragma: no cover
@@ -133,7 +134,6 @@ class AccountTestCase(unittest.TestCase):
             return json.loads(r.data.decode('utf-8'))
 
         return r
-
 
 if __name__ == '__main__':
     with open('results.xml', 'wb') as output:
