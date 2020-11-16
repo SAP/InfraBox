@@ -3,16 +3,16 @@ FROM debian:9.6-slim
 RUN    apt-get update -y \
     && apt-get install -y \
         libpq-dev \
-        python \
-        python-pip \
-        python-six \
-        python-cryptography \
-        python-pyasn1 \
-        python-crypto \
+        python3 \
+        python3-pip \
+        python3-six \
+        python3-cryptography \
+        python3-pyasn1 \
+        python3-crypto \
         python-ldap \
         curl \
         git \
-    && pip install \
+    && pip3 install \
         psycopg2 \
         nose \
         pyyaml \
@@ -37,7 +37,7 @@ RUN    apt-get update -y \
         python-swiftclient \
         python-cachetclient \
         croniter \
-    && apt-get remove -y python-pip \
+    && apt-get remove -y python3-pip \
     && apt-get autoremove -y \
     && rm -rf /var/lib/apt/lists/*
 
