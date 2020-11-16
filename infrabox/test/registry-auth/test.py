@@ -134,6 +134,7 @@ class AccountTestCase(unittest.TestCase):
 
         return r
 
+
 if __name__ == '__main__':
     with open('results.xml', 'wb') as output:
         unittest.main(testRunner=xmlrunner.XMLTestRunner(output=output))
