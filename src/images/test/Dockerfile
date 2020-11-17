@@ -13,6 +13,8 @@ RUN    apt-get update -y \
         curl \
         git \
     && pip install \
+        pyrsistent==0.15.7 \
+        six==1.14.0 \
         psycopg2 \
         nose \
         pyyaml \

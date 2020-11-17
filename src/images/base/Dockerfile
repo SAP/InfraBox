@@ -16,6 +16,8 @@ RUN    apt-get update -y \
         openssh-client \
         inotify-tools \
     && pip install \
+        pyrsistent==0.15.7 \
+        six==1.14.0 \
         psycopg2 \
         flask \
         flask-restx \
