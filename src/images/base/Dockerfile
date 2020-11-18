@@ -1,21 +1,28 @@
-FROM debian:9.6-slim
+FROM ubuntu:20.04
+
+ENV DEBIAN_FRONTEND=noninteractive
 
 RUN    apt-get update -y \
     && apt-get install -y \
-	libpq-dev \
-        python3 \
-        python3-pip \
-        python3-six \
+        pkg-config \
+	    libpq-dev \
+	    python3-dev \
+	    python3-pip \
         python3-cryptography \
         python3-crypto \
         python3-pyasn1 \
-        python-ldap \
         libxml2-dev \
         libxmlsec1-dev \
         python3-paramiko \
         openssh-client \
         inotify-tools \
+        libsasl2-dev \
+        libldap2-dev \
+        libssl-dev \
+        libxmlsec1-openssl \
     && pip3 install \
+        six \
+        python-ldap \
         psycopg2 \
         flask \
         flask-restx \
