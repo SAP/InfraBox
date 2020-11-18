@@ -12,7 +12,7 @@ class TestDockerCompose(unittest.TestCase):
             assert False
         except Exception as e:
             print(e)
-            self.assertEqual(e.message, message)
+            self.assertEqual(str(e), message)
 
     def test_empty(self):
         self.run_exception('./test/empty.yml', 'invalid file')

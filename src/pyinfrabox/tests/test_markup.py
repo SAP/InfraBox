@@ -13,7 +13,7 @@ class TestDockerCompose(unittest.TestCase):
             parse_document(data)
             assert False
         except ValidationError as e:
-            self.assertEqual(e.msg, expected)
+            self.assertEqual(str(e), expected)
 
 
     def test_version(self):
@@ -65,7 +65,7 @@ class TestDockerCompose(unittest.TestCase):
                 parse_text(data, "#")
                 assert False
             except ValidationError as e:
-                self.assertEqual(e.msg, expected)
+                self.assertEqual(str(e), expected)
 
         raises_expect_text({}, "#: property 'type' is required")
         raises_expect_text({"type": "text"}, "#: property 'text' is required")
@@ -86,7 +86,7 @@ class TestDockerCompose(unittest.TestCase):
                 parse_ordered_list(data, "#")
                 assert False
             except ValidationError as e:
-                self.assertEqual(e.msg, expected)
+                self.assertEqual(str(e), expected)
 
         raises_expect_list({}, "#: property 'type' is required")
         raises_expect_list({"type": "ordered_list"}, "#: property 'elements' is required")
@@ -104,7 +104,7 @@ class TestDockerCompose(unittest.TestCase):
                 parse_unordered_list(data, "#")
                 assert False
             except ValidationError as e:
-                self.assertEqual(e.msg, expected)
+                self.assertEqual(str(e), expected)
 
         raises_expect_list({}, "#: property 'type' is required")
         raises_expect_list({"type": "unordered_list"}, "#: property 'elements' is required")
@@ -122,7 +122,7 @@ class TestDockerCompose(unittest.TestCase):
                 parse_unordered_list(data, "#")
                 assert False
             except ValidationError as e:
-                self.assertEqual(e.msg, expected)
+                self.assertEqual(str(e), expected)
 
         raises_expect_group({}, "#: property 'type' is required")
         raises_expect_group({"type": "group"}, "#: property 'elements' is required")
@@ -140,7 +140,7 @@ class TestDockerCompose(unittest.TestCase):
                 parse_unordered_list(data, "#")
                 assert False
             except ValidationError as e:
-                self.assertEqual(e.msg, expected)
+                self.assertEqual(str(e), expected)
 
         raises_expect_p({}, "#: property 'type' is required")
         raises_expect_p({"type": "paragraph"}, "#: property 'elements' is required")
@@ -158,7 +158,7 @@ class TestDockerCompose(unittest.TestCase):
                 parse_grid(data, "#")
                 assert False
             except ValidationError as e:
-                self.assertEqual(e.msg, expected)
+                self.assertEqual(str(e), expected)
 
         raises_expect_grid({}, "#: property 'type' is required")
         raises_expect_grid({"type": "grid"}, "#: property 'rows' is required")
@@ -178,7 +178,7 @@ class TestDockerCompose(unittest.TestCase):
                 parse_table(data, "#")
                 assert False
             except ValidationError as e:
-                self.assertEqual(e.msg, expected)
+                self.assertEqual(str(e), expected)
 
         raises_expect_table({}, "#: property 'type' is required")
         raises_expect_table({"type": "table"}, "#: property 'rows' is required")

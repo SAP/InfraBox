@@ -68,5 +68,5 @@ def parse(d):
 
 def create_from(path):
     with open(path) as f:
-        d = yaml.load(f.read())
+        d = yaml.load(f.read(), yaml.SafeLoader)
         return parse(d)
