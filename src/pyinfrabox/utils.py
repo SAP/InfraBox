@@ -17,6 +17,7 @@ except:
 
 def check_text(t, path, allowEmpty=False):
     if not isinstance(t, str):
+        print(t)
         raise ValidationError(path, "is not a string")
 
     if not allowEmpty and not t:
