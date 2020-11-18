@@ -8,4 +8,4 @@ COPY src/pyinfraboxutils /pyinfraboxutils
 COPY src/pyinfrabox /pyinfrabox
 COPY infrabox/test/utils/id_rsa.pub /var/run/secrets/infrabox.net/rsa/id_rsa.pub
 
-CMD python /server.py
+CMD python3 /server.py
