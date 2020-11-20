@@ -18,7 +18,8 @@ conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
 
 class InputTests(TestCase):
     def get(self, url, password='b514af82-3c4f-4bb5-b1da-a89a0ced5e6f'):
-        auth = base64.b64encode('infrabox:%s' % encode_project_token(password, '2514af82-3c4f-4bb5-b1da-a89a0ced5e6f', 'myproject'))
+        basic = 'infrabox:%s' % encode_project_token(password, '2514af82-3c4f-4bb5-b1da-a89a0ced5e6f', 'myproject')
+        auth = base64.b64encode(basic.encode('utf-8')).decode('utf-8')
         headers = {'authorization': "Basic " + auth}
         return requests.get(url, headers=headers)
 
