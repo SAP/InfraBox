@@ -41,10 +41,10 @@ _prepareKubectl() {
 
 _getDependencies() {
     echo "## install infraboxcli"
-    # pip install infraboxcli
+    # pip3 install infraboxcli
     git clone https://github.com/SAP/InfraBox-cli.git /cli
     pushd /cli
-    pip install -e .
+    pip3 install -e .
     infrabox version
     git rev-parse HEAD
     popd
