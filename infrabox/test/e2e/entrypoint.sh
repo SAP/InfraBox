@@ -197,7 +197,7 @@ _runTests() {
     pushd /infrabox/context/infrabox/test/e2e
 
     set +e
-    python test.py
+    python3 test.py
     rc=$?
 
     cp results.xml /infrabox/upload/testresult
