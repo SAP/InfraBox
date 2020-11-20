@@ -1,5 +1,5 @@
 FROM nginx:1.15-alpine
-RUN apk add --no-cache curl python py-pip openssl && \
+RUN apk add --no-cache curl python3 py-pip openssl && \
     pip install htpasswd && \
     apk del py-pip
 

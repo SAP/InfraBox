@@ -6,4 +6,4 @@ COPY src/pyinfraboxutils /pyinfraboxutils
 
 ENV PYTHONPATH=/
 
-CMD python /metrics/server.py
+CMD python3 /metrics/server.py

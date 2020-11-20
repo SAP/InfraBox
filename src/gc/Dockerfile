@@ -6,4 +6,4 @@ COPY src/pyinfraboxutils /pyinfraboxutils
 
 ENV PYTHONPATH=/
 
-CMD python gc/gc.py
+CMD python3 gc/gc.py

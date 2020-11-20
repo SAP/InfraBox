@@ -7,4 +7,4 @@ COPY src/pyinfrabox /pyinfrabox
 
 ENV PYTHONPATH=/
 
-CMD python /server.py
+CMD python3 /server.py

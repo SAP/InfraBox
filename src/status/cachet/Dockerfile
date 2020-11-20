@@ -6,4 +6,4 @@ COPY src/pyinfraboxutils /pyinfraboxutils
 
 ENV PYTHONPATH=/
 
-CMD python /cachet.py
+CMD python3 /cachet.py

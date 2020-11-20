@@ -6,4 +6,4 @@ COPY src/pyinfraboxutils /pyinfraboxutils
 
 ENV PYTHONPATH=/
 
-CMD python review.py
+CMD python3 review.py

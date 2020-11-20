@@ -8,4 +8,4 @@ COPY src/openpolicyagent /infrabox/openpolicyagent
 COPY src/pyinfraboxutils /infrabox/pyinfraboxutils
 COPY src/pyinfrabox /infrabox/pyinfrabox
 
-CMD python /infrabox/api/server.py
+CMD python3 /infrabox/api/server.py

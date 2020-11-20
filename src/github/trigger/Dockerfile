@@ -7,4 +7,4 @@ COPY src/pyinfrabox /pyinfrabox
 
 ENV PYTHONPATH=/
 
-CMD python /trigger.py
+CMD python3 /trigger.py

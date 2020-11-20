@@ -6,4 +6,4 @@ COPY src/pyinfraboxutils /pyinfraboxutils
 
 ENV PYTHONPATH=/
 
-CMD python db/migrate.py
+CMD python3 db/migrate.py
