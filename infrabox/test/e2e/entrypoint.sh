@@ -110,6 +110,7 @@ _installPostgres() {
 
 _installMinio() {
     echo "## Install minio"
+    helm repo add stable https://charts.helm.sh/stable
     helm install \
         --set serviceType=ClusterIP,replicas=1,persistence.enabled=false \
         -n infrabox-minio \

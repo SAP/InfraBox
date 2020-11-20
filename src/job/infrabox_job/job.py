@@ -29,6 +29,7 @@ class Job(object):
         self.registries = None
         self.github_host = os.environ.get('GITHUB_HOST', "")
         self.enable_token_access = os.environ.get('GITHUB_ENABLE_TOKEN_ACCESS', False)
+        self.aborted = False
 
     def load_data(self):
         while True:

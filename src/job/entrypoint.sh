@@ -67,4 +67,4 @@ echo "CLUSTER: $INFRABOX_CLUSTER_NAME"
 echo "DOCKER VERSION: $(docker -v)"
 echo "DOCKER_COMPOSE VERSION: $(docker-compose -v)"
 
-/job/job.py $@
+exec /job/job.py $@
