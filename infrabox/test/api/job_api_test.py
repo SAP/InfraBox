@@ -237,6 +237,6 @@ class JobApiTest(ApiTestTemplate):
         keys = ['status', 'duration', 'message', 'stack']
         for i, received_row in enumerate(r):
             # create dictionary from the list to compare it easier
-            row_dictionary = dict(list(zip(keys, received_row)))
-            self.assertTrue(all(item in list(testresult_data["tests"][i].items())
-                                for item in list(row_dictionary.items())))
+            row_dictionary = dict(zip(keys, received_row))
+            self.assertTrue(all(item in testresult_data["tests"][i].items()
+                                for item in row_dictionary.items()))
