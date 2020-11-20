@@ -67,7 +67,6 @@ _initHelm() {
 		--clusterrole cluster-admin \
 		--serviceaccount=kube-system:tiller
     helm init --service-account tiller --wait
-    helm repo update
 }
 
 _getPodNameImpl() {
