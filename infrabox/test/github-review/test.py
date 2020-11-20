@@ -123,7 +123,12 @@ class TestIt(unittest.TestCase):
 
         requests_post.assert_called_with(
             'status_url',
-            data='{"target_url": "GITHUB_URL/dashboard/#/project/projectname/build/123/123/job/jobname", "state": "pending", "context": "Job: jobname", "description": "%s"}' % ("project_id:%s job_id:%s" % (self.job_data['project_id'], self.job_data['id']) ),
+            json={
+                "target_url": "GITHUB_URL/dashboard/#/project/projectname/build/123/123/job/jobname",
+                "state": "pending",
+                "context": "Job: jobname",
+                "description": "project_id:%s job_id:%s" % (self.job_data['project_id'], self.job_data['id'])
+            },
             headers={'Authorization': 'token token', 'User-Agent': 'InfraBox'},
             timeout=10,
             verify=False)
@@ -149,10 +154,14 @@ class TestIt(unittest.TestCase):
 
         execute_sql.side_effect = side_effect
         handle_job_update(None, self.event)
-        data = '{"target_url": "GITHUB_URL/dashboard/#/project/projectname/build/123/123/job/jobname", "context": "Job: jobname", "state": "%s", "description": "%s"}' % (self.expected_github_status, "project_id:%s job_id:%s" % (self.job_data['project_id'], self.job_data['id']))
         requests_post.assert_called_with(
             'status_url',
-            data=data,
+            json={
+                "target_url": "GITHUB_URL/dashboard/#/project/projectname/build/123/123/job/jobname",
+                "context": "Job: jobname",
+                "state": self.expected_github_status,
+                "description": "project_id:%s job_id:%s" % (self.job_data['project_id'], self.job_data['id'])
+            },
             headers={'Authorization': 'token token',
                      'User-Agent': 'InfraBox'},
             timeout=10,

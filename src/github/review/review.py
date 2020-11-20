@@ -171,7 +171,7 @@ def handle_job_update(conn, event):
     # TODO(ib-steffen): support ca bundles
     try:
         r = requests.post(github_status_url,
-                          data=json.dumps(payload),
+                          json=payload,
                           headers=headers,
                           timeout=10,
                           verify=False)
