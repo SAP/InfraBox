@@ -34,7 +34,7 @@ class Test(TestCase):
     image_path = project_id + '/image_name'
 
     def _get_headers(self):
-        auth = base64.b64encode('infrabox:%s' % encode_project_token(self.token, self.project_id, 'myproject'))
+        auth = base64.b64encode(('infrabox:%s' % encode_project_token(self.token, self.project_id, 'myproject')).encode('utf-8')).decode('utf-8')
         headers = {'authorization': "Basic " + auth}
         return headers
 
