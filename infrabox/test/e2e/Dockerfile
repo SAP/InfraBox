@@ -17,7 +17,7 @@ RUN apt-get update -y && apt-get install -y \
     xmlrunner \
     requests==2.18.4 \
     psycopg2 \
-    jwt
+    PyJWT
 
 RUN mkdir /project
 WORKDIR /project
