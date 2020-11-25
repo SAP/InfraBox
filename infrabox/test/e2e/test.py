@@ -332,7 +332,7 @@ def main():
             if r.status_code in (200, 404):
                 break
 
-            print((r.text))
+            print(r.text)
         except Exception as e:
             print(e)
 
