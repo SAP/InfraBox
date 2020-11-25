@@ -6,9 +6,9 @@ ARG HELM_VERSION=2.12.3
 RUN apt-get update -y && apt-get install -y \
     curl \
     pkg-config \
-	libpq-dev \
-	python3-dev \
-	python3-pip \
+    libpq-dev \
+    python3-dev \
+    python3-pip \
     postgresql-client \
     python3-crypto \
     python3-cryptography \
