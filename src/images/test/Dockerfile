@@ -48,10 +48,7 @@ RUN    apt-get update -y \
         keystoneauth1==3.7.0 \
         python-swiftclient \
         python-cachetclient \
-        croniter \
-    && apt-get remove -y python3-pip \
-    && apt-get autoremove -y \
-    && rm -rf /var/lib/apt/lists/*
+        croniter
 
 RUN useradd -ms /bin/bash infrabox
 USER infrabox

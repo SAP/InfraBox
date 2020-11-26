@@ -44,10 +44,7 @@ RUN    apt-get update -y \
         python-cachetclient \
         xmlsec \
         python3-saml \
-        croniter \
-    && apt-get remove -y python3-pip \
-    && apt-get autoremove -y \
-    && rm -rf /var/lib/apt/lists/*
+        croniter
 
 RUN useradd -ms /bin/bash infrabox
 USER infrabox
