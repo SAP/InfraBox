@@ -145,6 +145,9 @@ _installInfrabox() {
     mkdir -p /var/run/secrets/infrabox.net/rsa/
     cp id_rsa* /var/run/secrets/infrabox.net/rsa/
 
+    export INFRABOX_RSA_PRIVATE_KEY_PATH=/var/run/secrets/infrabox.net/rsa/id_rsa
+    export INFRABOX_RSA_PUBLIC_KEY_PATH=/var/run/secrets/infrabox.net/rsa/id_rsa.pem
+
     echo "## Install infrabox"
 
     PW=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
