@@ -139,7 +139,7 @@ _installNginxIngress() {
 _installInfrabox() {
 	cd /infrabox/context/deploy/infrabox
 
-    ssh-keygen -N '' -t rsa -f id_rsa
+    ssh-keygen -N '' -t rsa -m pem -f id_rsa
     ssh-keygen -f id_rsa.pub -e -m pem > id_rsa.pem
 
     mkdir -p /var/run/secrets/infrabox.net/rsa/
