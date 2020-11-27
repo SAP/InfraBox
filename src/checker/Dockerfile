@@ -6,4 +6,4 @@ COPY src/pyinfraboxutils /pyinfraboxutils
 
 ENV PYTHONPATH=/
 
-ENTRYPOINT ["python", "checker/checker.py"]
+ENTRYPOINT ["python3", "checker/checker.py"]
