@@ -72,7 +72,7 @@ class Parser(object):
             f = File(sourcefile.attrib["name"])
 
             for elt in sourcefile:
-                if 'type' in elt.attrib.keys():
+                if 'type' in list(elt.attrib.keys()):
 
                     if elt.attrib["type"] == "METHOD":
                         f.functions_found = int(elt.attrib["covered"]) + int(elt.attrib["missed"])

@@ -7,4 +7,4 @@ COPY src/collector-api /collector
 COPY src/pyinfraboxutils /pyinfraboxutils
 COPY src/pyinfrabox /pyinfrabox
 
-CMD python /collector/server.py
+CMD python3 /collector/server.py

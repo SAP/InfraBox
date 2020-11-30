@@ -14,7 +14,7 @@ def encode_user_token(user_id):
             'type': 'user'
         }
 
-        return jwt.encode(data, key=s.read(), algorithm='RS256')
+        return jwt.encode(data, key=s.read(), algorithm='RS256').decode('utf-8')
 
 def encode_project_token(token_id, project_id, name):
     with open(private_key_path) as s:
@@ -27,7 +27,7 @@ def encode_project_token(token_id, project_id, name):
             'type': 'project'
         }
 
-        return jwt.encode(data, key=s.read(), algorithm='RS256')
+        return jwt.encode(data, key=s.read(), algorithm='RS256').decode('utf-8')
 
 def encode_job_token(job_id):
     with open(private_key_path) as s:
@@ -38,7 +38,7 @@ def encode_job_token(job_id):
             'type': 'job'
         }
 
-        return jwt.encode(data, key=s.read(), algorithm='RS256')
+        return jwt.encode(data, key=s.read(), algorithm='RS256').decode('utf-8')
 
 def decode(encoded):
     with open(public_key_path) as s:

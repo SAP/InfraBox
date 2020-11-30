@@ -11,7 +11,7 @@ def handle_version(d, r):
 def handle_service(name, d, r):
     r['services'][name] = {}
 
-    for key, value in d[name].items():
+    for key, value in list(d[name].items()):
         allowed_fields = [
             'links',
             'environment',
@@ -38,7 +38,7 @@ def handle_service(name, d, r):
 def handle_services(d, r):
     d = d['services']
     r['services'] = {}
-    for key in d.keys():
+    for key in list(d.keys()):
         handle_service(key, d, r)
 
 
@@ -54,7 +54,7 @@ def parse(d):
     if "services" not in d:
         raise Exception("services not found")
 
-    for key in d.keys():
+    for key in list(d.keys()):
         if key == "version":
             handle_version(d, r)
         elif key == "services":
@@ -68,5 +68,5 @@ def parse(d):
 
 def create_from(path):
     with open(path) as f:
-        d = yaml.load(f.read())
+        d = yaml.load(f.read(), yaml.SafeLoader)
         return parse(d)

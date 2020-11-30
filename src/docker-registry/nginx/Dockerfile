@@ -1,6 +1,6 @@
 FROM nginx:1.15-alpine
-RUN apk add --no-cache curl python py-pip openssl && \
-    pip install htpasswd && \
+RUN apk add --no-cache curl python3 py-pip openssl && \
+    pip3 install htpasswd && \
     apk del py-pip
 
 COPY src/docker-registry/nginx/nginx.conf /etc/nginx/nginx.conf

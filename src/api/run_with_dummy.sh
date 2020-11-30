@@ -67,4 +67,4 @@ export INFRABOX_LEGAL_PRIVACY_URL=https://www.sap.com/about/legal/privacy.html
 export INFRABOX_LEGAL_TERMS_OF_USE_URL=https://www.sap.com/corporate/en/legal/terms-of-use.html
 
 
-python server.py
+python3 server.py

@@ -37,7 +37,7 @@ class TestClient:
         r = TestClient.app.get(url, headers=headers)
 
         if r.mimetype == 'application/json':
-            j = json.loads(r.data)
+            j = json.loads(r.data.decode('utf-8'))
             return j
 
         return r

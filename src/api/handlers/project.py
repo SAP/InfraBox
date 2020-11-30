@@ -1,5 +1,5 @@
 import uuid
-import urllib
+import urllib.request, urllib.parse, urllib.error
 import os
 import json
 import mimetypes
@@ -49,16 +49,16 @@ def nocache(view):
     return update_wrapper(no_cache, view)
 
 def get_badge(subject, status, color):
-    subject = urllib.quote(subject)
-    status = urllib.quote(status)
-    color = urllib.quote(color)
+    subject = urllib.parse.quote(subject)
+    status = urllib.parse.quote(status)
+    color = urllib.parse.quote(color)
 
     url = 'https://img.shields.io/static/v1.svg?label=%s&message=%s&color=%s' % (subject, status, color)
 
     resp = requests.get(url)
 
     excluded_headers = ['content-encoding', 'content-length', 'transfer-encoding', 'connection']
-    headers = [(name, value) for (name, value) in resp.raw.headers.items()
+    headers = [(name, value) for (name, value) in list(resp.raw.headers.items())
                if name.lower() not in excluded_headers]
 
     return Response(resp.content, resp.status_code, headers)

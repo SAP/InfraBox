@@ -80,7 +80,7 @@ def get_token():
             auth = auth.split(" ")[1]
 
             try:
-                decoded = base64.b64decode(auth)
+                decoded = base64.b64decode(auth).decode('utf-8')
             except:
                 logger.warn('could not base64 decode auth header %s', auth)
                 return None

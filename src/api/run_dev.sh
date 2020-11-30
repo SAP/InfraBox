@@ -14,7 +14,7 @@ sigint_handler()
 trap sigint_handler SIGINT
 
 while true; do
-    python $DIR/server.py &
+    python3 $DIR/server.py &
     PID=$!
     inotifywait -e modify -e move -e create --exclude='.*__pycache__.*' -r $watch
     kill $PID

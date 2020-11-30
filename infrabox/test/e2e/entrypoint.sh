@@ -44,7 +44,7 @@ _getDependencies() {
     # pip install infraboxcli
     git clone https://github.com/SAP/InfraBox-cli.git /cli
     pushd /cli
-    pip install -e .
+    pip3 install -e .
     infrabox version
     git rev-parse HEAD
     popd
@@ -139,11 +139,14 @@ _installNginxIngress() {
 _installInfrabox() {
 	cd /infrabox/context/deploy/infrabox
 
-    ssh-keygen -N '' -t rsa -f id_rsa
+    ssh-keygen -N '' -t rsa -m pem -f id_rsa
     ssh-keygen -f id_rsa.pub -e -m pem > id_rsa.pem
 
     mkdir -p /var/run/secrets/infrabox.net/rsa/
     cp id_rsa* /var/run/secrets/infrabox.net/rsa/
+
+    export INFRABOX_RSA_PRIVATE_KEY_PATH=/var/run/secrets/infrabox.net/rsa/id_rsa
+    export INFRABOX_RSA_PUBLIC_KEY_PATH=/var/run/secrets/infrabox.net/rsa/id_rsa.pem
 
     echo "## Install infrabox"
 
@@ -198,7 +201,7 @@ _runTests() {
     pushd /infrabox/context/infrabox/test/e2e
 
     set +e
-    python test.py
+    python3 test.py
     rc=$?
 
     cp results.xml /infrabox/upload/testresult

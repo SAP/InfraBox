@@ -2,7 +2,7 @@ import json
 import select
 import os
 
-import urllib
+import urllib.request, urllib.parse, urllib.error
 import requests
 import psycopg2
 
@@ -150,10 +150,10 @@ def handle_job_update(conn, event):
                 ''', [])[0]['root_url']
 
     target_url = '%s/dashboard/#/project/%s/build/%s/%s/job/%s' % (dashboard_url,
-                                                                   urllib.quote(project_name, safe=''),
+                                                                   urllib.parse.quote(project_name, safe=''),
                                                                    build_number,
                                                                    build_restartCounter,
-                                                                   urllib.quote_plus(job_name).replace('+', '%20'))
+                                                                   urllib.parse.quote_plus(job_name).replace('+', '%20'))
 
     job_name = job_name.split(".")[0]
     payload = {
@@ -171,7 +171,7 @@ def handle_job_update(conn, event):
     # TODO(ib-steffen): support ca bundles
     try:
         r = requests.post(github_status_url,
-                          data=json.dumps(payload),
+                          json=payload,
                           headers=headers,
                           timeout=10,
                           verify=False)

@@ -1,7 +1,7 @@
 FROM alpine:3.6
 
-RUN apk add --no-cache python2
+RUN apk add --no-cache python3
 
 COPY infrabox/generator /generator
 
-CMD python /generator/generator.py
+CMD python3 /generator/generator.py

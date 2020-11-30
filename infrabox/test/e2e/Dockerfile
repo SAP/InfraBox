@@ -1,17 +1,23 @@
-FROM ubuntu:18.04
+FROM ubuntu:20.04
+
+ENV DEBIAN_FRONTEND=noninteractive
 ARG HELM_VERSION=2.12.3
 
 RUN apt-get update -y && apt-get install -y \
     curl \
-    python-pip \
+    pkg-config \
+    libpq-dev \
+    python3-dev \
+    python3-pip \
     postgresql-client \
-    python-xmlrunner \
-    python-requests \
-    python-psycopg2 \
-    python-jwt \
-    python-crypto \
-    python-cryptography \
-    git
+    python3-crypto \
+    python3-cryptography \
+    git \
+    && pip3 install \
+    xmlrunner \
+    requests==2.18.4 \
+    psycopg2 \
+    PyJWT
 
 RUN mkdir /project
 WORKDIR /project

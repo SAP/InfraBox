@@ -9,7 +9,7 @@ class TestDockerCompose(unittest.TestCase):
             validate_json(data)
             assert False
         except ValidationError as e:
-            self.assertEqual(e.message, expected)
+            self.assertEqual(str(e), expected)
 
     def test_version(self):
         self.raises_expect({}, "#: property 'version' is required")

@@ -1,23 +1,28 @@
-FROM debian:9.6-slim
+FROM ubuntu:20.04
+
+ENV DEBIAN_FRONTEND=noninteractive
 
 RUN    apt-get update -y \
     && apt-get install -y \
-	libpq-dev \
-        python \
-        python-pip \
-        python-six \
-        python-cryptography \
-        python-crypto \
-        python-pyasn1 \
-        python-ldap \
+        pkg-config \
+	    libpq-dev \
+	    python3-dev \
+	    python3-pip \
+        python3-cryptography \
+        python3-crypto \
+        python3-pyasn1 \
         libxml2-dev \
         libxmlsec1-dev \
-        python-paramiko \
+        python3-paramiko \
         openssh-client \
         inotify-tools \
-    && pip install \
-        pyrsistent==0.15.7 \
-        six==1.14.0 \
+        libsasl2-dev \
+        libldap2-dev \
+        libssl-dev \
+        libxmlsec1-openssl \
+    && pip3 install \
+        six \
+        python-ldap \
         psycopg2 \
         flask \
         flask-restx \
@@ -37,11 +42,9 @@ RUN    apt-get update -y \
         keystoneauth1==3.7.0 \
         python-swiftclient \
         python-cachetclient \
-        python-saml \
-        croniter \
-    && apt-get remove -y python-pip \
-    && apt-get autoremove -y \
-    && rm -rf /var/lib/apt/lists/*
+        xmlsec \
+        python3-saml \
+        croniter
 
 RUN useradd -ms /bin/bash infrabox
 USER infrabox

@@ -101,8 +101,8 @@ class AllocatedRscGauge:
         Set all the occurrences of the combination dict to True in order to detect which values to set to 0
         because they are missing in the request result
         """
-        for project_dict in self._possible_combination.values():
-            for project_name in project_dict.keys():
+        for project_dict in list(self._possible_combination.values()):
+            for project_name in list(project_dict.keys()):
                 project_dict[project_name] = True
 
     @staticmethod
@@ -148,9 +148,9 @@ class AllocatedRscGauge:
             self._gauge.labels(rsc="mem", cluster="'%'", project=row[0]).set(row[1])
             self._gauge.labels(rsc="cpu", cluster="'%'", project=row[0]).set(row[2])
 
-        for cluster, project_dict in self._possible_combination.items():
+        for cluster, project_dict in list(self._possible_combination.items()):
             to_delete = []
-            for project, not_used in project_dict.items():
+            for project, not_used in list(project_dict.items()):
                 if not_used:
                     to_delete.append(project)
                     self._gauge.labels(rsc="mem", cluster=cluster, project=project).set(0)
@@ -214,8 +214,8 @@ class AllJobNodeGauge:
                 node_dict[row[1]] = False
             self._gauge.labels(node=row[0], state=row[1]).set(row[2])
 
-        for node, state_dict in self._possible_combination.items():
-            for state, to_set in state_dict.items():
+        for node, state_dict in list(self._possible_combination.items()):
+            for state, to_set in list(state_dict.items()):
                 if to_set:
                     self._gauge.labels(node=node, state=state).set(0)
 

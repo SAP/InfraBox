@@ -30,7 +30,7 @@ class InfraBoxPostgresPlugin(object):
                 conn = None
                 try:
                     conn = self.pool.getconn()
-                except HTTPResponse, e:
+                except HTTPResponse as e:
                     raise HTTPError(500, "Database Error", e)
 
                 # Add the connection handle as a keyword argument.
@@ -39,9 +39,9 @@ class InfraBoxPostgresPlugin(object):
                 try:
                     rv = callback(*args, **kwargs)
                     return rv
-                except HTTPError, e:
+                except HTTPError as e:
                     raise
-                except HTTPResponse, e:
+                except HTTPResponse as e:
                     raise
                 except psycopg2.OperationalError:
                     print("Operational Error. Retrying.")

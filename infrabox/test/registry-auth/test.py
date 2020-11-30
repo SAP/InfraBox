@@ -58,12 +58,12 @@ class AccountTestCase(unittest.TestCase):
         self.assertEqual(r['status'], 401)
 
     def test_header_no_password(self):
-        h = {'Authorization': 'Basic %s' % base64.b64encode('infrabox')}
+        h = {'Authorization': 'Basic %s' % base64.b64encode('infrabox'.encode("utf-8"))}
         r = self.get('/v2', h)
         self.assertEqual(r['status'], 401)
 
     def test_header_no_password_2(self):
-        h = {'Authorization': 'Basic %s' % base64.b64encode('infrabox:2')}
+        h = {'Authorization': 'Basic %s' % base64.b64encode('infrabox:2'.encode("utf-8"))}
         r = self.get('/v2', h)
         self.assertEqual(r['status'], 401)
 
@@ -121,7 +121,7 @@ class AccountTestCase(unittest.TestCase):
             project_token = self.project_token
 
         token = encode_project_token(project_token, self.project_id, 'myproject')
-        h = {'Authorization': 'Basic %s' % base64.b64encode('infrabox:%s' % token)}
+        h = {'Authorization': 'Basic %s' % base64.b64encode(('infrabox:%s' % token).encode("utf-8")).decode('utf-8')}
         return h
 
     def get(self, url, headers=None, method='GET'): # pragma: no cover
@@ -131,7 +131,7 @@ class AccountTestCase(unittest.TestCase):
         r = self.app.get(url, headers=headers)
 
         if r.mimetype == 'application/json':
-            return json.loads(r.data)
+            return json.loads(r.data.decode('utf-8'))
 
         return r
 

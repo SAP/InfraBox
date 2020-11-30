@@ -6,4 +6,4 @@ COPY src/pyinfraboxutils /pyinfraboxutils
 
 ENV PYTHONPATH=/
 
-ENTRYPOINT ["python", "scheduler/scheduler.py"]
+ENTRYPOINT ["python3", "scheduler/scheduler.py"]
