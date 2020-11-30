@@ -38,6 +38,7 @@ RUN    apt-get update -y \
         keystoneauth1==3.7.0 \
         python-swiftclient \
         python-cachetclient \
+        python-engineio==3.13.2 \
         croniter \
     && apt-get remove -y python-pip \
     && apt-get autoremove -y \

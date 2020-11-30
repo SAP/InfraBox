@@ -38,6 +38,7 @@ RUN    apt-get update -y \
         python-swiftclient \
         python-cachetclient \
         python-saml \
+        python-engineio==3.13.2 \
         croniter \
     && apt-get remove -y python-pip \
     && apt-get autoremove -y \
