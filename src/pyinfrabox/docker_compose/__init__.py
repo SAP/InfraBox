@@ -1,10 +1,9 @@
 import yaml
 
 def handle_version(d, r):
-    supported_versions = ("3.2",)
     v = str(d['version'])
-    if v not in supported_versions:
-        raise Exception("version not supported, supported version is 3.2")
+    if not v.startswith('3'):
+        raise Exception("version not supported, supported version >= 3.0")
 
     r["version"] = v
 
@@ -27,7 +26,8 @@ def handle_service(name, d, r):
             'depends_on',
             'entrypoint',
             'links',
-            'hostname'
+            'hostname',
+            'extra_hosts'
         ]
 
         if key in allowed_fields:
