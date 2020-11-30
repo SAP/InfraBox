@@ -24,7 +24,7 @@ RUN    apt-get update -y \
         codecov \
         flask \
         flask_restx \
-        flask_socketio \
+        flask_socketio==4.3.1 \
         requests==2.18.4 \
         PyJWT \
         jsonschema \

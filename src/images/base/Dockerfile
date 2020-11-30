@@ -21,7 +21,7 @@ RUN    apt-get update -y \
         psycopg2 \
         flask \
         flask-restx \
-        flask_socketio \
+        flask_socketio==4.3.1 \
         requests==2.18.4 \
         PyJWT \
         jsonschema \
