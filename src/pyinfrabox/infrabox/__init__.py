@@ -251,7 +251,7 @@ def parse_docker_image(d, path):
 
 def parse_docker(d, path):
     check_allowed_properties(d, path, ("type", "name", "docker_file", "depends_on", "resources",
-                                       "build_only", "environment",
+                                       "build_only", "environment", "target",
                                        "build_arguments", "deployments", "timeout", "security_context", "command",
                                        "build_context", "cache", "repository", "cluster", "services", "registries"))
     check_required_properties(d, path, ("type", "name", "docker_file", "resources"))
