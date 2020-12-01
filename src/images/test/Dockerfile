@@ -24,7 +24,7 @@ RUN    apt-get update -y \
         codecov \
         flask \
         flask_restx \
-        flask_socketio \
+        flask_socketio==4.3.1 \
         requests==2.18.4 \
         PyJWT \
         jsonschema \
@@ -38,10 +38,12 @@ RUN    apt-get update -y \
         keystoneauth1==3.7.0 \
         python-swiftclient \
         python-cachetclient \
+        python-engineio==3.13.2 \
         croniter \
     && apt-get remove -y python-pip \
     && apt-get autoremove -y \
     && rm -rf /var/lib/apt/lists/*
 
 RUN useradd -ms /bin/bash infrabox
+
 USER infrabox

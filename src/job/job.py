@@ -1070,7 +1070,8 @@ class RunJob(Job):
                 c.header("Deploying", show=True)
                 self.deploy_image(image_name_build, d)
 
-        self.build_docker_image(image_name_build, image_name_latest)
+        target = self.job.get('target', None)
+        self.build_docker_image(image_name_build, image_name_latest, target=target)
 
         try:
             if not self.job.get('build_only', True):
