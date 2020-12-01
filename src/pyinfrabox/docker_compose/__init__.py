@@ -27,7 +27,8 @@ def handle_service(name, d, r):
             'entrypoint',
             'links',
             'hostname',
-            'extra_hosts'
+            'extra_hosts',
+            'network_mode'
         ]
 
         if key in allowed_fields:
