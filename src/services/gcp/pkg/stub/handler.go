@@ -29,6 +29,7 @@ import (
     "k8s.io/client-go/dynamic"
     "k8s.io/client-go/kubernetes"
     "k8s.io/client-go/rest"
+    "k8s.io/client-go/tools/clientcmd"
 
     "github.com/operator-framework/operator-sdk/pkg/sdk/action"
     "github.com/operator-framework/operator-sdk/pkg/sdk/handler"
@@ -51,12 +52,15 @@ import (
     "github.com/mholt/archiver"
 )
 
+const adminSAName = "admin"
+
 type MasterAuth struct {
     ClientCertificate    string
     ClientKey            string
     ClusterCaCertificate string
     Username             string
     Password             string
+    Token                string
 }
 
 type RemoteCluster struct {
@@ -216,6 +220,12 @@ func syncGKECluster(cr *v1alpha1.GKECluster, log *logrus.Entry) (*v1alpha1.GKECl
         return createCluster(cr, log)
     } else {
         if gkecluster.Status == "RUNNING" {
+            err = injectAdminServiceAccount(gkecluster, log)
+            if err != nil {
+                log.Errorf("Failed to inject admin service account: %v", err)
+                return nil, err
+            }
+
             err = injectCollector(gkecluster, log)
             if err != nil {
                 log.Errorf("Failed to inject collector: %v", err)
@@ -244,10 +254,133 @@ func syncGKECluster(cr *v1alpha1.GKECluster, log *logrus.Entry) (*v1alpha1.GKECl
     return &cr.Status, nil
 }
 
+func getAdminToken(gkecluster *RemoteCluster, log *logrus.Entry) (string, error) {
+    client, err := newRemoteClusterSDK(gkecluster)
+
+    c, err := kubernetes.NewForConfig(client.kubeConfig)
+    if err != nil {
+        log.Errorf("error getting k8s client: %s", gkecluster.Name)
+        return "", err
+    }
+
+    sa, err := c.CoreV1().ServiceAccounts("kube-system").Get(adminSAName, metav1.GetOptions{})
+    if err != nil {
+        log.Errorf("error getting admin service account: %s", gkecluster.Name)
+        return "", err
+    }
+
+    secret, err := c.CoreV1().Secrets("kube-system").Get(sa.Secrets[0].Name, metav1.GetOptions{})
+    if err != nil {
+        log.Errorf("error getting admin sa secret: %s", gkecluster.Name)
+        return "", err
+    }
+
+    b64Secret := secret.Data["token"]
+    var token []byte
+    _, err = b64.StdEncoding.Decode(token, b64Secret)
+    if err != nil {
+        log.Errorf("error decoding admin token [%s] for cluster: %s", string(b64Secret), gkecluster.Name)
+        return "", err
+    }
+
+    return string(token), nil
+}
+
+func injectAdminServiceAccount(gkecluster *RemoteCluster, log *logrus.Entry) error {
+    client, err := newRemoteClusterSDK(gkecluster)
+
+    if err != nil {
+        log.Errorf("Failed to create remote cluster client: %v", err)
+        return err
+    }
+
+    err = client.Create(newAdminServiceAccount(), log)
+    if err != nil && !errors.IsAlreadyExists(err) {
+        log.Errorf("Failed to create admin service account : %v", err)
+        return err
+    }
+
+    err = client.Create(newAdminCRB(), log)
+    if err != nil && !errors.IsAlreadyExists(err) {
+        log.Errorf("Failed to create admin service account : %v", err)
+        return err
+    }
+
+    token, err := getAdminToken(gkecluster, log)
+    if err != nil {
+        log.Errorf("error getting admin token: %s", gkecluster.Name)
+        return err
+    }
+
+    gkecluster.MasterAuth.Token = token
+    return nil
+}
+
+func newAdminServiceAccount() *v1.ServiceAccount {
+    return &v1.ServiceAccount{
+        TypeMeta:                     metav1.TypeMeta{
+            Kind: "ServiceAccount",
+            APIVersion: "v1",
+        },
+        ObjectMeta:                   metav1.ObjectMeta{
+            Name: adminSAName,
+            Namespace: "kube-system",
+        },
+    }
+}
+
+func newAdminCRB() *rbacv1.ClusterRoleBinding {
+    return &rbacv1.ClusterRoleBinding{
+        TypeMeta: metav1.TypeMeta{
+            Kind:       "ClusterRoleBinding",
+            APIVersion: "rbac.authorization.k8s.io/v1",
+        },
+        ObjectMeta: metav1.ObjectMeta{
+            Name:      "admin-crb",
+            Namespace: "kube-system",
+        },
+        Subjects: []rbacv1.Subject{{
+            Kind:      "ServiceAccount",
+            Name:      "admin",
+            Namespace: "kube-system",
+        }},
+        RoleRef: rbacv1.RoleRef{
+            Kind:     "ClusterRole",
+            Name:     "cluster-admin",
+            APIGroup: "rbac.authorization.k8s.io",
+        },
+    }
+}
+
+
+
+func getGkeKubeConfig(gkecluster *RemoteCluster, log *logrus.Entry) error {
+    kubeConfigPath := "/tmp/" + gkecluster.Name
+
+    if _, err := os.Stat(kubeConfigPath); !os.IsNotExist(err) {
+        return nil
+    }
+
+    cmd := exec.Command("gcloud", "container", "clusters", "get-credentials", gkecluster.Name,
+                        "--zone", gkecluster.Zone)
+    cmd.Env = append(cmd.Env, "KUBECONFIG=" + kubeConfigPath)
+
+    _, err := cmd.CombinedOutput()
+    if err != nil {
+        log.Errorf("Failed to get kubeconfig for cluster: %s", gkecluster.Name)
+        os.Remove(kubeConfigPath)
+        return err
+    }
+
+    return nil
+}
+
 func deleteRemoteCluster(cr *v1alpha1.GKECluster, log *logrus.Entry) error {
     log.Infof("Deleting cluster %s", cr.Status.ClusterName)
     cmd := exec.Command("gcloud", "-q", "container", "clusters", "delete", cr.Status.ClusterName, "--async", "--zone", cr.Spec.Zone)
     out, err := cmd.CombinedOutput()
+
+    os.Remove("/tmp/" + cr.ClusterName)
 
     if err != nil {
         log.Errorf("Failed to delete cluster: %v", err)
@@ -553,7 +686,11 @@ func getRemoteCluster(name string, log *logrus.Entry) (*RemoteCluster, error) {
         return nil, nil
     }
 
-    return &gkeclusters[0], nil
+    res := &gkeclusters[0]
+    if err := getGkeKubeConfig(res, log); err != nil {
+        return nil, err
+    }
+    return res, nil
 }
 
 func getRemoteClusters(log *logrus.Entry) ([]RemoteCluster, error) {
@@ -672,6 +809,7 @@ func newSecret(cluster *v1alpha1.GKECluster, gke *RemoteCluster) *v1.Secret {
             "username":   []byte(gke.MasterAuth.Username),
             "password":   []byte(gke.MasterAuth.Password),
             "endpoint":   []byte("https://" + gke.Endpoint),
+            "token":      []byte(gke.MasterAuth.Token),
         },
     }
 }
@@ -934,24 +1072,11 @@ func (r *RemoteClusterSDK) Create(object types.Object, log *logrus.Entry) (err e
 }
 
 func newRemoteClusterSDK(cluster *RemoteCluster) (*RemoteClusterSDK, error) {
-    caCrt, err := b64.StdEncoding.DecodeString(cluster.MasterAuth.ClusterCaCertificate)
-    clientKey, _ := b64.StdEncoding.DecodeString(cluster.MasterAuth.ClientKey)
-    clientCrt, _ := b64.StdEncoding.DecodeString(cluster.MasterAuth.ClientCertificate)
+    kubeConfigPath := "/tmp/" + cluster.Name
 
+    kubeConfig, err := clientcmd.BuildConfigFromFlags("", kubeConfigPath)
     if err != nil {
         return nil, err
-    }
-
-    tlsClientConfig := rest.TLSClientConfig{}
-    tlsClientConfig.CAData = caCrt
-    tlsClientConfig.CertData = clientCrt
-    tlsClientConfig.KeyData = clientKey
-
-    kubeConfig := &rest.Config{
-        Host:            cluster.Endpoint,
-        TLSClientConfig: tlsClientConfig,
-        Username:        cluster.MasterAuth.Username,
-        Password:        cluster.MasterAuth.Password,
     }
 
     kubeClient := kubernetes.NewForConfigOrDie(kubeConfig)
