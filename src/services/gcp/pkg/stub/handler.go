@@ -365,9 +365,9 @@ func getGkeKubeConfig(gkecluster *RemoteCluster, log *logrus.Entry) error {
                         "--zone", gkecluster.Zone)
     cmd.Env = append(cmd.Env, "KUBECONFIG=" + kubeConfigPath)
 
-    _, err := cmd.CombinedOutput()
+    out, err := cmd.CombinedOutput()
     if err != nil {
-        log.Errorf("Failed to get kubeconfig for cluster: %s", gkecluster.Name)
+        log.Errorf("Failed to get kubeconfig for cluster: %s, %s, %v", gkecluster.Name, out, err)
         os.Remove(kubeConfigPath)
         return err
     }
@@ -687,9 +687,12 @@ func getRemoteCluster(name string, log *logrus.Entry) (*RemoteCluster, error) {
     }
 
     res := &gkeclusters[0]
-    if err := getGkeKubeConfig(res, log); err != nil {
-        return nil, err
+    if res.Status == "RUNNING" {
+        if err := getGkeKubeConfig(res, log); err != nil {
+            return nil, err
+        }
     }
+
     return res, nil
 }
 
