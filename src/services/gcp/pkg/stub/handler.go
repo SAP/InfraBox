@@ -276,13 +276,7 @@ func getAdminToken(gkecluster *RemoteCluster, log *logrus.Entry) (string, error)
         return "", err
     }
 
-    b64Secret := secret.Data["token"]
-    var token []byte
-    _, err = b64.StdEncoding.Decode(token, b64Secret)
-    if err != nil {
-        log.Errorf("error decoding admin token [%s] for cluster: %s", string(b64Secret), gkecluster.Name)
-        return "", err
-    }
+    token := secret.Data["token"]
 
     return string(token), nil
 }
@@ -356,7 +350,7 @@ func newAdminCRB() *rbacv1.ClusterRoleBinding {
 
 
 func getGkeKubeConfig(gkecluster *RemoteCluster, log *logrus.Entry) error {
-    kubeConfigPath := "/tmp/" + gkecluster.Name
+    kubeConfigPath := "/tmp/kubeconfig-" + gkecluster.Name
 
     if _, err := os.Stat(kubeConfigPath); !os.IsNotExist(err) {
         return nil
@@ -382,7 +376,7 @@ func deleteRemoteCluster(cr *v1alpha1.GKECluster, log *logrus.Entry) error {
     cmd := exec.Command("gcloud", "-q", "container", "clusters", "delete", cr.Status.ClusterName, "--async", "--zone", cr.Spec.Zone)
     out, err := cmd.CombinedOutput()
 
-    os.Remove("/tmp/" + cr.ClusterName)
+    os.Remove("/tmp/kubeconfig-" + cr.ClusterName)
 
     if err != nil {
         log.Errorf("Failed to delete cluster: %v", err)
@@ -1077,7 +1071,7 @@ func (r *RemoteClusterSDK) Create(object types.Object, log *logrus.Entry) (err e
 }
 
 func newRemoteClusterSDK(cluster *RemoteCluster) (*RemoteClusterSDK, error) {
-    kubeConfigPath := "/tmp/" + cluster.Name
+    kubeConfigPath := "/tmp/kubeconfig-" + cluster.Name
 
     kubeConfig, err := clientcmd.BuildConfigFromFlags("", kubeConfigPath)
     if err != nil {
