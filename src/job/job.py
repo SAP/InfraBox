@@ -1,8 +1,6 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #pylint: disable=too-many-lines,attribute-defined-outside-init,too-many-public-methods,too-many-locals
 import sys
-reload(sys)
-sys.setdefaultencoding('utf-8')
 
 import os
 import shutil
@@ -16,6 +14,7 @@ import traceback
 import urllib3
 import yaml
 import tarfile
+import signal
 
 from pyinfrabox.infrabox import validate_json
 from pyinfrabox.docker_compose import create_from
@@ -35,6 +34,8 @@ logger = get_logger('scheduler')
 
 ERR_EXIT_FAILURE = 1
 ERR_EXIT_ERROR = 2
+
+BUILD_ARGS = ('GITHUB_OAUTH_TOKEN', 'GITHUB_BASE_URL')
 
 def makedirs(path):
     os.makedirs(path)
@@ -138,11 +139,11 @@ class RunJob(Job):
             json.dump(o, out)
 
     def compress(self, source, output):
-        cmd = "tar -cf - --directory %s . | pv -L 500m | python -m snappy -c - %s" % (source, output)
+        cmd = "tar -cf - --directory %s . | pv -L 500m | python3 -m snappy -c - %s" % (source, output)
         self.console.execute(cmd, cwd=source, show=True, shell=True, show_cmd=False)
 
     def uncompress(self, source, output):
-        cmd = "python -m snappy -d %s - | tar -xf - -C %s" % (source, output)
+        cmd = "python3 -m snappy -d %s - | tar -xf - -C %s" % (source, output)
         self.console.execute(cmd, cwd=output, show=True, shell=True, show_cmd=False)
 
     def get_files_in_dir(self, d, ending=None):
@@ -157,7 +158,7 @@ class RunJob(Job):
 
         return result
 
-    def clone_repo(self, commit, clone_url, branch, ref, full_history, sub_path=None, submodules=True):
+    def clone_repo(self, commit, clone_url, branch, ref, full_history, sub_path=None, submodules=True, token=None):
         c = self.console
         mount_repo_dir = self.mount_repo_dir
 
@@ -166,6 +167,10 @@ class RunJob(Job):
 
         if os.environ['INFRABOX_GENERAL_DONT_CHECK_CERTIFICATES'] == 'true':
             c.execute(('git', 'config', '--global', 'http.sslVerify', 'false'), show=True)
+
+        if token and clone_url.startswith("http"):
+            schema, url = clone_url.split("://")
+            clone_url = schema + "://" + token + '@' + url
 
         cmd = ['git', 'clone']
 
@@ -176,7 +181,7 @@ class RunJob(Job):
                 cmd += ['--single-branch', '-b', branch]
 
         cmd += [clone_url, mount_repo_dir]
-        c.execute(cmd, show=True, retry=True)
+        c.execute_mask(cmd, show=True, retry=True, mask=token)
 
         if ref:
             cmd = ['git', 'fetch']
@@ -185,9 +190,9 @@ class RunJob(Job):
                 cmd += ['--depth=10']
 
             cmd += [clone_url, ref]
-            c.execute(cmd, cwd=mount_repo_dir, show=True, retry=True)
+            c.execute_mask(cmd, cwd=mount_repo_dir, show=True, retry=True, mask=token)
 
-        c.execute(['git', 'config', 'remote.origin.url', clone_url], cwd=mount_repo_dir, show=True)
+        c.execute_mask(['git', 'config', 'remote.origin.url', clone_url], cwd=mount_repo_dir, show=True, mask=token)
         c.execute(['git', 'config', 'remote.origin.fetch', '+refs/heads/*:refs/remotes/origin/*'],
                   cwd=mount_repo_dir, show=True)
         try:
@@ -224,6 +229,9 @@ class RunJob(Job):
             repo_clone = def_repo.get('clone', True)
             repo_submodules = def_repo.get('submodules', True)
             full_history = def_repo.get('full_history', None)
+            github_token = def_repo.get('github_api_token', None)
+            if not github_token:
+                github_token = self.repository.get('github_api_token', None)
             if full_history is None:
                 full_history = repo.get('full_history', False)
 
@@ -232,7 +240,7 @@ class RunJob(Job):
             if not repo_clone:
                 return
 
-            self.clone_repo(commit, clone_url, branch, ref, full_history, submodules=repo_submodules)
+            self.clone_repo(commit, clone_url, branch, ref, full_history, submodules=repo_submodules, token=github_token)
         elif self.project['type'] == 'upload':
             c.collect("Downloading Source")
             storage_source_zip = os.path.join(self.storage_dir, 'source.zip')
@@ -291,6 +299,29 @@ class RunJob(Job):
             with open(p, 'w+') as f:
                 f.write("started")
 
+    def config_github(self):
+        if os.environ.get('INFRABOX_GITHUB_ENABLED') == "false":
+            self.console.collect("Github not enabled", show=True)
+            return
+        if not self.enable_token_access:
+            self.console.collect("Github token not configured", show=True)
+        token = self.repository.get('github_api_token', None)
+        github_url = "https://" + self.github_host
+
+        if token:
+            self.console.collect("GITHUB_OAUTH_TOKEN=********", show=True)
+            github_url = "https://" + token + '@' + self.github_host
+            self.console.collect("GITHUB_BASE_URL=" + github_url.replace(token, '********'), show=True)
+        else:
+            self.console.collect("GITHUB_BASE_URL=" + github_url, show=True)
+
+        cmd = ["git", "config", "--global", 'url."' + github_url + '".insteadOf', '"https://' + self.github_host + '"']
+        if token:
+            self.console.execute_mask(cmd, show=True, mask=token)
+            self.environment['GITHUB_OAUTH_TOKEN'] = token
+
+        self.environment['GITHUB_BASE_URL'] = github_url
+
     def main(self):
         self.load_data()
         # Date
@@ -299,7 +330,7 @@ class RunJob(Job):
 
         # Show environment
         self.console.collect("Environment:", show=True)
-        for name, value in self.env_vars.iteritems():
+        for name, value in self.env_vars.items():
             self.console.collect("%s=%s" % (name, value), show=True)
 
         self.console.collect("", show=True)
@@ -307,7 +338,7 @@ class RunJob(Job):
         # Show secrets
         if self.secrets:
             self.console.collect("Secrets:", show=True)
-            for name, _ in self.secrets.iteritems():
+            for name, _ in self.secrets.items():
                 self.console.collect("%s=*****" % name, show=True)
             self.console.collect("", show=True)
 
@@ -327,6 +358,7 @@ class RunJob(Job):
                 self.console.collect(v, show=True)
             self.console.collect("", show=True)
 
+        self.config_github()
         self.get_source()
         self.create_infrabox_directories()
 
@@ -468,9 +500,24 @@ class RunJob(Job):
                 total_size += os.path.getsize(fp)
         return total_size
 
+    def finalize_upload(self):
+        self.upload_coverage_results()
+        self.upload_test_results()
+        self.upload_markup_files()
+        self.upload_badge_files()
+        self.upload_archive()
+
+    def handle_abort(self, signum, sigframe):
+        if not self.aborted:
+            self.aborted = True
+            self.console.collect("##Aborted", show=True)
+            self.finalize_upload()
+
     def main_run_job(self):
         c = self.console
         self.create_jobs_json()
+
+        signal.signal(signal.SIGTERM, self.handle_abort)
 
         # base dir for inputs
         storage_inputs_dir = os.path.join(self.storage_dir, 'inputs')
@@ -538,11 +585,9 @@ class RunJob(Job):
         except:
             raise
         finally:
-            self.upload_coverage_results()
-            self.upload_test_results()
-            self.upload_markup_files()
-            self.upload_badge_files()
-            self.upload_archive()
+            if self.aborted:
+                return
+            self.finalize_upload()
 
             # Compressing output
             c.collect("Uploading /infrabox/output", show=True)
@@ -628,7 +673,7 @@ class RunJob(Job):
             ]
 
             for v in compose_file_content['services'][service].get('volumes', []):
-                if isinstance(v, basestring):
+                if isinstance(v, str):
                     v = v.replace('/infrabox/context', self.mount_repo_dir)
                 service_volumes.append(v)
 
@@ -668,6 +713,10 @@ class RunJob(Job):
 
                 build['args'] = build.get('args', [])
                 build['args'] += ['INFRABOX_BUILD_NUMBER=%s' % self.build['build_number']]
+                for arg in BUILD_ARGS:
+                    if self.environment.get(arg, None):
+                        build['args'] += ['%s=%s' % (arg, self.environment[arg])]
+
 
         with open(compose_file_new, "w+") as out:
             json.dump(compose_file_content, out)
@@ -685,8 +734,8 @@ class RunJob(Job):
 
 
             self.environment['PATH'] = os.environ['PATH']
-            c.execute(['docker-compose', '-f', compose_file_new, 'build'],
-                      show=True, env=self.environment)
+            c.execute_mask(['docker-compose', '-f', compose_file_new, 'build'],
+                      show=True, env=self.environment, mask=self.repository.get('github_api_token', None))
             c.header("Run docker-compose", show=True)
 
 
@@ -694,7 +743,6 @@ class RunJob(Job):
 
             c.execute(['docker-compose', '-f', compose_file_new, 'up',
                        '--abort-on-container-exit'], env=self.environment, show=True, cwd=cwd)
-            c.execute(['docker-compose', '-f', compose_file_new, 'ps'], env=self.environment, cwd=cwd, show=True)
         except:
             raise Failure("Failed to build and run container")
         finally:
@@ -809,7 +857,7 @@ class RunJob(Job):
             cmd += ['-v', "/local-cache:/infrabox/local-cache"]
 
         # add env vars
-        for name, value in self.environment.iteritems():
+        for name, value in self.environment.items():
             cmd += ['-e', '%s=%s' % (name, value)]
 
         # add resource env vars
@@ -853,6 +901,14 @@ class RunJob(Job):
             if self.job['definition'].get('cache', {}).get('image', False) or self.job['definition'].get('deployments', None):
                 c.execute(("docker", "commit", container_name, image_name))
         except Exception as e:
+            try:
+                # Find out if container build was failed
+                out = subprocess.check_output(['docker', 'images', '-q', image_name]).strip()
+                if not out:
+                    raise Failure("Error running container")
+            except Exception as ex:
+                logger.exception(ex)
+                raise Failure("Error running container")
             try:
                 # Find out if container was killed due to oom
                 out = subprocess.check_output(['docker', 'inspect', container_name,
@@ -912,8 +968,12 @@ class RunJob(Job):
             cmd += ['--build-arg', 'INFRABOX_BUILD_NUMBER=%s' % self.build['build_number']]
 
             if 'build_arguments' in self.job and self.job['build_arguments']:
-                for name, value in self.job['build_arguments'].iteritems():
+                for name, value in self.job['build_arguments'].items():
                     cmd += ['--build-arg', '%s=%s' % (name, value)]
+
+            for arg in BUILD_ARGS:
+                if self.environment.get(arg, None):
+                    cmd += ['--build-arg', '%s=%s' % (arg, self.environment[arg])]
 
             if target:
                 cmd += ['--target', target]
@@ -921,7 +981,7 @@ class RunJob(Job):
                 cmd += ['--cache-from', cache_image]
 
             cwd = self._get_build_context_current_job()
-            c.execute(cmd, cwd=cwd, show=True)
+            c.execute_mask(cmd, cwd=cwd, show=True, mask=self.repository.get('github_api_token', None))
             self.cache_docker_image(image_name, cache_image)
         except Exception as e:
             raise Error("Failed to build the image: %s" % e)
@@ -1010,7 +1070,8 @@ class RunJob(Job):
                 c.header("Deploying", show=True)
                 self.deploy_image(image_name_build, d)
 
-        self.build_docker_image(image_name_build, image_name_latest)
+        target = self.job.get('target', None)
+        self.build_docker_image(image_name_build, image_name_latest, target=target)
 
         try:
             if not self.job.get('build_only', True):
@@ -1142,7 +1203,7 @@ class RunJob(Job):
                 job['name'] = parent_name + "/" + job['name']
 
                 deps = job.get('depends_on', [])
-                for x in xrange(0, len(deps)):
+                for x in range(0, len(deps)):
                     deps[x]['job'] = parent_name + "/" + deps[x]['job']
 
             job_name = job['name']
@@ -1160,7 +1221,17 @@ class RunJob(Job):
                 c.execute(['rm', '-rf', new_repo_path])
                 os.makedirs(new_repo_path)
 
-                self.clone_repo(job['commit'], clone_url, branch, None, True, sub_path)
+                github_token = None
+                if job.get('repo', None):
+                    try:
+                        github_token = job['repo'].get('github_api_token', None)
+                    except:
+                        pass
+
+                if not github_token:
+                    github_token = self.repository.get('github_api_token', None)
+
+                self.clone_repo(job['commit'], clone_url, branch, None, True, sub_path, token=github_token)
 
                 c.header("Parsing infrabox file", show=True)
                 ib_file = job.get('infrabox_file', None)
@@ -1184,7 +1255,8 @@ class RunJob(Job):
                     "commit": job['commit'],
                     "infrabox_file": ib_file,
                     "full_history": True,
-                    "branch": job.get('branch', None)
+                    "branch": job.get('branch', None),
+                    "github_api_token": self.repository.get('github_api_token', None)
                 }
 
                 new_infrabox_context = os.path.dirname(ib_path)
@@ -1233,7 +1305,7 @@ class RunJob(Job):
 
                 # overwrite env vars if set
                 if 'environment' in job:
-                    for n, v in job['environment'].iteritems():
+                    for n, v in job['environment'].items():
                         if 'environment' not in s:
                             s['environment'] = {}
 

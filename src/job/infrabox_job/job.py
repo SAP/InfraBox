@@ -27,6 +27,9 @@ class Job(object):
         self.source_upload = None
         self.deployments = None
         self.registries = None
+        self.github_host = os.environ.get('GITHUB_HOST', "")
+        self.enable_token_access = os.environ.get('GITHUB_ENABLE_TOKEN_ACCESS', False)
+        self.aborted = False
 
     def load_data(self):
         while True:
@@ -53,8 +56,8 @@ class Job(object):
                 else:
                     # Retry on any other error
                     continue
-            except Error:
-                raise
+            except Error as e:
+                raise e
             except Exception as e:
                 print(e)
 
@@ -76,6 +79,8 @@ class Job(object):
             self.source_upload = data['source_upload']
 
         self.deployments = data['deployments']
+
+        self.enable_token_access = self.enable_token_access and self.repository.get('github_api_token', None)
 
     def get_headers(self):
         return {
@@ -175,7 +180,7 @@ class Job(object):
         message = None
 
         r = None
-        for _ in xrange(0, 20):
+        for _ in range(0, 20):
             try:
                 message = None
                 r = requests.get("%s%s" % (self.api_server, url),
@@ -244,9 +249,9 @@ class Job(object):
         message = None
         retry_time = 10
 
-        for _ in xrange(0, 5):
+        for _ in range(0, 5):
             message = None
-            files = {filename: open(path)}
+            files = {filename: open(path, "rb")}
             try:
                 r = requests.post("%s%s" % (self.api_server, url),
                                   headers=self.get_headers(),

@@ -1,26 +1,27 @@
-FROM docker:17.12.1-ce-dind
+FROM docker:19.03.12-dind
 
-ENV CLOUD_SDK_VERSION 210.0.0
+ENV CLOUD_SDK_VERSION 298.0.0
 ENV PATH /google-cloud-sdk/bin:$PATH
 
 RUN apk add --no-cache \
-    python \
-    python-dev \
-    py-pip \
+    python3 \
+    python3-dev \
+    py3-jwt \
+    py3-pip \
     py-requests \
     py-crcmod \
     g++ \
     pv \
     snappy-dev \
-    bash \
     curl \
     bash \
     libc6-compat \
+    docker-compose \
     openssh-client \
     git && \
-    pip install docker==2.0.1 awscli pyyaml && \
-    pip install docker-compose==1.20.1 future PyJWT python-snappy && \
-    apk del py-pip python-dev g++ && \
+    pip3 install docker awscli pyyaml && \
+    pip3 install future python-snappy && \
+    apk del py-pip python3-dev g++ && \
     curl -O https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-${CLOUD_SDK_VERSION}-linux-x86_64.tar.gz && \
     tar xzf google-cloud-sdk-${CLOUD_SDK_VERSION}-linux-x86_64.tar.gz && \
     rm google-cloud-sdk-${CLOUD_SDK_VERSION}-linux-x86_64.tar.gz && \
@@ -41,5 +42,4 @@ COPY src/pyinfraboxutils /pyinfraboxutils
 ENV PYTHONPATH=/utils:/
 ENV PATH=/utils:$PATH
 
-RUN chmod +x /usr/local/bin/entrypoint.sh
-CMD /usr/local/bin/entrypoint.sh
+ENTRYPOINT [ "/usr/local/bin/entrypoint.sh" ]

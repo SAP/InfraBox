@@ -97,7 +97,7 @@ class Login(Resource):
             WHERE email = %s
         ''', [email])
 
-        if user and user['id'] == '00000000-0000-0000-0000-000000000000':
+        if user and user['password']:
             # Admin login
             if not bcrypt.checkpw(password.encode('utf8'), user['password'].encode('utf8')):
                 abort(400, 'Invalid email/password combination')

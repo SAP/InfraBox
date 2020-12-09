@@ -21,10 +21,16 @@ class ApiConsole(object):
     def collect(self, line, show=False):
         if show:
             try:
-                print line
+                print(line)
             except UnicodeEncodeError:
-                print line.encode('utf-8')
+                print(line.encode('utf-8'))
             sys.stdout.flush()
+
+    def execute_mask(self, command, cwd=None, shell=False, show=False, env=None, ignore_error=False, show_cmd=True, retry=False, mask=None):
+        if not mask or not show_cmd:
+            return self.execute(command, cwd, shell, show, env, ignore_error, show_cmd, retry)
+        self.collect(' '.join([x.replace(mask, '********') for x in command]), show=True)
+        self.execute(command, cwd, shell, show, env, ignore_error, False, retry)
 
     def execute(self, command, cwd=None, shell=False, show=False, env=None, ignore_error=False, show_cmd=True, retry=False):
         for _ in range(0, 5):
