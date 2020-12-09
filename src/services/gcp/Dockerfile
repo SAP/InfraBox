@@ -11,7 +11,7 @@ RUN dep ensure
 RUN ./tmp/build/build.sh
 
 FROM alpine:3.7
-ENV CLOUD_SDK_VERSION 198.0.0
+ENV CLOUD_SDK_VERSION 320.0.0
 
 ENV PATH /google-cloud-sdk/bin:$PATH
 
@@ -30,8 +30,6 @@ RUN apk --no-cache add \
     gcloud config set core/disable_usage_reporting true && \
     gcloud config set component_manager/disable_update_check true && \
     gcloud config set metrics/environment github_docker_image && \
-    gcloud config set container/use_v1_api false && \
-    gcloud config set container/new_scopes_behavior true && \
     gcloud components install kubectl && \
     gcloud --version
 

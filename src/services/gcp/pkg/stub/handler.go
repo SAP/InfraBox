@@ -28,6 +28,7 @@ import (
     "k8s.io/client-go/discovery/cached"
     "k8s.io/client-go/dynamic"
     "k8s.io/client-go/kubernetes"
+    _ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
     "k8s.io/client-go/rest"
     "k8s.io/client-go/tools/clientcmd"
 
@@ -363,6 +364,7 @@ func getGkeKubeConfig(gkecluster *RemoteCluster, log *logrus.Entry) error {
 
     cmd := exec.Command("gcloud", "container", "clusters", "get-credentials", gkecluster.Name,
                         "--zone", gkecluster.Zone)
+    cmd.Env = os.Environ()
     cmd.Env = append(cmd.Env, "KUBECONFIG=" + kubeConfigPath)
 
     out, err := cmd.CombinedOutput()

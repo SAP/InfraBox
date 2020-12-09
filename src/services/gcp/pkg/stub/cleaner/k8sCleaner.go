@@ -1,24 +1,25 @@
 package cleaner
 
 import (
-	"fmt"
-	"time"
+    "fmt"
+    "time"
 
-	"github.com/sirupsen/logrus"
-	appV1 "k8s.io/api/apps/v1"
-	appsV1Beta1 "k8s.io/api/apps/v1beta1"
-	appsV1Beta2 "k8s.io/api/apps/v1beta2"
-	batchV1 "k8s.io/api/batch/v1"
-	apiCoreV1 "k8s.io/api/core/v1"
-	apiExtV1Beta1 "k8s.io/api/extensions/v1beta1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
-	typedAppV1 "k8s.io/client-go/kubernetes/typed/apps/v1"
-	appsV1beta1 "k8s.io/client-go/kubernetes/typed/apps/v1beta1"
-	appsV1beta2 "k8s.io/client-go/kubernetes/typed/apps/v1beta2"
-	typedBatchV1 "k8s.io/client-go/kubernetes/typed/batch/v1"
-	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
-	"k8s.io/client-go/kubernetes/typed/extensions/v1beta1"
+    "github.com/sirupsen/logrus"
+    appV1 "k8s.io/api/apps/v1"
+    appsV1Beta1 "k8s.io/api/apps/v1beta1"
+    appsV1Beta2 "k8s.io/api/apps/v1beta2"
+    batchV1 "k8s.io/api/batch/v1"
+    apiCoreV1 "k8s.io/api/core/v1"
+    apiExtV1Beta1 "k8s.io/api/extensions/v1beta1"
+    "k8s.io/apimachinery/pkg/apis/meta/v1"
+    "k8s.io/client-go/kubernetes"
+    typedAppV1 "k8s.io/client-go/kubernetes/typed/apps/v1"
+    appsV1beta1 "k8s.io/client-go/kubernetes/typed/apps/v1beta1"
+    appsV1beta2 "k8s.io/client-go/kubernetes/typed/apps/v1beta2"
+    typedBatchV1 "k8s.io/client-go/kubernetes/typed/batch/v1"
+    corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
+    "k8s.io/client-go/kubernetes/typed/extensions/v1beta1"
+    _ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 )
 
 // Attempts to remove all objects in a kubernetes cluster connected to persistent resources.
