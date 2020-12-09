@@ -421,8 +421,8 @@ class Trigger(object):
             FROM job j
             JOIN build b
             ON b.id = j.build_id
-            WHERE 
-                b.commit_id = %s AND 
+            WHERE
+                b.commit_id = %s AND
                 j.state in ('scheduled', 'running', 'queued')
             ''', [commit_id], fetch=False)
 
