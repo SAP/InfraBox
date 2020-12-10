@@ -235,7 +235,7 @@ func (cc *clusterCleaner) cleanupNamespace(ns string,
 	}()
 
 	isClean = true
-	for i := 0; i < 7; i++ {
+	for i := 0; i < 5; i++ {
 		r := <-results
 		isClean = isClean && r.isClean
 		if r.err != nil && err == nil {

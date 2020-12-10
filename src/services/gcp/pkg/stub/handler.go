@@ -99,7 +99,8 @@ func createCluster(cr *v1alpha1.GKECluster, log *logrus.Entry) (*v1alpha1.GKEClu
     if limit != "" {
         gkeclusters, err := getRemoteClusters(log)
         if err != nil && !errors.IsNotFound(err) {
-            log.Errorf("Could not get GKE Clusters: %v", err)
+            err = fmt.Errorf("could not get GKE Clusters: %v", err)
+            log.Error(err)
             return nil, err
         }
 
@@ -193,8 +194,8 @@ func createCluster(cr *v1alpha1.GKECluster, log *logrus.Entry) (*v1alpha1.GKEClu
     out, err := cmd.CombinedOutput()
 
     if err != nil {
-        log.Errorf("Failed to create GKE Cluster: %v", err)
-        log.Error(string(out))
+        err = fmt.Errorf("failed to create GKE Cluster: %v, %s", err, out)
+        log.Error(err)
         return nil, err
     }
 
@@ -257,25 +258,22 @@ func syncGKECluster(cr *v1alpha1.GKECluster, log *logrus.Entry) (*v1alpha1.GKECl
     return &cr.Status, nil
 }
 
-func getAdminToken(gkecluster *RemoteCluster, log *logrus.Entry) (string, error) {
+func getAdminToken(gkecluster *RemoteCluster) (string, error) {
     client, err := newRemoteClusterSDK(gkecluster)
 
     c, err := kubernetes.NewForConfig(client.kubeConfig)
     if err != nil {
-        log.Errorf("error getting k8s client: %s", gkecluster.Name)
-        return "", err
+        return "", fmt.Errorf("error getting k8s client: %s, %v", gkecluster.Name, err)
     }
 
     sa, err := c.CoreV1().ServiceAccounts("kube-system").Get(adminSAName, metav1.GetOptions{})
     if err != nil {
-        log.Errorf("error getting admin service account: %s", gkecluster.Name)
-        return "", err
+        return "", fmt.Errorf("error getting admin service account: %s, %v", gkecluster.Name, err)
     }
 
     secret, err := c.CoreV1().Secrets("kube-system").Get(sa.Secrets[0].Name, metav1.GetOptions{})
     if err != nil {
-        log.Errorf("error getting admin sa secret: %s", gkecluster.Name)
-        return "", err
+        return "", fmt.Errorf("error getting admin sa secret: %s, %v", gkecluster.Name, err)
     }
 
     token := secret.Data["token"]
@@ -287,25 +285,29 @@ func injectAdminServiceAccount(gkecluster *RemoteCluster, log *logrus.Entry) err
     client, err := newRemoteClusterSDK(gkecluster)
 
     if err != nil {
-        log.Errorf("Failed to create remote cluster client: %v", err)
+        err = fmt.Errorf("failed to create remote cluster client: %v", err)
+        log.Error(err)
         return err
     }
 
     err = client.Create(newAdminServiceAccount(), log)
     if err != nil && !errors.IsAlreadyExists(err) {
-        log.Errorf("Failed to create admin service account : %v", err)
+        err = fmt.Errorf("failed to create admin service account : %v", err)
+        log.Error(err)
         return err
     }
 
     err = client.Create(newAdminCRB(), log)
     if err != nil && !errors.IsAlreadyExists(err) {
-        log.Errorf("Failed to create admin service account : %v", err)
+        err = fmt.Errorf("failed to create admin service account : %v", err)
+        log.Error(err)
         return err
     }
 
-    token, err := getAdminToken(gkecluster, log)
+    token, err := getAdminToken(gkecluster)
     if err != nil {
-        log.Errorf("error getting admin token: %s", gkecluster.Name)
+        err = fmt.Errorf("error getting admin token: %s", gkecluster.Name)
+        log.Error(err)
         return err
     }
 
@@ -665,10 +667,11 @@ func getRemoteCluster(name string, log *logrus.Entry) (*RemoteCluster, error) {
     cmd := exec.Command("gcloud", "container", "clusters", "list",
         "--filter", "name="+name, "--format", "json")
 
-    out, err := cmd.Output()
+    out, err := cmd.CombinedOutput()
 
     if err != nil {
-        log.Errorf("Could not list clusters: %v", err)
+        err = fmt.Errorf("could not list clusters: %s, %v", out, err)
+        log.Error(err)
         return nil, err
     }
 
@@ -676,7 +679,8 @@ func getRemoteCluster(name string, log *logrus.Entry) (*RemoteCluster, error) {
     err = json.Unmarshal(out, &gkeclusters)
 
     if err != nil {
-        log.Errorf("Could not parse cluster list: %v", err)
+        err = fmt.Errorf("could not parse cluster list: %s, %v", out, err)
+        log.Error(err)
         return nil, err
     }
 
@@ -689,7 +693,7 @@ func getRemoteCluster(name string, log *logrus.Entry) (*RemoteCluster, error) {
         if err := getGkeKubeConfig(res, log); err != nil {
             return nil, err
         }
-        token, err := getAdminToken(res, log)
+        token, err := getAdminToken(res)
         if err == nil {
             res.MasterAuth.Token = token
         }
