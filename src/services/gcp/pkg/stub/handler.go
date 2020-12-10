@@ -779,21 +779,22 @@ func getOutdatedClusters(maxAge string, log *logrus.Entry) ([]RemoteCluster, err
     return gkeclusters, nil
 }
 
-func generateKubeconfig(cr *v1alpha1.GKECluster, c *RemoteCluster) []byte {
+func generateKubeconfig(c *RemoteCluster) []byte {
     caCrt, _ := b64.StdEncoding.DecodeString(c.MasterAuth.ClusterCaCertificate)
     clusters := make(map[string]*clientcmdapi.Cluster)
-    clusters[cr.ClusterName] = &clientcmdapi.Cluster{
+    clusters[c.Name] = &clientcmdapi.Cluster{
         Server:                   "https://" + c.Endpoint,
         CertificateAuthorityData: caCrt,
     }
 
     contexts := make(map[string]*clientcmdapi.Context)
     contexts["default-context"] = &clientcmdapi.Context{
-        Cluster:   cr.ClusterName,
+        Cluster:   c.Name,
+        AuthInfo:  "admin",
     }
 
     authinfos := make(map[string]*clientcmdapi.AuthInfo)
-    authinfos["kube-system"] = &clientcmdapi.AuthInfo{
+    authinfos["admin"] = &clientcmdapi.AuthInfo{
         Token: c.MasterAuth.Token,
     }
 
@@ -842,7 +843,7 @@ func newSecret(cluster *v1alpha1.GKECluster, gke *RemoteCluster) *v1.Secret {
             "password":   []byte(gke.MasterAuth.Password),
             "endpoint":   []byte("https://" + gke.Endpoint),
             "token":      []byte(gke.MasterAuth.Token),
-            "kubeconfig": generateKubeconfig(cluster, gke),
+            "kubeconfig": generateKubeconfig(gke),
         },
     }
 }
@@ -866,7 +867,7 @@ func doCollectorRequest(cluster *RemoteCluster, log *logrus.Entry, endpoint stri
         return nil, err
     }
 
-    req.SetBasicAuth(cluster.MasterAuth.Username, cluster.MasterAuth.Password)
+    req.Header.Add("Authorization", "Bearer " + cluster.MasterAuth.Token)
 
     resp, err := client.Do(req)
     if err != nil {
@@ -1110,6 +1111,10 @@ func newRemoteClusterSDK(cluster *RemoteCluster) (*RemoteClusterSDK, error) {
     kubeConfig, err := clientcmd.BuildConfigFromFlags("", kubeConfigPath)
     if err != nil {
         return nil, err
+    }
+
+    if len(cluster.MasterAuth.Token) > 0 {
+        kubeConfig.BearerToken = cluster.MasterAuth.Token
     }
 
     kubeClient := kubernetes.NewForConfigOrDie(kubeConfig)
