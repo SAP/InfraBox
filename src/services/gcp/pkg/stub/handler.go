@@ -31,6 +31,7 @@ import (
     _ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
     "k8s.io/client-go/rest"
     "k8s.io/client-go/tools/clientcmd"
+    clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 
     "github.com/operator-framework/operator-sdk/pkg/sdk/action"
     "github.com/operator-framework/operator-sdk/pkg/sdk/handler"
@@ -778,6 +779,37 @@ func getOutdatedClusters(maxAge string, log *logrus.Entry) ([]RemoteCluster, err
     return gkeclusters, nil
 }
 
+func generateKubeconfig(cr *v1alpha1.GKECluster, c *RemoteCluster) []byte {
+    caCrt, _ := b64.StdEncoding.DecodeString(c.MasterAuth.ClusterCaCertificate)
+    clusters := make(map[string]*clientcmdapi.Cluster)
+    clusters[cr.ClusterName] = &clientcmdapi.Cluster{
+        Server:                   "https://" + c.Endpoint,
+        CertificateAuthorityData: caCrt,
+    }
+
+    contexts := make(map[string]*clientcmdapi.Context)
+    contexts["default-context"] = &clientcmdapi.Context{
+        Cluster:   cr.ClusterName,
+    }
+
+    authinfos := make(map[string]*clientcmdapi.AuthInfo)
+    authinfos["kube-system"] = &clientcmdapi.AuthInfo{
+        Token: c.MasterAuth.Token,
+    }
+
+    clientConfig := clientcmdapi.Config{
+        Kind:           "Config",
+        APIVersion:     "v1",
+        Clusters:       clusters,
+        Contexts:       contexts,
+        CurrentContext: "default-context",
+        AuthInfos:      authinfos,
+    }
+
+    kc, _ := clientcmd.Write(clientConfig)
+    return kc
+}
+
 func newSecret(cluster *v1alpha1.GKECluster, gke *RemoteCluster) *v1.Secret {
     caCrt, _ := b64.StdEncoding.DecodeString(gke.MasterAuth.ClusterCaCertificate)
     clientKey, _ := b64.StdEncoding.DecodeString(gke.MasterAuth.ClientKey)
@@ -810,6 +842,7 @@ func newSecret(cluster *v1alpha1.GKECluster, gke *RemoteCluster) *v1.Secret {
             "password":   []byte(gke.MasterAuth.Password),
             "endpoint":   []byte("https://" + gke.Endpoint),
             "token":      []byte(gke.MasterAuth.Token),
+            "kubeconfig": generateKubeconfig(cluster, gke),
         },
     }
 }
