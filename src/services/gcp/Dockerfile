@@ -1,4 +1,4 @@
-FROM golang:1.10-alpine AS build-env
+FROM golang:1.14-alpine AS build-env
 
 RUN apk add --no-cache git curl bash
 RUN curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
@@ -6,6 +6,8 @@ RUN curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
 COPY . /go/src/github.com/sap/infrabox/
 
 WORKDIR /go/src/github.com/sap/infrabox/src/services/gcp
+
+ENV GO111MODULE=off
 
 RUN dep ensure
 RUN ./tmp/build/build.sh
