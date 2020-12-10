@@ -187,9 +187,18 @@ class Trigger(object):
             self.execute('''
                 UPDATE "commit" SET tag = %s WHERE id = %s AND project_id = %s
             ''', [tag, c['id'], project_id], fetch=False)
+
+            build_on_tag = self.execute('''
+                            SELECT build_on_tag
+                            FROM project
+                            WHERE id = %s''', [project_id])[0]
+
+            if not build_on_tag and self.has_active_build(commit_id, project_id):
+                return
         else:
             if self.has_active_build(commit_id, project_id):
                 return
+
 
         if not result:
             status_url = repository['statuses_url'].format(sha=c['id'])
@@ -412,8 +421,8 @@ class Trigger(object):
             FROM job j
             JOIN build b
             ON b.id = j.build_id
-            WHERE 
-                b.commit_id = %s AND 
+            WHERE
+                b.commit_id = %s AND
                 j.state in ('scheduled', 'running', 'queued')
             ''', [commit_id], fetch=False)
 
