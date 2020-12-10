@@ -689,6 +689,10 @@ func getRemoteCluster(name string, log *logrus.Entry) (*RemoteCluster, error) {
         if err := getGkeKubeConfig(res, log); err != nil {
             return nil, err
         }
+        token, err := getAdminToken(res, log)
+        if err == nil {
+            res.MasterAuth.Token = token
+        }
     }
 
     return res, nil
