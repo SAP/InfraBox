@@ -178,6 +178,7 @@ func createCluster(cr *v1alpha1.GKECluster, log *logrus.Entry) (*v1alpha1.GKEClu
     }
 
     args = append(args, "--enable-ip-alias")
+    args = append(args, "--enable-basic-auth")
     args = append(args, "--enable-legacy-authorization")
     args = append(args, "--create-subnetwork", "")
 
