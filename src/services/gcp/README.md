@@ -39,11 +39,13 @@ The InfraBox GCP Service can be used to dynamically provision a Kubernetes Clust
 The GKE Cluster credentials will be available under `/var/run/infrabox.net/services/<service-name>/` (in the example above the service name is `my-cluster`) as files:
 
 - ca.crt
-- client.crt
-- client.key
+- client.crt (deprecated)
+- client.key (deprecated)
 - endpoint
-- username
-- password
+- token
+- kubeconfig
+- username (deprecated)
+- password (deprecated)
 
 You may configure kubectl in your job as follows:
 
@@ -52,23 +54,17 @@ You may configure kubectl in your job as follows:
 SERVICE_NAME="my-cluster"
 
 CA_CRT="/var/run/infrabox.net/services/$SERVICE_NAME/ca.crt"
-CLIENT_CRT="/var/run/infrabox.net/services/$SERVICE_NAME/client.crt"
-CLIENT_KEY="/var/run/infrabox.net/services/$SERVICE_NAME/client.key"
 
 ENDPOINT=$(cat /var/run/infrabox.net/services/$SERVICE_NAME/endpoint)
-PASSWORD=$(cat /var/run/infrabox.net/services/$SERVICE_NAME/password)
-USERNAME=$(cat /var/run/infrabox.net/services/$SERVICE_NAME/username)
+TOKEN=$(cat /var/run/infrabox.net/services/$SERVICE_NAME/token)
 
 kubectl config set-cluster $SERVICE_NAME \
     --server=$ENDPOINT \
+    --embed-certs=true \
     --certificate-authority=$CA_CRT
 
 kubectl config set-credentials admin \
-    --certificate-authority=$CA_CRT \
-    --client-certificate=$CLIENT_CRT \
-    --client-key=$CLIENT_KEY \
-    --username=$USERNAME \
-    --password=$PASSWORD
+    --token=$TOKEN
 
 kubectl config set-context default-system \
     --cluster=$SERVICE_NAME \
@@ -77,6 +73,12 @@ kubectl config set-context default-system \
 kubectl config use-context default-system
 
 kubectl get pods
+```
+
+or using
+
+```
+export KUBECONFIG="/var/run/infrabox.net/services/$SERVICE_NAME/kubeconfig"
 ```
 
 ## Install
