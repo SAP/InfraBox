@@ -1070,7 +1070,7 @@ class RunJob(Job):
                 c.header("Deploying", show=True)
                 self.deploy_image(image_name_build, d)
 
-        target = self.job.get('target', None)
+        target = self.job['definition'].get('target', None)
         self.build_docker_image(image_name_build, image_name_latest, target=target)
 
         try:
