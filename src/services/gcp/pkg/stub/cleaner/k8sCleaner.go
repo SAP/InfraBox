@@ -1,24 +1,21 @@
 package cleaner
 
 import (
-	"fmt"
-	"time"
+    "fmt"
+    "time"
 
-	"github.com/sirupsen/logrus"
-	appV1 "k8s.io/api/apps/v1"
-	appsV1Beta1 "k8s.io/api/apps/v1beta1"
-	appsV1Beta2 "k8s.io/api/apps/v1beta2"
-	batchV1 "k8s.io/api/batch/v1"
-	apiCoreV1 "k8s.io/api/core/v1"
-	apiExtV1Beta1 "k8s.io/api/extensions/v1beta1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
-	typedAppV1 "k8s.io/client-go/kubernetes/typed/apps/v1"
-	appsV1beta1 "k8s.io/client-go/kubernetes/typed/apps/v1beta1"
-	appsV1beta2 "k8s.io/client-go/kubernetes/typed/apps/v1beta2"
-	typedBatchV1 "k8s.io/client-go/kubernetes/typed/batch/v1"
-	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
-	"k8s.io/client-go/kubernetes/typed/extensions/v1beta1"
+    "github.com/sirupsen/logrus"
+    appV1 "k8s.io/api/apps/v1"
+    batchV1 "k8s.io/api/batch/v1"
+    apiCoreV1 "k8s.io/api/core/v1"
+    apiExtV1Beta1 "k8s.io/api/extensions/v1beta1"
+    "k8s.io/apimachinery/pkg/apis/meta/v1"
+    "k8s.io/client-go/kubernetes"
+    typedAppV1 "k8s.io/client-go/kubernetes/typed/apps/v1"
+    typedBatchV1 "k8s.io/client-go/kubernetes/typed/batch/v1"
+    corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
+    "k8s.io/client-go/kubernetes/typed/extensions/v1beta1"
+    _ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 )
 
 // Attempts to remove all objects in a kubernetes cluster connected to persistent resources.
@@ -159,12 +156,10 @@ func (cc *clusterCleaner) cleanAllNamespaces(clientSet kubernetes.Interface) (bo
 			deplIf typedAppV1.DeploymentInterface,
 			jobIf typedBatchV1.JobInterface,
 			statefulSetIf typedAppV1.StatefulSetInterface,
-			v1Beta1StatefulSetIf appsV1beta1.StatefulSetInterface,
-			v1Beta2StatefulSetIf appsV1beta2.StatefulSetInterface,
 			dsIf typedAppV1.DaemonSetInterface,
 			out chan *helperResultStruct) {
 
-			isClean, err := cc.cleanupNamespace(nsName, ingIf, deplIf, jobIf, statefulSetIf, v1Beta1StatefulSetIf, v1Beta2StatefulSetIf, dsIf)
+			isClean, err := cc.cleanupNamespace(nsName, ingIf, deplIf, jobIf, statefulSetIf, dsIf)
 			out <- &helperResultStruct{isClean, err}
 
 		}(ns.GetName(),
@@ -173,8 +168,6 @@ func (cc *clusterCleaner) cleanAllNamespaces(clientSet kubernetes.Interface) (bo
 			clientSet.AppsV1().Deployments(ns.GetName()),
 			clientSet.BatchV1().Jobs(ns.GetName()),
 			clientSet.AppsV1().StatefulSets(ns.GetName()),
-			clientSet.AppsV1beta1().StatefulSets(ns.GetName()),
-			clientSet.AppsV1beta2().StatefulSets(ns.GetName()),
 			clientSet.AppsV1().DaemonSets(ns.GetName()), outChan)
 	}
 
@@ -212,8 +205,6 @@ func (cc *clusterCleaner) cleanupNamespace(ns string,
 	deplIf typedAppV1.DeploymentInterface,
 	jobIf typedBatchV1.JobInterface,
 	statefulSetIf typedAppV1.StatefulSetInterface,
-	statefulSetV1beta1If appsV1beta1.StatefulSetInterface,
-	statefulSetV1beta2If appsV1beta2.StatefulSetInterface,
 	dsIf typedAppV1.DaemonSetInterface) (isClean bool, err error) {
 
 	results := make(chan *helperResultStruct, 8)
@@ -225,16 +216,6 @@ func (cc *clusterCleaner) cleanupNamespace(ns string,
 
 	go func() {
 		deploymentClean, podErr := cc.cleanAllStatefulSetInNamespace(ns, statefulSetIf)
-		results <- &helperResultStruct{deploymentClean, podErr}
-	}()
-
-	go func() {
-		deploymentClean, podErr := cc.cleanAllV1Beta1StatefulSetInNamespace(ns, statefulSetV1beta1If)
-		results <- &helperResultStruct{deploymentClean, podErr}
-	}()
-
-	go func() {
-		deploymentClean, podErr := cc.cleanAllV1Beta2StatefulSetInNamespace(ns, statefulSetV1beta2If)
 		results <- &helperResultStruct{deploymentClean, podErr}
 	}()
 
@@ -254,7 +235,7 @@ func (cc *clusterCleaner) cleanupNamespace(ns string,
 	}()
 
 	isClean = true
-	for i := 0; i < 7; i++ {
+	for i := 0; i < 5; i++ {
 		r := <-results
 		isClean = isClean && r.isClean
 		if r.err != nil && err == nil {
@@ -365,102 +346,6 @@ func (cc *clusterCleaner) enableStatefulSetForceDeleteIfNecessary(statefulSet *a
 		statefulSet.SetFinalizers([]string{})
 		if _, err := statefulSetIf.Update(statefulSet); err != nil {
 			cc.log.Debugf("couldn't remove finalizers from stateful set '%s' in namespace %s. err: %s", statefulSet.GetName(), ns, err.Error())
-			return err
-		}
-	}
-
-	return nil
-}
-
-func (cc *clusterCleaner) cleanAllV1Beta1StatefulSetInNamespace(ns string, statefulSetIf appsV1beta1.StatefulSetInterface) (bool, error) {
-	list, err := statefulSetIf.List(v1.ListOptions{IncludeUninitialized: true})
-	if err != nil {
-		cc.log.Errorf("couldn't list all v1beta1 stateful sets in the namespace %s. err: %s", ns, err.Error())
-		return false, err
-	}
-	if len(list.Items) == 0 {
-		return true, nil
-	}
-
-	now := time.Now()
-	for i := range list.Items {
-		if err := cc.enableV1Beta1StatefulSetForceDeleteIfNecessary(&list.Items[i], now, ns, statefulSetIf); err != nil {
-			return false, err
-		}
-	}
-
-	delPol := v1.DeletePropagationForeground
-	if err := statefulSetIf.DeleteCollection(&v1.DeleteOptions{PropagationPolicy: &delPol}, v1.ListOptions{IncludeUninitialized: true}); err != nil {
-		cc.log.Error("couldn't delete all v1beta1 stateful sets. err: ", err)
-		return false, err
-	}
-
-	return false, nil
-}
-
-func (cc *clusterCleaner) enableV1Beta1StatefulSetForceDeleteIfNecessary(claim *appsV1Beta1.StatefulSet, now time.Time, ns string, statefulSetIf appsV1beta1.StatefulSetInterface) error {
-	if claim.GetDeletionTimestamp() == nil {
-		return nil
-	}
-
-	durSinceDeletion := now.Sub(claim.GetDeletionTimestamp().Time)
-	if durSinceDeletion > deletionPeriodTolerance {
-		var dgp int64 = 0
-		claim.SetDeletionGracePeriodSeconds(&dgp)
-		claim.SetFinalizers([]string{})
-
-		cc.log.Debugf("v1beta1 stateful set '%s' in namespace %s is marked for deletion but wasn't deleted since %s ago. Will try to delete them", claim.GetName(), ns, durSinceDeletion.String())
-		claim.SetFinalizers([]string{})
-		if _, err := statefulSetIf.Update(claim); err != nil {
-			cc.log.Debugf("couldn't remove finalizers from stateful set '%s' in namespace %s. err: %s", claim.GetName(), ns, err.Error())
-			return err
-		}
-	}
-
-	return nil
-}
-
-func (cc *clusterCleaner) cleanAllV1Beta2StatefulSetInNamespace(ns string, statefulSetIf appsV1beta2.StatefulSetInterface) (bool, error) {
-	list, err := statefulSetIf.List(v1.ListOptions{IncludeUninitialized: true})
-	if err != nil {
-		cc.log.Errorf("couldn't list all v1beta2 stateful sets in the namespace %s. err: %s", ns, err.Error())
-		return false, err
-	}
-	if len(list.Items) == 0 {
-		return true, nil
-	}
-
-	now := time.Now()
-	for i := range list.Items {
-		if err := cc.enableV1Beta2StatefulSetForceDeleteIfNecessary(&list.Items[i], now, ns, statefulSetIf); err != nil {
-			return false, err
-		}
-	}
-
-	delPol := v1.DeletePropagationForeground
-	if err := statefulSetIf.DeleteCollection(&v1.DeleteOptions{PropagationPolicy: &delPol}, v1.ListOptions{IncludeUninitialized: true}); err != nil {
-		cc.log.Error("couldn't delete all v1beta2 stateful sets. err: ", err)
-		return false, err
-	}
-
-	return false, nil
-}
-
-func (cc *clusterCleaner) enableV1Beta2StatefulSetForceDeleteIfNecessary(claim *appsV1Beta2.StatefulSet, now time.Time, ns string, statefulSetIf appsV1beta2.StatefulSetInterface) error {
-	if claim.GetDeletionTimestamp() == nil {
-		return nil
-	}
-
-	durSinceDeletion := now.Sub(claim.GetDeletionTimestamp().Time)
-	if durSinceDeletion > deletionPeriodTolerance {
-		var dgp int64 = 0
-		claim.SetDeletionGracePeriodSeconds(&dgp)
-		claim.SetFinalizers([]string{})
-
-		cc.log.Debugf("v1beta2 stateful set '%s' in namespace %s is marked for deletion but wasn't deleted since %s ago. Will try to delete them", claim.GetName(), ns, durSinceDeletion.String())
-		claim.SetFinalizers([]string{})
-		if _, err := statefulSetIf.Update(claim); err != nil {
-			cc.log.Debugf("couldn't remove finalizers from stateful set '%s' in namespace %s. err: %s", claim.GetName(), ns, err.Error())
 			return err
 		}
 	}

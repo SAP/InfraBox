@@ -17,6 +17,3 @@ BUILD_PATH="${REPO_PATH}/cmd/${PROJECT_NAME}"
 echo "building "${PROJECT_NAME}"..."
 GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o ${BIN_DIR}/${PROJECT_NAME} $BUILD_PATH
 
-pushd pkg
-GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go test ./...
-popd

@@ -1,4 +1,4 @@
-FROM golang:1.10-alpine AS build-env
+FROM golang:1.14-alpine AS build-env
 
 RUN apk add --no-cache git curl bash
 RUN curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
@@ -6,6 +6,8 @@ RUN curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
 COPY . /go/src/github.com/sap/infrabox/
 
 WORKDIR /go/src/github.com/sap/infrabox/src/services/gcp
+
+ENV GO111MODULE=off
 
 RUN dep ensure
 RUN ./tmp/build/build.sh
@@ -30,8 +32,6 @@ RUN apk --no-cache add \
     gcloud config set core/disable_usage_reporting true && \
     gcloud config set component_manager/disable_update_check true && \
     gcloud config set metrics/environment github_docker_image && \
-    gcloud config set container/use_v1_api false && \
-    gcloud config set container/new_scopes_behavior true && \
     gcloud components install kubectl && \
     gcloud --version
 
