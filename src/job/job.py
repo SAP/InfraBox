@@ -732,7 +732,7 @@ class RunJob(Job):
             except Exception as e:
                 logger.exception(e)
 
-
+            stop_timeout = self.job['definition'].get('stop_timeout', 10)
             self.environment['PATH'] = os.environ['PATH']
             c.execute_mask(['docker-compose', '-f', compose_file_new, 'build'],
                       show=True, env=self.environment, mask=self.repository.get('github_api_token', None))
@@ -742,7 +742,7 @@ class RunJob(Job):
             cwd = self._get_build_context_current_job()
 
             c.execute(['docker-compose', '-f', compose_file_new, 'up',
-                       '--abort-on-container-exit'], env=self.environment, show=True, cwd=cwd)
+                       '--abort-on-container-exit', '--timeout', stop_timeout], env=self.environment, show=True, cwd=cwd)
         except:
             raise Failure("Failed to build and run container")
         finally:
