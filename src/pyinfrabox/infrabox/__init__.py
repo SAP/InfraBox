@@ -302,7 +302,7 @@ def parse_docker(d, path):
         check_string_array(d['command'], path + ".command")
 
 def parse_docker_compose(d, path):
-    check_allowed_properties(d, path, ("type", "name", "docker_compose_file", "depends_on",
+    check_allowed_properties(d, path, ("type", "name", "docker_compose_file", "depends_on", "stop_timeout",
                                        "environment", "resources", "cache", "timeout", "cluster",
                                        "repository", "registries"))
     check_required_properties(d, path, ("type", "name", "docker_compose_file", "resources"))
