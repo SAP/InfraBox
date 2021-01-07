@@ -7,7 +7,7 @@ from flask_restx import Resource, fields
 import ldap
 import bcrypt
 
-# from ldap.filter import escape_filter_chars
+from ldap.filter import escape_filter_chars
 from pyinfraboxutils import get_logger
 from pyinfraboxutils.ibflask import OK
 from pyinfraboxutils.token import encode_user_token
@@ -35,7 +35,7 @@ def authenticate(email, password):
     ldap_password = os.environ['INFRABOX_ACCOUNT_LDAP_PASSWORD']
     ldap_base_dn = os.environ['INFRABOX_ACCOUNT_LDAP_BASE']
 
-    search_filter = "(mail=%s)" % str(email)
+    search_filter = "(mail=%s)" % escape_filter_chars(str(email))
     user_dn = None
 
     connect = ldap_conn(ldap_server)
