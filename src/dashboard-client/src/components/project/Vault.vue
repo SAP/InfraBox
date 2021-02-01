@@ -1,0 +1,81 @@
+<template>
+    <div class="m-sm full-height">
+        <md-card md-theme="white" class="full-height clean-card">
+            <md-card-header>
+                <md-card-header-text class="setting-list">
+                    <md-icon>security</md-icon>
+                    <span>Vault</span>
+                </md-card-header-text>
+            </md-card-header>
+            <md-card-area>
+                    <md-list class="m-t-md m-b-md">
+                        <md-list-item>
+                            <md-input-container class="m-l-sm">
+                              <label>Url</label>
+                              <md-textarea v-model="url" required></md-textarea>
+                            </md-input-container>
+                            <md-input-container class="m-l-sm">
+                              <label>Token</label>
+                              <md-textarea v-model="token" required></md-textarea>
+                            </md-input-container>
+                            <md-button class="md-icon-button md-list-action" @click="addVault()">
+                                <md-icon md-theme="running" class="md-primary">add_circle</md-icon>
+                                <md-tooltip>Add new Vault record</md-tooltip>
+                            </md-button>
+                        </md-list-item>
+                        <md-list-item v-for="v in project.vault" :key="v.id">
+                            <div class="md-input-container m-r-xl md-theme-white">
+                                {{ v.url }}
+                            </div>
+                            <md-button type="submit" class="md-icon-button md-list-action" @click="deleteVault(v.id)">
+                                <md-icon class="md-primary">delete</md-icon>
+                                <md-tooltip>Delete secret permanently</md-tooltip>
+                            </md-button>
+                        </md-list-item>
+                    </md-list>
+            </md-card-area>
+        </md-card>
+    </div>
+</template>
+
+<script>
+import NewAPIService from '../../services/NewAPIService'
+import NotificationService from '../../services/NotificationService'
+import Notification from '../../models/Notification'
+
+export default {
+    props: ['project'],
+    data: () => ({
+        url: '',
+        token: ''
+    }),
+    created () {
+        this.project._loadVault()
+    },
+    methods: {
+        deleteVault (id) {
+            NewAPIService.delete(`projects/${this.project.id}/vault/${id}`)
+                .then((response) => {
+                    NotificationService.$emit('NOTIFICATION', new Notification(response))
+                    this.project._reloadVault()
+                })
+                .catch((err) => {
+                    NotificationService.$emit('NOTIFICATION', new Notification(err))
+                })
+        },
+        addVault () {
+            const d = { url: this.url, token: this.token }
+            NewAPIService.post(`projects/${this.project.id}/vault`, d)
+                .then((response) => {
+                    NotificationService.$emit('NOTIFICATION', new Notification(response))
+                    this.url = ''
+                    this.token = ''
+                    this.project._reloadVault()
+                })
+                .catch((err) => {
+                    NotificationService.$emit('NOTIFICATION', new Notification(err))
+                })
+        }
+    }
+}
+</script>

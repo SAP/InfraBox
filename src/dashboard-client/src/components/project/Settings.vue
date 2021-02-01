@@ -12,6 +12,9 @@
         <md-layout md-column md-gutter md-flex-xsmall="100" md-flex-small="50" md-flex-medium="50" md-flex-large="50" md-flex-xlarge="50">
             <ib-project-sshkeys :project="project"></ib-project-sshkeys>
         </md-layout>
+        <md-layout md-column md-gutter md-flex-xsmall="100" md-flex-small="50" md-flex-medium="50" md-flex-large="50" md-flex-xlarge="50">
+            <ib-Vault :project="project"></ib-Vault>
+         </md-layout>
         <md-layout v-if="project.userHasOwnerRights()" md-column md-gutter md-flex-xsmall="100" md-flex-small="50" md-flex-medium="50" md-flex-large="50" md-flex-xlarge="50">
             <ib-project-visibility :project="project"></ib-project-visibility>
         </md-layout>
@@ -32,6 +35,7 @@ import ProjectBadges from './Badges'
 import ProjectCronJobs from './Cron'
 import ProjectSSHKeys from './SSHKeys'
 import ProjectVisibility from './Visibility'
+import ProjectVault from './Vault'
 
 export default {
     props: ['project'],
@@ -42,6 +46,7 @@ export default {
         'ib-project-badges': ProjectBadges,
         'ib-project-cronjobs': ProjectCronJobs,
         'ib-project-visibility': ProjectVisibility,
+        'ib-Vault': ProjectVault,
         'ib-project-sshkeys': ProjectSSHKeys
     }
 }

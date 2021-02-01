@@ -4,7 +4,7 @@ import router from '../router'
 
 class NewAPIService {
     constructor () {
-        this.api = process.env.NEW_API_PATH
+        this.api = '10.236.96.107/api/v1/'
     }
 
     _handleError (ignoreUnauthorized) {
