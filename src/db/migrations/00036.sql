@@ -5,4 +5,4 @@ CREATE TABLE vault (
     token VARCHAR NOT NULL
 )
 
-CREATE UNIQUE INDEX vault_project_id_idx ON vault USING btree (project_id);
+CREATE INDEX vault_project_id_idx ON vault USING btree (project_id);
