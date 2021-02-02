@@ -23,7 +23,7 @@ class Tokens(Resource):
         '''one
         Returns project's vault service
         '''
-        v = g.db.execute_one_dict('''
+        v = g.db.execute_many_dict('''
             SELECT id, url, token
             FROM vault
             WHERE project_id = %s
