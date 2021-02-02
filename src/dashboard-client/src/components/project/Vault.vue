@@ -26,7 +26,6 @@
                         <md-list-item v-for="v in project.vault" :key="v.id">
                             <div class="md-input-container m-r-xl md-theme-white">
                                 <span>{{ v.url }}</span>
-                                <span>{{ v.token }}</span>
                             </div>
                             <md-button type="submit" class="md-icon-button md-list-action" @click="deleteVault(v.id)">
                                 <md-icon class="md-primary">delete</md-icon>
