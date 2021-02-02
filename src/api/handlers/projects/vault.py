@@ -10,7 +10,7 @@ ns = api.namespace('Vault',
 
 project_vault_model = api.model('VaultService', {
     'url': fields.String(required=True),
-    'token': fields.Boolean(required=True),
+    'token': fields.String(required=True),
     'id': fields.String(required=False)
 })
 
