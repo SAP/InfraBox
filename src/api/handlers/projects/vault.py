@@ -14,12 +14,12 @@ project_vault_model = api.model('VaultService', {
     'id': fields.String(required=False)
 })
 
-@ns.route('/')
+@ns.route('/<vault_id>')
 @api.doc(responses={403: 'Not Authorized'})
 class Tokens(Resource):
 
     @api.marshal_with(project_vault_model)
-    def get(self, project_id):
+    def get(self, project_id, vault_id):
         '''one
         Returns project's vault service
         '''
@@ -39,9 +39,9 @@ class Tokens(Resource):
         g.db.commit()
         return OK('Successfully added vault.')
 
-    def delete(self, project_id):
+    def delete(self, project_id, vault_id):
         g.db.execute('''
-                    DELETE FROM vault WHERE project_id = %s
-                ''', [project_id])
+                    DELETE FROM vault WHERE project_id = %s and id = %s
+                ''', [project_id, vault_id])
         g.db.commit()
         return OK('Successfully deleted vault.')
