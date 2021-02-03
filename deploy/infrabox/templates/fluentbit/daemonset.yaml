@@ -6,6 +6,9 @@ metadata:
   labels:
     app: infrabox-fluent-bit
 spec:
+  selector:
+    matchLabels:
+      app: infrabox-fluent-bit
   template:
     metadata:
       labels:
