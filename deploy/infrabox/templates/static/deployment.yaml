@@ -8,6 +8,9 @@ metadata:
         app: infrabox-static
 spec:
     replicas: 1
+    selector:
+        matchLabels:
+            app: infrabox-static
     template:
         metadata:
             labels:

@@ -7,6 +7,9 @@ metadata:
         app: infrabox-docker-registry
 spec:
     replicas: {{ required "docker_registry.replicas is required" .Values.docker_registry.replicas }}
+    selector:
+        matchLabels:
+            app: infrabox-docker-registry
     template:
         metadata:
             labels:

@@ -8,6 +8,9 @@ metadata:
         app: infrabox-metrics
 spec:
     replicas: 1
+    selector:
+        matchLabels:
+            app: infrabox-metrics
     template:
         metadata:
             labels:

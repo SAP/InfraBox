@@ -8,6 +8,9 @@ metadata:
         app: infrabox-checker
 spec:
     replicas: 1
+    selector:
+        matchLabels:
+            app: infrabox-checker
     template:
         metadata:
             labels:
