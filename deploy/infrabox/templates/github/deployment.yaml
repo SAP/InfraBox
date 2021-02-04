@@ -1,6 +1,6 @@
 {{ define "github_deployment" }}
 {{ if .Values.github.enabled }}
-apiVersion: apps/v1
+apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
     name: infrabox-github

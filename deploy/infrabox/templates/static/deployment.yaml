@@ -1,5 +1,5 @@
 {{ define "static_deployment" }}
-apiVersion: apps/v1
+apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
     name: infrabox-static

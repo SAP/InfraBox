@@ -1,6 +1,6 @@
 {{ define "gerrit_review_deployment" }}
 {{ if .Values.gerrit.enabled }}
-apiVersion: apps/v1
+apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
     name: infrabox-gerrit-review
