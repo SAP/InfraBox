@@ -7,9 +7,6 @@ metadata:
         app: infrabox-scheduler
 spec:
     replicas: 1
-    selector:
-        matchLabels:
-            app: infrabox-scheduler
     template:
         metadata:
             labels:

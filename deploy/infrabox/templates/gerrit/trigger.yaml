@@ -9,9 +9,6 @@ metadata:
         app: infrabox-gerrit-trigger
 spec:
     replicas: 1
-    selector:
-        matchLabels:
-            app: infrabox-gerrit-trigger
     template:
         metadata:
             labels:

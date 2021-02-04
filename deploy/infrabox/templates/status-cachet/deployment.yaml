@@ -8,9 +8,6 @@ metadata:
         app: infrabox-status-cachet
 spec:
     replicas: 1
-    selector:
-        matchLabels:
-            app: infrabox-status-cachet
     template:
         metadata:
             labels:
