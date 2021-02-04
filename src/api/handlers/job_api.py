@@ -806,18 +806,39 @@ class CreateJobs(Resource):
                     value = job['environment'][ename]
 
                     if isinstance(value, dict):
-                        env_var_ref_name = value['$secret']
-                        result = g.db.execute_many("""
-                            SELECT value FROM secret WHERE name = %s and project_id = %s
-                        """, [env_var_ref_name, project_id])
+                        if '$secret' in value:
+                            env_var_ref_name = value['$secret']
+                            result = g.db.execute_many("""
+                                SELECT value FROM secret WHERE name = %s and project_id = %s
+                            """, [env_var_ref_name, project_id])
 
-                        if not result:
-                            abort(400, "Secret '%s' not found" % env_var_ref_name)
+                            if not result:
+                                abort(400, "Secret '%s' not found" % env_var_ref_name)
 
-                        if not job['env_var_refs']:
-                            job['env_var_refs'] = {}
+                            if not job['env_var_refs']:
+                                job['env_var_refs'] = {}
 
-                        job['env_var_refs'][ename] = env_var_ref_name
+                            job['env_var_refs'][ename] = env_var_ref_name
+
+                        if '$vault' in value:
+                            url = value['$vault']
+                            result = g.db.execute_one("""env_var_refs
+                                SELECT token FROM vault WHERE url = %s and project_id = %s
+                            """, [url, project_id])
+
+                            if not result:
+                                abort(400, "The Token of Vault url '%s' was not found" % url)
+
+                            res = requests.get(url=url, headers={'X-Vault-Token': result})
+                            if res.status_code == 200:
+                                json_res = json.loads(res.content)
+                                value = None
+                                for _, v in json_res['data'].items():
+                                    value = v
+                                    break
+                                job['env_vars'][ename] = value
+                            else:
+                                abort(400, "Getting value from vault error: url is '%s', token is '%s' " % (url, result))
                     else:
                         job['env_vars'][ename] = value
 
