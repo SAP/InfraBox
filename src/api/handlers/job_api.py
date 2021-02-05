@@ -821,24 +821,23 @@ class CreateJobs(Resource):
                             job['env_var_refs'][ename] = env_var_ref_name
 
                         if '$vault' in value:
-                            app.logger.info('Enter Vault')
-                            url = value['$vault']
-                            app.logger.info('Valut is found: %s,%s', url, project_id)
+                            url = value['$vault_url']
+                            key = value['$vault_key']
                             result = g.db.execute_one("""
-                                SELECT token FROM vault WHERE url = %s and project_id = %s
-                            """, [url, project_id])
-                            app.logger.info('result is %s', result)
+                                SELECT token FROM vault WHERE url = %s and project_id = %s and secret_key = %s
+                            """, [url, project_id, key])
+
                             if not result:
-                                abort(400, "The Token of Vault url '%s' was not found" % url)
+                                abort(400, "The Token of Vault url '%s' with secret_key %s was not found" % (url, key))
 
                             vault_token = result[0]
                             res = requests.get(url=url, headers={'X-Vault-Token': vault_token})
                             if res.status_code == 200:
                                 json_res = json.loads(res.content)
-                                value = None
-                                for _, v in json_res['data'].items():
-                                    value = v
-                                    break
+                                if json_res['data'].get('data') and isinstance(json_res['data'].get('data'), dict):
+                                    value = json_res['data'].get('data').get(key)
+                                else:
+                                    value = json_res['data'].get(key)
                                 job['env_vars'][ename] = value
                             else:
                                 abort(400, "Getting value from vault error: url is '%s', token is '%s' " % (url, result))

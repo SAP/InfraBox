@@ -24,7 +24,7 @@ class Tokens(Resource):
         Returns project's vault service
         '''
         v = g.db.execute_many_dict('''
-            SELECT id, url, token
+            SELECT id, url, secret_key, token
             FROM vault
             WHERE project_id = %s
         ''', [project_id])
@@ -34,8 +34,8 @@ class Tokens(Resource):
     def post(self, project_id):
         b = request.get_json()
         g.db.execute('''
-                    INSERT INTO vault (project_id, url, token) VALUES(%s, %s, %s)
-                ''', [project_id, b['url'], b['token']])
+                    INSERT INTO vault (project_id, url, secret_key, token) VALUES(%s, %s, %s, %s)
+                ''', [project_id, b['url'], b['secret_key'], b['token']])
         g.db.commit()
         return OK('Successfully added vault.')
 
