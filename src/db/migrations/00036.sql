@@ -2,7 +2,6 @@ CREATE TABLE vault (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     project_id uuid NOT NULL,
     url VARCHAR NOT NULL,
-    secret_key VARCHAR NOT NULL,
     token VARCHAR NOT NULL
 );
 
