@@ -821,11 +821,13 @@ class CreateJobs(Resource):
                             job['env_var_refs'][ename] = env_var_ref_name
 
                         if '$vault' in value:
+                            app.logger.info('Enter Vault')
                             url = value['$vault']
-                            result = g.db.execute_one("""env_var_refs
+                            app.logger.info('Valut is found: %s,%s', url, project_id)
+                            result = g.db.execute_one("""
                                 SELECT token FROM vault WHERE url = %s and project_id = %s
                             """, [url, project_id])
-
+                            app.logger.info('result is %s', result)
                             if not result:
                                 abort(400, "The Token of Vault url '%s' was not found" % url)
 
