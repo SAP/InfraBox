@@ -15,6 +15,10 @@
                               <md-textarea v-model="url" required></md-textarea>
                             </md-input-container>
                             <md-input-container class="m-l-sm">
+                                <label>Secret Key</label>
+                                <md-textarea v-model="secret_key" required></md-textarea>
+                            </md-input-container>
+                            <md-input-container class="m-l-sm">
                               <label>Token</label>
                               <md-textarea v-model="token" required></md-textarea>
                             </md-input-container>
@@ -25,7 +29,10 @@
                         </md-list-item>
                         <md-list-item v-for="v in project.vault" :key="v.id">
                             <div class="md-input-container m-r-xl md-theme-white">
-                                <span>{{ v.url }}</span>
+                                {{ v.url }}
+                            </div>
+                            <div class="md-input-container m-r-xl md-theme-white">
+                                {{ v.secret_key }}
                             </div>
                             <md-button type="submit" class="md-icon-button md-list-action" @click="deleteVault(v.id)">
                                 <md-icon class="md-primary">delete</md-icon>
@@ -47,6 +54,7 @@ export default {
     props: ['project'],
     data: () => ({
         url: '',
+        secret_key: '',
         token: ''
     }),
     created () {
@@ -64,7 +72,7 @@ export default {
                 })
         },
         addVault () {
-            const d = { url: this.url, token: this.token }
+            const d = { url: this.url, secret_key: this.secret_key, token: this.token }
             NewAPIService.post(`projects/${this.project.id}/vault`, d)
                 .then((response) => {
                     NotificationService.$emit('NOTIFICATION', new Notification(response))
