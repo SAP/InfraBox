@@ -831,7 +831,8 @@ class CreateJobs(Resource):
                             if not result:
                                 abort(400, "The Token of Vault url '%s' was not found" % url)
 
-                            res = requests.get(url=url, headers={'X-Vault-Token': result})
+                            vault_token = result[0]
+                            res = requests.get(url=url, headers={'X-Vault-Token': vault_token})
                             if res.status_code == 200:
                                 json_res = json.loads(res.content)
                                 value = None
