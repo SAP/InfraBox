@@ -1,2 +1,3 @@
 TRUNCATE "vault";
+
 ALTER TABLE "vault" ADD COLUMN secret_key VARCHAR NOT NULL;
