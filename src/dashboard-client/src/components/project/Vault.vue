@@ -34,6 +34,9 @@
                             <div class="md-input-container m-r-xl md-theme-white">
                                 {{ v.secret_key }}
                             </div>
+                            <div class="md-input-container m-r-xl md-theme-white">
+                                {{ v.token }}
+                            </div>
                             <md-button type="submit" class="md-icon-button md-list-action" @click="deleteVault(v.id)">
                                 <md-icon class="md-primary">delete</md-icon>
                                 <md-tooltip>Delete secret permanently</md-tooltip>
