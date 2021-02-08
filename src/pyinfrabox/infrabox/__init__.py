@@ -104,9 +104,9 @@ def parse_vault_ref(value, p):
         raise ValidationError(p, "must contain a $vault_url")
     check_text(value['$vault_url'], p + ".$vault_url")
 
-    if "$vault_secret" not in value:
-        raise ValidationError(p, "must contain a $vault_secret")
-    check_text(value['$vault_secret'], p + ".$vault_secret")
+    if "$vault_key" not in value:
+        raise ValidationError(p, "must contain a $vault_key")
+    check_text(value['$vault_key'], p + ".$vault_key")
 
 def parse_environment(e, path):
     if not isinstance(e, dict):
