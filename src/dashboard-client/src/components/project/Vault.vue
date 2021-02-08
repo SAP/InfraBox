@@ -80,6 +80,7 @@ export default {
                 .then((response) => {
                     NotificationService.$emit('NOTIFICATION', new Notification(response))
                     this.url = ''
+                    this.secret_key = ''
                     this.token = ''
                     this.project._reloadVault()
                 })
