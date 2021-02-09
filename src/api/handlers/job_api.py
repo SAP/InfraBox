@@ -820,7 +820,7 @@ class CreateJobs(Resource):
 
                             job['env_var_refs'][ename] = env_var_ref_name
 
-                        if '$vault' in value:
+                        if '$vault_url' in value and '$vault_key' in value:
                             url = value['$vault_url']
                             key = value['$vault_key']
                             result = g.db.execute_one("""
