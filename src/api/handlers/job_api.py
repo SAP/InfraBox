@@ -5,6 +5,7 @@ import uuid
 import copy
 import urllib
 import random
+import tempfile
 from datetime import datetime
 from io import BytesIO
 
@@ -820,24 +821,36 @@ class CreateJobs(Resource):
 
                             job['env_var_refs'][ename] = env_var_ref_name
 
-                        if '$vault_url' in value and '$vault_key' in value:
-                            url = value['$vault_url']
-                            key = value['$vault_key']
+                        if '$vault' in value and '$vault_secret_path' in value and "$vault_secret_key" in value:
+                            name = value['$vault']
+                            secret_path = value['$vault_secret_path']
+                            secret_key = value['$vault_secret_key']
                             result = g.db.execute_one("""
-                                SELECT token FROM vault WHERE url = %s and project_id = %s and secret_key = %s
-                            """, [url, project_id, key])
+                                SELECT url,version,token,ca FROM vault WHERE name = %s and project_id = %s
+                            """, [name, project_id])
 
                             if not result:
-                                abort(400, "The Token of Vault url '%s' with secret_key %s was not found" % (url, key))
+                                abort(400, "Cannot get Vault '%s' in project '%s' " % (name, project_id))
 
-                            vault_token = result[0]
-                            res = requests.get(url=url, headers={'X-Vault-Token': vault_token})
+                            url, version, token, ca = result[0], result[1], result[2], result[3]
+                            if version == 'v1':
+                                url += '/v1/' + secret_path
+                            elif version == 'v2':
+                                paths = secret_path.split('/')
+                                url += '/v1/' + paths[0] + '/' + '/'.join(paths[1:])
+                            if not ca:
+                                res = requests.get(url=url, headers={'X-Vault-Token': token}, verify=False)
+                            else:
+                                with tempfile.NamedTemporaryFile(delete=False) as f:
+                                    f.write(ca)
+                                    f.flush()  # ensure all data written
+                                    res = requests.get(url=url, headers={'X-Vault-Token': token}, verify=f.name)
                             if res.status_code == 200:
                                 json_res = json.loads(res.content)
                                 if json_res['data'].get('data') and isinstance(json_res['data'].get('data'), dict):
-                                    value = json_res['data'].get('data').get(key)
+                                    value = json_res['data'].get('data').get(secret_key)
                                 else:
-                                    value = json_res['data'].get(key)
+                                    value = json_res['data'].get(secret_key)
                                 job['env_vars'][ename] = value
                             else:
                                 abort(400, "Getting value from vault error: url is '%s', token is '%s' " % (url, result))

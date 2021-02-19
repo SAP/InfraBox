@@ -9,9 +9,11 @@ ns = api.namespace('Vault',
                    description='Vault service related operations')
 
 project_vault_model = api.model('VaultService', {
+    'name': fields.String(required=True),
     'url': fields.String(required=True),
+    'version': fields.String(required=True),
     'token': fields.String(required=True),
-    'secret_key': fields.String(required=True),
+    'ca': fields.String(required=False),
     'id': fields.String(required=False)
 })
 
@@ -25,7 +27,7 @@ class Tokens(Resource):
         Returns project's vault service
         '''
         v = g.db.execute_many_dict('''
-            SELECT id, url, secret_key, token
+            SELECT id, name, url, version, token, ca
             FROM vault
             WHERE project_id = %s
         ''', [project_id])
@@ -35,8 +37,8 @@ class Tokens(Resource):
     def post(self, project_id):
         b = request.get_json()
         g.db.execute('''
-                    INSERT INTO vault (project_id, url, secret_key, token) VALUES(%s, %s, %s, %s)
-                ''', [project_id, b['url'], b['secret_key'], b['token']])
+                    INSERT INTO vault (project_id, name, url, version, token, ca) VALUES(%s, %s, %s, %s, %s, %s)
+                ''', [project_id, b['name'], b['url'], b['version'], b['token'], b['ca']])
         g.db.commit()
         return OK('Successfully added vault.')
 
