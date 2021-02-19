@@ -11,16 +11,27 @@
                     <md-list class="m-t-md m-b-md">
                         <md-list-item>
                             <md-input-container class="m-l-sm">
+                                <label>Name</label>
+                                <md-textarea v-model="name" required></md-textarea>
+                            </md-input-container>
+                            <md-input-container class="m-l-sm">
                               <label>Url</label>
                               <md-textarea v-model="url" required></md-textarea>
                             </md-input-container>
-                            <md-input-container class="m-l-sm">
-                                <label>Secret Key</label>
-                                <md-textarea v-model="secret_key" required></md-textarea>
+                            <md-input-container>
+                                <label>Version</label>
+                                <md-select name="version" id="version" v-model="version" required>
+                                    <md-option value="v1" class="bg-white">1</md-option>
+                                    <md-option value="v2" class="bg-white">2</md-option>
+                                </md-select>
                             </md-input-container>
                             <md-input-container class="m-l-sm">
                               <label>Token</label>
                               <md-textarea v-model="token" required></md-textarea>
+                            </md-input-container>
+                            <md-input-container class="m-l-sm">
+                                <label>CA</label>
+                                <md-textarea v-model="ca"></md-textarea>
                             </md-input-container>
                             <md-button class="md-icon-button md-list-action" @click="addVault()">
                                 <md-icon md-theme="running" class="md-primary">add_circle</md-icon>
@@ -29,10 +40,7 @@
                         </md-list-item>
                         <md-list-item v-for="v in project.vault" :key="v.id">
                             <div class="md-input-container m-r-xl md-theme-white">
-                                {{ v.url }}
-                            </div>
-                            <div class="md-input-container m-r-xl md-theme-white">
-                                {{ v.secret_key }}
+                                {{ v.name }}
                             </div>
                             <md-button type="submit" class="md-icon-button md-list-action" @click="deleteVault(v.id)">
                                 <md-icon class="md-primary">delete</md-icon>
@@ -53,9 +61,11 @@ import Notification from '../../models/Notification'
 export default {
     props: ['project'],
     data: () => ({
+        name: '',
         url: '',
-        secret_key: '',
-        token: ''
+        version: '',
+        token: '',
+        ca: ''
     }),
     created () {
         this.project._loadVault()
@@ -72,13 +82,15 @@ export default {
                 })
         },
         addVault () {
-            const d = { url: this.url, secret_key: this.secret_key, token: this.token }
+            const d = { name: this.name, url: this.url, version: this.version, token: this.token, ca: this.ca }
             NewAPIService.post(`projects/${this.project.id}/vault`, d)
                 .then((response) => {
                     NotificationService.$emit('NOTIFICATION', new Notification(response))
+                    this.name = ''
                     this.url = ''
-                    this.secret_key = ''
+                    this.version = ''
                     this.token = ''
+                    this.ca = ''
                     this.project._reloadVault()
                 })
                 .catch((err) => {
