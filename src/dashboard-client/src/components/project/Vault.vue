@@ -20,7 +20,7 @@
                             </md-input-container>
                             <md-input-container class="m-l-sm">
                                 <label>Namespace</label>
-                                <md-textarea v-model="namespace" required></md-textarea>
+                                <md-textarea v-model="namespace"></md-textarea>
                             </md-input-container>
                             <md-input-container>
                                 <label>Version</label>
