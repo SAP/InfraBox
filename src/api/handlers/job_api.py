@@ -833,6 +833,8 @@ class CreateJobs(Resource):
                                 abort(400, "Cannot get Vault '%s' in project '%s' " % (name, project_id))
 
                             url, version, token, ca, namespace = result[0], result[1], result[2], result[3], result[4]
+                            if not namespace:
+                                namespace = ''
                             if version == 'v1':
                                 url += '/v1/' + namespace + '/' + secret_path
                             elif version == 'v2':
