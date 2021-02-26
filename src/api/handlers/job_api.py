@@ -826,18 +826,18 @@ class CreateJobs(Resource):
                             secret_path = value['$vault_secret_path']
                             secret_key = value['$vault_secret_key']
                             result = g.db.execute_one("""
-                                SELECT url,version,token,ca FROM vault WHERE name = %s and project_id = %s
+                                SELECT url,version,token,ca,namespace FROM vault WHERE name = %s and project_id = %s
                             """, [name, project_id])
 
                             if not result:
                                 abort(400, "Cannot get Vault '%s' in project '%s' " % (name, project_id))
 
-                            url, version, token, ca = result[0], result[1], result[2], result[3]
+                            url, version, token, ca, namespace = result[0], result[1], result[2], result[3], result[4]
                             if version == 'v1':
-                                url += '/v1/' + secret_path
+                                url += '/v1/' + namespace + '/' + secret_path
                             elif version == 'v2':
                                 paths = secret_path.split('/')
-                                url += '/v1/' + paths[0] + '/data/' + '/'.join(paths[1:])
+                                url += '/v1/' + namespace + '/' + paths[0] + '/data/' + '/'.join(paths[1:])
                             if not ca:
                                 res = requests.get(url=url, headers={'X-Vault-Token': token}, verify=False)
                             else:
