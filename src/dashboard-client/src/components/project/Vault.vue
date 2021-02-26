@@ -18,6 +18,10 @@
                               <label>Url</label>
                               <md-textarea v-model="url" required></md-textarea>
                             </md-input-container>
+                            <md-input-container class="m-l-sm">
+                                <label>Namespace</label>
+                                <md-textarea v-model="namespace" required></md-textarea>
+                            </md-input-container>
                             <md-input-container>
                                 <label>Version</label>
                                 <md-select name="version" id="version" v-model="version" required>
@@ -63,6 +67,7 @@ export default {
     data: () => ({
         name: '',
         url: '',
+        namespace: '',
         version: '',
         token: '',
         ca: ''
@@ -82,12 +87,13 @@ export default {
                 })
         },
         addVault () {
-            const d = { name: this.name, url: this.url, version: this.version, token: this.token, ca: this.ca }
+            const d = { name: this.name, url: this.url, namespace: this.namespace, version: this.version, token: this.token, ca: this.ca }
             NewAPIService.post(`projects/${this.project.id}/vault`, d)
                 .then((response) => {
                     NotificationService.$emit('NOTIFICATION', new Notification(response))
                     this.name = ''
                     this.url = ''
+                    this.namespace = ''
                     this.version = ''
                     this.token = ''
                     this.ca = ''
