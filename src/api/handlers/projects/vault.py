@@ -39,7 +39,7 @@ class Tokens(Resource):
         b = request.get_json()
         g.db.execute('''
                     INSERT INTO vault (project_id, name, url, namespace, version, token, ca) VALUES(%s, %s, %s, %s, %s, %s, %s)
-                ''', [project_id, b['name'], b['url'], b['version'], b['token'], b['ca']])
+                ''', [project_id, b['name'], b['url'], b['namespace'], b['version'], b['token'], b['ca']])
         g.db.commit()
         return OK('Successfully added vault.')
 
