@@ -837,7 +837,7 @@ class CreateJobs(Resource):
                                 url += '/v1/' + secret_path
                             elif version == 'v2':
                                 paths = secret_path.split('/')
-                                url += '/v1/' + paths[0] + '/' + '/'.join(paths[1:])
+                                url += '/v1/' + paths[0] + '/data/' + '/'.join(paths[1:])
                             if not ca:
                                 res = requests.get(url=url, headers={'X-Vault-Token': token}, verify=False)
                             else:
