@@ -5,6 +5,7 @@ import uuid
 import copy
 import urllib
 import random
+import tempfile
 from datetime import datetime
 from io import BytesIO
 
@@ -806,18 +807,55 @@ class CreateJobs(Resource):
                     value = job['environment'][ename]
 
                     if isinstance(value, dict):
-                        env_var_ref_name = value['$secret']
-                        result = g.db.execute_many("""
-                            SELECT value FROM secret WHERE name = %s and project_id = %s
-                        """, [env_var_ref_name, project_id])
+                        if '$secret' in value:
+                            env_var_ref_name = value['$secret']
+                            result = g.db.execute_many("""
+                                SELECT value FROM secret WHERE name = %s and project_id = %s
+                            """, [env_var_ref_name, project_id])
 
-                        if not result:
-                            abort(400, "Secret '%s' not found" % env_var_ref_name)
+                            if not result:
+                                abort(400, "Secret '%s' not found" % env_var_ref_name)
 
-                        if not job['env_var_refs']:
-                            job['env_var_refs'] = {}
+                            if not job['env_var_refs']:
+                                job['env_var_refs'] = {}
 
-                        job['env_var_refs'][ename] = env_var_ref_name
+                            job['env_var_refs'][ename] = env_var_ref_name
+
+                        if '$vault' in value and '$vault_secret_path' in value and "$vault_secret_key" in value:
+                            name = value['$vault']
+                            secret_path = value['$vault_secret_path']
+                            secret_key = value['$vault_secret_key']
+                            result = g.db.execute_one("""
+                                SELECT url,version,token,ca,namespace FROM vault WHERE name = %s and project_id = %s
+                            """, [name, project_id])
+
+                            if not result:
+                                abort(400, "Cannot get Vault '%s' in project '%s' " % (name, project_id))
+
+                            url, version, token, ca, namespace = result[0], result[1], result[2], result[3], result[4]
+                            if not namespace:
+                                namespace = ''
+                            if version == 'v1':
+                                url += '/v1/' + namespace + '/' + secret_path
+                            elif version == 'v2':
+                                paths = secret_path.split('/')
+                                url += '/v1/' + namespace + '/' + paths[0] + '/data/' + '/'.join(paths[1:])
+                            if not ca:
+                                res = requests.get(url=url, headers={'X-Vault-Token': token}, verify=False)
+                            else:
+                                with tempfile.NamedTemporaryFile(delete=False) as f:
+                                    f.write(ca)
+                                    f.flush()  # ensure all data written
+                                    res = requests.get(url=url, headers={'X-Vault-Token': token}, verify=f.name)
+                            if res.status_code == 200:
+                                json_res = json.loads(res.content)
+                                if json_res['data'].get('data') and isinstance(json_res['data'].get('data'), dict):
+                                    value = json_res['data'].get('data').get(secret_key)
+                                else:
+                                    value = json_res['data'].get(secret_key)
+                                job['env_vars'][ename] = value
+                            else:
+                                abort(400, "Getting value from vault error: url is '%s', token is '%s' " % (url, result))
                     else:
                         job['env_vars'][ename] = value
 

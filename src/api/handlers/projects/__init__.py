@@ -7,3 +7,4 @@ import api.handlers.projects.secrets
 import api.handlers.projects.tokens
 import api.handlers.projects.cronjobs
 import api.handlers.projects.sshkeys
+import api.handlers.projects.vault
