@@ -382,21 +382,21 @@ class Trigger(object):
                 id, message, repository_id, timestamp,
                 author_name, author_email, author_username,
                 committer_name, committer_email, committer_username, url, project_id,
-                branch, pull_request_id, github_status_url)
+                branch, pull_request_id, github_status_url, env)
             VALUES (%s, %s, %s,
                 %s, %s, %s,
                 %s, %s, %s,
                 %s, %s, %s,
-                %s, %s, %s)
+                %s, %s, %s, %s)
             ON CONFLICT ON CONSTRAINT commit_pkey DO UPDATE
-                SET pull_request_id = %s
+                SET pull_request_id = %s, env = %s
         ''', [hc['sha'], hc['commit']['message'],
               repo_id, author_date, author_name,
               author_email, author_login,
               hc['commit']['committer']['name'],
               hc['commit']['committer']['email'],
               committer_login, hc['html_url'], project_id, branch, pr_id,
-              event['pull_request']['statuses_url'], pr_id], fetch=False)
+              event['pull_request']['statuses_url'], env, pr_id, env], fetch=False)
 
         # Abort jobs which are still running on the same PR
         self.execute('''
