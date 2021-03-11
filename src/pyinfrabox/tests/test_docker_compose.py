@@ -21,10 +21,10 @@ class TestDockerCompose(unittest.TestCase):
         self.run_exception('./test/no_version.yml', 'version not found')
 
     def test_unsupported_version(self):
-        self.run_exception('./test/unsupported_version.yml', 'version not supported, supported version is 3.2')
+        self.run_exception('./test/unsupported_version.yml', 'version not supported, supported version >= 3.0')
 
     def test_invalid_version(self):
-        self.run_exception('./test/invalid_version.yml', 'version not supported, supported version is 3.2')
+        self.run_exception('./test/invalid_version.yml', 'version not supported, supported version >= 3.0')
 
     def test_unsupported_option(self):
         self.run_exception('./test/unsupported_option.yml', '[services][test][expose] not supported')

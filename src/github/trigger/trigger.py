@@ -187,9 +187,18 @@ class Trigger(object):
             self.execute('''
                 UPDATE "commit" SET tag = %s WHERE id = %s AND project_id = %s
             ''', [tag, c['id'], project_id], fetch=False)
+
+            build_on_tag = self.execute('''
+                            SELECT build_on_tag
+                            FROM project
+                            WHERE id = %s''', [project_id])[0]
+
+            if not build_on_tag and self.has_active_build(commit_id, project_id):
+                return
         else:
             if self.has_active_build(commit_id, project_id):
                 return
+
 
         if not result:
             status_url = repository['statuses_url'].format(sha=c['id'])
@@ -401,9 +410,21 @@ class Trigger(object):
             AND b.project_id = c.project_id
             WHERE
                 c.pull_request_id = %s AND
-                j.state in ('scheduled', 'running') AND
+                j.state in ('scheduled', 'running', 'queued') AND
                 c.id != %s
         ''', [pr_id, commit_id], fetch=False)
+
+        if event['action'] in ['opened', 'reopened']:
+            self.execute('''
+            INSERT INTO abort
+            SELECT j.id, null
+            FROM job j
+            JOIN build b
+            ON b.id = j.build_id
+            WHERE
+                b.commit_id = %s AND
+                j.state in ('scheduled', 'running', 'queued')
+            ''', [commit_id], fetch=False)
 
         if not self.has_active_build(commit_id, project_id):
             build_id = self.create_build(commit_id, project_id)
@@ -445,6 +466,8 @@ def trigger_build():
 
     trigger = Trigger()
     if event == 'push':
+        # delay push event in case push and pr event comes at the same time
+        eventlet.sleep(7)
         return trigger.handle_push(request.get_json())
     elif event == 'pull_request':
         return trigger.handle_pull_request(request.get_json())

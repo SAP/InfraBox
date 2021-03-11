@@ -1,0 +1,1 @@
+ALTER TABLE "vault" ADD COLUMN namespace VARCHAR;

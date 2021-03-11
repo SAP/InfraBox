@@ -30,6 +30,7 @@ class Builds(Resource):
         sha = request.args.get('sha', None)
         branch = request.args.get('branch', None)
         cronjob = request.args.get('cronjob', None)
+        size = request.args.get('size', 10)
 
         if cronjob == "true":
             cronjob = True
@@ -44,6 +45,8 @@ class Builds(Resource):
         if build_to:
             build_to = int(build_to)
 
+        size = min(50, max(int(size), 0))
+
         if not build_to:
             r = g.db.execute_one_dict('''
                 SELECT max(build_number) as max
@@ -57,10 +60,10 @@ class Builds(Resource):
                 build_to = r['max'] + 1
 
         if not build_from:
-            build_from = max(build_to - 10, 0)
+            build_from = 0
 
-        if build_to - build_from > 200:
-            build_from = build_to - 200
+        #if build_to - build_from > 500:
+        #    build_from = max(build_to - 500, 0)
 
         p = g.db.execute_many_dict('''
             SELECT b.id, b.build_number, b.restart_counter, b.is_cronjob
@@ -74,6 +77,7 @@ class Builds(Resource):
             AND (%(branch)s IS NULL OR c.branch = %(branch)s)
             AND (%(cronjob)s IS NULL OR b.is_cronjob = %(cronjob)s)
             ORDER BY build_number DESC, restart_counter DESC
+            LIMIT %(size)s
         ''', {
             'pid': project_id,
             'from': build_from,
@@ -81,6 +85,7 @@ class Builds(Resource):
             'sha': sha,
             'branch': branch,
             'cronjob': cronjob,
+            'size': size,
         })
 
         return p

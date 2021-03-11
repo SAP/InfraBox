@@ -1,0 +1,1 @@
+ALTER TABLE "project" ADD COLUMN build_on_tag boolean DEFAULT true NOT NULL;

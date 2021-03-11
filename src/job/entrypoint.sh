@@ -33,17 +33,17 @@ if [ ! -e /var/run/docker.sock ]; then
     CNT=0
     while true; do
         if [ $CNT -gt 3 ]; then
-            echo "Docker daemon not started" > '/dev/termination-log'
-            cat /tmp/dockerd.log >> /dev/termination-log
+            echo "Docker daemon not started" | tee '/dev/termination-log'
+            cat /tmp/dockerd.log | tee -a /dev/termination-log
             exit 1
         fi
         let CNT=CNT+1
 
         if startDocker ; then
-            echo "Docker daemon stared."
+            echo "Docker daemon started."
             break
-        eles
-            echo "Docker daemon not stared, retry"
+        else
+            echo "Docker daemon not started, retry"
             sleep 60
         fi
     done
@@ -58,9 +58,13 @@ if [ ! -z "$INFRABOX_GIT_PRIVATE_KEY" ]; then
     chmod 600 ~/.ssh/id_rsa
     echo "StrictHostKeyChecking no" > ~/.ssh/config
     ssh-add ~/.ssh/id_rsa
-    ssh-keyscan -p $INFRABOX_GIT_PORT $INFRABOX_GIT_HOSTNAME >> ~/.ssh/known_hosts
+    ssh-keyscan -p $INFRABOX_GIT_PORT $INFRABOX_GIT_HOSTNAME >> ~/.ssh/known_hosts || true
 else
     echo "No private key configured"
 fi
 
-/job/job.py $@
+echo "CLUSTER: $INFRABOX_CLUSTER_NAME"
+echo "DOCKER VERSION: $(docker -v)"
+echo "DOCKER_COMPOSE VERSION: $(docker-compose -v)"
+
+exec /job/job.py $@

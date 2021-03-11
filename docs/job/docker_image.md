@@ -26,10 +26,10 @@ You can also specify an already build image and run it as a job.
 
 | Name | Required | Type | Default | Description |
 |------|----------|------|---------|-------------|
-|type|true|string||Has to be "docker" to run a single Docker container|
+|type|true|string||Has to be "docker-image" to run a single Docker container|
 |name|true|string||Name of the job|
 |image|true|string||Image to use, i.e. `alpine:latest`|
-|command|true|string||The command in [exec form](https://docs.docker.com/engine/reference/builder/#cmd)|
+|command|false|string||The command in [exec form](https://docs.docker.com/engine/reference/builder/#cmd)|
 |resources|true|[Resource Configuration](/docs/job/resources.md)||Specify the required resources for your job|
 |build_context|false|string||Specify the docker build context. If not set the directory containing the `infrabox.json` file will be used.|
 |cache|false|[Cache Configuration](/docs/job/cache.md)|{}|Configure the caching behavior|

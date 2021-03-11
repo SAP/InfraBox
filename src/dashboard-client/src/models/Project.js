@@ -14,6 +14,7 @@ export default class Project {
         this.state = 'finished'
         this.type = type
         this.secrets = null
+        this.vault = null
         this.cronjobs = null
         this.collaborators = null
         this.roles = null
@@ -53,7 +54,7 @@ export default class Project {
         return builds
     }
 
-    loadBuilds (from, to, sha, branch, cronjob) {
+    loadBuilds (from, to, sha, branch, cronjob, buildLimit) {
         let url = `projects/${this.id}/jobs/?from=${from}&to=${to}`
 
         if (sha) {
@@ -66,6 +67,10 @@ export default class Project {
 
         if (cronjob) {
             url += `&cronjob=${cronjob}`
+        }
+
+        if (buildLimit) {
+            url += `&build_limit=${buildLimit}`
         }
 
         return NewAPIService.get(url)
@@ -326,5 +331,21 @@ export default class Project {
         } else {
             this.state = 'finished'
         }
+    }
+
+    _loadVault () {
+        if (this.vault) {
+            return
+        }
+        this._reloadVault()
+    }
+    _reloadVault () {
+        return NewAPIService.get(`projects/${this.id}/vault`)
+            .then((vault) => {
+                store.commit('setVault', {project: this, vault: vault})
+            })
+            .catch((err) => {
+                NotificationService.$emit('NOTIFICATION', new Notification(err))
+            })
     }
 }

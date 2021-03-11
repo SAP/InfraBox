@@ -38,6 +38,7 @@ class Jobs(Resource):
         branch = request.args.get('branch', None)
         cronjob = request.args.get('cronjob', None)
         state = request.args.get('state', None)
+        build_limit = request.args.get('build_limit', None)
 
         if cronjob == "true":
             cronjob = True
@@ -65,10 +66,73 @@ class Jobs(Resource):
                 build_to = r['max'] + 1
 
         if not build_from:
-            build_from = max(build_to - 10, 0)
+            build_from = 0
+        if not build_limit:
+            if build_from == 0:
+                build_limit = 10
+            else:
+                build_limit = build_to - build_from
+        else:
+            try:
+                build_limit = int(build_limit)
+            except:
+                build_limit = 10
 
-        if build_to - build_from > 200:
-            build_from = build_to - 200
+        build_limit = min(50, build_limit)
+
+        #if build_to - build_from > 200:
+        #    build_from = build_to - 200
+
+        # we can avoid join with job table if there is no filter on state
+        if state:
+            sql_stmt = '''
+                SELECT DISTINCT b.id, build_number, restart_counter
+                FROM build b
+                INNER JOIN job j
+                ON b.id = j.build_id
+                LEFT OUTER JOIN commit c
+                ON b.commit_id = c.id
+                WHERE b.project_id = %(pid)s
+                AND b.build_number < %(to)s
+                AND b.build_number >= %(from)s
+                AND (%(sha)s IS NULL OR c.id = %(sha)s)
+                AND (%(branch)s IS NULL OR c.branch = %(branch)s)
+                AND (%(cronjob)s IS NULL OR b.is_cronjob = %(cronjob)s)
+                AND (%(state)s IS NULL OR j.state = %(state)s)
+                ORDER BY build_number DESC, restart_counter DESC
+                LIMIT %(build_limit)s
+            '''
+        else:
+            sql_stmt = '''
+                SELECT DISTINCT b.id, build_number, restart_counter
+                FROM build b
+                LEFT OUTER JOIN commit c
+                ON b.commit_id = c.id
+                WHERE b.project_id = %(pid)s
+                AND b.build_number < %(to)s
+                AND b.build_number >= %(from)s
+                AND (%(sha)s IS NULL OR c.id = %(sha)s)
+                AND (%(branch)s IS NULL OR c.branch = %(branch)s)
+                AND (%(cronjob)s IS NULL OR b.is_cronjob = %(cronjob)s)
+                ORDER BY build_number DESC, restart_counter DESC
+                LIMIT %(build_limit)s
+            '''
+
+        p = g.db.execute_many(sql_stmt, {
+            'pid': project_id,
+            'from': build_from,
+            'to': build_to,
+            'sha': sha,
+            'branch': branch,
+            'cronjob': cronjob,
+            'build_limit': build_limit,
+            'state': state,
+        })
+
+        build_ids = tuple(x[0] for x in p)
+
+        if not build_ids:
+            return []
 
         jobs = g.db.execute_many_dict('''
             SELECT
@@ -128,23 +192,10 @@ class Jobs(Resource):
                 ON c.committer_username = u.username
                 LEFT OUTER JOIN pull_request pr
                 ON c.pull_request_id = pr.id
-                WHERE j.project_id = %(pid)s
-                AND b.project_id = %(pid)s
-                AND b.build_number < %(to)s
-                AND b.build_number >= %(from)s
-                AND (%(sha)s IS NULL OR c.id = %(sha)s)
-                AND (%(branch)s IS NULL OR c.branch = %(branch)s)
-                AND (%(cronjob)s IS NULL OR b.is_cronjob = %(cronjob)s)
-                AND (%(state)s IS NULL OR j.state = %(state)s)
+                WHERE b.id IN %(build_ids)s
                 ORDER BY j.created_at DESC
         ''', {
-            'pid': project_id,
-            'from': build_from,
-            'to': build_to,
-            'sha': sha,
-            'branch': branch,
-            'cronjob': cronjob,
-            'state': state
+            'build_ids': build_ids
         })
 
         result = []
@@ -894,7 +945,7 @@ def compact(s):
         count = 1
         for count in range(1, c + 1):
             l = s.pop(0)
-            r['mem'] += max(r['mem'], l['mem'])
+            r['mem'] += l['mem']
             r['cpu'] += l['cpu']
             r['date'] += l['date']
 

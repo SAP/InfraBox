@@ -96,6 +96,22 @@ def parse_secret_ref(value, p):
 
     check_text(value['$secret'], p + ".$secret")
 
+def parse_vault_ref(value, p):
+    if not isinstance(value, dict):
+        raise ValidationError(p, "must be an object")
+
+    if "$vault" not in value:
+        raise ValidationError(p, "must contain a $vault")
+    check_text(value['$vault'], p + ".$vault")
+
+    if "$vault_secret_path" not in value:
+        raise ValidationError(p, "must contain a $vault_secret_path")
+    check_text(value['$vault_secret_path'], p + ".$vault_secret_path")
+
+    if "$vault_secret_key" not in value:
+        raise ValidationError(p, "must contain a $vault_secret_key")
+    check_text(value['$vault_secret_key'], p + ".$vault_secret_key")
+
 def parse_environment(e, path):
     if not isinstance(e, dict):
         raise ValidationError(path, "must be an object")
@@ -105,7 +121,10 @@ def parse_environment(e, path):
         p = path + "." + key
 
         if isinstance(value, dict):
-            parse_secret_ref(value, p)
+            if '$vault' not in value or '$vault_secret_path' not in value or "$vault_secret_key" not in value:
+                parse_secret_ref(value, p)
+            else:
+                parse_vault_ref(value, p)
         else:
             try:
                 check_text(value, p)
@@ -251,7 +270,7 @@ def parse_docker_image(d, path):
 
 def parse_docker(d, path):
     check_allowed_properties(d, path, ("type", "name", "docker_file", "depends_on", "resources",
-                                       "build_only", "environment",
+                                       "build_only", "environment", "target",
                                        "build_arguments", "deployments", "timeout", "security_context", "command",
                                        "build_context", "cache", "repository", "cluster", "services", "registries"))
     check_required_properties(d, path, ("type", "name", "docker_file", "resources"))
@@ -302,7 +321,7 @@ def parse_docker(d, path):
         check_string_array(d['command'], path + ".command")
 
 def parse_docker_compose(d, path):
-    check_allowed_properties(d, path, ("type", "name", "docker_compose_file", "depends_on",
+    check_allowed_properties(d, path, ("type", "name", "docker_compose_file", "depends_on", "stop_timeout",
                                        "environment", "resources", "cache", "timeout", "cluster",
                                        "repository", "registries"))
     check_required_properties(d, path, ("type", "name", "docker_compose_file", "resources"))

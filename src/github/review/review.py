@@ -159,7 +159,7 @@ def handle_job_update(conn, event):
     payload = {
         "state": state,
         "target_url": target_url,
-        "description": "InfraBox",
+        "description": "project_id:%s job_id:%s" % (project_id, job_id),
         "context": "Job: %s" % job_name
     }
 

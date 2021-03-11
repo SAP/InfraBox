@@ -55,7 +55,7 @@ To set docker build arguments create an object with the names and values for `bu
         ...
         "build_arguments": {
             "ARG_1": "My value",
-            "ANOTHER_ARG": "some other value
+            "ANOTHER_ARG": "some other value"
         }
     }]
 }

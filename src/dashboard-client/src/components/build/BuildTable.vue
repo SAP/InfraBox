@@ -166,7 +166,7 @@ export default {
             let foundFrom = maxBuildNumber
 
             if (this.search.search) {
-                this.project.loadBuilds(this.search.from || 0, this.search.to || maxBuildNumber, this.search.sha, this.search.branch, this.search.cronjob)
+                this.project.loadBuilds(this.search.from || 0, this.search.to || maxBuildNumber, this.search.sha, this.search.branch, this.search.cronjob, this.size || 10)
 
                 for (let b of this.project.builds) {
                     if (this.search.branch && b.commit && b.commit.branch !== this.search.branch) {
@@ -207,7 +207,7 @@ export default {
                 }
 
                 if (foundFrom !== from) {
-                    this.project.loadBuilds(from, to, this.search.sha, this.search.branch, this.search.cronjob)
+                    this.project.loadBuilds(from, to, this.search.sha, this.search.branch, this.search.cronjob, this.size || 10)
                 }
             }
 

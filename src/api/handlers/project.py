@@ -192,6 +192,7 @@ class Tests(Resource):
                                 ON b.id = j.build_id
                                     AND b.project_id = %s
                                     AND j.project_id = %s
+                                    AND j.name LIKE CONCAT(%s, '%%')
                                 INNER JOIN "commit" c
                                     ON c.id = b.commit_id
                                     AND c.project_id = b.project_id
@@ -201,7 +202,7 @@ class Tests(Resource):
                             )
                             AND j.name LIKE CONCAT(%s, '%%')
                     )
-            ''', [project_id, project_id, project_id, project_id, branch, job_name])
+            ''', [project_id, project_id, project_id, project_id, job_name, branch, job_name])
         elif build_number and build_restart_count:
             r = g.db.execute_one_dict('''
                 SELECT
