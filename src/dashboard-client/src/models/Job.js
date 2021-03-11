@@ -380,6 +380,35 @@ export default class Job {
             })
     }
 
+    rerun () {
+        return NewAPIService.get(`projects/${this.project.id}/jobs/${this.id}/rerun`)
+            .then((message) => {
+                NotificationService.$emit('NOTIFICATION', new Notification(message, 'done'))
+                return this.project._loadBuild(this.build.number, this.build.restartCounter)
+            }).then((build) => {
+                let a = this.name.split('.')
+                let name = a[0] + '.'
+
+                if (a.length > 1) {
+                    name += (parseInt(a[1]) + 1).toString()
+                } else {
+                    name += '1'
+                }
+                router.push({
+                    name: 'JobDetail',
+                    params: {
+                        projectName: encodeURIComponent(this.project.name),
+                        buildNumber: this.build.number,
+                        buildRestartCounter: this.build.restartCounter,
+                        jobName: name
+                    }
+                })
+            })
+            .catch((err) => {
+                NotificationService.$emit('NOTIFICATION', new Notification(err))
+            })
+    }
+
     clearCache () {
         return NewAPIService.get(`projects/${this.project.id}/jobs/${this.id}/cache/clear`)
             .then((message) => {
