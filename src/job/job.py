@@ -374,7 +374,8 @@ class RunJob(Job):
                     self.main_run_job()
                     break
                 except:
-                    pass
+                    if i == times - 1:
+                        raise
 
     def convert_coverage_result(self, f):
         parser = CoverageParser(f)
