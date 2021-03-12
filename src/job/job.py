@@ -365,7 +365,16 @@ class RunJob(Job):
         if self.job['type'] == 'create_job_matrix':
             self.main_create_jobs()
         else:
-            self.main_run_job()
+            # every job runs at least 1 time
+            times = 1
+            times += self.job['definition'].get('retry') or 0
+            for i in range(0, times):
+                self.console.collect("Job execute time: %s" % str(i+1), show=True)
+                try:
+                    self.main_run_job()
+                    break
+                except:
+                    pass
 
     def convert_coverage_result(self, f):
         parser = CoverageParser(f)
