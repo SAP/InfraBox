@@ -33,6 +33,10 @@ class ApiConsole(object):
         self.execute(command, cwd, shell, show, env, ignore_error, False, retry)
 
     def execute(self, command, cwd=None, shell=False, show=False, env=None, ignore_error=False, show_cmd=True, retry=False):
+        if env:
+            for k in env:
+                env[k] = str(env[k])
+
         for _ in range(0, 5):
             if show_cmd:
                 self.collect(' '.join(command), show=show)
