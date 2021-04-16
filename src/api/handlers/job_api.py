@@ -150,6 +150,7 @@ class Job(Resource):
         }
 
         pull_request_id = None
+        commit_env = None
         if data['project']['type'] == 'github' or data['project']['type'] == 'gerrit':
             r = g.db.execute_one('''
                 SELECT
@@ -165,7 +166,7 @@ class Job(Resource):
             # A regular commit
             r = g.db.execute_one('''
                 SELECT
-                    c.branch, c.committer_name, c.tag, c.pull_request_id
+                    c.branch, c.committer_name, c.tag, c.pull_request_id, c.env
                 FROM commit c
                 WHERE c.id = %s
                     AND c.project_id = %s
@@ -178,6 +179,7 @@ class Job(Resource):
                 "tag": r[2]
             }
             pull_request_id = r[3]
+            commit_env = r[4]
 
         if data['project']['type'] == 'upload':
             r = g.db.execute_one('''
@@ -389,6 +391,9 @@ class Job(Resource):
 
         if pull_request_id:
             data['env_vars']['INFRABOX_GITHUB_PULL_REQUEST'] = "true"
+        
+        if commit_env:
+            data['env_vars'].update(commit_env)
 
         if env_vars:
             for name, value in env_vars.iteritems():
