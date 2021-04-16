@@ -526,7 +526,8 @@ class RunJob(Job):
         c.collect("Syncing inputs:", show=True)
         for dep in self.parents:
             storage_input_file_dir = os.path.join(storage_inputs_dir, dep['id'])
-            os.makedirs(storage_input_file_dir)
+            if not os.path.exists(storage_input_file_dir):
+                os.makedirs(storage_input_file_dir)
 
             # Get files.json
             storage_input_file_tar = os.path.join(storage_input_file_dir, 'output.tar.snappy')
@@ -541,7 +542,8 @@ class RunJob(Job):
                     dir_name = m.group(1)
 
                 infrabox_input_dir = os.path.join(self.infrabox_inputs_dir, dir_name)
-                os.makedirs(infrabox_input_dir)
+                if not os.path.exists(infrabox_input_dir):
+                    os.makedirs(infrabox_input_dir)
                 self.uncompress(storage_input_file_tar, infrabox_input_dir)
                 c.execute(['ls', '-alh', infrabox_input_dir], show=True)
                 os.remove(storage_input_file_tar)
@@ -552,7 +554,8 @@ class RunJob(Job):
         # <storage_dir>/cache is synced with the corresponding
         # Storage path which stores the compressed cache
         storage_cache_dir = os.path.join(self.storage_dir, 'cache')
-        os.makedirs(storage_cache_dir)
+        if not os.path.exists(storage_cache_dir):
+            os.makedirs(storage_cache_dir)
 
         storage_cache_tar = os.path.join(storage_cache_dir, 'cache.tar.snappy')
 
