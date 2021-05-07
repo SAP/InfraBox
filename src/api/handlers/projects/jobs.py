@@ -609,6 +609,7 @@ class JobRerun(Resource):
             else:
                 # First restart
                 j['name'] = j['name'] + '.1'
+
             logger.debug('new jod id: %s, new job name: %s' % (j['id'], j['name']))
 
         for j in jobs:
