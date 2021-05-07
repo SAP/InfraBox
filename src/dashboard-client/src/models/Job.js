@@ -365,7 +365,7 @@ export default class Job {
                     name += '1'
                 }
 
-                if (frontName.length > 1) {
+                if (frontName.length > 0) {
                     name = '/' + name
                     name = frontName.join('/') + name
                 }
