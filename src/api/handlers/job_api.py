@@ -391,7 +391,7 @@ class Job(Resource):
 
         if pull_request_id:
             data['env_vars']['INFRABOX_GITHUB_PULL_REQUEST'] = "true"
-        
+
         if commit_env:
             data['env_vars'].update(commit_env)
 
@@ -704,12 +704,21 @@ class CreateJobs(Resource):
 
             cluster_selector = j['cluster'].get('selector', None)
             target_cluster = None
-
+            max_cpu_capacity, max_memory_capacity = 1, 1024
             if not cluster_selector:
+                # use the cluster which has more resources
+                for c in clusters:
+                    r = g.db.execute_one_dict('''
+                        SELECT cpu_capacity, memory_capacity FROM cluster WHERE name = %s
+                    ''', (c['label']))
+                    if r['cpu_capacity'] >= max_cpu_capacity and r['memory_capacity'] >= max_memory_capacity:
+                        target_cluster = c['label']
+                        max_cpu_capacity = r['cpu_capacity']
+                        max_memory_capacity = r['memory_capacity']
                 # use the parent cluster
-                for d in j.get('depends_on', []):
-                    target_cluster = assigned_clusters.get(d['job'], None)
-                    break
+                # for d in j.get('depends_on', []):
+                #     target_cluster = assigned_clusters.get(d['job'], None)
+                #     break
 
                 if not target_cluster:
                     # use any cluster with label default

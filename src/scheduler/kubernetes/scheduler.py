@@ -677,6 +677,10 @@ class Scheduler(object):
                             'limits': {
                                 'memory': '%sMi' % mem,
                                 'cpu': cpu
+                            },
+                            'requests': {
+                                'memory': '%sMi' % mem,
+                                'cpu': 1
                             }
                         },
                         'env': env,
