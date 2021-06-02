@@ -353,7 +353,10 @@ export default class Job {
                 NotificationService.$emit('NOTIFICATION', new Notification(message, 'done'))
                 return this.project._loadBuild(this.build.number, this.build.restartCounter)
             }).then((build) => {
-                let a = this.name.split('.')
+                let arr = this.name.split('/')
+                let frontName = arr.slice(0, arr.length - 1)
+                let lastName = arr[arr.length - 1]
+                let a = lastName.split('.')
                 let name = a[0] + '.'
 
                 if (a.length > 1) {
@@ -361,6 +364,12 @@ export default class Job {
                 } else {
                     name += '1'
                 }
+
+                if (frontName.length > 0) {
+                    name = '/' + name
+                    name = frontName.join('/') + name
+                }
+
                 router.push({
                     name: 'JobDetail',
                     params: {

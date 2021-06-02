@@ -392,11 +392,17 @@ class JobRestart(Resource):
             old_id_job[j['id']] = j
             j['id'] = str(uuid.uuid4())
 
-            m = re.search('(.*)\.([0-9]+)', j['name'])
+            job_name_items = j['name'].split('/')
+            last_item = job_name_items[-1]
+            m = re.search('(.*)\.([0-9]+)', last_item)
             if m:
                 # was already restarted
                 c = int(m.group(2))
-                j['name'] = '%s.%s' % (m.group(1), c+1)
+                front = '/'.join(job_name_items[0:-1])
+                if front:
+                    j['name'] = front + '/' + '%s.%s' % (m.group(1), c + 1)
+                else:
+                    j['name'] = '%s.%s' % (m.group(1), c + 1)
             else:
                 # First restart
                 j['name'] = j['name'] + '.1'
@@ -589,14 +595,21 @@ class JobRerun(Resource):
             old_id_job[j['id']] = j
             j['id'] = str(uuid.uuid4())
 
-            m = re.search('(.*)\.([0-9]+)', j['name'])
+            job_name_items = j['name'].split('/')
+            last_item = job_name_items[-1]
+            m = re.search('(.*)\.([0-9]+)', last_item)
             if m:
                 # was already restarted
                 c = int(m.group(2))
-                j['name'] = '%s.%s' % (m.group(1), c+1)
+                front = '/'.join(job_name_items[0:-1])
+                if front:
+                    j['name'] = front + '/' + '%s.%s' % (m.group(1), c + 1)
+                else:
+                    j['name'] = '%s.%s' % (m.group(1), c + 1)
             else:
                 # First restart
                 j['name'] = j['name'] + '.1'
+
             logger.debug('new jod id: %s, new job name: %s' % (j['id'], j['name']))
 
         for j in jobs:

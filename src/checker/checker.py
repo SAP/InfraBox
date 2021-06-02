@@ -100,10 +100,10 @@ class Checker(object):
             pods = r.json()['items']
             for pod in pods:
                 if pod['status']['phase'] not in ['Running', 'Succeeded']:
-                    self.logger.debug(
-                        'Pods checking - pod %s is in %s status' % \
-                        (pod['metadata']['name'], pod['status']['phase']))
-                    return False
+                    msg = 'Pods checking - pod %s is in %s status' % \
+                        (pod['metadata']['name'], pod['status']['phase'])
+                    self.logger.debug(msg)
+                    self.slack.warning(self.cluster_name, msg)
             return True
         except Exception as e:
             self.logger.exception('Got exception on check pods')
@@ -237,6 +237,10 @@ class CheckerSlackHook(SlackHook):
 
     def notify_down(self, cluster_name, reason):
         message = ":arrow_down_red: InfraBox cluster *{}* was deactivated by checker! [{}]".format(cluster_name, reason)
+        return self._send_wrap_exception(message)
+
+    def warning(self, cluster_name, msg):
+        message = "WARNING! [{}] {}".format(cluster_name, msg)
         return self._send_wrap_exception(message)
 
     def _send_wrap_exception(self, message):
