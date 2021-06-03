@@ -680,7 +680,7 @@ class Scheduler(object):
                             },
                             'requests': {
                                 'memory': '%sMi' % mem,
-                                'cpu': cpu
+                                'cpu': 0.3
                             }
                         },
                         'env': env,
