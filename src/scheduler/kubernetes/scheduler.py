@@ -661,8 +661,7 @@ class Scheduler(object):
                 s['metadata']['annotations']['infrabox.net/job-id'] = job_id
                 s['metadata']['annotations']['infrabox.net/job-token'] = job_token
                 s['metadata']['annotations']['infrabox.net/root-url'] = root_url
-        self.logger.info("cpu is {}".format(cpu))
-        self.logger.info("mem is {}".format(mem))
+
         job = {
             'apiVersion': 'core.infrabox.net/v1alpha1',
             'kind': 'IBPipelineInvocation',
@@ -681,7 +680,7 @@ class Scheduler(object):
                             },
                             'requests': {
                                 'memory': '%sMi' % mem,
-                                'cpu': 1
+                                'cpu': 0.5
                             }
                         },
                         'env': env,
