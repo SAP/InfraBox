@@ -710,7 +710,7 @@ class CreateJobs(Resource):
                 for c in clusters:
                     r = g.db.execute_one_dict('''
                         SELECT cpu_capacity, memory_capacity FROM cluster WHERE name = %s
-                    ''', (c['name']))
+                    ''', [c['name']])
                     if r['cpu_capacity'] >= max_cpu_capacity and r['memory_capacity'] >= max_memory_capacity:
                         target_cluster = c['name']
                         max_cpu_capacity = r['cpu_capacity']
