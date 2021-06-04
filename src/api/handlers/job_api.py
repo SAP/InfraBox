@@ -704,7 +704,6 @@ class CreateJobs(Resource):
 
             cluster_selector = j['cluster'].get('selector', None)
             target_cluster = None
-            max_cpu_capacity, max_memory_capacity = 0, 0
             if not cluster_selector:
                 preferred_cluster = j['cluster'].get('prefer', None)
                 if preferred_cluster:
@@ -725,11 +724,12 @@ class CreateJobs(Resource):
                     parent_jobs = j.get('depends_on', [])
                     if parent_jobs:
                         # use the parent cluster if it has a parent job
-                        for d in j.get('depends_on', []):
+                        for d in parent_jobs:
                             target_cluster = assigned_clusters.get(d['job'], None)
                             break
                     else:
                         # use the cluster which has more resources  if it has not a parent job
+                        max_cpu_capacity, max_memory_capacity = 0, 0
                         for c in clusters:
                             r = g.db.execute_one_dict('''
                                 SELECT cpu_capacity, memory_capacity FROM cluster WHERE name = %s
