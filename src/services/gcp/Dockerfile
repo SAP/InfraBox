@@ -13,7 +13,7 @@ RUN dep ensure
 RUN ./tmp/build/build.sh
 
 FROM alpine:3.7
-ENV CLOUD_SDK_VERSION 198.0.0
+ENV CLOUD_SDK_VERSION 330.0.0
 
 ENV PATH /google-cloud-sdk/bin:$PATH
 
