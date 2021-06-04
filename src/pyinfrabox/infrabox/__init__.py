@@ -27,8 +27,11 @@ def parse_repository(d, path):
 def parse_cluster(d, path):
     check_allowed_properties(d, path, ('selector', 'prefer',))
 
-    check_string_array(d['selector'], path + ".selector")
-    check_text(d['prefer'], path + ".prefer")
+    if 'selector' in d:
+        check_string_array(d['selector'], path + ".selector")
+
+    if 'prefer' in d:
+        check_text(d['prefer'], path + ".prefer")
 
 def parse_depends_on_condition(d, path):
     check_allowed_properties(d, path, ("job", "on"))
