@@ -713,7 +713,6 @@ class CreateJobs(Resource):
                     if not r:
                         app.logger.warn("No such a cluster named: {}".format(preferred_cluster))
                     else:
-                        print(j)
                         cpu_request = max(0.3, j['resources']['limits']['cpu'] / 2.0)
                         memory_request = j['resources']['limits']['memory']
                         if r['cpu_capacity'] >= cpu_request and r['memory_capacity'] >= memory_request:
