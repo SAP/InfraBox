@@ -704,14 +704,14 @@ class CreateJobs(Resource):
 
             cluster_selector = j['cluster'].get('selector', None)
             target_cluster = None
-            max_cpu_capacity, max_memory_capacity = 1, 1024
+            max_cpu_capacity, max_memory_capacity = 0, 0
             if not cluster_selector:
                 # use the cluster which has more resources
                 for c in clusters:
                     r = g.db.execute_one_dict('''
                         SELECT cpu_capacity, memory_capacity FROM cluster WHERE name = %s
                     ''', [c['name']])
-                    if r['cpu_capacity'] >= max_cpu_capacity and r['memory_capacity'] >= max_memory_capacity:
+                    if r['cpu_capacity'] > max_cpu_capacity and r['memory_capacity'] > max_memory_capacity:
                         target_cluster = c['name']
                         max_cpu_capacity = r['cpu_capacity']
                         max_memory_capacity = r['memory_capacity']
