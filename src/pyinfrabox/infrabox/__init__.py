@@ -25,9 +25,10 @@ def parse_repository(d, path):
         check_boolean(d['full_history'], path + ".full_history")
 
 def parse_cluster(d, path):
-    check_allowed_properties(d, path, ('selector',))
+    check_allowed_properties(d, path, ('selector', 'prefer',))
 
     check_string_array(d['selector'], path + ".selector")
+    check_text(d['prefer'], path + ".prefer")
 
 def parse_depends_on_condition(d, path):
     check_allowed_properties(d, path, ("job", "on"))
