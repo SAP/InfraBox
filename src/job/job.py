@@ -733,8 +733,13 @@ class RunJob(Job):
                 logger.exception(e)
 
             stop_timeout = self.job['definition'].get('stop_timeout', '10')
+            parallel_build = self.job['definition'].get('parallel_build', False)
             self.environment['PATH'] = os.environ['PATH']
-            c.execute_mask(['docker-compose', '-f', compose_file_new, 'build'],
+
+            cmds = ['docker-compose', '-f', compose_file_new, 'build']
+            if parallel_build:
+                cmds.append('--parallel')
+            c.execute_mask(cmds,
                       show=True, env=self.environment, mask=self.repository.get('github_api_token', None))
             c.header("Run docker-compose", show=True)
 
