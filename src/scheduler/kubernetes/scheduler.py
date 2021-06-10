@@ -916,6 +916,7 @@ class Scheduler(object):
     def upload_console(self, job_id):
         cursor = self.conn.cursor()
         cursor.execute("begin")
+        cursor.execute("SET LOCAL lock_timeout = '30s'")
         try:
             cursor.execute("""
                    SELECT output FROM console WHERE job_id = %s
@@ -934,6 +935,7 @@ class Scheduler(object):
                            """, [output, job_id, job_id])
             cursor.execute("commit")
         except Exception as e:
+            self.logger.error("upload console timeout for job: " + job_id)
             self.logger.error(e)
             cursor.execute("rollback")
         finally:
@@ -959,6 +961,7 @@ class Scheduler(object):
 
         cursor = self.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         cursor.execute("begin")
+        cursor.execute("SET LOCAL lock_timeout = '5s'")
 
         try:
             cursor.execute("""
@@ -998,12 +1001,14 @@ class Scheduler(object):
                 project_id = c['project_id']
                 cursor.execute("commit")
 
+                r = None
                 try:
                     r = requests.post('http://infrabox-api.infrabox-system:8080/internal/api/projects/%s/trigger' % project_id, json=trigger, timeout=10)
                 except Exception as e:
                     self.logger.warning(e)
 
                     cursor.execute('begin')
+                    cursor.execute("SET LOCAL lock_timeout = '5s'")
                     cursor.execute('''
                         UPDATE cronjob
                         SET last_trigger = %s
@@ -1013,6 +1018,7 @@ class Scheduler(object):
 
                 if r:
                     cursor.execute('begin')
+                    cursor.execute("SET LOCAL lock_timeout = '5s'")
                     cursor.execute('''
                         UPDATE build
                         SET is_cronjob = true
