@@ -1,13 +1,13 @@
 import json
 import select
 import os
-from queue import Queue, Empty
-import threading
-from threading import Thread
 
 import urllib
 import requests
 import psycopg2
+import eventlet
+eventlet.monkey_patch()
+from eventlet.hubs import trampoline
 
 import urllib3
 urllib3.disable_warnings()
@@ -40,22 +40,23 @@ def main(): # pragma: no cover
     logger.info("Connected to database")
 
     elect_leader(conn, 'github-review', cluster_name)
-    pool = ThreadPool(pool_size)
 
     curs = conn.cursor()
     curs.execute("LISTEN job_update;")
 
     logger.info("Waiting for job updates")
+    pool = eventlet.GreenPool()
 
     while True:
-        if select.select([conn], [], [], 5) != ([], [], []):
-            conn.poll()
-            while conn.notifies:
-                notify = conn.notifies.pop(0)
-                if not is_leader(conn, 'github-review', cluster_name, exit=False
-                                 ):
-                    continue
-                pool.add_task(handle_job_update, conn, json.loads(notify.payload))
+        trampoline(conn, read=True)
+        conn.poll()
+        while conn.notifies:
+            notify = conn.notifies.pop(0)
+            event = json.loads(notify.payload)
+            if not is_leader(conn, 'github-review', cluster_name, exit=False):
+                logger.info("skip job: %s because I'm not leader", event.get('job_id'))
+                continue
+            pool.spawn_n(handle_job_update, conn, event)
 
 
 def handle_job_update(conn, event):
@@ -121,7 +122,7 @@ def handle_job_update(conn, event):
 
     logger.info("")
     logger.info("Handle job %s", job_id)
-    logger.info("Setting state to %s", state)
+    logger.info("Setting jobs %s state to %s", job_id, state)
 
     token = execute_sql(conn, '''
         SELECT github_api_token FROM "user" u
@@ -182,80 +183,15 @@ def handle_job_update(conn, event):
                           verify=False)
 
         if r.status_code != 201:
-            logger.warn("Failed to update github status: %s", r.text)
+            logger.warn("[job: %s] Failed to update github status: %s", job_id, r.text)
             logger.warn(github_status_url)
         else:
-            logger.info("Successfully updated github status")
+            logger.info("[job: %s] Successfully updated github status", job_id)
     except Exception as e:
-        logger.warn("Failed to update github status: %s", e)
+        logger.warn("[job: %s] Failed to update github status: %s", job_id, e)
         return False
 
     return True
-
-class Worker(Thread):
-    _TIMEOUT = 2
-    """ Thread executing tasks from a given tasks queue. Thread is signalable, 
-        to exit
-    """
-
-    def __init__(self, tasks, th_num):
-        Thread.__init__(self)
-        self.tasks = tasks
-        self.daemon, self.th_num = True, th_num
-        self.done = threading.Event()
-        self.start()
-
-    def run(self):
-        while not self.done.is_set():
-            try:
-                func, args, kwargs = self.tasks.get(block=True,
-                                                    timeout=self._TIMEOUT)
-                try:
-                    func(*args, **kwargs)
-                except Exception as e:
-                    logger.error(e)
-                finally:
-                    self.tasks.task_done()
-            except Empty as e:
-                pass
-        return
-
-    def signal_exit(self):
-        """ Signal to thread to exit """
-        self.done.set()
-
-
-class ThreadPool:
-    """Pool of threads consuming tasks from a queue"""
-
-    def __init__(self, num_threads, tasks=[]):
-        self.tasks = Queue(num_threads)
-        self.workers = []
-        self.done = False
-        self._init_workers(num_threads)
-        for task in tasks:
-            self.tasks.put(task)
-
-    def _init_workers(self, num_threads):
-        for i in range(num_threads):
-            self.workers.append(Worker(self.tasks, i))
-
-    def add_task(self, func, *args, **kwargs):
-        """Add a task to the queue"""
-        self.tasks.put((func, args, kwargs))
-
-    def _close_all_threads(self):
-        """ Signal all threads to exit and lose the references to them """
-        for workr in self.workers:
-            workr.signal_exit()
-        self.workers = []
-
-    def wait_completion(self):
-        """Wait for completion of all the tasks in the queue"""
-        self.tasks.join()
-
-    def __del__(self):
-        self._close_all_threads()
 
 if __name__ == "__main__": # pragma: no cover
     main()
