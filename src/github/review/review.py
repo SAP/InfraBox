@@ -5,6 +5,9 @@ import os
 import urllib
 import requests
 import psycopg2
+import eventlet
+eventlet.monkey_patch()
+from eventlet.hubs import trampoline
 
 import urllib3
 urllib3.disable_warnings()
@@ -12,6 +15,7 @@ urllib3.disable_warnings()
 from pyinfraboxutils import get_logger, get_env, get_root_url
 from pyinfraboxutils.db import connect_db
 from pyinfraboxutils.leader import elect_leader, is_leader, is_active
+from pyinfraboxutils import dbpool
 
 logger = get_logger("github")
 
@@ -41,16 +45,28 @@ def main(): # pragma: no cover
     curs.execute("LISTEN job_update;")
 
     logger.info("Waiting for job updates")
+    pool = eventlet.GreenPool()
 
     while True:
-        if select.select([conn], [], [], 5) != ([], [], []):
-            conn.poll()
-            while conn.notifies:
-                notify = conn.notifies.pop(0)
-                if not is_leader(conn, 'github-review', cluster_name, exit=False
-                                 ):
-                    continue
-                handle_job_update(conn, json.loads(notify.payload))
+        trampoline(conn, read=True)
+        conn.poll()
+        while conn.notifies:
+            notify = conn.notifies.pop(0)
+            event = json.loads(notify.payload)
+            if not is_leader(conn, 'github-review', cluster_name, exit=False):
+                logger.info("skip job: %s because I'm not leader", event.get('job_id'))
+                continue
+            pool.spawn_n(handle, event)
+
+
+def handle(event):
+    db = dbpool.get()
+    try:
+        handle_job_update(db.conn, event)
+    except Exception as e:
+        logger.error(e)
+    finally:
+        dbpool.put(db)
 
 
 def handle_job_update(conn, event):
@@ -116,7 +132,7 @@ def handle_job_update(conn, event):
 
     logger.info("")
     logger.info("Handle job %s", job_id)
-    logger.info("Setting state to %s", state)
+    logger.info("Setting jobs %s state to %s", job_id, state)
 
     token = execute_sql(conn, '''
         SELECT github_api_token FROM "user" u
@@ -177,12 +193,12 @@ def handle_job_update(conn, event):
                           verify=False)
 
         if r.status_code != 201:
-            logger.warn("Failed to update github status: %s", r.text)
+            logger.warn("[job: %s] Failed to update github status: %s", job_id, r.text)
             logger.warn(github_status_url)
         else:
-            logger.info("Successfully updated github status")
+            logger.info("[job: %s] Successfully updated github status", job_id)
     except Exception as e:
-        logger.warn("Failed to update github status: %s", e)
+        logger.warn("[job: %s] Failed to update github status: %s", job_id, e)
         return False
 
     return True
