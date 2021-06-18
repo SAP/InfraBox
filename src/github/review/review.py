@@ -60,13 +60,13 @@ def main(): # pragma: no cover
 
 
 def handle(event):
-    conn = dbpool.get()
+    db = dbpool.get()
     try:
-        handle_job_update(conn, event)
+        handle_job_update(db.conn, event)
     except Exception as e:
         logger.error(e)
     finally:
-        dbpool.put(conn)
+        dbpool.put(db)
 
 
 def handle_job_update(conn, event):
