@@ -1,6 +1,9 @@
 import json
 import select
 import os
+from queue import Queue, Empty
+import threading
+from threading import Thread
 
 import urllib
 import requests
@@ -29,6 +32,7 @@ def main(): # pragma: no cover
     get_env('INFRABOX_DATABASE_PASSWORD')
     get_env('INFRABOX_DATABASE_HOST')
     get_env('INFRABOX_DATABASE_PORT')
+    pool_size = os.environ.get('THREAD_POOL_SIZE', 4)
 
     cluster_name = get_env('INFRABOX_CLUSTER_NAME')
     conn = connect_db()
@@ -36,6 +40,7 @@ def main(): # pragma: no cover
     logger.info("Connected to database")
 
     elect_leader(conn, 'github-review', cluster_name)
+    pool = ThreadPool(pool_size)
 
     curs = conn.cursor()
     curs.execute("LISTEN job_update;")
@@ -50,7 +55,7 @@ def main(): # pragma: no cover
                 if not is_leader(conn, 'github-review', cluster_name, exit=False
                                  ):
                     continue
-                handle_job_update(conn, json.loads(notify.payload))
+                pool.add_task(handle_job_update, conn, json.loads(notify.payload))
 
 
 def handle_job_update(conn, event):
@@ -186,6 +191,71 @@ def handle_job_update(conn, event):
         return False
 
     return True
+
+class Worker(Thread):
+    _TIMEOUT = 2
+    """ Thread executing tasks from a given tasks queue. Thread is signalable, 
+        to exit
+    """
+
+    def __init__(self, tasks, th_num):
+        Thread.__init__(self)
+        self.tasks = tasks
+        self.daemon, self.th_num = True, th_num
+        self.done = threading.Event()
+        self.start()
+
+    def run(self):
+        while not self.done.is_set():
+            try:
+                func, args, kwargs = self.tasks.get(block=True,
+                                                    timeout=self._TIMEOUT)
+                try:
+                    func(*args, **kwargs)
+                except Exception as e:
+                    logger.error(e)
+                finally:
+                    self.tasks.task_done()
+            except Empty as e:
+                pass
+        return
+
+    def signal_exit(self):
+        """ Signal to thread to exit """
+        self.done.set()
+
+
+class ThreadPool:
+    """Pool of threads consuming tasks from a queue"""
+
+    def __init__(self, num_threads, tasks=[]):
+        self.tasks = Queue(num_threads)
+        self.workers = []
+        self.done = False
+        self._init_workers(num_threads)
+        for task in tasks:
+            self.tasks.put(task)
+
+    def _init_workers(self, num_threads):
+        for i in range(num_threads):
+            self.workers.append(Worker(self.tasks, i))
+
+    def add_task(self, func, *args, **kwargs):
+        """Add a task to the queue"""
+        self.tasks.put((func, args, kwargs))
+
+    def _close_all_threads(self):
+        """ Signal all threads to exit and lose the references to them """
+        for workr in self.workers:
+            workr.signal_exit()
+        self.workers = []
+
+    def wait_completion(self):
+        """Wait for completion of all the tasks in the queue"""
+        self.tasks.join()
+
+    def __del__(self):
+        self._close_all_threads()
 
 if __name__ == "__main__": # pragma: no cover
     main()
