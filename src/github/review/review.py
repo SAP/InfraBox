@@ -15,6 +15,7 @@ urllib3.disable_warnings()
 from pyinfraboxutils import get_logger, get_env, get_root_url
 from pyinfraboxutils.db import connect_db
 from pyinfraboxutils.leader import elect_leader, is_leader, is_active
+from pyinfraboxutils import dbpool
 
 logger = get_logger("github")
 
@@ -32,7 +33,6 @@ def main(): # pragma: no cover
     get_env('INFRABOX_DATABASE_PASSWORD')
     get_env('INFRABOX_DATABASE_HOST')
     get_env('INFRABOX_DATABASE_PORT')
-    pool_size = os.environ.get('THREAD_POOL_SIZE', 4)
 
     cluster_name = get_env('INFRABOX_CLUSTER_NAME')
     conn = connect_db()
@@ -56,7 +56,17 @@ def main(): # pragma: no cover
             if not is_leader(conn, 'github-review', cluster_name, exit=False):
                 logger.info("skip job: %s because I'm not leader", event.get('job_id'))
                 continue
-            pool.spawn_n(handle_job_update, conn, event)
+            pool.spawn_n(handle, event)
+
+
+def handle(event):
+    conn = dbpool.get()
+    try:
+        handle_job_update(conn, event)
+    except Exception as e:
+        logger.error(e)
+    finally:
+        dbpool.put(conn)
 
 
 def handle_job_update(conn, event):
