@@ -36,7 +36,10 @@ def handle_entry(entry):
         os.makedirs(pod_path)
 
     metadata_path = os.path.join(pod_path, "metadata.json")
-    log_path = os.path.join(pod_path, e['container_name'] +".log")
+    container_name = e['container_name']
+    if '/' in container_name:
+        container_name = container_name.split("/")[-1]
+    log_path = os.path.join(pod_path, container_name +".log")
 
     if not os.path.exists(metadata_path):
         with open(metadata_path, 'w+') as metadata_file:
