@@ -11,7 +11,7 @@ RUN dep ensure
 RUN chmod +x ./tmp/build.sh
 RUN ./tmp/build.sh
 
-FROM alpine:3
+FROM alpine:3.13
 
 ENV PATH $PATH:/usr/local/bin
 
@@ -20,7 +20,7 @@ RUN \
   apk add bash py3-pip && \
   apk add --virtual=build linux-headers gcc libffi-dev musl-dev openssl-dev python3-dev make && \
   python3 -m pip install -U "pip!=20.0" && \
-  python3 -m pip install azure-cli!=2.25.0 && \
+  python3 -m pip install azure-cli && \
   apk del --purge build && \
   az aks install-cli
 
