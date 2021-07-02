@@ -391,7 +391,7 @@ class Job(Resource):
 
         if pull_request_id:
             data['env_vars']['INFRABOX_GITHUB_PULL_REQUEST'] = "true"
-        
+
         if commit_env:
             data['env_vars'].update(commit_env)
 
@@ -704,16 +704,44 @@ class CreateJobs(Resource):
 
             cluster_selector = j['cluster'].get('selector', None)
             target_cluster = None
-
             if not cluster_selector:
-                # use the parent cluster
-                for d in j.get('depends_on', []):
-                    target_cluster = assigned_clusters.get(d['job'], None)
-                    break
+                preferred_cluster = j['cluster'].get('prefer', None)
+                if preferred_cluster:
+                    r = g.db.execute_one_dict('''
+                        SELECT cpu_capacity, memory_capacity FROM cluster WHERE name = %s
+                    ''', [preferred_cluster])
+                    if not r:
+                        app.logger.warn("No such a cluster named: {}".format(preferred_cluster))
+                    else:
+                        cpu_request = max(0.3, j['resources']['limits']['cpu'] / 2.0)
+                        memory_request = j['resources']['limits']['memory']
+                        if r['cpu_capacity'] >= cpu_request and r['memory_capacity'] >= memory_request:
+                            target_cluster = preferred_cluster
+                        else:
+                            app.logger.info("""Could not use the preferred cluster as lack of resources. Request: {} CPU, {} Memory, Capacity: {} CPU, {} MEMORY'""".format(cpu_request, memory_request, r['cpu_capacity'], r['memory_capacity']))
 
                 if not target_cluster:
-                    # use any cluster with label default
-                    cluster_selector = ['default']
+                    parent_jobs = j.get('depends_on', [])
+                    if parent_jobs:
+                        # use the parent cluster if it has a parent job
+                        for d in parent_jobs:
+                            target_cluster = assigned_clusters.get(d['job'], None)
+                            break
+                    else:
+                        # use the cluster which has more resources  if it has not a parent job
+                        max_cpu_capacity, max_memory_capacity = 0, 0
+                        for c in clusters:
+                            r = g.db.execute_one_dict('''
+                                SELECT cpu_capacity, memory_capacity FROM cluster WHERE name = %s
+                            ''', [c['name']])
+                            if r['cpu_capacity'] > max_cpu_capacity and r['memory_capacity'] > max_memory_capacity:
+                                target_cluster = c['name']
+                                max_cpu_capacity = r['cpu_capacity']
+                                max_memory_capacity = r['memory_capacity']
+
+                    if not target_cluster:
+                        # use any cluster with label default
+                        cluster_selector = ['default']
 
             if not target_cluster:
                 # find a cluster with the selector
