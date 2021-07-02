@@ -19,7 +19,7 @@ RUN \
   apk update && \
   apk add bash py3-pip && \
   apk add --virtual=build linux-headers gcc libffi-dev musl-dev openssl-dev python3-dev make && \
-  python3 -m pip install -U "pip!=20.0" && \
+  python3 -m pip install -U "pip!=21.1.3" && \
   python3 -m pip install azure-cli && \
   apk del --purge build && \
   az aks install-cli
