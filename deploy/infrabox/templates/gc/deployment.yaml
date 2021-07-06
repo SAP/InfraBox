@@ -6,6 +6,9 @@ metadata:
     labels:
         app: infrabox-gc
 spec:
+    selector:
+        matchLabels:
+            app: infrabox-gc
     replicas: 1
     template:
         metadata:

@@ -6,6 +6,9 @@ metadata:
     labels:
         app: infrabox-api
 spec:
+    selector:
+        matchLabels:
+            app: infrabox-api
     replicas: {{ default 1 .Values.api.replicas }}
     template:
         metadata:

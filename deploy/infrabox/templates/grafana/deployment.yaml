@@ -7,6 +7,9 @@ metadata:
     labels:
         app: infrabox-grafana
 spec:
+    selector:
+        matchLabels:
+            app: infrabox-grafana
     replicas: 1
     template:
         metadata:

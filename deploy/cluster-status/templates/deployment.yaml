@@ -5,6 +5,9 @@ metadata:
     labels:
         app: infrabox-cluster-status
 spec:
+    selector:
+        matchLabels:
+            app: infrabox-cluster-status
     replicas: 3
     template:
         metadata:

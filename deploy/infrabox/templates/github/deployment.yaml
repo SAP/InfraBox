@@ -8,6 +8,9 @@ metadata:
     labels:
         app: infrabox-github
 spec:
+    selector:
+        matchLabels:
+            app: infrabox-github
     replicas: 1
     template:
         metadata:
