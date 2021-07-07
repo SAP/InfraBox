@@ -204,7 +204,7 @@ class Test(unittest.TestCase):
 
         self._print_job_logs()
 
-    #def test_docker_job(self):
+    # def test_docker_job(self):
     #    self.run_it('/infrabox/context/infrabox/test/e2e/tests/docker_job')
     #    self.expect_job('test')
 
