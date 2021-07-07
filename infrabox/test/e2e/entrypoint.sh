@@ -87,7 +87,7 @@ _installPostgres() {
     echo "## Install postgres"
 	helm install -n postgres stable/postgresql \
         --version 7.0.0 \
-		--set imageTag=9.6.2,postgresPassword=postgres,probes.readiness.periodSeconds=5 \
+		--set postgresqlPassword=postgres,readinessProbe.periodSeconds=5 \
 		--wait \
         --namespace infrabox-system
 
