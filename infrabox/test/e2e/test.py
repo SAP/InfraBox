@@ -64,6 +64,7 @@ class Test(unittest.TestCase):
                 retries -= 1
 
                 if retries < 0:
+                    time.sleep(36000)
                     raise e
 
     def _get_build(self):
