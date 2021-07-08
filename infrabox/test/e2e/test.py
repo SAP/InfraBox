@@ -338,12 +338,11 @@ def main():
 
         print("Server not yet ready")
 
-    time.sleep(90)
+    time.sleep(900000)
 
     print("Starting tests")
     with open('results.xml', 'wb') as output:
         unittest.main(testRunner=xmlrunner.XMLTestRunner(output=output), buffer=False)
 
 if __name__ == '__main__':
-    time.sleep(100000)
     main()
