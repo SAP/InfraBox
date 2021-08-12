@@ -994,7 +994,7 @@ func retrieveLogs(cr *v1alpha1.GKECluster, cluster *RemoteCluster, log *logrus.E
         for _, container := range pod.Containers {
             log.Debug("Collecting logs for pod: ", pod.PodID)
             data, err := doCollectorRequest(cluster, log, "/api/pods/"+pod.PodID+"/log/"+container)
-
+            log.Infof("FRANK TEST logs: %s", data)
             if err != nil {
                 log.Warningf("Failed to get collected pod logs: %v", err)
                 continue
