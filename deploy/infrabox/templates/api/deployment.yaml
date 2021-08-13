@@ -1,4 +1,4 @@
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
     name: infrabox-api
@@ -6,6 +6,9 @@ metadata:
     labels:
         app: infrabox-api
 spec:
+    selector:
+        matchLabels:
+            app: infrabox-api
     replicas: {{ default 1 .Values.api.replicas }}
     template:
         metadata:

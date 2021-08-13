@@ -1,5 +1,5 @@
 {{ if or .Values.ha.enabled .Values.monitoring.enabled }}
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
     name: infrabox-checker
@@ -7,6 +7,9 @@ metadata:
     labels:
         app: infrabox-checker
 spec:
+    selector:
+        matchLabels:
+            app: infrabox-checker
     replicas: 1
     template:
         metadata:

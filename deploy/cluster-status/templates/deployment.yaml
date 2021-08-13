@@ -1,10 +1,13 @@
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
     name: infrabox-cluster-status
     labels:
         app: infrabox-cluster-status
 spec:
+    selector:
+        matchLabels:
+            app: infrabox-cluster-status
     replicas: 3
     template:
         metadata:

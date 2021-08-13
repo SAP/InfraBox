@@ -1,4 +1,4 @@
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
     name: infrabox-gc
@@ -6,6 +6,9 @@ metadata:
     labels:
         app: infrabox-gc
 spec:
+    selector:
+        matchLabels:
+            app: infrabox-gc
     replicas: 1
     template:
         metadata:

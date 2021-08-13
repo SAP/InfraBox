@@ -8,30 +8,23 @@ _prepareKubectl() {
 	SERVICE_NAME="e2e-cluster"
 
 	CA_CRT="/var/run/infrabox.net/services/$SERVICE_NAME/ca.crt"
-	CLIENT_CRT="/var/run/infrabox.net/services/$SERVICE_NAME/client.crt"
-	CLIENT_KEY="/var/run/infrabox.net/services/$SERVICE_NAME/client.key"
 
+  ENDPOINT=$(cat /var/run/infrabox.net/services/$SERVICE_NAME/endpoint)
+  TOKEN=$(cat /var/run/infrabox.net/services/$SERVICE_NAME/token)
 
-	ENDPOINT=$(cat /var/run/infrabox.net/services/$SERVICE_NAME/endpoint)
-	PASSWORD=$(cat /var/run/infrabox.net/services/$SERVICE_NAME/password)
-	USERNAME=$(cat /var/run/infrabox.net/services/$SERVICE_NAME/username)
+  kubectl config set-cluster $SERVICE_NAME \
+    --server=$ENDPOINT \
+    --embed-certs=true \
+    --certificate-authority=$CA_CRT
 
-	kubectl config set-cluster $SERVICE_NAME \
-		--server=$ENDPOINT \
-		--certificate-authority=$CA_CRT
+  kubectl config set-credentials admin \
+    --token=$TOKEN
 
-	kubectl config set-credentials admin \
-		--certificate-authority=$CA_CRT \
-		--client-certificate=$CLIENT_CRT \
-		--client-key=$CLIENT_KEY \
-		--username=$USERNAME \
-		--password=$PASSWORD
+  kubectl config set-context default-system \
+    --cluster=$SERVICE_NAME \
+    --user=admin
 
-	kubectl config set-context default-system \
-		--cluster=$SERVICE_NAME \
-		--user=admin
-
-    kubectl config use-context default-system
+  kubectl config use-context default-system
 
     kubectl get nodes
 
@@ -93,8 +86,8 @@ _getPodName() {
 _installPostgres() {
     echo "## Install postgres"
 	helm install -n postgres stable/postgresql \
-        --version 1.0.0 \
-		--set imageTag=9.6.2,postgresPassword=postgres,probes.readiness.periodSeconds=5 \
+        --version 7.0.0 \
+		--set postgresqlPassword=postgres,readinessProbe.periodSeconds=5 \
 		--wait \
         --namespace infrabox-system
 
@@ -104,7 +97,7 @@ _installPostgres() {
     kubectl port-forward -n infrabox-system $postgres_pod 5432 &
 
     # Wait until postgres is ready
-    until psql -U postgres -h localhost -c '\l'; do
+    until psql postgresql://postgres:postgres@localhost:5432 -c '\l'; do
         >&2 echo "Postgres is unavailable - sleeping"
         sleep 1
 	done
