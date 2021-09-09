@@ -60,10 +60,19 @@ allow {
     api.method = "GET"
     api.path = ["api", "v1", "projects", project_id, svg_image]
     svg_image = svg_images[_]
-    
+
     api.token.type = "project"
     api.token.project.id = project_id
 }
+
+# Allow GET access to /api/v1/projects/<project_id>/(state.svg|tests.svg|badge.svg) for all users
+allow {
+    api.method = "GET"
+    api.path = ["api", "v1", "projects", project_id, svg_image]
+    svg_image = svg_images[_]
+}
+
+
 
 #Allow GET access to /api/v1/projects/<project_id>/archive for collaborators
 allow {
