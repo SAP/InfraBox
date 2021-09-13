@@ -11,7 +11,8 @@ RUN dep ensure
 RUN chmod +x ./tmp/build.sh
 RUN ./tmp/build.sh
 
-FROM alpine:3
+
+FROM alpine:3.9
 
 ENV PATH $PATH:/usr/local/bin
 
