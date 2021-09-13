@@ -1238,6 +1238,10 @@ func newCollectorService() *v1.Service {
 
 func newCollectorDeployment() *appsv1.Deployment {
     var replicas int32 = 1
+    collectorImage := os.Getenv("COLLECTOR_IMAGE")
+    if collectorImage == "" {
+        collectorImage := "quay.io/infrabox/collector-api"
+    }
     return &appsv1.Deployment{
         TypeMeta: metav1.TypeMeta{
             Kind:       "Deployment",
@@ -1263,7 +1267,7 @@ func newCollectorDeployment() *appsv1.Deployment {
                 Spec: v1.PodSpec{
                     Containers: []v1.Container{{
                         Name:  "api",
-                        Image: "quay.io/infrabox/collector-api",
+                        Image: collectorImage,
                     }},
                 },
             },
