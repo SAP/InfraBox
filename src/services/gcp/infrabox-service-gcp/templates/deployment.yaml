@@ -50,6 +50,10 @@ spec:
           - name: GC_INTERVAL
             value: {{ .Values.gc_interval | quote }}
           {{ end }}
+          {{ if .Values.collectorImage}}
+          - name: COLLECTOR_IMAGE
+            value: {{ .Values.collectorImage }}
+          {{ end }}
 
       volumes:
       - name: service-account

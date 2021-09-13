@@ -6,6 +6,8 @@ image:
 
 imagePullSecret:
 
+collectorImage:
+
 max_clusters: 30
 
 # clean up outdated cluster to save resources
