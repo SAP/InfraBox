@@ -1353,7 +1353,7 @@ func newCollectorDaemonSet() *appsv1.DaemonSet {
                 Spec: v1.PodSpec{
                     Containers: []v1.Container{{
                         Name:  "fluent-bit",
-                        Image: "fluent/fluent-bit:0.13",
+                        Image: "fluent/fluent-bit:1.8",
                         Resources: v1.ResourceRequirements{
                             Limits: v1.ResourceList{
                                 "memory": resource.MustParse("100Mi"),
