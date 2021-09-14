@@ -1240,7 +1240,7 @@ func newCollectorDeployment() *appsv1.Deployment {
     var replicas int32 = 1
     collectorImage := os.Getenv("COLLECTOR_IMAGE")
     if collectorImage == "" {
-        collectorImage := "quay.io/infrabox/collector-api"
+        collectorImage = "quay.io/infrabox/collector-api"
     }
     return &appsv1.Deployment{
         TypeMeta: metav1.TypeMeta{
