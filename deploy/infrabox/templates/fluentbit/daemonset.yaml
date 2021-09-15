@@ -14,7 +14,7 @@ spec:
       serviceAccountName: infrabox
       containers:
       - name: fluent-bit
-        image: fluent/fluent-bit:1.8
+        image: fluent/fluent-bit:0.13
         resources:
           limits:
             memory: 1000Mi
