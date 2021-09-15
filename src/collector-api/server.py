@@ -63,6 +63,9 @@ def handle_entry(entry):
     if 'log' in entry:
         with open(log_path, 'a+') as log_file:
             log = entry['log']
+            print(log)
+            logger.error(log)
+            logger.warn(log)
             log = log.replace('\x00', '\n')
             log = log.encode('ascii', 'ignore').decode('utf-8')
             log_file.write(log)
