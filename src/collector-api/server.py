@@ -68,7 +68,6 @@ def handle_entry(entry):
             log = log.replace('\x00', '\n')
             if '\n' not in log:
                 log = log + '\n'
-            logger.error(log)
             log_file.write(log)
 
 @api.route('/api/log')
