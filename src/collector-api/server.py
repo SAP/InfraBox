@@ -61,11 +61,11 @@ def handle_entry(entry):
             json.dump(md, metadata_file)
 
     if 'log' in entry:
+        reload(sys)
+        sys.setdefaultencoding('utf8')
         with open(log_path, 'a+') as log_file:
             log = entry['log']
             log = log.replace('\x00', '\n')
-            log = log.replace('\xb5', '\n')
-            print(log)
             logger.error(log)
             log_file.write(log)
 
