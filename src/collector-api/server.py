@@ -66,6 +66,8 @@ def handle_entry(entry):
         with open(log_path, 'a+') as log_file:
             log = entry['log']
             log = log.replace('\x00', '\n')
+            if '\n' not in log:
+                log = log + '\n'
             logger.error(log)
             log_file.write(log)
 
