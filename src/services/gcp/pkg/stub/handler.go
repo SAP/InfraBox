@@ -143,6 +143,10 @@ func createCluster(cr *v1alpha1.GKECluster, log *logrus.Entry) (*v1alpha1.GKEClu
         args = append(args, "--enable-network-policy")
     }
 
+    if !cr.Spec.DisableLegacyAuthorization {
+        args = append(args, "--enable-legacy-authorization")
+    }
+
     if cr.Spec.NumNodes != 0 {
         args = append(args, "--num-nodes")
         args = append(args, strconv.Itoa(int(cr.Spec.NumNodes)))
@@ -178,7 +182,6 @@ func createCluster(cr *v1alpha1.GKECluster, log *logrus.Entry) (*v1alpha1.GKEClu
     }
 
     args = append(args, "--enable-ip-alias")
-    args = append(args, "--enable-legacy-authorization")
     args = append(args, "--create-subnetwork", "")
 
     if cr.Spec.ClusterCidr == "" {
