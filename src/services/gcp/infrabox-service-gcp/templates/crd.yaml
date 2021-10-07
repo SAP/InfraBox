@@ -25,6 +25,8 @@ spec:
               type: string
             enableNetworkPolicy:
               type: boolean
+            disableLegacyAuthorization:
+              type: boolean
             numNodes:
               type: integer
               minimum: 1
