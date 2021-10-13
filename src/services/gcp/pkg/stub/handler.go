@@ -143,6 +143,10 @@ func createCluster(cr *v1alpha1.GKECluster, log *logrus.Entry) (*v1alpha1.GKEClu
         args = append(args, "--enable-network-policy")
     }
 
+    if !cr.Spec.DisableLegacyAuthorization {
+        args = append(args, "--enable-legacy-authorization")
+    }
+
     if cr.Spec.NumNodes != 0 {
         args = append(args, "--num-nodes")
         args = append(args, strconv.Itoa(int(cr.Spec.NumNodes)))
@@ -178,7 +182,6 @@ func createCluster(cr *v1alpha1.GKECluster, log *logrus.Entry) (*v1alpha1.GKEClu
     }
 
     args = append(args, "--enable-ip-alias")
-    args = append(args, "--enable-legacy-authorization")
     args = append(args, "--create-subnetwork", "")
 
     if cr.Spec.ClusterCidr == "" {
@@ -1238,6 +1241,10 @@ func newCollectorService() *v1.Service {
 
 func newCollectorDeployment() *appsv1.Deployment {
     var replicas int32 = 1
+    collectorImage := os.Getenv("COLLECTOR_IMAGE")
+    if collectorImage == "" {
+        collectorImage = "quay.io/infrabox/collector-api"
+    }
     return &appsv1.Deployment{
         TypeMeta: metav1.TypeMeta{
             Kind:       "Deployment",
@@ -1263,7 +1270,7 @@ func newCollectorDeployment() *appsv1.Deployment {
                 Spec: v1.PodSpec{
                     Containers: []v1.Container{{
                         Name:  "api",
-                        Image: "quay.io/infrabox/collector-api",
+                        Image: collectorImage,
                     }},
                 },
             },

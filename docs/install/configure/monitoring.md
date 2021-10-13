@@ -1,11 +1,9 @@
 # Monitoring
 
-We use prometheus for our monitoring. Install the [prometheus operator](https://github.com/coreos/prometheus-operator):
+We use prometheus for our monitoring. 
 
-```bash
-helm repo add coreos https://s3-eu-west-1.amazonaws.com/coreos-charts/stable/
-helm install coreos/prometheus-operator --name prometheus-operator --namespace infrabox-system
-```
+Install the [prometheus operator](https://github.com/prometheus-operator/prometheus-operator) by following their official documentation.
+
 
 When configuring your InfraBox with `helm` set these options:
 

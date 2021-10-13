@@ -9,6 +9,8 @@ from flask_restx import Resource, Api
 
 import eventlet
 eventlet.monkey_patch()
+reload(sys)
+sys.setdefaultencoding('utf8')
 
 from pyinfraboxutils import get_logger
 
@@ -19,6 +21,7 @@ storage_path = '/tmp/collector/'
 app = Flask(__name__)
 app.config['OPA_ENABLED'] = False
 api = Api(app)
+
 
 @api.route('/ping')
 class Ping(Resource):
@@ -64,7 +67,8 @@ def handle_entry(entry):
         with open(log_path, 'a+') as log_file:
             log = entry['log']
             log = log.replace('\x00', '\n')
-            log = log.encode('ascii', 'ignore').decode('utf-8')
+            if not log.endswith('\n'):
+                log = log + '\n'
             log_file.write(log)
 
 @api.route('/api/log')
