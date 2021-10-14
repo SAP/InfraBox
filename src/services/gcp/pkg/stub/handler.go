@@ -723,8 +723,7 @@ func getRemoteClusters(log *logrus.Entry) ([]RemoteCluster, error) {
             if i == 2 {
                 log.Errorf("Had tried 3 times but still Could not list clusters: %v", err)
                 return nil, err
-            }
-            else{
+            } else {
                 time.Sleep(time.Duration(int(time.Second) * 10))
                 continue
             }
