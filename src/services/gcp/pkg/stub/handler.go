@@ -667,64 +667,79 @@ func getExactClusterVersion(cr *v1alpha1.GKECluster, log *logrus.Entry) (string,
 }
 
 func getRemoteCluster(name string, log *logrus.Entry) (*RemoteCluster, error) {
-    cmd := exec.Command("gcloud", "container", "clusters", "list",
+    for i := 0; i < 3; i++ {
+        cmd := exec.Command("gcloud", "container", "clusters", "list",
         "--filter", "name="+name, "--format", "json")
 
-    out, err := cmd.CombinedOutput()
+        out, err := cmd.CombinedOutput()
 
-    if err != nil {
-        err = fmt.Errorf("could not list clusters: %s, %v", out, err)
-        log.Error(err)
-        return nil, err
-    }
+        if err != nil {
+            if i == 2 {
+                err = fmt.Errorf("Had tried 3 times but still could not list clusters: %s, %v", out, err)
+                log.Error(err)
+                return nil, err
+            } else {
+                time.Sleep(time.Duration(int(time.Second) * 10))
+                continue
+            }
+        } else {
+            var gkeclusters []RemoteCluster
+            err = json.Unmarshal(out, &gkeclusters)
 
-    var gkeclusters []RemoteCluster
-    err = json.Unmarshal(out, &gkeclusters)
+            if err != nil {
+                err = fmt.Errorf("could not parse cluster list: %s, %v", out, err)
+                log.Error(err)
+                return nil, err
+            }
 
-    if err != nil {
-        err = fmt.Errorf("could not parse cluster list: %s, %v", out, err)
-        log.Error(err)
-        return nil, err
-    }
+            if len(gkeclusters) == 0 {
+                return nil, nil
+            }
 
-    if len(gkeclusters) == 0 {
-        return nil, nil
-    }
+            res := &gkeclusters[0]
+            if res.Status == "RUNNING" {
+                if err := getGkeKubeConfig(res, log); err != nil {
+                    return nil, err
+                }
+                token, err := getAdminToken(res)
+                if err == nil {
+                    res.MasterAuth.Token = token
+                }
+            }
 
-    res := &gkeclusters[0]
-    if res.Status == "RUNNING" {
-        if err := getGkeKubeConfig(res, log); err != nil {
-            return nil, err
+            return res, nil
         }
-        token, err := getAdminToken(res)
-        if err == nil {
-            res.MasterAuth.Token = token
-        }
     }
-
-    return res, nil
 }
 
 func getRemoteClusters(log *logrus.Entry) ([]RemoteCluster, error) {
-    cmd := exec.Command("gcloud", "container", "clusters", "list",
-        "--format", "json")
+    for i := 0; i < 3; i++ {
+        cmd := exec.Command("gcloud", "container", "clusters", "list",
+            "--format", "json")
 
-    out, err := cmd.Output()
+        out, err := cmd.Output()
 
-    if err != nil {
-        log.Errorf("Could not list clusters: %v", err)
-        return nil, err
+        if err != nil {
+            if i == 2 {
+                log.Errorf("Had tried 3 times but still Could not list clusters: %v", err)
+                return nil, err
+            }
+            else{
+                time.Sleep(time.Duration(int(time.Second) * 10))
+                continue
+            }
+        } else {
+            var gkeclusters []RemoteCluster
+            err = json.Unmarshal(out, &gkeclusters)
+
+            if err != nil {
+                log.Errorf("Could not parse cluster list: %v", err)
+                return nil, err
+            }
+            return gkeclusters, nil
+        }
+
     }
-
-    var gkeclusters []RemoteCluster
-    err = json.Unmarshal(out, &gkeclusters)
-
-    if err != nil {
-        log.Errorf("Could not parse cluster list: %v", err)
-        return nil, err
-    }
-
-    return gkeclusters, nil
 }
 
 func GcLoop(maxAge string, interval int, log *logrus.Entry) {
