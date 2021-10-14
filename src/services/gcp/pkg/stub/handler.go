@@ -669,7 +669,7 @@ func getExactClusterVersion(cr *v1alpha1.GKECluster, log *logrus.Entry) (string,
 func getRemoteCluster(name string, log *logrus.Entry) (*RemoteCluster, error) {
     for i := 0; i < 3; i++ {
         cmd := exec.Command("gcloud", "container", "clusters", "list",
-        "--filter", "name="+name, "--format", "json")
+            "--filter", "name="+name, "--format", "json")
 
         out, err := cmd.CombinedOutput()
 
