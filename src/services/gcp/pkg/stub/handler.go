@@ -710,6 +710,8 @@ func getRemoteCluster(name string, log *logrus.Entry) (*RemoteCluster, error) {
             return res, nil
         }
     }
+
+    return nil, nil
 }
 
 func getRemoteClusters(log *logrus.Entry) ([]RemoteCluster, error) {
@@ -739,6 +741,8 @@ func getRemoteClusters(log *logrus.Entry) ([]RemoteCluster, error) {
         }
 
     }
+
+    return nil, nil
 }
 
 func GcLoop(maxAge string, interval int, log *logrus.Entry) {
