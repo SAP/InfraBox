@@ -81,7 +81,7 @@ class Projects(Resource):
             AND co.user_id = %s
         ''', [user_id])
 
-        if projects['cnt'] > 50:
+        if projects['cnt'] > 200:
             abort(400, 'too many projects')
 
         project = g.db.execute_one_dict('''
