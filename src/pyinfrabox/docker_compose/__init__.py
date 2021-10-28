@@ -28,7 +28,8 @@ def handle_service(name, d, r):
             'links',
             'hostname',
             'extra_hosts',
-            'network_mode'
+            'network_mode',
+            'profiles'
         ]
 
         if key in allowed_fields:
