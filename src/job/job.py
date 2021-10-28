@@ -747,7 +747,7 @@ class RunJob(Job):
             cwd = self._get_build_context_current_job()
             if compose_profiles:
                 compose_profiles = ','.join(compose_profiles)
-                cmds = ['COMPOSE_PROFILES=', compose_profiles, 'docker-compose', '-f', compose_file_new, 'up',
+                cmds = ['COMPOSE_PROFILES=%s' % compose_profiles, 'docker-compose', '-f', compose_file_new, 'up',
                         '--abort-on-container-exit', '--timeout', str(stop_timeout)]
             else:
                 cmds = ['docker-compose', '-f', compose_file_new, 'up', '--abort-on-container-exit', '--timeout',
