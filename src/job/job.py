@@ -745,8 +745,8 @@ class RunJob(Job):
             c.header("Run docker-compose", show=True)
 
             cwd = self._get_build_context_current_job()
+            cmds = ['docker-compose']
             if compose_profiles:
-                cmds = ['docker-compose']
                 for f in compose_profiles:
                     cmds.append('--profile')
                     cmds.append(f)
