@@ -750,11 +750,7 @@ class RunJob(Job):
                 for f in compose_profiles:
                     cmds.append('--profile')
                     cmds.append(f)
-                cmds += ['-f', compose_file_new, 'up', '--abort-on-container-exit', '--timeout', str(stop_timeout)]
-            else:
-                cmds = ['docker-compose', '-f', compose_file_new, 'up', '--abort-on-container-exit', '--timeout',
-                        str(stop_timeout)]
-            c.header("%s" % cmds, show=True)
+            cmds += ['-f', compose_file_new, 'up', '--abort-on-container-exit', '--timeout', str(stop_timeout)]
             c.execute(cmds, env=self.environment, show=True, cwd=cwd)
         except:
             raise Failure("Failed to build and run container")
