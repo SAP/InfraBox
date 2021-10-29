@@ -746,7 +746,7 @@ class RunJob(Job):
 
             cwd = self._get_build_context_current_job()
             if compose_profiles:
-                cmds = ['docker-compose', compose_profiles]
+                cmds = ['docker-compose']
                 for f in compose_profiles:
                     cmds.append('--profile')
                     cmds.append(f)
