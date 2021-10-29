@@ -757,7 +757,7 @@ class RunJob(Job):
             raise Failure("Failed to build and run container")
         finally:
             c.header("Finalize", show=True)
-
+            time.sleep(3600)
             try:
                 collector.stop()
                 self.post_stats(collector.get_result())
