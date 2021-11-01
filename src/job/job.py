@@ -734,6 +734,7 @@ class RunJob(Job):
 
             stop_timeout = self.job['definition'].get('stop_timeout', '10')
             parallel_build = self.job['definition'].get('parallel_build', False)
+            compose_profiles = self.job['definition'].get('compose_profiles', [])
             self.environment['PATH'] = os.environ['PATH']
 
             cmds = ['docker-compose', '-f', compose_file_new, 'build']
@@ -743,16 +744,18 @@ class RunJob(Job):
                       show=True, env=self.environment, mask=self.repository.get('github_api_token', None))
             c.header("Run docker-compose", show=True)
 
-
             cwd = self._get_build_context_current_job()
-
-            c.execute(['docker-compose', '-f', compose_file_new, 'up',
-                       '--abort-on-container-exit', '--timeout', str(stop_timeout)], env=self.environment, show=True, cwd=cwd)
+            cmds = ['docker-compose']
+            if compose_profiles:
+                for f in compose_profiles:
+                    cmds.append('--profile')
+                    cmds.append(f)
+            cmds += ['-f', compose_file_new, 'up', '--abort-on-container-exit', '--timeout', str(stop_timeout)]
+            c.execute(cmds, env=self.environment, show=True, cwd=cwd)
         except:
             raise Failure("Failed to build and run container")
         finally:
             c.header("Finalize", show=True)
-
             try:
                 collector.stop()
                 self.post_stats(collector.get_result())
