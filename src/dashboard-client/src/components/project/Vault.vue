@@ -107,7 +107,7 @@ export default {
                     this.version = ''
                     this.token = ''
                     this.ca = ''
-                    this.role_id= ''
+                    this.role_id = ''
                     this.secret_id = ''
                     this.project._reloadVault()
                 })
