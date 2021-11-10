@@ -12,7 +12,8 @@ from io import BytesIO
 import requests
 
 from flask import jsonify, request, send_file, g, after_this_request, abort
-from flask_restx import Resource
+from api.handlers.projects.vault import Secret
+from flask_restx import Resource,reqparse
 
 from werkzeug.datastructures import FileStorage
 
@@ -38,6 +39,18 @@ def delete_file(path):
             os.remove(path)
         except Exception as error:
             app.logger.warn("Failed to delete file: %s", error)
+
+def validateway(res):
+    token,role_id,secret_id  = res[2], res[5], res[6]
+    if token:
+        validate_res='token'
+    else:
+        # validate appRole
+        validate_res='appRole'
+        if not role_id or not secret_id:
+            validate_res='error'
+    return validate_res
+
 
 @api.route("/api/job/job", doc=False)
 class Job(Resource):
@@ -859,13 +872,13 @@ class CreateJobs(Resource):
                             secret_path = value['$vault_secret_path']
                             secret_key = value['$vault_secret_key']
                             result = g.db.execute_one("""
-                                SELECT url,version,token,ca,namespace FROM vault WHERE name = %s and project_id = %s
+                                SELECT url,version,token,ca,namespace,role_id,secret_id FROM vault WHERE name = %s and project_id = %s
                             """, [name, project_id])
 
                             if not result:
                                 abort(400, "Cannot get Vault '%s' in project '%s' " % (name, project_id))
 
-                            url, version, token, ca, namespace = result[0], result[1], result[2], result[3], result[4]
+                            url, version, token, ca, namespace,role_id,secret_id  = result[0], result[1], result[2], result[3], result[4], result[5], result[6]
                             if not namespace:
                                 namespace = ''
                             if version == 'v1':
@@ -873,22 +886,51 @@ class CreateJobs(Resource):
                             elif version == 'v2':
                                 paths = secret_path.split('/')
                                 url += '/v1/' + namespace + '/' + paths[0] + '/data/' + '/'.join(paths[1:])
-                            if not ca:
-                                res = requests.get(url=url, headers={'X-Vault-Token': token}, verify=False)
-                            else:
-                                with tempfile.NamedTemporaryFile(delete=False) as f:
-                                    f.write(ca)
-                                    f.flush()  # ensure all data written
-                                    res = requests.get(url=url, headers={'X-Vault-Token': token}, verify=f.name)
-                            if res.status_code == 200:
-                                json_res = json.loads(res.content)
-                                if json_res['data'].get('data') and isinstance(json_res['data'].get('data'), dict):
-                                    value = json_res['data'].get('data').get(secret_key)
+                            # choose validate way
+                            validate_res=validateway(result)
+                            if validate_res=='token':
+                                if not ca :
+                                    res = requests.get(url=url, headers={'X-Vault-Token': token}, verify=False)
                                 else:
-                                    value = json_res['data'].get(secret_key)
-                                job['env_vars'][ename] = value
-                            else:
-                                abort(400, "Getting value from vault error: url is '%s', token is '%s' " % (url, result))
+                                    with tempfile.NamedTemporaryFile(delete=False) as f:
+                                        f.write(ca)
+                                        f.flush()  # ensure all data written
+                                        res = requests.get(url=url, headers={'X-Vault-Token': token}, verify=f.name)
+                                if res.status_code == 200:
+                                    json_res = json.loads(res.content)
+                                    if json_res['data'].get('data') and isinstance(json_res['data'].get('data'), dict):
+                                        value = json_res['data'].get('data').get(secret_key)
+                                    else:
+                                        value = json_res['data'].get(secret_key)
+                                    job['env_vars'][ename] = value
+                                else:
+                                    abort(400, "Getting value from vault error: url is '%s', token is '%s' " % (url, result))
+                            if validate_res=='appRole':
+                                data= {}
+                                data['role_id']=role_id
+                                data['secret_id']=secret_id
+                                json_data=json.dumps(data)
+                                approle_url=result[0]+'/v1/' + namespace +  '/auth/approle/login'
+                                res = requests.post(url=approle_url,data=json_data, verify=False)
+                                if res.status_code == 200:
+                                    json_res = json.loads(res.content)
+                                    token = json_res['auth']['client_token']
+                                if not ca :
+                                    res = requests.get(url=url, headers={'X-Vault-Token': token}, verify=False)
+                                else:
+                                    with tempfile.NamedTemporaryFile(delete=False) as f:
+                                        f.write(ca)
+                                        f.flush()  # ensure all data written
+                                        res = requests.get(url=url, headers={'X-Vault-Token': token}, verify=f.name)
+                                if res.status_code == 200:
+                                    json_res = json.loads(res.content)
+                                    if json_res['data'].get('data') and isinstance(json_res['data'].get('data'), dict):
+                                        value = json_res['data'].get('data').get(secret_key)
+                                    else:
+                                        value = json_res['data'].get(secret_key)
+                                    job['env_vars'][ename] = value
+                                else:
+                                    abort(400, "Getting value from vault error: url is '%s', token is '%s' " % (url, result))
                     else:
                         job['env_vars'][ename] = value
 
