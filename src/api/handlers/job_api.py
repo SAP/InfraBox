@@ -13,7 +13,7 @@ import requests
 
 from flask import jsonify, request, send_file, g, after_this_request, abort
 from api.handlers.projects.vault import Secret
-from flask_restx import Resource,reqparse
+from flask_restx import Resource
 
 from werkzeug.datastructures import FileStorage
 
