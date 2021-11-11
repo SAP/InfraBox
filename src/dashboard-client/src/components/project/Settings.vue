@@ -12,11 +12,11 @@
         <md-layout md-column md-gutter md-flex-xsmall="100" md-flex-small="50" md-flex-medium="50" md-flex-large="50" md-flex-xlarge="50">
             <ib-project-sshkeys :project="project"></ib-project-sshkeys>
         </md-layout>
-        <md-layout md-column md-gutter md-flex-xsmall="100" md-flex-small="50" md-flex-medium="50" md-flex-large="50" md-flex-xlarge="50">
-            <ib-Vault :project="project"></ib-Vault>
-         </md-layout>
         <md-layout v-if="project.userHasOwnerRights()" md-column md-gutter md-flex-xsmall="100" md-flex-small="50" md-flex-medium="50" md-flex-large="50" md-flex-xlarge="50">
             <ib-project-visibility :project="project"></ib-project-visibility>
+        </md-layout>
+        <md-layout md-column md-gutter md-flex-xsmall="100" md-flex-small="100" md-flex-medium="100" md-flex-large="100" md-flex-xlarge="100">
+            <ib-Vault :project="project"></ib-Vault>
         </md-layout>
         <md-layout md-column md-gutter md-flex-xsmall="100" md-flex-small="100" md-flex-medium="100" md-flex-large="100" md-flex-xlarge="100">
             <ib-project-cronjobs :project="project"></ib-project-cronjobs>
