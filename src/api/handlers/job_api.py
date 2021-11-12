@@ -29,10 +29,8 @@ from pyinfraboxutils.storage import storage
 from pyinfraboxutils.secrets import decrypt_secret
 from pyinfraboxutils import get_root_url
 
-
 def allowed_file(filename, extensions):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in extensions
-
 
 def delete_file(path):
     if os.path.exists(path):
@@ -40,7 +38,6 @@ def delete_file(path):
             os.remove(path)
         except Exception as error:
             app.logger.warn("Failed to delete file: %s", error)
-
 
 def get_auth_type(res):
     token, role_id, secret_id = res[2], res[5], res[6]
@@ -256,7 +253,6 @@ class Job(Resource):
         ''', [data['project']['id']])
 
         is_fork = data['job'].get('fork', False)
-
         def get_secret(name):
             if is_fork:
                 abort(400, 'Access to secret %s is not allowed from a fork' % name)
@@ -429,7 +425,6 @@ class Job(Resource):
 
         return jsonify(data)
 
-
 @api.route("/api/job/source", doc=False)
 class Source(Resource):
 
@@ -450,6 +445,7 @@ class Source(Resource):
                 b.project_id = %s AND
                 j.project_id = %s
         ''', [job_id, project_id, project_id])
+
 
         filename = r[0]
         filename = filename.replace('/', '_')
@@ -536,7 +532,6 @@ class Archive(Resource):
 
         return jsonify({"message": "File uploaded"})
 
-
 @api.route("/api/job/output", doc=False)
 class Output(Resource):
 
@@ -604,7 +599,6 @@ class Output(Resource):
                     abort(500, "Failed to upload data")
 
             return jsonify({})
-
 
 @api.route("/api/job/output/<parent_job_id>", doc=False)
 class OutputParent(Resource):
@@ -674,7 +668,6 @@ class OutputParent(Resource):
 
         return send_file(f, attachment_filename=filename)
 
-
 def find_leaf_jobs(jobs):
     parent_jobs = {}
     leaf_jobs = []
@@ -688,7 +681,6 @@ def find_leaf_jobs(jobs):
             leaf_jobs.append(j)
 
     return leaf_jobs
-
 
 @api.route("/api/job/create_jobs", doc=False)
 class CreateJobs(Resource):
@@ -1046,7 +1038,6 @@ class CreateJobs(Resource):
         g.db.commit()
         return "Successfully create jobs"
 
-
 @api.route("/api/job/stats", doc=False)
 class Stats(Resource):
 
@@ -1074,7 +1065,6 @@ class Stats(Resource):
 
         return jsonify({})
 
-
 def insert(c, cols, rows, table):
     cursor = c.cursor()
     cols_str = ','.join(cols)
@@ -1089,7 +1079,6 @@ def insert(c, cols, rows, table):
     stmt = "INSERT INTO \"%s\" (%s) VALUES %s" % (table, cols_str, arg_str)
     cursor.execute(stmt)
     cursor.close()
-
 
 @api.route("/api/job/markup", doc=False)
 class Markup(Resource):
@@ -1144,7 +1133,6 @@ class Markup(Resource):
 
         return jsonify({})
 
-
 @api.route("/api/job/badge", doc=False)
 class Badge(Resource):
 
@@ -1195,7 +1183,6 @@ class Badge(Resource):
             g.db.commit()
 
         return jsonify({})
-
 
 @api.route("/api/job/testresult", doc=False)
 class Testresult(Resource):
