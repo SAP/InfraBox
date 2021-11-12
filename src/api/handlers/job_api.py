@@ -1065,6 +1065,7 @@ class Stats(Resource):
 
         return jsonify({})
 
+    
 def insert(c, cols, rows, table):
     cursor = c.cursor()
     cols_str = ','.join(cols)
