@@ -40,6 +40,9 @@ class Tokens(Resource):
     @api.expect(project_vault_model)
     def post(self, project_id):
         b = request.get_json()
+        if not b['token']:
+            if not b['role_id'] or not b['secret_id']:
+                abort(400, "Invalid Vault format")
         g.db.execute('''
                     INSERT INTO vault (project_id, name, url, namespace, version, token, ca ,role_id ,secret_id) VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s)
                 ''', [project_id, b['name'], b['url'], b['namespace'], b['version'], b['token'], b['ca'], b['role_id'], b['secret_id']])
