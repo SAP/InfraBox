@@ -42,7 +42,7 @@ def delete_file(path):
             app.logger.warn("Failed to delete file: %s", error)
 
 
-def validateway(res):
+def get_auth_type(res):
     token, role_id, secret_id = res[2], res[5], res[6]
     if token:
         validate_res = 'token'
@@ -305,8 +305,7 @@ class Job(Resource):
                     secret = get_secret(secret_access_key_name)
 
                     if secret is None:
-                        abort(400, "Secret %s not found" %
-                              secret_access_key_name)
+                        abort(400, "Secret %s not found" % secret_access_key_name)
 
                     dep['secret_access_key'] = secret
                     data['deployments'].append(dep)
@@ -354,8 +353,7 @@ class Job(Resource):
                     secret = get_secret(secret_access_key_name)
 
                     if secret is None:
-                        abort(400, "Secret %s not found" %
-                              secret_access_key_name)
+                        abort(400, "Secret %s not found" % secret_access_key_name)
 
                     r['secret_access_key'] = secret
                     data['registries'].append(r)
@@ -600,8 +598,7 @@ class Output(Resource):
                 files = {f: stream}
                 token = encode_job_token(job_id)
                 headers = {'Authorization': 'bearer ' + token}
-                r = requests.post(url, files=files,
-                                  headers=headers, timeout=120, verify=False)
+                r = requests.post(url, files=files, headers=headers, timeout=120, verify=False)
 
                 if r.status_code != 200:
                     app.logger.error(r.text)
@@ -662,8 +659,7 @@ class OutputParent(Resource):
 
         token = encode_job_token(job_id)
         headers = {'Authorization': 'token ' + token}
-        url = '%s/api/job/output/%s?filename=%s' % (
-            c['root_url'], parent_job_id, filename)
+        url = '%s/api/job/output/%s?filename=%s' % (c['root_url'], parent_job_id, filename)
 
         try:
             r = requests.get(url, headers=headers, timeout=120, verify=False)
@@ -736,8 +732,7 @@ class CreateJobs(Resource):
                         SELECT cpu_capacity, memory_capacity FROM cluster WHERE name = %s
                     ''', [preferred_cluster])
                     if not r:
-                        app.logger.warn(
-                            "No such a cluster named: {}".format(preferred_cluster))
+                        app.logger.warn("No such a cluster named: {}".format(preferred_cluster))
                     else:
                         cpu_request = max(
                             0.3, j['resources']['limits']['cpu'] / 2.0)
@@ -745,16 +740,14 @@ class CreateJobs(Resource):
                         if r['cpu_capacity'] >= cpu_request and r['memory_capacity'] >= memory_request:
                             target_cluster = preferred_cluster
                         else:
-                            app.logger.info("""Could not use the preferred cluster as lack of resources. Request: {} CPU, {} Memory, Capacity: {} CPU, {} MEMORY'""".format(
-                                cpu_request, memory_request, r['cpu_capacity'], r['memory_capacity']))
+                            app.logger.info("""Could not use the preferred cluster as lack of resources. Request: {} CPU, {} Memory, Capacity: {} CPU, {} MEMORY'""".format(cpu_request, memory_request, r['cpu_capacity'], r['memory_capacity']))
 
                 if not target_cluster:
                     parent_jobs = j.get('depends_on', [])
                     if parent_jobs:
                         # use the parent cluster if it has a parent job
                         for d in parent_jobs:
-                            target_cluster = assigned_clusters.get(
-                                d['job'], None)
+                            target_cluster = assigned_clusters.get(d['job'], None)
                             break
                     else:
                         # use the cluster which has more resources  if it has not a parent job
@@ -774,8 +767,7 @@ class CreateJobs(Resource):
 
             if not target_cluster:
                 # find a cluster with the selector
-                target_cluster = self.get_target_cluster(
-                    clusters, cluster_selector)
+                target_cluster = self.get_target_cluster(clusters, cluster_selector)
 
             if not target_cluster:
                 abort(400, 'Could not find a cluster which could satisfy the selector: %s' %
@@ -877,8 +869,7 @@ class CreateJobs(Resource):
                             """, [env_var_ref_name, project_id])
 
                             if not result:
-                                abort(400, "Secret '%s' not found" %
-                                      env_var_ref_name)
+                                abort(400, "Secret '%s' not found" % env_var_ref_name)
 
                             if not job['env_var_refs']:
                                 job['env_var_refs'] = {}
@@ -894,11 +885,9 @@ class CreateJobs(Resource):
                             """, [name, project_id])
 
                             if not result:
-                                abort(400, "Cannot get Vault '%s' in project '%s' " % (
-                                    name, project_id))
+                                abort(400, "Cannot get Vault '%s' in project '%s' " % (name, project_id))
 
-                            url, version, token, ca, namespace, role_id, secret_id = result[
-                                0], result[1], result[2], result[3], result[4], result[5], result[6]
+                            url, version, token, ca, namespace, role_id, secret_id = result[0], result[1], result[2], result[3], result[4], result[5], result[6]
                             if not namespace:
                                 namespace = ''
                             if version == 'v1':
@@ -908,9 +897,9 @@ class CreateJobs(Resource):
                                 url += '/v1/' + namespace + '/' + \
                                     paths[0] + '/data/' + '/'.join(paths[1:])
                             # choose validate way
-                            validate_res = validateway(result)
+                            validate_res = get_auth_type(result)
                             if validate_res == 'token':
-                                print ('validate way is token')
+                                print('validate way is token')
                             elif validate_res == 'appRole':
                                 data = {}
                                 data['role_id'] = role_id
@@ -927,30 +916,25 @@ class CreateJobs(Resource):
                                     abort(400, "Getting value from vault error: url is '%s', validate way is appRole " % (
                                         url))
                             else:
-                                abort(400, "Validate way is '%s' ! result is '%s' " % (
-                                    validate_res, result))
+                                abort(400, "Validate way is '%s' ! result is '%s' " % (validate_res, result))
 
                             if not ca:
                                 res = requests.get(url=url, headers={
-                                                    'X-Vault-Token': token}, verify=False)
+                                    'X-Vault-Token': token}, verify=False)
                             else:
                                 with tempfile.NamedTemporaryFile(delete=False) as f:
                                     f.write(ca)
                                     f.flush()  # ensure all data written
-                                    res = requests.get(url=url, headers={
-                                                        'X-Vault-Token': token}, verify=f.name)
+                                    res = requests.get(url=url, headers={'X-Vault-Token': token}, verify=f.name)
                             if res.status_code == 200:
                                 json_res = json.loads(res.content)
                                 if json_res['data'].get('data') and isinstance(json_res['data'].get('data'), dict):
-                                    value = json_res['data'].get(
-                                        'data').get(secret_key)
+                                    value = json_res['data'].get('data').get(secret_key)
                                 else:
-                                    value = json_res['data'].get(
-                                        secret_key)
+                                    value = json_res['data'].get(secret_key)
                                 job['env_vars'][ename] = value
                             else:
-                                abort(400, "Getting value from vault error: url is '%s', token is '%s' " % (
-                                    url, result))
+                                abort(400, "Getting value from vault error: url is '%s', token is '%s' " % (url, result))
                     else:
                         job['env_vars'][ename] = value
 
@@ -1000,8 +984,7 @@ class CreateJobs(Resource):
                 for dep in depends_on:
                     dep['job-id'] = jobname_id[dep['job']]
             else:
-                depends_on = [{"job": g.token['job']['name'],
-                               "job-id": parent_job_id, "on": ["finished"]}]
+                depends_on = [{"job": g.token['job']['name'], "job-id": parent_job_id, "on": ["finished"]}]
 
             if job_type == "docker":
                 f = job['docker_file']
@@ -1088,8 +1071,7 @@ class Stats(Resource):
             avg_cpu = round(s/c/100, 2)
 
         try:
-            g.db.execute("UPDATE job SET stats = %s, avg_cpu = %s WHERE id = %s", [
-                         json.dumps(stats), avg_cpu, job_id])
+            g.db.execute("UPDATE job SET stats = %s, avg_cpu = %s WHERE id = %s", [json.dumps(stats), avg_cpu, job_id])
             g.db.commit()
         except:
             pass
@@ -1310,8 +1292,7 @@ class Testresult(Resource):
                 ))
 
         if measurements:
-            insert(g.db.conn, ("test_run_id", "name", "unit", "value",
-                   "project_id"), measurements, 'measurement')
+            insert(g.db.conn, ("test_run_id", "name", "unit", "value", "project_id"), measurements, 'measurement')
 
         insert(g.db.conn, ("id", "state", "job_id", "duration",
                            "project_id", "message", "stack", "name", "suite"), test_runs, 'test_run')
