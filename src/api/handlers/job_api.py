@@ -363,8 +363,7 @@ class Job(Resource):
         root_url = get_root_url("global")
 
         # Default env vars
-        project_name = urllib.quote_plus(
-            data['project']['name']).replace('+', '%20')
+        project_name = urllib.quote_plus(data['project']['name']).replace('+', '%20')
         job_name = urllib.quote_plus(data['job']['name']).replace('+', '%20')
         build_url = "%s/dashboard/#/project/%s/build/%s/%s" % (root_url,
                                                                project_name,
@@ -734,8 +733,7 @@ class CreateJobs(Resource):
                     if not r:
                         app.logger.warn("No such a cluster named: {}".format(preferred_cluster))
                     else:
-                        cpu_request = max(
-                            0.3, j['resources']['limits']['cpu'] / 2.0)
+                        cpu_request = max(0.3, j['resources']['limits']['cpu'] / 2.0)
                         memory_request = j['resources']['limits']['memory']
                         if r['cpu_capacity'] >= cpu_request and r['memory_capacity'] >= memory_request:
                             target_cluster = preferred_cluster
@@ -894,8 +892,7 @@ class CreateJobs(Resource):
                                 url += '/v1/' + namespace + '/' + secret_path
                             elif version == 'v2':
                                 paths = secret_path.split('/')
-                                url += '/v1/' + namespace + '/' + \
-                                    paths[0] + '/data/' + '/'.join(paths[1:])
+                                url += '/v1/' + namespace + '/' + paths[0] + '/data/' + '/'.join(paths[1:])
                             # choose validate way
                             validate_res = get_auth_type(result)
                             if validate_res == 'token':
@@ -919,8 +916,7 @@ class CreateJobs(Resource):
                                 abort(400, "Validate way is '%s' ! result is '%s' " % (validate_res, result))
 
                             if not ca:
-                                res = requests.get(url=url, headers={
-                                    'X-Vault-Token': token}, verify=False)
+                                res = requests.get(url=url, headers={'X-Vault-Token': token}, verify=False)
                             else:
                                 with tempfile.NamedTemporaryFile(delete=False) as f:
                                     f.write(ca)
