@@ -928,7 +928,8 @@ class CreateJobs(Resource):
                                     abort(400, "Getting value from vault error: url is '%s', validate way is appRole " % (
                                         url))
                             else:
-                                abort(400, "Validate way error ! " )
+                                abort(400, "Validate way is '%s' ! result is '%s' " % (
+                                    validate_res, result))
 
                             if not ca:
                                 res = requests.get(url=url, headers={
