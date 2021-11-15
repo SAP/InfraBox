@@ -31,11 +31,19 @@
                             </md-input-container>
                             <md-input-container class="m-l-sm">
                               <label>Token</label>
-                              <md-textarea v-model="token" required></md-textarea>
+                              <md-textarea v-model="token"></md-textarea>
                             </md-input-container>
                             <md-input-container class="m-l-sm">
                                 <label>CA</label>
                                 <md-textarea v-model="ca"></md-textarea>
+                            </md-input-container>
+                            <md-input-container class="m-l-sm">
+                                <label>RoleId</label>
+                                <md-textarea v-model="role_id"></md-textarea>
+                            </md-input-container>
+                            <md-input-container class="m-l-sm">
+                                <label>SecretId</label>
+                                <md-textarea v-model="secret_id"></md-textarea>
                             </md-input-container>
                             <md-button class="md-icon-button md-list-action" @click="addVault()">
                                 <md-icon md-theme="running" class="md-primary">add_circle</md-icon>
@@ -70,7 +78,9 @@ export default {
         namespace: '',
         version: '',
         token: '',
-        ca: ''
+        ca: '',
+        role_id: '',
+        secret_id: ''
     }),
     created () {
         this.project._loadVault()
@@ -87,7 +97,7 @@ export default {
                 })
         },
         addVault () {
-            const d = { name: this.name, url: this.url, namespace: this.namespace, version: this.version, token: this.token, ca: this.ca }
+            const d = { name: this.name, url: this.url, namespace: this.namespace, version: this.version, token: this.token, ca: this.ca, role_id: this.role_id, secret_id: this.secret_id }
             NewAPIService.post(`projects/${this.project.id}/vault`, d)
                 .then((response) => {
                     NotificationService.$emit('NOTIFICATION', new Notification(response))
@@ -97,6 +107,8 @@ export default {
                     this.version = ''
                     this.token = ''
                     this.ca = ''
+                    this.role_id = ''
+                    this.secret_id = ''
                     this.project._reloadVault()
                 })
                 .catch((err) => {
