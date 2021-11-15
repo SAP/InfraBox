@@ -895,8 +895,7 @@ class CreateJobs(Resource):
                                 data['secret_id'] = secret_id
                                 json_data = json.dumps(data)
                                 approle_url = result[0]+ '/v1/' + namespace + '/auth/approle/login'
-                                res = requests.post(
-                                    url=approle_url, data=json_data, verify=False)
+                                res = requests.post(url=approle_url, data=json_data, verify=False)
                                 if res.status_code == 200:
                                     json_res = json.loads(res.content)
                                     token = json_res['auth']['client_token']
