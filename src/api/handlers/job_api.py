@@ -888,22 +888,20 @@ class CreateJobs(Resource):
                             # choose validate way
                             validate_res = get_auth_type(result)
                             if validate_res == 'token':
-                                print('validate way is token')
+                                app.logger.info('validate way is token')
                             elif validate_res == 'appRole':
                                 data = {}
                                 data['role_id'] = role_id
                                 data['secret_id'] = secret_id
                                 json_data = json.dumps(data)
-                                approle_url = result[0]+'/v1/' + \
-                                    namespace + '/auth/approle/login'
+                                approle_url = result[0]+ '/v1/' + namespace + '/auth/approle/login'
                                 res = requests.post(
                                     url=approle_url, data=json_data, verify=False)
                                 if res.status_code == 200:
                                     json_res = json.loads(res.content)
                                     token = json_res['auth']['client_token']
                                 else:
-                                    abort(400, "Getting value from vault error: url is '%s', validate way is appRole " % (
-                                        url))
+                                    abort(400, "Getting value from vault error: url is '%s', validate way is appRole " % (url))
                             else:
                                 abort(400, "Validate way is '%s' ! result is '%s' " % (validate_res, result))
 
