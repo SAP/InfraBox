@@ -39,17 +39,6 @@ def delete_file(path):
         except Exception as error:
             app.logger.warn("Failed to delete file: %s", error)
 
-def get_auth_type(res):
-    token, role_id, secret_id = res[2], res[5], res[6]
-    if token:
-        validate_res = 'token'
-    else:
-        # validate appRole
-        validate_res = 'appRole'
-        if not role_id or not secret_id:
-            validate_res = 'error'
-    return validate_res
-
 
 @api.route("/api/job/job", doc=False)
 class Job(Resource):
@@ -253,14 +242,94 @@ class Job(Resource):
         ''', [data['project']['id']])
 
         is_fork = data['job'].get('fork', False)
-        def get_secret(name):
-            if is_fork:
-                abort(400, 'Access to secret %s is not allowed from a fork' % name)
 
-            for ev in secrets:
-                if ev[0] == name:
-                    return decrypt_secret(ev[1])
-            return None
+        def get_secret_type(name):
+            try:
+                json.loads(name)
+                return 'vault'
+            except ValueError:
+                return 'secret'
+
+        def get_auth_type(res):
+            token, role_id, secret_id = res[2], res[5], res[6]
+            if token:
+                validate_res = 'token'
+            else:
+                # validate appRole
+                validate_res = 'appRole'
+                if not role_id or not secret_id:
+                    validate_res = 'error'
+            return validate_res
+
+        def get_secret(name, project_id=None):
+            secret_type = get_secret_type(name)
+            if secret_type == 'vault':
+                vault = json.loads(name)
+                name = vault['$vault']
+                secret_path = vault['$vault_secret_path']
+                secret_key = vault['$vault_secret_key']
+
+                if not project_id:
+                    abort(400, "project_id is essential for getting Vault '%s' " % (name, project_id))
+
+                result = g.db.execute_one("""
+                  SELECT url, version, token, ca, namespace, role_id, secret_id FROM vault WHERE name = %s and project_id = %s
+                """, [name, project_id])
+
+                if not result:
+                    abort(400, "Cannot get Vault '%s' in project '%s' " % (name, project_id))
+
+                url, version, token, ca, namespace, role_id, secret_id = result[0], result[1], result[2], result[3], result[4], result[5], result[6]
+                if not namespace:
+                    namespace = ''
+                if version == 'v1':
+                    url += '/v1/' + namespace + '/' + secret_path
+                elif version == 'v2':
+                    paths = secret_path.split('/')
+                    url += '/v1/' + namespace + '/' + paths[0] + '/data/' + '/'.join(paths[1:])
+                # choose validate way
+                validate_res = get_auth_type(result)
+                if validate_res == 'token':
+                    app.logger.info('validate way is token')
+                elif validate_res == 'appRole':
+                    data = {}
+                    data['role_id'] = role_id
+                    data['secret_id'] = secret_id
+                    json_data = json.dumps(data)
+                    approle_url = result[0] + '/v1/' + namespace + '/auth/approle/login'
+                    res = requests.post(url=approle_url, data=json_data, verify=False)
+                    if res.status_code == 200:
+                        json_res = json.loads(res.content)
+                        token = json_res['auth']['client_token']
+                    else:
+                        abort(400, "Getting value from vault error: url is '%s', validate way is appRole " % (url))
+                else:
+                    abort(400, "Validate way is '%s' ! result is '%s' " % (validate_res, result))
+
+                if not ca:
+                    res = requests.get(url=url, headers={'X-Vault-Token': token}, verify=False)
+                else:
+                    with tempfile.NamedTemporaryFile(delete=False) as f:
+                        f.write(ca)
+                        f.flush()  # ensure all data written
+                        res = requests.get(url=url, headers={'X-Vault-Token': token}, verify=f.name)
+                if res.status_code == 200:
+                    json_res = json.loads(res.content)
+                    if json_res['data'].get('data') and isinstance(json_res['data'].get('data'), dict):
+                        value = json_res['data'].get('data').get(secret_key)
+                    else:
+                        value = json_res['data'].get(secret_key)
+                    return value
+                else:
+                    abort(400, "Getting value from vault error: url is '%s', token is '%s' " % (url, result))
+            else:
+                if is_fork:
+                    abort(400, 'Access to secret %s is not allowed from a fork' % name)
+
+                for ev in secrets:
+                    if ev[0] == name:
+                        return decrypt_secret(ev[1])
+                return None
 
         # Deployments
         data['deployments'] = []
@@ -416,7 +485,7 @@ class Job(Resource):
 
         if env_var_refs:
             for name, value in env_var_refs.iteritems():
-                secret = get_secret(value)
+                secret = get_secret(value, data['project']['id'])
 
                 if secret is None:
                     abort(400, "Secret %s not found" % value)
@@ -866,60 +935,8 @@ class CreateJobs(Resource):
 
                             job['env_var_refs'][ename] = env_var_ref_name
 
-                        if '$vault' in value and '$vault_secret_path' in value and "$vault_secret_key" in value:
-                            name = value['$vault']
-                            secret_path = value['$vault_secret_path']
-                            secret_key = value['$vault_secret_key']
-                            result = g.db.execute_one("""
-                                SELECT url,version,token,ca,namespace,role_id,secret_id FROM vault WHERE name = %s and project_id = %s
-                            """, [name, project_id])
-
-                            if not result:
-                                abort(400, "Cannot get Vault '%s' in project '%s' " % (name, project_id))
-
-                            url, version, token, ca, namespace, role_id, secret_id = result[0], result[1], result[2], result[3], result[4], result[5], result[6]
-                            if not namespace:
-                                namespace = ''
-                            if version == 'v1':
-                                url += '/v1/' + namespace + '/' + secret_path
-                            elif version == 'v2':
-                                paths = secret_path.split('/')
-                                url += '/v1/' + namespace + '/' + paths[0] + '/data/' + '/'.join(paths[1:])
-                            # choose validate way
-                            validate_res = get_auth_type(result)
-                            if validate_res == 'token':
-                                app.logger.info('validate way is token')
-                            elif validate_res == 'appRole':
-                                data = {}
-                                data['role_id'] = role_id
-                                data['secret_id'] = secret_id
-                                json_data = json.dumps(data)
-                                approle_url = result[0]+ '/v1/' + namespace + '/auth/approle/login'
-                                res = requests.post(url=approle_url, data=json_data, verify=False)
-                                if res.status_code == 200:
-                                    json_res = json.loads(res.content)
-                                    token = json_res['auth']['client_token']
-                                else:
-                                    abort(400, "Getting value from vault error: url is '%s', validate way is appRole " % (url))
-                            else:
-                                abort(400, "Validate way is '%s' ! result is '%s' " % (validate_res, result))
-
-                            if not ca:
-                                res = requests.get(url=url, headers={'X-Vault-Token': token}, verify=False)
-                            else:
-                                with tempfile.NamedTemporaryFile(delete=False) as f:
-                                    f.write(ca)
-                                    f.flush()  # ensure all data written
-                                    res = requests.get(url=url, headers={'X-Vault-Token': token}, verify=f.name)
-                            if res.status_code == 200:
-                                json_res = json.loads(res.content)
-                                if json_res['data'].get('data') and isinstance(json_res['data'].get('data'), dict):
-                                    value = json_res['data'].get('data').get(secret_key)
-                                else:
-                                    value = json_res['data'].get(secret_key)
-                                job['env_vars'][ename] = value
-                            else:
-                                abort(400, "Getting value from vault error: url is '%s', token is '%s' " % (url, result))
+                        if '$vault' in value:
+                            job['env_var_refs'][ename] = json.dumps(value)
                     else:
                         job['env_vars'][ename] = value
 
