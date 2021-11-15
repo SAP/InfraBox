@@ -15,8 +15,11 @@ project_vault_model = api.model('VaultService', {
     'version': fields.String(required=True),
     'token': fields.String(required=True),
     'ca': fields.String(required=False),
+    'role_id': fields.String(required=False),
+    'secret_id': fields.String(required=False),
     'id': fields.String(required=False)
 })
+
 
 @ns.route('/')
 @api.doc(responses={403: 'Not Authorized'})
@@ -28,7 +31,7 @@ class Tokens(Resource):
         Returns project's vault service
         '''
         v = g.db.execute_many_dict('''
-            SELECT id, name, url, namespace, version, token, ca
+            SELECT id, name, url, namespace, version, token, ca, role_id, secret_id
             FROM vault
             WHERE project_id = %s
         ''', [project_id])
@@ -37,9 +40,12 @@ class Tokens(Resource):
     @api.expect(project_vault_model)
     def post(self, project_id):
         b = request.get_json()
+        if not b['token']:
+            if not b['role_id'] or not b['secret_id']:
+                abort(400, "Invalid Vault format")
         g.db.execute('''
-                    INSERT INTO vault (project_id, name, url, namespace, version, token, ca) VALUES(%s, %s, %s, %s, %s, %s, %s)
-                ''', [project_id, b['name'], b['url'], b['namespace'], b['version'], b['token'], b['ca']])
+                    INSERT INTO vault (project_id, name, url, namespace, version, token, ca, role_id, secret_id) VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                ''', [project_id, b['name'], b['url'], b['namespace'], b['version'], b['token'], b['ca'], b['role_id'], b['secret_id']])
         g.db.commit()
         return OK('Successfully added vault.')
 
