@@ -270,7 +270,7 @@ class Job(Resource):
                 secret_key = vault['$vault_secret_key']
 
                 if not project_id:
-                    abort(400, "project_id is essential for getting Vault '%s' " % (name, project_id))
+                    abort(400, "project_id is essential for getting Vault '%s' " % name)
 
                 result = g.db.execute_one("""
                   SELECT url, version, token, ca, namespace, role_id, secret_id FROM vault WHERE name = %s and project_id = %s
