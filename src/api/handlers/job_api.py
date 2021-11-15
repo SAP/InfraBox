@@ -265,19 +265,19 @@ class Job(Resource):
             secret_type = get_secret_type(name)
             if secret_type == 'vault':
                 vault = json.loads(name)
-                name = vault['$vault']
+                vault_name = vault['$vault']
                 secret_path = vault['$vault_secret_path']
                 secret_key = vault['$vault_secret_key']
 
                 if not project_id:
-                    abort(400, "project_id is essential for getting Vault '%s' " % name)
+                    abort(400, "project_id is essential for getting Vault: '%s' " % vault_name)
 
                 result = g.db.execute_one("""
                   SELECT url, version, token, ca, namespace, role_id, secret_id FROM vault WHERE name = %s and project_id = %s
                 """, [name, project_id])
 
                 if not result:
-                    abort(400, "Cannot get Vault '%s' in project '%s' " % (name, project_id))
+                    abort(400, "Cannot get Vault '%s' in project '%s' " % (vault_name, project_id))
 
                 url, version, token, ca, namespace, role_id, secret_id = result[0], result[1], result[2], result[3], result[4], result[5], result[6]
                 if not namespace:
@@ -292,12 +292,10 @@ class Job(Resource):
                 if validate_res == 'token':
                     app.logger.info('validate way is token')
                 elif validate_res == 'appRole':
-                    data = {}
-                    data['role_id'] = role_id
-                    data['secret_id'] = secret_id
-                    json_data = json.dumps(data)
-                    approle_url = result[0] + '/v1/' + namespace + '/auth/approle/login'
-                    res = requests.post(url=approle_url, data=json_data, verify=False)
+                    app_role = {'role_id': role_id, 'secret_id': secret_id}
+                    json_data = json.dumps(app_role)
+                    app_role_url = result[0] + '/v1/' + namespace + '/auth/approle/login'
+                    res = requests.post(url=app_role_url, data=json_data, verify=False)
                     if res.status_code == 200:
                         json_res = json.loads(res.content)
                         token = json_res['auth']['client_token']
