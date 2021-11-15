@@ -934,6 +934,9 @@ class CreateJobs(Resource):
                             job['env_var_refs'][ename] = env_var_ref_name
 
                         if '$vault' in value:
+                            if not job['env_var_refs']:
+                                job['env_var_refs'] = {}
+
                             job['env_var_refs'][ename] = json.dumps(value)
                     else:
                         job['env_vars'][ename] = value
