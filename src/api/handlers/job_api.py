@@ -274,7 +274,7 @@ class Job(Resource):
 
                 result = g.db.execute_one("""
                   SELECT url, version, token, ca, namespace, role_id, secret_id FROM vault WHERE name = %s and project_id = %s
-                """, [name, project_id])
+                """, [vault_name, project_id])
 
                 if not result:
                     abort(400, "Cannot get Vault '%s' in project '%s' " % (vault_name, project_id))
