@@ -240,6 +240,7 @@ class Trigger(object):
                         project_id, branch)
 
     def handle_push(self, event):
+        logger.info("PUSH event: {}".format(event))
         result = self.execute('''
             SELECT project_id FROM repository WHERE github_id = %s;
         ''', [event['repository']['id']])[0]
@@ -282,6 +283,7 @@ class Trigger(object):
 
 
     def handle_pull_request(self, event):
+        logger.info("PULL REQUEST event: {}".format(event))
         if event['action'] not in ['opened', 'reopened', 'synchronize']:
             return res(200, 'action ignored')
 
