@@ -373,7 +373,7 @@ class Trigger(object):
             "GITHUB_REPOSITORY_FULL_NAME": event['repository']['full_name'],
             "GITHUB_PULL_REQUEST_LABELS": getLabelsName(event),
             "GITHUB_PULL_REQUEST_DRAFT": event['pull_request']['draft']
-            })
+        })
 
         author_email = 'unknown'
         author_login = 'unknown'
