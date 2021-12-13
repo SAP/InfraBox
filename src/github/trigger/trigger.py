@@ -365,15 +365,15 @@ class Trigger(object):
             return names
 
         env = json.dumps({
-                "GITHUB_PULL_REQUEST_NUMBER": event['pull_request']['number'],
-                "GITHUB_PULL_REQUEST_BASE_LABEL": event['pull_request']['base']['label'],
-                "GITHUB_PULL_REQUEST_BASE_REF": event['pull_request']['base']['ref'],
-                "GITHUB_PULL_REQUEST_BASE_SHA": event['pull_request']['base']['sha'],
-                "GITHUB_PULL_REQUEST_BASE_REPO_CLONE_URL": event['pull_request']['base']['repo']['clone_url'],
-                "GITHUB_REPOSITORY_FULL_NAME": event['repository']['full_name'],
-                "GITHUB_PULL_REQUEST_LABELS": getLabelsName(event),
-                "GITHUB_PULL_REQUEST_DRAFT": event['pull_request']['draft']
-                })
+            "GITHUB_PULL_REQUEST_NUMBER": event['pull_request']['number'],
+            "GITHUB_PULL_REQUEST_BASE_LABEL": event['pull_request']['base']['label'],
+            "GITHUB_PULL_REQUEST_BASE_REF": event['pull_request']['base']['ref'],
+            "GITHUB_PULL_REQUEST_BASE_SHA": event['pull_request']['base']['sha'],
+            "GITHUB_PULL_REQUEST_BASE_REPO_CLONE_URL": event['pull_request']['base']['repo']['clone_url'],
+            "GITHUB_REPOSITORY_FULL_NAME": event['repository']['full_name'],
+            "GITHUB_PULL_REQUEST_LABELS": getLabelsName(event),
+            "GITHUB_PULL_REQUEST_DRAFT": event['pull_request']['draft']
+            })
 
         author_email = 'unknown'
         author_login = 'unknown'
