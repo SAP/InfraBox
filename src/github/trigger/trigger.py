@@ -240,7 +240,6 @@ class Trigger(object):
                         project_id, branch)
 
     def handle_push(self, event):
-        logger.info("PUSH event: {}".format(event))
         result = self.execute('''
             SELECT project_id FROM repository WHERE github_id = %s;
         ''', [event['repository']['id']])[0]
@@ -283,7 +282,6 @@ class Trigger(object):
 
 
     def handle_pull_request(self, event):
-        logger.info("PULL REQUEST event: {}".format(event))
         if event['action'] not in ['opened', 'reopened', 'synchronize']:
             return res(200, 'action ignored')
 
@@ -355,6 +353,15 @@ class Trigger(object):
             committer_login = hc['committer']['login']
 
         branch = event['pull_request']['head']['ref']
+        
+        def getLabelsName(event):
+            names = []
+            for label in event['pull_request']['labels']:
+                for k,v in label.items():
+                    if k == 'name':
+                        names.append(v)
+                        break
+            return ','.join(names)
 
         env = json.dumps({
             "GITHUB_PULL_REQUEST_NUMBER": event['pull_request']['number'],
@@ -362,7 +369,9 @@ class Trigger(object):
             "GITHUB_PULL_REQUEST_BASE_REF": event['pull_request']['base']['ref'],
             "GITHUB_PULL_REQUEST_BASE_SHA": event['pull_request']['base']['sha'],
             "GITHUB_PULL_REQUEST_BASE_REPO_CLONE_URL": event['pull_request']['base']['repo']['clone_url'],
-            "GITHUB_REPOSITORY_FULL_NAME": event['repository']['full_name']
+            "GITHUB_REPOSITORY_FULL_NAME": event['repository']['full_name'],
+            "GITHUB_PULL_REQUEST_LABELS": getLabelsName(event),
+            "GITHUB_PULL_REQUEST_DRAFT": event['pull_request']['draft']
         })
 
         author_email = 'unknown'
