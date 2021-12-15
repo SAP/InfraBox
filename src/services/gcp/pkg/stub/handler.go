@@ -201,7 +201,7 @@ func createCluster(cr *v1alpha1.GKECluster, log *logrus.Entry) (*v1alpha1.GKEClu
     if beta {
         gcloud_cmd = "gcloud beta"
     }
-    cmd = exec.Command(gcloud_cmd , args...)
+    cmd := exec.Command(gcloud_cmd , args...)
     out, err := cmd.CombinedOutput()
 
     if err != nil {
