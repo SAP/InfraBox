@@ -149,7 +149,7 @@ func createCluster(cr *v1alpha1.GKECluster, log *logrus.Entry) (*v1alpha1.GKEClu
 
     if cr.Spec.EnablePodSecurityPolicy {
         args = append(args, "--enable-pod-security-policy")
-        beta = true
+        args = append([]string{"beta"}, args...)
     }
     if cr.Spec.NumNodes != 0 {
         args = append(args, "--num-nodes")
@@ -197,11 +197,8 @@ func createCluster(cr *v1alpha1.GKECluster, log *logrus.Entry) (*v1alpha1.GKEClu
         args = append(args, "--services-ipv4-cidr", cr.Spec.ServiceCidr)
     }
 
-    gcloud_cmd := "gcloud"
-    if beta {
-        gcloud_cmd = "gcloud beta"
-    }
-    cmd := exec.Command(gcloud_cmd , args...)
+
+    cmd := exec.Command("gcloud" , args...)
     out, err := cmd.CombinedOutput()
 
     if err != nil {
