@@ -27,6 +27,8 @@ spec:
               type: boolean
             disableLegacyAuthorization:
               type: boolean
+            enablePodSecurityPolicy:
+              type: boolean
             numNodes:
               type: integer
               minimum: 1
