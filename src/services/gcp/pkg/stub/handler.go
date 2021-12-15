@@ -147,7 +147,7 @@ func createCluster(cr *v1alpha1.GKECluster, log *logrus.Entry) (*v1alpha1.GKEClu
         args = append(args, "--enable-legacy-authorization")
     }
 
-    if !cr.Spec.EnablePodSecurityPolicy {
+    if cr.Spec.EnablePodSecurityPolicy {
         args = append(args, "--enable-pod-security-policy")
     }
     if cr.Spec.NumNodes != 0 {
