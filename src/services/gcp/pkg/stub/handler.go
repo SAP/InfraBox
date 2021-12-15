@@ -197,11 +197,11 @@ func createCluster(cr *v1alpha1.GKECluster, log *logrus.Entry) (*v1alpha1.GKEClu
         args = append(args, "--services-ipv4-cidr", cr.Spec.ServiceCidr)
     }
 
+    gcloud_cmd := "gcloud"
     if beta {
-        cmd := exec.Command("gcloud beta", args...)
-    } else {
-        cmd := exec.Command("gcloud", args...)
+        gcloud_cmd = "gcloud beta"
     }
+    cmd = exec.Command(gcloud_cmd , args...)
     out, err := cmd.CombinedOutput()
 
     if err != nil {
