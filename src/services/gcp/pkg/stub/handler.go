@@ -120,7 +120,7 @@ func createCluster(cr *v1alpha1.GKECluster, log *logrus.Entry) (*v1alpha1.GKEClu
     }
 
     log.Infof("Create GKE cluster %s", cr.Status.ClusterName)
-
+    beta := false
     args := []string{"container", "clusters",
         "create", cr.Status.ClusterName,
         "--async",
@@ -149,6 +149,7 @@ func createCluster(cr *v1alpha1.GKECluster, log *logrus.Entry) (*v1alpha1.GKEClu
 
     if cr.Spec.EnablePodSecurityPolicy {
         args = append(args, "--enable-pod-security-policy")
+        beta = true
     }
     if cr.Spec.NumNodes != 0 {
         args = append(args, "--num-nodes")
@@ -196,7 +197,11 @@ func createCluster(cr *v1alpha1.GKECluster, log *logrus.Entry) (*v1alpha1.GKEClu
         args = append(args, "--services-ipv4-cidr", cr.Spec.ServiceCidr)
     }
 
-    cmd := exec.Command("gcloud", args...)
+    if beta {
+        cmd := exec.Command("gcloud beta", args...)
+    } else {
+        cmd := exec.Command("gcloud", args...)
+    }
     out, err := cmd.CombinedOutput()
 
     if err != nil {

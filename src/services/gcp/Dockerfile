@@ -33,7 +33,8 @@ RUN apk --no-cache add \
     gcloud config set component_manager/disable_update_check true && \
     gcloud config set metrics/environment github_docker_image && \
     gcloud components install kubectl && \
-    gcloud --version
+    gcloud --version && \
+    gcloud components install beta
 
 WORKDIR /app
 COPY --from=build-env /go/src/github.com/sap/infrabox/src/services/gcp/tmp/_output/bin/gcp /app/gcp
