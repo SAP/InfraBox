@@ -120,7 +120,6 @@ func createCluster(cr *v1alpha1.GKECluster, log *logrus.Entry) (*v1alpha1.GKEClu
     }
 
     log.Infof("Create GKE cluster %s", cr.Status.ClusterName)
-    beta := false
     args := []string{"container", "clusters",
         "create", cr.Status.ClusterName,
         "--async",
