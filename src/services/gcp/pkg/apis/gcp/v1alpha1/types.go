@@ -20,6 +20,7 @@ type GKEClusterSpec struct {
         MachineType                string `json:"machineType,omitempty"`
         EnableNetworkPolicy        bool   `json:"enableNetworkPolicy,omitempty"`
         DisableLegacyAuthorization bool   `json:"disableLegacyAuthorization,omitempty"`
+        EnablePodSecurityPolicy    bool   `json:"enablePodSecurityPolicy,omitempty"`
         NumNodes                   int32  `json:"numNodes,omitempty"`
         Preemptible                bool   `json:"preemptible,omitempty"`
         EnableAutoscaling          bool   `json:"enableAutoscaling,omitempty"`
