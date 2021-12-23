@@ -20,7 +20,8 @@ The job type docker is one of the most important jobs. You can use it to run any
         "deployments": [ ... ],
         "security_context": { ... },
         "repository": { ... },
-        "registries": []
+        "registries": [],
+        "target": "specificstage"
     }]
 }
 ```
@@ -43,6 +44,7 @@ The job type docker is one of the most important jobs. You can use it to run any
 |security_context|false|[Security Context](#security-context)|[]|Configure security related options,|
 |repository|false|[Repository Configuration](/docs/job/repository.md)|{}|Configure git repository options.|
 |registries|false|[Source Registry Configuration](/docs/job/source_registry.md)|[]|Configure the source registries.|
+|target|false|string||Stop at a specific build stage when using a multi-stage Dockerfile. [Reference](https://docs.docker.com/develop/develop-images/multistage-build/#stop-at-a-specific-build-stage).|
 
 ## Build Arguments
 To set docker build arguments create an object with the names and values for `build_arguments`.
