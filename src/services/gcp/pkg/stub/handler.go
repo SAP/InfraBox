@@ -636,38 +636,53 @@ func getLabels(cr *v1alpha1.GKECluster) map[string]string {
     return map[string]string{}
 }
 
+type Channel struct {
+	Channel        string   `json:"channel"`
+	DefaultVersion string   `json:"defaultVersion"`
+	ValidVersions  []string `json:"validVersions"`
+}
+
 type ServerConfig struct {
-    ValidMasterVersions []string `json:"validMasterVersions"`
-    ValidNodeVersions   []string `json:"validNodeVersions"`
+	ValidMasterVersions []string  `json:"validMasterVersions"`
+	ValidNodeVersions   []string  `json:"validNodeVersions"`
+	Channels            []Channel `json:"channels"`
 }
 
 func getExactClusterVersion(cr *v1alpha1.GKECluster, log *logrus.Entry) (string, error) {
-    cmd := exec.Command("gcloud", "container", "get-server-config",
-        "--format", "json",
-        "--zone", cr.Spec.Zone)
+	cmd := exec.Command("gcloud", "container", "get-server-config",
+		"--format", "json",
+		"--zone", cr.Spec.Zone)
 
-    out, err := cmd.Output()
+	out, err := cmd.Output()
 
-    if err != nil {
-        log.Errorf("Could not get server config: %v", err)
-        return "", err
-    }
+	if err != nil {
+		log.Errorf("Could not get server config: %v", err)
+		return "", err
+	}
 
-    var config ServerConfig
-    err = json.Unmarshal(out, &config)
+	var config ServerConfig
+	err = json.Unmarshal(out, &config)
 
-    if err != nil {
-        log.Errorf("Could not parse cluster config: %v", err)
-        return "", err
-    }
+	if err != nil {
+		log.Errorf("Could not parse cluster config: %v", err)
+		return "", err
+	}
 
-    for _, v := range config.ValidMasterVersions {
-        if strings.HasPrefix(v, cr.Spec.ClusterVersion) {
-            return v, nil
-        }
-    }
+	for _, v := range config.ValidMasterVersions {
+		if strings.HasPrefix(v, cr.Spec.ClusterVersion) {
+			return v, nil
+		}
+	}
 
-    return "", fmt.Errorf("Could not find a valid cluster version match for %v", cr.Spec.ClusterVersion)
+	for _, c := range config.Channels {
+		for _, v := range c.ValidVersions {
+			if strings.HasPrefix(v, cr.Spec.ClusterVersion) {
+				return v, nil
+			}
+		}
+	}
+
+	return "", fmt.Errorf("Could not find a valid cluster version match for %v", cr.Spec.ClusterVersion)
 }
 
 func getRemoteCluster(name string, log *logrus.Entry) (*RemoteCluster, error) {
