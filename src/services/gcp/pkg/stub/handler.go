@@ -643,8 +643,8 @@ type Channel struct {
 }
 
 type ServerConfig struct {
-    ValidMasterVersions []string  `json:"validMasterVersions"`
-    ValidNodeVersions   []string  `json:"validNodeVersions"`
+    ValidMasterVersions []string `json:"validMasterVersions"`
+    ValidNodeVersions   []string `json:"validNodeVersions"`
     Channels            []Channel `json:"channels"`
 }
 
