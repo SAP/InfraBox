@@ -674,12 +674,12 @@ func getExactClusterVersion(cr *v1alpha1.GKECluster, log *logrus.Entry) (string,
     for _, c := range config.Channels {
         for _, v := range c.ValidVersions {
             if strings.HasPrefix(v, cr.Spec.ClusterVersion) {
-                return v,c.Channel, nil
+                return v, strings.ToLower(c.Channel), nil
             }
         }
     }
 
-    return "", "" , fmt.Errorf("Could not find a valid cluster version match for %v ", cr.Spec.ClusterVersion)
+    return "", "" , fmt.Errorf("Could not find a valid cluster version match for %v", cr.Spec.ClusterVersion)
 }
 
 func getRemoteCluster(name string, log *logrus.Entry) (*RemoteCluster, error) {
