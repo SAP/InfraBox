@@ -679,7 +679,7 @@ func getExactClusterVersion(cr *v1alpha1.GKECluster, log *logrus.Entry) (string,
         }
     }
 
-    return "", "" , fmt.Errorf("In %v, could not find a valid cluster version match for %v ", config ,cr.Spec.ClusterVersion)
+    return "", "" , fmt.Errorf("Could not find a valid cluster version match for %v ", cr.Spec.ClusterVersion)
 }
 
 func getRemoteCluster(name string, log *logrus.Entry) (*RemoteCluster, error) {
