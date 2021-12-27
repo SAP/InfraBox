@@ -184,7 +184,7 @@ func createCluster(cr *v1alpha1.GKECluster, log *logrus.Entry) (*v1alpha1.GKEClu
             channel = "stable"
         }
         args = append(args, "--cluster-version", version)
-        args = append(args, "--channel", channel)
+        args = append(args, "--release-channel", channel)
     }
 
     args = append(args, "--enable-ip-alias")
