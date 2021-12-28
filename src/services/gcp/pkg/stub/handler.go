@@ -671,6 +671,26 @@ func getExactClusterVersion(cr *v1alpha1.GKECluster, log *logrus.Entry) (string,
         return "", "", err
     }
 
+    if cr.Spec.ClusterVersion == "latest" {
+        version := "" //Store the latest available version
+        for _, c := range config.Channels {
+            if c.Channel == "RAPID" {
+                for i, v := range c.ValidVersions {
+                    if i == 0 {
+                        version = v
+                    } else {
+                        sliceVersion := strings.Split(version, ".")
+                        sliceV := strings.Split(v, ".") //Compare major version at first and then minor version
+                        if (sliceVersion[1] < sliceV[1]) || (sliceVersion[1] == sliceV[1] && sliceVersion[3] < sliceV[3]) {
+                            version = v
+                        }
+                    }
+                }
+                return version, strings.ToLower(c.Channel), nil
+            }
+        }
+    }
+
     for _, c := range config.Channels {
         for _, v := range c.ValidVersions {
             if strings.HasPrefix(v, cr.Spec.ClusterVersion) {
