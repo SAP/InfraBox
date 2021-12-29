@@ -31,7 +31,8 @@ The InfraBox GCP Service can be used to dynamically provision a Kubernetes Clust
                 "enableAutoscaling": false,
                 "maxNodes": 1,
                 "minNodes": 1,
-                "zone": "us-east1-b"
+                "zone": "us-east1-b",
+                "clusterVersion": "latest" //You can set the number of major version or just use the "latest", InfraBox will try to match the exact version
             }
         }]
     }]
