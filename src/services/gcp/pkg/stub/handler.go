@@ -175,13 +175,16 @@ func createCluster(cr *v1alpha1.GKECluster, log *logrus.Entry) (*v1alpha1.GKEClu
 
     if cr.Spec.ClusterVersion != "" {
         // find out the exact cluster version
-        version, err := getExactClusterVersion(cr, log)
+        version, channel, err := getExactClusterVersion(cr, log)
 
         if err != nil {
             return nil, err
         }
-
+        if channel == "" {
+            channel = "stable"
+        }
         args = append(args, "--cluster-version", version)
+        args = append(args, "--release-channel", channel)
     }
 
     args = append(args, "--enable-ip-alias")
@@ -636,12 +639,19 @@ func getLabels(cr *v1alpha1.GKECluster) map[string]string {
     return map[string]string{}
 }
 
+type Channel struct {
+    Channel        string   `json:"channel"`
+    DefaultVersion string   `json:"defaultVersion"`
+    ValidVersions  []string `json:"validVersions"`
+}
+
 type ServerConfig struct {
     ValidMasterVersions []string `json:"validMasterVersions"`
     ValidNodeVersions   []string `json:"validNodeVersions"`
+    Channels            []Channel `json:"channels"`
 }
 
-func getExactClusterVersion(cr *v1alpha1.GKECluster, log *logrus.Entry) (string, error) {
+func getExactClusterVersion(cr *v1alpha1.GKECluster, log *logrus.Entry) (string, string, error) {
     cmd := exec.Command("gcloud", "container", "get-server-config",
         "--format", "json",
         "--zone", cr.Spec.Zone)
@@ -650,7 +660,7 @@ func getExactClusterVersion(cr *v1alpha1.GKECluster, log *logrus.Entry) (string,
 
     if err != nil {
         log.Errorf("Could not get server config: %v", err)
-        return "", err
+        return "", "", err
     }
 
     var config ServerConfig
@@ -658,16 +668,38 @@ func getExactClusterVersion(cr *v1alpha1.GKECluster, log *logrus.Entry) (string,
 
     if err != nil {
         log.Errorf("Could not parse cluster config: %v", err)
-        return "", err
+        return "", "", err
     }
 
-    for _, v := range config.ValidMasterVersions {
-        if strings.HasPrefix(v, cr.Spec.ClusterVersion) {
-            return v, nil
+    if cr.Spec.ClusterVersion == "latest" {
+        version := "" //Store the latest available version
+        for _, c := range config.Channels {
+            if c.Channel == "RAPID" {
+                for i, v := range c.ValidVersions {
+                    if i == 0 {
+                        version = v
+                    } else {
+                        sliceVersion := strings.Split(version, ".")
+                        sliceV := strings.Split(v, ".") //Compare major version at first and then minor version
+                        if (sliceVersion[1] < sliceV[1]) || (sliceVersion[1] == sliceV[1] && sliceVersion[3] < sliceV[3]) {
+                            version = v
+                        }
+                    }
+                }
+                return version, strings.ToLower(c.Channel), nil
+            }
         }
     }
 
-    return "", fmt.Errorf("Could not find a valid cluster version match for %v", cr.Spec.ClusterVersion)
+    for _, c := range config.Channels {
+        for _, v := range c.ValidVersions {
+            if strings.HasPrefix(v, cr.Spec.ClusterVersion) {
+                return v, strings.ToLower(c.Channel), nil
+            }
+        }
+    }
+
+    return "", "" , fmt.Errorf("Could not find a valid cluster version match for %v", cr.Spec.ClusterVersion)
 }
 
 func getRemoteCluster(name string, log *logrus.Entry) (*RemoteCluster, error) {
