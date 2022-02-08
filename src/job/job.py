@@ -959,13 +959,7 @@ class RunJob(Job):
             cache_from = self.get_cached_image(cache_image)
             docker_file = os.path.normpath(os.path.join(self._get_build_context_current_job(),
                                                         self.job['dockerfile']))
-            if not self.job.get('enable_docker_build_kit', True): 
-                cmd = ['docker', 'build',
-                    '-t', image_name,
-                    '-f', docker_file,
-                    '.']
-            else:
-                cmd = ['DOCKER_BUILDKIT=1','docker', 'build',
+            cmd = ['docker', 'build',
                     '-t', image_name,
                     '-f', docker_file,
                     '.']
@@ -994,6 +988,11 @@ class RunJob(Job):
                 cmd += ['--cache-from', cache_image]
 
             cwd = self._get_build_context_current_job()
+
+            if  self.job.get('enable_docker_build_kit', True):
+                kit_cmd = ['export','DOCKER_BUILDKIT=1']
+                c.execute_mask(kit_cmd, cwd=cwd, show=True, mask=self.repository.get('github_api_token', None))
+
             c.execute_mask(cmd, cwd=cwd, show=True, mask=self.repository.get('github_api_token', None))
             self.cache_docker_image(image_name, cache_image)
         except Exception as e:
