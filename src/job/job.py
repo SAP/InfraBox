@@ -990,8 +990,7 @@ class RunJob(Job):
             cwd = self._get_build_context_current_job()
 
             if  self.job.get('enable_docker_build_kit', True):
-                kit_cmd = ['export','DOCKER_BUILDKIT=1']
-                c.execute_mask(kit_cmd, cwd=cwd, show=True, mask=self.repository.get('github_api_token', None))
+                os.environ['DOCKER_BUILDKIT'] = '1'
 
             c.execute_mask(cmd, cwd=cwd, show=True, mask=self.repository.get('github_api_token', None))
             self.cache_docker_image(image_name, cache_image)
