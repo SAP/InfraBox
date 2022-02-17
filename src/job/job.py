@@ -988,16 +988,13 @@ class RunJob(Job):
                 cmd += ['--cache-from', cache_image]
 
             cwd = self._get_build_context_current_job()
-            
-            try:
-                if  self.job['enable_docker_build_kit'] is True:
-                    os.environ['DOCKER_BUILDKIT'] = '1'
-            
-            except KeyError as e:
-                os.environ['DOCKER_BUILDKIT'] = '0'
+        
+            if  self.job.get('enable_docker_build_kit', True):
+                os.environ['DOCKER_BUILDKIT'] = '1'
 
             c.execute_mask(cmd, cwd=cwd, show=True, mask=self.repository.get('github_api_token', None))
             self.cache_docker_image(image_name, cache_image)
+        
         except Exception as e:
             raise Error("Failed to build the image: %s" % e)
 
