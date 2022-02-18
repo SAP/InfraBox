@@ -97,10 +97,12 @@ class Job(Resource):
         limits = {}
         definition = r[29]
         build_only = True
+        enable_docker_buildkit = False
 
         if definition:
             limits = definition['resources']['limits']
             build_only = definition.get('build_only', True)
+            enable_docker_buildkit = definition.get('enable_docker_buildkit', False)
 
         data['job'] = {
             "id": job_id,
@@ -113,6 +115,7 @@ class Job(Resource):
             "cpu": limits.get('cpu', 1),
             "memory": limits.get('memory', 1024),
             "build_arguments": r[25],
+            "enable_docker_buildkit": enable_docker_buildkit,
             "definition": r[29]
         }
 
