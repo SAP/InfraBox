@@ -30,6 +30,9 @@ RUN apk add --no-cache \
     gcloud config set metrics/environment github_docker_image && \
     gcloud --version
 
+ADD http://aia.pki.co.sap.com/aia/SAP%20Global%20Root%20CA.crt \
+    /usr/local/share/ca-certificates/
+RUN update-ca-certificates
 COPY src/job /job
 
 COPY src/job/ecr_login.sh /usr/local/bin/
