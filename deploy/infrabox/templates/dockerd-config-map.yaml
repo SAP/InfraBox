@@ -6,7 +6,8 @@ metadata:
 data:
   daemon.json: |-
 {{ required "job.docker_daemon_config is required" .Values.job.docker_daemon_config | indent 4 }}
-  {{- if eq .Values.job.rootca }}
+  {{- if empty .Values.job.rootca }}
+  {{ else }}
   rootca.pem: |-
-{{ required "job.docker_daemon_config is required" .Values.job.rootca | indent 4 }}
+{{ required "job.rootca is required" .Values.job.rootca | indent 4 }}
   {{- end }}
