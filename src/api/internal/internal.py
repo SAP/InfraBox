@@ -33,7 +33,6 @@ class ConsoleUpdate(Resource):
             if 'kubernetes' not in r:
                 continue
 
-            print(r)
             job_id = r['kubernetes']['labels']['job-name'][:-4]
 
             a = float(r['date'])
