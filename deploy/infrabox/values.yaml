@@ -357,7 +357,7 @@ job:
         {}
 
     storage_driver: overlay
-    # rootca.pem: |-
+    #rootca_pem: |-
 
 
 monitoring:
