@@ -989,7 +989,7 @@ class RunJob(Job):
 
             cwd = self._get_build_context_current_job()
         
-            if  self.job.get('enable_docker_build_kit', True):
+            if  self.job['definition'].get('enable_docker_build_kit', False) is True:
                 os.environ['DOCKER_BUILDKIT'] = '1'
 
             c.execute_mask(cmd, cwd=cwd, show=True, mask=self.repository.get('github_api_token', None))
