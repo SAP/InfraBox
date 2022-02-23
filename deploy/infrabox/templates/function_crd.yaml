@@ -32,7 +32,7 @@ spec:
 {{ else }}
     -
         mountPath: /etc/ssl/certs/rootca.pem
-        name: rootca-config
+        name: dockerd-config
         subPath: rootca.pem
 {{ end }}
     -
