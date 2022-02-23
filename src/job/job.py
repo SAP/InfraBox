@@ -959,10 +959,11 @@ class RunJob(Job):
             cache_from = self.get_cached_image(cache_image)
             docker_file = os.path.normpath(os.path.join(self._get_build_context_current_job(),
                                                         self.job['dockerfile']))
+            
             cmd = ['docker', 'build',
-                    '-t', image_name,
-                    '-f', docker_file,
-                    '.']
+                   '-t', image_name,
+                   '-f', docker_file,
+                   '.']
 
             # Memory limit
             memory_limit = os.environ['INFRABOX_JOB_RESOURCES_LIMITS_MEMORY']
