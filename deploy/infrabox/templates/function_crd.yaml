@@ -28,7 +28,7 @@ spec:
         mountPath: /etc/docker/daemon.json
         name: dockerd-config
         subPath: daemon.json
-{{- if not (empty .Values.job.rootca_pem) }}
+{{- if .Values.job.rootca_pem }}
     -
         mountPath: /etc/ssl/certs/rootca.pem
         name: dockerd-config
