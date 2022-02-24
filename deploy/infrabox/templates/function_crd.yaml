@@ -30,7 +30,7 @@ spec:
         subPath: daemon.json
 {{- if .Values.job.rootca_pem }}
     -
-        mountPath: /etc/ssl/certs/rootca.pem
+        mountPath: /etc/ssl/certs/saprootca.pem
         name: dockerd-config
         subPath: rootca.pem
 {{ end }}
