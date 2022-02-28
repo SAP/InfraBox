@@ -706,47 +706,44 @@ func getRemoteCluster(name string, log *logrus.Entry) (*RemoteCluster, error) {
     var out []byte
     var err error
     MAX_RETRY := 3
-    cmd := exec.Command("gcloud", "container", "clusters", "list",
-        "--filter", "name="+name, "--format", "json")
     for i := 0; i < MAX_RETRY; i++ {
+        cmd := exec.Command("gcloud", "container", "clusters", "list",
+        "--filter", "name="+name, "--format", "json")
         out, err = cmd.CombinedOutput()
         if err == nil {
-            break
-        }
-        log.Warningf("Could not list clusters, will retry in 10s")
-        time.Sleep(time.Duration(int(time.Second) * 10))
-    }
-
-    if err != nil {
-        err = fmt.Errorf("Had tried 3 times but still could not list clusters: %s, %v", out, err)
-        log.Error(err)
-        return nil, err
-    } else {
-        var gkeclusters []RemoteCluster
-        err = json.Unmarshal(out, &gkeclusters)
-
-        if err != nil {
-            err = fmt.Errorf("could not parse cluster list: %s, %v", out, err)
-            log.Error(err)
-            return nil, err
-        }
-
-        if len(gkeclusters) == 0 {
-            return nil, nil
-        }
-
-        res := &gkeclusters[0]
-        if res.Status == "RUNNING" {
-            if err := getGkeKubeConfig(res, log); err != nil {
-                return nil, err
-            }
-            token, err := getAdminToken(res)
+            var gkeclusters []RemoteCluster
+            err = json.Unmarshal(out, &gkeclusters)
             if err == nil {
-                res.MasterAuth.Token = token
+                if len(gkeclusters) == 0 {
+                    return nil, nil
+                }
+
+                res := &gkeclusters[0]
+                if res.Status == "RUNNING" {
+                    if err := getGkeKubeConfig(res, log); err != nil {
+                        return nil, err
+                    }
+                    token, err := getAdminToken(res)
+                    if err == nil {
+                        res.MasterAuth.Token = token
+                    }
+                }
+                return res, nil
+            } else {
+                log.Warningf("could not parse cluster list: %s, %v, will retry in 10s", out, err)
+                time.Sleep(time.Duration(int(time.Second) * 10))
             }
+        } else {
+            log.Warningf("Could not list clusters, will retry in 10s")
+            time.Sleep(time.Duration(int(time.Second) * 10))
         }
-        return res, nil
+
     }
+
+    err = fmt.Errorf("Had tried 3 times but still get error: %v", err)
+    log.Error(err)
+    return nil, err
+
 
 }
 
@@ -754,29 +751,27 @@ func getRemoteClusters(log *logrus.Entry) ([]RemoteCluster, error) {
     var out []byte
     var err error
     MAX_RETRY := 3
-    cmd := exec.Command("gcloud", "container", "clusters", "list",
-        "--format", "json")
     for i := 0; i < MAX_RETRY; i++ {
+        cmd := exec.Command("gcloud", "container", "clusters", "list",
+        "--format", "json")
         out, err = cmd.Output()
         if err == nil {
-            break
+            var gkeclusters []RemoteCluster
+            err = json.Unmarshal(out, &gkeclusters)
+            if err == nil {
+                return gkeclusters, nil
+            } else {
+                log.Errorf("Could not parse cluster list: %v , will retry in 10s", err)
+                time.Sleep(time.Duration(int(time.Second) * 10))
+            }
+        } else {
+            log.Warningf("Could not list clusters, will retry in 10s")
+            time.Sleep(time.Duration(int(time.Second) * 10))
         }
-        log.Warningf("Could not list clusters, will retry in 10s")
-        time.Sleep(time.Duration(int(time.Second) * 10))
-    }
-    if err != nil {
-        log.Errorf("Had tried 3 times but still Could not list clusters: %v", err)
-        return nil, err
-    } else {
-        var gkeclusters []RemoteCluster
-        err = json.Unmarshal(out, &gkeclusters)
-        if err != nil {
-            log.Errorf("Could not parse cluster list: %v", err)
-            return nil, err
-        }
-        return gkeclusters, nil
-    }
 
+    }
+    log.Errorf("Had tried 3 times but still get error: %v", err)
+    return nil, err
 }
 
 func GcLoop(maxAge string, interval int, log *logrus.Entry) {

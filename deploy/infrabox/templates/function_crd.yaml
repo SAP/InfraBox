@@ -28,6 +28,12 @@ spec:
         mountPath: /etc/docker/daemon.json
         name: dockerd-config
         subPath: daemon.json
+{{- if .Values.job.rootca_pem }}
+    -
+        mountPath: /etc/ssl/certs/saprootca.pem
+        name: dockerd-config
+        subPath: rootca.pem
+{{ end }}
     -
         name: data-dir
         mountPath: "/data"

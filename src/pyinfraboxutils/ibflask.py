@@ -98,7 +98,7 @@ def get_token():
                 return None
 
             return token
-        elif auth.startswith("token ") or auth.startswith("bearer "):
+        elif auth.startswith("token ") or auth.startswith("bearer ") or auth.startswith("Bearer "):
             token = auth.split(" ")[1]
 
             try:

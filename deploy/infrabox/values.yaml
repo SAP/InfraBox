@@ -357,6 +357,8 @@ job:
         {}
 
     storage_driver: overlay
+    #rootca_pem: |-
+
 
 monitoring:
     # Enable InfraBox Monitoring. Requires prometheus-operator to be available.
