@@ -698,6 +698,8 @@ class ArchiveDownload(Resource):
         token = request.headers.get('Authorization')
         if token:
             token = token.replace("bearer ", "").replace("Bearer ","")
+        else:
+            token = ""
         filename = request.args.get('filename', None)
         force_download = request.args.get('view', "false") == "false"
         if not filename:
