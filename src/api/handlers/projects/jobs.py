@@ -698,8 +698,6 @@ class ArchiveDownload(Resource):
         token = request.headers.get('Authorization')
         if token:
             token = token.replace("bearer ", "").replace("Bearer ","")
-        else:
-            token = ""
         filename = request.args.get('filename', None)
         force_download = request.args.get('view', "false") == "false"
         if not filename:
@@ -726,6 +724,12 @@ class ArchiveDownload(Resource):
                 WHERE name=%s
             ''', [job_cluster])
             url = '%s/api/v1/projects/%s/jobs/%s/archive/download?filename=%s' % (c['root_url'], project_id, job_id, filename)
+            if not token:
+                try:
+                    token = encode_user_token(g.token['user']['id'])
+                except Exception:
+                    #public project has no token here.
+                    token = ""
             headers = {'Authorization': 'bearer ' + token}
 
             # TODO(ib-steffen): allow custom ca bundles
