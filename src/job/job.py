@@ -634,6 +634,10 @@ class RunJob(Job):
         compose_file = os.path.normpath(os.path.join(self.job['definition']['infrabox_context'], f))
         compose_file_new = compose_file + ".infrabox.json"
 
+        # check if enable buildkit
+        if  self.job['definition'].get('enable_docker_build_kit', False) is True:
+                os.environ['DOCKER_BUILDKIT'] = '1'
+
         # rewrite compose file
         compose_file_content = create_from(compose_file)
         for service in compose_file_content['services']:
