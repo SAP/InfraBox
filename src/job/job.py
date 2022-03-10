@@ -631,9 +631,9 @@ class RunJob(Job):
         c.header("Build containers", show=True)
         # check if enable buildkit
         # if  self.job['definition'].get('enable_docker_build_kit', False) is True:
-        os.environ['DOCKER_BUILDKIT'] = '1'
-        os.environ['COMPOSE_DOCKER_CLI_BUILD']= '1'
-        c.collect("BUILDKIT is enable", show=True)
+        # os.environ['DOCKER_BUILDKIT'] = '1'
+        # os.environ['COMPOSE_DOCKER_CLI_BUILD']= '1'
+        # c.collect("BUILDKIT is enable", show=True)
         f = self.job['dockerfile']
 
         compose_file = os.path.normpath(os.path.join(self.job['definition']['infrabox_context'], f))
@@ -747,7 +747,10 @@ class RunJob(Job):
             if parallel_build:
                 cmds.append('--parallel')
 
-
+            if  self.job['definition'].get('enable_docker_build_kit', False) is True:
+                os.environ['DOCKER_BUILDKIT'] = '1'
+                os.environ['COMPOSE_DOCKER_CLI_BUILD']= '1'
+                c.collect("BUILDKIT is enable! DOCKER_BUILDKIT is {docker},COMPOSE_DOCKER_CLI_BUILD is {compose}".format(os.environ['DOCKER_BUILDKIT'],os.environ['COMPOSE_DOCKER_CLI_BUILD']), show=True)
             c.execute_mask(cmds,
                       show=True, env=self.environment, mask=self.repository.get('github_api_token', None))
             c.header("Run docker-compose", show=True)
