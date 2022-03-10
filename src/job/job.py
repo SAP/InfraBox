@@ -728,10 +728,6 @@ class RunJob(Job):
 
         try:
             try:
-                # check if enable buildkit
-                if  self.job['definition'].get('enable_docker_build_kit', False) is True:
-                    os.environ['DOCKER_BUILDKIT'] = '1'
-
                 c.execute(['docker-compose', '-f', compose_file_new, 'rm'],
                           env=self.environment)
             except Exception as e:
@@ -745,6 +741,11 @@ class RunJob(Job):
             cmds = ['docker-compose', '-f', compose_file_new, 'build']
             if parallel_build:
                 cmds.append('--parallel')
+
+            # check if enable buildkit
+            if  self.job['definition'].get('enable_docker_build_kit', False) is True:
+                os.environ['DOCKER_BUILDKIT'] = '1'
+
             c.execute_mask(cmds,
                       show=True, env=self.environment, mask=self.repository.get('github_api_token', None))
             c.header("Run docker-compose", show=True)
