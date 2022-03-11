@@ -743,17 +743,20 @@ class RunJob(Job):
             compose_profiles = self.job['definition'].get('compose_profiles', [])
             self.environment['PATH'] = os.environ['PATH']
 
-            cmds = ['docker-compose', '-f', compose_file_new, 'build']
-            if parallel_build:
-                cmds.append('--parallel')
-
             if  self.job['definition'].get('enable_docker_build_kit', False) is True:
                 os.environ['DOCKER_BUILDKIT'] = '1'
                 os.environ['COMPOSE_DOCKER_CLI_BUILD']= '1'
                 c.collect('BUILDKIT is enable!', show=True)
+                cmds = ['DOCKER_BUILDKIT=1','COMPOSE_DOCKER_CLI_BUILD=1','docker-compose', '-f', compose_file_new, 'build']
+            else:
+                cmds = ['docker-compose', '-f', compose_file_new, 'build']
 
-            c.execute_mask(cmds,
+            if parallel_build:
+                cmds.append('--parallel')
+
+            c.execute_mask(cmds,shell=True,
                       show=True, env=self.environment, mask=self.repository.get('github_api_token', None))
+
             c.header("Run docker-compose", show=True)
 
             cwd = self._get_build_context_current_job()
