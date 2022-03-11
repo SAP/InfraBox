@@ -746,7 +746,7 @@ class RunJob(Job):
             if  self.job['definition'].get('enable_docker_build_kit', False) is True:
                 os.environ['DOCKER_BUILDKIT'] = '1'
                 os.environ['COMPOSE_DOCKER_CLI_BUILD']= '1'
-                c.collect('BUILDKIT is enable!', show=True)
+                c.collect('BUILDKIT is enabled during build stage!', show=True)
                 cmds = ['DOCKER_BUILDKIT=1','COMPOSE_DOCKER_CLI_BUILD=1','docker-compose', '-f', compose_file_new, 'build']
             else:
                 cmds = ['docker-compose', '-f', compose_file_new, 'build']
@@ -760,13 +760,22 @@ class RunJob(Job):
             c.header("Run docker-compose", show=True)
 
             cwd = self._get_build_context_current_job()
-            cmds = ['docker-compose']
+
+
+            if self.job['definition'].get('enable_docker_build_kit', False) is True:
+                os.environ['DOCKER_BUILDKIT'] = '1'
+                os.environ['COMPOSE_DOCKER_CLI_BUILD']= '1'
+                c.collect('BUILDKIT is enabled during running stage!', show=True)
+                cmds =  ['DOCKER_BUILDKIT=1','COMPOSE_DOCKER_CLI_BUILD=1','docker-compose']
+            else:
+                cmds = ['docker-compose']
+
             if compose_profiles:
                 for f in compose_profiles:
                     cmds.append('--profile')
                     cmds.append(f)
             cmds += ['-f', compose_file_new, 'up', '--abort-on-container-exit', '--timeout', str(stop_timeout)]
-            c.execute(cmds, env=self.environment, show=True, cwd=cwd)
+            c.execute(cmds, env=self.environment, show=True, cwd=cwd ,shell=True)
         except:
             raise Failure("Failed to build and run container")
         finally:
@@ -1004,13 +1013,13 @@ class RunJob(Job):
                 cmd += ['--cache-from', cache_image]
 
             cwd = self._get_build_context_current_job()
-        
+
             if  self.job['definition'].get('enable_docker_build_kit', False) is True:
                 os.environ['DOCKER_BUILDKIT'] = '1'
 
             c.execute_mask(cmd, cwd=cwd, show=True, mask=self.repository.get('github_api_token', None))
             self.cache_docker_image(image_name, cache_image)
-        
+
         except Exception as e:
             raise Error("Failed to build the image: %s" % e)
 
