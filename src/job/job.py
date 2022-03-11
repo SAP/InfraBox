@@ -747,13 +747,22 @@ class RunJob(Job):
                 os.environ['DOCKER_BUILDKIT'] = '1'
                 os.environ['COMPOSE_DOCKER_CLI_BUILD']= '1'
                 c.collect('BUILDKIT is enabled during build!', show=True)
+
                 ## change the /etc/docker/daemon.json settings
-                with open("/etc/docker/daemon.json","r+") as f:
-                    lines = f.readlines()
-                    lines.insert(1,"    \"features\": { \"buildkit\": true }, \n")
-                    s = ''.join(lines)
-                with open("/etc/docker/daemon.json","w") as f:
-                    f.write(s)
+                try:
+                    c.collect('changing the /etc/docker/daemon.json settings!', show=True)
+                    cmd = ["sed -i '2 i  \"features\": { \"buildkit\": true },' /etc/docker/daemon.json"]
+                    c.execute(cmd, env=self.environment, show=True)
+                    c.collect('changing done!', show=True)
+                except Exception as e:
+                    logger.exception(e)
+
+                # with open("/etc/docker/daemon.json","r+") as f:
+                #     lines = f.readlines()
+                #     lines.insert(1,"    \"features\": { \"buildkit\": true }, \n")
+                #     s = ''.join(lines)
+                # with open("/etc/docker/daemon.json","w") as f:
+                #     f.write(s)
 
                 cmds = ['DOCKER_BUILDKIT=1','COMPOSE_DOCKER_CLI_BUILD=1','docker-compose', '-f', compose_file_new, 'build']
             else:
