@@ -751,7 +751,7 @@ class RunJob(Job):
                 ## change the /etc/docker/daemon.json settings
                 try:
                     c.collect('changing the /etc/docker/daemon.json settings!', show=True)
-                    cmd = ["sed -i '2 i  \"features\": { \"buildkit\": true },' /etc/docker/daemon.json"]
+                    cmd = ["echo \"$(sed -i '2 i  \"features\": { \"buildkit\": true },' /etc/docker/daemon.json)\" >  /etc/docker/daemon.json"]
                     c.execute(cmd, env=self.environment, show=True , shell=True)
                     c.collect('changing done!', show=True)
                 except Exception as e:
