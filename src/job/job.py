@@ -751,7 +751,7 @@ class RunJob(Job):
                 ## change the /etc/docker/daemon.json settings
                 try:
                     c.collect('changing the /etc/docker/daemon.json settings!', show=True)
-                    cmd = ["echo \"$(sed 's\{\{ \"features\": { \"buildkit\": true },\g' /etc/docker/daemon.json)\" >  /etc/docker/daemon.json"]
+                    cmd = ["echo \"$(sed 's\\{\\{ \"features\": { \"buildkit\": true },\\g' /etc/docker/daemon.json)\" >  /etc/docker/daemon.json"]
                     # cmd = ["sed -ci '2 i  \"features\": { \"buildkit\": true },' /etc/docker/daemon.json)"]
                     c.execute(cmd, env=self.environment, show=True , shell=True)
                     c.collect('changing done!', show=True)
