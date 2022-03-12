@@ -747,6 +747,8 @@ class RunJob(Job):
                 os.environ['DOCKER_BUILDKIT'] = '1'
                 os.environ['COMPOSE_DOCKER_CLI_BUILD']= '1'
                 c.collect('BUILDKIT is enabled during build!', show=True)
+                self.environment['DOCKER_BUILDKIT'] = '1'
+                self.environment['COMPOSE_DOCKER_CLI_BUILD']= '1'
 
                 ## change the /etc/docker/daemon.json settings
                 try:
