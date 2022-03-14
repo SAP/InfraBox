@@ -629,11 +629,6 @@ class RunJob(Job):
 
     def run_job_docker_compose(self, c):
         c.header("Build containers", show=True)
-        # check if enable buildkit
-        # if  self.job['definition'].get('enable_docker_build_kit', False) is True:
-        # os.environ['DOCKER_BUILDKIT'] = '1'
-        # os.environ['COMPOSE_DOCKER_CLI_BUILD']= '1'
-        # c.collect("BUILDKIT is enable", show=True)
         f = self.job['dockerfile']
 
         compose_file = os.path.normpath(os.path.join(self.job['definition']['infrabox_context'], f))
@@ -749,24 +744,6 @@ class RunJob(Job):
                 c.collect('BUILDKIT is enabled during build!', show=True)
                 self.environment['DOCKER_BUILDKIT'] = '1'
                 self.environment['COMPOSE_DOCKER_CLI_BUILD']= '1'
-
-                ## change the /etc/docker/daemon.json settings
-                try:
-                    c.collect('changing the /etc/docker/daemon.json settings!', show=True)
-                    #cmd = ["echo \"$(sed 's\\{\\{ \"features\": { \"buildkit\": true },\\g' /etc/docker/daemon.json)\" >  /etc/docker/daemon.json"]
-                    cmd = ['echo','\"$(sed','\'','s','\\','{','\\','{ \"features\": { \"buildkit\": true },','\\','g','\'',' /etc/docker/daemon.json)\"', '>', '/etc/docker/daemon.json']
-                    # cmd = ["sed -ci '2 i  \"features\": { \"buildkit\": true },' /etc/docker/daemon.json)"]
-                    c.execute(cmd, env=self.environment, show=True , shell=True)
-                    c.collect('changing done!', show=True)
-                except Exception as e:
-                    logger.exception(e)
-
-                # with open("/etc/docker/daemon.json","r+") as f:
-                #     lines = f.readlines()
-                #     lines.insert(1,"    \"features\": { \"buildkit\": true }, \n")
-                #     s = ''.join(lines)
-                # with open("/etc/docker/daemon.json","w") as f:
-                #     f.write(s)
 
                 cmds = ['DOCKER_BUILDKIT=1','COMPOSE_DOCKER_CLI_BUILD=1','docker-compose', '-f', compose_file_new, 'build']
             else:
