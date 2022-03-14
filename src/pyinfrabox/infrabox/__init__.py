@@ -347,7 +347,7 @@ def parse_docker(d, path):
 
 
 def parse_docker_compose(d, path):
-    check_allowed_properties(d, path, ("type", "name", "docker_compose_file", "depends_on", "stop_timeout",
+    check_allowed_properties(d, path, ("type", "name", "docker_compose_file", "depends_on", "stop_timeout", "enable_docker_build_kit",
                                        "compose_profiles", "environment", "resources", "cache", "timeout", "cluster",
                                        "repository", "registries", "parallel_build"))
     check_required_properties(d, path, ("type", "name", "docker_compose_file", "resources"))
@@ -377,6 +377,9 @@ def parse_docker_compose(d, path):
 
     if 'registries' in d:
         parse_registries(d['registries'], path + '.registries')
+
+    if 'enable_docker_build_kit' in d:
+        check_boolean(d['enable_docker_build_kit'], path + ".enable_docker_build_kit" )
 
 
 def parse_wait(d, path):

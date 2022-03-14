@@ -11,6 +11,7 @@ The job type docker is one of the most important jobs. You can use it to run any
         "command": ["echo", "hello world"],
         "resources": { "limits": { "cpu": 1, "memory": 1024 } },
         "build_only": false,
+        "enable_docker_build_kit": true,
         "build_context": "...",
         "cache": { ... },
         "timeout": 3600,
@@ -34,6 +35,7 @@ The job type docker is one of the most important jobs. You can use it to run any
 |command|false|string||The command in [exec form](https://docs.docker.com/engine/reference/builder/#cmd) to be used when the container is run. Ignored if `build_only=true`|
 |resources|true|[Resource Configuration](/docs/job/resources.md)||Specify the required resources for your job.|
 |build_only|true|boolean|true|If set to true the container will only be build but not run. Use it if you only want to build a container and push it to a registry. See here for how to push to a docker registry.|
+|enable_docker_build_kit|false|boolean|false|If set to true, InfraBox will try to use the Dokcer Buildkit to build the containers. For more details, please refer to [Docker docs](https://docs.docker.com/develop/develop-images/build_enhancements/)|
 |build_context|false|string||Specify the docker build context. If not set the directory containing the `infrabox.json` file will be used.|
 |cache|false|[Cache Configuration](/docs/job/cache.md)|{}|Configure the caching behavior|
 |timeout|false|integer|3600|Timeout in seconds after which the job should be killed. Timeout starts when the job is set to running|

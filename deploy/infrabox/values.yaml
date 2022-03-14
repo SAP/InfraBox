@@ -357,7 +357,7 @@ job:
         {}
 
     storage_driver: overlay
-    #rootca_pem: |-
+    #rootca_pem: |- # Using base64 encoded string to put the cert in one line
 
 
 monitoring:
