@@ -749,8 +749,7 @@ class RunJob(Job):
             if parallel_build:
                 cmds.append('--parallel')
 
-            c.execute_mask(cmds,shell=True,
-                      show=True, env=self.environment, mask=self.repository.get('github_api_token', None))
+            c.execute_mask(cmds,show=True, env=self.environment, mask=self.repository.get('github_api_token', None))
 
             c.header("Run docker-compose", show=True)
 
