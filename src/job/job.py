@@ -743,9 +743,8 @@ class RunJob(Job):
                 self.environment['DOCKER_BUILDKIT'] = '1'
                 self.environment['COMPOSE_DOCKER_CLI_BUILD']= '1'
 
-                cmds = ['DOCKER_BUILDKIT=1','COMPOSE_DOCKER_CLI_BUILD=1','docker-compose', '-f', compose_file_new, 'build']
-            else:
-                cmds = ['docker-compose', '-f', compose_file_new, 'build']
+            
+            cmds = ['docker-compose', '-f', compose_file_new, 'build']
 
             if parallel_build:
                 cmds.append('--parallel')
