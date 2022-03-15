@@ -708,7 +708,7 @@ func getRemoteCluster(name string, log *logrus.Entry) (*RemoteCluster, error) {
     MAX_RETRY := 3
     for i := 0; i < MAX_RETRY; i++ {
         cmd := exec.Command("gcloud", "container", "clusters", "list",
-        "--filter", "name="+name, "--format", "json")
+        "--filter", "name="+name, "--format", "json", "--verbosity", "error")
         out, err = cmd.CombinedOutput()
         if err == nil {
             var gkeclusters []RemoteCluster
@@ -753,7 +753,7 @@ func getRemoteClusters(log *logrus.Entry) ([]RemoteCluster, error) {
     MAX_RETRY := 3
     for i := 0; i < MAX_RETRY; i++ {
         cmd := exec.Command("gcloud", "container", "clusters", "list",
-        "--format", "json")
+        "--format", "json", "--verbosity", "error")
         out, err = cmd.Output()
         if err == nil {
             var gkeclusters []RemoteCluster
