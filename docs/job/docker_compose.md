@@ -7,6 +7,7 @@ Sometimes you want to start multiple containers to test your application. For th
     "jobs": [{
         "type": "docker-compose",
         "name": "test",
+        "enable_docker_build_kit": true,
         "docker_compose_file": "infrabox/test/docker-compose.yml",
         "resources": { "limits": { "cpu": 1, "memory": 1024 } },
         "cache": { ... },
@@ -21,6 +22,7 @@ Sometimes you want to start multiple containers to test your application. For th
 |------|----------|------|---------|-------------|
 |type|true|string||Has to be "docker-compose" to run multiple containers|
 |name|true|string||Name of the job|
+|enable_docker_build_kit|false|boolean|false|If set to true, InfraBox will try to use the Dokcer Buildkit to build the containers. For more details, please refer to [Docker docs](https://docs.docker.com/compose/reference/build/)|
 |docker_compose_file|true|string||Path to the `docker-compose.yml`|
 |resources|true|[Resource Configuration](/docs/job/resources.md)||Specify the required resources for your job|
 |cache|false|[Cache Configuration](/docs/job/cache.md)|{}|Configure the caching behavior|

@@ -634,6 +634,7 @@ class RunJob(Job):
         compose_file = os.path.normpath(os.path.join(self.job['definition']['infrabox_context'], f))
         compose_file_new = compose_file + ".infrabox.json"
 
+
         # rewrite compose file
         compose_file_content = create_from(compose_file)
         for service in compose_file_content['services']:
@@ -737,11 +738,19 @@ class RunJob(Job):
             compose_profiles = self.job['definition'].get('compose_profiles', [])
             self.environment['PATH'] = os.environ['PATH']
 
+            if  self.job['definition'].get('enable_docker_build_kit', False) is True:
+                c.collect('BUILDKIT is enabled during build!', show=True)
+                self.environment['DOCKER_BUILDKIT'] = '1'
+                self.environment['COMPOSE_DOCKER_CLI_BUILD']= '1'
+
+            
             cmds = ['docker-compose', '-f', compose_file_new, 'build']
+
             if parallel_build:
                 cmds.append('--parallel')
-            c.execute_mask(cmds,
-                      show=True, env=self.environment, mask=self.repository.get('github_api_token', None))
+
+            c.execute_mask(cmds,show=True, env=self.environment, mask=self.repository.get('github_api_token', None))
+
             c.header("Run docker-compose", show=True)
 
             cwd = self._get_build_context_current_job()
@@ -989,13 +998,13 @@ class RunJob(Job):
                 cmd += ['--cache-from', cache_image]
 
             cwd = self._get_build_context_current_job()
-        
+
             if  self.job['definition'].get('enable_docker_build_kit', False) is True:
                 os.environ['DOCKER_BUILDKIT'] = '1'
 
             c.execute_mask(cmd, cwd=cwd, show=True, mask=self.repository.get('github_api_token', None))
             self.cache_docker_image(image_name, cache_image)
-        
+
         except Exception as e:
             raise Error("Failed to build the image: %s" % e)
 
