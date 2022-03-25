@@ -44,13 +44,6 @@ func NewK8sCleaner(cs kubernetes.Interface, log *logrus.Entry) *clusterCleaner {
 func (cc *clusterCleaner) Cleanup() (bool, error) {
 	cc.log.Debug("Attempt to clean up cluster")
 
-	if isClean, err := cc.cleanAllNamespaces(cc.clientSet); err != nil {
-		cc.log.Error("couldn't clean all namespaces: ", err.Error())
-		return false, err
-	} else if !isClean { // only cleanup pods, pvc, and pv if all stateful sets, deployments, ... are gone
-		return false, nil
-	}
-
 	if isClean, err := cc.cleanPodsInAllNamespaces(cc.clientSet); err != nil {
 		cc.log.Error("couldn't remove all pods: ", err.Error())
 		return false, nil
