@@ -303,7 +303,7 @@ class Job(Resource):
                         json_res = json.loads(res.content)
                         token = json_res['auth']['client_token']
                     else:
-                        abort(400, "Getting value from vault error: url is '%s', validate way is appRole " % (url))
+                        abort(400, "Getting value from vault error: url is '%s', validate way is appRole; API response: '%s'" % (url, res.text))
                 else:
                     abort(400, "Validate way is '%s' ! result is '%s' " % (validate_res, result))
 
