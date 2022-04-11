@@ -13,6 +13,8 @@ RUN apk add --no-cache \
     g++ \
     pv \
     snappy-dev \
+    linux-headers \
+    libffi-dev \
     curl \
     bash \
     libc6-compat \
