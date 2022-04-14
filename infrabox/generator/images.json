@@ -6,6 +6,11 @@
         "name": "images-base",
         "docker_file": "src/images/base/Dockerfile",
         "build_only": true,
+        "environment":{
+            "CHECKMARX_PASSWORD": {
+          "$secret": "QUAY_PASSWORD"
+             }
+        },
         "resources": {
             "limits": {
                 "cpu": 1,
@@ -32,6 +37,11 @@
         "name": "images-test",
         "docker_file": "src/images/test/Dockerfile",
         "build_only": true,
+        "environment":{
+            "CHECKMARX_PASSWORD": {
+          "$secret": "QUAY_PASSWORD"
+             }
+        },
         "resources": {
             "limits": {
                 "cpu": 1,

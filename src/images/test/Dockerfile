@@ -45,5 +45,5 @@ RUN    apt-get update -y \
     && rm -rf /var/lib/apt/lists/*
 
 RUN useradd -ms /bin/bash infrabox
-
+RUN env
 USER infrabox

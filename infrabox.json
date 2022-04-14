@@ -5,6 +5,11 @@
         "name": "ib",
         "docker_file": "infrabox/generator/Dockerfile",
         "build_only": false,
+        "environment":{
+            "CHECKMARX_PASSWORD": {
+          "$secret": "QUAY_PASSWORD"
+             }
+        },
         "resources": { "limits": { "cpu": 1, "memory": 512 }}
     }]
 }
