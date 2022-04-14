@@ -33,7 +33,9 @@
         "docker_file": "src/images/test/Dockerfile",
         "build_only": true,
         "environment":{
-            "$secret": "QUAY_PASSWORD"
+            "CHECKMARX_PASSWORD": {
+          "$secret": "QUAY_PASSWORD"
+             }
         },
         "resources": {
             "limits": {
