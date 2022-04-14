@@ -4,4 +4,4 @@ RUN apk add --no-cache python2
 
 COPY infrabox/generator /generator
 
-CMD python /generator/generator.py
+ENTRYPOINT /generator/entrypoint.sh
