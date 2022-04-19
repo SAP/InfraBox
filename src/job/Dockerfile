@@ -29,8 +29,7 @@ RUN apk add --no-cache \
     libc6-compat \
     openssh-client \
     git && \
-    pip3 install pynacl docker awscli pyyaml docker-compose && \
-    pip3 install future python-snappy
+    pip3 install --use-deprecated=legacy-resolver pynacl docker awscli pyyaml docker-compose future python-snappy six
 RUN apk del py3-pip python3-dev g++ && \
     curl -O https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-${CLOUD_SDK_VERSION}-linux-x86_64.tar.gz && \
     tar xzf google-cloud-sdk-${CLOUD_SDK_VERSION}-linux-x86_64.tar.gz && \
