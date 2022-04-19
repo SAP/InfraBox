@@ -1,8 +1,14 @@
 FROM docker:20.10.14-dind
 
-ENV CLOUD_SDK_VERSION 298.0.0
+ENV CLOUD_SDK_VERSION 380.0.0
 ENV PATH /google-cloud-sdk/bin:$PATH
 
+RUN apk add --update --no-cache \
+    clang-dev musl-dev yaml curl libmicrohttpd libuuid make
+RUN mkdir deps && \
+    wget -O - https://static.rust-lang.org/dist/rust-nightly-$(apk --print-arch)-unknown-linux-musl.tar.gz | tar -C deps -z -x -f - && \
+    sh /deps/rust-nightly-$(apk --print-arch)-unknown-linux-musl/install.sh --prefix=/usr && \
+    rm -rf /deps
 RUN apk add --no-cache \
     python3 \
     python3-dev \
@@ -13,14 +19,19 @@ RUN apk add --no-cache \
     g++ \
     pv \
     snappy-dev \
+    linux-headers \
+    libffi-dev \
+    gcc \
+    musl-dev \
+    openssl-dev \
     curl \
     bash \
     libc6-compat \
     openssh-client \
     git && \
-    pip3 install docker awscli pyyaml docker-compose && \
-    pip3 install future python-snappy && \
-    apk del py-pip python3-dev g++ && \
+    pip3 install pynacl docker awscli pyyaml docker-compose && \
+    pip3 install future python-snappy
+RUN apk del py3-pip python3-dev g++ && \
     curl -O https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-${CLOUD_SDK_VERSION}-linux-x86_64.tar.gz && \
     tar xzf google-cloud-sdk-${CLOUD_SDK_VERSION}-linux-x86_64.tar.gz && \
     rm google-cloud-sdk-${CLOUD_SDK_VERSION}-linux-x86_64.tar.gz && \
