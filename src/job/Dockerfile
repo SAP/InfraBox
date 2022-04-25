@@ -2,7 +2,6 @@ FROM docker:20.10.14-dind
 
 ENV CLOUD_SDK_VERSION 380.0.0
 ENV PATH /google-cloud-sdk/bin:$PATH
-
 RUN apk add --update --no-cache \
     clang-dev musl-dev yaml curl libmicrohttpd libuuid make
 RUN mkdir deps && \
@@ -27,9 +26,12 @@ RUN apk add --no-cache \
     curl \
     bash \
     libc6-compat \
-    openssh-client \
     git && \
-    pip3 install --use-deprecated=legacy-resolver pynacl docker awscli pyyaml docker-compose future python-snappy six
+    pip3 install pynacl docker awscli pyyaml docker-compose && \
+    pip3 install future python-snappy six
+## Install openssh 8.3
+RUN sed -i 's/v3.15/v3.12/g' /etc/apk/repositories && \
+    apk add --update openssh-client
 RUN curl -O https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-${CLOUD_SDK_VERSION}-linux-x86_64.tar.gz && \
     tar xzf google-cloud-sdk-${CLOUD_SDK_VERSION}-linux-x86_64.tar.gz && \
     rm google-cloud-sdk-${CLOUD_SDK_VERSION}-linux-x86_64.tar.gz && \
