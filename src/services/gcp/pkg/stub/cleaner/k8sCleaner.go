@@ -242,10 +242,10 @@ func (cc *clusterCleaner) cleanupNamespace(ns string,
 
 	results := make(chan *helperResultStruct, 8)
 
-	go func() {
+	/*go func() {
 		ingressClean, ingErr := cc.cleanAllIngressInNamespace(ns, ingIf)
 		results <- &helperResultStruct{ingressClean, ingErr}
-	}()
+	}()*/
 
 	go func() {
 		deploymentClean, podErr := cc.cleanAllStatefulSetInNamespace(ns, statefulSetIf)
@@ -672,7 +672,7 @@ func (cc *clusterCleaner) deletePersistentVolumes(pvIf corev1.PersistentVolumeIn
 	out, err := cmd.Output()
 
 	if err != nil {
-		cc.log.Errorf("Could not delete pv in all namespace: %v, %v", err, out)
+		cc.log.Error("Could not delete pv in all namespace: %v, %v", err, out)
 		return false, err
 	}
 
