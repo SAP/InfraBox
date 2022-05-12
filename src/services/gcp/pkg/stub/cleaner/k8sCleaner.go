@@ -81,7 +81,7 @@ func (cc *clusterCleaner) cleanServiceInAllNamespaces(clientSet kubernetes.Inter
 	out, err := cmd.Output()
 
 	if err != nil {
-		log.Errorf("Could not delete service in all namespace: %v, %v", err, out)
+		cc.log.Errorf("Could not delete service in all namespace: %v, %v", err, out)
 		return false, err
 	}
 
@@ -124,7 +124,7 @@ func (cc *clusterCleaner) cleanPvcsInAllNamespaces(clientSet kubernetes.Interfac
 	out, err := cmd.Output()
 
 	if err != nil {
-		log.Errorf("Could not delete pvc in all namespace: %v, %v", err, out)
+		cc.log.Errorf("Could not delete pvc in all namespace: %v, %v", err, out)
 		return false, err
 	}
 
@@ -163,16 +163,11 @@ func (cc *clusterCleaner) cleanPodsInAllNamespaces(clientSet kubernetes.Interfac
 	out, err := cmd.Output()
 
 	if err != nil {
-		log.Errorf("Could not delete pod in all namespace: %v, %v", err, out)
+		cc.log.Errorf("Could not delete pod in all namespace: %v, %v", err, out)
 		return false, err
 	}
 
 	return true, nil
-}
-
-type helperResultStruct struct {
-	isClean bool
-	err     error
 }
 
 func (cc *clusterCleaner) cleanAllNamespaces(clientSet kubernetes.Interface) (bool, error) {
@@ -420,7 +415,7 @@ func (cc *clusterCleaner) cleanAllIngressInNamespace(clientSet kubernetes.Interf
 	out, err := cmd.Output()
 
 	if err != nil {
-		log.Errorf("Could not list outdated clusters: %v, %v", err, out)
+		cc.log.Errorf("Could not list outdated clusters: %v, %v", err, out)
 		return false, err
 	}
 
@@ -677,7 +672,7 @@ func (cc *clusterCleaner) deletePersistentVolumes(pvIf corev1.PersistentVolumeIn
 	out, err := cmd.Output()
 
 	if err != nil {
-		log.Errorf("Could not delete pv in all namespace: %v, %v", err, out)
+		cc.log.Errorf("Could not delete pv in all namespace: %v, %v", err, out)
 		return false, err
 	}
 
