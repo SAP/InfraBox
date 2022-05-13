@@ -46,30 +46,30 @@ func (cc *clusterCleaner) Cleanup() (bool, error) {
 	cc.log.Debug("Attempt to clean up cluster")
 
 	if isClean, err := cc.cleanAllIngressInNamespace(cc.clientSet); err != nil {
-		cc.log.Error("couldn't clean all namespaces: ", err.Error())
-		return false, err
+		cc.log.Error("couldn't clean ingress: ", err.Error())
+		//return false, err
 	} else if !isClean { // only cleanup pods, pvc, and pv if all stateful sets, deployments, ... are gone
-		return false, nil
+		//return false, nil
 	}
 
 	if isClean, err := cc.cleanPodsInAllNamespaces(cc.clientSet); err != nil {
 		cc.log.Error("couldn't remove all pods: ", err.Error())
-		return false, nil
+		//return false, nil
 	} else if !isClean { // only cleanup pvc after all pods are gone
-		return false, nil
+		//return false, nil
 	}
 
 	if isClean, err := cc.cleanPvcsInAllNamespaces(cc.clientSet); err != nil {
 		cc.log.Error("couldn't remove all persistent volume claims: ", err.Error())
-		return false, nil
+		//return false, nil
 	} else if !isClean { // only cleanup pv after all claims are gone
-		return false, nil
+		//return false, nil
 	}
 
 	isClean, err := cc.deletePersistentVolumes(cc.pvIf)
 	if err != nil {
 		cc.log.Error("couldn't remove all persistent volumes: ", err.Error())
-		return false, err
+		//return false, err
 	}
 
 	return isClean, err
@@ -415,11 +415,11 @@ func (cc *clusterCleaner) cleanAllIngressInNamespace(clientSet kubernetes.Interf
 	out, err := cmd.Output()
 
 	if err != nil {
-		cc.log.Errorf("Could not list outdated clusters: %v, %v", err, out)
-		return false, err
+		cc.log.Errorf("Could not clean ingress in all-namespaces: %v, %v", err, out)
+		//return false, err
 	}
 
-	return true, nil
+	return true, err
 }
 
 func (cc *clusterCleaner) enableIngressForceDeleteIfNecessary(ingress *apiExtV1Beta1.Ingress, now time.Time, ns string, ingIf v1beta1.IngressInterface) error {
