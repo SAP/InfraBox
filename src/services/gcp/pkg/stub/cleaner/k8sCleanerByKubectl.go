@@ -4,6 +4,7 @@ import (
     "fmt"
     "os"
     "os/exec"
+    "github.com/sirupsen/logrus"
 )
 
 
@@ -12,7 +13,7 @@ type clusterCleanerByKubectl struct {
     log *logrus.Entry
 }
 
-func NewK8sCleanerByKubectl(kubeConfigPath string, log *log.Entry) *clusterCleanerByKubectl{
+func NewK8sCleanerByKubectl(kubeConfigPath string, log *logrus.Entry) *clusterCleanerByKubectl{
     ccbk := &clusterCleanerByKubectl{
         kubeConfigPath: kubeConfigPath,
 		log:            log,
@@ -26,23 +27,23 @@ func (ccbk *clusterCleanerByKubectl) Cleanup() (bool, error) {
     os.Setenv("KUBECONFIG", ccbk.kubeConfigPath)
     ingressClean, err:= ccbk.cleanAllIngresses()
     if err != nil {
-        cc.log.Error("couldn't clean all ingresses: ", err.Error())
-        return false, err
+        ccbk.log.Error("couldn't clean all ingresses: ", err.Error())
+        return ingressClean, err
     }
     podClean, err := ccbk.cleanAllPods()
     if err != nil {
-        cc.log.Error("couldn't clean all ingresses: ", err.Error())
-        return false, err
+        ccbk.log.Error("couldn't clean all ingresses: ", err.Error())
+        return podClean, err
     }
     pvcClean, err := ccbk.cleanAllPVC()
     if err != nil {
-        cc.log.Error("couldn't clean all pvc: ", err.Error())
-        return false, err
+        ccbk.log.Error("couldn't clean all pvc: ", err.Error())
+        return pvcClean, err
     }
     pvClean, err := ccbk.cleanAllPV()
     if err != nil {
-        cc.log.Error("couldn't clean all PV: ", err.Error())
-        return false, err
+        ccbk.log.Error("couldn't clean all PV: ", err.Error())
+        return pvClean, err
     }
     return true, nil
 }
