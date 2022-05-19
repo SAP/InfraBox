@@ -544,7 +544,7 @@ func deleteGKECluster(cr *v1alpha1.GKECluster, log *logrus.Entry) error {
         }
 
     case "cleaning cluster":
-        isClean, err := cleanupK8s(gkecluster, log)
+        isClean, err := cleanupK8sByKubectl(gkecluster, log)
         if err != nil {
             _ = checkTimeout(cr, log)
             return err
@@ -596,6 +596,12 @@ func cleanupK8s(cluster *RemoteCluster, log *logrus.Entry) (bool, error) {
     }
 
     isClean, err := cleaner.NewK8sCleaner(cs, log).Cleanup()
+    return isClean, err
+}
+
+func cleanupK8sByKubectl(cluster *RemoteCluster, log *logrus.Entry) (bool, error) {
+    kubeConfigPath := "/tmp/kubeconfig-" + cluster.Name
+    isClean, err := cleaner.NewK8sCleanerByKubectl(kubeConfigPath, log).Cleanup()
     return isClean, err
 }
 
@@ -799,7 +805,7 @@ func cleanUpClusters(maxAge string, log *logrus.Entry) {
             continue
         }
 
-        if _, err := cleanupK8s(&cluster, log); err != nil {
+        if _, err := cleanupK8sByKubectl(&cluster, log); err != nil {
             log.Errorf("Error clean up cluster: %v", err)
         }
 
