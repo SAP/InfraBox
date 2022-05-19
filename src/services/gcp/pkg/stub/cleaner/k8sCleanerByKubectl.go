@@ -14,7 +14,7 @@ type clusterCleanerByKubectl struct {
 
 func NewK8sCleanerByKubectl(kubeConfigPath string, log *log.Entry) *clusterCleanerByKubectl{
     ccbk := &clusterCleanerByKubectl{
-        kubeConfigPath: string,
+        kubeConfigPath: kubeConfigPath,
 		log:            log,
 	}
 
