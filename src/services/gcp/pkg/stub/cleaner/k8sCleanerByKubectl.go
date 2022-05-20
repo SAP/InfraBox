@@ -30,9 +30,9 @@ func (ccbk *clusterCleanerByKubectl) Cleanup() (bool, error) {
         ccbk.log.Error("couldn't clean all ingresses: ", err.Error())
         return ingressClean, err
     }
-    podClean, err := ccbk.cleanAllPods()
+    podClean, err := ccbk.cleanResources()
     if err != nil {
-        ccbk.log.Error("couldn't clean all ingresses: ", err.Error())
+        ccbk.log.Error("couldn't clean all resources: ", err.Error())
         return podClean, err
     }
     pvcClean, err := ccbk.cleanAllPVC()
@@ -49,6 +49,7 @@ func (ccbk *clusterCleanerByKubectl) Cleanup() (bool, error) {
 }
 
 func (ccbk *clusterCleanerByKubectl) cleanAllIngresses() (bool, error) {
+    ccbk.log.Debug("Attempt to clean up ingress")
     cmd := exec.Command("bash", "-c", "kubectl delete ingress --all --all-namespaces")
 	out, err := cmd.Output()
 	fmt.Println(string(out))
@@ -57,10 +58,11 @@ func (ccbk *clusterCleanerByKubectl) cleanAllIngresses() (bool, error) {
 	}
 	return true, nil
 }
-func (ccbk *clusterCleanerByKubectl) cleanAllPods() (bool, error) {
-    cmd := exec.Command("bash", "-c", "kubectl delete pod --all --all-namespaces")
+func (ccbk *clusterCleanerByKubectl) cleanResources() (bool, error) {
+    ccbk.log.Debug("Attempt to clean up resources")
+    cmd := exec.Command("bash", "-c", "kubectl delete all --all --all-namespaces")
 	out, err := cmd.Output()
-    fmt.Println(string(out))
+	fmt.Println(string(out))
 	if err != nil {
 		return false, err
 	}
@@ -68,6 +70,7 @@ func (ccbk *clusterCleanerByKubectl) cleanAllPods() (bool, error) {
 }
 
 func (ccbk *clusterCleanerByKubectl) cleanAllPVC() (bool, error) {
+    ccbk.log.Debug("Attempt to clean up PVC")
     cmd := exec.Command("bash", "-c", "kubectl delete pvc --all --all-namespaces")
 	out, err := cmd.Output()
 	fmt.Println(string(out))
@@ -78,6 +81,7 @@ func (ccbk *clusterCleanerByKubectl) cleanAllPVC() (bool, error) {
 }
 
 func (ccbk *clusterCleanerByKubectl) cleanAllPV() (bool, error) {
+    ccbk.log.Debug("Attempt to clean up PV")
     cmd := exec.Command("bash", "-c", "kubectl delete pv --all --all-namespaces")
 	out, err := cmd.Output()
 	fmt.Println(string(out))
