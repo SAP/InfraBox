@@ -73,6 +73,7 @@ func (ccbk *clusterCleanerByKubectl) cleanAllPVC() (bool, error) {
     cmd := exec.Command("bash", "-c", "kubectl delete pvc --all --all-namespaces")
 	out, err := cmd.Output()
 	ccbk.log.Debug("clean all resources in all pvc: ", out)
+
 	if err != nil {
 		return false, err
 	}
