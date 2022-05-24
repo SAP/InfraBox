@@ -1,7 +1,6 @@
 package cleaner
 
 import (
-    "fmt"
     "os"
     "os/exec"
     "github.com/sirupsen/logrus"
@@ -52,6 +51,7 @@ func (ccbk *clusterCleanerByKubectl) cleanAllIngresses() (bool, error) {
     ccbk.log.Debug("Attempt to clean up ingress")
     cmd := exec.Command("bash", "-c", "kubectl delete ingress --all --all-namespaces")
 	out, err := cmd.Output()
+    ccbk.log.Debug("clean all ingress in all namespaces: ", out)
 	if err != nil {
 		return false, err
 	}
@@ -61,6 +61,7 @@ func (ccbk *clusterCleanerByKubectl) cleanResources() (bool, error) {
     ccbk.log.Debug("Attempt to clean up resources")
     cmd := exec.Command("bash", "-c", "kubectl delete all --all --all-namespaces")
 	out, err := cmd.Output()
+	ccbk.log.Debug("clean all resources in all namespaces: ", out)
 	if err != nil {
 		return false, err
 	}
@@ -71,6 +72,8 @@ func (ccbk *clusterCleanerByKubectl) cleanAllPVC() (bool, error) {
     ccbk.log.Debug("Attempt to clean up PVC")
     cmd := exec.Command("bash", "-c", "kubectl delete pvc --all --all-namespaces")
 	out, err := cmd.Output()
+	ccbk.log.Debug("clean all resources in all pvc: ", out)
+
 	if err != nil {
 		return false, err
 	}
@@ -81,6 +84,7 @@ func (ccbk *clusterCleanerByKubectl) cleanAllPV() (bool, error) {
     ccbk.log.Debug("Attempt to clean up PV")
     cmd := exec.Command("bash", "-c", "kubectl delete pv --all --all-namespaces")
 	out, err := cmd.Output()
+	ccbk.log.Debug("clean all resources in all pv: ", out)
 	if err != nil {
 		return false, err
 	}
