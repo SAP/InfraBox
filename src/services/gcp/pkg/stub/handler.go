@@ -544,7 +544,7 @@ func deleteGKECluster(cr *v1alpha1.GKECluster, log *logrus.Entry) error {
         }
 
     case "cleaning cluster":
-        isClean, err := cleanupK8sByKubectl(gkecluster, log)
+        isClean, err := cleanupK8s(gkecluster, log)
         if err != nil {
             _ = checkTimeout(cr, log)
             return err
@@ -805,7 +805,7 @@ func cleanUpClusters(maxAge string, log *logrus.Entry) {
             continue
         }
 
-        if _, err := cleanupK8sByKubectl(&cluster, log); err != nil {
+        if _, err := cleanupK8s(&cluster, log); err != nil {
             log.Errorf("Error clean up cluster: %v", err)
         }
 
