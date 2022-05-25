@@ -44,15 +44,18 @@ func NewK8sCleaner(cs kubernetes.Interface, log *logrus.Entry) *clusterCleaner {
 func (cc *clusterCleaner) Cleanup() (bool, error) {
 	cc.log.Debug("Attempt to clean up cluster")
 
-	if isNamespacesClean, err := cc.cleanAllNamespaces(cc.clientSet); err != nil {
+	isNamespacesClean, err := cc.cleanAllNamespaces(cc.clientSet)
+	if err != nil {
 		cc.log.Error("couldn't clean all namespaces: ", err.Error())
 	}
 
-	if isPodsClean, err := cc.cleanPodsInAllNamespaces(cc.clientSet); err != nil {
+	isPodsClean, err := cc.cleanPodsInAllNamespaces(cc.clientSet)
+	if err != nil {
 		cc.log.Error("couldn't remove all pods: ", err.Error())
 	}
 
-	if isPvcsClean, err := cc.cleanPvcsInAllNamespaces(cc.clientSet); err != nil {
+	isPvcsClean, err := cc.cleanPvcsInAllNamespaces(cc.clientSet)
+	if err != nil {
 		cc.log.Error("couldn't remove all persistent volume claims: ", err.Error())
 	}
 
