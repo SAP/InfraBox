@@ -603,12 +603,6 @@ func cleanupK8s(cluster *RemoteCluster, log *logrus.Entry) (bool, error) {
     return isClean, err
 }
 
-func cleanupK8sByKubectl(cluster *RemoteCluster, log *logrus.Entry) (bool, error) {
-    kubeConfigPath := "/tmp/kubeconfig-" + cluster.Name
-    isClean, err := cleaner.NewK8sCleanerByKubectl(kubeConfigPath, log).Cleanup()
-    return isClean, err
-}
-
 func (h *Handler) Handle(ctx types.Context, event types.Event) error {
     switch o := event.Object.(type) {
     case *v1alpha1.GKECluster:
