@@ -277,7 +277,7 @@ func getAdminToken(gkecluster *RemoteCluster) (string, error) {
     }
 
 
-    _, err := c.CoreV1().ServiceAccounts("kube-system").Get(adminSAName, metav1.GetOptions{})
+    _, err = c.CoreV1().ServiceAccounts("kube-system").Get(adminSAName, metav1.GetOptions{})
     if err != nil {
         return "", fmt.Errorf("error getting admin service account: %s, %v", gkecluster.Name, err)
     }
