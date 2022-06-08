@@ -44,7 +44,6 @@ import (
     v1 "k8s.io/api/core/v1"
     rbacv1 "k8s.io/api/rbac/v1"
     metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-    authenticationv1 "k8s.io/api/authentication/v1"
 
     "k8s.io/apimachinery/pkg/api/errors"
     "k8s.io/apimachinery/pkg/api/meta"
@@ -277,13 +276,7 @@ func getAdminToken(gkecluster *RemoteCluster) (string, error) {
         return "", fmt.Errorf("error getting k8s client: %s, %v", gkecluster.Name, err)
     }
 
-	treq := &authenticationv1.TokenRequest{
-		Spec: authenticationv1.TokenRequestSpec{
-			Audiences: []string{"api"},
-		},
-	}
 
-    _, err = c.CoreV1().ServiceAccounts("kube-system").CreateToken(adminSAName, treq)
     if err != nil {
 		return "", fmt.Errorf("error creating token for service account: %s, %v", gkecluster.Name, err)
 	}
@@ -293,11 +286,15 @@ func getAdminToken(gkecluster *RemoteCluster) (string, error) {
         return "", fmt.Errorf("error getting admin service account: %s, %v", gkecluster.Name, err)
     }
 
-    if len(sa.Secrets) == 0 {
-        return "", fmt.Errorf("error getting admin sa secret as sa.Secrets is empty: %s, %s, %v", gkecluster.Name, sa, err)
+
+    err = action.Create(newTokenSecret(cr, gkecluster))
+    if err != nil && !errors.IsAlreadyExists(err) {
+        log.Errorf("Failed to create secret: %v", err)
+        return nil, err
     }
 
-    secret, err := c.CoreV1().Secrets("kube-system").Get(sa.Secrets[0].Name, metav1.GetOptions{})
+
+    secret, err := c.CoreV1().Secrets("kube-system").Get(adminSAName + "-token", metav1.GetOptions{})
     if err != nil {
         return "", fmt.Errorf("error getting admin sa secret: %s, %v", gkecluster.Name, err)
     }
@@ -883,6 +880,29 @@ func generateKubeconfig(c *RemoteCluster) []byte {
 
     kc, _ := clientcmd.Write(clientConfig)
     return kc
+}
+
+func newTokenSecret(cluster *v1alpha1.GKECluster, gke *RemoteCluster) *v1.Secret {
+    caCrt, _ := b64.StdEncoding.DecodeString(gke.MasterAuth.ClusterCaCertificate)
+    clientKey, _ := b64.StdEncoding.DecodeString(gke.MasterAuth.ClientKey)
+    clientCrt, _ := b64.StdEncoding.DecodeString(gke.MasterAuth.ClientCertificate)
+
+    secretName := adminSAName + "-token"
+
+    annotations := make(map[string]string)
+    annotations["kubernetes.io/service-account.name"]=adminSAName
+    return &v1.Secret{
+        TypeMeta: metav1.TypeMeta{
+            Kind:       "Secret",
+            APIVersion: "v1",
+        },
+        ObjectMeta: metav1.ObjectMeta{
+            Name:      secretName,
+            Namespace: cluster.Namespace,
+            Annotations: annotations
+        },
+        Type: "kubernetes.io/service-account-token"
+    }
 }
 
 func newSecret(cluster *v1alpha1.GKECluster, gke *RemoteCluster) *v1.Secret {
