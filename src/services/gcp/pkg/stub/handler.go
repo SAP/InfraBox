@@ -287,7 +287,7 @@ func getAdminToken(gkecluster *RemoteCluster) (string, error) {
     }
 
 
-    err = action.Create(newTokenSecret(cr, gkecluster))
+    err = action.Create(newTokenSecret())
     if err != nil && !errors.IsAlreadyExists(err) {
         log.Errorf("Failed to create secret: %v", err)
         return nil, err
@@ -882,10 +882,7 @@ func generateKubeconfig(c *RemoteCluster) []byte {
     return kc
 }
 
-func newTokenSecret(cluster *v1alpha1.GKECluster, gke *RemoteCluster) *v1.Secret {
-    caCrt, _ := b64.StdEncoding.DecodeString(gke.MasterAuth.ClusterCaCertificate)
-    clientKey, _ := b64.StdEncoding.DecodeString(gke.MasterAuth.ClientKey)
-    clientCrt, _ := b64.StdEncoding.DecodeString(gke.MasterAuth.ClientCertificate)
+func newTokenSecret() *v1.Secret {
 
     secretName := adminSAName + "-token"
 
@@ -898,7 +895,7 @@ func newTokenSecret(cluster *v1alpha1.GKECluster, gke *RemoteCluster) *v1.Secret
         },
         ObjectMeta: metav1.ObjectMeta{
             Name:      secretName,
-            Namespace: cluster.Namespace,
+            Namespace: "kube-system",
             Annotations: annotations
         },
         Type: "kubernetes.io/service-account-token"
