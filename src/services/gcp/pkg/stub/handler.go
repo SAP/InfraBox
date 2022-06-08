@@ -44,6 +44,7 @@ import (
     v1 "k8s.io/api/core/v1"
     rbacv1 "k8s.io/api/rbac/v1"
     metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+    authenticationv1 "k8s.io/api/authentication/v1"
 
     "k8s.io/apimachinery/pkg/api/errors"
     "k8s.io/apimachinery/pkg/api/meta"
@@ -275,6 +276,17 @@ func getAdminToken(gkecluster *RemoteCluster) (string, error) {
     if err != nil {
         return "", fmt.Errorf("error getting k8s client: %s, %v", gkecluster.Name, err)
     }
+
+	treq := &authenticationv1.TokenRequest{
+		Spec: authenticationv1.TokenRequestSpec{
+			Audiences: []string{"api"},
+		},
+	}
+
+    _, err = clientset.CoreV1().ServiceAccounts("kube-system").CreateToken(adminSAName, treq)
+    if err != nil {
+		return "", fmt.Errorf("error creating token for service account: %s, %v", gkecluster.Name, err)
+	}
 
     sa, err := c.CoreV1().ServiceAccounts("kube-system").Get(adminSAName, metav1.GetOptions{})
     if err != nil {
