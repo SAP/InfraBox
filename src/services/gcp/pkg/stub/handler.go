@@ -289,8 +289,7 @@ func getAdminToken(gkecluster *RemoteCluster) (string, error) {
 
     err = action.Create(newTokenSecret())
     if err != nil && !errors.IsAlreadyExists(err) {
-        log.Errorf("Failed to create secret: %v", err)
-        return nil, err
+        return "", fmt.Errorf("error creating token secret: %s, %v", gkecluster.Name, err)
     }
 
 
