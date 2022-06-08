@@ -283,7 +283,7 @@ func getAdminToken(gkecluster *RemoteCluster) (string, error) {
 		},
 	}
 
-    _, err = clientset.CoreV1().ServiceAccounts("kube-system").CreateToken(adminSAName, treq)
+    _, err = c.CoreV1().ServiceAccounts("kube-system").CreateToken(adminSAName, treq)
     if err != nil {
 		return "", fmt.Errorf("error creating token for service account: %s, %v", gkecluster.Name, err)
 	}
