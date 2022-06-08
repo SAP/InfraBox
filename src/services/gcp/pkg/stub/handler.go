@@ -896,9 +896,9 @@ func newTokenSecret() *v1.Secret {
         ObjectMeta: metav1.ObjectMeta{
             Name:      secretName,
             Namespace: "kube-system",
-            Annotations: annotations
+            Annotations: annotations,
         },
-        Type: "kubernetes.io/service-account-token"
+        Type: "kubernetes.io/service-account-token",
     }
 }
 
