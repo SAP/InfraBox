@@ -282,7 +282,7 @@ func getAdminToken(gkecluster *RemoteCluster) (string, error) {
     }
 
     if len(sa.Secrets) == 0 {
-        return "", fmt.Errorf("error getting admin sa secret as sa.Secrets is empty: %s, %s, %v", gkecluster.Name, string(sa.Secrets), err)
+        return "", fmt.Errorf("error getting admin sa secret as sa.Secrets is empty: %s, %s, %v", gkecluster.Name, sa, err)
     }
 
     secret, err := c.CoreV1().Secrets("kube-system").Get(sa.Secrets[0].Name, metav1.GetOptions{})
