@@ -270,37 +270,37 @@ func syncGKECluster(cr *v1alpha1.GKECluster, log *logrus.Entry) (*v1alpha1.GKECl
 
 func getAdminToken(gkecluster *RemoteCluster) (string, error) {
     client, err := newRemoteClusterSDK(gkecluster)
-
+    log.Infof("Begin to 111111111111")
     c, err := kubernetes.NewForConfig(client.kubeConfig)
     if err != nil {
         return "", fmt.Errorf("error getting k8s client: %s, %v", gkecluster.Name, err)
     }
 
-
+    log.Infof("Begin to 111111111112")
     _, err = c.CoreV1().ServiceAccounts("kube-system").Get(adminSAName, metav1.GetOptions{})
     if err != nil {
         return "", fmt.Errorf("error getting admin service account: %s, %v", gkecluster.Name, err)
     }
 
-
+    log.Infof("Begin to 111111111113")
     err = action.Create(newTokenSecret())
-    if err != nil && !errors.IsAlreadyExists(err) {
+    if err != nil {
         return "", fmt.Errorf("error creating token secret: %s, %v", gkecluster.Name, err)
     }
 
-
+    log.Infof("Begin to 111111111114")
     secret, err := c.CoreV1().Secrets("kube-system").Get(adminSAName + "-token", metav1.GetOptions{})
     if err != nil {
         return "", fmt.Errorf("error getting admin sa secret: %s, %v", gkecluster.Name, err)
     }
-
+    log.Infof("Begin to 111111111115")
     token := secret.Data["token"]
 
     return string(token), nil
 }
 
 func injectAdminServiceAccount(gkecluster *RemoteCluster, log *logrus.Entry) error {
-    log.Infof("Begin to 111111111111")
+
     client, err := newRemoteClusterSDK(gkecluster)
 
 
@@ -309,28 +309,28 @@ func injectAdminServiceAccount(gkecluster *RemoteCluster, log *logrus.Entry) err
         log.Error(err)
         return err
     }
-    log.Infof("Begin to 2222222222222")
+
     err = client.Create(newAdminServiceAccount(), log)
     if err != nil && !errors.IsAlreadyExists(err) {
         err = fmt.Errorf("failed to create admin service account : %v", err)
         log.Error(err)
         return err
     }
-    log.Infof("Begin to 33333333333")
+
     err = client.Create(newAdminCRB(), log)
     if err != nil && !errors.IsAlreadyExists(err) {
         err = fmt.Errorf("failed to create admin service account : %v", err)
         log.Error(err)
         return err
     }
-    log.Infof("Begin to 4444444444444")
+
     token, err := getAdminToken(gkecluster)
     if err != nil {
         err = fmt.Errorf("error getting admin token: %s", gkecluster.Name)
         log.Error(err)
         return err
     }
-    log.Infof("Begin to 5555555555555")
+
     gkecluster.MasterAuth.Token = token
     return nil
 }
