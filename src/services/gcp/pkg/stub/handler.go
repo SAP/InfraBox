@@ -300,35 +300,37 @@ func getAdminToken(gkecluster *RemoteCluster) (string, error) {
 }
 
 func injectAdminServiceAccount(gkecluster *RemoteCluster, log *logrus.Entry) error {
+    log.Infof("Begin to 111111111111")
     client, err := newRemoteClusterSDK(gkecluster)
+
 
     if err != nil {
         err = fmt.Errorf("failed to create remote cluster client: %v", err)
         log.Error(err)
         return err
     }
-
+    log.Infof("Begin to 2222222222222")
     err = client.Create(newAdminServiceAccount(), log)
     if err != nil && !errors.IsAlreadyExists(err) {
         err = fmt.Errorf("failed to create admin service account : %v", err)
         log.Error(err)
         return err
     }
-
+    log.Infof("Begin to 33333333333")
     err = client.Create(newAdminCRB(), log)
     if err != nil && !errors.IsAlreadyExists(err) {
         err = fmt.Errorf("failed to create admin service account : %v", err)
         log.Error(err)
         return err
     }
-
+    log.Infof("Begin to 4444444444444")
     token, err := getAdminToken(gkecluster)
     if err != nil {
         err = fmt.Errorf("error getting admin token: %s", gkecluster.Name)
         log.Error(err)
         return err
     }
-
+    log.Infof("Begin to 5555555555555")
     gkecluster.MasterAuth.Token = token
     return nil
 }
