@@ -270,25 +270,20 @@ func syncGKECluster(cr *v1alpha1.GKECluster, log *logrus.Entry) (*v1alpha1.GKECl
 
 func getAdminToken(gkecluster *RemoteCluster) (string, error) {
     client, err := newRemoteClusterSDK(gkecluster)
-    fmt.Println("Begin to 111111111111")
     c, err := kubernetes.NewForConfig(client.kubeConfig)
     if err != nil {
         return "", fmt.Errorf("error getting k8s client: %s, %v", gkecluster.Name, err)
     }
 
-    fmt.Println("Begin to 111111111112")
     _, err = c.CoreV1().ServiceAccounts("kube-system").Get(adminSAName, metav1.GetOptions{})
     if err != nil {
         return "", fmt.Errorf("error getting admin service account: %s, %v", gkecluster.Name, err)
     }
 
-
-    fmt.Println("Begin to 111111111113")
     secret, err := c.CoreV1().Secrets("kube-system").Get(adminSAName + "-token", metav1.GetOptions{})
     if err != nil {
         return "", fmt.Errorf("error getting admin sa secret: %s, %v", gkecluster.Name, err)
     }
-    fmt.Println("Begin to 111111111114")
     token := secret.Data["token"]
 
     return string(token), nil
