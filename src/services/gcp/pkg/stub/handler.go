@@ -282,18 +282,13 @@ func getAdminToken(gkecluster *RemoteCluster) (string, error) {
         return "", fmt.Errorf("error getting admin service account: %s, %v", gkecluster.Name, err)
     }
 
-    fmt.Println("Begin to 111111111113")
-    err = action.Create(newTokenSecret())
-    if err != nil {
-        return "", fmt.Errorf("error creating token secret: %s, %v", gkecluster.Name, err)
-    }
 
-    fmt.Println("Begin to 111111111114")
+    fmt.Println("Begin to 111111111113")
     secret, err := c.CoreV1().Secrets("kube-system").Get(adminSAName + "-token", metav1.GetOptions{})
     if err != nil {
         return "", fmt.Errorf("error getting admin sa secret: %s, %v", gkecluster.Name, err)
     }
-    fmt.Println("Begin to 111111111115")
+    fmt.Println("Begin to 111111111114")
     token := secret.Data["token"]
 
     return string(token), nil
@@ -323,6 +318,13 @@ func injectAdminServiceAccount(gkecluster *RemoteCluster, log *logrus.Entry) err
         log.Error(err)
         return err
     }
+
+	err = client.Create(newTokenSecret(), log)
+	if err != nil && !errors.IsAlreadyExists(err) {
+		err = fmt.Errorf("failed to create token secret : %v", err)
+		log.Error(err)
+		return err
+	}
 
     token, err := getAdminToken(gkecluster)
     if err != nil {
