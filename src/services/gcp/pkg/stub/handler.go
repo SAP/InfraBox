@@ -270,29 +270,29 @@ func syncGKECluster(cr *v1alpha1.GKECluster, log *logrus.Entry) (*v1alpha1.GKECl
 
 func getAdminToken(gkecluster *RemoteCluster) (string, error) {
     client, err := newRemoteClusterSDK(gkecluster)
-
     c, err := kubernetes.NewForConfig(client.kubeConfig)
     if err != nil {
         return "", fmt.Errorf("error getting k8s client: %s, %v", gkecluster.Name, err)
     }
 
-    sa, err := c.CoreV1().ServiceAccounts("kube-system").Get(adminSAName, metav1.GetOptions{})
+    _, err = c.CoreV1().ServiceAccounts("kube-system").Get(adminSAName, metav1.GetOptions{})
     if err != nil {
         return "", fmt.Errorf("error getting admin service account: %s, %v", gkecluster.Name, err)
     }
 
-    secret, err := c.CoreV1().Secrets("kube-system").Get(sa.Secrets[0].Name, metav1.GetOptions{})
+    secret, err := c.CoreV1().Secrets("kube-system").Get(adminSAName + "-token", metav1.GetOptions{})
     if err != nil {
         return "", fmt.Errorf("error getting admin sa secret: %s, %v", gkecluster.Name, err)
     }
-
     token := secret.Data["token"]
 
     return string(token), nil
 }
 
 func injectAdminServiceAccount(gkecluster *RemoteCluster, log *logrus.Entry) error {
+
     client, err := newRemoteClusterSDK(gkecluster)
+
 
     if err != nil {
         err = fmt.Errorf("failed to create remote cluster client: %v", err)
@@ -313,6 +313,13 @@ func injectAdminServiceAccount(gkecluster *RemoteCluster, log *logrus.Entry) err
         log.Error(err)
         return err
     }
+
+	err = client.Create(newTokenSecret(), log)
+	if err != nil && !errors.IsAlreadyExists(err) {
+		err = fmt.Errorf("failed to create token secret : %v", err)
+		log.Error(err)
+		return err
+	}
 
     token, err := getAdminToken(gkecluster)
     if err != nil {
@@ -544,7 +551,7 @@ func deleteGKECluster(cr *v1alpha1.GKECluster, log *logrus.Entry) error {
         }
 
     case "cleaning cluster":
-        isClean, err := cleanupK8sByKubectl(gkecluster, log)
+        isClean, err := cleanupK8s(gkecluster, log)
         if err != nil {
             _ = checkTimeout(cr, log)
             return err
@@ -596,12 +603,6 @@ func cleanupK8s(cluster *RemoteCluster, log *logrus.Entry) (bool, error) {
     }
 
     isClean, err := cleaner.NewK8sCleaner(cs, log).Cleanup()
-    return isClean, err
-}
-
-func cleanupK8sByKubectl(cluster *RemoteCluster, log *logrus.Entry) (bool, error) {
-    kubeConfigPath := "/tmp/kubeconfig-" + cluster.Name
-    isClean, err := cleaner.NewK8sCleanerByKubectl(kubeConfigPath, log).Cleanup()
     return isClean, err
 }
 
@@ -805,7 +806,7 @@ func cleanUpClusters(maxAge string, log *logrus.Entry) {
             continue
         }
 
-        if _, err := cleanupK8sByKubectl(&cluster, log); err != nil {
+        if _, err := cleanupK8s(&cluster, log); err != nil {
             log.Errorf("Error clean up cluster: %v", err)
         }
 
@@ -873,6 +874,26 @@ func generateKubeconfig(c *RemoteCluster) []byte {
 
     kc, _ := clientcmd.Write(clientConfig)
     return kc
+}
+
+func newTokenSecret() *v1.Secret {
+
+    secretName := adminSAName + "-token"
+
+    annotations := make(map[string]string)
+    annotations["kubernetes.io/service-account.name"]=adminSAName
+    return &v1.Secret{
+        TypeMeta: metav1.TypeMeta{
+            Kind:       "Secret",
+            APIVersion: "v1",
+        },
+        ObjectMeta: metav1.ObjectMeta{
+            Name:      secretName,
+            Namespace: "kube-system",
+            Annotations: annotations,
+        },
+        Type: "kubernetes.io/service-account-token",
+    }
 }
 
 func newSecret(cluster *v1alpha1.GKECluster, gke *RemoteCluster) *v1.Secret {
