@@ -1,6 +1,7 @@
 import json
 import hashlib
 import hmac
+import re
 from datetime import datetime
 
 import eventlet
@@ -247,11 +248,13 @@ class Trigger(object):
         project_id = result[0]
 
         result = self.execute('''
-            SELECT build_on_push FROM project WHERE id = %s;
+            SELECT build_on_push, build_skip_pattern FROM project WHERE id = %s;
         ''', [project_id])[0]
 
         if not result[0]:
             return res(200, 'build_on_push not set')
+
+        build_skip_pattern = result[1]
 
         branch = None
         tag = None
@@ -273,6 +276,10 @@ class Trigger(object):
 
         if not token:
             return res(200, 'no token')
+
+        if build_skip_pattern and re.search(build_skip_pattern, ref):
+            return res(200, 'build_skip_pattern matched, skip this build')
+
 
         if commit:
             self.create_push(commit, event['repository'], branch, tag)
@@ -353,7 +360,7 @@ class Trigger(object):
             committer_login = hc['committer']['login']
 
         branch = event['pull_request']['head']['ref']
-        
+
         def getLabelsName(event):
             names = []
             for label in event['pull_request']['labels']:
