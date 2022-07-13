@@ -248,13 +248,16 @@ class Trigger(object):
         project_id = result[0]
 
         result = self.execute('''
-            SELECT build_on_push, build_skip_pattern FROM project WHERE id = %s;
+            SELECT build_on_push FROM project WHERE id = %s;
         ''', [project_id])[0]
 
         if not result[0]:
             return res(200, 'build_on_push not set')
 
-        build_skip_pattern = result[1]
+        result = self.execute('''
+            SELECT skip_pattern FROM project_skip_pattern WHERE id = %s;
+        ''', [project_id])[0]
+        skip_pattern = result[0]
 
         branch = None
         tag = None
@@ -277,7 +280,7 @@ class Trigger(object):
         if not token:
             return res(200, 'no token')
 
-        if build_skip_pattern and re.search(build_skip_pattern, ref):
+        if skip_pattern and re.search(skip_pattern, ref):
             return res(200, 'build_skip_pattern matched, skip this build')
 
 

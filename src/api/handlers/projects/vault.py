@@ -23,11 +23,11 @@ project_vault_model = api.model('VaultService', {
 
 @ns.route('/')
 @api.doc(responses={403: 'Not Authorized'})
-class Tokens(Resource):
+class Vault(Resource):
 
     @api.marshal_with(project_vault_model)
     def get(self, project_id):
-        '''one
+        '''
         Returns project's vault service
         '''
         v = g.db.execute_many_dict('''
@@ -52,7 +52,7 @@ class Tokens(Resource):
 
 @ns.route('/<vault_id>')
 @api.doc(responses={403: 'Not Authorized'})
-class Secret(Resource):
+class Vault(Resource):
     @api.response(200, 'Success', response_model)
     def delete(self, project_id, vault_id):
         g.db.execute('''
