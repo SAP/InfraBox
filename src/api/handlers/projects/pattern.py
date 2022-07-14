@@ -23,7 +23,7 @@ class Pattern(Resource):
         '''
         Returns project's skip pattern
         '''
-        v = g.db.execute_one_dict('''
+        v = g.db.execute_many_dict('''
             SELECT id, skip_pattern
             FROM project_skip_pattern
             WHERE project_id = %s
