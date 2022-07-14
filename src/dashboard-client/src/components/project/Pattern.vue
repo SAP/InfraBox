@@ -42,7 +42,7 @@ import Notification from '../../models/Notification'
 export default {
     props: ['project'],
     data: () => ({
-        skip_pattern: '',
+        skip_pattern: ''
     }),
     created () {
         this.project._loadPattern()
@@ -59,7 +59,7 @@ export default {
                 })
         },
         addPattern () {
-            const d = { skip_pattern: this.skip_pattern}
+            const d = { skip_pattern: this.skip_pattern }
             NewAPIService.post(`projects/${this.project.id}/pattern`, d)
                 .then((response) => {
                     NotificationService.$emit('NOTIFICATION', new Notification(response))

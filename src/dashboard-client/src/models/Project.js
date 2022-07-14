@@ -358,11 +358,11 @@ export default class Project {
     }
     _reloadPattern () {
         return NewAPIService.get(`projects/${this.id}/pattern`)
-          .then((pattern) => {
-              store.commit('setPattern', {project: this, pattern: pattern})
-          })
-          .catch((err) => {
-              NotificationService.$emit('NOTIFICATION', new Notification(err))
-          })
+            .then((pattern) => {
+                store.commit('setPattern', {project: this, pattern: pattern})
+            })
+            .catch((err) => {
+                NotificationService.$emit('NOTIFICATION', new Notification(err))
+            })
     }
 }
