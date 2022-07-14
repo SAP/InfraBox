@@ -19,6 +19,9 @@
             <ib-Vault :project="project"></ib-Vault>
         </md-layout>
         <md-layout md-column md-gutter md-flex-xsmall="100" md-flex-small="100" md-flex-medium="100" md-flex-large="100" md-flex-xlarge="100">
+            <ib-project-pattern :project="project"></ib-project-pattern>
+        </md-layout>
+        <md-layout md-column md-gutter md-flex-xsmall="100" md-flex-small="100" md-flex-medium="100" md-flex-large="100" md-flex-xlarge="100">
             <ib-project-cronjobs :project="project"></ib-project-cronjobs>
         </md-layout>
         <md-layout md-column md-gutter md-flex-xsmall="100" md-flex-small="100" md-flex-medium="100" md-flex-large="100" md-flex-xlarge="100">
@@ -36,6 +39,7 @@ import ProjectCronJobs from './Cron'
 import ProjectSSHKeys from './SSHKeys'
 import ProjectVisibility from './Visibility'
 import ProjectVault from './Vault'
+import ProjectPattern from './Pattern'
 
 export default {
     props: ['project'],
@@ -47,6 +51,7 @@ export default {
         'ib-project-cronjobs': ProjectCronJobs,
         'ib-project-visibility': ProjectVisibility,
         'ib-Vault': ProjectVault,
+        'ib-project-pattern': ProjectPattern,
         'ib-project-sshkeys': ProjectSSHKeys
     }
 }
