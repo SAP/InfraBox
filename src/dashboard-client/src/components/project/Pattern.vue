@@ -52,7 +52,7 @@ export default {
             NewAPIService.delete(`projects/${this.project.id}/pattern`)
                 .then((response) => {
                     NotificationService.$emit('NOTIFICATION', new Notification(response))
-                    this.project._reloadVault()
+                    this.project._reloadPattern()
                 })
                 .catch((err) => {
                     NotificationService.$emit('NOTIFICATION', new Notification(err))
