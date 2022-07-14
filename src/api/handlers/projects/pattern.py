@@ -32,7 +32,7 @@ class Pattern(Resource):
 
     @api.expect(project_skip_pattern_model)
     def post(self, project_id):
-        v = g.db.execute_one_dict('''
+        v = g.db.execute_many_dict('''
             SELECT skip_pattern
             FROM project_skip_pattern
             WHERE project_id = %s
