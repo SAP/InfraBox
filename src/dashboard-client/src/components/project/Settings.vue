@@ -19,10 +19,10 @@
             <ib-Vault :project="project"></ib-Vault>
         </md-layout>
         <md-layout md-column md-gutter md-flex-xsmall="100" md-flex-small="100" md-flex-medium="100" md-flex-large="100" md-flex-xlarge="100">
-            <ib-project-pattern :project="project"></ib-project-pattern>
+            <ib-project-cronjobs :project="project"></ib-project-cronjobs>
         </md-layout>
         <md-layout md-column md-gutter md-flex-xsmall="100" md-flex-small="100" md-flex-medium="100" md-flex-large="100" md-flex-xlarge="100">
-            <ib-project-cronjobs :project="project"></ib-project-cronjobs>
+            <ib-project-pattern :project="project"></ib-project-pattern>
         </md-layout>
         <md-layout md-column md-gutter md-flex-xsmall="100" md-flex-small="100" md-flex-medium="100" md-flex-large="100" md-flex-xlarge="100">
             <ib-project-badges :project="project"></ib-project-badges>

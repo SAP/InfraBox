@@ -3,7 +3,7 @@
         <md-card md-theme="white" class="full-height clean-card">
             <md-card-header>
                 <md-card-header-text class="setting-list">
-                    <md-icon>bookmark</md-icon>
+                    <md-icon>security</md-icon>
                     <span>Build Skip Pattern</span>
                 </md-card-header-text>
             </md-card-header>
@@ -11,7 +11,7 @@
                     <md-list class="m-t-md m-b-md">
                         <md-list-item>
                             <md-input-container class="m-l-sm">
-                                <label>Build will be skipped if Github event ref matched the pattern</label>
+                                <label>Infrabox Build will be skipped if Github event ref matched the pattern</label>
                                 <md-textarea v-model="skip_pattern" required></md-textarea>
                             </md-input-container>
                             <md-button class="md-icon-button md-list-action" @click="addPattern()">
