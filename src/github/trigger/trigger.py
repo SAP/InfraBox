@@ -256,12 +256,15 @@ class Trigger(object):
 
         result = self.execute('''
             SELECT skip_pattern FROM project_skip_pattern WHERE project_id = %s;
-        ''', [project_id])[0]
-        skip_pattern = result[0]
+        ''', [project_id])
 
+        skip_pattern = None
         branch = None
         tag = None
         commit = None
+
+        if result:
+            skip_pattern = result[0][0]
 
         if event.get('base_ref', None):
             branch = remove_ref(event['base_ref'])
