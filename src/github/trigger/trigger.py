@@ -255,7 +255,7 @@ class Trigger(object):
             return res(200, 'build_on_push not set')
 
         result = self.execute('''
-            SELECT skip_pattern FROM project_skip_pattern WHERE id = %s;
+            SELECT skip_pattern FROM project_skip_pattern WHERE project_id = %s;
         ''', [project_id])[0]
         skip_pattern = result[0]
 
