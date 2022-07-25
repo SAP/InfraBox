@@ -157,7 +157,10 @@ class Trigger(object):
             GROUP BY job.state
         ''', [commit_id, project_id])
 
+        logger.error('## Following line is result')
+        logger.error(result)
         if result:
+            logger.error("result is true")
             return True
 
         return False
@@ -183,7 +186,7 @@ class Trigger(object):
         ''', [c['id'], project_id])
 
         commit_id = c['id']
-
+        print('tag is {}'.format(tag))
         if tag:
             self.execute('''
                 UPDATE "commit" SET tag = %s WHERE id = %s AND project_id = %s
@@ -194,6 +197,8 @@ class Trigger(object):
                             FROM project
                             WHERE id = %s''', [project_id])[0]
 
+            print('build_on_tag is {}'.format(build_on_tag))
+            print('has_active_build is {}'.format(self.has_active_build(commit_id, project_id)))
             if not build_on_tag and self.has_active_build(commit_id, project_id):
                 return
         else:
