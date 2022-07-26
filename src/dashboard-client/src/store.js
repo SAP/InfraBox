@@ -218,6 +218,12 @@ function setVault (state, data) {
     project.vault = vault
 }
 
+function setPattern (state, data) {
+    const project = data.project
+    const pattern = data.pattern
+    project.pattern = pattern
+}
+
 function setCollaborators (state, data) {
     const project = data.project
     const collaborators = data.collaborators
@@ -365,7 +371,8 @@ const mutations = {
     setAdminClusters,
     updateAdminCluster,
     setArchive,
-    setVault
+    setVault,
+    setPattern
 }
 
 const getters = {}
