@@ -198,7 +198,12 @@ class Trigger(object):
                             WHERE id = %s''', [project_id])[0]
 
             logger.error('build_on_tag is {}'.format(build_on_tag))
+            logger.error('build_on_tag[0] is {}'.format(build_on_tag[0]))
             if not build_on_tag and self.has_active_build(commit_id, project_id):
+                logger.error('return 1')
+                return
+            if not build_on_tag[0] and self.has_active_build(commit_id, project_id):
+                logger.error('return 2')
                 return
         else:
             if self.has_active_build(commit_id, project_id):
