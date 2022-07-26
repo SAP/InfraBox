@@ -1,6 +1,7 @@
 import json
 import hashlib
 import hmac
+import re
 from datetime import datetime
 
 import eventlet
@@ -182,7 +183,6 @@ class Trigger(object):
         ''', [c['id'], project_id])
 
         commit_id = c['id']
-
         if tag:
             self.execute('''
                 UPDATE "commit" SET tag = %s WHERE id = %s AND project_id = %s
@@ -191,14 +191,13 @@ class Trigger(object):
             build_on_tag = self.execute('''
                             SELECT build_on_tag
                             FROM project
-                            WHERE id = %s''', [project_id])[0]
+                            WHERE id = %s''', [project_id])[0][0]
 
             if not build_on_tag and self.has_active_build(commit_id, project_id):
                 return
         else:
             if self.has_active_build(commit_id, project_id):
                 return
-
 
         if not result:
             status_url = repository['statuses_url'].format(sha=c['id'])
@@ -253,9 +252,17 @@ class Trigger(object):
         if not result[0]:
             return res(200, 'build_on_push not set')
 
+        result = self.execute('''
+            SELECT skip_pattern FROM project_skip_pattern WHERE project_id = %s;
+        ''', [project_id])
+
+        skip_pattern = None
         branch = None
         tag = None
         commit = None
+
+        if result:
+            skip_pattern = result[0][0]
 
         if event.get('base_ref', None):
             branch = remove_ref(event['base_ref'])
@@ -273,6 +280,10 @@ class Trigger(object):
 
         if not token:
             return res(200, 'no token')
+
+        if skip_pattern and re.search(skip_pattern, ref):
+            return res(200, 'build_skip_pattern matched, skip this build')
+
 
         if commit:
             self.create_push(commit, event['repository'], branch, tag)
@@ -353,7 +364,7 @@ class Trigger(object):
             committer_login = hc['committer']['login']
 
         branch = event['pull_request']['head']['ref']
-        
+
         def getLabelsName(event):
             names = []
             for label in event['pull_request']['labels']:

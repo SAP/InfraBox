@@ -15,6 +15,7 @@ export default class Project {
         this.type = type
         this.secrets = null
         this.vault = null
+        this.pattern = null
         this.cronjobs = null
         this.collaborators = null
         this.roles = null
@@ -343,6 +344,22 @@ export default class Project {
         return NewAPIService.get(`projects/${this.id}/vault`)
             .then((vault) => {
                 store.commit('setVault', {project: this, vault: vault})
+            })
+            .catch((err) => {
+                NotificationService.$emit('NOTIFICATION', new Notification(err))
+            })
+    }
+
+    _loadPattern () {
+        if (this.pattern) {
+            return
+        }
+        this._reloadPattern()
+    }
+    _reloadPattern () {
+        return NewAPIService.get(`projects/${this.id}/pattern`)
+            .then((pattern) => {
+                store.commit('setPattern', {project: this, pattern: pattern})
             })
             .catch((err) => {
                 NotificationService.$emit('NOTIFICATION', new Notification(err))
