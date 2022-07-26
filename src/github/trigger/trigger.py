@@ -186,7 +186,7 @@ class Trigger(object):
         ''', [c['id'], project_id])
 
         commit_id = c['id']
-        print('tag is {}'.format(tag))
+        logger.error('tag is {}'.format(tag))
         if tag:
             self.execute('''
                 UPDATE "commit" SET tag = %s WHERE id = %s AND project_id = %s
@@ -197,15 +197,14 @@ class Trigger(object):
                             FROM project
                             WHERE id = %s''', [project_id])[0]
 
-            print('build_on_tag is {}'.format(build_on_tag))
-            print('has_active_build is {}'.format(self.has_active_build(commit_id, project_id)))
+            logger.error('build_on_tag is {}'.format(build_on_tag))
             if not build_on_tag and self.has_active_build(commit_id, project_id):
                 return
         else:
             if self.has_active_build(commit_id, project_id):
                 return
 
-
+        logger.error("#######")
         if not result:
             status_url = repository['statuses_url'].format(sha=c['id'])
             self.execute('''
