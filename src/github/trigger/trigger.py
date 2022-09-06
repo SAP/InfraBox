@@ -293,8 +293,7 @@ class Trigger(object):
 
 
     def handle_pull_request(self, event):
-        if event['action'] not in ['opened', 'reopened', 'synchronize']:
-            return res(200, 'action ignored')
+        legal_actions = ['opened', 'reopened', 'synchronize']
 
         result = self.execute('''
             SELECT id, project_id FROM repository WHERE github_id = %s;
@@ -304,9 +303,18 @@ class Trigger(object):
             return res(404, "Unknown repository")
 
         result = result[0]
-
         repo_id = result[0]
         project_id = result[1]
+
+        build_on_label = self.execute('''
+            SELECT build_on_label FROM project WHERE id = %s;
+        ''', [project_id])[0]
+
+        if build_on_label[0]:
+            legal_actions.append('labeled')
+
+        if event['action'] not in legal_actions:
+            return res(200, 'action ignored')
 
         result = self.execute('''
             SELECT build_on_push FROM project WHERE id = %s;
