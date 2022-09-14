@@ -140,7 +140,7 @@ def parse_environment(e, path):
                 parse_vault_ref(value, p)
         else:
             try:
-                check_text(value, p)
+                check_text(value, p, allowEmpty=True)
             except:
                 raise ValidationError(p, "must be a string or object")
 
