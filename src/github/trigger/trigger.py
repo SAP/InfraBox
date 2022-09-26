@@ -382,7 +382,8 @@ class Trigger(object):
             "GITHUB_PULL_REQUEST_BASE_REPO_CLONE_URL": event['pull_request']['base']['repo']['clone_url'],
             "GITHUB_REPOSITORY_FULL_NAME": event['repository']['full_name'],
             "GITHUB_PULL_REQUEST_LABELS": getLabelsName(event),
-            "GITHUB_PULL_REQUEST_DRAFT": event['pull_request']['draft']
+            "GITHUB_PULL_REQUEST_DRAFT": event['pull_request']['draft'],
+            "GITHUB_PULL_REQUEST_USER_LOGIN": event['pull_request']['user']['login']
         })
 
         author_email = 'unknown'
