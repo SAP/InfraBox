@@ -32,11 +32,20 @@ projects_projects_name_collaborator([user_id, project_name]){
     collaborators[j].user_id = user_id
     collaborators[j].project_id = projects[i].id
 }
+valid_project_token([token, project_id]) {
+    token.type = "project"
+    token.project.id = project_id
+}
 
 allow {
     api.method = "GET"
     api.path = ["api", "v1", "projects"]
     api.token.type = "user"
+}
+allow {
+    api.method = "GET"
+    api.path = ["api", "v1", "projects"]
+    valid_project_token([api.token, project_id])
 }
 
 allow {
@@ -80,6 +89,11 @@ allow {
     api.method = "GET"
     api.path = ["api", "v1", "projects", project]
     projects_projects_public(project)
+}
+allow {
+    api.method = "GET"
+    api.path = ["api", "v1", "projects", project]
+    valid_project_token([api.token, project_id])
 }
 
 allow {
