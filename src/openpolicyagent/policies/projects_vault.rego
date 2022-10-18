@@ -45,7 +45,7 @@ allow {
     api.method = "DELETE"
     api.path = ["api", "v1", "projects", project_id, "vault", vault_id]
     api.token.type = "user"
-    api.token.project.id = project_id
+    projects_vault_administrator([api.token.user.id, project_id])
 }
 allow {
     api.method = "DELETE"
