@@ -451,6 +451,7 @@ class Job(Resource):
 
         data['env_vars'] = {
             "TERM": "xterm-256color",
+            "INFRABOX_PROJECT_ID": data['project']['id'],
             "INFRABOX_JOB_ID": data['job']['id'],
             "INFRABOX_JOB_URL": job_url,
             "INFRABOX_JOB_API_URL": job_api_url,
