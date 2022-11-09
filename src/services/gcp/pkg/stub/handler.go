@@ -128,6 +128,9 @@ func createCluster(cr *v1alpha1.GKECluster, log *logrus.Entry) (*v1alpha1.GKEClu
         "--zone", cr.Spec.Zone,
     }
 
+    args = append(args, "--metadata")
+    args = append(args, "block-project-ssh-keys=true")
+
     if cr.Spec.DiskSize != 0 {
         args = append(args, "--disk-size")
         args = append(args, strconv.Itoa(int(cr.Spec.DiskSize)))
