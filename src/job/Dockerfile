@@ -27,7 +27,7 @@ RUN apk add --no-cache \
     bash \
     libc6-compat \
     git && \
-    pip3 install pynacl docker awscli pyyaml docker-compose && \
+    pip3 install pynacl docker awscli pyyaml && \
     pip3 install future python-snappy six
 ## Install openssh 8.3
 RUN sed -i 's/v3.15/v3.12/g' /etc/apk/repositories && \
@@ -40,6 +40,13 @@ RUN curl -O https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cl
     gcloud config set component_manager/disable_update_check true && \
     gcloud config set metrics/environment github_docker_image && \
     gcloud --version
+
+## Install latest docker-compose
+RUN apk add jq && \
+    VERSION=$(curl --silent https://api.github.com/repos/docker/compose/releases/latest | jq .name -r) && \
+    DESTINATION=/usr/bin/docker-compose && \
+    curl -L https://github.com/docker/compose/releases/download/${VERSION}/docker-compose-$(uname -s)-$(uname -m) -o $DESTINATION && \
+    chmod 755 $DESTINATION
 
 COPY src/job /job
 
