@@ -29,7 +29,9 @@ def handle_service(name, d, r):
             'hostname',
             'extra_hosts',
             'network_mode',
-            'profiles'
+            'profiles',
+            'read_only',
+            'cap_drop'
         ]
 
         if key in allowed_fields:
