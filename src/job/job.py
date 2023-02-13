@@ -737,13 +737,14 @@ class RunJob(Job):
             parallel_build = self.job['definition'].get('parallel_build', False)
             compose_profiles = self.job['definition'].get('compose_profiles', [])
             self.environment['PATH'] = os.environ['PATH']
-
-            if  self.job['definition'].get('enable_docker_build_kit', False) is True:
+            self.environment['DOCKER_BUILDKIT'] = '0'
+            self.environment['COMPOSE_DOCKER_CLI_BUILD'] = '0'
+            if self.job['definition'].get('enable_docker_build_kit', False) is True:
                 c.collect('BUILDKIT is enabled during build!', show=True)
                 self.environment['DOCKER_BUILDKIT'] = '1'
                 self.environment['COMPOSE_DOCKER_CLI_BUILD']= '1'
 
-            
+
             cmds = ['docker-compose', '-f', compose_file_new, 'build']
 
             if parallel_build:

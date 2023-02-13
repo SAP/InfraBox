@@ -44,7 +44,7 @@ RUN curl -O https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cl
 ## Install latest docker-compose
 RUN apk add jq && \
     DESTINATION=/usr/bin/docker-compose && \
-    curl -L https://github.com/docker/compose/releases/download/v2.3.3/docker-compose-$(uname -s)-$(uname -m) -o $DESTINATION && \
+    curl -L https://github.com/docker/compose/releases/download/v2.14.0/docker-compose-$(uname -s)-$(uname -m) -o $DESTINATION && \
     chmod 755 $DESTINATION
 
 COPY src/job /job
