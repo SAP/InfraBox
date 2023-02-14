@@ -769,7 +769,7 @@ class RunJob(Job):
             try:
                 collector.stop()
                 self.post_stats(collector.get_result())
-                c.execute(['docker-compose', '-f', compose_file_new, 'rm'],
+                c.execute(['docker-compose', '-f', compose_file_new, 'rm', '--force'],
                           env=self.environment)
             except Exception as e:
                 logger.exception(e)
