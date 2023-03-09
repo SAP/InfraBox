@@ -1,5 +1,5 @@
 {{ if .Values.monitoring.enabled }}
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
     name: infrabox-metrics
@@ -8,6 +8,9 @@ metadata:
         app: infrabox-metrics
 spec:
     replicas: 1
+    selector:
+        matchLabels:
+            app: infrabox-metrics
     template:
         metadata:
             labels:

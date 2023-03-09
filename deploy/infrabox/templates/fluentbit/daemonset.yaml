@@ -1,4 +1,4 @@
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: infrabox-fluent-bit
@@ -6,6 +6,9 @@ metadata:
   labels:
     app: infrabox-fluent-bit
 spec:
+  selector:
+    matchLabels:
+      app: infrabox-fluent-bit
   template:
     metadata:
       labels:

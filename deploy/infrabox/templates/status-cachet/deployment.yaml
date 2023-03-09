@@ -1,5 +1,5 @@
 {{ if .Values.cachet.enabled }}
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
     name: infrabox-status-cachet
@@ -8,6 +8,9 @@ metadata:
         app: infrabox-status-cachet
 spec:
     replicas: 1
+    selector:
+        matchLabels:
+            app: infrabox-status-cachet
     template:
         metadata:
             labels:

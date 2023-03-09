@@ -1,6 +1,6 @@
 {{ define "gerrit_trigger_deployment" }}
 {{ if .Values.gerrit.enabled }}
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
     name: infrabox-gerrit-trigger
@@ -9,6 +9,9 @@ metadata:
         app: infrabox-gerrit-trigger
 spec:
     replicas: 1
+    selector:
+        matchLabels:
+            app: infrabox-gerrit-trigger
     template:
         metadata:
             labels:
