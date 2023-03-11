@@ -1,5 +1,5 @@
 FROM ubuntu:18.04
-ARG HELM_VERSION=2.17.0
+ARG HELM_VERSION=3.11.2
 
 RUN apt-get update -y && apt-get install -y \
     curl \
