@@ -24,7 +24,7 @@
                 "numNodes": 2,
                 "preemptible": false,
                 "zone": "us-east1-b",
-                "clusterVersion": "1.15"
+                "clusterVersion": "1.22"
             }
         }]
     }]
