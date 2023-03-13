@@ -103,7 +103,7 @@ _installPostgres() {
     kubectl port-forward -n infrabox-system $postgres_pod 5432 &
 
     # Wait until postgres is ready
-    until psql postgresql://postgres:postgres@localhost:5435 -c '\l'; do
+    until psql postgresql://postgres:postgres@localhost:5432 -c '\l'; do
         >&2 echo "Postgres is unavailable - sleeping"
         sleep 1
 	done
