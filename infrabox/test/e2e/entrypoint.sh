@@ -68,6 +68,7 @@ _initHelm() {
     # helm init --service-account tiller --wait
 
     helm repo add stable https://charts.helm.sh/stable
+    helm repo add bitnami https://charts.bitnami.com/bitnami
 }
 
 _getPodNameImpl() {
@@ -127,7 +128,7 @@ _installNginxIngress() {
         nic \
         --namespace kube-system \
         --wait \
-        stable/nginx-ingress
+        bitnami/nginx-ingress-controller
 
     nginx_ip=$(_getNginxIP)
 
