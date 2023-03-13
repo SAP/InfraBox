@@ -90,9 +90,10 @@ _getPodName() {
 
 _installPostgres() {
     echo "## Install postgres"
+    # image.tag=9.6.24-debian-10-r70 didn't work, use default
 	helm install postgres stable/postgresql \
         --version 8.6.4 \
-		--set image.tag=9.6.2,postgresqlPassword=postgres,readinessProbe.periodSeconds=5 \
+		--set postgresqlPassword=postgres,readinessProbe.periodSeconds=5 \
 		--wait \
         --namespace infrabox-system
 
