@@ -90,9 +90,9 @@ _getPodName() {
 
 _installPostgres() {
     echo "## Install postgres"
-	helm install -n postgres stable/postgresql \
-        --version 1.0.0 \
-		--set imageTag=9.6.2,postgresPassword=postgres,probes.readiness.periodSeconds=5 \
+	helm install postgres stable/postgresql \
+        --version 8.6.4 \
+		--set image.tag=9.6.2,postgresqlPassword=postgres,readinessProbe.periodSeconds=5 \
 		--wait \
         --namespace infrabox-system
 
@@ -112,8 +112,8 @@ _installMinio() {
     echo "## Install minio"
 
     helm install \
-        --set serviceType=ClusterIP,replicas=1,persistence.enabled=false \
-        -n infrabox-minio \
+        infrabox-minio \
+        --set service.type=ClusterIP,replicas=1,persistence.enabled=false \
         --namespace infrabox-system \
         --wait \
         stable/minio
@@ -123,7 +123,7 @@ _installNginxIngress() {
     echo "## Install nginx ingress"
 
     helm install \
-        -n nic \
+        nic \
         --namespace kube-system \
         --wait \
         stable/nginx-ingress
