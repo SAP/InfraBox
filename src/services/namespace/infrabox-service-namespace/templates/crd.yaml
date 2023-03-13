@@ -4,7 +4,10 @@ metadata:
   name: clusternamespaces.namespace.service.infrabox.net
 spec:
   group: namespace.service.infrabox.net
-  version: v1alpha1
+  versions: 
+    - name: v1alpha1
+      served: true
+      storage: true
   names:
     kind: ClusterNamespace
     plural: clusternamespaces

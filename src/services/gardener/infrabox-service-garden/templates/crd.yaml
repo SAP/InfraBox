@@ -4,7 +4,10 @@ metadata:
   name: shootclusters.gardener.service.infrabox.net
 spec:
   group: gardener.service.infrabox.net
-  version: v1alpha1
+  versions: 
+    - name: v1alpha1
+      served: true
+      storage: true
   names:
     kind: ShootCluster
     plural: shootclusters
