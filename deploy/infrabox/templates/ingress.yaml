@@ -1,38 +1,53 @@
 {{ define "ing_dashboard" }}
 -
+    pathType: Prefix
     path: /dashboard
     backend:
-        serviceName: infrabox-static
-        servicePort: 80
+        service:
+            name: infrabox-static
+            port: 
+                number: 80
 {{ end }}
 
 {{ define "ing_root" }}
 -
+    pathType: Prefix
     path: /
     backend:
-        serviceName: infrabox-static
-        servicePort: 80
+        service:
+            name: infrabox-static
+            port: 
+                number: 80
 {{ end }}
 
 {{ define "ing_github"}}
 -
+    pathType: Prefix
     path: /github/hook
     backend:
-        serviceName: infrabox-github-trigger
-        servicePort: 8080
+        service:
+            name: infrabox-github-trigger
+            port: 
+                number: 8080
 -
+    pathType: Prefix
     path: /github/auth
     backend:
-        serviceName: infrabox-api
-        servicePort: 8080
+        service:
+            name: infrabox-api
+            port: 
+                number: 8080
 {{ end }}
 
 {{ define "ing_saml"}}
 -
+    pathType: Prefix
     path: /saml
     backend:
-        serviceName: infrabox-api
-        servicePort: 8080
+        service:
+            name: infrabox-api
+            port: 
+                number: 8080
 {{ end }}
 
 
@@ -67,10 +82,13 @@ spec:
                 {{ include "ing_dashboard" . | indent 12 }}
             {{ end }}
             -
+                pathType: Prefix
                 path: /api
                 backend:
-                    serviceName: infrabox-api
-                    servicePort: 8080
+                    service:
+                        name: infrabox-api
+                        port: 
+                            number: 8080
             {{ if .Values.github.enabled }}
             {{ if .Values.ha.enabled }}
                 {{ include "ing_github" . | indent 12 }}
@@ -86,23 +104,32 @@ spec:
             {{ end }}
             {{ end }}
             -
+                pathType: Prefix
                 path: /v2
                 backend:
-                    serviceName: infrabox-docker-registry
-                    servicePort: 8080
+                    service:
+                        name: infrabox-docker-registry
+                        port: 
+                            number: 8080
             {{ if .Values.monitoring.enabled }}
             -
+                pathType: Prefix
                 path: /grafana
                 backend:
-                    serviceName: infrabox-grafana
-                    servicePort: 80
+                    service:
+                        name: infrabox-grafana
+                        port: 
+                            number: 80
             {{ end }}
             {{ if eq .Values.cluster.name "master" }}
             -
+                pathType: Prefix
                 path: /
                 backend:
-                    serviceName: infrabox-static
-                    servicePort: 80
+                    service:
+                        name: infrabox-static
+                        port: 
+                            number: 80
             {{ end }}
             {{ if .Values.ha.enabled }}
                 {{ include "ing_root" . | indent 12 }}
