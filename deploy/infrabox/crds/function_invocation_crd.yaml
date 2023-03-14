@@ -18,5 +18,5 @@ spec:
         openAPIV3Schema:
           type: object
           properties:
-            json:
+            spec:
               x-kubernetes-preserve-unknown-fields: true
