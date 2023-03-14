@@ -185,7 +185,7 @@ job:
         {"insecure-registries": ["$ROOT_URL"]}
 EOL
 
-    helm install --namespace infrabox-system -f my_values.yaml --wait infrabox .
+    helm install --namespace infrabox-system -f my_values.yaml --wait --timeout=10m infrabox .
 
     export INFRABOX_DATABASE_HOST=localhost
     export INFRABOX_DATABASE_DB=postgres
