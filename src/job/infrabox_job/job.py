@@ -32,6 +32,10 @@ class Job(object):
         self.aborted = False
 
     def load_data(self):
+        retry = 0
+        current_backoff = 1
+        backoff_limit = 300
+
         while True:
             try:
                 r = requests.get("%s/job" % self.api_server,
@@ -54,8 +58,18 @@ class Job(object):
                 elif r.status_code == 200:
                     break
                 else:
-                    # Retry on any other error
-                    continue
+                    # exponential backoff
+                    if retry < 10:
+                        retry += 1
+                        if current_backoff < backoff_limit:
+                            backoff = current_backoff
+                            current_backoff *= 2
+                        else:
+                            backoff = backoff_limit
+                        time.sleep(backoff)
+                        continue
+                    else:
+                        raise Error(r.text)
             except Error as e:
                 raise e
             except Exception as e:

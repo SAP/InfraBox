@@ -40,6 +40,8 @@ class Vault(Resource):
     @api.expect(project_vault_model)
     def post(self, project_id):
         b = request.get_json()
+        if not b['name'] or not b['url'] or not ['version']:
+            abort(400, "Invalid Vault format")
         if not b['token']:
             if not b['role_id'] or not b['secret_id']:
                 abort(400, "Invalid Vault format")
