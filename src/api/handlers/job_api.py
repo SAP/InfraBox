@@ -264,7 +264,7 @@ class Job(Resource):
                     validate_res = 'error'
             return validate_res
 
-        def get_secret(name, project_id=None):
+        def get_secret(name):
             secret_type = get_secret_type(name)
             if secret_type == 'vault':
                 vault = json.loads(name)
@@ -272,15 +272,12 @@ class Job(Resource):
                 secret_path = vault['$vault_secret_path']
                 secret_key = vault['$vault_secret_key']
 
-                if not project_id:
-                    abort(400, "project_id is essential for getting Vault: '%s' " % vault_name)
-
                 result = g.db.execute_one("""
                   SELECT url, version, token, ca, namespace, role_id, secret_id FROM vault WHERE name = %s and project_id = %s
-                """, [vault_name, project_id])
+                """, [vault_name, data['project']['id']])
 
                 if not result:
-                    abort(400, "Cannot get Vault '%s' in project '%s' " % (vault_name, project_id))
+                    abort(400, "Cannot get Vault '%s' in project '%s' " % (vault_name, data['project']['id']))
 
                 url, version, token, ca, namespace, role_id, secret_id = result[0], result[1], result[2], result[3], result[4], result[5], result[6]
                 if not namespace:
@@ -514,7 +511,7 @@ class Job(Resource):
 
         if env_var_refs:
             for name, value in env_var_refs.iteritems():
-                secret = get_secret(value, data['project']['id'])
+                secret = get_secret(value)
 
                 if secret is None:
                     abort(400, "Secret %s not found" % value)
