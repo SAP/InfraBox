@@ -207,7 +207,7 @@ class RunJob(Job):
         c.execute(cmd, cwd=mount_repo_dir, show=True)
 
         if submodules:
-            c.execute_mask(['git', 'submodule', 'init'], cwd=mount_repo_dir, show=True, retry=True, mask=token)
+            c.execute(['git', 'submodule', 'init'], cwd=mount_repo_dir, show=False, retry=True)
             c.execute(['git', 'submodule', 'update'], cwd=mount_repo_dir, show=True, retry=True)
 
 
