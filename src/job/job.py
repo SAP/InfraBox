@@ -35,7 +35,7 @@ logger = get_logger('scheduler')
 ERR_EXIT_FAILURE = 1
 ERR_EXIT_ERROR = 2
 
-BUILD_ARGS = ('GITHUB_OAUTH_TOKEN', 'GITHUB_BASE_URL')
+BUILD_ARGS = ('GITHUB_OAUTH_TOKEN', 'GITHUB_BASE_URL', 'INFRABOX_CRONJOB')
 
 def makedirs(path):
     os.makedirs(path)
