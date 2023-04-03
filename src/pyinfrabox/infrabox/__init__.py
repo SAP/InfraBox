@@ -473,7 +473,6 @@ def parse_deployment_ecr(d, path):
 
 def parse_registry_gcr(d, path):
     check_required_properties(d, path, ("type", "service_account", "repository", "host"))
-    parse_secret_ref(d['service_account'], path + ".service_account")
 
     check_text(d['host'], path + ".host")
     check_text(d['repository'], path + ".region")
