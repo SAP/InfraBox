@@ -420,7 +420,12 @@ def parse_registry_docker_registry(d, path):
     check_text(d['host'], path + ".host")
     check_text(d['repository'], path + ".repository")
     check_text(d['username'], path + ".username")
-    parse_secret_ref(d['password'], path + ".password")
+
+    if 'password' in d:
+        if '$vault' in d['password']:
+            parse_vault_ref(d['password'], path + ".password")
+        else:
+            parse_secret_ref(d['password'], path + ".password")
 
 
 def parse_registry_ecr(d, path):
@@ -428,8 +433,15 @@ def parse_registry_ecr(d, path):
 
     check_text(d['host'], path + ".host")
     check_text(d['region'], path + ".region")
-    parse_secret_ref(d['secret_access_key'], path + ".secret_access_key")
-    parse_secret_ref(d['access_key_id'], path + ".access_key_id")
+    if '$vault' in d['secret_access_key']:
+        parse_vault_ref(d['secret_access_key'], path + ".secret_access_key")
+    else:
+        parse_secret_ref(d['secret_access_key'], path + ".secret_access_key")
+
+    if '$vault' in d['access_key_id']:
+        parse_vault_ref(d['access_key_id'], path + ".access_key_id")
+    else:
+        parse_secret_ref(d['access_key_id'], path + ".access_key_id")
 
 
 def parse_deployment_ecr(d, path):
@@ -465,7 +477,10 @@ def parse_registry_gcr(d, path):
 
     check_text(d['host'], path + ".host")
     check_text(d['repository'], path + ".region")
-    parse_secret_ref(d['service_account'], path + ".service_account")
+    if '$vault' in d['service_account']:
+        parse_vault_ref(d['service_account'], path + ".service_account")
+    else:
+        parse_secret_ref(d['service_account'], path + ".service_account")
 
 
 def parse_deployment_gcr(d, path):
