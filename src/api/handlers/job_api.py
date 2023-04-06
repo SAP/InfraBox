@@ -413,37 +413,61 @@ class Job(Resource):
         if registries:
             for r in registries:
                 if r['type'] == 'docker-registry':
-                    secret_name = r['password']['$secret']
-                    secret = get_secret(secret_name)
+                    password = r['password']
+                    if '$secret' in password:
+                        password_secret_name = r['password']['$secret']
+                        secret = get_secret(password_secret_name)
+                    elif '$vault' in password:
+                        secret = get_secret(json.dumps(password))
+                    else:
+                        abort(400, "Only $secret and $vault are allowed in password")
 
                     if secret is None:
-                        abort(400, "Secret %s not found" % secret_name)
+                        abort(400, "Password %s not found" % password)
 
                     r['password'] = secret
                     data['registries'].append(r)
                 elif r['type'] == 'gcr':
-                    service_account = r['service_account']['$secret']
-                    secret = get_secret(service_account)
+                    service_account = r['service_account']
+                    if '$secret' in service_account:
+                        service_account_secret_name = r['service_account']['$secret']
+                        secret = get_secret(service_account_secret_name)
+                    elif '$vault' in service_account:
+                        secret = get_secret(json.dumps(service_account))
+                    else:
+                        abort(400, "Only $secret and $vault are allowed in service_account")
 
                     if secret is None:
-                        abort(400, "Secret %s not found" % service_account)
+                        abort(400, "Service account %s not found" % service_account)
 
                     r['service_account'] = secret
                     data['registries'].append(r)
                 elif r['type'] == 'ecr':
-                    access_key_id_name = r['access_key_id']['$secret']
-                    secret = get_secret(access_key_id_name)
+                    access_key_id = r['access_key_id']
+                    if '$secret' in access_key_id:
+                        access_key_id_secret_name = r['access_key_id']['$secret']
+                        secret = get_secret(access_key_id_secret_name)
+                    elif '$vault' in access_key_id:
+                        secret = get_secret(json.dumps(access_key_id))
+                    else:
+                        abort(400, "Only $secret and $vault are allowed in access_key_id")
 
                     if secret is None:
-                        abort(400, "Secret %s not found" % access_key_id_name)
+                        abort(400, "Access key id %s not found" % access_key_id)
 
                     r['access_key_id'] = secret
 
-                    secret_access_key_name = r['secret_access_key']['$secret']
-                    secret = get_secret(secret_access_key_name)
+                    secret_access_key = r['secret_access_key']
+                    if '$secret' in secret_access_key:
+                        secret_access_key_secret_name = r['secret_access_key']['$secret']
+                        secret = get_secret(secret_access_key_secret_name)
+                    elif '$vault' in access_key_id:
+                        secret = get_secret(json.dumps(secret_access_key))
+                    else:
+                        abort(400, "Only $secret and $vault are allowed in secret_access_key")
 
                     if secret is None:
-                        abort(400, "Secret %s not found" % secret_access_key_name)
+                        abort(400, "Secret access key %s not found" % secret_access_key)
 
                     r['secret_access_key'] = secret
                     data['registries'].append(r)
