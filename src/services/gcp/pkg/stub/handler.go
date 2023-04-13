@@ -249,6 +249,12 @@ func syncGKECluster(cr *v1alpha1.GKECluster, log *logrus.Entry) (*v1alpha1.GKECl
                 return nil, err
             }
 
+            err = injectGateKeeper(gkecluster, log)
+            if err != nil {
+                log.Errorf("Failed to inject gatekeeper: %v", err)
+                return nil, err
+            }
+
             err = action.Create(newSecret(cr, gkecluster))
             if err != nil && !errors.IsAlreadyExists(err) {
                 log.Errorf("Failed to create secret: %v", err)
@@ -1116,7 +1122,7 @@ func injectCollector(cluster *RemoteCluster, log *logrus.Entry) error {
 
     err = client.Create(newCollectorNamespace(), log)
     if err != nil && !errors.IsAlreadyExists(err) {
-        log.Errorf("Failed to create collector deployment: %v", err)
+        log.Errorf("Failed to create collector namespace: %v", err)
         return err
     }
 
@@ -1151,6 +1157,78 @@ func injectCollector(cluster *RemoteCluster, log *logrus.Entry) error {
     }
 
     return nil
+}
+
+func injectGateKeeper(cluster *RemoteCluster, log *logrus.Entry) error {
+    client, err := newRemoteClusterSDK(cluster)
+
+    if err != nil {
+        log.Errorf("Failed to create remote cluster client: %v", err)
+        return err
+    }
+
+    err = client.Create(newGateKeeperNamespace(), log)
+    if err != nil && !errors.IsAlreadyExists(err) {
+        log.Errorf("Failed to create gatekeeper namespace: %v", err)
+        return err
+    }
+
+    log.Infof("Injecting SAP GateKeeper into cluster %s", cluster.Name)
+    cmd := exec.Command("curl", "-k", "-Lo", "/gatekeeper.tar.gz", "https://int.repositories.cloud.sap/artifactory/deploy-releases-xmake/com/sap/datahub/linuxx86_64/gatekeeper/3.9.0-sap-004/gatekeeper-3.9.0-sap-004.tar.gz")
+    out, err := cmd.CombinedOutput()
+    if err != nil {
+        log.Errorf("Failed to download SAP GateKeeper: %v", err)
+        log.Error(string(out))
+        return err
+    }
+
+    cmd := exec.Command("tar", "-xzvf", "/gatekeeper.tar.gz")
+    out, err := cmd.CombinedOutput()
+    if err != nil {
+        log.Errorf("Failed to execute 'tar -xzvf /gatekeeper.tar.gz': %v", err)
+        log.Error(string(out))
+        return err
+    }
+
+    cmd := exec.Command("sed", "-i", "-e", "s/  registry:/  registry: eu.gcr.io/g", "/gatekeeper/values.yaml")
+    out, err := cmd.CombinedOutput()
+    if err != nil {
+        log.Errorf("Failed to replace registry: %v", err)
+        log.Error(string(out))
+        return err
+    }
+
+    cmd := exec.Command("sed", "-i", "-e", "s/  repository:/  repository: sap-p-and-i-big-data-vora\\/dev\\/com.sap.datahub.linuxx86_64\\/gatekeeper/g", "/gatekeeper/values.yaml")
+    out, err := cmd.CombinedOutput()
+    if err != nil {
+        log.Errorf("Failed to replace repository: %v", err)
+        log.Error(string(out))
+        return err
+    }
+
+    cmd := exec.Command("sed", "-i", "-e", "s/  version:/  version: 3.9.0-sap-004/g", "/gatekeeper/values.yaml")
+    out, err := cmd.CombinedOutput()
+    if err != nil {
+        log.Errorf("Failed to replace version: %v", err)
+        log.Error(string(out))
+        return err
+    }
+
+    // test code
+    cmd := exec.Command("cat", "/gatekeeper/values.yaml")
+    out, err := cmd.CombinedOutput()
+    log.Error(string(out))
+    if err != nil {
+        log.Errorf("Failed to cat /gatekeeper/values.yaml: %v", err)
+    }
+
+    cmd := exec.Command("bash", "-c", "export KUBECONFIG=/tmp/kubeconfig-" + cluster.Name + " && helm install gatekeeper /gatekeeper -f /gatekeeper/values.yaml")
+    out, err := cmd.Output()
+    if err != nil {
+        log.Errorf("Could not install gatekeeper: %v, %v", err, out)
+        return err
+    }
+
 }
 
 type RemoteClusterSDK struct {
@@ -1486,6 +1564,18 @@ func newCollectorDaemonSet() *appsv1.DaemonSet {
                     }},
                 },
             },
+        },
+    }
+}
+
+func newGateKeeperNamespace() *v1.Namespace {
+    return &v1.Namespace{
+        TypeMeta: metav1.TypeMeta{
+            Kind:       "Namespace",
+            APIVersion: "v1",
+        },
+        ObjectMeta: metav1.ObjectMeta{
+            Name: "gatekeeper",
         },
     }
 }
