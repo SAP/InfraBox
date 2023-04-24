@@ -926,6 +926,7 @@ class RunJob(Job):
                     raise Failure("Error running container")
             except Exception as ex:
                 logger.exception(ex)
+                logger.exception('Give this job more memory may work......')
                 raise Failure("Error running container")
             try:
                 # Find out if container was killed due to oom
