@@ -172,6 +172,7 @@ image:
   tag: $IMAGE_TAG
 storage:
   s3:
+    # these are the default accessKey/secretKey defined in the helm chart
     access_key_id: AKIAIOSFODNN7EXAMPLE
     bucket: infrabox
     enabled: true
@@ -185,7 +186,7 @@ job:
         {"insecure-registries": ["$ROOT_URL"]}
 EOL
 
-    helm install --namespace infrabox-system -f my_values.yaml --wait --timeout=10m infrabox .
+    helm install --namespace infrabox-system -f my_values.yaml --wait --timeout=20m infrabox .
 
     export INFRABOX_DATABASE_HOST=localhost
     export INFRABOX_DATABASE_DB=postgres
