@@ -91,10 +91,10 @@ _getPodName() {
 
 _installPostgres() {
     echo "## Install postgres"
-    # image.tag=9.6.24-debian-10-r70 didn't work, use default
-	helm install postgres stable/postgresql \
-        --version 8.6.4 \
-		--set postgresqlPassword=postgres,readinessProbe.periodSeconds=5 \
+	helm install postgres oci://registry-1.docker.io/bitnamicharts/postgresql \
+        --version 12.5.1 \
+		--set auth.postgresPassword=postgres \
+        --set image.tag=15.3.0-debian-11-r0 \
 		--wait \
         --namespace infrabox-system
 
@@ -160,6 +160,7 @@ admin:
   public_key: $(base64 -w 0 ./id_rsa.pem)
 general:
   dont_check_certificates: true
+  log_level: debug
 database:
   postgres:
     db: postgres

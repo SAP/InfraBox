@@ -24,11 +24,12 @@ class Test(unittest.TestCase):
     def setUp(self):
         conn = connect_db()
         cur = conn.cursor()
+        print("db connected")
         cur.execute('''DELETE FROM job''')
         cur.execute('''DELETE FROM auth_token''')
         cur.execute('''DELETE FROM collaborator''')
         cur.execute('''DELETE FROM project''')
-        cur.execute('''DELETE FROM "user"''')
+        cur.execute('''DELETE FROM "user" where id = %s''', (self.user_id,))
         cur.execute('''DELETE FROM source_upload''')
         cur.execute('''DELETE FROM build''')
         cur.execute('''DELETE FROM test_run''')
@@ -50,6 +51,7 @@ class Test(unittest.TestCase):
 
         os.environ['INFRABOX_CLI_TOKEN'] = encode_project_token(self.token_id, self.project_id, 'myproject')
         self.root_url = os.environ['INFRABOX_ROOT_URL']
+        print("Setup complete")
 
     def _api_get(self, url):
         headers = {'Authorization': 'bearer ' + os.environ['INFRABOX_CLI_TOKEN']}
@@ -338,7 +340,7 @@ def main():
 
         print("Server not yet ready")
 
-    time.sleep(90)
+    time.sleep(5)
 
     print("Starting tests")
     with open('results.xml', 'wb') as output:
