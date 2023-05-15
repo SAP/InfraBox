@@ -8,7 +8,7 @@ metadata:
     # The cloudsql proxy does not stop and helm would time out
     {{ else }}
     annotations:
-        "helm.sh/hook": "post-install,pre-upgrade"
+        "helm.sh/hook": "pre-install,pre-upgrade" # use the pre-install hook, otherwise the e2e test installation may hang
         "helm.sh/hook-delete-policy": "before-hook-creation"
     {{ end }}
 spec:
