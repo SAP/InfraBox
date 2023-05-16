@@ -5,6 +5,7 @@ RUN apt-get update -y && apt-get install -y \
     curl \
     python3.8 \
     python3-pip \
+    postgresql-client \
     git
 
 RUN mkdir /project
