@@ -2,7 +2,22 @@
     "version": 1,
     "jobs": [{
         "type": "workflow",
+        "name": "images",
+        "infrabox_file": "../../.infrabox/output/images.json"
+    }, {
+        "type": "workflow",
+        "name": "test",
+        "infrabox_file": "../../.infrabox/output/tests.json",
+        "depends_on": ["images"]
+    }, {
+        "type": "workflow",
+        "name": "deploy",
+        "infrabox_file": "../../.infrabox/output/deployments.json",
+        "depends_on": ["test"]
+    }, {
+        "type": "workflow",
         "name": "e2e",
-        "infrabox_file": "../../.infrabox/output/e2e.json"
+        "infrabox_file": "../../.infrabox/output/e2e.json",
+        "depends_on": ["deploy"]
     }]
 }
