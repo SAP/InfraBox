@@ -3,14 +3,8 @@ ARG HELM_VERSION=3.11.2
 
 RUN apt-get update -y && apt-get install -y \
     curl \
-    python-pip \
-    postgresql-client \
-    python-xmlrunner \
-    python-requests \
-    python-psycopg2 \
-    python-jwt \
-    python-crypto \
-    python-cryptography \
+    python3.8 \
+    python3-pip \
     git
 
 RUN mkdir /project

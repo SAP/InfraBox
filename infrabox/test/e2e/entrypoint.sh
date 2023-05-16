@@ -211,7 +211,7 @@ _runTests() {
     pushd /infrabox/context/infrabox/test/e2e
 
     set +e
-    python e2e.py
+    python3 e2e.py
     rc=$?
 
     exit $rc

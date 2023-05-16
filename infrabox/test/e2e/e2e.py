@@ -1,10 +1,11 @@
 import os
-import requests
-import urllib3
 import unittest
 import time
 import subprocess
 import json
+
+import urllib3
+import requests
 
 def get_env(name: str):
     env = os.getenv(name)
@@ -227,6 +228,8 @@ class Test(unittest.TestCase):
     def test_infrabox_yaml(self):
         run_build('./tests/infrabox_yaml', self.project_id, self.cli_token)
         self.expect_job('hello-world')
+
+    # TODO: test restart job / rerun job
 
     @classmethod
     def tearDownClass(cls):
