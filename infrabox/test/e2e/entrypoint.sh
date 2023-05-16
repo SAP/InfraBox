@@ -45,7 +45,7 @@ _getDependencies() {
     # pip install infraboxcli
     git clone https://github.com/SAP/InfraBox-cli.git /cli
     pushd /cli
-    pip install -e .
+    pip3 install -e .
     infrabox version
     git rev-parse HEAD
     popd
