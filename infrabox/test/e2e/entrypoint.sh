@@ -202,6 +202,8 @@ EOL
     export INFRABOX_DATABASE_PASSWORD=postgres
     export INFRABOX_URL=https://$ROOT_URL
     export INFRABOX_ROOT_URL=https://$ROOT_URL
+    export INFRABOX_ADMIN_EMAIL=admin@admin.com
+    export INFRABOX_ADMIN_PASSWORD=$PW
 }
 
 _runTests() {
@@ -209,10 +211,8 @@ _runTests() {
     pushd /infrabox/context/infrabox/test/e2e
 
     set +e
-    python test.py
+    python e2e.py
     rc=$?
-
-    cp results.xml /infrabox/upload/testresult
 
     exit $rc
 }
