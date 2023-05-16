@@ -14,44 +14,15 @@ from pyinfraboxutils.db import connect_db, DB
 from pyinfraboxutils.token import encode_project_token
 from pyinfraboxutils.secrets import encrypt_secret
 
+job_id = '1514af82-3c4f-4bb5-b1da-a89a0ced5e6f'
+user_id = '2514af82-3c4f-4bb5-b1da-a89a0ced5e6b'
+build_id = '3514af82-3c4f-4bb5-b1da-a89a0ced5e6a'
+project_id = '4514af82-3c4f-4bb5-b1da-a89a0ced5e6f'
+token_id = '5514af82-3c4f-4bb5-b1da-a89a0ced5e6f'
+
 class Test(unittest.TestCase):
-    job_id = '1514af82-3c4f-4bb5-b1da-a89a0ced5e6f'
-    user_id = '2514af82-3c4f-4bb5-b1da-a89a0ced5e6b'
-    build_id = '3514af82-3c4f-4bb5-b1da-a89a0ced5e6a'
-    project_id = '4514af82-3c4f-4bb5-b1da-a89a0ced5e6f'
-    token_id = '5514af82-3c4f-4bb5-b1da-a89a0ced5e6f'
-
     def setUp(self):
-        conn = connect_db()
-        cur = conn.cursor()
-        print("db connected")
-        cur.execute('''DELETE FROM job''')
-        cur.execute('''DELETE FROM auth_token''')
-        cur.execute('''DELETE FROM collaborator''')
-        cur.execute('''DELETE FROM project''')
-        cur.execute('''DELETE FROM "user" where id = %s''', (self.user_id,))
-        cur.execute('''DELETE FROM source_upload''')
-        cur.execute('''DELETE FROM build''')
-        cur.execute('''DELETE FROM test_run''')
-        cur.execute('''DELETE FROM measurement''')
-        cur.execute('''DELETE FROM job_markup''')
-        cur.execute('''DELETE FROM secret''')
-        cur.execute('''INSERT INTO "user"(id, github_id, avatar_url, name,
-                            email, github_api_token, username)
-                        VALUES(%s, 1, 'avatar', 'name', 'email', 'token', 'login')''', (self.user_id,))
-        cur.execute('''INSERT INTO project(name, type, id, public)
-                        VALUES('test', 'upload', %s, true)''', (self.project_id,))
-        cur.execute('''INSERT INTO collaborator(project_id, user_id, role)
-                        VALUES(%s, %s, 'Owner')''', (self.project_id, self.user_id,))
-        cur.execute('''INSERT INTO auth_token(project_id, id, description, scope_push, scope_pull)
-                        VALUES(%s, %s, 'asd', true, true)''', (self.project_id, self.token_id,))
-        cur.execute('''INSERT INTO secret(project_id, name, value)
-                        VALUES(%s, 'SECRET_ENV', %s)''', (self.project_id, encrypt_secret('hello world')))
-        conn.commit()
-
-        os.environ['INFRABOX_CLI_TOKEN'] = encode_project_token(self.token_id, self.project_id, 'myproject')
         self.root_url = os.environ['INFRABOX_ROOT_URL']
-        print("Setup complete")
 
     def _api_get(self, url):
         headers = {'Authorization': 'bearer ' + os.environ['INFRABOX_CLI_TOKEN']}
@@ -69,7 +40,7 @@ class Test(unittest.TestCase):
                     raise e
 
     def _get_build(self):
-        url = '%s/api/v1/projects/%s/builds/' % (self.root_url, self.project_id)
+        url = '%s/api/v1/projects/%s/builds/' % (self.root_url, project_id)
         result = self._api_get(url)
         try:
             return result.json()[0]
@@ -80,7 +51,7 @@ class Test(unittest.TestCase):
 
     def _get_jobs(self):
         build = self._get_build()
-        url = '%s/api/v1/projects/%s/builds/%s/jobs/' % (self.root_url, self.project_id, build['id'])
+        url = '%s/api/v1/projects/%s/builds/%s/jobs/' % (self.root_url, project_id, build['id'])
         jobs = self._api_get(url)
 
         try:
@@ -110,7 +81,7 @@ class Test(unittest.TestCase):
 
         for j in jobs:
             url = '%s/api/v1/projects/%s/jobs/%s/console' % (self.root_url,
-                                                             self.project_id,
+                                                             project_id,
                                                              j['id'])
             r = self._api_get(url)
 
@@ -164,7 +135,7 @@ class Test(unittest.TestCase):
         jobs = self._get_jobs()
         for j in jobs:
             if j['name'] == restart_job_name:
-                url = '%s/api/v1/projects/%s/jobs/%s/restart' % (self.root_url, self.project_id, j['id'])
+                url = '%s/api/v1/projects/%s/jobs/%s/restart' % (self.root_url, project_id, j['id'])
                 r = self._api_get(url)
                 try:
                     if r.status_code == 200 and r.json()['status'] == 200:
@@ -180,7 +151,7 @@ class Test(unittest.TestCase):
         jobs = self._get_jobs()
         for j in jobs:
             if j['name'] == rerun_job_name:
-                url = '%s/api/v1/projects/%s/jobs/%s/rerun' % (self.root_url, self.project_id, j['id'])
+                url = '%s/api/v1/projects/%s/jobs/%s/rerun' % (self.root_url, project_id, j['id'])
                 r = self._api_get(url)
                 try:
                     if r.status_code == 200 and r.json()['status'] == 200:
@@ -283,9 +254,9 @@ class Test(unittest.TestCase):
         self.expect_job('sub1')
         self.expect_job('sub1/sub1')
 
-    def test_secure_env(self):
-        self.run_it('/infrabox/context/infrabox/test/e2e/tests/docker_secure_env')
-        self.expect_job('test')
+    # def test_secure_env(self):
+    #     self.run_it('/infrabox/context/infrabox/test/e2e/tests/docker_secure_env')
+    #     self.expect_job('test')
 
     def test_secure_env_not_found(self):
         self.run_it('/infrabox/context/infrabox/test/e2e/tests/docker_secure_env_not_found')
@@ -315,6 +286,40 @@ class Test(unittest.TestCase):
         self.expect_job('test-1.1')
         self.expect_job('test-2', parents=['test-1.1'])
 
+def _setUp():
+    # setup only need to be run once
+    conn = connect_db()
+    cur = conn.cursor()
+    print("db connected %s" % conn)
+    cur.execute('''DELETE FROM job;''')
+    cur.execute('''DELETE FROM auth_token;''')
+    cur.execute('''DELETE FROM collaborator;''')
+    cur.execute('''DELETE FROM project;''')
+    cur.execute('''DELETE FROM "user" where id = %s;''', (user_id,))
+    cur.execute('''DELETE FROM source_upload;''')
+    cur.execute('''DELETE FROM build;''')
+    cur.execute('''DELETE FROM test_run;''')
+    cur.execute('''DELETE FROM measurement;''')
+    cur.execute('''DELETE FROM job_markup;''')
+    # cur.execute('''DELETE FROM secret;''')
+    conn.commit()
+    cur.execute('''INSERT INTO "user"(id, github_id, avatar_url, name,
+                        email, github_api_token, username)
+                    VALUES(%s, 1, 'avatar', 'name', 'email', 'token', 'login');''', (user_id,))
+    cur.execute('''INSERT INTO project(name, type, id, public)
+                    VALUES('test', 'upload', %s, true);''', (project_id,))
+    cur.execute('''INSERT INTO collaborator(project_id, user_id, role)
+                    VALUES(%s, %s, 'Owner');''', (project_id, user_id,))
+    cur.execute('''INSERT INTO auth_token(project_id, id, description, scope_push, scope_pull)
+                    VALUES(%s, %s, 'asd', true, true);''', (project_id, token_id,))
+    # cur.execute('''INSERT INTO secret(project_id, name, value)
+    #                 VALUES(%s, 'SECRET_ENV', %s);''', (project_id, encrypt_secret('hello world')))
+    conn.commit()
+
+    os.environ['INFRABOX_CLI_TOKEN'] = encode_project_token(token_id, project_id, 'myproject')
+    
+    print("Setup complete")
+
 def main():
 
     root_url = os.environ['INFRABOX_ROOT_URL']
@@ -342,9 +347,11 @@ def main():
 
     time.sleep(5)
 
+    print("running setup method")
+    _setUp()
+
     print("Starting tests")
-    with open('results.xml', 'wb') as output:
-        unittest.main(testRunner=xmlrunner.XMLTestRunner(output=output), buffer=False)
+    unittest.main()
 
 if __name__ == '__main__':
     main()

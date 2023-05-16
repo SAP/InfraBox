@@ -4,13 +4,16 @@ kind: Job
 metadata:
     name: infrabox-db-migration
     namespace: {{ template "system_namespace" . }}
-    {{ if .Values.database.cloudsql.enabled }}
-    # The cloudsql proxy does not stop and helm would time out
-    {{ else }}
-    annotations:
-        "helm.sh/hook": "pre-install,pre-upgrade" # use the pre-install hook, otherwise the e2e test installation may hang
-        "helm.sh/hook-delete-policy": "before-hook-creation"
-    {{ end }}
+    # {{ if .Values.database.cloudsql.enabled }}
+    # # The cloudsql proxy does not stop and helm would time out
+    # {{ else }}
+    # annotations:
+    #     "helm.sh/hook": "pre-install,pre-upgrade" # use the pre-install hook, otherwise the e2e test installation may hang
+    #     "helm.sh/hook-delete-policy": "before-hook-creation"
+    # {{ end }}
+    # post-install hook may cause the e2e test installation hang, 
+    # because scheduler is crashing since there is no database table
+    # Bug pre-install hook doesn't work either, since this job needs objects like rsa secrets 
 spec:
     template:
         metadata:

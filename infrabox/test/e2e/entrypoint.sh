@@ -36,6 +36,11 @@ _prepareKubectl() {
     kubectl create ns infrabox-system
 }
 
+_createNamesapce() {
+    kubectl create ns infrabox-worker
+    kubectl create ns infrabox-system
+}
+
 _getDependencies() {
     echo "## install infraboxcli"
     # pip install infraboxcli
@@ -91,10 +96,12 @@ _getPodName() {
 
 _installPostgres() {
     echo "## Install postgres"
+    # postgres 15 will have the problem of "SCRAM authentication requires libpq version 10 or above"
+    # which may need to update base image OS version...
 	helm install postgres oci://registry-1.docker.io/bitnamicharts/postgresql \
         --version 12.5.1 \
 		--set auth.postgresPassword=postgres \
-        --set image.tag=15.3.0-debian-11-r0 \
+        --set image.tag=13.11.0-debian-11-r0 \
 		--wait \
         --namespace infrabox-system
 
@@ -213,6 +220,7 @@ _runTests() {
 
 main() {
     _prepareKubectl
+    _createNamesapce
     _getDependencies
     _initHelm
     _installPostgres
