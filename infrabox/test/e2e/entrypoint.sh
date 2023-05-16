@@ -31,12 +31,11 @@ _prepareKubectl() {
     kubectl config use-context default-system
 
     kubectl get nodes
-
-    kubectl create ns infrabox-worker
-    kubectl create ns infrabox-system
 }
 
 _createNamesapce() {
+    echo "## create infrabox namespace"
+    
     kubectl create ns infrabox-worker
     kubectl create ns infrabox-system
 }
