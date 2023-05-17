@@ -1,10 +1,12 @@
 FROM ubuntu:18.04
 ARG HELM_VERSION=3.11.2
 
+# we need a low version of PyJWT so install with apt
 RUN apt-get update -y && apt-get install -y \
     curl \
     python3.8 \
     python3-pip \
+    python3-jwt \
     postgresql-client \
     git
 
