@@ -1,6 +1,6 @@
 #!/bin/bash -ev
 
-IMAGE_TAG=build_$INFRABOX_BUILD_NUMBER
+IMAGE_TAG=build_2803
 
 _prepareKubectl() {
     echo "## Prepare kubectl"
