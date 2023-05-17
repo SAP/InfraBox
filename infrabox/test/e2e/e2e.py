@@ -77,7 +77,7 @@ def wait_latest_build(project_id: str):
 
 
 def run_build(cwd: str, project_id: str, cli_token: str):
-    command = ['/home/cjc/.local/bin/infrabox', '--ca-bundle', 'False', "--url", INFRABOX_ROOT_URL , 'push']
+    command = ['infrabox', '--ca-bundle', 'False', "--url", INFRABOX_ROOT_URL , 'push']
 
     r = subprocess.run(command, cwd=cwd, env={"INFRABOX_CLI_TOKEN": cli_token}, check=True)
 
