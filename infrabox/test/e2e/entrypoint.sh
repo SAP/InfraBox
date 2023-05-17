@@ -145,7 +145,7 @@ _installInfrabox() {
 
     echo "## Install infrabox"
 
-    PW=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
+    PW=ouRGa4RGDM9FLr09Y21K4yL9hAg8eg1C
 
 	cat >my_values.yaml <<EOL
 admin:

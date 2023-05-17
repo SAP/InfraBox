@@ -1,3 +1,10 @@
+"""
+Three envs should be set:
+INFRABOX_ADMIN_EMAIL
+INFRABOX_ADMIN_PASSWORD
+INFRABOX_ROOT_URL
+"""
+
 import os
 import unittest
 import time
