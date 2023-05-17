@@ -40,17 +40,6 @@ _createNamesapce() {
     kubectl create ns infrabox-system
 }
 
-_getDependencies() {
-    echo "## install infraboxcli"
-    # pip install infraboxcli
-    git clone https://github.com/SAP/InfraBox-cli.git /cli
-    pushd /cli
-    pip3 install -e .
-    infrabox version
-    git rev-parse HEAD
-    popd
-}
-
 _getNginxIP() {
     external_ip=""
     while [ -z $external_ip ]; do
@@ -220,7 +209,6 @@ _runTests() {
 main() {
     _prepareKubectl
     _createNamesapce
-    _getDependencies
     _initHelm
     _installPostgres
     _installMinio

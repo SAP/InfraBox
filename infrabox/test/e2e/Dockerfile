@@ -8,6 +8,9 @@ RUN apt-get update -y && apt-get install -y \
     postgresql-client \
     git
 
+RUN git clone https://github.com/SAP/InfraBox-cli.git /cli && \
+    pip3 install -e /cli
+
 RUN mkdir /project
 WORKDIR /project
 
