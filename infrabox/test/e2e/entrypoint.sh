@@ -53,13 +53,6 @@ _getNginxIP() {
 _initHelm() {
     echo "## init helm"
 
-    # FIXME: tiller is not needed any more
-    # kubectl -n kube-system create sa tiller
-    # kubectl create clusterrolebinding tiller \
-	# 	--clusterrole cluster-admin \
-	# 	--serviceaccount=kube-system:tiller
-    # helm init --service-account tiller --wait
-
     helm repo add stable https://charts.helm.sh/stable
     helm repo add bitnami https://charts.bitnami.com/bitnami
 }
