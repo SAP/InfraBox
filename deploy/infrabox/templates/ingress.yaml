@@ -58,7 +58,6 @@ metadata:
     name: infrabox
     namespace: {{ template "system_namespace" . }}
     annotations:
-        kubernetes.io/ingress.class: "nginx"
         nginx.ingress.kubernetes.io/proxy-body-size: "2048m"
         nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
         nginx.ingress.kubernetes.io/proxy-connect-timeout: "1200"
@@ -71,6 +70,7 @@ metadata:
         kubernetes.io/tls-acme: "true"
         {{ end }}
 spec:
+    ingressClassName: nginx
     rules:
     -
         host: {{ .Values.host }}
