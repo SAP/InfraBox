@@ -17,7 +17,7 @@ data:
     [SERVICE]
         Flush        2
         Daemon       Off
-        Log_Level    info
+        Log_Level    {{ .Values.general.log_level }}
         Parsers_File parsers.conf
     [INPUT]
         Name             tail
