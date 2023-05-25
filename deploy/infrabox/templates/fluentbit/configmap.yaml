@@ -5,14 +5,14 @@ metadata:
   namespace: {{ template "system_namespace" . }}
 data:
   parsers.conf: |-
+    # CRI Parser
     [PARSER]
-        Name         docker_utf8
-        Format       json
-        Time_Key     time
-        Time_Format  %Y-%m-%dT%H:%M:%S.%L
-        Time_Keep    On
-        Decode_Field_as escaped_utf8 log do_next
-        Decode_Field_as escaped      log
+        # http://rubular.com/r/tjUt3Awgg4
+        Name cri
+        Format regex
+        Regex ^(?<time>[^ ]+) (?<stream>stdout|stderr) (?<logtag>[^ ]*) (?<log>.*)$
+        Time_Key    time
+        Time_Format %Y-%m-%dT%H:%M:%S.%L%z
   fluent-bit.conf: |-
     [SERVICE]
         Flush        2
@@ -22,7 +22,7 @@ data:
     [INPUT]
         Name             tail
         Path             /var/log/containers/*{{- template "worker_namespace" . -}}*.log
-        Parser           docker_utf8
+        Parser           cri
         Tag              kube.*
         Refresh_Interval 2
         Mem_Buf_Limit    200MB

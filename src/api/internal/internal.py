@@ -38,7 +38,7 @@ class ConsoleUpdate(Resource):
             a = float(r['date'])
             date = datetime.fromtimestamp(float(a)).strftime("%H:%M:%S")
             log = "%s|%s" % (date, r['log'])
-            log = log.replace('\x00', '\n')
+            log += '\n'
 
             if not data.get(job_id):
                 data[job_id] = ""
