@@ -40,3 +40,9 @@ data:
         Port 8080
         URI /internal/api/job/consoleupdate
         Format json
+    {{- if eq .Values.general.log_level "debug" }}
+    [OUTPUT]
+        Name  stdout
+        Match *
+        Format json
+    {{- end }}
