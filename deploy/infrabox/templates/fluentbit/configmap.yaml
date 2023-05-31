@@ -19,6 +19,8 @@ data:
         Daemon       Off
         Log_Level    {{ .Values.general.log_level }}
         Parsers_File parsers.conf
+        scheduler.base   3
+        scheduler.cap    30
     [INPUT]
         Name             tail
         Path             /var/log/containers/*{{- template "worker_namespace" . -}}*.log
@@ -40,6 +42,7 @@ data:
         Port 8080
         URI /internal/api/job/consoleupdate
         Format json
+        Retry_Limit 5
     {{- if eq .Values.general.log_level "debug" }}
     [OUTPUT]
         Name  stdout
