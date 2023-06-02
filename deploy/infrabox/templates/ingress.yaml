@@ -139,5 +139,5 @@ spec:
     tls:
         - hosts:
             - {{ .Values.host }}
-          secretName: infrabox-tls-certs
+          secretName: {{ .Values.tls.cert_secret }}
 {{ end }}

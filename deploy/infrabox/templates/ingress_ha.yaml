@@ -95,6 +95,6 @@ spec:
     tls:
         - hosts:
             - {{ .Values.ha.global_host }}
-          secretName: infrabox-ha-tls-certs
+          secretName: {{ .Values.tls.ha_cert_secret }}
 {{ end }}
 {{ end }}
