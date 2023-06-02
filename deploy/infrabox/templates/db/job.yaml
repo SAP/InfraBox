@@ -13,7 +13,12 @@ metadata:
     # {{ end }}
     # post-install hook may cause the e2e test installation hang, 
     # because scheduler is crashing since there is no database table
-    # Bug pre-install hook doesn't work either, since this job needs objects like rsa secrets 
+    # But pre-install hook doesn't work either, since this job needs objects like rsa secrets
+    annotations:
+        # since job template is immutable, we need to delete it first before sync
+        argocd.argoproj.io/hook: Sync
+        argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+        # FIXME: set some annotations for helm
 spec:
     template:
         metadata:
