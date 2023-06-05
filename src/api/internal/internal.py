@@ -42,6 +42,11 @@ class ConsoleUpdate(Resource):
             else:
                 message = ""
             log = "%s|%s\n" % (date, message)
+            # if for some reason a job prints \x00
+            # psycopg2 will throw an error "ValueError: A string literal cannot contain NUL (0x00) characters."
+            # https://github.com/psycopg/psycopg2/issues/420
+            # so we manually replace it
+            log = log.replace('\x00', '\n')
 
             if not data.get(job_id):
                 data[job_id] = ""
