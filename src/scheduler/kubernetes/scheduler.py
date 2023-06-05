@@ -521,12 +521,21 @@ class FunctionInvocationController(Controller):
                     }
                 }
             elif pod['status']['phase'] == 'Pending':
-                fi['status']['state'] = {
-                    'pending': {
-                        'reason': pod['status']['conditions'][-1].get('reason', None),
-                        'message': pod['status']['conditions'][-1].get('message', None)
+                if 'conditions' in pod['status']:
+                    reason = pod['status']['conditions'][-1].get('reason', None)
+                    message = pod['status']['conditions'][-1].get('message', None)
+                    fi['status']['state'] = {
+                        'pending': {
+                            'reason': reason,
+                            'message': message
+                        }
                     }
-                }
+                else:
+                    fi['status']['state'] = {
+                        'pending': {
+                            'status': json.dumps(pod['status']),
+                        }
+                    }
 
         return fi
 

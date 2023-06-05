@@ -35,7 +35,7 @@ logger = get_logger('scheduler')
 ERR_EXIT_FAILURE = 1
 ERR_EXIT_ERROR = 2
 
-BUILD_ARGS = ('GITHUB_OAUTH_TOKEN', 'GITHUB_BASE_URL')
+BUILD_ARGS = ('GITHUB_OAUTH_TOKEN', 'GITHUB_BASE_URL', 'INFRABOX_CRONJOB')
 
 def makedirs(path):
     os.makedirs(path)
@@ -207,8 +207,8 @@ class RunJob(Job):
         c.execute(cmd, cwd=mount_repo_dir, show=True)
 
         if submodules:
-            c.execute(['git', 'submodule', 'init'], cwd=mount_repo_dir, show=True, retry=True)
-            c.execute(['git', 'submodule', 'update'], cwd=mount_repo_dir, show=True, retry=True)
+            c.execute(['git', 'submodule', 'init', '-q'], cwd=mount_repo_dir, show=True, retry=True)
+            c.execute(['git', 'submodule', 'update', '-q'], cwd=mount_repo_dir, show=True, retry=True)
 
 
     def get_source(self):
@@ -926,6 +926,7 @@ class RunJob(Job):
                     raise Failure("Error running container")
             except Exception as ex:
                 logger.exception(ex)
+                logger.exception('Give this job more memory may work......')
                 raise Failure("Error running container")
             try:
                 # Find out if container was killed due to oom
