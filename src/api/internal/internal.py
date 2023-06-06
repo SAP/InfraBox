@@ -35,8 +35,8 @@ class ConsoleUpdate(Resource):
 
             job_id = r['kubernetes']['labels']['job-name'][:-4]
 
-            a = float(r['date'])
-            date = datetime.fromtimestamp(float(a)).strftime("%H:%M:%S")
+            timestamp = float(r['date'])
+            date = datetime.fromtimestamp(timestamp).strftime("%H:%M:%S")
             if r.get("log"):
                 message = r.get("log")
             else:
@@ -49,12 +49,12 @@ class ConsoleUpdate(Resource):
             log = log.replace('\x00', '\n')
 
             if not data.get(job_id):
-                data[job_id] = ""
+                data[job_id] = {"date": timestamp, "log": ""}
 
-            data[job_id] += log
+            data[job_id]['log'] += log
 
-        for job_id, log in data.items():
-            if not log:
+        for job_id, item in data.items():
+            if not item['log']:
                 continue
 
             r = g.db.execute_one("""
@@ -70,8 +70,8 @@ class ConsoleUpdate(Resource):
                 continue
 
             g.db.execute("""
-                INSERT INTO console (job_id, output) VALUES (%s, %s);
-            """, [job_id, log])
+                INSERT INTO console (job_id, output, date) VALUES (%s, %s, to_timestamp(%s));
+            """, [job_id, item['log'], item['date']])
             g.db.commit() # Commit here, updating job state later on might fail
 
             g.db.execute("""
