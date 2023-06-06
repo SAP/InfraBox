@@ -31,7 +31,8 @@ def handle_service(name, d, r):
             'network_mode',
             'profiles',
             'read_only',
-            'cap_drop'
+            'cap_drop',
+            'scale'
         ]
 
         if key in allowed_fields:
