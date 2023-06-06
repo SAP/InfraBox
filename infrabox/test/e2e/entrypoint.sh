@@ -7,47 +7,37 @@ _prepareKubectl() {
 
 	SERVICE_NAME="e2e-cluster"
 
-	CA_CRT="/var/run/infrabox.net/services/$SERVICE_NAME/ca.crt"
-	CLIENT_CRT="/var/run/infrabox.net/services/$SERVICE_NAME/client.crt"
-	CLIENT_KEY="/var/run/infrabox.net/services/$SERVICE_NAME/client.key"
+    CA_CRT="/var/run/infrabox.net/services/$SERVICE_NAME/ca.crt"
 
+    ENDPOINT=$(cat /var/run/infrabox.net/services/$SERVICE_NAME/endpoint)
+    TOKEN=$(cat /var/run/infrabox.net/services/$SERVICE_NAME/token)
 
-	ENDPOINT=$(cat /var/run/infrabox.net/services/$SERVICE_NAME/endpoint)
-	PASSWORD=$(cat /var/run/infrabox.net/services/$SERVICE_NAME/password)
-	USERNAME=$(cat /var/run/infrabox.net/services/$SERVICE_NAME/username)
+    kubectl config set-cluster $SERVICE_NAME \
+        --server=$ENDPOINT \
+        --embed-certs=true \
+        --certificate-authority=$CA_CRT
 
-	kubectl config set-cluster $SERVICE_NAME \
-		--server=$ENDPOINT \
-		--certificate-authority=$CA_CRT
+    kubectl config set-credentials admin \
+        --token=$TOKEN
 
-	kubectl config set-credentials admin \
-		--certificate-authority=$CA_CRT \
-		--client-certificate=$CLIENT_CRT \
-		--client-key=$CLIENT_KEY \
-		--username=$USERNAME \
-		--password=$PASSWORD
+    kubectl config set-context default-system \
+        --cluster=$SERVICE_NAME \
+        --user=admin
 
-	kubectl config set-context default-system \
-		--cluster=$SERVICE_NAME \
-		--user=admin
+    kubectl config use-context default-system
+
+    kubectl get pods
 
     kubectl config use-context default-system
 
     kubectl get nodes
-
-    kubectl create ns infrabox-worker
-    kubectl create ns infrabox-system
 }
 
-_getDependencies() {
-    echo "## install infraboxcli"
-    # pip install infraboxcli
-    git clone https://github.com/SAP/InfraBox-cli.git /cli
-    pushd /cli
-    pip install -e .
-    infrabox version
-    git rev-parse HEAD
-    popd
+_createNamesapce() {
+    echo "## create infrabox namespace"
+    
+    kubectl create ns infrabox-worker
+    kubectl create ns infrabox-system
 }
 
 _getNginxIP() {
@@ -63,13 +53,8 @@ _getNginxIP() {
 _initHelm() {
     echo "## init helm"
 
-    kubectl -n kube-system create sa tiller
-    kubectl create clusterrolebinding tiller \
-		--clusterrole cluster-admin \
-		--serviceaccount=kube-system:tiller
-    helm init --service-account tiller --wait
-
     helm repo add stable https://charts.helm.sh/stable
+    helm repo add bitnami https://charts.bitnami.com/bitnami
 }
 
 _getPodNameImpl() {
@@ -92,9 +77,12 @@ _getPodName() {
 
 _installPostgres() {
     echo "## Install postgres"
-	helm install -n postgres stable/postgresql \
-        --version 1.0.0 \
-		--set imageTag=9.6.2,postgresPassword=postgres,probes.readiness.periodSeconds=5 \
+    # postgres 15 will have the problem of "SCRAM authentication requires libpq version 10 or above"
+    # which may need to update base image OS version...
+	helm install postgres oci://registry-1.docker.io/bitnamicharts/postgresql \
+        --version 12.5.1 \
+		--set auth.postgresPassword=postgres \
+        --set image.tag=13.11.0-debian-11-r0 \
 		--wait \
         --namespace infrabox-system
 
@@ -104,7 +92,7 @@ _installPostgres() {
     kubectl port-forward -n infrabox-system $postgres_pod 5432 &
 
     # Wait until postgres is ready
-    until psql -U postgres -h localhost -c '\l'; do
+    until psql postgresql://postgres:postgres@localhost:5432 -c '\l'; do
         >&2 echo "Postgres is unavailable - sleeping"
         sleep 1
 	done
@@ -114,8 +102,8 @@ _installMinio() {
     echo "## Install minio"
 
     helm install \
-        --set serviceType=ClusterIP,replicas=1,persistence.enabled=false \
-        -n infrabox-minio \
+        infrabox-minio \
+        --set service.type=ClusterIP,replicas=1,persistence.enabled=false \
         --namespace infrabox-system \
         --wait \
         stable/minio
@@ -125,10 +113,10 @@ _installNginxIngress() {
     echo "## Install nginx ingress"
 
     helm install \
-        -n nic \
+        nic \
         --namespace kube-system \
         --wait \
-        stable/nginx-ingress
+        bitnami/nginx-ingress-controller
 
     nginx_ip=$(_getNginxIP)
 
@@ -150,7 +138,7 @@ _installInfrabox() {
 
     echo "## Install infrabox"
 
-    PW=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
+    PW=ouRGa4RGDM9FLr09Y21K4yL9hAg8eg1C
 
 	cat >my_values.yaml <<EOL
 admin:
@@ -160,6 +148,7 @@ admin:
   public_key: $(base64 -w 0 ./id_rsa.pem)
 general:
   dont_check_certificates: true
+  log_level: debug
 database:
   postgres:
     db: postgres
@@ -172,6 +161,7 @@ image:
   tag: $IMAGE_TAG
 storage:
   s3:
+    # these are the default accessKey/secretKey defined in the helm chart
     access_key_id: AKIAIOSFODNN7EXAMPLE
     bucket: infrabox
     enabled: true
@@ -185,7 +175,7 @@ job:
         {"insecure-registries": ["$ROOT_URL"]}
 EOL
 
-    helm install --namespace infrabox-system -f my_values.yaml --wait .
+    helm install --namespace infrabox-system -f my_values.yaml --wait --timeout=20m infrabox .
 
     export INFRABOX_DATABASE_HOST=localhost
     export INFRABOX_DATABASE_DB=postgres
@@ -194,6 +184,8 @@ EOL
     export INFRABOX_DATABASE_PASSWORD=postgres
     export INFRABOX_URL=https://$ROOT_URL
     export INFRABOX_ROOT_URL=https://$ROOT_URL
+    export INFRABOX_ADMIN_EMAIL=admin@admin.com
+    export INFRABOX_ADMIN_PASSWORD=$PW
 }
 
 _runTests() {
@@ -201,17 +193,15 @@ _runTests() {
     pushd /infrabox/context/infrabox/test/e2e
 
     set +e
-    python test.py
+    python3 e2e.py
     rc=$?
-
-    cp results.xml /infrabox/upload/testresult
 
     exit $rc
 }
 
 main() {
     _prepareKubectl
-    _getDependencies
+    _createNamesapce
     _initHelm
     _installPostgres
     _installMinio

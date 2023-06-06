@@ -1,4 +1,4 @@
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
     name: infrabox-api
@@ -7,6 +7,9 @@ metadata:
         app: infrabox-api
 spec:
     replicas: {{ default 1 .Values.api.replicas }}
+    selector:
+        matchLabels:
+            app: infrabox-api
     template:
         metadata:
             labels:
@@ -23,7 +26,6 @@ spec:
                 env:
                 {{ include "env_general" . | indent 16 }}
                 {{ include "env_gerrit" . | indent 16 }}
-                {{ include "env_version" . | indent 16 }}
                 volumeMounts:
                 {{ include "mounts_gerrit" . | indent 16 }}
             {{ end }}
@@ -66,7 +68,6 @@ spec:
                 {{ include "env_github_secrets" . | indent 16 }}
                 {{ include "env_ldap" . | indent 16 }}
                 {{ include "env_saml" . | indent 16 }}
-                {{ include "env_version" . | indent 16 }}
                 {{ include "env_cluster" . | indent 16 }}
                 {{ include "env_account" . | indent 16 }}
                 {{ include "env_ha" . | indent 16 }}

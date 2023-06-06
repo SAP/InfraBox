@@ -1,12 +1,11 @@
 {{ if .Values.ingress.enabled }}
 {{ if .Values.ha.enabled}}
-apiVersion: extensions/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
     name: infrabox-ha-entry
     namespace: {{ template "system_namespace" . }}
     annotations:
-        kubernetes.io/ingress.class: "nginx"
         nginx.ingress.kubernetes.io/proxy-body-size: "2048m"
         nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
         nginx.ingress.kubernetes.io/proxy-connect-timeout: "1200"
@@ -16,61 +15,86 @@ metadata:
         nginx.ingress.kubernetes.io/session-cookie-hash: "sha1"
         nginx.ingress.kubernetes.io/ssl-redirect: "true"
 spec:
+    ingressClassName: nginx
     rules:
     -
         host: {{ .Values.ha.global_host }}
         http:
             paths:
-            -
+            -   
+                pathType: Prefix
                 path: /dashboard
                 backend:
-                    serviceName: infrabox-static
-                    servicePort: 80
+                    service:
+                        name: infrabox-static
+                        port: 
+                            number: 80
             -
+                pathType: Prefix
                 path: /api
                 backend:
-                    serviceName: infrabox-api
-                    servicePort: 8080
+                    service:
+                        name: infrabox-api
+                        port: 
+                            number: 8080
             {{ if .Values.github.enabled }}
             -
+                pathType: Prefix
                 path: /github/hook
                 backend:
-                    serviceName: infrabox-github-trigger
-                    servicePort: 8080
+                    service:
+                        name: infrabox-github-trigger
+                        port: 
+                            number: 8080
             -
+                pathType: Prefix
                 path: /github/auth
                 backend:
-                    serviceName: infrabox-api
-                    servicePort: 8080
+                    service:
+                        name: infrabox-api
+                        port: 
+                            number: 8080
             {{ end }}
             {{ if .Values.account.saml.enabled }}
             -
+                pathType: Prefix
                 path: /saml
                 backend:
-                    serviceName: infrabox-api
-                    servicePort: 8080
+                    service:
+                        name: infrabox-api
+                        port: 
+                            number: 8080
             {{ end }}
             {{ if .Values.monitoring.enabled }}
             -
+                pathType: Prefix
                 path: /grafana
                 backend:
-                    serviceName: infrabox-grafana
-                    servicePort: 80
+                    service:
+                        name: infrabox-grafana
+                        port: 
+                            number: 80
             {{ end }}
             -
+                pathType: Prefix
                 path: /v2
                 backend:
-                    serviceName: infrabox-docker-registry
-                    servicePort: 8080
+                    service:
+                        name: infrabox-docker-registry
+                        port: 
+                            number: 8080
             -
+                pathType: Prefix
                 path: /
                 backend:
-                    serviceName: infrabox-static
-                    servicePort: 80
+                    service:
+                        name: infrabox-static
+                        port: 
+                            number: 80
 
     tls:
         - hosts:
             - {{ .Values.ha.global_host }}
-          secretName: infrabox-ha-tls-certs
+          secretName: {{ .Values.tls.ha_cert_secret }}
 {{ end }}
 {{ end }}

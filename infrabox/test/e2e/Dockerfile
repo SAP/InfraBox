@@ -1,17 +1,17 @@
 FROM ubuntu:18.04
-ARG HELM_VERSION=2.17.0
+ARG HELM_VERSION=3.11.2
 
+# we need a low version of PyJWT so install with apt
 RUN apt-get update -y && apt-get install -y \
     curl \
-    python-pip \
+    python3.8 \
+    python3-pip \
+    python3-jwt \
     postgresql-client \
-    python-xmlrunner \
-    python-requests \
-    python-psycopg2 \
-    python-jwt \
-    python-crypto \
-    python-cryptography \
     git
+
+RUN git clone https://github.com/SAP/InfraBox-cli.git /cli && \
+    pip3 install -e /cli
 
 RUN mkdir /project
 WORKDIR /project

@@ -1,4 +1,4 @@
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: infrabox-fluent-bit
@@ -6,6 +6,9 @@ metadata:
   labels:
     app: infrabox-fluent-bit
 spec:
+  selector:
+    matchLabels:
+      app: infrabox-fluent-bit
   template:
     metadata:
       labels:
@@ -14,7 +17,7 @@ spec:
       serviceAccountName: infrabox
       containers:
       - name: fluent-bit
-        image: fluent/fluent-bit:0.13
+        image: cr.fluentbit.io/fluent/fluent-bit:2.1.3
         resources:
           limits:
             memory: 1000Mi

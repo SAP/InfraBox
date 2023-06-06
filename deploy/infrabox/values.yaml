@@ -381,3 +381,7 @@ network_policies:
 
 dev:
     enabled: false
+
+tls:
+    cert_secret: infrabox-tls-certs
+    ha_cert_secret: infrabox-ha-tls-certs

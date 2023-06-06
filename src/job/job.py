@@ -1176,7 +1176,7 @@ class RunJob(Job):
                 try:
                     create_from(p)
                 except Exception as e:
-                    raise Error("%s: %s" % (p, e.message))
+                    raise Error("%s: %s" % (p, str(e)))
 
             if job_type == "workflow":
                 workflowfile = job['infrabox_file']

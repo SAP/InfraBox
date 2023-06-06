@@ -1,0 +1,17 @@
+{{- $system_namespace := lookup "v1" "Namespace" "" .Values.system_namespace -}}
+{{- $worker_namespace := lookup "v1" "Namespace" "" .Values.worker_namespace -}}
+
+{{ if not $system_namespace }}
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ .Values.system_namespace }}
+{{ end }}
+---
+{{ if not $worker_namespace }}
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ .Values.worker_namespace }}
+{{ end }}
+---

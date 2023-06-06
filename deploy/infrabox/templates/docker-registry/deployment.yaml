@@ -1,4 +1,4 @@
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
     name: infrabox-docker-registry
@@ -7,6 +7,9 @@ metadata:
         app: infrabox-docker-registry
 spec:
     replicas: {{ required "docker_registry.replicas is required" .Values.docker_registry.replicas }}
+    selector:
+        matchLabels:
+            app: infrabox-docker-registry
     template:
         metadata:
             labels:
@@ -50,7 +53,7 @@ spec:
                     value: "true"
                 -
                     name: REGISTRY_HTTP_SECRET
-                    value: {{ .Values.admin.private_key | sha256sum }}
+                    value: {{ required ".Values.admin.private_key is required" .Values.admin.private_key | sha256sum }}
                 {{ if .Values.storage.s3.enabled }}
                 -
                     name: REGISTRY_STORAGE
@@ -91,7 +94,7 @@ spec:
                     name: REGISTRY_STORAGE
                     value: swift
                 -   name: REGISTRY_HEALTH_STORAGEDRIVER_ENABLED
-                    value: false
+                    value: "false"
                 -
                     name: REGISTRY_STORAGE_SWIFT_AUTHURL
                     value: {{ .Values.storage.swift.auth_url }}

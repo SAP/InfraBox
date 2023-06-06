@@ -1,5 +1,5 @@
 {{ define "static_deployment" }}
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
     name: infrabox-static
@@ -8,6 +8,9 @@ metadata:
         app: infrabox-static
 spec:
     replicas: 1
+    selector:
+        matchLabels:
+            app: infrabox-static
     template:
         metadata:
             labels:
