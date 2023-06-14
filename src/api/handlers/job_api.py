@@ -656,6 +656,7 @@ class Output(Resource):
 
     def post(self):
         job_id = g.token['job']['id']
+        app.logger.info("Uploading output of job {}".format(job_id))
 
         for f, _ in request.files.items():
             key = "%s/%s" % (job_id, f)
@@ -670,7 +671,7 @@ class Output(Resource):
                 AND state = 'queued'
             ''', [job_id])
 
-            current_cluster = g.db.execute_one_dict('''
+            current_job_cluster = g.db.execute_one_dict('''
                 SELECT cluster_name
                 FROM job
                 WHERE id = %s
@@ -698,7 +699,7 @@ class Output(Resource):
                 AND name = ANY (%s)
                 AND name != %s
                 AND name != %s
-            ''', [list(clusters), os.environ['INFRABOX_CLUSTER_NAME'], current_cluster])
+            ''', [list(clusters), os.environ['INFRABOX_CLUSTER_NAME'], current_job_cluster])
 
             g.release_db()
 
@@ -711,6 +712,7 @@ class Output(Resource):
                 files = {f: stream}
                 token = encode_job_token(job_id)
                 headers = {'Authorization': 'bearer ' + token}
+                app.logger.info("Uploading output of job {} to another cluster {}".format(job_id, url))
                 r = requests.post(url, files=files, headers=headers, timeout=120, verify=False)
 
                 if r.status_code != 200:
