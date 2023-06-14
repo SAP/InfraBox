@@ -1,8 +1,9 @@
 import time
+from datetime import datetime, timedelta
 
 from pyinfraboxutils import get_logger, get_env
 from pyinfraboxutils import dbpool
-from pyinfraboxutils.storage import storage
+from pyinfraboxutils.storage import storage, SWIFT
 
 logger = get_logger("gc")
 
@@ -31,6 +32,7 @@ class GC(object):
         self._gc_test_runs(db)
         self._gc_orphaned_projects(db)
         self._gc_storage_job_cache(db)
+        self._gc_swift()
 
     def _gc_job_console_output(self, db):
         # Delete the console output of jobs
@@ -131,6 +133,21 @@ class GC(object):
 
     def _gc_storage_source_upload(self):
         pass
+
+    def _gc_swift(self):
+        if not isinstance(storage, SWIFT):
+            return
+        client = storage._get_client()
+        for folder in ("archive/", "output/", "upload/", "segments/"):
+            _, data = client.get_container(storage.container, prefix=folder, full_listing=True)
+            now = datetime.now()
+            for obj in data:
+                # FIXME: when migrated to Python3, we can just use fromisoformat
+                # last_modified = datetime.fromisoformat(obj["last_modified"])
+                last_modified = datetime.strptime(obj["last_modified"], "%Y-%m-%dT%H:%M:%S.%f")
+                if now - last_modified > timedelta(days=14):
+                    storage._delete(obj["name"])
+                    logger.info("deleted obj {}".format(obj['name']))
 
     def _gc_storage_job_cache(self, db):
         # Delete all cache of all jobs which have not
