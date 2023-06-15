@@ -22,12 +22,15 @@ from pyinfrabox.markup import validate_markup
 from pyinfrabox.testresult import validate_result
 from pyinfrabox import ValidationError
 
+from pyinfraboxutils import get_logger
 from pyinfraboxutils.token import encode_job_token
 from pyinfraboxutils.ibrestplus import api
 from pyinfraboxutils.ibflask import app
 from pyinfraboxutils.storage import storage
 from pyinfraboxutils.secrets import decrypt_secret
 from pyinfraboxutils import get_root_url
+
+logger = get_logger(__name__)
 
 def allowed_file(filename, extensions):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in extensions
@@ -37,7 +40,7 @@ def delete_file(path):
         try:
             os.remove(path)
         except Exception as error:
-            app.logger.warn("Failed to delete file: %s", error)
+            logger.warning("Failed to delete file: %s", error)
 
 
 @api.route("/api/job/job", doc=False)
@@ -290,7 +293,7 @@ class Job(Resource):
                 # choose validate way
                 validate_res = get_auth_type(result)
                 if validate_res == 'token':
-                    app.logger.info('validate way is token')
+                    logger.info('validate way is token')
                 elif validate_res == 'appRole':
                     app_role = {'role_id': role_id, 'secret_id': secret_id}
                     json_data = json.dumps(app_role)
@@ -656,7 +659,7 @@ class Output(Resource):
 
     def post(self):
         job_id = g.token['job']['id']
-        app.logger.info("Uploading output of job {}".format(job_id))
+        logger.info("Uploading output of job {}".format(job_id))
 
         for f, _ in request.files.items():
             key = "%s/%s" % (job_id, f)
@@ -712,11 +715,11 @@ class Output(Resource):
                 files = {f: stream}
                 token = encode_job_token(job_id)
                 headers = {'Authorization': 'bearer ' + token}
-                app.logger.info("Uploading output of job {} to another cluster {}".format(job_id, url))
+                logger.info("Uploading output of job {} to another cluster {}".format(job_id, url))
                 r = requests.post(url, files=files, headers=headers, timeout=120, verify=False)
 
                 if r.status_code != 200:
-                    app.logger.error(r.text)
+                    logger.error(r.text)
                     abort(500, "Failed to upload data")
 
             return jsonify({})
@@ -844,14 +847,14 @@ class CreateJobs(Resource):
                         SELECT cpu_capacity, memory_capacity FROM cluster WHERE name = %s
                     ''', [preferred_cluster])
                     if not r:
-                        app.logger.warn("No such a cluster named: {}".format(preferred_cluster))
+                        logger.warning("No such a cluster named: {}".format(preferred_cluster))
                     else:
                         cpu_request = max(0.3, j['resources']['limits']['cpu'] / 2.0)
                         memory_request = j['resources']['limits']['memory']
                         if r['cpu_capacity'] >= cpu_request and r['memory_capacity'] >= memory_request:
                             target_cluster = preferred_cluster
                         else:
-                            app.logger.info("""Could not use the preferred cluster as lack of resources. Request: {} CPU, {} Memory, Capacity: {} CPU, {} MEMORY'""".format(cpu_request, memory_request, r['cpu_capacity'], r['memory_capacity']))
+                            logger.info("""Could not use the preferred cluster as lack of resources. Request: {} CPU, {} Memory, Capacity: {} CPU, {} MEMORY'""".format(cpu_request, memory_request, r['cpu_capacity'], r['memory_capacity']))
 
                 if not target_cluster:
                     parent_jobs = j.get('depends_on', [])
@@ -1198,7 +1201,7 @@ class Markup(Resource):
             except ValidationError as e:
                 abort(400, e.message)
             except Exception as e:
-                app.logger.error(e)
+                logger.error(e)
                 abort(400, "Failed to parse json")
 
         return jsonify({})
