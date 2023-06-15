@@ -4,8 +4,6 @@
 # and bookworm (12) does not ship Python 2 at all
 FROM debian:buster-slim
 
-COPY src/images/base/requirements.txt /infrabox/
-
 RUN apt-get update -y \
     && apt-get install -y \
 	    libpq-dev \
@@ -24,7 +22,9 @@ RUN apt-get update -y \
     && apt-get autoremove -y \
     && rm -rf /var/lib/apt/lists/*
 
-RUN pip install --no-cache-dir -r /infrabox/requirements.txt
+COPY src/images/base/requirements_full.txt /infrabox/
+
+RUN pip install --no-cache-dir -r /infrabox/requirements_full.txt
 
 RUN useradd -ms /bin/bash infrabox
 
