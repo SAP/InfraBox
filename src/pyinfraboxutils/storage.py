@@ -12,7 +12,9 @@ from keystoneauth1 import session
 from keystoneauth1.identity import v3
 from swiftclient.client import Connection, ClientException
 
-from pyinfraboxutils import get_env
+from pyinfraboxutils import get_env, get_logger
+
+logger = get_logger("storage")
 
 USE_S3 = get_env('INFRABOX_STORAGE_S3_ENABLED') == 'true'
 USE_GCS = get_env('INFRABOX_STORAGE_GCS_ENABLED') == 'true'
@@ -243,16 +245,15 @@ class SWIFT(Storage):
         client = self._get_client()
         try:
             client.head_object(self.container, key)
-        except ClientException:
-            return False
+        except ClientException as err:
+            if err.http_status == 404:
+                return False
+            else:
+                raise
         return True
 
     def _upload(self, stream, key):
         client = self._get_client()
-        try:
-            client.head_container(self.container)
-        except ClientException:
-            client.put_container(self.container)
         client.put_object(container=self.container,
                           obj=key,
                           contents=stream)
@@ -272,7 +273,8 @@ class SWIFT(Storage):
             _, contents = client.get_object(self.container, key)
             with open(path, 'w') as f:
                 f.write(contents)
-        except:
+        except Exception as e:
+            logger.error("Download object {} failed: {}".format(key, e))
             return None
 
         self._clean_up(path)

@@ -1,8 +1,12 @@
-FROM debian:9.6-slim
+# buster (10) is the last version to support Python 2.
+# bullseye (11) although does have a Python 2 interpreter, 
+# almost *all* Python 2 packages, however, have been removed from bullseye
+# and bookworm (12) does not ship Python 2 at all
+FROM debian:buster-slim
 
-RUN    apt-get update -y \
+RUN apt-get update -y \
     && apt-get install -y \
-	libpq-dev \
+	    libpq-dev \
         python \
         python-pip \
         python-six \
@@ -15,34 +19,12 @@ RUN    apt-get update -y \
         python-paramiko \
         openssh-client \
         inotify-tools \
-    && pip install \
-        pyrsistent==0.15.7 \
-        six==1.14.0 \
-        psycopg2 \
-        flask \
-        flask-restx \
-        flask_socketio==4.3.1 \
-        requests==2.18.4 \
-        PyJWT \
-        jsonschema \
-        eventlet \
-        boto3 \
-        google-cloud-storage \
-        future \
-        bcrypt \
-        pycrypto \
-        prometheus_client \
-        azure-mgmt-resource \
-        azure-storage==0.36.0 \
-        keystoneauth1==3.7.0 \
-        python-swiftclient \
-        python-cachetclient \
-        python-saml \
-        python-engineio==3.13.2 \
-        croniter \
-    && apt-get remove -y python-pip \
     && apt-get autoremove -y \
     && rm -rf /var/lib/apt/lists/*
+
+COPY src/images/base/requirements_full.txt /infrabox/
+
+RUN pip install --no-cache-dir -r /infrabox/requirements_full.txt
 
 RUN useradd -ms /bin/bash infrabox
 
