@@ -1,0 +1,32 @@
+# These versions are dumped from base image build_2868 and before
+# the modifications are:
+# updated python-swiftclient from 3.10.1 to 3.13.1
+# manually added msrest==0.6.19 botocore==1.19.25 python-socketio==4.6.1
+# to aviod pip break dependencies
+azure-mgmt-resource==15.0.0
+azure-storage==0.36.0
+msrest==0.6.19
+bcrypt==3.1.7
+boto3==1.16.25
+botocore==1.19.25
+croniter==0.3.36
+eventlet==0.29.1
+Flask==1.1.2
+flask-restx==0.2.0
+Flask-SocketIO==4.3.1
+future==0.18.2
+futures==3.3.0
+google-cloud-storage==1.33.0
+jsonschema==3.2.0
+keystoneauth1==3.7.0
+psycopg2==2.8.6
+pycrypto==2.6.1
+PyJWT==1.7.1
+pyrsistent==0.15.7
+python-cachetclient==0.2.5
+python-engineio==3.13.2
+python-saml==2.8.0
+python-socketio==4.6.1
+python-swiftclient==3.13.1
+requests==2.18.4
+six==1.14.0
