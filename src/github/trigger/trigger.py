@@ -370,7 +370,7 @@ class Trigger(object):
         def getLabelsName(event):
             names = []
             for label in event['pull_request']['labels']:
-                for k,v in label.items():
+                for k,v in list(label.items()):
                     if k == 'name':
                         names.append(v)
                         break

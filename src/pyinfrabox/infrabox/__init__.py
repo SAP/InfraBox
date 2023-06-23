@@ -642,12 +642,12 @@ def validate_json(d):
         if deps:
             all_deps[job_name] = deps
 
-    for job_name, deps in all_deps.items():
+    for job_name, deps in list(all_deps.items()):
         queue = list(deps.keys())
         for dep_job in queue:
             if dep_job == job_name:
                 raise ValidationError("Jobs", "Circular dependency detected.")
             if dep_job in all_deps:
-                queue.extend(all_deps[dep_job].keys())
+                queue.extend(list(all_deps[dep_job].keys()))
 
     return True

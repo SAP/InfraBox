@@ -22,12 +22,12 @@ from pyinfraboxutils.ibrestplus import api, app
 from pyinfraboxutils.ibopa import opa_do_auth, opa_start_push_loop
 from pyinfraboxutils import dbpool
 
-import handlers
-import settings
-import internal
+from . import handlers
+from . import settings
+from . import internal
 
-import listeners.console
-import listeners.job
+from . import listeners.console
+from . import listeners.job
 
 
 logger = get_logger('api')
