@@ -1060,7 +1060,7 @@ class RunJob(Job):
 
                 c.execute(cmd, show=False)
         except Exception as e:
-            raise Error("Failed to login to registry: " + e.message)
+            raise Error("Failed to login to registry: " + str(e))
 
     def _logout_registry(self, reg):
         c = self.console
@@ -1374,19 +1374,19 @@ def main():
 
     except Failure as e:
         j.console.header('Failure', show=True)
-        j.console.collect(e.message, show=True)
+        j.console.collect(str(e), show=True)
 
         with open('/dev/termination-log', 'w+') as out:
-            out.write(e.message)
+            out.write(str(e))
 
         sys.exit(ERR_EXIT_FAILURE)
 
     except Error as e:
         j.console.header('Error', show=True)
-        j.console.collect(e.message, show=True)
+        j.console.collect(str(e), show=True)
 
         with open('/dev/termination-log', 'w+') as out:
-            out.write(e.message)
+            out.write(str(e))
 
         sys.exit(ERR_EXIT_ERROR)
     except:

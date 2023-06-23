@@ -1204,7 +1204,7 @@ class Markup(Resource):
                              """, [job_id, name, content, project_id])
                 g.db.commit()
             except ValidationError as e:
-                abort(400, e.message)
+                abort(400, str(e))
             except Exception as e:
                 logger.error(e)
                 abort(400, "Failed to parse json")
@@ -1247,7 +1247,7 @@ class Badge(Resource):
                     data = json.load(md)
                     validate_badge(data)
             except ValidationError as e:
-                abort(400, e.message)
+                abort(400, str(e))
             except:
                 abort(400, "Failed to parse json")
 
@@ -1301,7 +1301,7 @@ class Testresult(Resource):
         try:
             validate_result(data)
         except ValidationError as e:
-            abort(400, e.message)
+            abort(400, str(e))
 
         rows = g.db.execute_one("""
             SELECT j.project_id

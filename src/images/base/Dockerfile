@@ -5,8 +5,14 @@
 FROM debian:buster-slim
 
 # make a symbol link to not break any python commands...
+# currently we need gcc to build wheel for xmlsec (which is a dependency of python3-saml)
+# so we cannot use --no-install-recommends to reduce image size
+
+# version info:
+# python3-pycryptodome: 3.6.1
 RUN apt-get update -y \
     && apt-get install -y \
+        curl \
 	    libpq-dev \
         python3 \
         python3-pip \

@@ -7,17 +7,17 @@ bcrypt==3.1.7
 boto3==1.16.25
 croniter==0.3.36
 eventlet==0.29.1
-Flask==1.1.2
+Flask==1.1.4
 flask-restx==0.2.0
 Flask-SocketIO==4.3.1
 google-cloud-storage==1.33.0
 jsonschema==3.2.0
 keystoneauth1==3.7.0
-psycopg2==2.8.6
-PyJWT==1.7.1
-pyrsistent==0.15.7
+psycopg2-binary==2.8.6
+PyJWT==2.6.0
 python-cachetclient==0.2.5
 python-engineio==3.13.2
 python3-saml==1.15.0
 python-swiftclient==3.13.1
 requests==2.31.0
+MarkupSafe==0.23 # jinja2 2.11.3 did not pin MarkupSafe versions, will bring breaking changes

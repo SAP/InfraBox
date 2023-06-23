@@ -3,16 +3,9 @@ import errno
 import uuid
 
 from builtins import int, range, str
-from past.builtins import str
+from urllib.parse import urlparse
 
 from pyinfrabox import ValidationError
-
-try:
-    #python2
-    from urllib.parse import urlparse
-except:
-    #python3
-    from urllib.parse import urlparse
 
 
 def check_text(t, path, allowEmpty=False):
