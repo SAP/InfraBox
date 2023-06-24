@@ -104,7 +104,7 @@ def configure_admin(conn):
     password = get_env('INFRABOX_ADMIN_PASSWORD')
     email = get_env('INFRABOX_ADMIN_EMAIL')
 
-    hashed_password = bcrypt.hashpw(password.encode('utf8'), bcrypt.gensalt())
+    hashed_password = bcrypt.hashpw(password.encode('utf8'), bcrypt.gensalt()).decode()
 
     cur = conn.cursor()
     cur.execute('''

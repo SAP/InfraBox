@@ -130,7 +130,7 @@ class S3(Storage):
             return None
 
         path = '/tmp/%s' % uuid.uuid4()
-        with open(path, 'w+') as f:
+        with open(path, 'wb') as f:
             f.write(result['Body'].read())
 
         self._clean_up(path)
@@ -181,7 +181,7 @@ class GCS(Storage):
             return None
 
         path = '/tmp/%s' % uuid.uuid4()
-        with open(path, 'w+') as f:
+        with open(path, 'wb') as f:
             blob.download_to_file(f)
 
         self._clean_up(path)
@@ -272,7 +272,7 @@ class SWIFT(Storage):
         path = '/tmp/%s' % uuid.uuid4()
         try:
             _, contents = client.get_object(self.container, key)
-            with open(path, 'w') as f:
+            with open(path, 'wb') as f:
                 f.write(contents)
         except Exception as e:
             # ignoring 404 as e.g. in job running getting output.json 404 means no output
