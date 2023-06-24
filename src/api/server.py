@@ -3,11 +3,11 @@ import uuid
 import os
 import sys
 
-import urllib3
 
 import eventlet
 eventlet.monkey_patch()
 
+import urllib3
 import flask_socketio
 import socketio
 
