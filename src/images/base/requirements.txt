@@ -9,15 +9,17 @@ croniter==0.3.36
 eventlet==0.29.1
 Flask==1.1.4
 flask-restx==0.2.0
-Flask-SocketIO==4.3.1
+Flask-SocketIO==4.3.2
 google-cloud-storage==1.33.0
 jsonschema==3.2.0
 keystoneauth1==3.7.0
 psycopg2-binary==2.8.6
-PyJWT==2.6.0
+PyJWT[crypto]==2.6.0
 python-cachetclient==0.2.5
 python-engineio==3.13.2
 python3-saml==1.15.0
 python-swiftclient==3.13.1
 requests==2.31.0
 MarkupSafe==0.23 # jinja2 2.11.3 did not pin MarkupSafe versions, will bring breaking changes
+paramiko==2.12.0 # FIXME: can we update to 3.x?
+pycryptodome==3.6.6

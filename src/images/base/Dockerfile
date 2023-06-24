@@ -4,23 +4,20 @@
 # and bookworm (12) does not ship Python 2 at all
 FROM debian:buster-slim
 
-# make a symbol link to not break any python commands...
-# currently we need gcc to build wheel for xmlsec (which is a dependency of python3-saml)
-# so we cannot use --no-install-recommends to reduce image size
-
-# version info:
-# python3-pycryptodome: 3.6.1
+# gcc and python3-dev are necessary to build some wheels
+# netbase offer /etc/protocols which is used by `getprotobyname` syscall
 RUN apt-get update -y \
-    && apt-get install -y \
+    && apt-get install --no-install-recommends -y \
+        gcc \
+        python3-dev \
+        netbase \
         curl \
 	    libpq-dev \
         python3 \
         python3-pip \
-        python3-pycryptodome \
         python3-ldap \
         libxml2-dev \
         libxmlsec1-dev \
-        python3-paramiko \
         openssh-client \
         inotify-tools \
     && apt-get autoremove -y \
