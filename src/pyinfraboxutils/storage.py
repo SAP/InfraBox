@@ -240,6 +240,7 @@ class SWIFT(Storage):
         self.user_domain_name = get_env('INFRABOX_STORAGE_SWIFT_USER_DOMAIN_NAME')
         self.project_name = get_env('INFRABOX_STORAGE_SWIFT_PROJECT_NAME')
         self.project_domain_name = get_env('INFRABOX_STORAGE_SWIFT_PROJECT_DOMAIN_NAME')
+        self.client = None
 
     def exists(self, key):
         client = self._get_client()
@@ -282,14 +283,16 @@ class SWIFT(Storage):
         return path
 
     def _get_client(self):
-        auth = v3.Password(auth_url=self.auth_url,
-                           username=os.getenv('INFRABOX_STORAGE_SWIFT_USERNAME'),
-                           password=os.getenv('INFRABOX_STORAGE_SWIFT_PASSWORD'),
-                           user_domain_name=self.user_domain_name,
-                           project_name=self.project_name,
-                           project_domain_name=self.project_domain_name)
-        keystone_session = session.Session(auth=auth)
-        return Connection(session=keystone_session)
+        if not self.client:
+            auth = v3.Password(auth_url=self.auth_url,
+                            username=os.getenv('INFRABOX_STORAGE_SWIFT_USERNAME'),
+                            password=os.getenv('INFRABOX_STORAGE_SWIFT_PASSWORD'),
+                            user_domain_name=self.user_domain_name,
+                            project_name=self.project_name,
+                            project_domain_name=self.project_domain_name)
+            keystone_session = session.Session(auth=auth)
+            self.client = Connection(session=keystone_session)
+        return self.client
 
 if USE_S3:
     storage = S3()
