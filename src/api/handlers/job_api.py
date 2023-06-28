@@ -661,10 +661,17 @@ class Output(Resource):
         job_id = g.token['job']['id']
         logger.info("Uploading output of job {}".format(job_id))
 
+        recursive_upload = request.args.get("recursive", "true")
+
         for f, _ in request.files.items():
             key = "%s/%s" % (job_id, f)
-
             stream = request.files[f].stream
+
+            if not storage.exists(key):
+                storage.upload_output(stream, key)
+
+            if recursive_upload == "false":
+                return jsonify({})
 
             # determine all children
             jobs = g.db.execute_many_dict('''
@@ -706,12 +713,9 @@ class Output(Resource):
 
             g.release_db()
 
-            if not storage.exists(key):
-                storage.upload_output(stream, key)
-
             for c in clusters:
                 stream.seek(0)
-                url = '%s/api/job/output' % c['root_url']
+                url = '%s/api/job/output?recursive=false' % c['root_url']
                 files = {f: stream}
                 token = encode_job_token(job_id)
                 headers = {'Authorization': 'bearer ' + token}

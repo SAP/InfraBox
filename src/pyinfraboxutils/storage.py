@@ -274,6 +274,9 @@ class SWIFT(Storage):
             with open(path, 'w') as f:
                 f.write(contents)
         except Exception as e:
+            # ignoring 404 as e.g. in job running getting output.json 404 means no output
+            if isinstance(e, ClientException) and e.http_status == 404:
+                return None
             logger.error("Download object {} failed: {}".format(key, e))
             return None
 
