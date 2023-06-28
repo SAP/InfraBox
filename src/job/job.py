@@ -906,6 +906,7 @@ class RunJob(Job):
         if privileged:
             cmd += ['--privileged']
             cmd += ['-v', '/data/inner/docker:/var/lib/docker']
+            cmd += ['-v', '/var/run/docker.sock:/var/run/docker.sock']
 
         cmd += [image_name]
 
