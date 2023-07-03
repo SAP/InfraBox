@@ -509,6 +509,8 @@ if enable_upload_forward:
                 if r.status_code != 200:
                     abort(500, "Failed to upload data")
 
+            # aquire a lock to avoid race condition
+            g.db.execute("LOCK TABLE build IN EXCLUSIVE MODE;")
             build_number = g.db.execute_one_dict('''
                 SELECT count(distinct build_number) + 1 AS build_number
                 FROM build AS b

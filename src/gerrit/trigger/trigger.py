@@ -138,6 +138,8 @@ def handle_patchset_created_project(conn, event, project_id, project_name):
         commit = result
 
     c = conn.cursor()
+    # aquire a lock to avoid race condition
+    c.execute("LOCK TABLE build IN EXCLUSIVE MODE;")
     c.execute('''
         SELECT max(build_number) + 1 AS build_no
         FROM build AS b
