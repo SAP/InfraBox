@@ -163,7 +163,7 @@ class Test(unittest.TestCase):
         cls.cli_token = r.json()["data"]["token"]
 
     def expect_job(
-        self, job_name, state="finished", message=None, parents=None, dockerfile=None
+        self, job_name, state="finished", message=None, parents=None, dockerfile=None, console_contains=[]
     ):
         j = get_job(self.project_id, self.build_str, job_name)
         data = json.dumps(j, indent=4)
@@ -184,11 +184,20 @@ class Test(unittest.TestCase):
             for p in parents:
                 self.assertTrue(p in actual_parents, data)
 
+        if len(console_contains):
+            r = session.get(
+                f"{INFRABOX_ROOT_URL}/api/v1/projects/{self.project_id}/jobs/{j['id']}/console",
+                verify=False,
+            )
+            
+            for text in console_contains:
+                assert console_contains in r.text
+
     def test_docker_job(self):
         self.build_str = run_build(
             "./tests/docker_job", self.project_id, self.cli_token
         )
-        self.expect_job("test")
+        self.expect_job("test", console_contains=["Hello World"])
 
     def test_docker_multiple_jobs(self):
         self.build_str = run_build(
@@ -231,7 +240,6 @@ class Test(unittest.TestCase):
             "flow/sub-3", parents=["flow/sub-1"], dockerfile="Dockerfile_flow"
         )
 
-    @unittest.skip("FIXME: alpine apk add will hang forever..")
     def test_docker_compose_job(self):
         self.build_str = run_build(
             "./tests/docker_compose_job", self.project_id, self.cli_token
@@ -299,9 +307,18 @@ class Test(unittest.TestCase):
         self.expect_job("sub1")
         self.expect_job("sub1/sub1")
 
-    # def test_secure_env(self):
-    #     self.build_str = run_build('./tests/docker_secure_env', self.project_id, self.cli_token)
-    #     self.expect_job('test')
+    def test_secure_env(self):
+        r = session.post(
+                f"{INFRABOX_ROOT_URL}/api/v1/projects/{self.project_id}/secrets",
+                verify=False,
+                json={
+                    "name": "SECRET_ENV",
+                    "value": "hello world",
+                }
+            )
+        assert r.json()['message'] in ("Successfully added secret.", "Secret with this name already exist.")
+        self.build_str = run_build('./tests/docker_secure_env', self.project_id, self.cli_token)
+        self.expect_job('test')
 
     def test_secure_env_not_found(self):
         self.build_str = run_build(
