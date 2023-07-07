@@ -1151,7 +1151,7 @@ def insert(c, cols, rows, table):
     arg_str = ""
     for r in rows:
         arg_str += "("
-        arg_str += ','.join(cursor.mogrify("%s", (x, )) for x in r)
+        arg_str += ','.join(cursor.mogrify("%s", (x, )).decode() for x in r)
         arg_str += "),"
 
     arg_str = arg_str[:-1]
@@ -1343,6 +1343,7 @@ class Testresult(Resource):
                 t['suite']
             ))
 
+
             # create measurements
             for m in t.get('measurements', []):
                 measurements.append((
@@ -1352,6 +1353,8 @@ class Testresult(Resource):
                     m['value'],
                     project_id
                 ))
+
+        logger.debug(f"test runs: {test_runs}")
 
         if measurements:
             insert(g.db.conn, ("test_run_id", "name", "unit", "value", "project_id"), measurements, 'measurement')

@@ -3,6 +3,10 @@ import unittest
 import copy
 from unittest import mock
 import xmlrunner
+import sys
+
+# dbpool will need some envs, so we mock it
+sys.modules['pyinfraboxutils.dbpool'] = mock.Mock()
 
 from review import handle_job_update
 

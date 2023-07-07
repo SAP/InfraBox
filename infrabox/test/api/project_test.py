@@ -33,10 +33,10 @@ class ProjectTest(ApiTestTemplate):
         filename = 'test.json'
         file_path = getcwd() + '/' + filename
         test_content = {'foo':'bar'}
-        with open(file_path, 'w+') as test_data:
-            json.dump({'foo':'bar'}, test_data)
-            test_data.flush()
-            test_data.seek(0)
+        with open(file_path, "w") as f:
+            json.dump({'foo':'bar'}, f)
+        
+        with open(file_path, 'rb') as test_data:
             files = {filename: test_data}
             r = TestClient.post('/api/job/archive', data=files, headers=TestClient.get_job_authorization(self.job_id_running),
                                 content_type='multipart/form-data')

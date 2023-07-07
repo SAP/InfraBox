@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -ex
 
 coverage run --source=.,$1 --branch test.py
 

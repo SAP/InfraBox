@@ -483,7 +483,7 @@ def trigger_build():
     #pylint: disable=no-member
     body = request.get_data()
     secret = get_env('INFRABOX_GITHUB_WEBHOOK_SECRET')
-    signed = sign_blob(secret, body)
+    signed = sign_blob(secret.encode(), body)
 
     if signed != sig:
         return res(400, "X-Hub-Signature does not match blob signature")

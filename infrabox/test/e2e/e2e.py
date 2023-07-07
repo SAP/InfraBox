@@ -96,7 +96,7 @@ def run_build(cwd: str, project_id: str, cli_token: str) -> str:
     r = subprocess.run(command, cwd=cwd, check=True, capture_output=True)
     print(r.stdout.decode())
     build_string = re.search(
-        f"{INFRABOX_ROOT_URL}/dashboard/#/project/{E2E_PROJECT_NAME}/build/(\d*/\d*)",
+        fr"{INFRABOX_ROOT_URL}/dashboard/#/project/{E2E_PROJECT_NAME}/build/(\d*/\d*)",
         r.stdout.decode(),
     )
     if not build_string:
@@ -191,7 +191,7 @@ class Test(unittest.TestCase):
             )
             
             for text in console_contains:
-                assert console_contains in r.text
+                assert text in r.text
 
     def test_docker_job(self):
         self.build_str = run_build(
@@ -340,8 +340,26 @@ class Test(unittest.TestCase):
         )
         self.expect_job("hello-world")
 
+    def test_testresult_api(self):
+        self.build_str = run_build(
+            "./tests/infrabox_testresult", self.project_id, self.cli_token
+        )
+        job_name = "testresult"
+        self.expect_job(job_name)
+        j = get_job(self.project_id, self.build_str, job_name)
+        r = session.get(
+                f"{INFRABOX_ROOT_URL}/api/v1/projects/{self.project_id}/jobs/{j['id']}/testruns",
+                verify=False,
+            )
+        test_choice = r.json()[0]
+        test_skipped = r.json()[3]
+        assert test_choice['name'] == "test_choice"
+        assert test_choice['state'] == "ok"
+        assert test_skipped['name'] == "test_skipped"
+        assert test_skipped['state'] == "skipped"
+
     # TODO: test restart job / rerun job
 
 
 if __name__ == "__main__":
-    print("run with `pytest e2e.py -n x")
+    print("run with `pytest e2e.py -n x`, don't forget the envs")
