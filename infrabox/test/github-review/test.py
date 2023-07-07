@@ -1,7 +1,7 @@
 # pylint: disable=attribute-defined-outside-init,relative-import
 import unittest
 import copy
-import mock
+from unittest import mock
 import xmlrunner
 
 from review import handle_job_update

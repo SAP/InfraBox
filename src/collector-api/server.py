@@ -8,10 +8,7 @@ from flask import Flask, request, send_from_directory, abort, Response
 from flask_restx import Resource, Api
 
 import eventlet
-import importlib
 eventlet.monkey_patch()
-importlib.reload(sys)
-sys.setdefaultencoding('utf8')
 
 from pyinfraboxutils import get_logger
 
