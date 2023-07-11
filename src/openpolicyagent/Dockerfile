@@ -1,4 +1,4 @@
-FROM openpolicyagent/opa:0.10.7
+FROM openpolicyagent/opa:0.10.7-debug
 
 ENV PYTHONPATH=/
 
