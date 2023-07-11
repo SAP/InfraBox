@@ -264,7 +264,7 @@ func syncGKECluster(cr *v1alpha1.GKECluster, log *logrus.Entry) (*v1alpha1.GKECl
         }
         if gkecluster.Status == "ERROR" {
             log.Errorf("Error creating cluster %s", cr.Status.ClusterName)
-            return nil, goerrors.New("error creating GKE cluster")
+            return nil, goerrors.New(fmt.Sprintf("error creating GKE cluster %s, which means the cluster get an ERROR status on GCP, please restart current job or check it on GCP directly", cr.Status.ClusterName))
         }
     }
 
