@@ -475,6 +475,10 @@ https://{{- required "host is required" .Values.host -}}:{{- .Values.port -}}
       readOnly: true
     - name: cloudsql
       mountPath: /cloudsql
+    lifecycle:
+      preStop:
+        exec:
+          command: ["/bin/sleep","15"]
 {{ end }}
 {{ end }}
 
@@ -482,6 +486,11 @@ https://{{- required "host is required" .Values.host -}}:{{- .Values.port -}}
 -
     image: {{ include "image_repository" . }}/opa:{{ include "image_tag" . }}
     name: opa
+    lifecycle:
+      preStop:
+        exec:
+          command: ["/busybox/sleep","15"]
+
 {{ end }}
 
 {{- define "dockerCredentials" }}
