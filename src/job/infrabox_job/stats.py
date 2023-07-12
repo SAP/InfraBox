@@ -1,6 +1,9 @@
 import threading
 import time
 import docker
+from pyinfraboxutils import get_logger
+
+logger = get_logger('job.stats')
 
 class StatsCollector(object):
     def __init__(self):
@@ -36,7 +39,7 @@ class StatsCollector(object):
         cpu_delta = float(cpu_container_cur) - float(cpu_container_prev)
         system_delta = float(cpu_system_cur) - float(cpu_system_prev)
 
-        cpu_percent = (cpu_delta / system_delta) * len(current['cpu_stats']['cpu_usage']['percpu_usage']) * 100
+        cpu_percent = (cpu_delta / system_delta) * current['cpu_stats']['online_cpus'] * 100
         cpu_percent = float(int(cpu_percent * 100)) / 100.0
 
         # handle mem
@@ -59,20 +62,20 @@ class StatsCollector(object):
 
                 if stat:
                     container_data['stats'].append(stat)
-        except:
-            pass
+        except Exception as e:
+            logger.error(e)
 
 
     def list_containers(self):
-        client = docker.from_env(version="1.24", timeout=3)
+        client = docker.from_env(version="1.41", timeout=3)
         while True:
             time.sleep(1)
 
             containers = []
             try:
                 containers = client.containers.list()
-            except:
-                pass
+            except Exception as e:
+                logger.error(e)
 
             with self.lock:
                 if not self.run:
