@@ -1120,6 +1120,7 @@ class Stats(Resource):
     def post(self):
         job_id = g.token['job']['id']
 
+        logger.debug(request.json)
         stats = request.json['stats']
         s = 0
         c = 0
@@ -1136,8 +1137,8 @@ class Stats(Resource):
         try:
             g.db.execute("UPDATE job SET stats = %s, avg_cpu = %s WHERE id = %s", [json.dumps(stats), avg_cpu, job_id])
             g.db.commit()
-        except:
-            pass
+        except Exception as e:
+            logger.error(e)
 
         return jsonify({})
 
