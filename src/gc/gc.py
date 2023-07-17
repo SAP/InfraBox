@@ -138,7 +138,7 @@ class GC(object):
         if not isinstance(storage, SWIFT):
             return
         client = storage._get_client()
-        for folder in ("archive/", "output/", "upload/", "segments/", "files/", "cache/"):
+        for folder in ("archive/", "output/", "upload/"):
             _, data = client.get_container(storage.container, prefix=folder, full_listing=True)
             now = datetime.now()
             for obj in data:
