@@ -99,8 +99,8 @@ class Trigger(object):
         ''', [repo_id])[0][0]
 
     def create_build(self, commit_id, project_id):
-        # aquire a lock to avoid race condition
-        self.execute("LOCK TABLE build IN EXCLUSIVE MODE;")
+        # # aquire a lock to avoid race condition
+        # self.execute("LOCK TABLE build IN EXCLUSIVE MODE;")
         build_no = self.execute('''
             SELECT max(build_number) + 1 AS build_no
             FROM build AS b
