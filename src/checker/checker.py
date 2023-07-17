@@ -18,19 +18,19 @@ from prometheus_client import Counter, Summary, start_http_server
 class Checker(object):
 
     INFRABOX_API_DURATION = Summary(
-        'infrabox_api_duration_seconds', 
+        'infrabox_api_duration_seconds',
         'Time spent processing request to InfraBox API')
 
     STORAGE_UPLOAD_DURATION = Summary(
-        'storage_upload_duration_seconds', 
+        'storage_upload_duration_seconds',
         'Time spent uploading file to storage')
 
     STORAGE_DOWNLOAD_DURATION = Summary(
-        'storage_download_duration_seconds', 
+        'storage_download_duration_seconds',
         'Time spent downloading file to storage')
 
     DATABASE_SELECT1_DURATION = Summary(
-        'database_select1_duration_seconds', 
+        'database_select1_duration_seconds',
         'Time spent executing "SELECT 1" into database')
 
     def __init__(self, conn, args):
@@ -48,19 +48,19 @@ class Checker(object):
         self.retry_times = 0
         self.max_retry_times = 3
         self.infrabox_api_call_errors = Counter(
-            'infrabox_api_errors_total', 
+            'infrabox_api_errors_total',
             'Errors in requests to InfraBox API')
         self.storage_checker_errors = Counter(
-            'storage_checker_errors_total', 
+            'storage_checker_errors_total',
             'Errors uploding/downloading files to/from storage')
         self.infrabox_dashboard_access_errors = Counter(
-            'infrabox_dashboard_access_errors_total', 
+            'infrabox_dashboard_access_errors_total',
             'Errors acessing dashboard')
         self.slack = CheckerSlackHook.get_from_env(self.logger)
 
     def _check_dashboard(self):
         try:
-            r = requests.head(self.root_url, verify=False, timeout=5)
+            r = requests.head(self.root_url, verify=False, timeout=30)
             self.logger.debug("Dashboard checking - HTTP Status code: %d" % r.status_code)
             if r.status_code != 200:
                 self.infrabox_dashboard_access_errors.inc()
@@ -70,7 +70,7 @@ class Checker(object):
             self.logger.exception('Got exception on check dashboard')
             self.infrabox_dashboard_access_errors.inc()
             return False
-    
+
     def _check_api(self):
         try:
             r = self._request_api_with_metrics()
@@ -86,14 +86,14 @@ class Checker(object):
 
     @INFRABOX_API_DURATION.time()
     def _request_api_with_metrics(self):
-        return requests.head(self.root_url + '/api/ping', verify=False, timeout=5)
+        return requests.head(self.root_url + '/api/ping', verify=False, timeout=30)
 
     def _check_pods(self):
         try:
             h = {'Authorization': 'Bearer %s' % self.args.token}
             r = requests.get(
                 self.args.api_server + '/api/v1/namespaces/%s/pods' % self.namespace,
-                headers=h, timeout=10, verify=False)
+                headers=h, timeout=30, verify=False)
             if r.status_code != 200:
                 self.logger.debug('Pods checking - HTTP Status code: %d' % r.status_code)
                 return False
@@ -165,7 +165,7 @@ class Checker(object):
             & self._check_database())
 
     def _update_cluster_status(self, is_checking_healthy):
-        
+
         if self.is_cluster_healthy != is_checking_healthy:
             self.is_cluster_healthy = is_checking_healthy
             self.retry_times = 0
@@ -263,7 +263,7 @@ def main():
     parser = argparse.ArgumentParser(prog="checker.py")
     args = parser.parse_args()
 
-    # Validate if env vars are setted 
+    # Validate if env vars are setted
     get_env('INFRABOX_VERSION')
     get_env('INFRABOX_CLUSTER_NAME')
     get_env('INFRABOX_DATABASE_DB')
@@ -283,7 +283,7 @@ def main():
     with open('/var/run/secrets/kubernetes.io/serviceaccount/token', 'r') as f:
         args.token = str(f.read()).strip()
 
-    kube_apiserver_host = get_env('INFRABOX_KUBERNETES_MASTER_HOST')    
+    kube_apiserver_host = get_env('INFRABOX_KUBERNETES_MASTER_HOST')
     kube_apiserver_port = get_env('INFRABOX_KUBERNETES_MASTER_PORT')
 
     args.api_server = "https://" + kube_apiserver_host + ":" + kube_apiserver_port
