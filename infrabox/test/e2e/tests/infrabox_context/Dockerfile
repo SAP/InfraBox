@@ -1,4 +1,4 @@
-FROM node:8.9-alpine
+FROM public.ecr.aws/docker/library/node:current-alpine
 
 WORKDIR /project
 COPY . .

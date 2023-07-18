@@ -1,1 +1,1 @@
-FROM alpine:3.4
+FROM public.ecr.aws/docker/library/alpine

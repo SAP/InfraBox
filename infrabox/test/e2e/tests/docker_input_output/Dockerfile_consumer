@@ -1,2 +1,2 @@
-FROM alpine
+FROM public.ecr.aws/docker/library/alpine
 CMD cat /infrabox/inputs/producer/data.txt

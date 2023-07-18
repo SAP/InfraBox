@@ -8,4 +8,4 @@ done
 
 echo "## Run Tests"
 cd /project/tests
-nosetests -v .
+python3 tests.py

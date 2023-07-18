@@ -12,6 +12,7 @@ import subprocess
 import json
 import uuid
 import re
+import sys
 
 import urllib3
 import requests
@@ -48,8 +49,10 @@ def get_build(project_id: str, build_str: str):
     return r.json()
 
 
-def print_build_logs(project_id: str, build_str: str):
+def get_build_logs(project_id: str, build_str: str):
     build = get_build(project_id, build_str)
+
+    rtn = []
 
     for job in build:
         r = session.get(
@@ -57,7 +60,9 @@ def print_build_logs(project_id: str, build_str: str):
             verify=False,
         )
 
-        print(r.text)
+        rtn.append(r.text)
+
+    return "\n".join(rtn)
 
 
 def wait_latest_build(project_id: str, build_str: str):
@@ -90,21 +95,40 @@ def run_build(cwd: str, project_id: str, cli_token: str) -> str:
 
     command = ["infrabox", "--ca-bundle", "False", "--url", INFRABOX_ROOT_URL, "push"]
 
-    os.environ["INFRABOX_CLI_TOKEN"] = cli_token
     # we are not passing this env directly to subprocess.run since we want it to
     # inherit current envs (like PATH)
-    r = subprocess.run(command, cwd=cwd, check=True, capture_output=True)
-    print(r.stdout.decode())
-    build_string = re.search(
-        fr"{INFRABOX_ROOT_URL}/dashboard/#/project/{E2E_PROJECT_NAME}/build/(\d*/\d*)",
-        r.stdout.decode(),
-    )
-    if not build_string:
-        raise Exception("cannot match build numbers in the stdout of `infrabox push`")
-    build_string = build_string.group(1)
+    os.environ["INFRABOX_CLI_TOKEN"] = cli_token
 
-    wait_latest_build(project_id, build_string)
-    print_build_logs(project_id, build_string)
+    retry = 0
+    max_retry = 5
+    wait = 1
+
+    while retry < max_retry:
+        r = subprocess.run(command, cwd=cwd, check=True, capture_output=True)
+        stdout = r.stdout.decode()
+        print(stdout)
+        
+        build_string = re.search(
+            fr"/dashboard/#/project/{E2E_PROJECT_NAME}/build/(\d*/\d*)",
+            stdout,
+        )
+        if not build_string:
+            raise Exception("cannot match build numbers in the stdout of `infrabox push`")
+        build_string = build_string.group(1)
+
+        wait_latest_build(project_id, build_string)
+        build_logs = get_build_logs(project_id, build_string)
+
+        if "toomanyrequests: Rate exceeded" not in build_logs:
+            print(build_logs)
+            break
+        print("hit rate limit, retrying...")
+        wait *= 2
+        retry += 1
+        time.sleep(wait)
+
+    if retry == max_retry:
+        raise Exception("Build failed because of rate limits.")
 
     return build_string
 
@@ -140,8 +164,8 @@ class Test(unittest.TestCase):
                     "private": False,
                 },
             )
-            print(r.content)
-            assert r.status_code == 200
+            print(r.text)
+            assert r.status_code == 200 or (r.status_code == 400 and "already exists" in r.text)
             r = session.get(
                 f"{INFRABOX_ROOT_URL}/api/v1/projects/name/{E2E_PROJECT_NAME}",
                 verify=False,
@@ -363,3 +387,4 @@ class Test(unittest.TestCase):
 
 if __name__ == "__main__":
     print("run with `pytest e2e.py -n x`, don't forget the envs")
+    sys.exit(1)

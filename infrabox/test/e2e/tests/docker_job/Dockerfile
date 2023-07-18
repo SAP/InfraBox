@@ -1,2 +1,2 @@
-FROM alpine
-CMD echo "hello world"
+FROM public.ecr.aws/docker/library/alpine
+CMD echo "Hello World"
