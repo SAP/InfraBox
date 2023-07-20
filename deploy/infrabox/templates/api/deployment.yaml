@@ -23,6 +23,13 @@ spec:
             -
                 image: {{ include "image_repository" . }}/gerrit-api:{{ include "image_tag" . }}
                 name: gerrit-api
+                resources:
+                    requests:
+                        cpu: "50m"
+                        memory: "32Mi"
+                    limits:
+                        cpu: "400m"
+                        memory: "256Mi"
                 env:
                 {{ include "env_general" . | indent 16 }}
                 {{ include "env_gerrit" . | indent 16 }}
@@ -35,6 +42,13 @@ spec:
                 {{ if .Values.dev.enabled }}
                 command: ["/infrabox/api/run_dev.sh"]
                 {{ end }}
+                resources:
+                    requests:
+                        cpu: "250m"
+                        memory: "600Mi"
+                    limits:
+                        cpu: "1000m"
+                        memory: "1200Mi"
                 volumeMounts:
                 {{ include "mounts_rsa_public" . | indent 16 }}
                 {{ include "mounts_rsa_private" . | indent 16 }}
