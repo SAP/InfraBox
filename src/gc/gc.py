@@ -138,14 +138,14 @@ class GC(object):
         if not isinstance(storage, SWIFT):
             return
         client = storage._get_client()
-        for folder in ("archive/", "output/", "upload/", "segments/"):
+        for folder in ("archive/", "output/", "upload/"):
             _, data = client.get_container(storage.container, prefix=folder, full_listing=True)
             now = datetime.now()
             for obj in data:
                 # FIXME: when migrated to Python3, we can just use fromisoformat
                 # last_modified = datetime.fromisoformat(obj["last_modified"])
                 last_modified = datetime.strptime(obj["last_modified"], "%Y-%m-%dT%H:%M:%S.%f")
-                if now - last_modified > timedelta(days=14):
+                if now - last_modified > timedelta(days=7):
                     storage._delete(obj["name"])
                     logger.info("deleted obj {}".format(obj['name']))
 
