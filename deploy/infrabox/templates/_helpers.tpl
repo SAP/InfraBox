@@ -469,6 +469,13 @@ https://{{- required "host is required" .Values.host -}}:{{- .Values.port -}}
     command: ["/cloud_sql_proxy", "--dir=/cloudsql",
               "-instances={{ .Values.database.cloudsql.instance_connection_name }}=tcp:5432",
               "-credential_file=/secrets/cloudsql/credentials.json"]
+    resources:
+        requests:
+            cpu: "50m"
+            memory: "32Mi"
+        limits:
+            cpu: "400m"
+            memory: "256Mi"
     volumeMounts:
     - name: cloudsql-instance-credentials
       mountPath: /secrets/cloudsql
@@ -486,6 +493,13 @@ https://{{- required "host is required" .Values.host -}}:{{- .Values.port -}}
 -
     image: {{ include "image_repository" . }}/opa:{{ include "image_tag" . }}
     name: opa
+    resources:
+        requests:
+            cpu: "50m"
+            memory: "128Mi"
+        limits:
+            cpu: "400m"
+            memory: "512Mi"
     lifecycle:
       preStop:
         exec:
