@@ -276,7 +276,7 @@ def trigger_build(project_id):
     project_type = project[0]
 
     # aquire a lock to avoid race condition
-    # g.db.execute("LOCK TABLE build IN EXCLUSIVE MODE;")
+    g.db.execute("LOCK TABLE build IN EXCLUSIVE MODE;")
     r = g.db.execute_one('''
         SELECT max(build_number) + 1 AS build_no
         FROM build AS b
