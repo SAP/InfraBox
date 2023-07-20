@@ -23,6 +23,13 @@ spec:
             -
                 name: scheduler
                 image: {{ include "image_repository" . }}/scheduler-kubernetes:{{ include "image_tag" . }}
+                resources:
+                    requests:
+                        cpu: "100m"
+                        memory: "200Mi"
+                    limits:
+                        cpu: "500m"
+                        memory: "800Mi"
                 env:
                 {{ include "env_database" . | indent 16 }}
                 {{ include "env_general" . | indent 16 }}

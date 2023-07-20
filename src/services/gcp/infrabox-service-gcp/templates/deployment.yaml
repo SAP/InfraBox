@@ -31,6 +31,12 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: "Always"
           resources:
+            requests:
+                cpu: "100m"
+                memory: "500Mi"
+            limits:
+                cpu: "1000m"
+                memory: "1200Mi"
           volumeMounts:
           - name: service-account
             mountPath: "/var/run/infrabox.net/gcp"
