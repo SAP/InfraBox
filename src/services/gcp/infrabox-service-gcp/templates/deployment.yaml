@@ -33,10 +33,10 @@ spec:
           resources:
             requests:
                 cpu: "100m"
-                memory: "500Mi"
+                memory: "1200Mi"
             limits:
                 cpu: "1000m"
-                memory: "1200Mi"
+                memory: "2400Mi"
           volumeMounts:
           - name: service-account
             mountPath: "/var/run/infrabox.net/gcp"

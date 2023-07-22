@@ -472,7 +472,7 @@ https://{{- required "host is required" .Values.host -}}:{{- .Values.port -}}
     resources:
         requests:
             cpu: "50m"
-            memory: "32Mi"
+            memory: "64Mi"
         limits:
             cpu: "400m"
             memory: "256Mi"
@@ -496,7 +496,7 @@ https://{{- required "host is required" .Values.host -}}:{{- .Values.port -}}
     resources:
         requests:
             cpu: "50m"
-            memory: "128Mi"
+            memory: "256Mi"
         limits:
             cpu: "400m"
             memory: "512Mi"
