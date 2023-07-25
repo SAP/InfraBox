@@ -42,4 +42,4 @@ def encode_job_token(job_id):
 
 def decode(encoded):
     with open(public_key_path) as s:
-        return jwt.decode(encoded, key=s.read(), algorithm='RS256')
+        return jwt.decode(encoded, key=s.read(), algorithms=['RS256'])

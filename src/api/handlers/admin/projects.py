@@ -52,7 +52,7 @@ class Projects(Resource):
             result[j['name']]['jobs'] = j['cnt']
 
         response = []
-        for _, v in result.iteritems():
+        for _, v in result.items():
             response.append(v)
 
         return response

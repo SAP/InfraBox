@@ -58,12 +58,12 @@ class AccountTestCase(unittest.TestCase):
         self.assertEqual(r['status'], 401)
 
     def test_header_no_password(self):
-        h = {'Authorization': 'Basic %s' % base64.b64encode('infrabox')}
+        h = {'Authorization': f'Basic {base64.b64encode(b"infrabox").decode()}'}
         r = self.get('/v2', h)
         self.assertEqual(r['status'], 401)
 
     def test_header_no_password_2(self):
-        h = {'Authorization': 'Basic %s' % base64.b64encode('infrabox:2')}
+        h = {'Authorization': f'Basic {base64.b64encode(b"infrabox:2").decode()}'}
         r = self.get('/v2', h)
         self.assertEqual(r['status'], 401)
 
@@ -121,7 +121,7 @@ class AccountTestCase(unittest.TestCase):
             project_token = self.project_token
 
         token = encode_project_token(project_token, self.project_id, 'myproject')
-        h = {'Authorization': 'Basic %s' % base64.b64encode('infrabox:%s' % token)}
+        h = {'Authorization': f'Basic {base64.b64encode("infrabox:{}".format(token).encode()).decode()}'}
         return h
 
     def get(self, url, headers=None, method='GET'): # pragma: no cover

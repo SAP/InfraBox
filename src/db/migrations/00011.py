@@ -14,6 +14,7 @@ def decrypt_secret(s):
     with open(private_key_path) as f:
         key = RSA.importKey(f.read())
         s = base64.b64decode(s)
+        # FIXME: pycryptodome 3.0 removes RSA ojbect `decrypt` method
         return key.decrypt(s)
 
 def migrate(conn):

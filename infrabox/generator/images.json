@@ -32,6 +32,9 @@
         "name": "images-test",
         "docker_file": "src/images/test/Dockerfile",
         "build_only": true,
+        "depends_on": [
+            "images-base"
+        ],
         "resources": {
             "limits": {
                 "cpu": 1,

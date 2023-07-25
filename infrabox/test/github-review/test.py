@@ -1,8 +1,12 @@
 # pylint: disable=attribute-defined-outside-init,relative-import
 import unittest
 import copy
-import mock
+from unittest import mock
 import xmlrunner
+import sys
+
+# dbpool will need some envs, so we mock it
+sys.modules['pyinfraboxutils.dbpool'] = mock.Mock()
 
 from review import handle_job_update
 

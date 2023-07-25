@@ -9,8 +9,6 @@ from flask_restx import Resource, Api
 
 import eventlet
 eventlet.monkey_patch()
-reload(sys)
-sys.setdefaultencoding('utf8')
 
 from pyinfraboxutils import get_logger
 

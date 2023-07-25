@@ -38,7 +38,7 @@ class JobApiTest(ApiTestTemplate):
         TestClient.execute("""UPDATE build SET source_upload_id = %s
                               WHERE id = %s""", [self.source_upload_id, self.build_id])
 
-        with open(file_name, 'r') as source_data:
+        with open(file_name, 'rb') as source_data:
             storage.upload_project(source_data, file_name)
         remove(file_name)
 
@@ -123,7 +123,7 @@ class JobApiTest(ApiTestTemplate):
         with open(file_name, 'w') as markup_data_file:
             json.dump(markup_data, markup_data_file)
 
-        with open(file_name, 'r') as markup_data_file:
+        with open(file_name, 'rb') as markup_data_file:
             markup_data_file.seek(0)
             data = {"file1": markup_data_file}
             r = TestClient.post(self.url_ns + '/markup', data=data, headers=self.job_headers,
@@ -158,7 +158,7 @@ class JobApiTest(ApiTestTemplate):
             # Write data into json file
             json.dump(job_data, job_data_file)
 
-        with open(file_name, 'r') as job_data_file:
+        with open(file_name, 'rb') as job_data_file:
             data = {"file1": job_data_file}
             result = TestClient.post(self.url_ns + '/badge', data=data, headers=self.job_headers,
                                      content_type='multipart/form-data')
@@ -185,7 +185,7 @@ class JobApiTest(ApiTestTemplate):
             # just create file, there's no need to write anything into file
             pass
 
-        with open(test_filename, 'r') as test_file:
+        with open(test_filename, 'rb') as test_file:
             data = {"data": test_file}
             r = TestClient.post(self.url_ns + '/testresult', data=data, headers=self.job_headers,
                                 content_type='multipart/form-data')
@@ -220,7 +220,7 @@ class JobApiTest(ApiTestTemplate):
 
         TestClient.execute("""TRUNCATE test_run""")
 
-        with open(test_filename, 'r') as test_file:
+        with open(test_filename, 'rb') as test_file:
             data = {"data": test_file}
             r = TestClient.post(self.url_ns + '/testresult', data=data, headers=self.job_headers,
                                 content_type='multipart/form-data')

@@ -4,27 +4,29 @@
 # and bookworm (12) does not ship Python 2 at all
 FROM debian:buster-slim
 
+# gcc and python3-dev are necessary to build some wheels
+# netbase offer /etc/protocols which is used by `getprotobyname` syscall
 RUN apt-get update -y \
-    && apt-get install -y \
+    && apt-get install --no-install-recommends -y \
+        gcc \
+        python3-dev \
+        netbase \
+        curl \
 	    libpq-dev \
-        python \
-        python-pip \
-        python-six \
-        python-cryptography \
-        python-crypto \
-        python-pyasn1 \
-        python-ldap \
+        python3 \
+        python3-pip \
+        python3-ldap \
         libxml2-dev \
         libxmlsec1-dev \
-        python-paramiko \
         openssh-client \
         inotify-tools \
     && apt-get autoremove -y \
+    && ln -s /usr/bin/python3 /usr/bin/python \
     && rm -rf /var/lib/apt/lists/*
 
-COPY src/images/base/requirements_full.txt /infrabox/
+COPY src/images/base/requirements.txt /infrabox/
 
-RUN pip install --no-cache-dir -r /infrabox/requirements_full.txt
+RUN python -m pip install -U pip && python -m pip -V && python -m pip install --no-cache-dir -r /infrabox/requirements.txt
 
 RUN useradd -ms /bin/bash infrabox
 

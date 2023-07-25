@@ -3,7 +3,7 @@ import os
 import json
 import uuid
 import copy
-import urllib
+import urllib.request, urllib.parse, urllib.error
 import random
 import tempfile
 from datetime import datetime
@@ -480,8 +480,8 @@ class Job(Resource):
         root_url = get_root_url("global")
 
         # Default env vars
-        project_name = urllib.quote_plus(data['project']['name']).replace('+', '%20')
-        job_name = urllib.quote_plus(data['job']['name']).replace('+', '%20')
+        project_name = urllib.parse.quote_plus(data['project']['name']).replace('+', '%20')
+        job_name = urllib.parse.quote_plus(data['job']['name']).replace('+', '%20')
         build_url = "%s/dashboard/#/project/%s/build/%s/%s" % (root_url,
                                                                project_name,
                                                                data['build']['build_number'],
@@ -530,14 +530,14 @@ class Job(Resource):
             data['env_vars'].update(commit_env)
 
         if env_vars:
-            for name, value in env_vars.iteritems():
+            for name, value in env_vars.items():
                 try:
                     data['env_vars'][name] = str(value)
                 except UnicodeEncodeError:
                     data['env_vars'][name] = value.encode('utf-8')
 
         if env_var_refs:
-            for name, value in env_var_refs.iteritems():
+            for name, value in env_var_refs.items():
                 secret = get_secret(value)
 
                 if secret is None:
@@ -607,7 +607,7 @@ class Cache(Resource):
         project_id = g.token['project']['id']
         job_name = g.token['job']['name']
 
-        for f, _ in request.files.items():
+        for f, _ in list(request.files.items()):
             template = 'project_%s_job_%s_%s'
             key = template % (project_id, job_name, f)
             key = key.replace('/', '_')
@@ -663,7 +663,7 @@ class Output(Resource):
 
         recursive_upload = request.args.get("recursive", "true")
 
-        for f, _ in request.files.items():
+        for f, _ in list(request.files.items()):
             key = "%s/%s" % (job_id, f)
             stream = request.files[f].stream
 
@@ -899,6 +899,7 @@ class CreateJobs(Resource):
         parent_job_id = g.token['job']['id']
 
         d = request.json
+        logger.debug("POST to /api/job/create_jobs: %s", d)
         jobs = d['jobs']
 
         if not jobs:
@@ -969,7 +970,7 @@ class CreateJobs(Resource):
                     AND j.state = 'finished'
             """, [project_id, project_id, build_number - 10, build_number, job['name']])[0]
 
-            job['avg_duration'] = avg_duration
+            job['avg_duration'] = avg_duration if avg_duration is not None else 0
 
             if not job['env_vars']:
                 job['env_vars'] = {}
@@ -1124,7 +1125,7 @@ class Stats(Resource):
         stats = request.json['stats']
         s = 0
         c = 0
-        for _, values in stats.items():
+        for _, values in list(stats.items()):
             for v in values:
                 c += 1
                 s += v['cpu']
@@ -1150,7 +1151,7 @@ def insert(c, cols, rows, table):
     arg_str = ""
     for r in rows:
         arg_str += "("
-        arg_str += ','.join(cursor.mogrify("%s", (x, )) for x in r)
+        arg_str += ','.join(cursor.mogrify("%s", (x, )).decode() for x in r)
         arg_str += "),"
 
     arg_str = arg_str[:-1]
@@ -1182,7 +1183,7 @@ class Markup(Resource):
             delete_file(path)
             return response
 
-        for name, f in request.files.iteritems():
+        for name, f in request.files.items():
             try:
                 if not allowed_file(f.filename, ("json",)):
                     abort(400, "Filetype not allowed")
@@ -1204,7 +1205,7 @@ class Markup(Resource):
                              """, [job_id, name, content, project_id])
                 g.db.commit()
             except ValidationError as e:
-                abort(400, e.message)
+                abort(400, str(e))
             except Exception as e:
                 logger.error(e)
                 abort(400, "Failed to parse json")
@@ -1231,7 +1232,7 @@ class Badge(Resource):
             delete_file(path)
             return response
 
-        for _, f in request.files.iteritems():
+        for _, f in request.files.items():
             if not allowed_file(f.filename, ("json")):
                 abort(400, "Filetype not allowed")
 
@@ -1247,7 +1248,7 @@ class Badge(Resource):
                     data = json.load(md)
                     validate_badge(data)
             except ValidationError as e:
-                abort(400, e.message)
+                abort(400, str(e))
             except:
                 abort(400, "Failed to parse json")
 
@@ -1301,7 +1302,7 @@ class Testresult(Resource):
         try:
             validate_result(data)
         except ValidationError as e:
-            abort(400, e.message)
+            abort(400, str(e))
 
         rows = g.db.execute_one("""
             SELECT j.project_id
@@ -1342,6 +1343,7 @@ class Testresult(Resource):
                 t['suite']
             ))
 
+
             # create measurements
             for m in t.get('measurements', []):
                 measurements.append((
@@ -1351,6 +1353,8 @@ class Testresult(Resource):
                     m['value'],
                     project_id
                 ))
+
+        logger.debug(f"test runs: {test_runs}")
 
         if measurements:
             insert(g.db.conn, ("test_run_id", "name", "unit", "value", "project_id"), measurements, 'measurement')

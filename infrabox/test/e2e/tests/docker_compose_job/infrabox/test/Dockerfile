@@ -1,7 +1,6 @@
-FROM alpine:3.4
+FROM public.ecr.aws/docker/library/alpine
 
-RUN apk add --no-cache python py-requests py-pip curl
-RUN pip install nose
+RUN apk add --no-cache python3 py3-requests py3-pip curl
 
 COPY . project
 
