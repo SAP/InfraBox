@@ -207,8 +207,6 @@ class RunJob(Job):
         c.execute(cmd, cwd=mount_repo_dir, show=True)
 
         if submodules:
-            import time
-            time.sleep(3600)
             c.execute(['git', 'submodule', 'init', '-q'], cwd=mount_repo_dir, show=True, retry=True)
             c.execute(['git', 'submodule', 'update', '-q'], cwd=mount_repo_dir, show=True, retry=True)
 
