@@ -109,7 +109,7 @@ class Login(Resource):
                 user = g.db.execute_one_dict('''
                     INSERT INTO "user" (email, username, name)
                     VALUES (%s, %s, %s) RETURNING id
-                ''', [email, ldap_user['cn'], ldap_user['displayName']])
+                ''', [email, ldap_user['cn'].decode('utf-8'), ldap_user['displayName'].decode('utf-8')])
 
         token = encode_user_token(user['id'])
 
