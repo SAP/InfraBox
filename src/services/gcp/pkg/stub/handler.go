@@ -202,6 +202,7 @@ func createCluster(cr *v1alpha1.GKECluster, log *logrus.Entry) (*v1alpha1.GKEClu
         args = append(args, "--services-ipv4-cidr", cr.Spec.ServiceCidr)
     }
 
+    args = append(args, "--no-enable-legacy-authorization")
 
     cmd := exec.Command("gcloud" , args...)
     out, err := cmd.CombinedOutput()
