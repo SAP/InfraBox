@@ -1,5 +1,5 @@
 # buster (10) is the last version to support Python 2.
-# bullseye (11) although does have a Python 2 interpreter, 
+# bullseye (11) although does have a Python 2 interpreter,
 # almost *all* Python 2 packages, however, have been removed from bullseye
 # and bookworm (12) does not ship Python 2 at all
 FROM debian:buster-slim
@@ -20,6 +20,7 @@ RUN apt-get update -y \
         libxmlsec1-dev \
         openssh-client \
         inotify-tools \
+        vim \
     && apt-get autoremove -y \
     && ln -s /usr/bin/python3 /usr/bin/python \
     && rm -rf /var/lib/apt/lists/*
