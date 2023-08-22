@@ -187,9 +187,11 @@ def handle_job_update(conn, event):
     # TODO(ib-steffen): support ca bundles
     try:
         logger.info("debug start")
-        print(github_status_url)
-        print(payload)
-        print(headers)
+        logger.info(github_status_url)
+        logger.info(target_url)
+        json.dumps(payload)
+        logger.info(payload)
+        logger.info(headers)
         r = requests.post(github_status_url,
                           data=json.dumps(payload),
                           headers=headers,
