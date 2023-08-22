@@ -186,12 +186,16 @@ def handle_job_update(conn, event):
 
     # TODO(ib-steffen): support ca bundles
     try:
+        logger.info("debug start")
+        logger.info("github_status_url: %s", github_status_url)
+        logger.info("payload: %s", payload)
+        logger.info("headers: %s", headers)
         r = requests.post(github_status_url,
                           data=json.dumps(payload),
                           headers=headers,
                           timeout=10,
                           verify=False)
-
+        logger.info("debug end")
         if r.status_code != 201:
             logger.warn("[job: %s] Failed to update github status: %s", job_id, r.text)
             logger.warn(github_status_url)
