@@ -1,13 +1,13 @@
 import json
 import select
 import os
-
-import urllib.request, urllib.parse, urllib.error
-import requests
-import psycopg2
 import eventlet
 eventlet.monkey_patch()
 from eventlet.hubs import trampoline
+import urllib.request, urllib.parse, urllib.error
+import requests
+import psycopg2
+
 
 import urllib3
 urllib3.disable_warnings()
@@ -186,18 +186,11 @@ def handle_job_update(conn, event):
 
     # TODO(ib-steffen): support ca bundles
     try:
-        logger.info("debug start")
-        logger.info(github_status_url)
-        logger.info(target_url)
-        json.dumps(payload)
-        logger.info(payload)
-        logger.info(headers)
         r = requests.post(github_status_url,
                           data=json.dumps(payload),
                           headers=headers,
                           timeout=10,
                           verify=False)
-        logger.info("debug end")
         if r.status_code != 201:
             logger.warn("[job: %s] Failed to update github status: %s", job_id, r.text)
             logger.warn(github_status_url)

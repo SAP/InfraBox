@@ -20,7 +20,6 @@ RUN apt-get update -y \
         libxmlsec1-dev \
         openssh-client \
         inotify-tools \
-        vim \
     && apt-get autoremove -y \
     && ln -s /usr/bin/python3 /usr/bin/python \
     && rm -rf /var/lib/apt/lists/*
