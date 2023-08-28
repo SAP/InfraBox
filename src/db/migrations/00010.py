@@ -7,6 +7,7 @@ import psycopg2
 
 public_key_path = os.environ.get('INFRABOX_RSA_PUBLIC_KEY_PATH', '/var/run/secrets/infrabox.net/rsa/id_rsa.pub')
 
+# FIXME: pycryptodome 3.0 removes RSA ojbect `encrypt` method
 def encrypt_secret(s):
     with open(public_key_path) as f:
         key = RSA.importKey(f.read())

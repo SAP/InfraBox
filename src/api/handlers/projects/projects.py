@@ -210,8 +210,8 @@ class Projects(Resource):
 
             # deploy key
             key = RSA.generate(2048)
-            private_key = key.exportKey('PEM')
-            public_key = key.publickey().exportKey('OpenSSH')
+            private_key = key.exportKey('PEM').decode('utf-8')
+            public_key = key.publickey().exportKey('OpenSSH').decode('utf-8')
             deploy_key_config = {
                 'title': "InfraBox",
                 'key': public_key,

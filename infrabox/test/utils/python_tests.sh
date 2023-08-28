@@ -1,8 +1,7 @@
 #!/bin/bash
+set -ex
 
 coverage run --source=.,$1 --branch test.py
-
-set -e
 
 coverage report -m
 coverage xml

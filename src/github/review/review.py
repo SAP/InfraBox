@@ -1,13 +1,13 @@
 import json
 import select
 import os
-
-import urllib
-import requests
-import psycopg2
 import eventlet
 eventlet.monkey_patch()
 from eventlet.hubs import trampoline
+import urllib.request, urllib.parse, urllib.error
+import requests
+import psycopg2
+
 
 import urllib3
 urllib3.disable_warnings()
@@ -166,10 +166,10 @@ def handle_job_update(conn, event):
                 ''', [])[0]['root_url']
 
     target_url = '%s/dashboard/#/project/%s/build/%s/%s/job/%s' % (dashboard_url,
-                                                                   urllib.quote(project_name, safe=''),
+                                                                   urllib.parse.quote(project_name, safe=''),
                                                                    build_number,
                                                                    build_restartCounter,
-                                                                   urllib.quote_plus(job_name).replace('+', '%20'))
+                                                                   urllib.parse.quote_plus(job_name).replace('+', '%20'))
 
     job_name = job_name.split(".")[0]
     payload = {
@@ -191,7 +191,6 @@ def handle_job_update(conn, event):
                           headers=headers,
                           timeout=10,
                           verify=False)
-
         if r.status_code != 201:
             logger.warn("[job: %s] Failed to update github status: %s", job_id, r.text)
             logger.warn(github_status_url)

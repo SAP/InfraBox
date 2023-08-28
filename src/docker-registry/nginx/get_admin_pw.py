@@ -21,5 +21,5 @@ open(os.environ['HTPASSWD_PATH'], 'w')
 with htpasswd.Basic(os.environ['HTPASSWD_PATH'], mode="md5") as userdb:
     try:
         userdb.add(admin_user, admin_password)
-    except htpasswd.basic.UserExists, e:
+    except htpasswd.basic.UserExists as e:
         print(e)

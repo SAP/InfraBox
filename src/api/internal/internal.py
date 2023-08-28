@@ -53,7 +53,7 @@ class ConsoleUpdate(Resource):
 
             data[job_id]['log'] += log
 
-        for job_id, item in data.items():
+        for job_id, item in list(data.items()):
             if not item['log']:
                 continue
 

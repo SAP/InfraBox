@@ -330,7 +330,7 @@ class RunJob(Job):
 
         # Show environment
         self.console.collect("Environment:", show=True)
-        for name, value in self.env_vars.items():
+        for name, value in list(self.env_vars.items()):
             self.console.collect("%s=%s" % (name, value), show=True)
 
         self.console.collect("", show=True)
@@ -338,7 +338,7 @@ class RunJob(Job):
         # Show secrets
         if self.secrets:
             self.console.collect("Secrets:", show=True)
-            for name, _ in self.secrets.items():
+            for name, _ in list(self.secrets.items()):
                 self.console.collect("%s=*****" % name, show=True)
             self.console.collect("", show=True)
 
@@ -875,7 +875,7 @@ class RunJob(Job):
             cmd += ['-v', "/local-cache:/infrabox/local-cache"]
 
         # add env vars
-        for name, value in self.environment.items():
+        for name, value in list(self.environment.items()):
             cmd += ['-e', '%s=%s' % (name, value)]
 
         # add resource env vars
@@ -987,7 +987,7 @@ class RunJob(Job):
             cmd += ['--build-arg', 'INFRABOX_BUILD_NUMBER=%s' % self.build['build_number']]
 
             if 'build_arguments' in self.job and self.job['build_arguments']:
-                for name, value in self.job['build_arguments'].items():
+                for name, value in list(self.job['build_arguments'].items()):
                     cmd += ['--build-arg', '%s=%s' % (name, value)]
 
             for arg in BUILD_ARGS:
@@ -1060,7 +1060,7 @@ class RunJob(Job):
 
                 c.execute(cmd, show=False)
         except Exception as e:
-            raise Error("Failed to login to registry: " + e.message)
+            raise Error("Failed to login to registry: " + str(e))
 
     def _logout_registry(self, reg):
         c = self.console
@@ -1329,7 +1329,7 @@ class RunJob(Job):
 
                 # overwrite env vars if set
                 if 'environment' in job:
-                    for n, v in job['environment'].items():
+                    for n, v in list(job['environment'].items()):
                         if 'environment' not in s:
                             s['environment'] = {}
 
@@ -1374,19 +1374,19 @@ def main():
 
     except Failure as e:
         j.console.header('Failure', show=True)
-        j.console.collect(e.message, show=True)
+        j.console.collect(str(e), show=True)
 
         with open('/dev/termination-log', 'w+') as out:
-            out.write(e.message)
+            out.write(str(e))
 
         sys.exit(ERR_EXIT_FAILURE)
 
     except Error as e:
         j.console.header('Error', show=True)
-        j.console.collect(e.message, show=True)
+        j.console.collect(str(e), show=True)
 
         with open('/dev/termination-log', 'w+') as out:
-            out.write(e.message)
+            out.write(str(e))
 
         sys.exit(ERR_EXIT_ERROR)
     except:

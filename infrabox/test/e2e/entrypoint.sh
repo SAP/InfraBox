@@ -177,13 +177,9 @@ EOL
 
     helm install --namespace infrabox-system -f my_values.yaml --wait --timeout=20m infrabox .
 
-    export INFRABOX_DATABASE_HOST=localhost
-    export INFRABOX_DATABASE_DB=postgres
-    export INFRABOX_DATABASE_USER=postgres
-    export INFRABOX_DATABASE_PORT=5432
-    export INFRABOX_DATABASE_PASSWORD=postgres
-    export INFRABOX_URL=https://$ROOT_URL
-    export INFRABOX_ROOT_URL=https://$ROOT_URL
+    kubectl -n infrabox-system port-forward service/infrabox-api 8080 &
+
+    export INFRABOX_ROOT_URL=http://localhost:8080
     export INFRABOX_ADMIN_EMAIL=admin@admin.com
     export INFRABOX_ADMIN_PASSWORD=$PW
 }
@@ -193,7 +189,7 @@ _runTests() {
     pushd /infrabox/context/infrabox/test/e2e
 
     set +e
-    python3 e2e.py
+    pytest e2e.py -n 8
     rc=$?
 
     exit $rc

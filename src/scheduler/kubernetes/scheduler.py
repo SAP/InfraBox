@@ -577,7 +577,7 @@ class Scheduler(object):
     def kube_job(self, job_id, cpu, mem, services=None):
         h = {'Authorization': 'Bearer %s' % self.args.token}
 
-        job_token = encode_job_token(job_id).decode()
+        job_token = encode_job_token(job_id)
 
         env = [{
             'name': 'INFRABOX_JOB_ID',

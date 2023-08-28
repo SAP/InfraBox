@@ -1,6 +1,6 @@
 import json
 import select
-import urllib
+import urllib.request, urllib.parse, urllib.error
 import time
 import os
 
@@ -60,7 +60,7 @@ def main():
         time.sleep(3)
 
 def handle_job_update_retry(conn, update):
-    for _ in xrange(0, 3):
+    for _ in range(0, 3):
         try:
             handle_job_update(conn, update)
             return
@@ -163,7 +163,7 @@ def handle_job_update(conn, event):
                    key_filename=gerrit_key_filename)
     client.get_transport().set_keepalive(60)
 
-    project_name_quote = urllib.quote_plus(project_name).replace('+', '%20')
+    project_name_quote = urllib.parse.quote_plus(project_name).replace('+', '%20')
     build_url = "%s/dashboard/#/project/%s/build/%s/%s" % (dashboard_url,
                                                            project_name_quote,
                                                            build_number,

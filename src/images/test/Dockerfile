@@ -1,24 +1,10 @@
-FROM debian:buster-slim
+ARG INFRABOX_BUILD_NUMBER
+FROM quay.io/infrabox/images-base:build_$INFRABOX_BUILD_NUMBER
 
-RUN    apt-get update -y \
-    && apt-get install -y \
-        libpq-dev \
-        python \
-        python-pip \
-        python-six \
-        python-cryptography \
-        python-pyasn1 \
-        python-crypto \
-        python-ldap \
-        curl \
-        git \
-    && apt-get autoremove -y \
-    && rm -rf /var/lib/apt/lists/*
+# restore root user so we can have correct install path
+USER root
 
-COPY src/images/test/requirements_test_full.txt /infrabox/
-
-RUN pip install --no-cache-dir -r /infrabox/requirements_test_full.txt
-
-RUN useradd -ms /bin/bash infrabox
+COPY src/images/test/requirements_test.txt /infrabox/
+RUN python -m pip install --no-cache-dir -r /infrabox/requirements_test.txt
 
 USER infrabox

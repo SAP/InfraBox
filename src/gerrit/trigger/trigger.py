@@ -230,7 +230,7 @@ def handle_patchset_created_project(conn, event, project_id, project_name):
                                  project_id, dockerfile,
                                  repo, env_var, cluster_name, definition)
                 VALUES (%s, 'queued', %s, 'create_job_matrix', 'Create Jobs',
-                        %s, '', %s, %s, null, %s)''', (str(uuid.uuid5(uuid.NAMESPACE_DNS, (event['type'] + sha).encode('utf-8'))),
+                        %s, '', %s, %s, null, %s)''', (str(uuid.uuid5(uuid.NAMESPACE_DNS, (event['type'] + sha))),
                                                        build_id,
                                                        project_id,
                                                        json.dumps(git_repo),

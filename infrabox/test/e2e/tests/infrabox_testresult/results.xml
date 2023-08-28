@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite errors="0" failures="0" file=".py" name="TestSequenceFunctions-20230707170418" skipped="1" tests="4" time="0.004" timestamp="2023-07-07T17:04:18">
+        <testcase classname="TestSequenceFunctions" file="test-xml.py" line="23" name="test_choice" time="0.003" timestamp="2023-07-07T17:04:18">
+                <system-out>
+<![CDATA[]]>            </system-out>
+                <system-err>
+<![CDATA[]]>            </system-err>
+        </testcase>
+        <testcase classname="TestSequenceFunctions" file="test-xml.py" line="27" name="test_sample" time="0.000" timestamp="2023-07-07T17:04:18">
+                <system-out>
+<![CDATA[]]>            </system-out>
+                <system-err>
+<![CDATA[]]>            </system-err>
+        </testcase>
+        <testcase classname="TestSequenceFunctions" file="test-xml.py" line="14" name="test_shuffle" time="0.000" timestamp="2023-07-07T17:04:18">
+                <system-out>
+<![CDATA[]]>            </system-out>
+                <system-err>
+<![CDATA[]]>            </system-err>
+        </testcase>
+        <testcase classname="TestSequenceFunctions" file="test-xml.py" line="10" name="test_skipped" time="0.001" timestamp="2023-07-07T17:04:18">
+                <skipped message="demonstrating skipping" type="skip"/>
+                <system-out>
+<![CDATA[]]>            </system-out>
+                <system-err>
+<![CDATA[]]>            </system-err>
+        </testcase>
+</testsuite>

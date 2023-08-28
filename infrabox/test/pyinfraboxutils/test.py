@@ -4,6 +4,7 @@ import sys
 import xmlrunner
 
 from pyinfraboxutils.coverage import *
+from pyinfraboxutils.token import *
 
 class TestCoverageMethods(unittest.TestCase):
 
@@ -45,6 +46,20 @@ class TestCoverageMethods(unittest.TestCase):
         self.assertTrue(parser.files[hello2].lines_hit == 0)
         self.assertTrue(parser.files[hello2].lines_found == 3)
         self.assertTrue(parser.files[hello2].name == "HelloWorld2.java")
+
+class TestToken(unittest.TestCase):
+    def test_encode_token(self):
+        token = encode_job_token("foo")
+        data = decode(token)
+        expected = {
+            'job': {
+                'id': "foo"
+            },
+            'type': 'job'
+        }
+
+        self.assertEqual(data, expected)
+        
 
 if __name__ == '__main__':
     s = unittest.defaultTestLoader.discover('.')

@@ -2,7 +2,7 @@
     "version": 1,
     "jobs": [{
         "type": "docker",
-        "name": "e2e-k8s-1-22",
+        "name": "e2e-k8s-1-24",
         "docker_file": "infrabox/test/e2e/Dockerfile",
         "build_context": "../..",
         "build_only": false,
@@ -24,7 +24,7 @@
                 "numNodes": 2,
                 "preemptible": false,
                 "zone": "us-east1-b",
-                "clusterVersion": "1.22"
+                "clusterVersion": "1.24"
             }
         }]
     }]
