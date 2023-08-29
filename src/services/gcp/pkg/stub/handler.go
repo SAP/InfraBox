@@ -121,7 +121,7 @@ func createCluster(cr *v1alpha1.GKECluster, log *logrus.Entry) (*v1alpha1.GKEClu
         }
     }
 
-	baseIPV4CIDR := "192.168.0.0/16"
+	baseIPV4CIDR := "172.16.0.0/16"
 	masterIPv4CIRDs := getExistingMasterIPv4CIRDs(gkeclusters)
 	finalCIDR := ""
     log.Debugf("existng ipv4 cidr: %s", masterIPv4CIRDs)
@@ -133,8 +133,8 @@ func createCluster(cr *v1alpha1.GKECluster, log *logrus.Entry) (*v1alpha1.GKEClu
 			log.Error(err)
 			return nil, err
 		} else {
-            log.Debug("check if %s in %s", cidr, masterIPv4CIRDs)
-			if contains(masterIPv4CIRDs, cidr) {
+            log.Debugf("check if %s in %s", cidr, masterIPv4CIRDs)
+			if !contains(masterIPv4CIRDs, cidr) {
 				finalCIDR = cidr
 				break
 			}
