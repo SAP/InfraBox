@@ -124,13 +124,16 @@ func createCluster(cr *v1alpha1.GKECluster, log *logrus.Entry) (*v1alpha1.GKEClu
 	baseIPV4CIDR := "192.168.0.0/16"
 	masterIPv4CIRDs := getExistingMasterIPv4CIRDs(gkeclusters)
 	finalCIDR := ""
+    log.Debugf("existng ipv4 cidr: %s", masterIPv4CIRDs)
 	for {
 		cidr, err := getRandomIPv4CIRD(baseIPV4CIDR)
+        log.Debugf("generate ipv4 cidr: %s", cidr)
 		if err != nil {
 			err = fmt.Errorf("err while getting CIDR for Cluster %s: %s", cr.Status.ClusterName, err)
 			log.Error(err)
 			return nil, err
 		} else {
+            log.Debug("check if %s in %s", cidr, masterIPv4CIRDs)
 			if contains(masterIPv4CIRDs, cidr) {
 				finalCIDR = cidr
 				break
@@ -870,7 +873,7 @@ func getOutdatedClusters(maxAge string, log *logrus.Entry) ([]RemoteCluster, err
 }
 
 func getExistingMasterIPv4CIRDs(gkeclusters []RemoteCluster) []string {
-	var allMasterIPv4CIRSs = make([]string, len(gkeclusters))
+	var allMasterIPv4CIRSs = make([]string, 0)
 	for _, gkecluster := range gkeclusters {
         masterIpv4CidrBlock, ok := gkecluster.PrivateClusterConfig["masterIpv4CidrBlock"].(string)
 		if ok && masterIpv4CidrBlock != "" {
