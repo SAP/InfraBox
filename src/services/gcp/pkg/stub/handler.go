@@ -873,7 +873,7 @@ func getExistingMasterIPv4CIRDs(gkeclusters []RemoteCluster) []string {
 	var allMasterIPv4CIRSs = make([]string, len(gkeclusters))
 	for _, gkecluster := range gkeclusters {
 		if gkecluster.PrivateClusterConfig["masterIpv4CidrBlock"] != "" {
-			allMasterIPv4CIRSs = append(allMasterIPv4CIRSs, gkecluster.PrivateClusterConfig["masterIpv4CidrBlock"])
+			allMasterIPv4CIRSs = append(allMasterIPv4CIRSs, gkecluster.PrivateClusterConfig["masterIpv4CidrBlock"].(string))
 		}
 	}
 	return allMasterIPv4CIRSs
