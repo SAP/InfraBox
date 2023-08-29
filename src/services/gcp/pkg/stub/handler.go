@@ -1,57 +1,61 @@
 package stub
 
 import (
-    "bytes"
-    "crypto/tls"
-    "crypto/x509"
-    b64 "encoding/base64"
-    "encoding/json"
-    "fmt"
-    "io/ioutil"
-    "mime/multipart"
-    "net/http"
-    "os"
-    "os/exec"
-    "path"
-    "strconv"
-    "strings"
-    "time"
+	"bytes"
+	"crypto/tls"
+	"crypto/x509"
+	b64 "encoding/base64"
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"mime/multipart"
+	"net/http"
+	"os"
+	"os/exec"
+	"path"
+	"strconv"
+	"strings"
+	"time"
 
-    uuid "github.com/satori/go.uuid"
+	uuid "github.com/satori/go.uuid"
 
-    "github.com/sap/infrabox/src/services/gcp/pkg/apis/gcp/v1alpha1"
-    "github.com/sap/infrabox/src/services/gcp/pkg/stub/cleaner"
+	"github.com/sap/infrabox/src/services/gcp/pkg/apis/gcp/v1alpha1"
+	"github.com/sap/infrabox/src/services/gcp/pkg/stub/cleaner"
 
-    goerrors "errors"
+	goerrors "errors"
 
-    "k8s.io/client-go/discovery"
-    "k8s.io/client-go/discovery/cached"
-    "k8s.io/client-go/dynamic"
-    "k8s.io/client-go/kubernetes"
-    _ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
-    "k8s.io/client-go/rest"
-    "k8s.io/client-go/tools/clientcmd"
-    clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
+	"k8s.io/client-go/discovery"
+	"k8s.io/client-go/discovery/cached"
+	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/kubernetes"
+	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
+	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 
-    "github.com/operator-framework/operator-sdk/pkg/sdk/action"
-    "github.com/operator-framework/operator-sdk/pkg/sdk/handler"
-    "github.com/operator-framework/operator-sdk/pkg/sdk/types"
-    "github.com/operator-framework/operator-sdk/pkg/util/k8sutil"
+	"github.com/operator-framework/operator-sdk/pkg/sdk/action"
+	"github.com/operator-framework/operator-sdk/pkg/sdk/handler"
+	"github.com/operator-framework/operator-sdk/pkg/sdk/types"
+	"github.com/operator-framework/operator-sdk/pkg/util/k8sutil"
 
-    "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 
-    appsv1 "k8s.io/api/apps/v1"
-    v1 "k8s.io/api/core/v1"
-    rbacv1 "k8s.io/api/rbac/v1"
-    metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	appsv1 "k8s.io/api/apps/v1"
+	v1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-    "k8s.io/apimachinery/pkg/api/errors"
-    "k8s.io/apimachinery/pkg/api/meta"
-    "k8s.io/apimachinery/pkg/api/resource"
-    "k8s.io/apimachinery/pkg/runtime/schema"
-    "k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
+	"k8s.io/apimachinery/pkg/api/resource"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/intstr"
 
-    "github.com/mholt/archiver"
+	"math/rand"
+	"net"
+
+	"github.com/mholt/archiver"
+	"golang.org/x/exp/slices"
 )
 
 const adminSAName = "admin"
@@ -66,11 +70,12 @@ type MasterAuth struct {
 }
 
 type RemoteCluster struct {
-    Name       string
-    Status     string
-    Zone       string
-    Endpoint   string
-    MasterAuth MasterAuth
+    Name                 string
+    Status               string
+    Zone                 string
+    Endpoint             string
+    PrivateClusterConfig map[string]string
+    MasterAuth           MasterAuth
 }
 
 func NewHandler() handler.Handler {
@@ -95,27 +100,42 @@ func setClusterName(cr *v1alpha1.GKECluster, log *logrus.Entry) error {
 func createCluster(cr *v1alpha1.GKECluster, log *logrus.Entry) (*v1alpha1.GKEClusterStatus, error) {
     limit := os.Getenv("MAX_NUM_CLUSTERS")
     status := cr.Status
-
+    gkeclusters, err := getRemoteClusters(log)
+    if err != nil && !errors.IsNotFound(err) {
+        err = fmt.Errorf("could not get GKE Clusters: %v", err)
+        log.Error(err)
+        return nil, err
+    }
     if limit != "" {
-        gkeclusters, err := getRemoteClusters(log)
-        if err != nil && !errors.IsNotFound(err) {
-            err = fmt.Errorf("could not get GKE Clusters: %v", err)
-            log.Error(err)
-            return nil, err
-        }
-
         l, err := strconv.Atoi(limit)
 
         if err != nil {
             log.Errorf("Failed to parse cluster limit: %v", err)
             return nil, err
         }
-
+        
         if len(gkeclusters) >= l {
             status.Status = "pending"
             status.Message = "Cluster limit reached, waiting..."
             log.Debug(status.Message)
             return &status, nil
+        }
+    }
+
+    baseIPV4CIDR := "192.168.0.0/16"
+    masterIPv4CIRDs, err := getExistingMasterIPv4CIRDs(gkeclusters)
+    finalCIDR := ""
+    for ;; {
+        cidr, err := getRandomIPv4CIRD(baseIPV4CIDR)
+        if err != nil {
+            err = fmt.Errorf("err while getting CIDR for Cluster %s: %s",cr.Status.ClusterName, err)
+            log.Error(err)
+            return nil, err
+        } else {
+            if !slices.Contains(masterIPv4CIRDs, cidr){
+                finalCIDR = cidr
+                break
+            }
         }
     }
 
@@ -203,6 +223,7 @@ func createCluster(cr *v1alpha1.GKECluster, log *logrus.Entry) (*v1alpha1.GKEClu
     }
 
     args = append(args, "--no-enable-legacy-authorization")
+    args = append(args, "--master-ipv4-cidr", finalCIDR)
 
     cmd := exec.Command("gcloud" , args...)
     out, err := cmd.CombinedOutput()
@@ -739,6 +760,7 @@ func getRemoteCluster(name string, log *logrus.Entry) (*RemoteCluster, error) {
                         res.MasterAuth.Token = token
                     }
                 }
+                if res.privateClusterConfig.
                 return res, nil
             } else {
                 log.Warningf("could not parse cluster list: %s, %v, will retry in 10s", out, err)
@@ -846,6 +868,37 @@ func getOutdatedClusters(maxAge string, log *logrus.Entry) ([]RemoteCluster, err
     }
 
     return gkeclusters, nil
+}
+
+func getExistingMasterIPv4CIRDs(gkeclusters []RemoteCluster) []string{
+    var allMasterIPv4CIRSs = make([]string, len(gkeclusters))
+    for _, gkecluster := range gkeclusters {
+        if gkecluster.PrivateClusterConfig["masterIpv4CidrBlock"] != nil {
+            append(allMasterIPv4CIRSs, gkecluster.PrivateClusterConfig["masterIpv4CidrBlock"])
+        }
+    }
+    return allMasterIPv4CIRSs
+}
+
+func getRandomIPv4CIRD(baseIPv4CIRD string) (string, error){
+    rand.Seed(time.Now().UnixNano())
+    _, ipnet, err := net.ParseCIDR(baseIPv4CIRD)
+    if err != nil {
+		fmt.Println("Error parsing CIDR:", err)
+		return "", err
+	}
+    randomLastOctet := rand.Intn(254) + 1
+    randomIP := make(net.IP, len(ipnet.IP))
+	copy(randomIP, ipnet.IP)
+	randomIP[2] = byte(randomLastOctet)
+	randomLastOctet = rand.Intn(254) + 1
+	randomIP[3] = byte(randomLastOctet)
+    randomMask := net.CIDRMask(28, 32)
+    newSubnet := &net.IPNet{
+		IP:   randomIP,
+		Mask: randomMask,
+	}
+	return newSubnet.String(), nil
 }
 
 func generateKubeconfig(c *RemoteCluster) []byte {
