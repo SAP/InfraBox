@@ -55,7 +55,6 @@ import (
 	"net"
 
 	"github.com/mholt/archiver"
-	"golang.org/x/exp/slices"
 )
 
 const adminSAName = "admin"
@@ -132,7 +131,7 @@ func createCluster(cr *v1alpha1.GKECluster, log *logrus.Entry) (*v1alpha1.GKEClu
             log.Error(err)
             return nil, err
         } else {
-            if !slices.Contains(masterIPv4CIRDs, cidr){
+            if contains(masterIPv4CIRDs, cidr){
                 finalCIDR = cidr
                 break
             }
@@ -899,6 +898,15 @@ func getRandomIPv4CIRD(baseIPv4CIRD string) (string, error){
 		Mask: randomMask,
 	}
 	return newSubnet.String(), nil
+}
+
+func contains(s []string, e string) bool {
+	for _, a := range s {
+		if a == e {
+			return true
+		}
+	}
+	return false
 }
 
 func generateKubeconfig(c *RemoteCluster) []byte {
