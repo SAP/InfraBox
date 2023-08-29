@@ -73,7 +73,7 @@ type RemoteCluster struct {
 	Status               string
 	Zone                 string
 	Endpoint             string
-	PrivateClusterConfig map[string]any
+	PrivateClusterConfig map[string]interface{}
 	MasterAuth           MasterAuth
 }
 
