@@ -117,13 +117,11 @@ func createCluster(cr *v1alpha1.GKECluster, log *logrus.Entry) (*v1alpha1.GKEClu
             return &status, nil
         }
     }
-
-	baseIPV4CIDR := "192.168.0.0/16"
 	masterIPv4CIRDs := getExistingMasterIPv4CIRDs(gkeclusters)
 	finalCIDR := ""
     log.Debugf("existng ipv4 cidr: %s", masterIPv4CIRDs)
 	for {
-		cidr, err := getRandomIPv4CIRD(baseIPV4CIDR)
+		cidr, err := getRandomIPv4CIRD()
         log.Infof("generate master ipv4 cidr: %s", cidr)
 		if err != nil {
 			err = fmt.Errorf("err while getting CIDR for Cluster %s: %s", cr.Status.ClusterName, err)
@@ -224,7 +222,7 @@ func createCluster(cr *v1alpha1.GKECluster, log *logrus.Entry) (*v1alpha1.GKEClu
 	args = append(args, "--no-enable-legacy-authorization")
     args = append(args, "--enable-private-nodes")
 	args = append(args, "--master-ipv4-cidr", finalCIDR)
-
+	args = append(args, "--enable-master-authorized-networks", "0.0.0.0/0")
     cmd := exec.Command("gcloud" , args...)
     out, err := cmd.CombinedOutput()
 
@@ -880,7 +878,7 @@ func getExistingMasterIPv4CIRDs(gkeclusters []RemoteCluster) []string {
 	return allMasterIPv4CIRSs
 }
 
-func getRandomIPv4CIRD(baseIPv4CIRD string) (string, error) {
+func getRandomIPv4CIRD() (string, error) {
     cmd := exec.Command("python3" , "/app/subnet_fetcher.py")
     out, err := cmd.CombinedOutput()
     if err != nil {
