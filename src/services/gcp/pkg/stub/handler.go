@@ -51,9 +51,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
-	"math/rand"
-	"net"
-
 	"github.com/mholt/archiver"
 )
 
@@ -127,7 +124,7 @@ func createCluster(cr *v1alpha1.GKECluster, log *logrus.Entry) (*v1alpha1.GKEClu
     log.Debugf("existng ipv4 cidr: %s", masterIPv4CIRDs)
 	for {
 		cidr, err := getRandomIPv4CIRD(baseIPV4CIDR)
-        log.Debugf("generate ipv4 cidr: %s", cidr)
+        log.Infof("generate master ipv4 cidr: %s", cidr)
 		if err != nil {
 			err = fmt.Errorf("err while getting CIDR for Cluster %s: %s", cr.Status.ClusterName, err)
 			log.Error(err)
@@ -884,24 +881,12 @@ func getExistingMasterIPv4CIRDs(gkeclusters []RemoteCluster) []string {
 }
 
 func getRandomIPv4CIRD(baseIPv4CIRD string) (string, error) {
-	rand.Seed(time.Now().UnixNano())
-	_, ipnet, err := net.ParseCIDR(baseIPv4CIRD)
-	if err != nil {
-		fmt.Println("Error parsing CIDR:", err)
-		return "", err
-	}
-	randomLastOctet := rand.Intn(254) + 1
-	randomIP := make(net.IP, len(ipnet.IP))
-	copy(randomIP, ipnet.IP)
-	randomIP[2] = byte(randomLastOctet)
-	randomLastOctet = rand.Intn(254) + 1
-	randomIP[3] = byte(randomLastOctet)
-	randomMask := net.CIDRMask(28, 32)
-	newSubnet := &net.IPNet{
-		IP:   randomIP,
-		Mask: randomMask,
-	}
-	return newSubnet.String(), nil
+    cmd := exec.Command("python3" , "/app/subnet_fetcher.py")
+    out, err := cmd.CombinedOutput()
+    if err != nil {
+        return "", err
+    }
+    return string(out), nil
 }
 
 func contains(s []string, e string) bool {
