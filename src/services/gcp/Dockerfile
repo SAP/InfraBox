@@ -20,12 +20,13 @@ ENV PATH /google-cloud-sdk/bin:$PATH
 RUN apk --no-cache add \
         curl \
         python \
-        python-pip \
         py-crcmod \
         bash \
         libc6-compat \
         openssh-client \
         git \
+        python3 \
+        py3-pip \
     && curl -O https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-${CLOUD_SDK_VERSION}-linux-x86_64.tar.gz && \
     tar xzf google-cloud-sdk-${CLOUD_SDK_VERSION}-linux-x86_64.tar.gz && \
     rm google-cloud-sdk-${CLOUD_SDK_VERSION}-linux-x86_64.tar.gz && \
@@ -36,7 +37,8 @@ RUN apk --no-cache add \
     gcloud config set metrics/environment github_docker_image && \
     gcloud components install kubectl && \
     gcloud --version && \
-    gcloud components install beta
+    gcloud components install beta && \
+    pip3 install update pip && pip3 install ipaddress
 
 WORKDIR /app
 COPY --from=build-env /go/src/github.com/sap/infrabox/src/services/gcp/tmp/_output/bin/gcp /app/gcp
