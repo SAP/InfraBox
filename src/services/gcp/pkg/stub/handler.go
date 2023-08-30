@@ -886,7 +886,8 @@ func getRandomIPv4CIRD(baseIPv4CIRD string) (string, error) {
     if err != nil {
         return "", err
     }
-    return string(out), nil
+    result := strings.ReplaceAll(string(out), "\n", "")
+    return result, nil
 }
 
 func contains(s []string, e string) bool {
