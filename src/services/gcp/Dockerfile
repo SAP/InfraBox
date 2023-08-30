@@ -41,6 +41,7 @@ RUN apk --no-cache add \
 
 WORKDIR /app
 COPY --from=build-env /go/src/github.com/sap/infrabox/src/services/gcp/tmp/_output/bin/gcp /app/gcp
+COPY --from=build-env /go/src/github.com/sap/infrabox/src/services/gcp/scripts/subnet_fetcher.py /app/subnet_fetcher.py
 
 RUN addgroup -S infrabox && adduser -S -G infrabox infrabox
 USER infrabox
