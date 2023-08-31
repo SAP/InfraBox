@@ -48,7 +48,7 @@ spec:
                         memory: "1200Mi"
                     limits:
                         cpu: "1000m"
-                        memory: "2000Mi"
+                        memory: "4Gi"
                 volumeMounts:
                 {{ include "mounts_rsa_public" . | indent 16 }}
                 {{ include "mounts_rsa_private" . | indent 16 }}
