@@ -222,7 +222,8 @@ func createCluster(cr *v1alpha1.GKECluster, log *logrus.Entry) (*v1alpha1.GKEClu
 	args = append(args, "--no-enable-legacy-authorization")
     args = append(args, "--enable-private-nodes")
 	args = append(args, "--master-ipv4-cidr", finalCIDR)
-	args = append(args, "--enable-master-authorized-networks", "0.0.0.0/0")
+	args = append(args, "--enable-master-authorized-networks")
+    args = append(args, "--master-authorized-networks", "0.0.0.0/0")
     cmd := exec.Command("gcloud" , args...)
     out, err := cmd.CombinedOutput()
 
