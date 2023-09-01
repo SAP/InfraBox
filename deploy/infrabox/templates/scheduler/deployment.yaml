@@ -29,7 +29,7 @@ spec:
                         memory: "400Mi"
                     limits:
                         cpu: "500m"
-                        memory: "800Mi"
+                        memory: "2Gi"
                 env:
                 {{ include "env_database" . | indent 16 }}
                 {{ include "env_general" . | indent 16 }}

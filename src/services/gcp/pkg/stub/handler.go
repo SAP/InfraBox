@@ -1,57 +1,57 @@
 package stub
 
 import (
-    "bytes"
-    "crypto/tls"
-    "crypto/x509"
-    b64 "encoding/base64"
-    "encoding/json"
-    "fmt"
-    "io/ioutil"
-    "mime/multipart"
-    "net/http"
-    "os"
-    "os/exec"
-    "path"
-    "strconv"
-    "strings"
-    "time"
+	"bytes"
+	"crypto/tls"
+	"crypto/x509"
+	b64 "encoding/base64"
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"mime/multipart"
+	"net/http"
+	"os"
+	"os/exec"
+	"path"
+	"strconv"
+	"strings"
+	"time"
 
-    uuid "github.com/satori/go.uuid"
+	uuid "github.com/satori/go.uuid"
 
-    "github.com/sap/infrabox/src/services/gcp/pkg/apis/gcp/v1alpha1"
-    "github.com/sap/infrabox/src/services/gcp/pkg/stub/cleaner"
+	"github.com/sap/infrabox/src/services/gcp/pkg/apis/gcp/v1alpha1"
+	"github.com/sap/infrabox/src/services/gcp/pkg/stub/cleaner"
 
-    goerrors "errors"
+	goerrors "errors"
 
-    "k8s.io/client-go/discovery"
-    "k8s.io/client-go/discovery/cached"
-    "k8s.io/client-go/dynamic"
-    "k8s.io/client-go/kubernetes"
-    _ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
-    "k8s.io/client-go/rest"
-    "k8s.io/client-go/tools/clientcmd"
-    clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
+	"k8s.io/client-go/discovery"
+	"k8s.io/client-go/discovery/cached"
+	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/kubernetes"
+	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
+	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 
-    "github.com/operator-framework/operator-sdk/pkg/sdk/action"
-    "github.com/operator-framework/operator-sdk/pkg/sdk/handler"
-    "github.com/operator-framework/operator-sdk/pkg/sdk/types"
-    "github.com/operator-framework/operator-sdk/pkg/util/k8sutil"
+	"github.com/operator-framework/operator-sdk/pkg/sdk/action"
+	"github.com/operator-framework/operator-sdk/pkg/sdk/handler"
+	"github.com/operator-framework/operator-sdk/pkg/sdk/types"
+	"github.com/operator-framework/operator-sdk/pkg/util/k8sutil"
 
-    "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 
-    appsv1 "k8s.io/api/apps/v1"
-    v1 "k8s.io/api/core/v1"
-    rbacv1 "k8s.io/api/rbac/v1"
-    metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	appsv1 "k8s.io/api/apps/v1"
+	v1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-    "k8s.io/apimachinery/pkg/api/errors"
-    "k8s.io/apimachinery/pkg/api/meta"
-    "k8s.io/apimachinery/pkg/api/resource"
-    "k8s.io/apimachinery/pkg/runtime/schema"
-    "k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
+	"k8s.io/apimachinery/pkg/api/resource"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/intstr"
 
-    "github.com/mholt/archiver"
+	"github.com/mholt/archiver"
 )
 
 const adminSAName = "admin"
@@ -66,11 +66,12 @@ type MasterAuth struct {
 }
 
 type RemoteCluster struct {
-    Name       string
-    Status     string
-    Zone       string
-    Endpoint   string
-    MasterAuth MasterAuth
+	Name                 string
+	Status               string
+	Zone                 string
+	Endpoint             string
+	PrivateClusterConfig map[string]interface{}
+	MasterAuth           MasterAuth
 }
 
 func NewHandler() handler.Handler {
@@ -95,15 +96,13 @@ func setClusterName(cr *v1alpha1.GKECluster, log *logrus.Entry) error {
 func createCluster(cr *v1alpha1.GKECluster, log *logrus.Entry) (*v1alpha1.GKEClusterStatus, error) {
     limit := os.Getenv("MAX_NUM_CLUSTERS")
     status := cr.Status
-
-    if limit != "" {
         gkeclusters, err := getRemoteClusters(log)
         if err != nil && !errors.IsNotFound(err) {
             err = fmt.Errorf("could not get GKE Clusters: %v", err)
             log.Error(err)
             return nil, err
         }
-
+	if limit != "" {
         l, err := strconv.Atoi(limit)
 
         if err != nil {
@@ -118,6 +117,24 @@ func createCluster(cr *v1alpha1.GKECluster, log *logrus.Entry) (*v1alpha1.GKEClu
             return &status, nil
         }
     }
+	masterIPv4CIRDs := getExistingMasterIPv4CIRDs(gkeclusters)
+	finalCIDR := ""
+    log.Debugf("existng ipv4 cidr: %s", masterIPv4CIRDs)
+	for {
+		cidr, err := getRandomIPv4CIRD()
+        log.Infof("generate master ipv4 cidr: %s", cidr)
+		if err != nil {
+			err = fmt.Errorf("err while getting CIDR for Cluster %s: %s", cr.Status.ClusterName, err)
+			log.Error(err)
+			return nil, err
+		} else {
+            log.Debugf("check if %s in %s", cidr, masterIPv4CIRDs)
+			if !contains(masterIPv4CIRDs, cidr) {
+				finalCIDR = cidr
+				break
+			}
+		}
+	}
 
     log.Infof("Create GKE cluster %s", cr.Status.ClusterName)
     args := []string{"container", "clusters",
@@ -202,7 +219,11 @@ func createCluster(cr *v1alpha1.GKECluster, log *logrus.Entry) (*v1alpha1.GKEClu
         args = append(args, "--services-ipv4-cidr", cr.Spec.ServiceCidr)
     }
 
-
+	args = append(args, "--no-enable-legacy-authorization")
+    args = append(args, "--enable-private-nodes")
+	args = append(args, "--master-ipv4-cidr", finalCIDR)
+	args = append(args, "--enable-master-authorized-networks")
+    args = append(args, "--master-authorized-networks", "0.0.0.0/0")
     cmd := exec.Command("gcloud" , args...)
     out, err := cmd.CombinedOutput()
 
@@ -845,6 +866,36 @@ func getOutdatedClusters(maxAge string, log *logrus.Entry) ([]RemoteCluster, err
     }
 
     return gkeclusters, nil
+}
+
+func getExistingMasterIPv4CIRDs(gkeclusters []RemoteCluster) []string {
+	var allMasterIPv4CIRSs = make([]string, 0)
+	for _, gkecluster := range gkeclusters {
+        masterIpv4CidrBlock, ok := gkecluster.PrivateClusterConfig["masterIpv4CidrBlock"].(string)
+		if ok && masterIpv4CidrBlock != "" {
+			allMasterIPv4CIRSs = append(allMasterIPv4CIRSs, masterIpv4CidrBlock)
+		}
+	}
+	return allMasterIPv4CIRSs
+}
+
+func getRandomIPv4CIRD() (string, error) {
+    cmd := exec.Command("python3" , "/app/subnet_fetcher.py")
+    out, err := cmd.CombinedOutput()
+    if err != nil {
+        return "", err
+    }
+    result := strings.ReplaceAll(string(out), "\n", "")
+    return result, nil
+}
+
+func contains(s []string, e string) bool {
+	for _, a := range s {
+		if a == e {
+			return true
+		}
+	}
+	return false
 }
 
 func generateKubeconfig(c *RemoteCluster) []byte {

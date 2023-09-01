@@ -36,7 +36,7 @@ spec:
                 memory: "1200Mi"
             limits:
                 cpu: "1000m"
-                memory: "2400Mi"
+                memory: "4Gi"
           volumeMounts:
           - name: service-account
             mountPath: "/var/run/infrabox.net/gcp"
