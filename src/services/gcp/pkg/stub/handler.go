@@ -1218,7 +1218,7 @@ func updateClusterFirewall(cluster *RemoteCluster, log *logrus.Entry) error {
     masterIpv4CidrBlock, ok := cluster.PrivateClusterConfig["masterIpv4CidrBlock"].(string)
 	if ok && masterIpv4CidrBlock != "" {
 		log.Infof("Update firewall rule for cluster %s with %s", cluster.Name, masterIpv4CidrBlock)
-        cmd := exec.Command("gcloud" , "compute", "firewall-rule", "list", "--filter", fmt.Sprintf("name~^gke-%s(.)vms", cluster.Name), "--format", "json")
+        cmd := exec.Command("gcloud" , "compute", "firewall-rules", "list", "--filter", fmt.Sprintf("name~^gke-%s(.)vms", cluster.Name), "--format", "json")
         out, err := cmd.CombinedOutput()
         if err != nil {
             err = fmt.Errorf("failed to get firewall rule for cluster %s: %v, %s", cluster.Name, err, out)
