@@ -280,6 +280,11 @@ func syncGKECluster(cr *v1alpha1.GKECluster, log *logrus.Entry) (*v1alpha1.GKECl
                 return nil, err
             }
 
+            err = updateClusterFirewall(gkecluster, log)
+            if err != nil {
+                log.Errorf("Failed to update cluster %s firewall: %v", gkecluster.Name, err)
+            }
+
             log.Infof("GKE cluster %s is ready", cr.Status.ClusterName)
 
             status := cr.Status
@@ -1206,6 +1211,41 @@ func injectCollector(cluster *RemoteCluster, log *logrus.Entry) error {
     }
 
     return nil
+}
+
+type FirewallRule struct {
+    Name         string
+    SourceRanges []string
+}
+
+func updateClusterFirewall(cluster *RemoteCluster, log *logrus.Entry) error {
+    masterIpv4CidrBlock, ok := cluster.PrivateClusterConfig["masterIpv4CidrBlock"].(string)
+	if ok && masterIpv4CidrBlock != "" {
+		log.Infof("Update firewall rule for cluster %s with %s", cluster.Name, masterIpv4CidrBlock)
+        cmd := exec.Command("gcloud" , "compute", "firewall-rules", "list", "--filter", fmt.Sprintf("name~^gke-%s(.)vms", cluster.Name), "--format", "json")
+        out, err := cmd.CombinedOutput()
+        if err != nil {
+            err = fmt.Errorf("failed to get firewall rule for cluster %s: %v, %s", cluster.Name, err, out)
+            log.Error(err)
+            return err
+        }
+        var firewallRule []FirewallRule
+        json.Unmarshal(out, &firewallRule)
+        name := firewallRule[0].Name
+        sourceRanges := firewallRule[0].SourceRanges
+        newRanges := append(sourceRanges, masterIpv4CidrBlock)
+        newRangesString := strings.Join(newRanges,",")
+        cmd = exec.Command("gcloud", "compute", "firewall-rules", "update", name, fmt.Sprintf("--source-ranges=%s", newRangesString))
+        _, err = cmd.CombinedOutput()
+        if err != nil {
+            err = fmt.Errorf("failed to update firewall rule for cluster %s: %v", cluster.Name, err)
+            log.Error(err)
+            return err
+        } 
+        return nil
+	}
+    log.Warningf("MasterIpv4CidrBlock fetching failed for cluster %s", cluster.Name)
+	return nil
 }
 
 type RemoteClusterSDK struct {
