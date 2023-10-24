@@ -32,7 +32,8 @@ def handle_service(name, d, r):
             'profiles',
             'read_only',
             'cap_drop',
-            'scale'
+            'scale',
+            'deploy'
         ]
 
         if key in allowed_fields:
