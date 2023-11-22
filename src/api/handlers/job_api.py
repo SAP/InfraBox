@@ -286,10 +286,10 @@ class Job(Resource):
                 if not namespace:
                     namespace = ''
                 if version == 'v1':
-                    url += '/v1/' + namespace + '/' + secret_path
+                    url += '/v1/' + namespace + '/' + secret_path if namespace else '/v1/' + secret_path
                 elif version == 'v2':
                     paths = secret_path.split('/')
-                    url += '/v1/' + namespace + '/' + paths[0] + '/data/' + '/'.join(paths[1:])
+                    url += '/v1/' + namespace + '/' + paths[0] + '/data/' + '/'.join(paths[1:]) if namespace else '/v1/' + paths[0] + '/data/' + '/'.join(paths[1:])
                 # choose validate way
                 validate_res = get_auth_type(result)
                 if validate_res == 'token':
@@ -297,13 +297,13 @@ class Job(Resource):
                 elif validate_res == 'appRole':
                     app_role = {'role_id': role_id, 'secret_id': secret_id}
                     json_data = json.dumps(app_role)
-                    app_role_url = result[0] + '/v1/' + namespace + '/auth/approle/login'
+                    app_role_url = result[0] + '/v1/' + namespace + '/auth/approle/login' if namespace else result[0] + '/v1/auth/approle/login'
                     res = requests.post(url=app_role_url, data=json_data, verify=False)
                     if res.status_code == 200:
                         json_res = json.loads(res.content)
                         token = json_res['auth']['client_token']
                     else:
-                        abort(400, "Getting value from vault error: url is '%s', validate way is appRole; API response: '%s'" % (url, res.text))
+                        abort(400, "Getting value from vault error: url is '%s', validate way is appRole; API response: '%s'" % (app_role_url, res.text))
                 else:
                     abort(400, "Validate way is '%s' ! result is '%s' " % (validate_res, result))
 
