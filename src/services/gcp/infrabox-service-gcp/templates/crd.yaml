@@ -4,7 +4,7 @@ metadata:
   name: gkeclusters.gcp.service.infrabox.net
 spec:
   group: gcp.service.infrabox.net
-  versions: 
+  versions:
     - name: v1alpha1
       served: true
       storage: true
@@ -50,6 +50,8 @@ spec:
                   type: string
                 clusterCidr:
                   type: string
+                enableManagedPrometheus:
+                  type: boolean
             status:
               x-kubernetes-preserve-unknown-fields: true
   names:

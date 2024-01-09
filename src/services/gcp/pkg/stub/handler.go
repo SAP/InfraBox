@@ -223,6 +223,9 @@ func createCluster(cr *v1alpha1.GKECluster, log *logrus.Entry) (*v1alpha1.GKEClu
     args = append(args, "--enable-private-nodes")
 	args = append(args, "--master-ipv4-cidr", finalCIDR)
 	args = append(args, "--enable-master-authorized-networks")
+	if !cr.Spec.EnableManagedPrometheus {
+	    args = append(args, "--disable-managed-prometheus")
+	}
 	master_authorized_networks := os.Getenv("ALLOW_IPS")
 	if master_authorized_networks == "" {
 	    master_authorized_networks = "0.0.0.0/0"
@@ -1241,7 +1244,7 @@ func updateClusterFirewall(cluster *RemoteCluster, log *logrus.Entry) error {
             err = fmt.Errorf("failed to update firewall rule for cluster %s: %v", cluster.Name, err)
             log.Error(err)
             return err
-        } 
+        }
         return nil
 	}
     log.Warningf("MasterIpv4CidrBlock fetching failed for cluster %s", cluster.Name)

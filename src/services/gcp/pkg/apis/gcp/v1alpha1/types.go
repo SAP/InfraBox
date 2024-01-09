@@ -30,6 +30,7 @@ type GKEClusterSpec struct {
         Zone                       string `json:"zone"`
         ServiceCidr                string `json:"serviceCidr,omitempty"`
         ClusterCidr                string `json:"clusterCidr,omitempty"`
+        EnableManagedPrometheus    bool   `json:"enableManagedPrometheus,omitempty"`
 }
 
 type GKEClusterStatus struct {
