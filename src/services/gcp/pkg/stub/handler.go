@@ -224,7 +224,7 @@ func createCluster(cr *v1alpha1.GKECluster, log *logrus.Entry) (*v1alpha1.GKEClu
 	args = append(args, "--master-ipv4-cidr", finalCIDR)
 	args = append(args, "--enable-master-authorized-networks")
 	if !cr.Spec.EnableManagedPrometheus {
-	    args = append(args, "--disable-managed-prometheus")
+	    args = append(args, "--no-enable-managed-prometheus")
 	}
 	master_authorized_networks := os.Getenv("ALLOW_IPS")
 	if master_authorized_networks == "" {
