@@ -44,35 +44,22 @@ def delete_file(path):
             logger.warning("Failed to delete file: %s", error)
 
 
-def get_token_by_app_role(app_role_url, role_id, secret_id, retry_times=3):
+def get_token_by_app_role(app_role_url, role_id, secret_id):
     app_role = {'role_id': role_id, 'secret_id': secret_id}
     json_data = json.dumps(app_role)
-    attempt = 0
-    err_msg = 'Getting token from Vault error'
-    while retry_times > 0:
+    for i in range(0, 10):
         res = requests.post(url=app_role_url, data=json_data, verify=False)
-        attempt += 1
         if res.status_code == 200:
             json_res = json.loads(res.content)
             token = json_res['auth']['client_token']
             return token
-        else:
-            if retry_times > 1:
-                logger.warning("Vault Token returned code is not 200, will retry after %s seconds...", 10 * pow(2, attempt))
-                time.sleep(10 * pow(2, attempt))
-            else:
-                err_msg = "Getting token from Vault error even though retried {} times, url is {}, API response is {}:{}".format(attempt, app_role_url, res.status_code, res.text)
-                logger.error(err_msg)
-        retry_times -= 1
+    err_msg = "Getting token from Vault error even tried 10 times, url is {}, API response is {}:{}".format(app_role_url, res.status_code, res.text)
     abort(400, err_msg)
 
 
-def get_value_from_vault(url, token, secret_key, verify, retry_times=3):
-    attempt = 0
-    err_msg = 'Getting value from Vault error'
-    while retry_times > 0:
+def get_value_from_vault(url, token, secret_key, verify):
+    for i in range(0, 10):
         response = requests.get(url=url, headers={'X-Vault-Token': token}, verify=verify)
-        attempt += 1
         if response.status_code == 200:
             json_res = json.loads(response.content)
             if json_res['data'].get('data') and isinstance(json_res['data'].get('data'), dict):
@@ -80,14 +67,7 @@ def get_value_from_vault(url, token, secret_key, verify, retry_times=3):
             else:
                 value = json_res['data'].get(secret_key)
             return value
-        else:
-            if retry_times > 1:
-                logger.warning("Vault value returned code is not 200, will retry after %s seconds...", 10 * pow(2, attempt))
-                time.sleep(10 * pow(2, attempt))
-            else:
-                err_msg = "Getting value from Vault error even though retried {} times, url is {}, API response is {}:{}".format(attempt, url, response.status_code, response.text)
-                logger.error(err_msg)
-        retry_times -= 1
+    err_msg = "Getting value from Vault error even tried 10 times, url is {}, API response is {}:{}".format(url, response.status_code, response.text)
     abort(400, err_msg)
 
 
