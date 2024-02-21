@@ -53,6 +53,7 @@ def get_token_by_app_role(app_role_url, role_id, secret_id):
             json_res = json.loads(res.content)
             token = json_res['auth']['client_token']
             return token
+        time.sleep(5)
     err_msg = "Getting token from Vault error even tried 10 times, url is {}, API response is {}:{}".format(app_role_url, res.status_code, res.text)
     abort(400, err_msg)
 
@@ -67,6 +68,7 @@ def get_value_from_vault(url, token, secret_key, verify):
             else:
                 value = json_res['data'].get(secret_key)
             return value
+        time.sleep(5)
     err_msg = "Getting value from Vault error even tried 10 times, url is {}, API response is {}:{}".format(url, response.status_code, response.text)
     abort(400, err_msg)
 
