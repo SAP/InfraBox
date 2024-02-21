@@ -57,10 +57,10 @@ def get_token_by_app_role(app_role_url, role_id, secret_id, retry_times=3):
             return token
         else:
             if retry_times > 1:
-                logger.warning("Vault Token returned code is not 200, will retry after %s seconds..." % 10 * pow(2, attempt))
+                logger.warning("Vault Token returned code is not 200, will retry after %s seconds...", 10 * pow(2, attempt))
                 time.sleep(1 * pow(2, attempt))
             else:
-                logger.error("Getting token from Vault error even though retried %s times, url is '%s', API response is '%s':'%s'" % attempt, app_role_url, res.status_code, res.text)
+                logger.error("Getting token from Vault error even though retried '%s' times, url is '%s', API response is '%s':'%s'", attempt, app_role_url, res.status_code, res.text)
         retry_times -= 1
     abort(400, "Getting token from vault error")
 
@@ -79,10 +79,10 @@ def get_value_from_vault(url, token, secret_key, verify, retry_times=3):
             return value
         else:
             if retry_times > 1:
-                logger.warning("Vault value returned code is not 200, will retry after %s seconds..." % 10 * pow(2, attempt))
+                logger.warning("Vault value returned code is not 200, will retry after %s seconds...", 10 * pow(2, attempt))
                 time.sleep(1 * pow(2, attempt))
             else:
-                logger.error("Getting value from Vault error even though retried %s times, url is '%s', API response is '%s':'%s'" % attempt, url, response.status_code, response.text)
+                logger.error("Getting value from Vault error even though retried %s times, url is '%s', API response is '%s':'%s'", attempt, url, response.status_code, response.text)
         retry_times -= 1
         abort(400, "Getting data from vault error")
 
