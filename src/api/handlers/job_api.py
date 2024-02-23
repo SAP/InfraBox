@@ -1,6 +1,7 @@
 #pylint: disable=too-many-lines,too-few-public-methods,too-many-locals,too-many-statements,too-many-branches
 import os
 import json
+import time
 import uuid
 import copy
 import urllib.request, urllib.parse, urllib.error
@@ -41,6 +42,35 @@ def delete_file(path):
             os.remove(path)
         except Exception as error:
             logger.warning("Failed to delete file: %s", error)
+
+
+def get_token_by_app_role(app_role_url, role_id, secret_id):
+    app_role = {'role_id': role_id, 'secret_id': secret_id}
+    json_data = json.dumps(app_role)
+    for i in range(0, 10):
+        res = requests.post(url=app_role_url, data=json_data, verify=False)
+        if res.status_code == 200:
+            json_res = json.loads(res.content)
+            token = json_res['auth']['client_token']
+            return token
+        time.sleep(5)
+    err_msg = "Getting token from Vault error even tried 10 times, url is {}, API response is {}:{}".format(app_role_url, res.status_code, res.text)
+    abort(400, err_msg)
+
+
+def get_value_from_vault(url, token, secret_key, verify):
+    for i in range(0, 10):
+        response = requests.get(url=url, headers={'X-Vault-Token': token}, verify=verify)
+        if response.status_code == 200:
+            json_res = json.loads(response.content)
+            if json_res['data'].get('data') and isinstance(json_res['data'].get('data'), dict):
+                value = json_res['data'].get('data').get(secret_key)
+            else:
+                value = json_res['data'].get(secret_key)
+            return value
+        time.sleep(5)
+    err_msg = "Getting value from Vault error even tried 10 times, url is {}, API response is {}:{}".format(url, response.status_code, response.text)
+    abort(400, err_msg)
 
 
 @api.route("/api/job/job", doc=False)
@@ -295,34 +325,18 @@ class Job(Resource):
                 if validate_res == 'token':
                     logger.info('validate way is token')
                 elif validate_res == 'appRole':
-                    app_role = {'role_id': role_id, 'secret_id': secret_id}
-                    json_data = json.dumps(app_role)
                     app_role_url = result[0] + '/v1/' + namespace + '/auth/approle/login' if namespace else result[0] + '/v1/auth/approle/login'
-                    res = requests.post(url=app_role_url, data=json_data, verify=False)
-                    if res.status_code == 200:
-                        json_res = json.loads(res.content)
-                        token = json_res['auth']['client_token']
-                    else:
-                        abort(400, "Getting value from vault error: url is '%s', validate way is appRole; API response: '%s'" % (app_role_url, res.text))
+                    token = get_token_by_app_role(app_role_url, role_id, secret_id)
                 else:
                     abort(400, "Validate way is '%s' ! result is '%s' " % (validate_res, result))
 
                 if not ca:
-                    res = requests.get(url=url, headers={'X-Vault-Token': token}, verify=False)
+                    return get_value_from_vault(url, token, secret_key, False)
                 else:
                     with tempfile.NamedTemporaryFile(delete=False) as f:
                         f.write(ca)
                         f.flush()  # ensure all data written
-                        res = requests.get(url=url, headers={'X-Vault-Token': token}, verify=f.name)
-                if res.status_code == 200:
-                    json_res = json.loads(res.content)
-                    if json_res['data'].get('data') and isinstance(json_res['data'].get('data'), dict):
-                        value = json_res['data'].get('data').get(secret_key)
-                    else:
-                        value = json_res['data'].get(secret_key)
-                    return value
-                else:
-                    abort(400, "Getting value from vault error: url is '%s', token is '%s' " % (url, result))
+                    return get_value_from_vault(url, token, secret_key, f.name)
             else:
                 if is_fork:
                     abort(400, 'Access to secret %s is not allowed from a fork' % name)
