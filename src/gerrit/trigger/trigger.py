@@ -40,11 +40,13 @@ def main():
 
     logger.info("Connected to gerrit")
     _, stdout, _ = client.exec_command('gerrit stream-events')
+
     logger.info("Waiting for stream-events")
     for line in stdout:
-        for i in range(0, 2):
+        for _ in range(0, 2):
             try:
                 event = json.loads(line)
+
                 if event['type'] in ("patchset-created", "draft-published", "change-merged"):
                     logger.debug(json.dumps(event, indent=4))
                     if not is_active(conn, cluster_name):
