@@ -40,12 +40,13 @@ def main():
 
     logger.info("Connected to gerrit")
     _, stdout, _ = client.exec_command('gerrit stream-events')
-    logger.info(f"stdout is: {stdout}")
+    logger.info(f"stdout is: {stdout.readlines()}")
     logger.info("Waiting for stream-events")
     for line in stdout:
-        for _ in range(0, 2):
+        logger.info(f"line -1 is: {line}")
+        for i in range(0, 2):
             try:
-                logger.info(f"line is: {line}")
+                logger.info(f"line {i} is: {line}")
                 event = json.loads(line)
                 if event['type'] in ("patchset-created", "draft-published", "change-merged"):
                     logger.debug(json.dumps(event, indent=4))
