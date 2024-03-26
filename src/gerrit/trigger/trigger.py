@@ -40,7 +40,7 @@ def main():
 
     logger.info("Connected to gerrit")
     _, stdout, _ = client.exec_command('gerrit stream-events')
-    logger.info(f"stdout is: {stdout.readlines()}")
+    logger.info(f"stdout is: {stdout}")
     logger.info("Waiting for stream-events")
     for line in stdout:
         logger.info(f"line -1 is: {line}")
