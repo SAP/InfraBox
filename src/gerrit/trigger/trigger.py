@@ -40,13 +40,10 @@ def main():
 
     logger.info("Connected to gerrit")
     _, stdout, _ = client.exec_command('gerrit stream-events')
-    logger.info(f"stdout is: {stdout}")
     logger.info("Waiting for stream-events")
     for line in stdout:
-        logger.info(f"line -1 is: {line}")
         for i in range(0, 2):
             try:
-                logger.info(f"line {i} is: {line}")
                 event = json.loads(line)
                 if event['type'] in ("patchset-created", "draft-published", "change-merged"):
                     logger.debug(json.dumps(event, indent=4))
@@ -193,6 +190,7 @@ def handle_patchset_created_project(conn, event, project_id, project_name):
         "GERRIT_TOPIC": event['change'].get('topic', ""),
         "GERRIT_HOST": get_env('INFRABOX_GERRIT_HOSTNAME'),
         "GERRIT_PORT": get_env('INFRABOX_GERRIT_PORT'),
+        "GERRIT_CLONE_PORT": get_env('INFRABOX_GERRIT_CLONE_PORT'),
     }
 
     if event.get('uploader', None):
@@ -210,7 +208,7 @@ def handle_patchset_created_project(conn, event, project_id, project_name):
         "commit": sha,
         "clone_url": "ssh://%s@%s:%s/%s" % (get_env('INFRABOX_GERRIT_USERNAME'),
                                             get_env('INFRABOX_GERRIT_HOSTNAME'),
-                                            get_env('INFRABOX_GERRIT_PORT'),
+                                            get_env('INFRABOX_GERRIT_CLONE_PORT'),
                                             project_name),
         "ref": event['patchSet']['ref'],
         "event": event['change']['branch']

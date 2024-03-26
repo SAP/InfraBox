@@ -204,6 +204,9 @@ gerrit:
     # Port
     port: 29418
 
+    # Clone Port
+    clone_port: 39418
+
 # Github configuration
 github:
     # Enable Github
