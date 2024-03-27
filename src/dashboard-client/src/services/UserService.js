@@ -71,9 +71,9 @@ class UserService {
             })
     }
 
-    loadRepos () {
+    loadRepos (page, perPage) {
         if (store.state.user.hasGithubAccount() && store.state.settings.INFRABOX_GITHUB_ENABLED) {
-            return NewAPIService.get('github/repos/')
+            return NewAPIService.get('github/paginated_repos?page=' + page + '&per_page=' + perPage)
                 .then((d) => {
                     if (d) {
                         store.commit('setGithubRepos', d)

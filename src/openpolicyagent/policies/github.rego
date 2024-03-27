@@ -21,6 +21,12 @@ allow {
 
 allow {
     api.method = "GET"
+    api.path = ["api", "v1", "github", "paginated_repos"]
+    api.token.type = "user"
+}
+
+allow {
+    api.method = "GET"
     api.path = ["github", "auth"]
 }
 
