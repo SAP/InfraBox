@@ -192,6 +192,7 @@ def handle_patchset_created_project(conn, event, project_id, project_name):
         "GERRIT_TOPIC": event['change'].get('topic', ""),
         "GERRIT_HOST": get_env('INFRABOX_GERRIT_HOSTNAME'),
         "GERRIT_PORT": get_env('INFRABOX_GERRIT_PORT'),
+        "GERRIT_CLONE_PORT": get_env('INFRABOX_GERRIT_CLONE_PORT'),
     }
 
     if event.get('uploader', None):
@@ -209,7 +210,7 @@ def handle_patchset_created_project(conn, event, project_id, project_name):
         "commit": sha,
         "clone_url": "ssh://%s@%s:%s/%s" % (get_env('INFRABOX_GERRIT_USERNAME'),
                                             get_env('INFRABOX_GERRIT_HOSTNAME'),
-                                            get_env('INFRABOX_GERRIT_PORT'),
+                                            get_env('INFRABOX_GERRIT_CLONE_PORT'),
                                             project_name),
         "ref": event['patchSet']['ref'],
         "event": event['change']['branch']

@@ -280,6 +280,9 @@ https://{{- required "host is required" .Values.host -}}:{{- .Values.port -}}
 -
     name: INFRABOX_GERRIT_PORT
     value: {{ default "29418" .Values.gerrit.port | quote }}
+-
+    name: INFRABOX_GERRIT_CLONE_PORT
+    value: {{ default "39418" .Values.gerrit.clone_port | quote }}
 {{ end }}
 {{ end }}
 
