@@ -998,7 +998,8 @@ class Scheduler(object):
                     SELECT last_trigger
                     FROM cronjob
                     WHERE id = %s """, [c['id']])
-                last_trigger = cursor.fetchone()
+                result = cursor.fetchone()
+                last_trigger = result[0]
                 i = croniter('%s %s %s %s %s' % (c['minute'], c['hour'], c['day_month'], c['month'], c['day_week']), last_trigger)
                 next_trigger = i.get_next(datetime)
                 if next_trigger > datetime.now():
