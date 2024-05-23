@@ -993,6 +993,18 @@ class Scheduler(object):
                     # still in future
                     continue
 
+                # Double-check the next_trigger by selecting the latest last_trigger for the cronjob
+                cursor.execute("""
+                    SELECT last_trigger
+                    FROM cronjob
+                    WHERE id = %s """, [c['id']])
+                last_trigger = cursor.fetchone()
+                i = croniter('%s %s %s %s %s' % (c['minute'], c['hour'], c['day_month'], c['month'], c['day_week']), last_trigger)
+                next_trigger = i.get_next(datetime)
+                if next_trigger > datetime.now():
+                    # still in future
+                    continue
+
                 cursor.execute('''
                     UPDATE cronjob
                     SET last_trigger = now()
