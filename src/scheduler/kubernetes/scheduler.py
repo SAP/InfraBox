@@ -1002,7 +1002,7 @@ class Scheduler(object):
                 result = cursor.fetchone()
                 if result:
                     self.logger.info(f"### result is {result}")
-                    last_trigger = result[0]
+                    last_trigger = result['last_trigger']
                     i = croniter('%s %s %s %s %s' % (c['minute'], c['hour'], c['day_month'], c['month'], c['day_week']), last_trigger)
                     next_trigger = i.get_next(datetime)
                     if next_trigger > datetime.now():
