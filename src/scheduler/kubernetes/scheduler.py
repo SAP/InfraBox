@@ -5,6 +5,7 @@ import os
 import random
 import json
 import copy
+import traceback
 from datetime import datetime
 
 import requests
@@ -1056,6 +1057,7 @@ class Scheduler(object):
                 break
         except Exception as e:
             self.logger.error(e)
+            self.logger.error(traceback.format_exc())
             cursor.execute("rollback")
         finally:
             cursor.close()
