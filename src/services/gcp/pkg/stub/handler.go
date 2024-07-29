@@ -237,6 +237,7 @@ func createCluster(cr *v1alpha1.GKECluster, log *logrus.Entry) (*v1alpha1.GKEClu
     if err != nil {
         err = fmt.Errorf("failed to create GKE Cluster: %v, %s", err, out)
         log.Error(err)
+        log.Errorf("Error creation by Args: %v", args)
         return nil, err
     }
 
@@ -735,13 +736,12 @@ func getExactClusterVersion(cr *v1alpha1.GKECluster, log *logrus.Entry) (string,
     }
 
     for _, c := range config.Channels {
+        if strings.ToLower(c.Channel) == "extended" {
+            // extended in not supported by --release-channel extended, see https://cloud.google.com/kubernetes-engine/docs/concepts/release-channels
+            continue
+        }
         for _, v := range c.ValidVersions {
             if strings.HasPrefix(v, cr.Spec.ClusterVersion) {
-                if strings.ToLower(c.Channel) == "extended" {
-                    log.Errorf("### Channel is %s", strings.ToLower(c.Channel))
-                    log.Errorf("### config.Channels is %v", config.Channels)
-                    log.Errorf("### c.ValidVersions is %v", c.ValidVersions)
-                }
                 return v, strings.ToLower(c.Channel), nil
             }
         }
