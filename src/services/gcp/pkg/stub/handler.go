@@ -737,6 +737,11 @@ func getExactClusterVersion(cr *v1alpha1.GKECluster, log *logrus.Entry) (string,
     for _, c := range config.Channels {
         for _, v := range c.ValidVersions {
             if strings.HasPrefix(v, cr.Spec.ClusterVersion) {
+                if strings.ToLower(c.Channel) == "extended" {
+                    log.Errorf("### Channel is %s", strings.ToLower(c.Channel))
+                    log.Errorf("### config.Channels is %v", config.Channels)
+                    log.Errorf("### c.ValidVersions is %v", c.ValidVersions)
+                }
                 return v, strings.ToLower(c.Channel), nil
             }
         }
