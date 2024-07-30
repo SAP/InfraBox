@@ -1,5 +1,6 @@
 import uuid
 import os
+import re
 import requests
 
 from flask import g, request, abort, redirect
@@ -42,7 +43,14 @@ def get_next_page(r):
     n3 = link.find('>;', n2)
     return link[n2:n3]
 
-def get_github_api(url, token):
+def parse_link_header(link):
+    reg = r"<.+?page=(?P<page>\d+)>; rel=\"(?P<direction>prev|next|first|last)\""
+    res = {}
+    for match in re.finditer(reg, link):
+        res[match.group("direction")] = match.group("page")
+    return res
+
+def get_github_api(url, token, raw_result=False):
     headers = {
         "Authorization": "token " + token,
         "User-Agent": "InfraBox"
@@ -51,6 +59,8 @@ def get_github_api(url, token):
 
     # TODO(ib-steffen): allow custom ca bundles
     r = requests.get(url, headers=headers, verify=False)
+    if raw_result:
+        return r
     result = []
     result.extend(r.json())
 
@@ -125,6 +135,49 @@ class Repos(Resource):
                     break
 
         return github_repos
+
+@api.route('/api/v1/github/paginated_repos', doc=False)
+class V2Repos(Resource):
+
+    def get(self):
+        user_id = g.token['user']['id']
+
+        user = g.db.execute_one_dict('''
+            SELECT github_api_token
+            FROM "user"
+            WHERE id = %s
+        ''', [user_id])
+
+        if not user:
+            abort(404)
+
+        token = user['github_api_token']
+
+        page = request.args.get('page', 1)
+        per_page = request.args.get('per_page', 50)
+        github_repos_response = get_github_api('/user/repos?visibility=all&page={page}&per_page={per_page}'
+                                               .format(page=page, per_page=per_page),
+                                               token, raw_result=True)
+        github_repos = github_repos_response.json()
+        filtered_repos = []
+        for github_repo in github_repos:
+            filtered_repos.append({
+                "name": github_repo["name"],
+                "owner_login": github_repo["owner"]["login"],
+                "private": github_repo["private"],
+                "open_issues_count": github_repo["open_issues_count"],
+                "forks_count": github_repo["forks_count"],
+            })
+
+        nav = {}
+        for direction, page in parse_link_header(github_repos_response.headers.get('Link', "")).items():
+            nav[direction] = page
+        result = {
+            "nav": nav,
+            "items": filtered_repos
+        }
+        return result
+
 
 @api.route('/github/auth', doc=False)
 class Auth(Resource):
