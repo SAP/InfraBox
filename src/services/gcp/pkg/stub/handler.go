@@ -237,7 +237,7 @@ func createCluster(cr *v1alpha1.GKECluster, log *logrus.Entry) (*v1alpha1.GKEClu
     if err != nil {
         err = fmt.Errorf("failed to create GKE Cluster: %v, %s", err, out)
         log.Error(err)
-        log.Errorf("Error creation by Args: %v", args)
+        log.Errorf("Error creation with command: gcloud %s", strings.Join(args, " "))
         return nil, err
     }
 
