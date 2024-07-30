@@ -73,6 +73,10 @@
                                     <md-icon>replay</md-icon><span class="m-l-xs">Restart Job</span>
                                     <md-tooltip md-direction="bottom">Restart Job</md-tooltip>
                                 </md-button>
+                                <md-button class="md-raised md-primary md-dense" v-on:click="job.rerun()">
+                                    <md-icon>replay</md-icon><span class="m-l-xs">Rerun Single Job</span>
+                                    <md-tooltip md-direction="bottom">Rerun Single Job</md-tooltip>
+                                </md-button>
                                 <md-button class="md-raised md-primary md-dense" v-on:click="job.clearCache()">
                                     <md-icon>delete_sweep</md-icon><span class="m-l-xs">Clear Cache</span>
                                     <md-tooltip md-direction="bottom">Clear Job</md-tooltip>
@@ -113,6 +117,12 @@
                                                          <md-button class="md-icon-button md-primary md-raised md-dense" v-on:click="job.restart()">
                                                             <md-icon style="color: white">replay</md-icon>
                                                             <md-tooltip md-direction="bottom">Restart Job</md-tooltip>
+                                                        </md-button>
+                                                    </div>
+                                                    <div class="m-r-xl">
+                                                         <md-button class="md-icon-button md-primary md-raised md-dense" v-on:click="job.rerun()">
+                                                            <md-icon style="color: white">replay</md-icon>
+                                                            <md-tooltip md-direction="bottom">Rerun Single Job</md-tooltip>
                                                         </md-button>
                                                     </div>
                                                     <div class="m-r-xl">
