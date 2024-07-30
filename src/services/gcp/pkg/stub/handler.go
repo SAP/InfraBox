@@ -736,6 +736,10 @@ func getExactClusterVersion(cr *v1alpha1.GKECluster, log *logrus.Entry) (string,
     }
 
     for _, c := range config.Channels {
+        if strings.ToLower(c.Channel) == "extended" {
+            // extended in not supported by --release-channel extended in current gcloud version
+            continue
+        }
         for _, v := range c.ValidVersions {
             if strings.HasPrefix(v, cr.Spec.ClusterVersion) {
                 return v, strings.ToLower(c.Channel), nil
