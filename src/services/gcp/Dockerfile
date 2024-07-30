@@ -12,7 +12,7 @@ ENV GO111MODULE=off
 RUN dep ensure
 RUN ./tmp/build/build.sh
 
-FROM alpine:3.7
+FROM alpine:3.19
 ENV CLOUD_SDK_VERSION 483.0.0
 
 ENV PATH /google-cloud-sdk/bin:$PATH
