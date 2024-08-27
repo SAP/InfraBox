@@ -641,7 +641,7 @@ class Archive(Resource):
             SELECT id
             FROM job
             WHERE id = %s
-            AND (state = 'running' OR end_date > NOW() - INTERVAL '5 minutes')
+            AND (state = 'running' OR end_date > NOW() - INTERVAL '15 minutes')
         ''', [job_id])
 
         if not j:
