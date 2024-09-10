@@ -9,7 +9,7 @@
                         </h3>
                     </md-card-header-text>
             </md-card-header>
-        <md-stepper @completed="addProject">
+        <md-stepper @completed="addProject" @change="stepperChange">
             <md-theme md-name="running">
                 <md-step :md-editable="true">
                     <h3>Select project type</h3>
@@ -56,9 +56,9 @@
                                     </md-table-row>
                                 </md-table-header>
                                 <md-table-body>
-                                    <md-table-row v-for="(r, index) of $store.state.user.githubRepos" :key="r.id">
+                                    <md-table-row v-for="(r, index) of $store.state.user.githubRepos.items" :key="r.id">
                                         <md-table-cell class="md-body-2">{{ r.name }}</md-table-cell>
-                                        <md-table-cell>{{ r.owner.login }}</md-table-cell>
+                                        <md-table-cell>{{ r.owner_login }}</md-table-cell>
                                         <md-table-cell>
                                             <i v-if="r.private" class="fa fa-fw fa-home fa-2x"></i>
                                             <i v-if="!r.private" class="fa fa-fw fa-globe fa-2x"></i>
@@ -72,6 +72,13 @@
                                     </md-table-row>
                                 </md-table-body>
                             </md-table>
+                            <ib-api-table-pagination
+                                :md-page-size.sync="size"
+                                :page="page"
+                                md-label="Projects"
+                                :nav-data="$store.state.user.githubRepos.nav"
+                                @pagination="onPagination"
+                            />
                         </md-table-card>
                     </div>
                 </md-step>
@@ -99,10 +106,14 @@
 import ProjectService from '../services/ProjectService'
 import UserService from '../services/UserService'
 import store from '../store'
+import ApiTablePagination from './utils/ApiTablePagination'
 
 export default {
     name: 'AddProject',
     store,
+    components: {
+        'ib-api-table-pagination': ApiTablePagination
+    },
     data: () => ({
         projName: '',
         nameValid: false,
@@ -110,11 +121,10 @@ export default {
         priv: true,
         githubRepo: null,
         invalidMessage: 'Name required',
-        selectRepo: false
+        selectRepo: false,
+        page: 1,
+        size: 50
     }),
-    created () {
-        UserService.loadRepos()
-    },
     watch: {
         projName () {
             if (this.projName.length < 3) {
@@ -141,11 +151,20 @@ export default {
 
             ProjectService.addProject(this.projName, this.priv, this.type, repoName)
         },
+        stepperChange (value) {
+            if (value === 1 && this.type === 'github') {
+                UserService.loadRepos(1, this.size)
+            }
+        },
         selectGithubRepo (r) {
             this.githubRepo = r
         },
         connectGithubAccount () {
             window.location.href = '/github/auth/connect'
+        },
+        onPagination (page) {
+            UserService.loadRepos(page, this.size)
+            this.page = parseInt(page)
         }
     }
 }
