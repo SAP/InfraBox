@@ -464,7 +464,7 @@ func collectLogs(c *RemoteCluster, cr *v1alpha1.GKECluster, log *logrus.Entry, s
 
     for {
         select {
-        case <-time.After(time.Minute * 5):
+        case <-time.After(time.Minute * 10):
             log.Infof("timeout collecting logs for %s", cr.Status.ClusterName)
             return
         case <-done:
