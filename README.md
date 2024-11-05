@@ -1,5 +1,4 @@
 # <img src="src\dashboard-client\static\logo_compact_transparent.png" width="200">
-[![Build Status](https://infraboxci.datahub.sapcloud.io/api/v1/projects/deb14c11-dcbe-41f0-ade8-9d26e87266c3/state.svg?branch=master)](https://infraboxci.datahub.sapcloud.io/dashboard/#/project/sap-infrabox)
 [![REUSE status](https://api.reuse.software/badge/github.com/SAP/InfraBox)](https://api.reuse.software/info/github.com/SAP/InfraBox)
 
 
