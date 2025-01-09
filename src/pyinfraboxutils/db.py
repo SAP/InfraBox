@@ -33,9 +33,15 @@ class DB(object):
 
     def execute_many(self, stmt, args=None):
         c = self.conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-        c.execute(stmt, args)
-        r = c.fetchall()
-        c.close()
+        try:
+            self.validate_args(args)
+            c.execute(stmt, args)
+            r = c.fetchall()
+        except psycopg2.Error as e:
+            logger.exception("Database error: %s", e)
+            raise
+        finally:
+            c.close()
         return r
 
     def execute_one_dict(self, stmt, args=None):
