@@ -35,7 +35,10 @@ class DB(object):
         c = self.conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
         try:
             self.validate_args(args)
-            c.execute(stmt, args)
+            if args is not None:
+                c.executemany(stmt, args)
+            else:
+                c.execute(stmt)
             r = c.fetchall()
         except psycopg2.Error as e:
             logger.exception("Database error: %s", e)
