@@ -8,27 +8,30 @@ RUN mkdir deps && \
     wget -O - https://static.rust-lang.org/dist/rust-nightly-$(apk --print-arch)-unknown-linux-musl.tar.gz | tar -C deps -z -x -f - && \
     sh /deps/rust-nightly-$(apk --print-arch)-unknown-linux-musl/install.sh --prefix=/usr && \
     rm -rf /deps
-RUN apk add --no-cache \
-    python3 \
-    python3-dev \
-    py3-jwt \
-    py3-pip \
-    py-requests \
-    py-crcmod \
-    g++ \
-    pv \
-    snappy-dev \
-    linux-headers \
-    libffi-dev \
-    gcc \
-    musl-dev \
-    openssl-dev \
-    curl \
-    bash \
-    libc6-compat \
-    git && \
-    pip3 install pynacl docker awscli pyyaml && \
-    pip3 install future python-snappy six
+RUN apk update && apk add --no-cache
+RUN apk add --no-cache python3
+RUN apk add --no-cache python3-dev
+RUN apk add --no-cache py3-jwt
+RUN apk add --no-cache py3-pip
+RUN apk add --no-cache py-requests
+RUN apk add --no-cache py-crcmod
+RUN apk add --no-cache g++
+RUN apk add --no-cache pv
+RUN apk add --no-cache snappy-dev
+RUN apk add --no-cache linux-headers
+RUN apk add --no-cache libffi-dev
+RUN apk add --no-cache gcc
+RUN apk add --no-cache musl-dev
+RUN apk add --no-cache openssl-dev
+RUN apk add --no-cache curl
+RUN apk add --no-cache bash
+RUN apk add --no-cache libc6-compat
+RUN apk add --no-cache git
+RUN pip3 install --upgrade pip setuptools wheel
+RUN pip3 install pynacl docker awscli pyyaml
+RUN pip3 install future
+RUN pip3 install python-snappy
+RUN pip3 install six
 ## Install openssh 8.3
 RUN sed -i 's/v3.15/v3.12/g' /etc/apk/repositories && \
     apk add --update openssh-client
