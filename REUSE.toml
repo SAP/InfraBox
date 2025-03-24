@@ -1,0 +1,15 @@
+version = 1
+SPDX-PackageName = "InfraBox"
+SPDX-PackageDownloadLocation = "https://github.com/sap/InfraBox"
+
+[[annotations]]
+path = "**"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2018-2020 SAP SE or an SAP affiliate company and InfraBox contributors"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = "src/services/aks/pkg/apis/azure/v1alpha1"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "Copyright The Kubernetes Authors."
+SPDX-License-Identifier = "Apache-2.0"
