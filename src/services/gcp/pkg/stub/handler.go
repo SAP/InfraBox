@@ -162,7 +162,7 @@ func createCluster(cr *v1alpha1.GKECluster, log *logrus.Entry) (*v1alpha1.GKEClu
 		args = append(args, "--enable-network-policy")
 	}
 
-	if cr.Spec.StackType && cr.Spec.StackType == "ipv4-ipv6" {
+	if cr.Spec.StackType == "ipv4-ipv6" {
 		args = append(args, "--network=gke-dualstack-network")
 		args = append(args, "--subnetwork=gke-dualstack-subnet")
 		args = append(args, "--stack-type=ipv4-ipv6")
