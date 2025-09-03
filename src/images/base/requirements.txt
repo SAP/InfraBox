@@ -24,3 +24,4 @@ MarkupSafe==0.23 # jinja2 2.11.3 did not pin MarkupSafe versions, will bring bre
 paramiko==2.12.0 # FIXME: can we update to 3.x?
 pycryptodome==3.6.6
 prometheus-client==0.9.0
+xmlsec
