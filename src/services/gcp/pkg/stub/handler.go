@@ -158,29 +158,21 @@ func createCluster(cr *v1alpha1.GKECluster, log *logrus.Entry) (*v1alpha1.GKEClu
 		args = append(args, cr.Spec.MachineType)
 	}
 
-	// if cr.Spec.EnableNetworkPolicy {
-	// 	args = append(args, "--enable-network-policy")
-	// }
-
-	args = append(args, "--network=gke-dualstack-network")
-	args = append(args, "--subnetwork=gke-dualstack-subnet")
-	args = append(args, "--stack-type=ipv4-ipv6")
-	args = append(args, "--enable-dataplane-v2")
-
-	// if cr.Spec.StackType == "ipv4-ipv6" {
-	// 	args = append(args, "--network=gke-dualstack-network")
-	// 	args = append(args, "--subnetwork=gke-dualstack-subnet")
-	// 	args = append(args, "--stack-type=ipv4-ipv6")
-	// 	args = append(args, "--enable-dataplane-v2")
-	// 	if cr.Spec.EnableNetworkPolicy {
-	// 		for i, v := range args {
-	// 			if v == "--enable-network-policy" {
-	// 				args = append(args[:i], args[i+1:]...)
-	// 				break
-	// 			}
-	// 		}
-	// 	}
-	// }
+	if cr.Spec.StackType != "" {
+		log.Infof("use stack type: %s", cr.Spec.StackType)
+		if cr.Spec.StackType == "ipv4-ipv6" {
+			args = append(args, "--network=gke-dualstack-network")
+			args = append(args, "--subnetwork=gke-dualstack-subnet")
+			args = append(args, "--stack-type=ipv4-ipv6")
+			args = append(args, "--enable-dataplane-v2")
+			log.Infof("enable dualstack network")
+		}
+	} else {
+		if cr.Spec.EnableNetworkPolicy {
+			args = append(args, "--enable-network-policy")
+		}
+		args = append(args, "--create-subnetwork", "")
+	}
 
 	if !cr.Spec.DisableLegacyAuthorization {
 		args = append(args, "--enable-legacy-authorization")
@@ -228,7 +220,6 @@ func createCluster(cr *v1alpha1.GKECluster, log *logrus.Entry) (*v1alpha1.GKEClu
 	}
 
 	args = append(args, "--enable-ip-alias")
-	// args = append(args, "--create-subnetwork", "")
 
 	if cr.Spec.ClusterCidr == "" {
 		cr.Spec.ClusterCidr = "/18"
