@@ -159,13 +159,12 @@ func createCluster(cr *v1alpha1.GKECluster, log *logrus.Entry) (*v1alpha1.GKEClu
 	}
 
 	if cr.Spec.StackType != "" {
-		log.Infof("use stack type: %s", cr.Spec.StackType)
 		if cr.Spec.StackType == "ipv4-ipv6" {
 			args = append(args, "--network=gke-dualstack-network")
 			args = append(args, "--subnetwork=gke-dualstack-subnet")
 			args = append(args, "--stack-type=ipv4-ipv6")
 			args = append(args, "--enable-dataplane-v2")
-			log.Infof("enable dualstack network")
+			log.Infof("enable stack type: %s", cr.Spec.StackType)
 		}
 	} else {
 		if cr.Spec.EnableNetworkPolicy {
