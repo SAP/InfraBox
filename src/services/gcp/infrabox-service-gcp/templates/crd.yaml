@@ -52,6 +52,8 @@ spec:
                   type: string
                 enableManagedPrometheus:
                   type: boolean
+                stackType:
+                  type: string
             status:
               x-kubernetes-preserve-unknown-fields: true
   names:

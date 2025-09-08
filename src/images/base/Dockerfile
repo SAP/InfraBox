@@ -1,8 +1,4 @@
-# buster (10) is the last version to support Python 2.
-# bullseye (11) although does have a Python 2 interpreter,
-# almost *all* Python 2 packages, however, have been removed from bullseye
-# and bookworm (12) does not ship Python 2 at all
-FROM debian:buster-slim
+FROM debian:bullseye-slim
 
 # gcc and python3-dev are necessary to build some wheels
 # netbase offer /etc/protocols which is used by `getprotobyname` syscall
@@ -12,12 +8,15 @@ RUN apt-get update -y \
         python3-dev \
         netbase \
         curl \
-	    libpq-dev \
+        libpq-dev \
         python3 \
         python3-pip \
         python3-ldap \
         libxml2-dev \
         libxmlsec1-dev \
+        xmlsec1 \
+        pkg-config \
+        libxmlsec1-openssl \
         openssh-client \
         inotify-tools \
     && apt-get autoremove -y \
