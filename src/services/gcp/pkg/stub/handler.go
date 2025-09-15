@@ -2,11 +2,13 @@ package stub
 
 import (
 	"bytes"
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	b64 "encoding/base64"
 	"encoding/json"
 	"fmt"
+	"golang.org/x/sync/semaphore"
 	"io/ioutil"
 	"mime/multipart"
 	"net/http"
@@ -15,6 +17,7 @@ import (
 	"path"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	uuid "github.com/satori/go.uuid"
@@ -1111,6 +1114,13 @@ func retrieveLogs(cr *v1alpha1.GKECluster, cluster *RemoteCluster, log *logrus.E
 	log.Infof("Collecting data from GKE cluster %s", cluster.Name)
 	defer close(done)
 
+	parallelLogPulls := 1
+	if n, err := strconv.Atoi(os.Getenv("INFRABOX_PARALLEL_LOG_PULL")); err == nil {
+		if n > 0 && n < 10 {
+			parallelLogPulls = n
+		}
+	}
+
 	annotations := cr.GetAnnotations()
 	_, ok := annotations["infrabox.net/root-url"]
 	if !ok {
@@ -1144,23 +1154,40 @@ func retrieveLogs(cr *v1alpha1.GKECluster, cluster *RemoteCluster, log *logrus.E
 		return
 	}
 
+	// Do log collection in parallel, up to parallelLogPulls concurrent goroutines.
+	wg := sync.WaitGroup{}
+	sem := semaphore.NewWeighted(int64(parallelLogPulls))
 	for _, pod := range pods {
+		pod := pod // necessary before Go1.22 I think that changed this behavior.
 		for _, container := range pod.Containers {
-			log.Debug("Collecting logs for pod: ", pod.PodID)
-			data, err := doCollectorRequest(cluster, log, "/api/pods/"+pod.PodID+"/log/"+container)
+			container := container
+			err := sem.Acquire(context.Background(), 1)
 			if err != nil {
-				log.Warningf("Failed to get collected pod logs: %v", err)
-				continue
+				log.Errorf("Failed to get collected pod list, cannot acquire semaphore: %v", err)
+				return
 			}
 
-			filename := "pod_" + pod.Namespace + "_" + pod.Pod + "_" + container + ".txt"
-			filename = path.Join(logPath, filename)
-			if err := ioutil.WriteFile(filename, *data, os.ModePerm); err != nil {
-				log.Debugf("Failed to write pod logs: %v", err)
-				continue
-			}
+			wg.Add(1)
+			go func() {
+				defer sem.Release(1)
+				defer wg.Done()
+
+				log.Debug("Collecting logs for pod: ", pod.PodID)
+				data, err := doCollectorRequest(cluster, log, "/api/pods/"+pod.PodID+"/log/"+container)
+				if err != nil {
+					log.Warningf("Failed to get collected pod logs: %v", err)
+					return
+				}
+				filename := "pod_" + pod.Namespace + "_" + pod.Pod + "_" + container + ".txt"
+				filename = path.Join(logPath, filename)
+				if err := ioutil.WriteFile(filename, *data, os.ModePerm); err != nil {
+					log.Debugf("Failed to write pod logs: %v", err)
+					return
+				}
+			}()
 		}
 	}
+	wg.Wait()
 
 	archivePath := path.Join(logPath, "pods_log.zip")
 	err = archiver.Archive([]string{logPath}, archivePath)
