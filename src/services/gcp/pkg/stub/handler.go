@@ -8,7 +8,6 @@ import (
 	b64 "encoding/base64"
 	"encoding/json"
 	"fmt"
-	"golang.org/x/sync/semaphore"
 	"io/ioutil"
 	"mime/multipart"
 	"net/http"
@@ -19,6 +18,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"golang.org/x/sync/semaphore"
 
 	uuid "github.com/satori/go.uuid"
 
@@ -1119,6 +1120,7 @@ func retrieveLogs(cr *v1alpha1.GKECluster, cluster *RemoteCluster, log *logrus.E
 		if n > 0 && n < 10 {
 			parallelLogPulls = n
 		}
+		log.Infof("Setting parallel log pulls for log collection: %d", parallelLogPulls)
 	}
 
 	annotations := cr.GetAnnotations()
