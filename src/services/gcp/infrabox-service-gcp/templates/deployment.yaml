@@ -52,6 +52,8 @@ spec:
             value: {{ .Values.allow_ips | quote }}
           - name: GC_ENABLED
             value: {{ .Values.gc_enabled | quote }}
+          - name: INFRABOX_PARALLEL_LOG_PULL
+            value: {{ .Values.infrabox_parallel_log_pull | quote }}
           {{ if .Values.gc_enabled }}
           - name: GC_CLUSTER_MAX_AGE
             value: {{ .Values.gc_cluster_max_age | quote }}

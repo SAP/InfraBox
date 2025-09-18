@@ -23,3 +23,5 @@ gc_interval: 3600
 log_level: info
 
 allow_ips:
+
+infrabox_parallel_log_pull: 2
