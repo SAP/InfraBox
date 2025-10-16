@@ -76,18 +76,22 @@ def generate_batch_token(url, temp_token, policies=None, ttl="1h"):
         "policies": policies,
         "ttl": ttl
     }
+    try:
+        for i in range(0, 10):
+            res = requests.post(url=url, data=batch_payload, headers={"X-Vault-Token": temp_token}, verify=False)
+            if res.status_code == 200:
+                json_res = json.loads(res.content)
+                token = json_res['auth']['client_token']
+                return token
+            time.sleep(5)
+        msg = "Getting batch token from Vault failed even tried 10 times, url is {}, API response is {}:{}".format(
+            url, res.status_code, res.text)
+        logger.info(msg)
+        return None
+    except Exception as e:
+        logger.info("Exception when getting batch token from Vault: {}".format(e))
+        return None
 
-    for i in range(0, 10):
-        res = requests.post(url=url, data=batch_payload, headers={"X-Vault-Token": temp_token}, verify=False)
-        if res.status_code == 200:
-            json_res = json.loads(res.content)
-            token = json_res['auth']['client_token']
-            return token
-        time.sleep(5)
-    msg = "Getting batch token from Vault error even tried 10 times, url is {}, API response is {}:{}".format(
-        url, res.status_code, res.text)
-    logger.info(msg)
-    return None
 
 
 def get_value_from_vault(url, token, secret_key, verify):
