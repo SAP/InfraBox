@@ -1,3 +1,6 @@
+import eventlet
+eventlet.monkey_patch()
+
 import unittest
 import json
 import base64

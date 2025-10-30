@@ -7,6 +7,9 @@ import json
 from flask import Flask, request, send_from_directory, abort, Response
 from flask_restx import Resource, Api
 
+import eventlet
+eventlet.monkey_patch()
+
 from pyinfraboxutils import get_logger
 
 logger = get_logger('api')
