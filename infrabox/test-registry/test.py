@@ -2,9 +2,6 @@ import os
 import base64
 from unittest import TestCase
 
-import eventlet
-eventlet.monkey_patch()
-
 import psycopg2
 import psycopg2.extensions
 import requests
