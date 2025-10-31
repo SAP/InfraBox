@@ -6,7 +6,7 @@ azure-storage==0.36.0
 bcrypt==3.1.7
 boto3==1.16.25
 croniter==0.3.36
-eventlet==0.30.0
+eventlet==0.31.0
 Flask==1.1.4
 flask-restx==0.2.0
 Flask-SocketIO==4.3.2
