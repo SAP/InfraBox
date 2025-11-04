@@ -6,7 +6,7 @@ azure-storage==0.36.0
 bcrypt==3.1.7
 boto3==1.16.25
 croniter==0.3.36
-eventlet==0.31.0
+eventlet==0.29.1
 Flask==1.1.4
 flask-restx==0.2.0
 Flask-SocketIO==4.3.2
@@ -22,6 +22,6 @@ python-swiftclient==3.13.1
 requests==2.31.0
 MarkupSafe==0.23 # jinja2 2.11.3 did not pin MarkupSafe versions, will bring breaking changes
 paramiko==2.12.0 # FIXME: can we update to 3.x?
-pycryptodome==3.6.6
+pycryptodome==3.19.0
 prometheus-client==0.9.0
 xmlsec
