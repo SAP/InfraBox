@@ -43,70 +43,91 @@ def delete_file(path):
         except Exception as error:
             logger.warning("Failed to delete file: %s", error)
 
-
-def get_token_by_app_role(app_role_url, role_id, secret_id):
-    app_role = {'role_id': role_id, 'secret_id': secret_id}
-    json_data = json.dumps(app_role)
-    for i in range(0, 10):
-        res = requests.post(url=app_role_url, data=json_data, verify=False)
+class Vault():
+    def __init__(self, base_url, namespace, role_id, secret_id):
+        self.base_url = base_url
+        self.namespace = namespace
+        self.role_id = role_id
+        self.secret_id = secret_id
+        self.token = None
+    
+    def get_token_by_app_role(self):
+        if self.token and self.is_token_valid(self.token):
+            return self.token
+        app_role = {'role_id': self.role_id, 'secret_id': self.secret_id}
+        app_role_url = self.base_url + '/v1/' + self.namespace + '/auth/approle/login' if self.namespace else self.base_url + '/v1/auth/approle/login'
+        json_data = json.dumps(app_role)
+        for i in range(0, 10):
+            res = requests.post(url=app_role_url, data=json_data, verify=False)
         if res.status_code == 200:
             json_res = json.loads(res.content)
-            token = json_res['auth']['client_token']
-            return token
+            self.token = json_res['auth']['client_token']
+            return self.token
         time.sleep(5)
-    err_msg = "Getting token from Vault error even tried 10 times, url is {}, API response is {}:{}".format(app_role_url, res.status_code, res.text)
-    abort(400, err_msg)
+        err_msg = "Getting token from Vault error even tried 10 times, url is {}, API response is {}:{}".format(app_role_url, res.status_code, res.text)
+        abort(400, err_msg)
 
-
-def generate_batch_token(url, temp_token, policies=None, ttl="1h"):
-    """
-    Generate a batch token using AppRole credentials.
-    :param url: The Vault endpoint to create the batch token.
-    :param temp_token: A service token generated when logging in with AppRole.
-    :param policies: List of policies to attach to the batch token.
-    :param ttl: Time-to-live for the batch token.
-    :return: The generated batch token.
-    """
-
-    if policies is None:
-        policies = ["default"]
-
-    batch_payload = {
-        "type": "batch",
-        "policies": policies,
-        "ttl": ttl
-    }
-    try:
-        for i in range(0, 10):
-            res = requests.post(url=url, data=batch_payload, headers={"X-Vault-Token": temp_token}, verify=False)
+    def is_token_valid(self, token):
+        """Return True if the provided token is valid according to Vault's lookup-self endpoint."""
+        if not token:
+            return False
+        try:
+            lookup_url = self.base_url + 'v1/' + self.namespace + '/auth/token/lookup-self'
+            res = requests.get(url=lookup_url, headers={"X-Vault-Token": token}, verify=False)
             if res.status_code == 200:
-                json_res = json.loads(res.content)
-                token = json_res['auth']['client_token']
-                return token
+                return True
+            return False
+        except Exception as e:
+            self.logger.debug("Token validation failed: %s", str(e))
+            return False
+
+    def generate_batch_token(self, service_token, policies=None, ttl="1h"):
+        """
+        Generate a batch token using AppRole credentials.
+        :param service_token: A service token generated when logging in with AppRole.
+        :param policies: List of policies to attach to the batch token.
+        :param ttl: Time-to-live for the batch token.
+        :return: The generated batch token.
+        """
+
+        if policies is None:
+            policies = ["default"]
+
+        batch_payload = {
+            "type": "batch",
+            "policies": policies,
+            "ttl": ttl
+        }
+        url = self.base_url + '/v1/' + self.namespace + '/auth/token/create' if self.namespace else self.base_url + '/v1/auth/token/create'
+        try:
+            for i in range(0, 10):
+                res = requests.post(url=url, data=batch_payload, headers={"X-Vault-Token": service_token}, verify=False)
+                if res.status_code == 200:
+                    json_res = json.loads(res.content)
+                    token = json_res['auth']['client_token']
+                    return token
+                time.sleep(5)
+            msg = "Getting batch token from Vault failed even tried 10 times, url is {}, API response is {}:{}".format(
+                url, res.status_code, res.text)
+            logger.info(msg)
+            return None
+        except Exception as e:
+            logger.info("Exception when getting batch token from Vault: {}".format(e))
+            return None
+
+    def get_value_from_vault(url, token, secret_key, verify):
+        for i in range(0, 10):
+            response = requests.get(url=url, headers={'X-Vault-Token': token}, verify=verify)
+            if response.status_code == 200:
+                json_res = json.loads(response.content)
+                if json_res['data'].get('data') and isinstance(json_res['data'].get('data'), dict):
+                    value = json_res['data'].get('data').get(secret_key)
+                else:
+                    value = json_res['data'].get(secret_key)
+                return value
             time.sleep(5)
-        msg = "Getting batch token from Vault failed even tried 10 times, url is {}, API response is {}:{}".format(
-            url, res.status_code, res.text)
-        logger.info(msg)
-        return None
-    except Exception as e:
-        logger.info("Exception when getting batch token from Vault: {}".format(e))
-        return None
-
-
-
-def get_value_from_vault(url, token, secret_key, verify):
-    for i in range(0, 10):
-        response = requests.get(url=url, headers={'X-Vault-Token': token}, verify=verify)
-        if response.status_code == 200:
-            json_res = json.loads(response.content)
-            if json_res['data'].get('data') and isinstance(json_res['data'].get('data'), dict):
-                value = json_res['data'].get('data').get(secret_key)
-            else:
-                value = json_res['data'].get(secret_key)
-            return value
-        time.sleep(5)
-    err_msg = "Getting value from Vault error even tried 10 times, url is {}, API response is {}:{}".format(url, response.status_code, response.text)
-    abort(400, err_msg)
+        err_msg = "Getting value from Vault error even tried 10 times, url is {}, API response is {}:{}".format(url, response.status_code, response.text)
+        abort(400, err_msg)
 
 
 @api.route("/api/job/job", doc=False)
@@ -361,10 +382,9 @@ class Job(Resource):
                 if validate_res == 'token':
                     logger.info('validate way is token')
                 elif validate_res == 'appRole':
-                    app_role_url = result[0] + '/v1/' + namespace + '/auth/approle/login' if namespace else result[0] + '/v1/auth/approle/login'
-                    token = get_token_by_app_role(app_role_url, role_id, secret_id)
-                    batch_token_url = result[0] + '/v1/' + namespace + '/auth/token/create' if namespace else result[0] + '/v1/auth/token/create'
-                    batch_token = generate_batch_token(batch_token_url, token)
+                    vault = Vault(url, namespace, role_id, secret_id)
+                    token = vault.get_token_by_app_role()
+                    batch_token = vault.generate_batch_token(token)
                     if batch_token:
                         token = batch_token
                 else:
