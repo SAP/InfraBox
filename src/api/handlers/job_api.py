@@ -50,9 +50,11 @@ class Vault():
         self.role_id = role_id
         self.secret_id = secret_id
         self.token = None
+        self.policies = None
     
     def get_token_by_app_role(self):
-        if self.token and self.is_token_valid(self.token):
+        self.policies = self.get_policies(self.token)
+        if self.token and self.policies:
             return self.token
         app_role = {'role_id': self.role_id, 'secret_id': self.secret_id}
         app_role_url = self.base_url + '/v1/' + self.namespace + '/auth/approle/login' if self.namespace else self.base_url + '/v1/auth/approle/login'
@@ -62,26 +64,29 @@ class Vault():
         if res.status_code == 200:
             json_res = json.loads(res.content)
             self.token = json_res['auth']['client_token']
+            self.policies = self.get_policies(self.token)
             return self.token
         time.sleep(5)
         err_msg = "Getting token from Vault error even tried 10 times, url is {}, API response is {}:{}".format(app_role_url, res.status_code, res.text)
         abort(400, err_msg)
 
-    def is_token_valid(self, token):
-        """Return True if the provided token is valid according to Vault's lookup-self endpoint."""
+    def get_policies(self, token):
+        """Return the policies associated with the provided token."""
         if not token:
-            return False
+            return None
         try:
-            lookup_url = self.base_url + 'v1/' + self.namespace + '/auth/token/lookup-self'
+            lookup_url = self.base_url + 'v1/' + self.namespace + '/auth/token/lookup-self' if self.namespace else self.base_url + 'v1/auth/token/lookup-self'
             res = requests.get(url=lookup_url, headers={"X-Vault-Token": token}, verify=False)
             if res.status_code == 200:
-                return True
-            return False
+                json_res = json.loads(res.content)
+                policies = json_res['data']['policies']
+                return policies
+            return None
         except Exception as e:
             self.logger.debug("Token validation failed: %s", str(e))
-            return False
+            return None
 
-    def generate_batch_token(self, service_token, policies=None, ttl="1h"):
+    def generate_batch_token(self, service_token, ttl="1h"):
         """
         Generate a batch token using AppRole credentials.
         :param service_token: A service token generated when logging in with AppRole.
@@ -89,13 +94,12 @@ class Vault():
         :param ttl: Time-to-live for the batch token.
         :return: The generated batch token.
         """
-
-        if policies is None:
-            policies = ["default"]
+        if self.policies is None:
+            self.policies = self.get_policies(service_token)
 
         batch_payload = {
             "type": "batch",
-            "policies": policies,
+            "policies": self.policies or ['default'],
             "ttl": ttl
         }
         url = self.base_url + '/v1/' + self.namespace + '/auth/token/create' if self.namespace else self.base_url + '/v1/auth/token/create'
@@ -115,7 +119,19 @@ class Vault():
             logger.info("Exception when getting batch token from Vault: {}".format(e))
             return None
 
-    def get_value_from_vault(url, token, secret_key, verify):
+    def _get_api_url(self):
+        url = self.base_url
+        if not self.namespace:
+            self.namespace = ''
+        if self.version == 'v1':
+            url += '/v1/' + self.namespace + '/' + self.secret_path if self.namespace else '/v1/' + self.secret_path
+        elif self.version == 'v2':
+            paths = self.secret_path.split('/')
+            url += '/v1/' + self.namespace + '/' + paths[0] + '/data/' + '/'.join(paths[1:]) if self.namespace else '/v1/' + paths[0] + '/data/' + '/'.join(paths[1:])
+        return url
+
+    def get_value_from_vault(self, token, secret_key, verify):
+        url = self._get_api_url()
         for i in range(0, 10):
             response = requests.get(url=url, headers={'X-Vault-Token': token}, verify=verify)
             if response.status_code == 200:
@@ -370,19 +386,13 @@ class Job(Resource):
                     abort(400, "Cannot get Vault '%s' in project '%s' " % (vault_name, data['project']['id']))
 
                 url, version, token, ca, namespace, role_id, secret_id = result[0], result[1], result[2], result[3], result[4], result[5], result[6]
-                if not namespace:
-                    namespace = ''
-                if version == 'v1':
-                    url += '/v1/' + namespace + '/' + secret_path if namespace else '/v1/' + secret_path
-                elif version == 'v2':
-                    paths = secret_path.split('/')
-                    url += '/v1/' + namespace + '/' + paths[0] + '/data/' + '/'.join(paths[1:]) if namespace else '/v1/' + paths[0] + '/data/' + '/'.join(paths[1:])
                 # choose validate way
                 validate_res = get_auth_type(result)
+                vault = Vault(url, namespace, role_id, secret_id)
                 if validate_res == 'token':
                     logger.info('validate way is token')
                 elif validate_res == 'appRole':
-                    vault = Vault(url, namespace, role_id, secret_id)
+                    logger.info('validate way is appRole') 
                     token = vault.get_token_by_app_role()
                     batch_token = vault.generate_batch_token(token)
                     if batch_token:
@@ -391,12 +401,12 @@ class Job(Resource):
                     abort(400, "Validate way is '%s' ! result is '%s' " % (validate_res, result))
 
                 if not ca:
-                    return get_value_from_vault(url, token, secret_key, False)
+                    return vault.get_value_from_vault(token, secret_key, False)
                 else:
                     with tempfile.NamedTemporaryFile(delete=False) as f:
                         f.write(ca)
                         f.flush()  # ensure all data written
-                    return get_value_from_vault(url, token, secret_key, f.name)
+                    return vault.get_value_from_vault(token, secret_key, f.name)
             else:
                 if is_fork:
                     abort(400, 'Access to secret %s is not allowed from a fork' % name)
