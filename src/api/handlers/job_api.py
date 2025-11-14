@@ -69,7 +69,8 @@ class Vault():
                 return self.token
             time.sleep(5)
         err_msg = "Getting token from Vault error even tried 10 times, url is {}, API response is {}:{}".format(app_role_url, res.status_code, res.text)
-        abort(400, err_msg)
+        raise Exception(err_msg)
+        # abort(400, err_msg)
 
     def get_policies(self, token):
         """Return the policies associated with the provided token."""
@@ -116,9 +117,11 @@ class Vault():
             msg = "Getting batch token from Vault failed even tried 10 times, url is {}, API response is {}:{}".format(
                 url, res.status_code, res.text)
             logger.info(msg)
+            raise Exception(msg)
             return None
         except Exception as e:
             logger.info("Exception when getting batch token from Vault: {}".format(e))
+            raise e
             return None
 
     def _get_api_url(self, secret_path):
@@ -145,7 +148,8 @@ class Vault():
                 return value
             time.sleep(5)
         err_msg = "Getting value from Vault error even tried 10 times, url is {}, API response is {}:{}".format(url, response.status_code, response.text)
-        abort(400, err_msg)
+        # abort(400, err_msg)
+        raise Exception(err_msg)
 
 
 @api.route("/api/job/job", doc=False)
@@ -390,19 +394,24 @@ class Job(Resource):
                 url, version, token, ca, namespace, role_id, secret_id = result[0], result[1], result[2], result[3], result[4], result[5], result[6]
                 # choose validate way
                 validate_res = get_auth_type(result)
+                logger.info("start to get secret from vault")
                 vault = Vault(url, namespace, version, role_id, secret_id)
                 if validate_res == 'token':
                     logger.info('validate way is token')
                 elif validate_res == 'appRole':
                     logger.info('validate way is appRole') 
                     token = vault.get_token_by_app_role()
+                    logger.info('get_token_by_app_role %s' % token)
                     batch_token = vault.generate_batch_token(token)
+                    logger.info('generate_batch_token %s' % batch_token)
                     if batch_token:
                         token = batch_token
                 else:
                     abort(400, "Validate way is '%s' ! result is '%s' " % (validate_res, result))
 
                 if not ca:
+                    logger.info('get_value_from_vault %s %s %s' % (token, secret_path, secret_key))
+                    logger.info('get_value_from_vault %s' % vault.get_value_from_vault)
                     return vault.get_value_from_vault(token, secret_path, secret_key, False)
                 else:
                     with tempfile.NamedTemporaryFile(delete=False) as f:
