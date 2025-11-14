@@ -389,7 +389,8 @@ class Job(Resource):
                 """, [vault_name, data['project']['id']])
 
                 if not result:
-                    abort(400, "Cannot get Vault '%s' in project '%s' " % (vault_name, data['project']['id']))
+                    raise Exception("Cannot get Vault '%s' in project '%s' " % (vault_name, data['project']['id']))
+                    # abort(400, "Cannot get Vault '%s' in project '%s' " % (vault_name, data['project']['id']))
 
                 url, version, token, ca, namespace, role_id, secret_id = result[0], result[1], result[2], result[3], result[4], result[5], result[6]
                 # choose validate way
