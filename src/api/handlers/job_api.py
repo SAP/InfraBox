@@ -117,11 +117,9 @@ class Vault():
             msg = "Getting batch token from Vault failed even tried 10 times, url is {}, API response is {}:{}".format(
                 url, res.status_code, res.text)
             logger.info(msg)
-            raise Exception(msg)
             return None
         except Exception as e:
             logger.info("Exception when getting batch token from Vault: {}".format(e))
-            raise e
             return None
 
     def _get_api_url(self, secret_path):
@@ -412,7 +410,7 @@ class Job(Resource):
 
                 if not ca:
                     logger.info('get_value_from_vault %s %s %s' % (token, secret_path, secret_key))
-                    logger.info('get_value_from_vault %s' % vault.get_value_from_vault)
+                    logger.info('get_value_from_vault %s' % vault.get_value_from_vault(token, secret_path, secret_key, False))
                     return vault.get_value_from_vault(token, secret_path, secret_key, False)
                 else:
                     with tempfile.NamedTemporaryFile(delete=False) as f:
