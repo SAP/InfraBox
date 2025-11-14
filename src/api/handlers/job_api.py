@@ -52,7 +52,7 @@ class Vault():
         self.secret_id = secret_id
         self.token = None
         self.policies = None
-    
+
     def get_token_by_app_role(self):
         self.policies = self.get_policies(self.token)
         if self.token and self.policies:
@@ -76,7 +76,7 @@ class Vault():
         if not token:
             return None
         try:
-            lookup_url = self.base_url + 'v1/' + self.namespace + '/auth/token/lookup-self' if self.namespace else self.base_url + 'v1/auth/token/lookup-self'
+            lookup_url = self.base_url + '/v1/' + self.namespace + '/auth/token/lookup-self' if self.namespace else self.base_url + 'v1/auth/token/lookup-self'
             res = requests.get(url=lookup_url, headers={"X-Vault-Token": token}, verify=False)
             if res.status_code == 200:
                 json_res = json.loads(res.content)
@@ -91,12 +91,13 @@ class Vault():
         """
         Generate a batch token using AppRole credentials.
         :param service_token: A service token generated when logging in with AppRole.
-        :param policies: List of policies to attach to the batch token.
         :param ttl: Time-to-live for the batch token.
         :return: The generated batch token.
         """
         if self.policies is None:
             self.policies = self.get_policies(service_token)
+        if 'token-creator' in self.policies:
+            self.policies.remove('token-creator')
 
         batch_payload = {
             "type": "batch",
@@ -106,7 +107,7 @@ class Vault():
         url = self.base_url + '/v1/' + self.namespace + '/auth/token/create' if self.namespace else self.base_url + '/v1/auth/token/create'
         try:
             for i in range(0, 10):
-                res = requests.post(url=url, data=batch_payload, headers={"X-Vault-Token": service_token}, verify=False)
+                res = requests.post(url=url, json=batch_payload, headers={"X-Vault-Token": service_token}, verify=False)
                 if res.status_code == 200:
                     json_res = json.loads(res.content)
                     token = json_res['auth']['client_token']
