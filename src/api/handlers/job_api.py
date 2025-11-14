@@ -44,9 +44,10 @@ def delete_file(path):
             logger.warning("Failed to delete file: %s", error)
 
 class Vault():
-    def __init__(self, base_url, namespace, role_id, secret_id):
+    def __init__(self, base_url, namespace, version, role_id, secret_id):
         self.base_url = base_url
         self.namespace = namespace
+        self.version = version
         self.role_id = role_id
         self.secret_id = secret_id
         self.token = None
@@ -61,12 +62,12 @@ class Vault():
         json_data = json.dumps(app_role)
         for i in range(0, 10):
             res = requests.post(url=app_role_url, data=json_data, verify=False)
-        if res.status_code == 200:
-            json_res = json.loads(res.content)
-            self.token = json_res['auth']['client_token']
-            self.policies = self.get_policies(self.token)
-            return self.token
-        time.sleep(5)
+            if res.status_code == 200:
+                json_res = json.loads(res.content)
+                self.token = json_res['auth']['client_token']
+                self.policies = self.get_policies(self.token)
+                return self.token
+            time.sleep(5)
         err_msg = "Getting token from Vault error even tried 10 times, url is {}, API response is {}:{}".format(app_role_url, res.status_code, res.text)
         abort(400, err_msg)
 
@@ -83,7 +84,7 @@ class Vault():
                 return policies
             return None
         except Exception as e:
-            self.logger.debug("Token validation failed: %s", str(e))
+            logger.debug("Token validation failed: %s", str(e))
             return None
 
     def generate_batch_token(self, service_token, ttl="1h"):
@@ -119,19 +120,19 @@ class Vault():
             logger.info("Exception when getting batch token from Vault: {}".format(e))
             return None
 
-    def _get_api_url(self):
+    def _get_api_url(self, secret_path):
         url = self.base_url
         if not self.namespace:
             self.namespace = ''
         if self.version == 'v1':
-            url += '/v1/' + self.namespace + '/' + self.secret_path if self.namespace else '/v1/' + self.secret_path
+            url += '/v1/' + self.namespace + '/' + secret_path if self.namespace else '/v1/' + secret_path
         elif self.version == 'v2':
-            paths = self.secret_path.split('/')
+            paths = secret_path.split('/')
             url += '/v1/' + self.namespace + '/' + paths[0] + '/data/' + '/'.join(paths[1:]) if self.namespace else '/v1/' + paths[0] + '/data/' + '/'.join(paths[1:])
         return url
 
-    def get_value_from_vault(self, token, secret_key, verify):
-        url = self._get_api_url()
+    def get_value_from_vault(self, token, secret_path, secret_key, verify):
+        url = self._get_api_url(secret_path)
         for i in range(0, 10):
             response = requests.get(url=url, headers={'X-Vault-Token': token}, verify=verify)
             if response.status_code == 200:
@@ -388,7 +389,7 @@ class Job(Resource):
                 url, version, token, ca, namespace, role_id, secret_id = result[0], result[1], result[2], result[3], result[4], result[5], result[6]
                 # choose validate way
                 validate_res = get_auth_type(result)
-                vault = Vault(url, namespace, role_id, secret_id)
+                vault = Vault(url, namespace, version, role_id, secret_id)
                 if validate_res == 'token':
                     logger.info('validate way is token')
                 elif validate_res == 'appRole':
@@ -401,12 +402,12 @@ class Job(Resource):
                     abort(400, "Validate way is '%s' ! result is '%s' " % (validate_res, result))
 
                 if not ca:
-                    return vault.get_value_from_vault(token, secret_key, False)
+                    return vault.get_value_from_vault(token, secret_path, secret_key, False)
                 else:
                     with tempfile.NamedTemporaryFile(delete=False) as f:
                         f.write(ca)
                         f.flush()  # ensure all data written
-                    return vault.get_value_from_vault(token, secret_key, f.name)
+                    return vault.get_value_from_vault(token, secret_path, secret_key, f.name)
             else:
                 if is_fork:
                     abort(400, 'Access to secret %s is not allowed from a fork' % name)
