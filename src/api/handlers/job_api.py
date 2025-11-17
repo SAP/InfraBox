@@ -113,6 +113,9 @@ class Vault():
                     json_res = json.loads(res.content)
                     token = json_res['auth']['client_token']
                     return token
+                elif res.status_code == 403:
+                    logger.info("Getting batch token from Vault forbidden: {}".format(res.text))
+                    return None
                 time.sleep(5)
             msg = "Getting batch token from Vault failed even tried 10 times, url is {}, API response is {}:{}".format(
                 url, res.status_code, res.text)
@@ -136,17 +139,31 @@ class Vault():
     def get_value_from_vault(self, token, secret_path, secret_key, verify):
         url = self._get_api_url(secret_path)
         for i in range(0, 10):
-            response = requests.get(url=url, headers={'X-Vault-Token': token}, verify=verify)
+            response = requests.get(url=url, headers={'X-Vault-Token': token}, verify=verify, timeout=30)
             if response.status_code == 200:
-                json_res = json.loads(response.content)
-                if json_res['data'].get('data') and isinstance(json_res['data'].get('data'), dict):
-                    value = json_res['data'].get('data').get(secret_key)
+                body = response.content
+                if not body:
+                    logger.debug('Empty body from Vault for url %s (attempt %d)', url, i)
+                    time.sleep(5)
+                    continue
+                try:
+                    json_res = json.loads(body)
+                except Exception:
+                    logger.info('Non-JSON response from Vault at %s (attempt %d): %s', url, i, body)
+                    time.sleep(5)
+                    continue
+
+                data_field = json_res.get('data', {})
+                if isinstance(data_field, dict) and data_field.get('data') and isinstance(data_field.get('data'), dict):
+                    value = data_field.get('data').get(secret_key)
                 else:
-                    value = json_res['data'].get(secret_key)
+                    value = data_field.get(secret_key)
                 return value
+
+            logger.debug('Vault returned status %s for %s (attempt %d)', response.status_code, url, i)
             time.sleep(5)
-        err_msg = "Getting value from Vault error even tried 10 times, url is {}, API response is {}:{}".format(url, response.status_code, response.text)
-        # abort(400, err_msg)
+
+        err_msg = "Getting value from Vault error even tried 10 times, url is {}, API response is {}:{}".format(url, getattr(response, 'status_code', None), getattr(response, 'text', None))
         raise Exception(err_msg)
 
 
