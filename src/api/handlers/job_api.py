@@ -61,7 +61,7 @@ class Vault():
         app_role_url = self.base_url + '/v1/' + self.namespace + '/auth/approle/login' if self.namespace else self.base_url + '/v1/auth/approle/login'
         json_data = json.dumps(app_role)
         for i in range(0, 10):
-            res = requests.post(url=app_role_url, data=json_data, verify=False, timeout=30)
+            res = requests.post(url=app_role_url, data=json_data, verify=False)
             if res.status_code == 200:
                 json_res = json.loads(res.content)
                 self.token = json_res['auth']['client_token']
@@ -77,8 +77,8 @@ class Vault():
         if not token:
             return None
         try:
-            lookup_url = self.base_url + '/v1/' + self.namespace + '/auth/token/lookup-self' if self.namespace else self.base_url + '/v1/auth/token/lookup-self'
-            res = requests.get(url=lookup_url, headers={"X-Vault-Token": token}, verify=False, timeout=30)
+            lookup_url = self.base_url + '/v1/' + self.namespace + '/auth/token/lookup-self' if self.namespace else self.base_url + 'v1/auth/token/lookup-self'
+            res = requests.get(url=lookup_url, headers={"X-Vault-Token": token}, verify=False)
             if res.status_code == 200:
                 json_res = json.loads(res.content)
                 policies = json_res['data']['policies']
@@ -108,7 +108,7 @@ class Vault():
         url = self.base_url + '/v1/' + self.namespace + '/auth/token/create' if self.namespace else self.base_url + '/v1/auth/token/create'
         try:
             for i in range(0, 10):
-                res = requests.post(url=url, json=batch_payload, headers={"X-Vault-Token": service_token}, verify=False, timeout=30)
+                res = requests.post(url=url, json=batch_payload, headers={"X-Vault-Token": service_token}, verify=False)
                 if res.status_code == 200:
                     json_res = json.loads(res.content)
                     token = json_res['auth']['client_token']
@@ -136,7 +136,7 @@ class Vault():
     def get_value_from_vault(self, token, secret_path, secret_key, verify):
         url = self._get_api_url(secret_path)
         for i in range(0, 10):
-            response = requests.get(url=url, headers={'X-Vault-Token': token}, verify=verify, timeout=30)
+            response = requests.get(url=url, headers={'X-Vault-Token': token}, verify=verify)
             if response.status_code == 200:
                 json_res = json.loads(response.content)
                 if json_res['data'].get('data') and isinstance(json_res['data'].get('data'), dict):
@@ -410,7 +410,6 @@ class Job(Resource):
 
                 if not ca:
                     logger.info('get_value_from_vault %s %s %s' % (token, secret_path, secret_key))
-                    logger.info('get_value_from_vault %s' % vault.get_value_from_vault(token, secret_path, secret_key, False))
                     return vault.get_value_from_vault(token, secret_path, secret_key, False)
                 else:
                     with tempfile.NamedTemporaryFile(delete=False) as f:
