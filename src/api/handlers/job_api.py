@@ -360,6 +360,8 @@ class Job(Resource):
         ''', [data['project']['id']])
 
         is_fork = data['job'].get('fork', False)
+        # Cache Vault instances per vault name+project so we create them only once
+        vault_cache = {}
 
         def get_secret_type(name):
             try:
@@ -382,10 +384,10 @@ class Job(Resource):
         def get_secret(name):
             secret_type = get_secret_type(name)
             if secret_type == 'vault':
-                vault = json.loads(name)
-                vault_name = vault['$vault']
-                secret_path = vault['$vault_secret_path']
-                secret_key = vault['$vault_secret_key']
+                vault_cfg = json.loads(name)
+                vault_name = vault_cfg['$vault']
+                secret_path = vault_cfg['$vault_secret_path']
+                secret_key = vault_cfg['$vault_secret_key']
 
                 result = g.db.execute_one("""
                   SELECT url, version, token, ca, namespace, role_id, secret_id FROM vault WHERE name = %s and project_id = %s
@@ -397,26 +399,34 @@ class Job(Resource):
                 url, version, token, ca, namespace, role_id, secret_id = result[0], result[1], result[2], result[3], result[4], result[5], result[6]
                 # choose validate way
                 validate_res = get_auth_type(result)
-                vault = Vault(url, namespace, version, role_id, secret_id)
+
+                # key vault per project to avoid collisions
+                vault_key = f"{vault_name}-{data['project']['id']}"
+                vault_client = vault_cache.get(vault_key)
+                if not vault_client:
+                    vault_client = Vault(url, namespace, version, role_id, secret_id)
+                    vault_cache[vault_key] = vault_client
+
                 if validate_res == 'token':
                     logger.info('validate way is token')
+                    token_to_use = token
                 elif validate_res == 'appRole':
-                    logger.info('validate way is appRole') 
-                    token = vault.get_token_by_app_role()
-                    batch_token = vault.generate_batch_token(token)
+                    logger.info('validate way is appRole')
+                    token_to_use = vault_client.get_token_by_app_role()
+                    batch_token = vault_client.generate_batch_token(token_to_use)
                     if batch_token:
-                        token = batch_token
+                        token_to_use = batch_token
                 else:
                     abort(400, "Validate way is '%s' ! result is '%s' " % (validate_res, result))
 
                 if not ca:
-                    logger.info('Start to get value fron vault %s %s %s' % (token, secret_path, secret_key))
-                    return vault.get_value_from_vault(token, secret_path, secret_key, False)
+                    logger.info('Start to get value fron vault %s %s %s' % (token_to_use, secret_path, secret_key))
+                    return vault_client.get_value_from_vault(token_to_use, secret_path, secret_key, False)
                 else:
                     with tempfile.NamedTemporaryFile(delete=False) as f:
                         f.write(ca)
                         f.flush()  # ensure all data written
-                    return vault.get_value_from_vault(token, secret_path, secret_key, f.name)
+                    return vault_client.get_value_from_vault(token_to_use, secret_path, secret_key, f.name)
             else:
                 if is_fork:
                     abort(400, 'Access to secret %s is not allowed from a fork' % name)
