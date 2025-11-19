@@ -392,22 +392,18 @@ class Job(Resource):
                 """, [vault_name, data['project']['id']])
 
                 if not result:
-                    raise Exception("Cannot get Vault '%s' in project '%s' " % (vault_name, data['project']['id']))
-                    # abort(400, "Cannot get Vault '%s' in project '%s' " % (vault_name, data['project']['id']))
+                    abort(400, "Cannot get Vault '%s' in project '%s' " % (vault_name, data['project']['id']))
 
                 url, version, token, ca, namespace, role_id, secret_id = result[0], result[1], result[2], result[3], result[4], result[5], result[6]
                 # choose validate way
                 validate_res = get_auth_type(result)
-                logger.info("start to get secret from vault")
                 vault = Vault(url, namespace, version, role_id, secret_id)
                 if validate_res == 'token':
                     logger.info('validate way is token')
                 elif validate_res == 'appRole':
                     logger.info('validate way is appRole') 
                     token = vault.get_token_by_app_role()
-                    logger.info('get_token_by_app_role %s' % token)
                     batch_token = vault.generate_batch_token(token)
-                    logger.info('generate_batch_token %s' % batch_token)
                     if batch_token:
                         token = batch_token
                 else:
