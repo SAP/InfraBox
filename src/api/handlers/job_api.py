@@ -410,7 +410,7 @@ class Job(Resource):
                     abort(400, "Validate way is '%s' ! result is '%s' " % (validate_res, result))
 
                 if not ca:
-                    logger.info('get_value_from_vault %s %s %s' % (token, secret_path, secret_key))
+                    logger.info('Start to get value fron vault %s %s %s' % (token, secret_path, secret_key))
                     return vault.get_value_from_vault(token, secret_path, secret_key, False)
                 else:
                     with tempfile.NamedTemporaryFile(delete=False) as f:
