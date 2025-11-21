@@ -94,18 +94,19 @@ class Vault():
         :param ttl: Time-to-live for the batch token.
         :return: The generated batch token.
         """
-        if self.policies is None:
-            self.policies = self.get_policies(service_token)
-        if 'token-creator' in self.policies:
-            self.policies.remove('token-creator')
-
-        batch_payload = {
-            "type": "batch",
-            "policies": self.policies or ['default'],
-            "ttl": ttl
-        }
-        url = self.base_url + '/v1/' + self.namespace + '/auth/token/create' if self.namespace else self.base_url + '/v1/auth/token/create'
         try:
+            if self.policies is None:
+                self.policies = self.get_policies(service_token) or ['default']
+            if self.policies and 'token-creator' in self.policies:
+                self.policies.remove('token-creator')
+
+            batch_payload = {
+                "type": "batch",
+                "policies": self.policies or ['default'],
+                "ttl": ttl
+            }
+            url = self.base_url + '/v1/' + self.namespace + '/auth/token/create' if self.namespace else self.base_url + '/v1/auth/token/create'
+            
             for i in range(0, 10):
                 res = requests.post(url=url, json=batch_payload, headers={"X-Vault-Token": service_token}, verify=False)
                 if res.status_code == 200:
