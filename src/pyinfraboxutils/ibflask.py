@@ -142,11 +142,12 @@ def check_request_authorization():
         is_authorized = opa_do_auth(opa_input)
 
         if not is_authorized:
-            logger.info("Rejected unauthorized request")
+            logger.info("Rejected unauthorized request: path=%s, method=%s, token_type=%s", 
+                       request.path, request.method, g.token.get('type') if g.token else 'None')
             abort(401, 'Unauthorized')
 
     except requests.exceptions.RequestException as e:
-        logger.error(e)
+        logger.error("OPA Authorization service error: %s. Check if OPA is running at configured host/port", e)
         abort(500, 'Authorization failed')
 
 def check_job_belongs_to_project(f):
