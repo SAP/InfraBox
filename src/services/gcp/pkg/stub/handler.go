@@ -746,6 +746,26 @@ func getExactClusterVersion(cr *v1alpha1.GKECluster, log *logrus.Entry) (string,
 		}
 	}
 
+	if cr.Spec.ClusterVersion == "oldest" {
+		version := "" //Store the oldest available version
+		for _, c := range config.Channels {
+			if c.Channel == "RAPID" {
+				for i, v := range c.ValidVersions {
+					if i == 0 {
+						version = v
+					} else {
+						sliceVersion := strings.Split(version, ".")
+						sliceV := strings.Split(v, ".") //Compare major version at first and then minor version
+						if (sliceVersion[1] > sliceV[1]) || (sliceVersion[1] == sliceV[1] && sliceVersion[3] > sliceV[3]) {
+							version = v
+						}
+					}
+				}
+				return version, strings.ToLower(c.Channel), nil
+			}
+		}
+	}
+
 	for _, c := range config.Channels {
 		if strings.ToLower(c.Channel) == "extended" {
 			// extended in not supported by --release-channel extended in current gcloud version
