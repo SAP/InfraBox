@@ -739,7 +739,7 @@ class RunJob(Job):
             self.environment['PATH'] = os.environ['PATH']
             self.environment['DOCKER_BUILDKIT'] = '0'
             self.environment['COMPOSE_DOCKER_CLI_BUILD'] = '0'
-            if self.job['definition'].get('enable_docker_build_kit', False) is True:
+            if self.job['definition'].get('enable_docker_buildkit', False) is True:
                 c.collect('BUILDKIT is enabled during build!', show=True)
                 self.environment['DOCKER_BUILDKIT'] = '1'
                 self.environment['COMPOSE_DOCKER_CLI_BUILD']= '1'
@@ -1001,7 +1001,7 @@ class RunJob(Job):
 
             cwd = self._get_build_context_current_job()
 
-            if  self.job['definition'].get('enable_docker_build_kit', False) is True:
+            if  self.job['definition'].get('enable_docker_buildkit', False) is True:
                 os.environ['DOCKER_BUILDKIT'] = '1'
 
             c.execute_mask(cmd, cwd=cwd, show=True, mask=self.repository.get('github_api_token', None))

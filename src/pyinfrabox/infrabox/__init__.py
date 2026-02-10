@@ -292,7 +292,7 @@ def parse_docker_image(d, path):
 
 def parse_docker(d, path):
     check_allowed_properties(d, path, ("type", "name", "docker_file", "depends_on", "resources",
-                                       "build_only", "environment", "target", "enable_docker_build_kit",
+                                       "build_only", "environment", "target", "enable_docker_buildkit",
                                        "build_arguments", "deployments", "timeout", "security_context", "command",
                                        "build_context", "cache", "repository", "cluster", "services", "registries"))
     check_required_properties(d, path, ("type", "name", "docker_file", "resources"))
@@ -312,8 +312,8 @@ def parse_docker(d, path):
     if 'build_only' in d:
         check_boolean(d['build_only'], path + ".build_only")
 
-    if 'enable_docker_build_kit' in d:
-        check_boolean(d['enable_docker_build_kit'], path + ".enable_docker_build_kit" )
+    if 'enable_docker_buildkit' in d:
+        check_boolean(d['enable_docker_buildkit'], path + ".enable_docker_buildkit" )
 
     if 'cache' in d:
         parse_cache(d['cache'], path + ".cache")
@@ -347,7 +347,7 @@ def parse_docker(d, path):
 
 
 def parse_docker_compose(d, path):
-    check_allowed_properties(d, path, ("type", "name", "docker_compose_file", "depends_on", "stop_timeout", "enable_docker_build_kit",
+    check_allowed_properties(d, path, ("type", "name", "docker_compose_file", "depends_on", "stop_timeout", "enable_docker_buildkit",
                                        "compose_profiles", "environment", "resources", "cache", "timeout", "cluster",
                                        "repository", "registries", "parallel_build"))
     check_required_properties(d, path, ("type", "name", "docker_compose_file", "resources"))
@@ -378,8 +378,8 @@ def parse_docker_compose(d, path):
     if 'registries' in d:
         parse_registries(d['registries'], path + '.registries')
 
-    if 'enable_docker_build_kit' in d:
-        check_boolean(d['enable_docker_build_kit'], path + ".enable_docker_build_kit" )
+    if 'enable_docker_buildkit' in d:
+        check_boolean(d['enable_docker_buildkit'], path + ".enable_docker_buildkit" )
 
 
 def parse_wait(d, path):
