@@ -194,6 +194,10 @@ def normalize_token(token):
         if not validate_project_token(token):
             return None
 
+    # Validate global token
+    elif token["type"] == "global":
+        return validate_global_token(token)
+
     return token
 
 def enrich_job_token(token):
@@ -228,6 +232,31 @@ def validate_user_token(token):
         logger.warn('user not found')
         return None
     token['user']['role'] = u[1]
+    return token
+
+def validate_global_token(token):
+    if not ("id" in token and validate_uuid(token['id'])):
+        return None
+
+    r = g.db.execute_one('''
+        SELECT id, description, scope_push, scope_pull FROM global_token
+        WHERE id = %s
+    ''', [token['id']])
+    if not r:
+        logger.warn('global token not valid')
+        return None
+
+    token['global_token'] = {
+        'id': r[0],
+        'description': r[1],
+        'scope_push': r[2],
+        'scope_pull': r[3],
+    }
+    # Global tokens act as viewer role
+    token['user'] = {
+        'id': None,
+        'role': 'viewer',
+    }
     return token
 
 def validate_project_token(token):
