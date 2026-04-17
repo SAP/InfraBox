@@ -926,6 +926,12 @@ class Scheduler(object):
                 WHERE id = %s and state = 'running' """, (job_id,))
             cursor.close()
 
+            # Delete the k8s resource so the pod receives SIGTERM and has
+            # terminationGracePeriodSeconds (60s) to run finalize_upload(),
+            # which uploads /infrabox/upload/archive. kube_delete_job is
+            # idempotent — safe if the resource is already being deleted.
+            self.kube_delete_job(job_id)
+
     def upload_console(self, job_id):
         cursor = self.conn.cursor()
         cursor.execute("begin")
