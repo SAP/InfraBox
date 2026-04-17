@@ -1075,7 +1075,7 @@ class CreateJobs(Resource):
                     AND j.state = 'finished'
             """, [project_id, project_id, build_number - 10, build_number, job['name']])[0]
 
-            job['avg_duration'] = avg_duration if avg_duration is not None else 0
+            job['avg_duration'] = float(avg_duration) if avg_duration is not None else 0
 
             if not job['env_vars']:
                 job['env_vars'] = {}
