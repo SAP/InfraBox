@@ -511,6 +511,14 @@ class RunJob(Job):
         if not self.aborted:
             self.aborted = True
             self.console.collect("##Aborted", show=True)
+            if hasattr(self, '_compose_file_new'):
+                try:
+                    subprocess.call(
+                        ['docker-compose', '-f', self._compose_file_new, 'stop', '--timeout', '30'],
+                        env=self.environment,
+                        timeout=35)
+                except Exception:
+                    pass
             self.finalize_upload()
 
     def main_run_job(self):
@@ -721,6 +729,8 @@ class RunJob(Job):
 
         with open(compose_file_new, "w+") as out:
             json.dump(compose_file_content, out)
+
+        self._compose_file_new = compose_file_new
 
         collector = StatsCollector()
 
