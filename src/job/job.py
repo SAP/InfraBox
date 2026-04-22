@@ -378,22 +378,12 @@ class RunJob(Job):
         testresult_exists = False
 
         if os.path.exists(self.infrabox_archive_dir):
-            files = self.get_files_in_dir(self.infrabox_archive_dir)
-
-            if files:
-                c.collect("Uploading /infrabox/upload/archive", show=True)
+            if self.get_files_in_dir(self.infrabox_archive_dir):
                 archive_exists = True
-                for f in files:
-                    c.collect("%s" % f, show=True)
-                    self.post_file_to_api_server("/archive", f, filename=f.replace(self.infrabox_upload_dir+'/', ''))
 
         if os.path.exists(self.infrabox_testresult_dir):
-            files = self.get_files_in_dir(self.infrabox_testresult_dir)
-
-            if files:
+            if self.get_files_in_dir(self.infrabox_testresult_dir):
                 testresult_exists = True
-                for f in files:
-                    c.collect("%s" % f, show=True)
 
         tar_file = os.path.join(self.infrabox_upload_dir, 'all_archives' + '.tar.gz')
         with tarfile.open(tar_file, mode='w:gz') as archive:
@@ -403,6 +393,12 @@ class RunJob(Job):
                 archive.add(self.infrabox_testresult_dir, arcname='testresult')
 
         self.post_file_to_api_server("/archive", tar_file)
+
+        if archive_exists:
+            c.collect("Uploading /infrabox/upload/archive", show=True)
+            for f in self.get_files_in_dir(self.infrabox_archive_dir):
+                c.collect("%s" % f, show=True)
+                self.post_file_to_api_server("/archive", f, filename=f.replace(self.infrabox_upload_dir+'/', ''))
 
 
     def upload_coverage_results(self):
@@ -501,16 +497,24 @@ class RunJob(Job):
         return total_size
 
     def finalize_upload(self):
+        self.upload_archive()
         self.upload_coverage_results()
         self.upload_test_results()
         self.upload_markup_files()
         self.upload_badge_files()
-        self.upload_archive()
 
     def handle_abort(self, signum, sigframe):
         if not self.aborted:
             self.aborted = True
             self.console.collect("##Aborted", show=True)
+            if hasattr(self, '_compose_file_new'):
+                try:
+                    subprocess.call(
+                        ['docker-compose', '-f', self._compose_file_new, 'stop', '--timeout', '30'],
+                        env=self.environment,
+                        timeout=35)
+                except Exception:
+                    pass
             self.finalize_upload()
 
     def main_run_job(self):
@@ -721,6 +725,8 @@ class RunJob(Job):
 
         with open(compose_file_new, "w+") as out:
             json.dump(compose_file_content, out)
+
+        self._compose_file_new = compose_file_new
 
         collector = StatsCollector()
 
