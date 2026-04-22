@@ -481,7 +481,7 @@ class FunctionInvocationController(Controller):
                         'automountServiceAccountToken': False,
                         'containers': containers,
                         'restartPolicy': 'Never',
-                        'terminationGracePeriodSeconds': 60,
+                        'terminationGracePeriodSeconds': 180,
                         'volumes': f['spec']['volumes'],
                         'imagePullSecrets': f['spec'].get('imagePullSecrets', None)
                     },

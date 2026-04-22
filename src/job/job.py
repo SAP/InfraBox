@@ -501,16 +501,17 @@ class RunJob(Job):
         return total_size
 
     def finalize_upload(self):
+        self.upload_archive()
         self.upload_coverage_results()
         self.upload_test_results()
         self.upload_markup_files()
         self.upload_badge_files()
-        self.upload_archive()
 
     def handle_abort(self, signum, sigframe):
         if not self.aborted:
             self.aborted = True
             self.console.collect("##Aborted", show=True)
+            self.upload_archive()
             if hasattr(self, '_compose_file_new'):
                 try:
                     subprocess.call(
