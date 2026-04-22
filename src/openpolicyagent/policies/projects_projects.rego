@@ -43,6 +43,7 @@ allow {
     api.method = "POST"
     api.path = ["api", "v1", "projects"]
     api.token.type = "user"
+    api.token.user.role != "viewer"
 }
 
 allow {
