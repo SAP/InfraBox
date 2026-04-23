@@ -116,6 +116,7 @@ def configure_admin(conn):
     ''', [email, hashed_password, email, hashed_password])
     cur.close()
     conn.commit()
+    logger.info("Finished updating admin credentials")
 
 def main():
     get_env('INFRABOX_VERSION')

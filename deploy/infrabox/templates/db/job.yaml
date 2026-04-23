@@ -32,7 +32,7 @@ spec:
                 name: migrate
                 image: {{ include "image_repository" . }}/db:{{ include "image_tag" . }}
                 command: ["/bin/sh", "-c"]
-                args: ["python db/migrate.py; kill -2 $(pgrep cloud_sql_proxy)"]
+                args: ["python db/migrate.py; python -c \"import os,signal\nfor p in os.listdir('/proc'):\n    if not p.isdigit(): continue\n    try:\n        cmdline=open('/proc/'+p+'/cmdline','rb').read()\n        if b'cloud_sql_proxy' in cmdline: os.kill(int(p),signal.SIGTERM)\n    except: pass\""]
                 env:
                 {{ include "env_database" . | indent 16 }}
                 {{ include "env_general" . | indent 16 }}
