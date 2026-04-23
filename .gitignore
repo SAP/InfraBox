@@ -45,3 +45,4 @@ src/services/gcp/tmp/_output/
 src/services/namespace/vendor
 src/services/namespace/namespace
 src/services/namespace/tmp/_output/
+CLAUDE.md
