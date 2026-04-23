@@ -129,7 +129,7 @@ def main():
 
     conn = connect_db()
     migrate_db(conn)
-    # configure_admin(conn)
+    configure_admin(conn)
     conn.close()
 
 if __name__ == "__main__":

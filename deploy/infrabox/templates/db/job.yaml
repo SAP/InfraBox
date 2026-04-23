@@ -25,11 +25,14 @@ spec:
             name: infrabox-db-migration
         spec:
             {{ include "imagePullSecret" . | indent 8 }}
+            shareProcessNamespace: true
             containers:
             {{ include "containers_database" . | indent 12 }}
             -
                 name: migrate
                 image: {{ include "image_repository" . }}/db:{{ include "image_tag" . }}
+                command: ["/bin/sh", "-c"]
+                args: ["python db/migrate.py; kill -2 $(pgrep cloud_sql_proxy)"]
                 env:
                 {{ include "env_database" . | indent 16 }}
                 {{ include "env_general" . | indent 16 }}
