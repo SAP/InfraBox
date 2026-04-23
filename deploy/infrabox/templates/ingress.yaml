@@ -121,16 +121,6 @@ spec:
                         port: 
                             number: 80
             {{ end }}
-            {{ if eq .Values.cluster.name "master" }}
-            -
-                pathType: Prefix
-                path: /
-                backend:
-                    service:
-                        name: infrabox-static
-                        port: 
-                            number: 80
-            {{ end }}
             {{ if .Values.ha.enabled }}
                 {{ include "ing_root" . | indent 12 }}
             {{ else if eq .Values.cluster.name "master" }}
