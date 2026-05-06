@@ -27,23 +27,13 @@ allow {
     api.token.user.role = "viewer"
 }
 
-# Allow global token (viewer) GET access to all admin endpoints
+# Allow admin-only GET access to audit all global tokens
 allow {
     api.method = "GET"
-    api.token.type = "global"
-    api.token.user.role = "viewer"
-}
-
-# Allow admin access to manage global tokens
-allow {
-    api.path[0] = "api"
-    api.path[1] = "v1"
-    api.path[2] = "admin"
-    api.path[3] = "global-tokens"
+    api.path = ["api", "v1", "admin", "global-tokens"]
     api.token.type = "user"
     user_roles[api.token.user.role] >= 30
 }
-
 
 # Allow GET access to /api/v1/admin/clusters for users logged in
 allow {
@@ -68,5 +58,3 @@ deny {
     api.token.type = "user"
     user_roles[api.token.user.role] <= 20
 }
-
-

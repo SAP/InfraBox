@@ -61,6 +61,16 @@ class AdminService {
                 NotificationService.$emit('NOTIFICATION', new Notification(err))
             })
     }
+
+    loadGlobalTokens () {
+        return NewAPIService.get(`admin/global-tokens`)
+            .then((tokens) => {
+                store.commit('setAdminGlobalTokens', tokens)
+            })
+            .catch((err) => {
+                NotificationService.$emit('NOTIFICATION', new Notification(err))
+            })
+    }
 }
 
 export default new AdminService()

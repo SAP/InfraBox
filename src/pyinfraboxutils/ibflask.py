@@ -46,6 +46,26 @@ def teardown_request(_):
         logger.exception(e)
 
 
+@app.after_request
+def log_global_token_access(response):
+    token = getattr(g, 'token', None)
+    if not token or token.get('type') != 'global':
+        return response
+    if response.status_code >= 400:
+        return response
+    try:
+        db = getattr(g, 'db', None)
+        if db:
+            db.execute('''
+                INSERT INTO global_token_access_log (token_id, path, method, status_code)
+                VALUES (%s, %s, %s, %s)
+            ''', [token['global_token']['id'], request.path, request.method, response.status_code])
+            db.commit()
+    except Exception as e:
+        logger.warning('Failed to log global token access: %s', e)
+    return response
+
+
 @app.errorhandler(404)
 def not_found(error):
     msg = error.description
@@ -239,7 +259,7 @@ def validate_global_token(token):
         return None
 
     r = g.db.execute_one('''
-        SELECT id, description, scope_push, scope_pull FROM global_token
+        SELECT id, description, scope_push, scope_pull, user_id FROM global_token
         WHERE id = %s
     ''', [token['id']])
     if not r:
@@ -252,9 +272,9 @@ def validate_global_token(token):
         'scope_push': r[2],
         'scope_pull': r[3],
     }
-    # Global tokens act as viewer role
+    # Token is scoped to its owner; viewer role enforces read-only access
     token['user'] = {
-        'id': None,
+        'id': r[4],
         'role': 'viewer',
     }
     return token

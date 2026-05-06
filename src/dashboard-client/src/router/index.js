@@ -14,6 +14,8 @@ import TestDetail from '@/components/test/TestDetail'
 import AdminUsers from '@/components/admin/AdminUsers'
 import AdminProjects from '@/components/admin/AdminProjects'
 import AdminClusters from '@/components/admin/AdminClusters'
+import AdminGlobalTokens from '@/components/admin/AdminGlobalTokens'
+import UserGlobalTokens from '@/components/user/UserGlobalTokens'
 
 import UserService from '../services/UserService'
 
@@ -71,6 +73,16 @@ export default new Router({
         path: '/admin/clusters',
         name: 'AdminClusters',
         component: AdminClusters,
+        beforeEnter: loginGuard
+    }, {
+        path: '/admin/global-tokens',
+        name: 'AdminGlobalTokens',
+        component: AdminGlobalTokens,
+        beforeEnter: loginGuard
+    }, {
+        path: '/user/tokens',
+        name: 'UserGlobalTokens',
+        component: UserGlobalTokens,
         beforeEnter: loginGuard
     }, {
         path: '/project/:projectName',
