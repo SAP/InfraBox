@@ -27,7 +27,7 @@ RUN apk add --no-cache \
     libc6-compat \
     git && \
     pip3 install pynacl docker awscli pyyaml crcmod && \
-    pip3 install future python-snappy six
+    pip3 install future 'python-snappy==0.6.1' six
 ## Install openssh 8.3
 RUN sed -i 's/v3.15/v3.12/g' /etc/apk/repositories && \
     apk add --update openssh-client
