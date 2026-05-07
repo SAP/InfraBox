@@ -1,6 +1,7 @@
 import uuid
+from datetime import datetime
 
-from flask import g, abort, request
+from flask import g, request
 from flask_restx import Resource, fields
 from pyinfraboxutils.ibflask import OK
 from pyinfraboxutils.ibrestplus import api
@@ -32,11 +33,17 @@ access_log_model = api.model('GlobalTokenAccessLog', {
 })
 
 
+def _serialize_row(row):
+    result = {}
+    for k, v in row.items():
+        result[k] = v.isoformat() if isinstance(v, datetime) else v
+    return result
+
+
 @api.route('/api/v1/user/global-tokens', doc=False)
 class UserGlobalTokens(Resource):
 
     def get(self):
-        """List the current user's global viewer tokens"""
         user_id = g.token['user']['id']
         tokens = g.db.execute_many_dict('''
             SELECT id, description, scope_push, scope_pull, created_at
@@ -44,11 +51,10 @@ class UserGlobalTokens(Resource):
             WHERE user_id = %s
             ORDER BY created_at DESC
         ''', [user_id])
-        return tokens
+        return [_serialize_row(t) for t in tokens]
 
     @api.expect(global_token_create_model, validate=True)
     def post(self):
-        """Create a new global viewer token for the current user"""
         user_id = g.token['user']['id']
         body = request.get_json()
         token_id = str(uuid.uuid4())
@@ -77,17 +83,19 @@ class UserGlobalTokens(Resource):
 class UserGlobalToken(Resource):
 
     def delete(self, token_id):
-        """Revoke one of the current user's global tokens"""
         user_id = g.token['user']['id']
 
-        num = g.db.execute('''
-            DELETE FROM global_token
-            WHERE id = %s AND user_id = %s
+        existing = g.db.execute_one('''
+            SELECT id FROM global_token WHERE id = %s AND user_id = %s
+        ''', [token_id, user_id])
+
+        if not existing:
+            return {'status': 404, 'message': 'Token not found'}, 404
+
+        g.db.execute('''
+            DELETE FROM global_token WHERE id = %s AND user_id = %s
         ''', [token_id, user_id])
         g.db.commit()
-
-        if num == 0:
-            abort(404, "Token not found")
 
         return OK("OK")
 
@@ -96,17 +104,14 @@ class UserGlobalToken(Resource):
 class UserGlobalTokenAccessLog(Resource):
 
     def get(self, token_id):
-        """Return the last 200 access log entries for one of the user's tokens"""
         user_id = g.token['user']['id']
 
-        # Verify ownership before exposing access log
         token = g.db.execute_one('''
-            SELECT id FROM global_token
-            WHERE id = %s AND user_id = %s
+            SELECT id FROM global_token WHERE id = %s AND user_id = %s
         ''', [token_id, user_id])
 
         if not token:
-            abort(404, "Token not found")
+            return {'status': 404, 'message': 'Token not found'}, 404
 
         logs = g.db.execute_many_dict('''
             SELECT accessed_at, path, method, status_code
@@ -116,4 +121,4 @@ class UserGlobalTokenAccessLog(Resource):
             LIMIT 200
         ''', [token_id])
 
-        return logs
+        return [_serialize_row(log) for log in logs]
