@@ -7,20 +7,13 @@ class ApiTestTemplate(unittest.TestCase):
     # TODO optimize setup for each test
 
     def setUp(self):
-        TestClient.execute('TRUNCATE global_token_access_log, global_token, "user"')
-        TestClient.execute('TRUNCATE project')
-        TestClient.execute('TRUNCATE collaborator')
-        TestClient.execute('TRUNCATE repository')
-        TestClient.execute('TRUNCATE commit')
-        TestClient.execute('TRUNCATE build')
-        TestClient.execute('TRUNCATE console')
-        TestClient.execute('TRUNCATE job')
-        TestClient.execute('TRUNCATE job_markup')
-        TestClient.execute('TRUNCATE job_badge')
-        TestClient.execute('TRUNCATE source_upload')
-        TestClient.execute('TRUNCATE secret')
-        TestClient.execute('TRUNCATE cluster')
-        TestClient.execute('TRUNCATE auth_token')
+        TestClient.execute(
+            'TRUNCATE global_token_access_log, global_token, '
+            'collaborator, auth_token, secret, '
+            'console, job_markup, job_badge, job, '
+            'build, commit, repository, '
+            '"user", project, source_upload, cluster'
+        )
 
         self.project_id = '1514af82-3c4f-4bb5-b1da-a89a0ced5e6f'
         self.project_id_github = '1614af82-3c4f-4bb5-b1da-a89a0ced5e6f'
