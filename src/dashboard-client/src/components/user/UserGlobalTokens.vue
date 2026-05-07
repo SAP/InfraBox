@@ -1,109 +1,172 @@
 <template>
-    <md-card class="main-card">
-        <md-card-header class="main-card-header fix-padding">
-            <md-card-header-text>
-                <h3 class="md-title card-title">
-                    <md-layout>
-                        <md-layout md-vertical-align="center">My Tokens</md-layout>
-                    </md-layout>
-                </h3>
-            </md-card-header-text>
-        </md-card-header>
+    <div>
+        <!-- ===== Global Viewer Tokens ===== -->
+        <md-card class="main-card">
+            <md-card-header class="main-card-header fix-padding">
+                <md-card-header-text>
+                    <h3 class="md-title card-title">
+                        <md-layout>
+                            <md-layout md-vertical-align="center">Global Viewer Tokens</md-layout>
+                        </md-layout>
+                    </h3>
+                </md-card-header-text>
+            </md-card-header>
 
-        <!-- Create form -->
-        <md-card md-theme="white" class="clean-card">
-            <md-card-area>
-                <md-list class="m-t-md m-b-md">
-                    <md-list-item>
-                        <md-input-container class="m-r-sm" style="flex: 2">
-                            <label>Token Description (e.g. "Grafana Read-Only")</label>
-                            <md-input v-model="form.description" @keyup.enter.native="createToken"></md-input>
-                        </md-input-container>
-                        <div class="m-r-sm scope-toggle">
-                            <md-checkbox v-model="form.scopePull">Read (pull)</md-checkbox>
-                        </div>
-                        <div class="m-r-sm scope-toggle">
-                            <md-checkbox v-model="form.scopePush">Write (push)</md-checkbox>
-                        </div>
-                        <md-button :disabled="disableAdd" class="md-icon-button md-list-action" @click="createToken">
-                            <md-icon md-theme="running" class="md-primary">add_circle</md-icon>
-                            <md-tooltip>Create token</md-tooltip>
-                        </md-button>
-                    </md-list-item>
-                </md-list>
-            </md-card-area>
+            <!-- Create form -->
+            <md-card md-theme="white" class="clean-card">
+                <md-card-area>
+                    <md-list class="m-t-md m-b-md">
+                        <md-list-item>
+                            <md-input-container class="m-r-sm" style="flex: 2">
+                                <label>Token Description (e.g. "Grafana Read-Only")</label>
+                                <md-input v-model="form.description" @keyup.enter.native="createToken"></md-input>
+                            </md-input-container>
+                            <div class="m-r-sm scope-toggle">
+                                <md-checkbox v-model="form.scopePull">Read (pull)</md-checkbox>
+                            </div>
+                            <div class="m-r-sm scope-toggle">
+                                <md-checkbox v-model="form.scopePush">Write (push)</md-checkbox>
+                            </div>
+                            <md-button :disabled="disableAdd" class="md-icon-button md-list-action" @click="createToken">
+                                <md-icon md-theme="running" class="md-primary">add_circle</md-icon>
+                                <md-tooltip>Create token</md-tooltip>
+                            </md-button>
+                        </md-list-item>
+                    </md-list>
+                </md-card-area>
+            </md-card>
+
+            <!-- Token list -->
+            <md-table-card class="clean-card">
+                <md-table>
+                    <md-table-header>
+                        <md-table-row>
+                            <md-table-head>Description</md-table-head>
+                            <md-table-head>Read</md-table-head>
+                            <md-table-head>Write</md-table-head>
+                            <md-table-head>Created</md-table-head>
+                            <md-table-head>Actions</md-table-head>
+                        </md-table-row>
+                    </md-table-header>
+                    <md-table-body>
+                        <template v-for="t in tokens">
+                            <md-table-row :key="t.id">
+                                <md-table-cell>{{ t.description }}</md-table-cell>
+                                <md-table-cell>
+                                    <md-icon v-if="t.scope_pull" class="md-primary">check</md-icon>
+                                    <md-icon v-else>close</md-icon>
+                                </md-table-cell>
+                                <md-table-cell>
+                                    <md-icon v-if="t.scope_push" class="md-primary">check</md-icon>
+                                    <md-icon v-else>close</md-icon>
+                                </md-table-cell>
+                                <md-table-cell>{{ formatDate(t.created_at) }}</md-table-cell>
+                                <md-table-cell>
+                                    <md-button class="md-icon-button" @click="toggleLog(t)">
+                                        <md-icon>history</md-icon>
+                                        <md-tooltip>{{ expandedId === t.id ? 'Hide' : 'Show' }} access log</md-tooltip>
+                                    </md-button>
+                                    <md-button class="md-icon-button" @click="confirmRevoke(t)">
+                                        <md-icon class="md-primary">delete</md-icon>
+                                        <md-tooltip>Revoke token</md-tooltip>
+                                    </md-button>
+                                </md-table-cell>
+                            </md-table-row>
+
+                            <!-- Inline access log -->
+                            <md-table-row v-if="expandedId === t.id" :key="t.id + '-log'" class="log-row">
+                                <md-table-cell colspan="5" class="log-cell">
+                                    <div v-if="logLoading" class="log-loading">Loading...</div>
+                                    <div v-else-if="accessLog.length === 0" class="log-empty">No access records yet.</div>
+                                    <table v-else class="log-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Time</th>
+                                                <th>Method</th>
+                                                <th>Path</th>
+                                                <th>Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr v-for="(entry, idx) in accessLog" :key="idx">
+                                                <td class="log-time">{{ formatDate(entry.accessed_at) }}</td>
+                                                <td>{{ entry.method }}</td>
+                                                <td class="log-path">{{ entry.path }}</td>
+                                                <td>{{ entry.status_code }}</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </md-table-cell>
+                            </md-table-row>
+                        </template>
+
+                        <md-table-row v-if="tokens.length === 0">
+                            <md-table-cell colspan="5">No personal tokens yet. Create one above.</md-table-cell>
+                        </md-table-row>
+                    </md-table-body>
+                </md-table>
+            </md-table-card>
         </md-card>
 
-        <!-- Token list -->
-        <md-table-card class="clean-card">
-            <md-table>
-                <md-table-header>
-                    <md-table-row>
-                        <md-table-head>Description</md-table-head>
-                        <md-table-head>Read</md-table-head>
-                        <md-table-head>Write</md-table-head>
-                        <md-table-head>Created</md-table-head>
-                        <md-table-head>Actions</md-table-head>
-                    </md-table-row>
-                </md-table-header>
-                <md-table-body>
-                    <template v-for="t in tokens">
-                        <md-table-row :key="t.id">
-                            <md-table-cell>{{ t.description }}</md-table-cell>
-                            <md-table-cell>
-                                <md-icon v-if="t.scope_pull" class="md-primary">check</md-icon>
-                                <md-icon v-else>close</md-icon>
-                            </md-table-cell>
-                            <md-table-cell>
-                                <md-icon v-if="t.scope_push" class="md-primary">check</md-icon>
-                                <md-icon v-else>close</md-icon>
-                            </md-table-cell>
-                            <md-table-cell>{{ formatDate(t.created_at) }}</md-table-cell>
-                            <md-table-cell>
-                                <md-button class="md-icon-button" @click="toggleLog(t)">
-                                    <md-icon>history</md-icon>
-                                    <md-tooltip>{{ expandedId === t.id ? 'Hide' : 'Show' }} access log</md-tooltip>
-                                </md-button>
-                                <md-button class="md-icon-button" @click="confirmRevoke(t)">
-                                    <md-icon class="md-primary">delete</md-icon>
-                                    <md-tooltip>Revoke token</md-tooltip>
-                                </md-button>
-                            </md-table-cell>
-                        </md-table-row>
+        <!-- ===== Project Tokens ===== -->
+        <md-card class="main-card" style="margin-top: 16px">
+            <md-card-header class="main-card-header fix-padding">
+                <md-card-header-text>
+                    <h3 class="md-title card-title">
+                        <md-layout>
+                            <md-layout md-vertical-align="center">Project Tokens</md-layout>
+                            <md-layout md-vertical-align="center">
+                                <small class="section-hint">Manage individual project tokens in each project's settings</small>
+                            </md-layout>
+                        </md-layout>
+                    </h3>
+                </md-card-header-text>
+            </md-card-header>
 
-                        <!-- Inline access log -->
-                        <md-table-row v-if="expandedId === t.id" :key="t.id + '-log'" class="log-row">
-                            <md-table-cell colspan="5" class="log-cell">
-                                <div v-if="logLoading" class="log-loading">Loading...</div>
-                                <div v-else-if="accessLog.length === 0" class="log-empty">No access records yet.</div>
-                                <table v-else class="log-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Time</th>
-                                            <th>Method</th>
-                                            <th>Path</th>
-                                            <th>Status</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr v-for="(entry, idx) in accessLog" :key="idx">
-                                            <td class="log-time">{{ formatDate(entry.accessed_at) }}</td>
-                                            <td>{{ entry.method }}</td>
-                                            <td class="log-path">{{ entry.path }}</td>
-                                            <td>{{ entry.status_code }}</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </md-table-cell>
+            <md-table-card class="clean-card">
+                <md-table>
+                    <md-table-header>
+                        <md-table-row>
+                            <md-table-head>Project</md-table-head>
+                            <md-table-head>Description</md-table-head>
+                            <md-table-head>Read</md-table-head>
+                            <md-table-head>Write</md-table-head>
                         </md-table-row>
-                    </template>
+                    </md-table-header>
+                    <md-table-body>
+                        <template v-for="project in adminProjects">
+                            <md-table-row
+                                v-for="token in (project.tokens || [])"
+                                :key="project.id + '-' + token.id">
+                                <md-table-cell>
+                                    <router-link
+                                        :to="{name: 'ProjectDetailSettings', params: {projectName: encodeURIComponent(project.name)}}"
+                                        style="color: inherit">
+                                        {{ project.name }}
+                                    </router-link>
+                                </md-table-cell>
+                                <md-table-cell>{{ token.description }}</md-table-cell>
+                                <md-table-cell>
+                                    <md-icon v-if="token.scope_pull" class="md-primary">check</md-icon>
+                                    <md-icon v-else>close</md-icon>
+                                </md-table-cell>
+                                <md-table-cell>
+                                    <md-icon v-if="token.scope_push" class="md-primary">check</md-icon>
+                                    <md-icon v-else>close</md-icon>
+                                </md-table-cell>
+                            </md-table-row>
+                        </template>
 
-                    <md-table-row v-if="tokens.length === 0">
-                        <md-table-cell colspan="5">No personal tokens yet. Create one above.</md-table-cell>
-                    </md-table-row>
-                </md-table-body>
-            </md-table>
-        </md-table-card>
+                        <md-table-row v-if="projectTokensLoading">
+                            <md-table-cell colspan="4">Loading...</md-table-cell>
+                        </md-table-row>
+                        <md-table-row v-else-if="totalProjectTokenCount === 0">
+                            <md-table-cell colspan="4">No project tokens found.</md-table-cell>
+                        </md-table-row>
+                    </md-table-body>
+                </md-table>
+            </md-table-card>
+        </md-card>
 
         <!-- New token dialog -->
         <md-dialog ref="tokenDialog">
@@ -128,7 +191,7 @@
             md-cancel-text="Cancel"
             @close="onRevokeClose">
         </md-dialog-confirm>
-    </md-card>
+    </div>
 </template>
 
 <script>
@@ -146,6 +209,7 @@ export default {
         expandedId: null,
         accessLog: [],
         logLoading: false,
+        projectTokensLoading: false,
         form: {
             description: '',
             scopePull: true,
@@ -156,6 +220,12 @@ export default {
     computed: {
         disableAdd () {
             return !this.form.description || this.form.description.length < 3
+        },
+        adminProjects () {
+            return this.$store.state.projects.filter(p => p.userHasAdminRights())
+        },
+        totalProjectTokenCount () {
+            return this.adminProjects.reduce((sum, p) => sum + (p.tokens ? p.tokens.length : 0), 0)
         }
     },
 
@@ -163,6 +233,13 @@ export default {
         UserTokenService.loadTokens().then((tokens) => {
             this.tokens = tokens
         }).catch(() => {})
+
+        const adminProjects = this.$store.state.projects.filter(p => p.userHasAdminRights())
+        if (adminProjects.length > 0) {
+            this.projectTokensLoading = true
+            Promise.all(adminProjects.map(p => p._loadTokens()))
+                .finally(() => { this.projectTokensLoading = false })
+        }
     },
 
     methods: {
@@ -234,6 +311,13 @@ export default {
     padding-top: 7px !important;
     padding-bottom: 22px !important;
     padding-left: 0 !important;
+}
+
+.section-hint {
+    font-size: 13px;
+    font-weight: normal;
+    color: #888;
+    margin-left: 12px;
 }
 
 .token-pre {
