@@ -7,11 +7,11 @@ from test_template import ApiTestTemplate
 class UserGlobalTokensTest(ApiTestTemplate):
 
     URL = 'api/v1/user/global-tokens'
+    TOKEN_URL = URL + '/%s'
+    ACCESS_LOG_URL = URL + '/%s/access-log'
 
     def setUp(self):
         super(UserGlobalTokensTest, self).setUp()
-        TestClient.execute('TRUNCATE global_token_access_log')
-        TestClient.execute('TRUNCATE global_token')
 
         self.other_user_id = str(uuid.uuid4())
         TestClient.execute("""
@@ -95,7 +95,7 @@ class UserGlobalTokensTest(ApiTestTemplate):
                                    headers=TestClient.get_user_authorization(self.user_id))
         token_id = create_r['id']
 
-        r = TestClient.delete('%s/%s' % (self.URL, token_id),
+        r = TestClient.delete(self.TOKEN_URL % token_id,
                               headers=TestClient.get_user_authorization(self.user_id))
         self.assertEqual(r['status'], 200)
 
@@ -110,7 +110,7 @@ class UserGlobalTokensTest(ApiTestTemplate):
                                    headers=TestClient.get_user_authorization(self.user_id))
         token_id = create_r['id']
 
-        TestClient.delete('%s/%s' % (self.URL, token_id),
+        TestClient.delete(self.TOKEN_URL % token_id,
                           headers=TestClient.get_user_authorization(self.user_id))
 
         count = TestClient.execute_one("SELECT COUNT(*) FROM global_token WHERE id = %s", [token_id])
@@ -123,7 +123,7 @@ class UserGlobalTokensTest(ApiTestTemplate):
             VALUES (%s, 'not yours', false, true, %s)
         """, [other_token_id, self.other_user_id])
 
-        r = TestClient.delete('%s/%s' % (self.URL, other_token_id),
+        r = TestClient.delete(self.TOKEN_URL % other_token_id,
                               headers=TestClient.get_user_authorization(self.user_id))
         self.assertEqual(r['status'], 404)
 
@@ -134,7 +134,7 @@ class UserGlobalTokensTest(ApiTestTemplate):
 
     def test_delete_nonexistent_token_returns_404(self):
         fake_id = str(uuid.uuid4())
-        r = TestClient.delete('%s/%s' % (self.URL, fake_id),
+        r = TestClient.delete(self.TOKEN_URL % fake_id,
                               headers=TestClient.get_user_authorization(self.user_id))
         self.assertEqual(r['status'], 404)
 
@@ -146,7 +146,7 @@ class UserGlobalTokensTest(ApiTestTemplate):
                                    headers=TestClient.get_user_authorization(self.user_id))
         token_id = create_r['id']
 
-        r = TestClient.get('%s/%s/access-log' % (self.URL, token_id),
+        r = TestClient.get(self.ACCESS_LOG_URL % token_id,
                            headers=TestClient.get_user_authorization(self.user_id))
         self.assertIsInstance(r, list)
         self.assertEqual(len(r), 0)
@@ -166,7 +166,7 @@ class UserGlobalTokensTest(ApiTestTemplate):
             VALUES (%s, '/api/v1/projects/abc/builds', 'GET', 200)
         """, [token_id])
 
-        r = TestClient.get('%s/%s/access-log' % (self.URL, token_id),
+        r = TestClient.get(self.ACCESS_LOG_URL % token_id,
                            headers=TestClient.get_user_authorization(self.user_id))
         self.assertEqual(len(r), 2)
         paths = {e['path'] for e in r}
@@ -188,12 +188,12 @@ class UserGlobalTokensTest(ApiTestTemplate):
             VALUES (%s, '/api/v1/projects', 'GET', 200)
         """, [other_token_id])
 
-        r = TestClient.get('%s/%s/access-log' % (self.URL, other_token_id),
+        r = TestClient.get(self.ACCESS_LOG_URL % other_token_id,
                            headers=TestClient.get_user_authorization(self.user_id))
         self.assertEqual(r['status'], 404)
 
     def test_access_log_nonexistent_token_returns_404(self):
         fake_id = str(uuid.uuid4())
-        r = TestClient.get('%s/%s/access-log' % (self.URL, fake_id),
+        r = TestClient.get(self.ACCESS_LOG_URL % fake_id,
                            headers=TestClient.get_user_authorization(self.user_id))
         self.assertEqual(r['status'], 404)

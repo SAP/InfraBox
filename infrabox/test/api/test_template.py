@@ -7,8 +7,7 @@ class ApiTestTemplate(unittest.TestCase):
     # TODO optimize setup for each test
 
     def setUp(self):
-        TestClient.execute('TRUNCATE global_token_access_log')
-        TestClient.execute('TRUNCATE global_token')
+        TestClient.execute('TRUNCATE global_token_access_log, global_token')
         TestClient.execute('TRUNCATE "user"')
         TestClient.execute('TRUNCATE project')
         TestClient.execute('TRUNCATE collaborator')
