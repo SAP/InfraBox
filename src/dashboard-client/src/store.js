@@ -376,7 +376,6 @@ const mutations = {
     setAdminClusters,
     updateAdminCluster,
     setAdminGlobalTokens,
-    deleteAdminGlobalToken,
     setArchive,
     setVault,
     setPattern
