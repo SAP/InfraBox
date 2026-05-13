@@ -23,9 +23,11 @@ Open http://localhost:8081 (increments automatically if 8080 is taken).
 
 **Default credentials** (created by `seed.sql` on first run):
 
-| Email | Password | Role |
-|-------|----------|------|
-| admin@local.dev | admin123 | admin |
+| Email | Password | Role | Project access |
+|-------|----------|------|----------------|
+| admin@local.dev | admin123 | admin | — |
+| alice@local.dev | password123 | user | Owner: project-alpha, Developer: project-beta |
+| bob@local.dev | password123 | user | none |
 
 Log in with the **email** address, not the username.
 
