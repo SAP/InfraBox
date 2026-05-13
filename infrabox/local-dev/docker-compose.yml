@@ -7,7 +7,7 @@ services:
             dockerfile: ./src/postgres/Dockerfile
         environment:
             - POSTGRES_USER=postgres
-            - POSTGRES_PASSWORD=
+            - POSTGRES_PASSWORD=${INFRABOX_DB_PASSWORD}
             - POSTGRES_DB=postgres
             - POSTGRES_HOST_AUTH_METHOD=trust
         volumes:
@@ -41,7 +41,7 @@ services:
             - INFRABOX_VERSION=local-dev
             - INFRABOX_DATABASE_HOST=postgres
             - INFRABOX_DATABASE_USER=postgres
-            - INFRABOX_DATABASE_PASSWORD=
+            - INFRABOX_DATABASE_PASSWORD=${INFRABOX_DB_PASSWORD}
             - INFRABOX_DATABASE_PORT=5432
             - INFRABOX_DATABASE_DB=postgres
             - INFRABOX_GENERAL_REPORT_ISSUE_URL=https://github.com/SAP/InfraBox/issues
