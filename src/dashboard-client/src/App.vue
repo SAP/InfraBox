@@ -73,13 +73,6 @@
                     </a>
                 </md-list-item>
 
-                <md-list-item class="navi-link">
-                    <a href="#" class="md-list-item-container md-button" v-on:click="logout()">
-                        <md-icon><i class="fa fa-sign-out fa-fw"></i></md-icon>
-                        <span>Logout</span>
-                    </a>
-                </md-list-item>
-
                 <md-list-item>
                     <router-link to="/user/tokens" style="color: inherit">
                         <span @click="toggleLeftSidenav()">
@@ -87,6 +80,13 @@
                             <span class="fix-list">My Tokens</span>
                         </span>
                     </router-link>
+                </md-list-item>
+
+                <md-list-item class="navi-link">
+                    <a href="#" class="md-list-item-container md-button" v-on:click="logout()">
+                        <md-icon><i class="fa fa-sign-out fa-fw"></i></md-icon>
+                        <span>Logout</span>
+                    </a>
                 </md-list-item>
 
                 <md-list-item v-if="$store.state.user.hasWriteAccess()">
