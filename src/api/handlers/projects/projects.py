@@ -49,21 +49,14 @@ class Projects(Resource):
         '''
         Returns user's projects
         '''
-        if g.token.get('type') == 'global' and g.token.get('global_token', {}).get('scope_pull'):
-            projects = g.db.execute_many_dict("""
-                SELECT id, name, type, public, null AS userrole
-                FROM project
-                ORDER BY name
-            """)
-        else:
-            projects = g.db.execute_many_dict("""
-                SELECT p.id, p.name, p.type, p.public, co.role AS userrole
-                FROM project p
-                INNER JOIN collaborator co
-                ON co.project_id = p.id
-                AND %s = co.user_id
-                ORDER BY p.name
-            """, [g.token['user']['id']])
+        projects = g.db.execute_many_dict("""
+            SELECT p.id, p.name, p.type, p.public, co.role AS userrole
+            FROM project p
+            INNER JOIN collaborator co
+            ON co.project_id = p.id
+            AND %s = co.user_id
+            ORDER BY p.name
+        """, [g.token['user']['id']])
 
         return projects
 
