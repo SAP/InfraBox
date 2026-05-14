@@ -1,4 +1,4 @@
-FROM docker:20.10.14-dind
+FROM docker:23.0-dind
 
 ENV CLOUD_SDK_VERSION 380.0.0
 ENV PATH /google-cloud-sdk/bin:$PATH
@@ -13,8 +13,7 @@ RUN apk add --no-cache \
     python3-dev \
     py3-jwt \
     py3-pip \
-    py-requests \
-    py-crcmod \
+    py3-requests \
     g++ \
     pv \
     snappy-dev \
@@ -27,8 +26,8 @@ RUN apk add --no-cache \
     bash \
     libc6-compat \
     git && \
-    pip3 install pynacl docker awscli pyyaml && \
-    pip3 install future python-snappy six
+    pip3 install pynacl docker awscli pyyaml crcmod && \
+    pip3 install future 'python-snappy==0.6.1' six
 ## Install openssh 8.3
 RUN sed -i 's/v3.15/v3.12/g' /etc/apk/repositories && \
     apk add --update openssh-client
