@@ -267,14 +267,14 @@ def validate_global_token(token):
         return None
 
     token['global_token'] = {
-        'id': r[0],
-        'description': r[1],
-        'scope_push': r[2],
-        'scope_pull': r[3],
+        'id': r['id'],
+        'description': r['description'],
+        'scope_push': r['scope_push'],
+        'scope_pull': r['scope_pull'],
     }
     # Token is scoped to its owner; viewer role enforces read-only access
     token['user'] = {
-        'id': r[4],
+        'id': r['user_id'],
         'role': 'viewer',
     }
     return token
