@@ -270,7 +270,9 @@ def validate_global_token(token):
         'scope_push': r['scope_push'],
         'scope_pull': r['scope_pull'],
     }
-    # Token is scoped to its owner; viewer role enforces read-only access
+    # Global tokens are always read-only by design; role is always 'viewer'
+    # regardless of scope_push. scope_push is stored for future enforcement
+    # but does not change OPA authorization at this time.
     token['user'] = {
         'id': r['user_id'],
         'role': 'viewer',

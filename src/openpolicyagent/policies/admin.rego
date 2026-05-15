@@ -3,7 +3,7 @@ package infrabox
 # HTTP API request
 import input as api
 
-user_roles = {"viewer": 15, "user": 10, "devops": 20, "admin": 30}
+user_roles = {"viewer": 5, "user": 10, "devops": 20, "admin": 30}
 
 default authz = false
 
