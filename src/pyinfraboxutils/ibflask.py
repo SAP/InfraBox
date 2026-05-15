@@ -51,8 +51,6 @@ def log_global_token_access(response):
     token = getattr(g, 'token', None)
     if not token or token.get('type') != 'global':
         return response
-    if response.status_code >= 400:
-        return response
     try:
         db = getattr(g, 'db', None)
         if db:
@@ -260,7 +258,7 @@ def validate_global_token(token):
 
     r = g.db.execute_one('''
         SELECT id, description, scope_push, scope_pull, user_id FROM global_token
-        WHERE id = %s
+        WHERE id = %s AND expires_at > NOW()
     ''', [token['id']])
     if not r:
         logger.warn('global token not valid')

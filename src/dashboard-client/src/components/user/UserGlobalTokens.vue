@@ -21,6 +21,10 @@
                                 <label>Token Description (e.g. "Grafana Read-Only")</label>
                                 <md-input v-model="form.description" @keyup.enter.native="createToken"></md-input>
                             </md-input-container>
+                            <md-input-container class="m-r-sm" style="flex: 0 0 160px">
+                                <label>Validity (days)</label>
+                                <md-input v-model.number="form.expiresDays" type="number" min="1" max="3650" placeholder="365"></md-input>
+                            </md-input-container>
                             <md-button :disabled="disableAdd" class="md-icon-button md-list-action" @click="createToken">
                                 <md-icon md-theme="running" class="md-primary">add_circle</md-icon>
                                 <md-tooltip>Create read-only token</md-tooltip>
@@ -37,6 +41,7 @@
                         <md-table-row>
                             <md-table-head>Description</md-table-head>
                             <md-table-head>Created</md-table-head>
+                            <md-table-head>Expires</md-table-head>
                             <md-table-head>Actions</md-table-head>
                         </md-table-row>
                     </md-table-header>
@@ -45,6 +50,12 @@
                             <md-table-row :key="t.id">
                                 <md-table-cell>{{ t.description }}</md-table-cell>
                                 <md-table-cell>{{ formatDate(t.created_at) }}</md-table-cell>
+                                <md-table-cell>
+                                    <span :class="expiryClass(t.expires_at)">
+                                        {{ formatDate(t.expires_at) }}
+                                        <md-icon v-if="isExpiringSoon(t.expires_at)" style="font-size:16px;vertical-align:middle">warning</md-icon>
+                                    </span>
+                                </md-table-cell>
                                 <md-table-cell>
                                     <md-button class="md-icon-button" @click="toggleLog(t)">
                                         <md-icon>history</md-icon>
@@ -85,7 +96,7 @@
                         </template>
 
                         <md-table-row v-if="tokens.length === 0">
-                            <md-table-cell colspan="3">No personal tokens yet. Create one above.</md-table-cell>
+                            <md-table-cell colspan="4">No personal tokens yet. Create one above.</md-table-cell>
                         </md-table-row>
                     </md-table-body>
                 </md-table>
@@ -195,13 +206,15 @@ export default {
         logLoading: false,
         projectTokensLoading: false,
         form: {
-            description: ''
+            description: '',
+            expiresDays: 365
         }
     }),
 
     computed: {
         disableAdd () {
-            return !this.form.description || this.form.description.length < 3
+            return !this.form.description || this.form.description.length < 3 ||
+                !this.form.expiresDays || this.form.expiresDays < 1 || this.form.expiresDays > 3650
         },
         adminProjects () {
             return this.$store.state.projects.filter(p => p.userHasAdminRights())
@@ -229,18 +242,36 @@ export default {
             return v ? moment(v).format('YYYY-MM-DD HH:mm:ss') : '-'
         },
 
+        isExpiringSoon (expiresAt) {
+            if (!expiresAt) return false
+            return moment(expiresAt).diff(moment(), 'days') <= 30
+        },
+
+        expiryClass (expiresAt) {
+            if (!expiresAt) return ''
+            const days = moment(expiresAt).diff(moment(), 'days')
+            if (days < 0) return 'expiry-expired'
+            if (days <= 30) return 'expiry-soon'
+            return ''
+        },
+
         createToken () {
             if (this.disableAdd) return
-            UserTokenService.createToken(this.form.description, false, true)
+            const days = this.form.expiresDays || 365
+            UserTokenService.createToken(this.form.description, false, true, days)
                 .then((result) => {
+                    const expiresAt = new Date()
+                    expiresAt.setDate(expiresAt.getDate() + days)
                     this.tokens.unshift({
                         id: result.id,
                         description: result.description,
-                        created_at: new Date().toISOString()
+                        created_at: new Date().toISOString(),
+                        expires_at: expiresAt.toISOString()
                     })
                     this.newToken = result.token
                     this.$refs['tokenDialog'].open()
                     this.form.description = ''
+                    this.form.expiresDays = 365
                 })
                 .catch(() => {})
         },
@@ -343,5 +374,15 @@ export default {
     color: #999;
     padding: 8px 0;
     font-size: 13px;
+}
+
+.expiry-soon {
+    color: #e65100;
+    font-weight: 500;
+}
+
+.expiry-expired {
+    color: #c62828;
+    font-weight: 500;
 }
 </style>

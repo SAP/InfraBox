@@ -11,11 +11,12 @@ class UserTokenService {
             })
     }
 
-    createToken (description, scopePush, scopePull) {
+    createToken (description, scopePush, scopePull, expiresDays) {
         return NewAPIService.post('user/global-tokens', {
             description,
             scope_push: scopePush,
-            scope_pull: scopePull
+            scope_pull: scopePull,
+            expires_days: expiresDays || 365
         }).catch((err) => {
             NotificationService.$emit('NOTIFICATION', new Notification(err))
             throw err

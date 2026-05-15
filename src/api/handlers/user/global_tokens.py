@@ -17,12 +17,14 @@ global_token_model = api.model('UserGlobalToken', {
     'scope_pull': fields.Boolean,
     'scope_push': fields.Boolean,
     'created_at': fields.String,
+    'expires_at': fields.String,
 })
 
 global_token_create_model = api.model('UserGlobalTokenCreate', {
     'description': fields.String(required=True),
     'scope_push': fields.Boolean(required=False, default=False),
     'scope_pull': fields.Boolean(required=False, default=True),
+    'expires_days': fields.Integer(required=False, default=365),
 })
 
 access_log_model = api.model('GlobalTokenAccessLog', {
@@ -46,7 +48,7 @@ class UserGlobalTokens(Resource):
     def get(self):
         user_id = g.token['user']['id']
         tokens = g.db.execute_many_dict('''
-            SELECT id, description, scope_push, scope_pull, created_at
+            SELECT id, description, scope_push, scope_pull, created_at, expires_at
             FROM global_token
             WHERE user_id = %s
             ORDER BY created_at DESC
@@ -61,11 +63,14 @@ class UserGlobalTokens(Resource):
         description = body['description']
         scope_push = body.get('scope_push', False)
         scope_pull = body.get('scope_pull', True)
+        expires_days = int(body.get('expires_days', 365))
+        if not (1 <= expires_days <= 3650):
+            expires_days = 365
 
         g.db.execute('''
-            INSERT INTO global_token (id, description, scope_push, scope_pull, user_id)
-            VALUES (%s, %s, %s, %s, %s)
-        ''', [token_id, description, scope_push, scope_pull, user_id])
+            INSERT INTO global_token (id, description, scope_push, scope_pull, user_id, expires_at)
+            VALUES (%s, %s, %s, %s, %s, NOW() + (%s * INTERVAL '1 day'))
+        ''', [token_id, description, scope_push, scope_pull, user_id, expires_days])
         g.db.commit()
 
         token = encode_global_token(token_id)
@@ -76,6 +81,7 @@ class UserGlobalTokens(Resource):
             'description': description,
             'scope_push': scope_push,
             'scope_pull': scope_pull,
+            'expires_days': expires_days,
         }
 
 
@@ -85,18 +91,14 @@ class UserGlobalToken(Resource):
     def delete(self, token_id):
         user_id = g.token['user']['id']
 
-        existing = g.db.execute_one('''
-            SELECT id FROM global_token WHERE id = %s AND user_id = %s
+        deleted = g.db.execute_one('''
+            DELETE FROM global_token WHERE id = %s AND user_id = %s RETURNING id
         ''', [token_id, user_id])
 
-        if not existing:
+        if not deleted:
             return {'status': 404, 'message': 'Token not found'}, 404
 
-        g.db.execute('''
-            DELETE FROM global_token WHERE id = %s AND user_id = %s
-        ''', [token_id, user_id])
         g.db.commit()
-
         return OK("OK")
 
 
