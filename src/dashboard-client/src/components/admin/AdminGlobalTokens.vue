@@ -19,6 +19,7 @@
                         <md-table-head>Read</md-table-head>
                         <md-table-head>Write</md-table-head>
                         <md-table-head>Created</md-table-head>
+                        <md-table-head>Expires</md-table-head>
                     </md-table-row>
                 </md-table-header>
                 <md-table-body>
@@ -34,9 +35,10 @@
                             <md-icon v-else>close</md-icon>
                         </md-table-cell>
                         <md-table-cell>{{ formatDate(t.created_at) }}</md-table-cell>
+                        <md-table-cell>{{ formatDate(t.expires_at) }}</md-table-cell>
                     </md-table-row>
                     <md-table-row v-if="tokens.length === 0">
-                        <md-table-cell colspan="5">No global tokens found.</md-table-cell>
+                        <md-table-cell colspan="6">No global tokens found.</md-table-cell>
                     </md-table-row>
                 </md-table-body>
             </md-table>
