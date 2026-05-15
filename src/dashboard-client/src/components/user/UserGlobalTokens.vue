@@ -21,15 +21,9 @@
                                 <label>Token Description (e.g. "Grafana Read-Only")</label>
                                 <md-input v-model="form.description" @keyup.enter.native="createToken"></md-input>
                             </md-input-container>
-                            <div class="m-r-sm scope-toggle">
-                                <md-checkbox v-model="form.scopePull">Read (pull)</md-checkbox>
-                            </div>
-                            <div class="m-r-sm scope-toggle">
-                                <md-checkbox v-model="form.scopePush">Write (push)</md-checkbox>
-                            </div>
                             <md-button :disabled="disableAdd" class="md-icon-button md-list-action" @click="createToken">
                                 <md-icon md-theme="running" class="md-primary">add_circle</md-icon>
-                                <md-tooltip>Create token</md-tooltip>
+                                <md-tooltip>Create read-only token</md-tooltip>
                             </md-button>
                         </md-list-item>
                     </md-list>
@@ -42,8 +36,6 @@
                     <md-table-header>
                         <md-table-row>
                             <md-table-head>Description</md-table-head>
-                            <md-table-head>Read</md-table-head>
-                            <md-table-head>Write</md-table-head>
                             <md-table-head>Created</md-table-head>
                             <md-table-head>Actions</md-table-head>
                         </md-table-row>
@@ -52,14 +44,6 @@
                         <template v-for="t in tokens">
                             <md-table-row :key="t.id">
                                 <md-table-cell>{{ t.description }}</md-table-cell>
-                                <md-table-cell>
-                                    <md-icon v-if="t.scope_pull" class="md-primary">check</md-icon>
-                                    <md-icon v-else>close</md-icon>
-                                </md-table-cell>
-                                <md-table-cell>
-                                    <md-icon v-if="t.scope_push" class="md-primary">check</md-icon>
-                                    <md-icon v-else>close</md-icon>
-                                </md-table-cell>
                                 <md-table-cell>{{ formatDate(t.created_at) }}</md-table-cell>
                                 <md-table-cell>
                                     <md-button class="md-icon-button" @click="toggleLog(t)">
@@ -75,7 +59,7 @@
 
                             <!-- Inline access log -->
                             <md-table-row v-if="expandedId === t.id" :key="t.id + '-log'" class="log-row">
-                                <md-table-cell colspan="5" class="log-cell">
+                                <md-table-cell colspan="3" class="log-cell">
                                     <div v-if="logLoading" class="log-loading">Loading...</div>
                                     <div v-else-if="accessLog.length === 0" class="log-empty">No access records yet.</div>
                                     <table v-else class="log-table">
@@ -101,7 +85,7 @@
                         </template>
 
                         <md-table-row v-if="tokens.length === 0">
-                            <md-table-cell colspan="5">No personal tokens yet. Create one above.</md-table-cell>
+                            <md-table-cell colspan="3">No personal tokens yet. Create one above.</md-table-cell>
                         </md-table-row>
                     </md-table-body>
                 </md-table>
@@ -211,9 +195,7 @@ export default {
         logLoading: false,
         projectTokensLoading: false,
         form: {
-            description: '',
-            scopePull: true,
-            scopePush: false
+            description: ''
         }
     }),
 
@@ -249,20 +231,16 @@ export default {
 
         createToken () {
             if (this.disableAdd) return
-            UserTokenService.createToken(this.form.description, this.form.scopePush, this.form.scopePull)
+            UserTokenService.createToken(this.form.description, false, true)
                 .then((result) => {
                     this.tokens.unshift({
                         id: result.id,
                         description: result.description,
-                        scope_pull: result.scope_pull,
-                        scope_push: result.scope_push,
                         created_at: new Date().toISOString()
                     })
                     this.newToken = result.token
                     this.$refs['tokenDialog'].open()
                     this.form.description = ''
-                    this.form.scopePull = true
-                    this.form.scopePush = false
                 })
                 .catch(() => {})
         },
@@ -323,11 +301,6 @@ export default {
 .token-pre {
     white-space: pre-wrap;
     word-wrap: break-word;
-}
-
-.scope-toggle {
-    display: flex;
-    align-items: center;
 }
 
 .log-row td,
