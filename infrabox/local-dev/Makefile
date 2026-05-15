@@ -16,5 +16,5 @@ logs:
 
 frontend:
 	cd $(ROOT)/src/dashboard-client && \
-	  npm install --legacy-peer-deps --ignore-scripts && \
+	  npm install --ignore-scripts && \
 	  npm run dev
