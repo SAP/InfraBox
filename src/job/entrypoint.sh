@@ -49,6 +49,12 @@ if [ ! -e /var/run/docker.sock ]; then
             cp /etc/ssl/certs/saprootca.pem "/etc/docker/certs.d/${registry}/ca.crt"
         done
         echo "SAP Root CA installed for $(ls /etc/docker/certs.d/ | wc -l) registries"
+
+        # BuildKit's cache registry client uses the system CA bundle, not /etc/docker/certs.d/.
+        # Append the SAP Root CA to the Alpine system bundle so BuildKit can trust
+        # InfraBox internal registries when importing --cache-from manifests via HTTPS.
+        cat /etc/ssl/certs/saprootca.pem >> /etc/ssl/certs/ca-certificates.crt
+        echo "SAP Root CA appended to system CA bundle for BuildKit"
     fi
 
     echo "Waiting for docker daemon to start up"
