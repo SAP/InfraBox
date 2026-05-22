@@ -29,6 +29,34 @@ if [ ! -e /var/run/docker.sock ]; then
     cat /etc/docker/daemon.json
     echo ""
 
+    # DM01-5956: Install SAP Root CA for InfraBox internal registries so that
+    # Docker's built-in BuildKit (docker driver, DOCKER_BUILDKIT=1) can import
+    # cache manifests via --cache-from without x509 errors.
+    # Note: /etc/buildkit/buildkitd.toml is only read by a standalone buildkitd
+    # process, NOT by the Docker daemon's built-in BuildKit driver.
+    if [ -f /etc/ssl/certs/saprootca.pem ]; then
+        echo "Installing SAP Root CA into /etc/docker/certs.d/ for InfraBox registries"
+        for registry in \
+            "test-new.infrabox.datahub.only.sap" \
+            "infrabox.datahub.only.sap" \
+            "ha-eu-de-1.infrabox.datahub.only.sap" \
+            "ha-eu-de-1b.infrabox.datahub.only.sap" \
+            "ha-eu-de-2.infrabox.datahub.only.sap" \
+            "ha-eu-de-2b.infrabox.datahub.only.sap" \
+            "gardener-eu-de-1.infrabox.datahub.only.sap" \
+            "gardener-eu-de-2.infrabox.datahub.only.sap"; do
+            mkdir -p "/etc/docker/certs.d/${registry}"
+            cp /etc/ssl/certs/saprootca.pem "/etc/docker/certs.d/${registry}/ca.crt"
+        done
+        echo "SAP Root CA installed for $(ls /etc/docker/certs.d/ | wc -l) registries"
+
+        # BuildKit's cache registry client uses the system CA bundle, not /etc/docker/certs.d/.
+        # Append the SAP Root CA to the Alpine system bundle so BuildKit can trust
+        # InfraBox internal registries when importing --cache-from manifests via HTTPS.
+        cat /etc/ssl/certs/saprootca.pem >> /etc/ssl/certs/ca-certificates.crt
+        echo "SAP Root CA appended to system CA bundle for BuildKit"
+    fi
+
     echo "Waiting for docker daemon to start up"
     CNT=0
     while true; do
