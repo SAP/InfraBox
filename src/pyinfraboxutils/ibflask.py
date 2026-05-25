@@ -46,6 +46,24 @@ def teardown_request(_):
         logger.exception(e)
 
 
+@app.after_request
+def log_global_token_access(response):
+    token = getattr(g, 'token', None)
+    if not token or token.get('type') != 'global':
+        return response
+    try:
+        db = getattr(g, 'db', None)
+        if db:
+            db.execute('''
+                INSERT INTO global_token_access_log (token_id, path, method, status_code)
+                VALUES (%s, %s, %s, %s)
+            ''', [token['global_token']['id'], request.path, request.method, response.status_code])
+            db.commit()
+    except Exception as e:
+        logger.warning('Failed to log global token access: %s', e)
+    return response
+
+
 @app.errorhandler(404)
 def not_found(error):
     msg = error.description
@@ -194,6 +212,10 @@ def normalize_token(token):
         if not validate_project_token(token):
             return None
 
+    # Validate global token
+    elif token["type"] == "global":
+        return validate_global_token(token)
+
     return token
 
 def enrich_job_token(token):
@@ -228,6 +250,33 @@ def validate_user_token(token):
         logger.warn('user not found')
         return None
     token['user']['role'] = u[1]
+    return token
+
+def validate_global_token(token):
+    if not ("id" in token and validate_uuid(token['id'])):
+        return None
+
+    r = g.db.execute_one('''
+        SELECT id, description, scope_push, scope_pull, user_id FROM global_token
+        WHERE id = %s AND expires_at > NOW()
+    ''', [token['id']])
+    if not r:
+        logger.warn('global token not valid')
+        return None
+
+    token['global_token'] = {
+        'id': r['id'],
+        'description': r['description'],
+        'scope_push': r['scope_push'],
+        'scope_pull': r['scope_pull'],
+    }
+    # Global tokens are always read-only by design; role is always 'viewer'
+    # regardless of scope_push. scope_push is stored for future enforcement
+    # but does not change OPA authorization at this time.
+    token['user'] = {
+        'id': r['user_id'],
+        'role': 'viewer',
+    }
     return token
 
 def validate_project_token(token):

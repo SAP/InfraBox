@@ -43,6 +43,7 @@ allow {
     api.method = "POST"
     api.path = ["api", "v1", "projects"]
     api.token.type = "user"
+    api.token.user.role != "viewer"
 }
 
 allow {
@@ -94,4 +95,52 @@ allow {
     api.path = ["api", "v1", "projects", project, "visibility"]
     api.token.type = "user"
     projects_projects_owner([api.token.user.id, project])
+}
+
+# Allow global token GET access to projects the token owner is a collaborator on
+allow {
+    api.method = "GET"
+    api.path = ["api", "v1", "projects"]
+    api.token.type = "global"
+}
+
+# Allow global token GET access to specific project only if owner is collaborator
+allow {
+    api.method = "GET"
+    api.path = ["api", "v1", "projects", project]
+    api.token.type = "global"
+    projects_projects_collaborator([api.token.user.id, project])
+}
+
+# Allow global token GET access to project by name only if owner is collaborator
+allow {
+    api.method = "GET"
+    array.slice(api.path, 0, 4) = ["api", "v1", "projects", "name"]
+    project_name := concat("/", array.slice(api.path, 4, count(api.path)))
+    api.token.type = "global"
+    projects_projects_name_collaborator([api.token.user.id, project_name])
+}
+
+# Allow viewer user role GET access to all projects list
+allow {
+    api.method = "GET"
+    api.path = ["api", "v1", "projects"]
+    api.token.type = "user"
+    api.token.user.role = "viewer"
+}
+
+# Allow viewer user role GET access to specific project by id
+allow {
+    api.method = "GET"
+    api.path = ["api", "v1", "projects", project]
+    api.token.type = "user"
+    api.token.user.role = "viewer"
+}
+
+# Allow viewer user role GET access to project by name
+allow {
+    api.method = "GET"
+    array.slice(api.path, 0, 4) = ["api", "v1", "projects", "name"]
+    api.token.type = "user"
+    api.token.user.role = "viewer"
 }

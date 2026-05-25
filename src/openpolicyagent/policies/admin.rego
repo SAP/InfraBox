@@ -3,7 +3,7 @@ package infrabox
 # HTTP API request
 import input as api
 
-user_roles = {"user": 10, "devops": 20, "admin": 30}
+user_roles = {"viewer": 5, "user": 10, "devops": 20, "admin": 30}
 
 default authz = false
 
@@ -20,6 +20,20 @@ allow {
     user_roles[api.token.user.role] >= 20
 }
 
+# Allow viewer role GET access to all admin endpoints
+allow {
+    api.method = "GET"
+    api.token.type = "user"
+    api.token.user.role = "viewer"
+}
+
+# Allow admin-only GET access to audit all global tokens
+allow {
+    api.method = "GET"
+    api.path = ["api", "v1", "admin", "global-tokens"]
+    api.token.type = "user"
+    user_roles[api.token.user.role] >= 30
+}
 
 # Allow GET access to /api/v1/admin/clusters for users logged in
 allow {
@@ -44,5 +58,3 @@ deny {
     api.token.type = "user"
     user_roles[api.token.user.role] <= 20
 }
-
-

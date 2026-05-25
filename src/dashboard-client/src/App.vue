@@ -73,6 +73,15 @@
                     </a>
                 </md-list-item>
 
+                <md-list-item>
+                    <router-link to="/user/tokens" style="color: inherit">
+                        <span @click="toggleLeftSidenav()">
+                            <md-icon><i class="fa fa-key fa-fw"></i></md-icon>
+                            <span class="fix-list">My Tokens</span>
+                        </span>
+                    </router-link>
+                </md-list-item>
+
                 <md-list-item class="navi-link">
                     <a href="#" class="md-list-item-container md-button" v-on:click="logout()">
                         <md-icon><i class="fa fa-sign-out fa-fw"></i></md-icon>
@@ -109,6 +118,14 @@
                                       </span>
                                   </router-link>
                               </md-list-item>
+                            <md-list-item class="md-inset">
+                                <router-link :to="{name: 'AdminGlobalTokens'}">
+                                    <span @click="toggleLeftSidenav()">
+                                        <i class="fa fa-key"></i>
+                                        Tokens (Audit)
+                                    </span>
+                                </router-link>
+                            </md-list-item>
                         </md-list>
                     </md-list-expand>
                 </md-list-item>

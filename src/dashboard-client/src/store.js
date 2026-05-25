@@ -18,7 +18,8 @@ const state = {
     admin: {
         projects: [],
         users: [],
-        clusters: []
+        clusters: [],
+        globalTokens: []
     }
 }
 
@@ -345,6 +346,10 @@ function setAdminUserRole (state, payload) {
     user.role = role
 }
 
+function setAdminGlobalTokens (state, tokens) {
+    state.admin.globalTokens = tokens
+}
+
 const mutations = {
     addProjects,
     addJobs,
@@ -370,6 +375,7 @@ const mutations = {
     setAdminProjects,
     setAdminClusters,
     updateAdminCluster,
+    setAdminGlobalTokens,
     setArchive,
     setVault,
     setPattern

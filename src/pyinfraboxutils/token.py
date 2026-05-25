@@ -29,6 +29,15 @@ def encode_project_token(token_id, project_id, name):
 
         return jwt.encode(data, key=s.read(), algorithm='RS256')
 
+def encode_global_token(token_id):
+    with open(private_key_path) as s:
+        data = {
+            'id': token_id,
+            'type': 'global'
+        }
+
+        return jwt.encode(data, key=s.read(), algorithm='RS256')
+
 def encode_job_token(job_id):
     with open(private_key_path) as s:
         data = {

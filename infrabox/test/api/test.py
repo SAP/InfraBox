@@ -15,6 +15,7 @@ from tokens_test import TokensTest
 from secrets_test import SecretsTest
 from collaborators_test import CollaboratorsTest
 from user_test import UserTest
+from global_tokens_test import UserGlobalTokensTest
 
 from pyinfraboxutils.storage import storage
 
@@ -33,6 +34,7 @@ if __name__ == '__main__':
         suite.addTests(unittest.TestLoader().loadTestsFromTestCase(TokensTest))
         suite.addTests(unittest.TestLoader().loadTestsFromTestCase(SecretsTest))
         suite.addTests(unittest.TestLoader().loadTestsFromTestCase(UserTest))
+        suite.addTests(unittest.TestLoader().loadTestsFromTestCase(UserGlobalTokensTest))
 
         testRunner = XMLTestRunner(output=output)
         #unittest.main(testRunner = XMLTestRunner(output=output),
