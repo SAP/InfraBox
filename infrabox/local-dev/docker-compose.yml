@@ -1,0 +1,87 @@
+version: "3.2"
+
+services:
+    postgres:
+        build:
+            context: ../../
+            dockerfile: ./src/postgres/Dockerfile
+        environment:
+            - POSTGRES_USER=postgres
+            - POSTGRES_PASSWORD=${INFRABOX_DB_PASSWORD}
+            - POSTGRES_DB=postgres
+            - POSTGRES_HOST_AUTH_METHOD=trust
+        volumes:
+            - ./seed.sql:/docker-entrypoint-initdb.d/99_seed.sql
+        ports:
+            - "5432:5432"
+
+    minio:
+        image: minio/minio
+        command: server /data
+        environment:
+            - MINIO_ACCESS_KEY=AKIAIOSFODNN7EXAMPLE
+            - MINIO_SECRET_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+        ports:
+            - "9000:9000"
+
+    opa:
+        build:
+            context: ../../
+            dockerfile: ./src/openpolicyagent/Dockerfile
+        ports:
+            - "8181:8181"
+
+    api:
+        build:
+            context: ../../
+            dockerfile: ./src/api/Dockerfile
+            args:
+                INFRABOX_BUILD_NUMBER: "3091"
+        environment:
+            - INFRABOX_VERSION=local-dev
+            - INFRABOX_DATABASE_HOST=postgres
+            - INFRABOX_DATABASE_USER=postgres
+            - INFRABOX_DATABASE_PASSWORD=${INFRABOX_DB_PASSWORD}
+            - INFRABOX_DATABASE_PORT=5432
+            - INFRABOX_DATABASE_DB=postgres
+            - INFRABOX_GENERAL_REPORT_ISSUE_URL=https://github.com/SAP/InfraBox/issues
+            - INFRABOX_STORAGE_GCS_ENABLED=false
+            - INFRABOX_STORAGE_AZURE_ENABLED=false
+            - INFRABOX_STORAGE_SWIFT_ENABLED=false
+            - INFRABOX_STORAGE_S3_ENABLED=true
+            - INFRABOX_STORAGE_S3_BUCKET=infrabox
+            - INFRABOX_STORAGE_S3_REGION=us-east-1
+            - INFRABOX_STORAGE_S3_SECURE=false
+            - INFRABOX_STORAGE_S3_ACCESS_KEY=AKIAIOSFODNN7EXAMPLE
+            - INFRABOX_STORAGE_S3_SECRET_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+            - INFRABOX_STORAGE_S3_ENDPOINT=minio
+            - INFRABOX_STORAGE_S3_PORT=9000
+            - GOOGLE_APPLICATION_CREDENTIALS=
+            - INFRABOX_ROOT_URL=http://localhost:8090
+            - INFRABOX_CLUSTER_NAME=master
+            - INFRABOX_HA_ENABLED=false
+            - INFRABOX_OPA_HOST=opa
+            - INFRABOX_OPA_PORT=8181
+            - INFRABOX_OPA_PUSH_INTERVAL=30
+            - INFRABOX_ACCOUNT_SIGNUP_ENABLED=true
+            - INFRABOX_ACCOUNT_LDAP_ENABLED=false
+            - INFRABOX_ACCOUNT_SAML_ENABLED=false
+            - INFRABOX_LEGAL_PRIVACY_URL=
+            - INFRABOX_LEGAL_TERMS_OF_USE_URL=
+            - INFRABOX_GITHUB_ENABLED=false
+            - INFRABOX_GITHUB_LOGIN_ENABLED=false
+            - INFRABOX_GERRIT_ENABLED=false
+            - INFRABOX_LOG_LEVEL=debug
+        volumes:
+            - ../test/utils/id_rsa:/var/run/secrets/infrabox.net/rsa/id_rsa:ro
+            - ../test/utils/id_rsa.pub:/var/run/secrets/infrabox.net/rsa/id_rsa.pub:ro
+        ports:
+            - "8090:8080"
+        links:
+            - postgres
+            - minio
+            - opa
+        depends_on:
+            - postgres
+            - minio
+            - opa

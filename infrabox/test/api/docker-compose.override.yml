@@ -1,0 +1,16 @@
+version: "3.2"
+
+services:
+    postgres:
+        environment:
+            - POSTGRES_USER=postgres
+            - POSTGRES_PASSWORD=postgres
+            - POSTGRES_DB=postgres
+            - POSTGRES_HOST_AUTH_METHOD=trust
+
+    test:
+        build:
+            args:
+                INFRABOX_BUILD_NUMBER: "3091"
+        volumes:
+            - ../../../:/infrabox/context
