@@ -6,10 +6,10 @@ POST   /api/v1/mcp/tokens              create
 GET    /api/v1/mcp/tokens              list
 PATCH  /api/v1/mcp/tokens/<id>         update
 DELETE /api/v1/mcp/tokens/<id>         revoke
-POST   /api/v1/mcp/tokens/<id>/trigger grant trigger permission (time-limited, hours)
+POST   /api/v1/mcp/tokens/<id>/trigger grant trigger permission (permanent until revoked)
 DELETE /api/v1/mcp/tokens/<id>/trigger revoke trigger permission
 """
-import hashlib
+import json
 import os
 import secrets
 from datetime import datetime, timezone, timedelta
@@ -19,6 +19,7 @@ from flask_restx import Resource
 
 from pyinfraboxutils.ibrestplus import api
 from api.handlers.mcp.audit import audit_mcp
+from api.handlers.mcp.auth import _hash_token
 
 _MAX_EXPIRY_DAYS = int(os.environ.get('MCP_TOKEN_MAX_EXPIRY_DAYS', 365))
 _MAX_PER_USER = int(os.environ.get('MCP_TOKEN_MAX_PER_USER', 20))
@@ -88,9 +89,8 @@ class MCPTokenList(Resource):
         raw_suffix = secrets.token_hex(24)  # 48 hex chars
         raw_token = f'ib_mcp_{raw_suffix}'
         token_id = raw_suffix[:16]
-        token_hash = hashlib.sha256(raw_token.encode('utf-8')).hexdigest()
+        token_hash = _hash_token(raw_token)
 
-        import json
         g.db.execute('''
             INSERT INTO mcp_token (token_id, token_hash, user_id, name, enabled_projects, allow_trigger, expires_at)
             VALUES (%s, %s, %s, %s, %s, FALSE, %s)
@@ -131,12 +131,14 @@ class MCPToken(Resource):
         if 'enabled_projects' in body:
             if not isinstance(body['enabled_projects'], dict):
                 return jsonify({'message': 'enabled_projects must be an object', 'status': 400}), 400
-            import json
             updates.append('enabled_projects = %s')
             params.append(json.dumps(body['enabled_projects']))
 
         if 'expires_days' in body:
-            days = int(body['expires_days'])
+            try:
+                days = int(body['expires_days'])
+            except (ValueError, TypeError):
+                return jsonify({'message': 'expires_days must be an integer', 'status': 400}), 400
             if days < 1 or days > _MAX_EXPIRY_DAYS:
                 return jsonify({'message': f'expires_days must be 1–{_MAX_EXPIRY_DAYS}', 'status': 400}), 400
             updates.append('expires_at = %s')
@@ -174,13 +176,12 @@ class MCPToken(Resource):
 @ns.route('/<string:token_id>/trigger')
 class MCPTokenTrigger(Resource):
     def post(self, token_id):
-        """Grant trigger permission to a token (time-limited by hours, max 168)."""
+        """Grant trigger permission to a token (permanent until revoked via DELETE)."""
         user_id = _current_user_id()
         row = _own_token(token_id, user_id)
         if not row:
             abort(404)
 
-        body = request.get_json(silent=True) or {}
         g.db.execute(
             'UPDATE mcp_token SET allow_trigger = TRUE WHERE token_id = %s AND user_id = %s',
             [token_id, user_id]

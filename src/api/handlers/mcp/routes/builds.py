@@ -3,6 +3,8 @@ MCP builds endpoints.
 GET  /api/v1/mcp/projects/<project_id>/builds
 POST /api/v1/mcp/projects/<project_id>/trigger
 """
+import uuid as _uuid
+
 from flask import g, jsonify, abort
 from flask_restx import Resource
 
@@ -52,8 +54,6 @@ class MCPTrigger(Resource):
     @mcp_rate_limit('trigger_build')
     def post(self, project_id):
         """Trigger a new build (requires allow_trigger on the MCP token)."""
-        audit_mcp('trigger_build', outcome='attempt', details={'project_id': project_id})
-
         if not check_project_access_mcp(project_id):
             audit_mcp('trigger_build', outcome='forbidden', details={'project_id': project_id})
             abort(403, 'access to this project is not permitted for the current MCP token')
@@ -79,9 +79,10 @@ class MCPTrigger(Resource):
             }), 400
 
         try:
-            import uuid as _uuid
             build_id = str(_uuid.uuid4())
-            # Create a minimal build record; the scheduler picks it up from here.
+            # Lock the table so concurrent triggers compute non-duplicate build numbers,
+            # matching the pattern used by the existing trigger endpoint (trigger.py).
+            g.db.execute('LOCK TABLE build IN EXCLUSIVE MODE')
             g.db.execute('''
                 INSERT INTO build (id, project_id, build_number, restart_counter, source)
                 SELECT %s, %s, COALESCE(MAX(build_number), 0) + 1, 0, 'mcp'

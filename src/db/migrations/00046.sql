@@ -15,7 +15,9 @@ CREATE TABLE mcp_token (
 CREATE INDEX idx_mcp_token_user_id ON mcp_token(user_id);
 CREATE INDEX idx_mcp_token_hash    ON mcp_token(token_hash);
 
--- Audit log for all MCP API calls
+-- Audit log for all MCP API calls.
+-- Retention: rows older than 90 days should be pruned periodically, e.g.:
+--   DELETE FROM mcp_access_log WHERE accessed_at < NOW() - INTERVAL '90 days';
 CREATE TABLE mcp_access_log (
     id          uuid         DEFAULT gen_random_uuid() NOT NULL,
     token_id    VARCHAR(16),
