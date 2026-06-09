@@ -41,8 +41,8 @@ class UserGlobalTokensTest(ApiTestTemplate):
     def test_list_tokens_only_returns_own_tokens(self):
         # Insert a token owned by another user
         TestClient.execute("""
-            INSERT INTO global_token (id, description, scope_push, scope_pull, user_id)
-            VALUES (%s, 'other token', false, true, %s)
+            INSERT INTO global_token (id, description, scope_push, scope_pull, user_id, expires_at)
+            VALUES (%s, 'other token', false, true, %s, NOW() + INTERVAL '30 days')
         """, [str(uuid.uuid4()), self.other_user_id])
 
         r = TestClient.get(self.URL, TestClient.get_user_authorization(self.user_id))
@@ -119,8 +119,8 @@ class UserGlobalTokensTest(ApiTestTemplate):
     def test_cannot_delete_other_users_token(self):
         other_token_id = str(uuid.uuid4())
         TestClient.execute("""
-            INSERT INTO global_token (id, description, scope_push, scope_pull, user_id)
-            VALUES (%s, 'not yours', false, true, %s)
+            INSERT INTO global_token (id, description, scope_push, scope_pull, user_id, expires_at)
+            VALUES (%s, 'not yours', false, true, %s, NOW() + INTERVAL '30 days')
         """, [other_token_id, self.other_user_id])
 
         r = TestClient.delete(self.TOKEN_URL % other_token_id,
@@ -180,8 +180,8 @@ class UserGlobalTokensTest(ApiTestTemplate):
     def test_access_log_enforces_ownership(self):
         other_token_id = str(uuid.uuid4())
         TestClient.execute("""
-            INSERT INTO global_token (id, description, scope_push, scope_pull, user_id)
-            VALUES (%s, 'other log token', false, true, %s)
+            INSERT INTO global_token (id, description, scope_push, scope_pull, user_id, expires_at)
+            VALUES (%s, 'other log token', false, true, %s, NOW() + INTERVAL '30 days')
         """, [other_token_id, self.other_user_id])
         TestClient.execute("""
             INSERT INTO global_token_access_log (token_id, path, method, status_code)

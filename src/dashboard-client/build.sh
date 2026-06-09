@@ -2,8 +2,11 @@
 cp -r /infrabox/context/src/dashboard-client /dashboard
 
 echo "## Link cache"
-mkdir -p /infrabox/cache/node_modules
-cp -r /infrabox/cache/node_modules /dashboard
+if [ -d /infrabox/cache/node_modules ]; then
+    mv /infrabox/cache/node_modules /dashboard/node_modules
+else
+    mkdir -p /dashboard/node_modules
+fi
 
 cd /dashboard
 
@@ -14,10 +17,6 @@ npm install
 
 echo "## build"
 npm run build
-
-echo "## Copy to cache"
-rm -rf /infrabox/cache/node_modules
-cp -r /dashboard/node_modules /infrabox/cache
 
 echo "## Copy to output"
 cp -r /dashboard/dist /infrabox/output
