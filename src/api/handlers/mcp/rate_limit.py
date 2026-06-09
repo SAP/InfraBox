@@ -76,6 +76,8 @@ def _check_rate_limit(user_id: str, endpoint: str) -> bool:
         return count <= rpm
 
     except Exception as exc:
+        global _redis_client
+        _redis_client = None  # force reconnect attempt on next request
         logger.warning('MCP rate limiter Redis error (fail-open): %s', exc)
         return True
 

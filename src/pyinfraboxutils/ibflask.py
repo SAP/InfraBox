@@ -119,6 +119,11 @@ def get_token():
         elif auth.startswith("token ") or auth.startswith("bearer ") or auth.startswith("Bearer "):
             token = auth.split(" ")[1]
 
+            # MCP opaque tokens are validated by mcp_auth_required, not by JWT decode.
+            # Return a minimal placeholder so OPA can route the request correctly.
+            if token.startswith("ib_mcp_"):
+                return {"type": "mcp"}
+
             try:
                 token = decode(token.encode('utf8'))
             except Exception as e:
@@ -192,6 +197,9 @@ def check_job_belongs_to_project(f):
 def normalize_token(token):
     # Enrich job token
     if token is None or not "type" in token:
+        return token
+    # MCP tokens are validated per-request by mcp_auth_required; skip here.
+    if token["type"] == "mcp":
         return token
     if token["type"] == "job":
         try:

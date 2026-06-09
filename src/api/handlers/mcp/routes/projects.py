@@ -27,18 +27,21 @@ class MCPProjects(Resource):
             enabled = getattr(g, 'mcp_enabled_projects', None)
 
             if enabled is not None:
-                # MCP token path: return only scoped projects
+                # MCP token path: return only scoped projects where the token owner
+                # is still a collaborator — re-validate membership at query time so
+                # a revoked collaborator cannot enumerate project metadata.
                 if not enabled:
                     audit_mcp('list_projects', outcome='success', details={'count': 0})
                     return jsonify([])
 
                 project_ids = list(enabled.keys())
                 rows = g.db.execute_many_dict('''
-                    SELECT id, name, type, public
-                    FROM project
-                    WHERE id = ANY(%s::uuid[])
-                    ORDER BY name
-                ''', [project_ids])
+                    SELECT p.id, p.name, p.type, p.public
+                    FROM project p
+                    INNER JOIN collaborator co ON co.project_id = p.id AND co.user_id = %s
+                    WHERE p.id = ANY(%s::uuid[])
+                    ORDER BY p.name
+                ''', [user_id, project_ids])
             else:
                 # Session path: return all projects the user is a collaborator on
                 rows = g.db.execute_many_dict('''

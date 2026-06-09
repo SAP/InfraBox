@@ -123,10 +123,14 @@ def check_project_access_mcp(project_id: str) -> bool:
     if per_project_expiry:
         try:
             exp = datetime.fromisoformat(per_project_expiry)
-            if exp < _utcnow():
+            # fromisoformat() on a naive string (no UTC offset) returns a naive
+            # datetime; compare against naive UTC to avoid TypeError.
+            now = _utcnow_naive() if exp.tzinfo is None else _utcnow()
+            if exp < now:
                 return False
         except (ValueError, TypeError):
-            pass
+            # Malformed expiry — treat as expired rather than silently granting access.
+            return False
 
     return True
 
