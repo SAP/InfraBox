@@ -109,3 +109,64 @@ allow {
     api.token.type = "project"
     api.token.project.id = project
 }
+
+# Global token: read-only access to builds for collaborators
+allow {
+    api.method = "GET"
+    api.path = ["api", "v1", "projects", project, "builds"]
+    api.token.type = "global"
+    build_collaborator([api.token.user.id, project])
+}
+
+allow {
+    api.method = "GET"
+    api.path = ["api", "v1", "projects", project, "builds", _]
+    api.token.type = "global"
+    build_collaborator([api.token.user.id, project])
+}
+
+allow {
+    api.method = "GET"
+    api.path = ["api", "v1", "projects", project, "builds", _, _]
+    api.token.type = "global"
+    build_collaborator([api.token.user.id, project])
+}
+
+allow {
+    api.method = "GET"
+    api.path = ["api", "v1", "projects", project, "builds", _, _, "state"]
+    api.token.type = "global"
+    build_collaborator([api.token.user.id, project])
+}
+
+allow {
+    api.method = "GET"
+    api.path = ["api", "v1", "projects", project, "builds", _, "jobs"]
+    api.token.type = "global"
+    build_collaborator([api.token.user.id, project])
+}
+
+# Global token: write operations require scope_push
+allow {
+    api.method = "GET"
+    api.path = ["api", "v1", "projects", project, "builds", _, "restart"]
+    api.token.type = "global"
+    api.token.global_token.scope_push = true
+    build_collaborator([api.token.user.id, project])
+}
+
+allow {
+    api.method = "GET"
+    api.path = ["api", "v1", "projects", project, "builds", _, "abort"]
+    api.token.type = "global"
+    api.token.global_token.scope_push = true
+    build_collaborator([api.token.user.id, project])
+}
+
+allow {
+    api.method = "GET"
+    api.path = ["api", "v1", "projects", project, "builds", _, "cache", "clear"]
+    api.token.type = "global"
+    api.token.global_token.scope_push = true
+    build_collaborator([api.token.user.id, project])
+}

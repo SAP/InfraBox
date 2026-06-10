@@ -350,3 +350,121 @@ allow {
     api.path = ["api", "v1", "projects", project_id, "jobs", _, "cache", "clear"]
     valid_project_token([api.token, project_id])
 }
+
+# Global token: read-only access to jobs for collaborators
+allow {
+    api.method = "GET"
+    api.path = ["api", "v1", "projects", project_id, "jobs"]
+    api.token.type = "global"
+    project_jobs_collaborator([api.token.user.id, project_id])
+}
+
+allow {
+    api.method = "GET"
+    api.path = ["api", "v1", "projects", project_id, "jobs", _, "console"]
+    api.token.type = "global"
+    project_jobs_collaborator([api.token.user.id, project_id])
+}
+
+allow {
+    api.method = "GET"
+    api.path = ["api", "v1", "projects", project_id, "jobs", _, "output"]
+    api.token.type = "global"
+    project_jobs_collaborator([api.token.user.id, project_id])
+}
+
+allow {
+    api.method = "GET"
+    api.path = ["api", "v1", "projects", project_id, "jobs", _, "testresults"]
+    api.token.type = "global"
+    project_jobs_collaborator([api.token.user.id, project_id])
+}
+
+allow {
+    api.method = "GET"
+    api.path = ["api", "v1", "projects", project_id, "jobs", _, "testruns"]
+    api.token.type = "global"
+    project_jobs_collaborator([api.token.user.id, project_id])
+}
+
+allow {
+    api.method = "GET"
+    api.path = ["api", "v1", "projects", project_id, "jobs", _, "tests", "history"]
+    api.token.type = "global"
+    project_jobs_collaborator([api.token.user.id, project_id])
+}
+
+allow {
+    api.method = "GET"
+    api.path = ["api", "v1", "projects", project_id, "jobs", _, "tabs"]
+    api.token.type = "global"
+    project_jobs_collaborator([api.token.user.id, project_id])
+}
+
+allow {
+    api.method = "GET"
+    api.path = ["api", "v1", "projects", project_id, "jobs", _, "archive"]
+    api.token.type = "global"
+    project_jobs_collaborator([api.token.user.id, project_id])
+}
+
+allow {
+    api.method = "GET"
+    api.path = ["api", "v1", "projects", project_id, "jobs", _, "archive", "download"]
+    api.token.type = "global"
+    project_jobs_collaborator([api.token.user.id, project_id])
+}
+
+allow {
+    api.method = "GET"
+    api.path = ["api", "v1", "projects", project_id, "jobs", _, "archive", "download", "all"]
+    api.token.type = "global"
+    project_jobs_collaborator([api.token.user.id, project_id])
+}
+
+allow {
+    api.method = "GET"
+    api.path = ["api", "v1", "projects", project_id, "jobs", _, "badges"]
+    api.token.type = "global"
+    project_jobs_collaborator([api.token.user.id, project_id])
+}
+
+allow {
+    api.method = "GET"
+    api.path = ["api", "v1", "projects", project_id, "jobs", _, "stats"]
+    api.token.type = "global"
+    project_jobs_collaborator([api.token.user.id, project_id])
+}
+
+# Global token: write operations require scope_push
+allow {
+    api.method = "GET"
+    api.path = ["api", "v1", "projects", project_id, "jobs", _, "restart"]
+    api.token.type = "global"
+    api.token.global_token.scope_push = true
+    project_jobs_collaborator([api.token.user.id, project_id])
+}
+
+allow {
+    api.method = "GET"
+    api.path = ["api", "v1", "projects", project_id, "jobs", _, "rerun"]
+    api.token.type = "global"
+    api.token.global_token.scope_push = true
+    project_jobs_collaborator([api.token.user.id, project_id])
+}
+
+allow {
+    api.method = "GET"
+    api.path = ["api", "v1", "projects", project_id, "jobs", _, "abort"]
+    api.token.type = "global"
+    api.token.global_token.scope_push = true
+    project_jobs_collaborator([api.token.user.id, project_id])
+}
+
+allow {
+    api.method = "GET"
+    api.path = ["api", "v1", "projects", project_id, "jobs", _, "cache", "clear"]
+    api.token.type = "global"
+    api.token.global_token.scope_push = true
+    project_jobs_collaborator([api.token.user.id, project_id])
+}
