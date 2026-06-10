@@ -13,7 +13,7 @@ import logging
 from datetime import datetime, timezone
 from functools import wraps
 
-from flask import g, request, jsonify
+from flask import g, request, abort
 
 logger = logging.getLogger('mcp_auth')
 
@@ -35,7 +35,7 @@ def _hash_token(raw_token: str) -> str:
 
 
 def _reject(status, message):
-    return jsonify({'message': message, 'status': status}), status
+    abort(status, message)
 
 
 def mcp_auth_required(f):
@@ -59,11 +59,11 @@ def mcp_auth_required(f):
 
         # MCP tokens are only valid on /api/v1/mcp/* paths
         if not request.path.startswith(_MCP_PATH_PREFIX):
-            return _reject(403, 'MCP token can only be used on /api/v1/mcp/* endpoints')
+            _reject(403, 'MCP token can only be used on /api/v1/mcp/* endpoints')
 
         token_suffix = raw_token[len(_MCP_TOKEN_PREFIX):]
         if len(token_suffix) != 48:
-            return _reject(401, 'invalid MCP token format')
+            _reject(401, 'invalid MCP token format')
 
         token_id = token_suffix[:16]
         token_hash = _hash_token(raw_token)
@@ -75,13 +75,13 @@ def mcp_auth_required(f):
         ''', [token_id, token_hash])
 
         if not row:
-            return _reject(401, 'invalid or unknown MCP token')
+            _reject(401, 'invalid or unknown MCP token')
 
         if row['revoked_at'] is not None:
-            return _reject(401, 'MCP token has been revoked')
+            _reject(401, 'MCP token has been revoked')
 
         if row['expires_at'] < _utcnow_naive():
-            return _reject(401, 'MCP token has expired')
+            _reject(401, 'MCP token has expired')
 
         # Update last_used_at (best-effort, non-fatal)
         try:
