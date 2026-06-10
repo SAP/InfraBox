@@ -207,3 +207,122 @@ test_regular_user_can_post_projects {
         "token": user_normal_token
     }
 }
+
+# ─── global token: builds and jobs read access ────────────────────────────────
+
+test_global_viewer_can_list_builds {
+    authz with input as {
+        "method": "GET",
+        "path": ["api", "v1", "projects", "00000000-0000-0000-0000-000000000099", "builds"],
+        "token": global_viewer_token
+    } with data.infrabox.collaborators.collaborators as [
+        {"user_id": "00000000-0000-0000-0000-000000000002",
+         "project_id": "00000000-0000-0000-0000-000000000099",
+         "role": "Developer"}
+    ]
+}
+
+test_global_viewer_can_get_build {
+    authz with input as {
+        "method": "GET",
+        "path": ["api", "v1", "projects", "00000000-0000-0000-0000-000000000099", "builds", "00000000-0000-0000-0000-000000000010"],
+        "token": global_viewer_token
+    } with data.infrabox.collaborators.collaborators as [
+        {"user_id": "00000000-0000-0000-0000-000000000002",
+         "project_id": "00000000-0000-0000-0000-000000000099",
+         "role": "Developer"}
+    ]
+}
+
+test_global_viewer_can_get_job_console {
+    authz with input as {
+        "method": "GET",
+        "path": ["api", "v1", "projects", "00000000-0000-0000-0000-000000000099", "jobs", "00000000-0000-0000-0000-000000000020", "console"],
+        "token": global_viewer_token
+    } with data.infrabox.collaborators.collaborators as [
+        {"user_id": "00000000-0000-0000-0000-000000000002",
+         "project_id": "00000000-0000-0000-0000-000000000099",
+         "role": "Developer"}
+    ]
+}
+
+test_global_viewer_can_get_job_stats {
+    authz with input as {
+        "method": "GET",
+        "path": ["api", "v1", "projects", "00000000-0000-0000-0000-000000000099", "jobs", "00000000-0000-0000-0000-000000000020", "stats"],
+        "token": global_viewer_token
+    } with data.infrabox.collaborators.collaborators as [
+        {"user_id": "00000000-0000-0000-0000-000000000002",
+         "project_id": "00000000-0000-0000-0000-000000000099",
+         "role": "Developer"}
+    ]
+}
+
+test_global_viewer_cannot_list_builds_non_collaborator {
+    not authz with input as {
+        "method": "GET",
+        "path": ["api", "v1", "projects", "00000000-0000-0000-0000-000000000098", "builds"],
+        "token": global_viewer_token
+    } with data.infrabox.collaborators.collaborators as [
+        {"user_id": "00000000-0000-0000-0000-000000000002",
+         "project_id": "00000000-0000-0000-0000-000000000099",
+         "role": "Developer"}
+    ]
+}
+
+# ─── global token: write operations require scope_push ────────────────────────
+
+global_viewer_push_token = {
+    "type": "global",
+    "user": {"id": "00000000-0000-0000-0000-000000000002", "role": "viewer"},
+    "global_token": {"id": "00000000-0000-0000-0000-000000000001",
+                     "scope_push": true, "scope_pull": true}
+}
+
+test_global_viewer_cannot_restart_build_without_scope_push {
+    not authz with input as {
+        "method": "GET",
+        "path": ["api", "v1", "projects", "00000000-0000-0000-0000-000000000099", "builds", "00000000-0000-0000-0000-000000000010", "restart"],
+        "token": global_viewer_token
+    } with data.infrabox.collaborators.collaborators as [
+        {"user_id": "00000000-0000-0000-0000-000000000002",
+         "project_id": "00000000-0000-0000-0000-000000000099",
+         "role": "Developer"}
+    ]
+}
+
+test_global_push_can_restart_build {
+    authz with input as {
+        "method": "GET",
+        "path": ["api", "v1", "projects", "00000000-0000-0000-0000-000000000099", "builds", "00000000-0000-0000-0000-000000000010", "restart"],
+        "token": global_viewer_push_token
+    } with data.infrabox.collaborators.collaborators as [
+        {"user_id": "00000000-0000-0000-0000-000000000002",
+         "project_id": "00000000-0000-0000-0000-000000000099",
+         "role": "Developer"}
+    ]
+}
+
+test_global_viewer_cannot_trigger_without_scope_push {
+    not authz with input as {
+        "method": "POST",
+        "path": ["api", "v1", "projects", "00000000-0000-0000-0000-000000000099", "trigger"],
+        "token": global_viewer_token
+    } with data.infrabox.collaborators.collaborators as [
+        {"user_id": "00000000-0000-0000-0000-000000000002",
+         "project_id": "00000000-0000-0000-0000-000000000099",
+         "role": "Developer"}
+    ]
+}
+
+test_global_push_can_trigger {
+    authz with input as {
+        "method": "POST",
+        "path": ["api", "v1", "projects", "00000000-0000-0000-0000-000000000099", "trigger"],
+        "token": global_viewer_push_token
+    } with data.infrabox.collaborators.collaborators as [
+        {"user_id": "00000000-0000-0000-0000-000000000002",
+         "project_id": "00000000-0000-0000-0000-000000000099",
+         "role": "Developer"}
+    ]
+}
