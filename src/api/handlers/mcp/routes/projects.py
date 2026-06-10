@@ -2,7 +2,7 @@
 MCP projects endpoint: GET /api/v1/mcp/projects
 Returns projects the MCP token has access to.
 """
-from flask import g, jsonify
+from flask import g
 from flask_restx import Resource
 
 from pyinfraboxutils.ibrestplus import api
@@ -32,7 +32,7 @@ class MCPProjects(Resource):
                 # a revoked collaborator cannot enumerate project metadata.
                 if not enabled:
                     audit_mcp('list_projects', outcome='success', details={'count': 0})
-                    return jsonify([])
+                    return []
 
                 project_ids = list(enabled.keys())
                 rows = g.db.execute_many_dict('''
@@ -54,7 +54,7 @@ class MCPProjects(Resource):
             result = [{'id': r['id'], 'name': r['name'], 'type': r['type'], 'public': r['public']}
                       for r in rows]
             audit_mcp('list_projects', outcome='success', details={'count': len(result)})
-            return jsonify(result)
+            return result
         except Exception as exc:
             audit_mcp('list_projects', outcome='failure', error=str(exc))
             raise
