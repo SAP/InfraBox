@@ -5,7 +5,7 @@ POST /api/v1/mcp/projects/<project_id>/trigger
 """
 import uuid as _uuid
 
-from flask import g, jsonify, abort
+from flask import g, abort
 from flask_restx import Resource
 
 from pyinfraboxutils.ibrestplus import api
@@ -41,7 +41,7 @@ class MCPBuilds(Resource):
             result = [_build_dict(r) for r in rows]
             audit_mcp('list_builds', outcome='success',
                       details={'project_id': project_id, 'count': len(result)})
-            return jsonify(result)
+            return result
         except Exception as exc:
             audit_mcp('list_builds', outcome='failure',
                       details={'project_id': project_id}, error=str(exc))
@@ -73,10 +73,10 @@ class MCPTrigger(Resource):
         if not project:
             abort(404)
         if project['type'] not in ('upload', 'test'):
-            return jsonify({
+            return {
                 'message': 'trigger is only supported for upload/test type projects via MCP',
                 'status': 400,
-            }), 400
+            }, 400
 
         try:
             build_id = str(_uuid.uuid4())
@@ -91,7 +91,7 @@ class MCPTrigger(Resource):
             g.db.commit()
             audit_mcp('trigger_build', outcome='success',
                       details={'project_id': project_id, 'build_id': build_id})
-            return jsonify({'build_id': build_id, 'status': 200}), 200
+            return {'build_id': build_id, 'status': 200}, 200
         except Exception as exc:
             audit_mcp('trigger_build', outcome='failure',
                       details={'project_id': project_id}, error=str(exc))

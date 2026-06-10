@@ -14,7 +14,7 @@ import os
 import secrets
 from datetime import datetime, timezone, timedelta
 
-from flask import g, jsonify, request, abort
+from flask import g, request, abort
 from flask_restx import Resource
 
 from pyinfraboxutils.ibrestplus import api
@@ -59,7 +59,7 @@ class MCPTokenList(Resource):
             WHERE user_id = %s AND revoked_at IS NULL
             ORDER BY created_at DESC
         ''', [user_id])
-        return jsonify([_serialize(r) for r in rows])
+        return [_serialize(r) for r in rows]
 
     def post(self):
         """Create a new MCP token."""
@@ -69,20 +69,20 @@ class MCPTokenList(Resource):
             SELECT COUNT(*) FROM mcp_token WHERE user_id = %s AND revoked_at IS NULL
         ''', [user_id])[0]
         if count >= _MAX_PER_USER:
-            return jsonify({'message': f'max {_MAX_PER_USER} tokens per user', 'status': 400}), 400
+            return {'message': f'max {_MAX_PER_USER} tokens per user', 'status': 400}, 400
 
         body = request.get_json(silent=True) or {}
         name = (body.get('name') or '').strip()[:128]
         if not name:
-            return jsonify({'message': 'name is required', 'status': 400}), 400
+            return {'message': 'name is required', 'status': 400}, 400
 
         enabled_projects = body.get('enabled_projects') or {}
         if not isinstance(enabled_projects, dict):
-            return jsonify({'message': 'enabled_projects must be an object', 'status': 400}), 400
+            return {'message': 'enabled_projects must be an object', 'status': 400}, 400
 
         expires_days = int(body.get('expires_days') or _MAX_EXPIRY_DAYS)
         if expires_days < 1 or expires_days > _MAX_EXPIRY_DAYS:
-            return jsonify({'message': f'expires_days must be 1–{_MAX_EXPIRY_DAYS}', 'status': 400}), 400
+            return {'message': f'expires_days must be 1–{_MAX_EXPIRY_DAYS}', 'status': 400}, 400
 
         expires_at = _utcnow() + timedelta(days=expires_days)
 
@@ -99,14 +99,14 @@ class MCPTokenList(Resource):
 
         audit_mcp('create_mcp_token', outcome='success', details={'token_id': token_id, 'name': name})
 
-        return jsonify({
+        return {
             'token_id': token_id,
             'token': raw_token,  # shown once only
             'name': name,
             'enabled_projects': enabled_projects,
             'allow_trigger': False,
             'expires_at': expires_at.isoformat(),
-        }), 201
+        }, 201
 
 
 @ns.route('/<string:token_id>')
@@ -130,7 +130,7 @@ class MCPToken(Resource):
 
         if 'enabled_projects' in body:
             if not isinstance(body['enabled_projects'], dict):
-                return jsonify({'message': 'enabled_projects must be an object', 'status': 400}), 400
+                return {'message': 'enabled_projects must be an object', 'status': 400}, 400
             updates.append('enabled_projects = %s')
             params.append(json.dumps(body['enabled_projects']))
 
@@ -138,14 +138,14 @@ class MCPToken(Resource):
             try:
                 days = int(body['expires_days'])
             except (ValueError, TypeError):
-                return jsonify({'message': 'expires_days must be an integer', 'status': 400}), 400
+                return {'message': 'expires_days must be an integer', 'status': 400}, 400
             if days < 1 or days > _MAX_EXPIRY_DAYS:
-                return jsonify({'message': f'expires_days must be 1–{_MAX_EXPIRY_DAYS}', 'status': 400}), 400
+                return {'message': f'expires_days must be 1–{_MAX_EXPIRY_DAYS}', 'status': 400}, 400
             updates.append('expires_at = %s')
             params.append(_utcnow() + timedelta(days=days))
 
         if not updates:
-            return jsonify({'message': 'nothing to update', 'status': 400}), 400
+            return {'message': 'nothing to update', 'status': 400}, 400
 
         params.append(token_id)
         params.append(user_id)
@@ -155,7 +155,7 @@ class MCPToken(Resource):
         )
         g.db.commit()
         audit_mcp('update_mcp_token', outcome='success', details={'token_id': token_id})
-        return jsonify({'message': 'token updated', 'status': 200})
+        return {'message': 'token updated', 'status': 200}
 
     def delete(self, token_id):
         """Revoke a token (soft delete)."""
@@ -170,7 +170,7 @@ class MCPToken(Resource):
         )
         g.db.commit()
         audit_mcp('revoke_mcp_token', outcome='success', details={'token_id': token_id})
-        return jsonify({'message': 'token revoked', 'status': 200})
+        return {'message': 'token revoked', 'status': 200}
 
 
 @ns.route('/<string:token_id>/trigger')
@@ -188,7 +188,7 @@ class MCPTokenTrigger(Resource):
         )
         g.db.commit()
         audit_mcp('grant_mcp_trigger', outcome='success', details={'token_id': token_id})
-        return jsonify({'message': 'trigger permission granted', 'status': 200})
+        return {'message': 'trigger permission granted', 'status': 200}
 
     def delete(self, token_id):
         """Revoke trigger permission from a token."""
@@ -203,7 +203,7 @@ class MCPTokenTrigger(Resource):
         )
         g.db.commit()
         audit_mcp('revoke_mcp_trigger', outcome='success', details={'token_id': token_id})
-        return jsonify({'message': 'trigger permission revoked', 'status': 200})
+        return {'message': 'trigger permission revoked', 'status': 200}
 
 
 def _serialize(row):

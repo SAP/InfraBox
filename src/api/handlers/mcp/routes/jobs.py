@@ -4,7 +4,7 @@ GET /api/v1/mcp/projects/<project_id>/builds/<build_id>/jobs
 GET /api/v1/mcp/projects/<project_id>/jobs/<job_id>/log
 GET /api/v1/mcp/projects/<project_id>/jobs/<job_id>/artifacts
 """
-from flask import g, jsonify, abort
+from flask import g, abort
 from flask_restx import Resource
 
 from pyinfraboxutils.ibrestplus import api
@@ -44,7 +44,7 @@ class MCPJobList(Resource):
             result = [_job_dict(r) for r in rows]
             audit_mcp('list_jobs', outcome='success',
                       details={'project_id': project_id, 'build_id': build_id, 'count': len(result)})
-            return jsonify(result)
+            return result
         except Exception as exc:
             audit_mcp('list_jobs', outcome='failure',
                       details={'project_id': project_id, 'build_id': build_id}, error=str(exc))
@@ -115,7 +115,7 @@ class MCPJobArtifacts(Resource):
                       for r in rows]
             audit_mcp('list_job_artifacts', outcome='success',
                       details={'project_id': project_id, 'job_id': job_id, 'count': len(result)})
-            return jsonify(result)
+            return result
         except Exception as exc:
             audit_mcp('list_job_artifacts', outcome='failure',
                       details={'project_id': project_id, 'job_id': job_id}, error=str(exc))
