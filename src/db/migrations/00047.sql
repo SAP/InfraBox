@@ -33,3 +33,5 @@ CREATE TABLE mcp_access_log (
 
 CREATE INDEX idx_mcp_access_log_token_id    ON mcp_access_log(token_id);
 CREATE INDEX idx_mcp_access_log_accessed_at ON mcp_access_log(accessed_at);
+
+ALTER TABLE build ADD COLUMN source VARCHAR(64);

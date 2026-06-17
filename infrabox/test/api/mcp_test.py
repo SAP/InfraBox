@@ -207,6 +207,172 @@ class TestMcpRateLimit(unittest.TestCase):
             self.assertTrue(mcp_rate_limit_mod._check_rate_limit('normal-user', 'list_builds'))
 
 
+# ---------------------------------------------------------------------------
+# Builds routes — MCPBuilds.get and MCPTrigger.post
+# ---------------------------------------------------------------------------
+
+# Strategy: the route decorators (@mcp_auth_required, @mcp_rate_limit) and
+# flask.g/request are real werkzeug-backed objects already loaded.  Stub the
+# decorators to pass-throughs, fix the namespace decorator, stub audit, then
+# reload builds.py so the route classes are plain Python classes again.
+# Use a real Flask app + test_request_context so g/abort work properly.
+
+import flask as _real_flask
+from werkzeug.exceptions import HTTPException as _HTTPException
+
+# Patch decorators before reload so the reloaded module picks up pass-throughs.
+_mcp_auth_mod = sys.modules['api.handlers.mcp.auth']
+_mcp_auth_mod.mcp_auth_required = lambda f: f
+mcp_rate_limit_mod.mcp_rate_limit = lambda endpoint: (lambda f: f)
+
+class _PassNs:
+    def route(self, *a, **kw): return lambda cls: cls
+
+sys.modules['pyinfraboxutils.ibrestplus'].api.namespace = lambda *a, **kw: _PassNs()
+
+_audit_stub = types.ModuleType('api.handlers.mcp.audit')
+_audit_stub.audit_mcp = MagicMock()
+sys.modules['api.handlers.mcp.audit'] = _audit_stub
+
+mcp_builds_mod = importlib.reload(sys.modules['api.handlers.mcp.routes.builds'])
+
+_flask_app = _real_flask.Flask(__name__)
+_flask_app.config['TESTING'] = True
+
+
+def _make_db(*, project=None, rows=None, execute_raises=None):
+    db = MagicMock()
+    db.execute_one_dict.return_value = project
+    db.execute_many_dict.return_value = rows or []
+    if execute_raises:
+        db.execute.side_effect = execute_raises
+    return db
+
+
+class TestMCPBuildsGet(unittest.TestCase):
+    def setUp(self):
+        _audit_stub.audit_mcp.reset_mock()
+
+    def _call(self, db, project_id='proj-1'):
+        with _flask_app.test_request_context('/'):
+            _real_flask.g.db = db
+            return mcp_builds_mod.MCPBuilds().get(project_id)
+
+    def test_returns_build_list(self):
+        from datetime import datetime
+        db = _make_db(rows=[
+            {'id': 'b1', 'build_number': 1, 'restart_counter': 0,
+             'project_id': 'proj-1', 'commit_id': 'abc', 'branch': 'main',
+             'created_at': datetime(2024, 1, 1), 'finished_at': None, 'status': 'finished'},
+        ])
+        with patch.object(mcp_builds_mod, 'check_project_access_mcp', return_value=True):
+            result = self._call(db)
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0]['build_number'], 1)
+        self.assertEqual(result[0]['branch'], 'main')
+
+    def test_forbidden_when_no_project_access(self):
+        db = _make_db(rows=[])
+        with patch.object(mcp_builds_mod, 'check_project_access_mcp', return_value=False):
+            with self.assertRaises(_HTTPException) as ctx:
+                self._call(db)
+        self.assertEqual(ctx.exception.code, 403)
+
+    def test_db_exception_propagates(self):
+        db = _make_db()
+        db.execute_many_dict.side_effect = RuntimeError('db error')
+        with patch.object(mcp_builds_mod, 'check_project_access_mcp', return_value=True):
+            with self.assertRaises(RuntimeError):
+                self._call(db)
+
+    def test_created_at_iso_format(self):
+        from datetime import datetime
+        db = _make_db(rows=[
+            {'id': 'b2', 'build_number': 2, 'restart_counter': 0,
+             'project_id': 'proj-1', 'commit_id': None, 'branch': None,
+             'created_at': datetime(2024, 6, 1, 12, 0, 0), 'finished_at': None, 'status': None},
+        ])
+        with patch.object(mcp_builds_mod, 'check_project_access_mcp', return_value=True):
+            result = self._call(db)
+        self.assertEqual(result[0]['created_at'], '2024-06-01T12:00:00')
+
+
+class TestMCPTriggerPost(unittest.TestCase):
+    def setUp(self):
+        _audit_stub.audit_mcp.reset_mock()
+
+    def _call(self, db, project_id='proj-1'):
+        with _flask_app.test_request_context('/'):
+            _real_flask.g.db = db
+            return mcp_builds_mod.MCPTrigger().post(project_id)
+
+    def test_trigger_success_returns_build_id(self):
+        db = _make_db(project={'id': 'proj-1', 'type': 'upload'})
+        with patch.object(mcp_builds_mod, 'check_project_access_mcp', return_value=True), \
+             patch.object(mcp_builds_mod, 'check_trigger_access_mcp', return_value=True):
+            result, status = self._call(db)
+        self.assertEqual(status, 200)
+        self.assertIn('build_id', result)
+
+    def test_trigger_inserts_source_column(self):
+        """INSERT must reference source='mcp' — regression for missing column in 00047.sql."""
+        db = _make_db(project={'id': 'proj-1', 'type': 'upload'})
+        with patch.object(mcp_builds_mod, 'check_project_access_mcp', return_value=True), \
+             patch.object(mcp_builds_mod, 'check_trigger_access_mcp', return_value=True):
+            self._call(db)
+        # call[0]=LOCK TABLE, call[1]=INSERT INTO build
+        insert_sql = db.execute.call_args_list[1][0][0]
+        self.assertIn('source', insert_sql)
+        self.assertIn("'mcp'", insert_sql)
+
+    def test_trigger_test_project_type_allowed(self):
+        db = _make_db(project={'id': 'proj-1', 'type': 'test'})
+        with patch.object(mcp_builds_mod, 'check_project_access_mcp', return_value=True), \
+             patch.object(mcp_builds_mod, 'check_trigger_access_mcp', return_value=True):
+            _, status = self._call(db)
+        self.assertEqual(status, 200)
+
+    def test_forbidden_no_project_access(self):
+        db = _make_db()
+        with patch.object(mcp_builds_mod, 'check_project_access_mcp', return_value=False):
+            with self.assertRaises(_HTTPException) as ctx:
+                self._call(db)
+        self.assertEqual(ctx.exception.code, 403)
+
+    def test_forbidden_no_trigger_permission(self):
+        db = _make_db()
+        with patch.object(mcp_builds_mod, 'check_project_access_mcp', return_value=True), \
+             patch.object(mcp_builds_mod, 'check_trigger_access_mcp', return_value=False):
+            with self.assertRaises(_HTTPException) as ctx:
+                self._call(db)
+        self.assertEqual(ctx.exception.code, 403)
+
+    def test_returns_400_for_github_project(self):
+        db = _make_db(project={'id': 'proj-1', 'type': 'github'})
+        with patch.object(mcp_builds_mod, 'check_project_access_mcp', return_value=True), \
+             patch.object(mcp_builds_mod, 'check_trigger_access_mcp', return_value=True):
+            _, status = self._call(db)
+        self.assertEqual(status, 400)
+
+    def test_returns_404_for_missing_project(self):
+        db = _make_db(project=None)
+        with patch.object(mcp_builds_mod, 'check_project_access_mcp', return_value=True), \
+             patch.object(mcp_builds_mod, 'check_trigger_access_mcp', return_value=True):
+            with self.assertRaises(_HTTPException) as ctx:
+                self._call(db)
+        self.assertEqual(ctx.exception.code, 404)
+
+    def test_db_exception_propagates(self):
+        db = _make_db(
+            project={'id': 'proj-1', 'type': 'upload'},
+            execute_raises=RuntimeError('db error'),
+        )
+        with patch.object(mcp_builds_mod, 'check_project_access_mcp', return_value=True), \
+             patch.object(mcp_builds_mod, 'check_trigger_access_mcp', return_value=True):
+            with self.assertRaises(RuntimeError):
+                self._call(db)
+
+
 if __name__ == '__main__':
     unittest.main()
 
