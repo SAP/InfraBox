@@ -31,11 +31,25 @@ class MCPBuilds(Resource):
 
         try:
             rows = g.db.execute_many_dict('''
-                SELECT id, build_number, restart_counter, project_id, commit_id,
-                       branch, created_at, finished_at, status
-                FROM build
-                WHERE project_id = %s
-                ORDER BY build_number DESC, restart_counter DESC
+                SELECT b.id, b.build_number, b.restart_counter, b.project_id, b.commit_id,
+                       c.branch,
+                       MIN(j.created_at)                                        AS created_at,
+                       MAX(j.end_date)                                          AS finished_at,
+                       CASE
+                           WHEN bool_or(j.state IN ('running','queued','scheduled')) THEN 'running'
+                           WHEN bool_or(j.state = 'failure')  THEN 'failure'
+                           WHEN bool_or(j.state = 'error')    THEN 'error'
+                           WHEN bool_or(j.state = 'killed')   THEN 'killed'
+                           WHEN bool_or(j.state = 'unstable') THEN 'unstable'
+                           WHEN bool_and(j.state = 'finished') THEN 'finished'
+                           ELSE NULL
+                       END                                                      AS status
+                FROM build b
+                LEFT JOIN commit c ON c.id = b.commit_id
+                LEFT JOIN job j    ON j.build_id = b.id
+                WHERE b.project_id = %s
+                GROUP BY b.id, b.build_number, b.restart_counter, b.project_id, b.commit_id, c.branch
+                ORDER BY b.build_number DESC, b.restart_counter DESC
                 LIMIT 50
             ''', [project_id])
             result = [_build_dict(r) for r in rows]
