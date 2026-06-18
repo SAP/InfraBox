@@ -36,7 +36,7 @@ class MCPJobList(Resource):
         try:
             rows = g.db.execute_many_dict('''
                 SELECT j.id, j.name, j.state, j.build_id, j.project_id,
-                       j.start_date, j.end_date, j.cpu, j.memory, j.message
+                       j.start_date, j.end_date, j.message
                 FROM job j
                 WHERE j.build_id = %s AND j.project_id = %s
                 ORDER BY j.name
@@ -131,7 +131,5 @@ def _job_dict(r):
         'project_id': r['project_id'],
         'start_date': r['start_date'].isoformat() if r.get('start_date') else None,
         'end_date': r['end_date'].isoformat() if r.get('end_date') else None,
-        'cpu': r.get('cpu'),
-        'memory': r.get('memory'),
         'message': r.get('message'),
     }
