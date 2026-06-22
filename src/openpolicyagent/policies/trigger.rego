@@ -7,7 +7,7 @@ import data.infrabox.projects.projects
 import data.infrabox.roles
 
 trigger_collaborator([user, project_id]) {
-    collaborators[i].project_id = project
+    collaborators[i].project_id = project_id
     collaborators[i].user_id = user
 }
 
@@ -22,5 +22,14 @@ allow {
     api.path = ["api", "v1", "projects", project_id, "trigger"]
     api.token.type = "project"
     api.token.project.id = project_id
+}
+
+# Global token: trigger requires scope_push
+allow {
+    api.method = "POST"
+    api.path = ["api", "v1", "projects", project_id, "trigger"]
+    api.token.type = "global"
+    api.token.global_token.scope_push = true
+    trigger_collaborator([api.token.user.id, project_id])
 }
 

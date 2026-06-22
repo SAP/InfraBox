@@ -35,3 +35,11 @@ allow {
     api.token.type = "user"
     projects_cronjobs_administrator([api.token.user.id, project_id])
 }
+
+# Global token: read-only list of cron jobs for collaborators
+allow {
+    api.method = "GET"
+    api.path = ["api", "v1", "projects", project_id, "cronjobs"]
+    api.token.type = "global"
+    projects_cronjobs_administrator([api.token.user.id, project_id])
+}
