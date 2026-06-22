@@ -133,3 +133,4 @@ def _job_dict(r):
         'end_date': r['end_date'].isoformat() if r.get('end_date') else None,
         'message': r.get('message'),
     }
+
