@@ -487,6 +487,9 @@
                     "memory": 2048
                 }
             },
+            "cache": {
+                "image": true
+            },
             "deployments": [
                 {
                     "type": "docker-registry",
