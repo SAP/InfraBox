@@ -31,3 +31,5 @@ The API Server starts up on port 8080.
 
 ## API Docs
 After you have started the API you can access the docs at http://localhost:8080/doc
+
+# Just for testing api build image 
