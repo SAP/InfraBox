@@ -254,7 +254,7 @@
                             </md-table-cell>
                             <md-table-cell>{{ t.last_used_at ? formatDate(t.last_used_at) : '—' }}</md-table-cell>
                             <md-table-cell>
-                                <md-switch :value="t.allow_trigger" @change="toggleMcpTrigger(t)" class="mcp-trigger-switch"></md-switch>
+                                <md-switch v-model="t.allow_trigger" @change="toggleMcpTrigger(t)" class="mcp-trigger-switch"></md-switch>
                             </md-table-cell>
                             <md-table-cell>
                                 <md-button class="md-icon-button" @click="confirmMcpRevoke(t)">
