@@ -282,7 +282,7 @@
                 <pre>$ export INFRABOX_MCP_TOKEN=&lt;TOKEN_VALUE&gt;</pre>
             </md-dialog-content>
             <md-dialog-actions>
-                <md-button class="md-primary" @click="$refs['mcpTokenDialog'].close()">OK</md-button>
+                <md-button class="md-primary" @click="closeMcpTokenDialog">OK</md-button>
             </md-dialog-actions>
         </md-dialog>
 
@@ -481,7 +481,12 @@ export default {
             const newVal = !token.allow_trigger
             UserTokenService.setMcpTrigger(token.token_id, newVal)
                 .then(() => { token.allow_trigger = newVal })
-                .catch(() => {})
+                .catch(() => { token.allow_trigger = !newVal })
+        },
+
+        closeMcpTokenDialog () {
+            this.$refs['mcpTokenDialog'].close()
+            this.newMcpToken = ''
         }
     }
 }
