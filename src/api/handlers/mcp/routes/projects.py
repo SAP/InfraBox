@@ -61,3 +61,4 @@ class MCPProjects(Resource):
         except Exception as exc:
             audit_mcp('list_projects', outcome='failure', error=str(exc))
             raise
+
