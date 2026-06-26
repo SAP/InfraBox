@@ -61,6 +61,16 @@ class NewAPIService {
             })
             .catch(this._handleError(false))
     }
+
+    patch (url, payload) {
+        console.log(`PATCH API: ${url}`)
+        const u = this.api + url
+        return Vue.http.patch(u, payload)
+            .then((response) => {
+                return response.body
+            })
+            .catch(this._handleError(false))
+    }
 }
 
 export default new NewAPIService()

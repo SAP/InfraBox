@@ -186,6 +186,155 @@
             md-cancel-text="Cancel"
             @close="onRevokeClose">
         </md-dialog-confirm>
+
+        <!-- ===== MCP Tokens ===== -->
+        <md-card class="main-card" style="margin-top: 16px">
+            <md-card-header class="main-card-header fix-padding">
+                <md-card-header-text>
+                    <h3 class="md-title card-title">
+                        <md-layout>
+                            <md-layout md-vertical-align="center">MCP Tokens</md-layout>
+                            <md-layout md-vertical-align="center">
+                                <small class="section-hint">For use with the InfraBox MCP server (INFRABOX_MCP_TOKEN)</small>
+                            </md-layout>
+                        </md-layout>
+                    </h3>
+                </md-card-header-text>
+            </md-card-header>
+
+            <!-- Create form -->
+            <md-card md-theme="white" class="clean-card">
+                <md-card-area>
+                    <md-list class="m-t-md m-b-md">
+                        <md-list-item>
+                            <md-input-container class="m-r-sm" style="flex: 2" :class="{'md-input-invalid': mcpNameError}">
+                                <label>Token Name (e.g. "Claude Desktop")</label>
+                                <md-input v-model="mcpForm.name" @keyup.enter.native="createMcpToken"></md-input>
+                                <span class="md-error" v-if="mcpNameError">Name must be at least 3 characters</span>
+                            </md-input-container>
+                            <md-input-container class="m-r-sm" style="flex: 0 0 160px" :class="{'md-input-invalid': mcpDaysError}">
+                                <label>Validity (days)</label>
+                                <md-input v-model.number="mcpForm.expiresDays" type="number" min="1" max="365" placeholder="365"></md-input>
+                                <span class="md-error" v-if="mcpDaysError">1–365 days</span>
+                            </md-input-container>
+                            <md-button class="md-icon-button md-list-action" @click="createMcpToken">
+                                <md-icon md-theme="running" class="md-primary">add_circle</md-icon>
+                                <md-tooltip>Create MCP token</md-tooltip>
+                            </md-button>
+                        </md-list-item>
+                        <md-list-item v-if="userProjects.length > 0" style="flex-wrap: wrap; align-items: flex-start; padding: 0 16px 8px">
+                            <div style="width: 100%; font-size: 13px; color: #666; margin-bottom: 6px;">
+                                Project scope
+                                <small style="color: #999; margin-left: 6px;">leave all unchecked to allow access to all projects</small>
+                            </div>
+                            <div style="display: flex; flex-wrap: wrap; gap: 4px 16px;">
+                                <label v-for="p in userProjects" :key="p.id" class="mcp-project-checkbox">
+                                    <input type="checkbox" :value="p.id" v-model="mcpForm.selectedProjects">
+                                    {{ p.name }}
+                                </label>
+                            </div>
+                        </md-list-item>
+                    </md-list>
+                </md-card-area>
+            </md-card>
+
+            <!-- Token list -->
+            <md-table-card class="clean-card">
+                <md-table>
+                    <md-table-header>
+                        <md-table-row>
+                            <md-table-head>Name</md-table-head>
+                            <md-table-head>Projects</md-table-head>
+                            <md-table-head>Created</md-table-head>
+                            <md-table-head>Expires</md-table-head>
+                            <md-table-head>Last Used</md-table-head>
+                            <md-table-head>Trigger</md-table-head>
+                            <md-table-head>Actions</md-table-head>
+                        </md-table-row>
+                    </md-table-header>
+                    <md-table-body>
+                        <template v-for="t in mcpTokens">
+                            <md-table-row :key="t.token_id">
+                                <md-table-cell>{{ t.name }}</md-table-cell>
+                                <md-table-cell>
+                                    <span v-if="!t.enabled_projects || Object.keys(t.enabled_projects).length === 0" class="mcp-all-projects">all projects</span>
+                                    <span v-else class="mcp-project-count">{{ Object.keys(t.enabled_projects).length }} project(s)</span>
+                                </md-table-cell>
+                                <md-table-cell>{{ formatDate(t.created_at) }}</md-table-cell>
+                                <md-table-cell>
+                                    <span :class="expiryClass(t.expires_at)">
+                                        {{ formatDate(t.expires_at) }}
+                                        <md-icon v-if="isExpiringSoon(t.expires_at)" style="font-size:16px;vertical-align:middle">warning</md-icon>
+                                    </span>
+                                </md-table-cell>
+                                <md-table-cell>{{ t.last_used_at ? formatDate(t.last_used_at) : '—' }}</md-table-cell>
+                                <md-table-cell>
+                                    <md-switch v-model="t.allow_trigger" @change="toggleMcpTrigger(t)" class="mcp-trigger-switch"></md-switch>
+                                </md-table-cell>
+                                <md-table-cell>
+                                    <md-button class="md-icon-button" @click="toggleScopeEdit(t)">
+                                        <md-icon>edit</md-icon>
+                                        <md-tooltip>Edit project scope</md-tooltip>
+                                    </md-button>
+                                    <md-button class="md-icon-button" @click="confirmMcpRevoke(t)">
+                                        <md-icon class="md-primary">delete</md-icon>
+                                        <md-tooltip>Revoke token</md-tooltip>
+                                    </md-button>
+                                </md-table-cell>
+                            </md-table-row>
+
+                            <!-- Inline scope editor -->
+                            <md-table-row v-if="scopeEditId === t.token_id" :key="t.token_id + '-scope'" class="log-row">
+                                <md-table-cell colspan="7" class="log-cell">
+                                    <div style="padding: 8px 0;">
+                                        <div style="font-size: 13px; color: #666; margin-bottom: 8px;">
+                                            Project scope
+                                            <small style="color: #999; margin-left: 6px;">leave all unchecked to allow access to all projects</small>
+                                        </div>
+                                        <div style="display: flex; flex-wrap: wrap; gap: 4px 16px; margin-bottom: 12px;">
+                                            <label v-for="p in userProjects" :key="p.id" class="mcp-project-checkbox">
+                                                <input type="checkbox" :value="p.id" v-model="scopeEditSelection">
+                                                {{ p.name }}
+                                            </label>
+                                        </div>
+                                        <md-button class="md-raised md-primary md-dense" @click="saveScopeEdit(t)">Save</md-button>
+                                        <md-button class="md-dense" @click="scopeEditId = null">Cancel</md-button>
+                                    </div>
+                                </md-table-cell>
+                            </md-table-row>
+                        </template>
+
+                        <md-table-row v-if="mcpTokens.length === 0">
+                            <md-table-cell colspan="7">No MCP tokens yet. Create one above.</md-table-cell>
+                        </md-table-row>
+                    </md-table-body>
+                </md-table>
+            </md-table-card>
+        </md-card>
+
+        <!-- MCP new token dialog -->
+        <md-dialog ref="mcpTokenDialog">
+            <md-dialog-title>MCP Token Created</md-dialog-title>
+            <md-dialog-content>
+                Save this token somewhere safe — it will not be shown again.<br><br>
+                <pre class="token-pre">{{ newMcpToken }}</pre><br>
+                Use it with the InfraBox MCP server:<br>
+                <pre>$ export INFRABOX_MCP_TOKEN=&lt;TOKEN_VALUE&gt;</pre>
+            </md-dialog-content>
+            <md-dialog-actions>
+                <md-button class="md-primary" @click="closeMcpTokenDialog">OK</md-button>
+            </md-dialog-actions>
+        </md-dialog>
+
+        <!-- MCP revoke confirmation dialog -->
+        <md-dialog-confirm
+            ref="mcpRevokeDialog"
+            md-title="Revoke MCP Token"
+            :md-content="`Revoke &quot;${pendingMcpRevoke ? pendingMcpRevoke.name : ''}&quot;? This cannot be undone.`"
+            md-ok-text="Revoke"
+            md-cancel-text="Cancel"
+            @close="onMcpRevokeClose">
+        </md-dialog-confirm>
     </div>
 </template>
 
@@ -208,6 +357,16 @@ export default {
         form: {
             description: '',
             expiresDays: 365
+        },
+        mcpTokens: [],
+        newMcpToken: '',
+        pendingMcpRevoke: null,
+        scopeEditId: null,
+        scopeEditSelection: [],
+        mcpForm: {
+            name: '',
+            expiresDays: 365,
+            selectedProjects: []
         }
     }),
 
@@ -215,6 +374,20 @@ export default {
         disableAdd () {
             return !this.form.description || this.form.description.length < 3 ||
                 !this.form.expiresDays || this.form.expiresDays < 1 || this.form.expiresDays > 3650
+        },
+        disableMcpAdd () {
+            return !this.mcpForm.name || this.mcpForm.name.length < 3 ||
+                !this.mcpForm.expiresDays || this.mcpForm.expiresDays < 1 || this.mcpForm.expiresDays > 365
+        },
+        mcpNameError () {
+            return this.mcpForm.name !== '' && this.mcpForm.name.length < 3
+        },
+        mcpDaysError () {
+            return this.mcpForm.expiresDays !== '' && this.mcpForm.expiresDays !== null &&
+                (this.mcpForm.expiresDays < 1 || this.mcpForm.expiresDays > 365)
+        },
+        userProjects () {
+            return this.$store.state.projects || []
         },
         adminProjects () {
             return this.$store.state.projects.filter(p => p.userHasAdminRights())
@@ -227,6 +400,10 @@ export default {
     created () {
         UserTokenService.loadTokens().then((tokens) => {
             this.tokens = tokens
+        }).catch(() => {})
+
+        UserTokenService.loadMcpTokens().then((tokens) => {
+            this.mcpTokens = tokens
         }).catch(() => {})
 
         const adminProjects = this.$store.state.projects.filter(p => p.userHasAdminRights())
@@ -310,6 +487,94 @@ export default {
                 .then((log) => { this.accessLog = log })
                 .catch(() => {})
                 .finally(() => { this.logLoading = false })
+        },
+
+        createMcpToken () {
+            if (!this.mcpForm.name || this.mcpForm.name.length < 3) {
+                NotificationService.$emit('NOTIFICATION', new Notification({ message: 'Token name must be at least 3 characters.' }))
+                return
+            }
+            const days = this.mcpForm.expiresDays
+            if (!days || days < 1 || days > 365) {
+                NotificationService.$emit('NOTIFICATION', new Notification({ message: 'Validity must be between 1 and 365 days.' }))
+                return
+            }
+            const enabledProjects = this.mcpForm.selectedProjects.length > 0
+                ? this.mcpForm.selectedProjects.reduce((acc, id) => { acc[id] = null; return acc }, {})
+                : {}
+            UserTokenService.createMcpToken(this.mcpForm.name, enabledProjects, this.mcpForm.expiresDays)
+                .then((result) => {
+                    this.mcpTokens.unshift({
+                        token_id: result.token_id,
+                        name: result.name,
+                        enabled_projects: result.enabled_projects,
+                        allow_trigger: result.allow_trigger,
+                        expires_at: result.expires_at,
+                        created_at: new Date().toISOString(),
+                        last_used_at: null
+                    })
+                    this.newMcpToken = result.token
+                    this.$refs['mcpTokenDialog'].open()
+                    this.mcpForm.name = ''
+                    this.mcpForm.expiresDays = 365
+                    this.mcpForm.selectedProjects = []
+                })
+                .catch(() => {})
+        },
+
+        confirmMcpRevoke (token) {
+            this.pendingMcpRevoke = token
+            this.$refs['mcpRevokeDialog'].open()
+        },
+
+        onMcpRevokeClose (type) {
+            if (type !== 'ok' || !this.pendingMcpRevoke) {
+                this.pendingMcpRevoke = null
+                return
+            }
+            const target = this.pendingMcpRevoke
+            UserTokenService.revokeMcpToken(target.token_id)
+                .then(() => {
+                    this.mcpTokens = this.mcpTokens.filter(t => t.token_id !== target.token_id)
+                    NotificationService.$emit('NOTIFICATION', new Notification({ message: `MCP token "${target.name}" revoked.` }))
+                })
+                .catch(() => {})
+                .finally(() => { this.pendingMcpRevoke = null })
+        },
+
+        toggleScopeEdit (token) {
+            if (this.scopeEditId === token.token_id) {
+                this.scopeEditId = null
+                return
+            }
+            this.scopeEditId = token.token_id
+            this.scopeEditSelection = Object.keys(token.enabled_projects || {})
+        },
+
+        saveScopeEdit (token) {
+            const enabledProjects = this.scopeEditSelection.reduce((acc, id) => {
+                acc[id] = null
+                return acc
+            }, {})
+            UserTokenService.updateMcpToken(token.token_id, enabledProjects)
+                .then(() => {
+                    token.enabled_projects = enabledProjects
+                    this.scopeEditId = null
+                    NotificationService.$emit('NOTIFICATION', new Notification({ message: `Scope updated for "${token.name}".` }))
+                })
+                .catch(() => {})
+        },
+
+        toggleMcpTrigger (token) {
+            const newVal = !token.allow_trigger
+            UserTokenService.setMcpTrigger(token.token_id, newVal)
+                .then(() => { token.allow_trigger = newVal })
+                .catch(() => { token.allow_trigger = !newVal })
+        },
+
+        closeMcpTokenDialog () {
+            this.$refs['mcpTokenDialog'].close()
+            this.newMcpToken = ''
         }
     }
 }
@@ -384,5 +649,33 @@ export default {
 .expiry-expired {
     color: #c62828;
     font-weight: 500;
+}
+
+.mcp-all-projects {
+    color: #888;
+    font-style: italic;
+    font-size: 13px;
+}
+
+.mcp-project-count {
+    font-size: 13px;
+}
+
+.mcp-trigger-switch {
+    margin: 0;
+}
+
+.mcp-project-checkbox {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 13px;
+    cursor: pointer;
+    user-select: none;
+    color: #444;
+}
+
+.mcp-project-checkbox input {
+    cursor: pointer;
 }
 </style>

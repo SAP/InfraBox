@@ -38,6 +38,51 @@ class UserTokenService {
                 throw err
             })
     }
+    // MCP token methods — /api/v1/mcp/tokens/*
+
+    loadMcpTokens () {
+        return NewAPIService.get('mcp/tokens/')
+            .catch((err) => {
+                NotificationService.$emit('NOTIFICATION', new Notification(err))
+                throw err
+            })
+    }
+
+    createMcpToken (name, enabledProjects, expiresDays) {
+        return NewAPIService.post('mcp/tokens/', {
+            name,
+            enabled_projects: enabledProjects || {},
+            expires_days: expiresDays || 365
+        }).catch((err) => {
+            NotificationService.$emit('NOTIFICATION', new Notification(err))
+            throw err
+        })
+    }
+
+    updateMcpToken (tokenId, enabledProjects) {
+        return NewAPIService.patch(`mcp/tokens/${tokenId}`, { enabled_projects: enabledProjects })
+            .catch((err) => {
+                NotificationService.$emit('NOTIFICATION', new Notification(err))
+                throw err
+            })
+    }
+
+    revokeMcpToken (tokenId) {
+        return NewAPIService.delete(`mcp/tokens/${tokenId}`)
+            .catch((err) => {
+                NotificationService.$emit('NOTIFICATION', new Notification(err))
+                throw err
+            })
+    }
+
+    setMcpTrigger (tokenId, allow) {
+        const method = allow ? 'post' : 'delete'
+        return NewAPIService[method](`mcp/tokens/${tokenId}/trigger`, {})
+            .catch((err) => {
+                NotificationService.$emit('NOTIFICATION', new Notification(err))
+                throw err
+            })
+    }
 }
 
 export default new UserTokenService()
