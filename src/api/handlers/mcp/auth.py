@@ -116,6 +116,10 @@ def check_project_access_mcp(project_id: str) -> bool:
         return True
 
     enabled = g.mcp_enabled_projects
+    if not enabled:
+        # empty dict = all projects allowed
+        return True
+
     if project_id not in enabled:
         return False
 
