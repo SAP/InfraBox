@@ -59,6 +59,14 @@ class UserTokenService {
         })
     }
 
+    updateMcpToken (tokenId, enabledProjects) {
+        return NewAPIService.patch(`mcp/tokens/${tokenId}`, { enabled_projects: enabledProjects })
+            .catch((err) => {
+                NotificationService.$emit('NOTIFICATION', new Notification(err))
+                throw err
+            })
+    }
+
     revokeMcpToken (tokenId) {
         return NewAPIService.delete(`mcp/tokens/${tokenId}`)
             .catch((err) => {
