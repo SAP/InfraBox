@@ -67,7 +67,7 @@ class NewAPIService {
         const u = this.api + url
         return Vue.http.patch(u, payload)
             .then((response) => {
-                return response.body
+                return response.body || {}
             })
             .catch(this._handleError(false))
     }

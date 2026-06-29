@@ -107,6 +107,10 @@ def mcp_auth_required(f):
 def check_project_access_mcp(project_id: str) -> bool:
     """Return True if the current request may access project_id.
 
+    enabled_projects semantics (intentional):
+      {}          → allow all projects (user chose no restriction when creating the token)
+      {id: ...}   → allow only the listed project IDs
+
     MCP token path: project must be in g.mcp_enabled_projects and not past
     its per-project expiry (if set).
     Session path: delegates to OPA (already checked in before_request).
@@ -117,7 +121,7 @@ def check_project_access_mcp(project_id: str) -> bool:
 
     enabled = g.mcp_enabled_projects
     if not enabled:
-        # empty dict = all projects allowed
+        # empty dict → no project restriction, allow all
         return True
 
     if project_id not in enabled:

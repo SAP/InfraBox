@@ -566,9 +566,10 @@ export default {
         },
 
         toggleMcpTrigger (token) {
-            const newVal = !token.allow_trigger
+            // v-model has already flipped token.allow_trigger to the new value;
+            // read it directly rather than negating again.
+            const newVal = token.allow_trigger
             UserTokenService.setMcpTrigger(token.token_id, newVal)
-                .then(() => { token.allow_trigger = newVal })
                 .catch(() => { token.allow_trigger = !newVal })
         },
 
