@@ -222,8 +222,8 @@
                                 <md-tooltip>Create MCP token</md-tooltip>
                             </md-button>
                         </md-list-item>
-                        <md-list-item v-if="userProjects.length > 0" style="flex-wrap: wrap; align-items: flex-start; padding: 0 16px 8px">
-                            <div style="width: 100%; font-size: 13px; color: #666; margin-bottom: 6px;">
+                        <div v-if="userProjects.length > 0" style="padding: 0 16px 12px;">
+                            <div style="font-size: 13px; color: #666; margin-bottom: 6px;">
                                 Project scope
                                 <small style="color: #999; margin-left: 6px;">leave all unchecked to allow access to all projects</small>
                             </div>
@@ -233,7 +233,7 @@
                                     {{ p.name }}
                                 </label>
                             </div>
-                        </md-list-item>
+                        </div>
                     </md-list>
                 </md-card-area>
             </md-card>
@@ -297,8 +297,8 @@
                                                 {{ p.name }}
                                             </label>
                                         </div>
-                                        <md-button class="md-raised md-primary md-dense" @click="saveScopeEdit(t)">Save</md-button>
-                                        <md-button class="md-dense" @click="scopeEditId = null">Cancel</md-button>
+                                        <md-button class="md-raised md-primary md-dense" style="margin-top: 8px" @click="saveScopeEdit(t)">Save</md-button>
+                                        <md-button class="md-dense" style="margin-top: 8px" @click="scopeEditId = null">Cancel</md-button>
                                     </div>
                                 </md-table-cell>
                             </md-table-row>
@@ -603,6 +603,7 @@ export default {
 .log-cell {
     background-color: #f9f9f9 !important;
     padding: 8px 16px !important;
+    overflow: visible !important;
 }
 
 .log-table {
