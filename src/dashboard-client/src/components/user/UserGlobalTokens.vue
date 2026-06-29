@@ -297,8 +297,8 @@
                                                 {{ p.name }}
                                             </label>
                                         </div>
-                                        <md-button class="md-raised md-primary md-dense" style="margin-top: 8px" @click="saveScopeEdit(t)">Save</md-button>
-                                        <md-button class="md-dense" style="margin-top: 8px" @click="scopeEditId = null">Cancel</md-button>
+                                        <button class="scope-btn scope-btn-primary" @click="saveScopeEdit(t)">Save</button>
+                                        <button class="scope-btn" @click="scopeEditId = null">Cancel</button>
                                     </div>
                                 </md-table-cell>
                             </md-table-row>
@@ -679,5 +679,33 @@ export default {
 
 .mcp-project-checkbox input {
     cursor: pointer;
+}
+
+.scope-btn {
+    display: inline-block;
+    margin-top: 8px;
+    margin-right: 8px;
+    padding: 6px 16px;
+    border: none;
+    border-radius: 2px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    text-transform: uppercase;
+    background: #e0e0e0;
+    color: #212121;
+}
+
+.scope-btn:hover {
+    background: rgba(0,0,0,0.07);
+}
+
+.scope-btn-primary {
+    background: #009688;
+    color: #fff;
+}
+
+.scope-btn-primary:hover {
+    background: #00796b;
 }
 </style>
