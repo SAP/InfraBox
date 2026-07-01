@@ -1,9 +1,16 @@
 """
 MCP job endpoints.
 GET /api/v1/mcp/projects/<project_id>/builds/<build_id>/jobs
+GET /api/v1/mcp/projects/<project_id>/jobs/<job_id>
 GET /api/v1/mcp/projects/<project_id>/jobs/<job_id>/log
 GET /api/v1/mcp/projects/<project_id>/jobs/<job_id>/artifacts
+GET /api/v1/mcp/projects/<project_id>/jobs/<job_id>/stats
+GET /api/v1/mcp/projects/<project_id>/jobs/<job_id>/testruns
+GET /api/v1/mcp/projects/<project_id>/jobs/<job_id>/manifest
 """
+import json
+import logging
+
 from flask import g, abort
 from flask_restx import Resource
 
@@ -11,6 +18,11 @@ from pyinfraboxutils.ibrestplus import api
 from api.handlers.mcp.auth import mcp_auth_required, check_project_access_mcp
 from api.handlers.mcp.rate_limit import mcp_rate_limit
 from api.handlers.mcp.audit import audit_mcp
+
+logger = logging.getLogger('mcp_jobs')
+
+_ACCESS_DENIED = 'access to this project is not permitted for the current MCP token'
+_JOB_BY_PROJECT = 'SELECT id FROM job WHERE id = %s AND project_id = %s'
 
 ns_build_jobs = api.namespace('MCP Build Jobs',
                               path='/api/v1/mcp/projects/<project_id>/builds/<build_id>',
@@ -31,7 +43,7 @@ class MCPJobList(Resource):
                   details={'project_id': project_id, 'build_id': build_id})
         if not check_project_access_mcp(project_id):
             audit_mcp('list_jobs', outcome='forbidden', details={'project_id': project_id})
-            abort(403, 'access to this project is not permitted for the current MCP token')
+            abort(403, _ACCESS_DENIED)
 
         try:
             rows = g.db.execute_many_dict('''
@@ -51,6 +63,36 @@ class MCPJobList(Resource):
             raise
 
 
+@ns_job.route('')
+class MCPJob(Resource):
+    @mcp_auth_required
+    @mcp_rate_limit('list_jobs')
+    def get(self, project_id, job_id):
+        """Get a single job by ID."""
+        audit_mcp('get_job', outcome='attempt',
+                  details={'project_id': project_id, 'job_id': job_id})
+        if not check_project_access_mcp(project_id):
+            audit_mcp('get_job', outcome='forbidden', details={'project_id': project_id})
+            abort(403, _ACCESS_DENIED)
+
+        try:
+            row = g.db.execute_one_dict('''
+                SELECT j.id, j.name, j.state, j.build_id, j.project_id,
+                       j.start_date, j.end_date, j.message
+                FROM job j
+                WHERE j.id = %s AND j.project_id = %s
+            ''', [job_id, project_id])
+            if not row:
+                abort(404)
+            audit_mcp('get_job', outcome='success',
+                      details={'project_id': project_id, 'job_id': job_id})
+            return _job_dict(row)
+        except Exception as exc:
+            audit_mcp('get_job', outcome='failure',
+                      details={'project_id': project_id, 'job_id': job_id}, error=str(exc))
+            raise
+
+
 @ns_job.route('/log')
 class MCPJobLog(Resource):
     @mcp_auth_required
@@ -61,12 +103,9 @@ class MCPJobLog(Resource):
                   details={'project_id': project_id, 'job_id': job_id})
         if not check_project_access_mcp(project_id):
             audit_mcp('get_job_log', outcome='forbidden', details={'project_id': project_id})
-            abort(403, 'access to this project is not permitted for the current MCP token')
+            abort(403, _ACCESS_DENIED)
 
-        # Verify job belongs to project
-        job = g.db.execute_one_dict('''
-            SELECT id FROM job WHERE id = %s AND project_id = %s
-        ''', [job_id, project_id])
+        job = g.db.execute_one_dict(_JOB_BY_PROJECT, [job_id, project_id])
         if not job:
             abort(404)
 
@@ -94,11 +133,9 @@ class MCPJobArtifacts(Resource):
                   details={'project_id': project_id, 'job_id': job_id})
         if not check_project_access_mcp(project_id):
             audit_mcp('list_job_artifacts', outcome='forbidden', details={'project_id': project_id})
-            abort(403, 'access to this project is not permitted for the current MCP token')
+            abort(403, _ACCESS_DENIED)
 
-        job = g.db.execute_one_dict('''
-            SELECT id FROM job WHERE id = %s AND project_id = %s
-        ''', [job_id, project_id])
+        job = g.db.execute_one_dict(_JOB_BY_PROJECT, [job_id, project_id])
         if not job:
             abort(404)
 
@@ -122,6 +159,130 @@ class MCPJobArtifacts(Resource):
             raise
 
 
+@ns_job.route('/stats')
+class MCPJobStats(Resource):
+    @mcp_auth_required
+    @mcp_rate_limit('list_jobs')
+    def get(self, project_id, job_id):
+        """Get resource usage stats for a job."""
+        audit_mcp('get_job_stats', outcome='attempt',
+                  details={'project_id': project_id, 'job_id': job_id})
+        if not check_project_access_mcp(project_id):
+            audit_mcp('get_job_stats', outcome='forbidden', details={'project_id': project_id})
+            abort(403, _ACCESS_DENIED)
+
+        try:
+            row = g.db.execute_one_dict('''
+                SELECT stats FROM job WHERE id = %s AND project_id = %s
+            ''', [job_id, project_id])
+            if not row:
+                abort(404)
+            result = {}
+            if row.get('stats'):
+                try:
+                    parsed = json.loads(row['stats'])
+                    for k, v in parsed.items():
+                        result[k] = _compact_stats(v)
+                except Exception as parse_exc:
+                    logger.warning('failed to parse stats for job %s: %s', job_id, parse_exc)
+                    audit_mcp('get_job_stats', outcome='partial',
+                              details={'project_id': project_id, 'job_id': job_id},
+                              error=str(parse_exc))
+                    return result
+            audit_mcp('get_job_stats', outcome='success',
+                      details={'project_id': project_id, 'job_id': job_id})
+            return result
+        except Exception as exc:
+            audit_mcp('get_job_stats', outcome='failure',
+                      details={'project_id': project_id, 'job_id': job_id}, error=str(exc))
+            raise
+
+
+@ns_job.route('/testruns')
+class MCPJobTestruns(Resource):
+    @mcp_auth_required
+    @mcp_rate_limit('list_jobs')
+    def get(self, project_id, job_id):
+        """Get test results for a job."""
+        audit_mcp('get_job_testruns', outcome='attempt',
+                  details={'project_id': project_id, 'job_id': job_id})
+        if not check_project_access_mcp(project_id):
+            audit_mcp('get_job_testruns', outcome='forbidden', details={'project_id': project_id})
+            abort(403, _ACCESS_DENIED)
+
+        try:
+            rows = g.db.execute_many_dict('''
+                SELECT tr.state, tr.name, tr.suite, tr.duration, tr.message, tr.stack,
+                       to_char(tr.timestamp, 'YYYY-MM-DD HH24:MI:SS') AS timestamp
+                FROM test_run tr
+                WHERE tr.job_id = %s AND tr.project_id = %s
+            ''', [job_id, project_id])
+            audit_mcp('get_job_testruns', outcome='success',
+                      details={'project_id': project_id, 'job_id': job_id, 'count': len(rows)})
+            return rows
+        except Exception as exc:
+            audit_mcp('get_job_testruns', outcome='failure',
+                      details={'project_id': project_id, 'job_id': job_id}, error=str(exc))
+            raise
+
+
+@ns_job.route('/manifest')
+class MCPJobManifest(Resource):
+    @mcp_auth_required
+    @mcp_rate_limit('list_jobs')
+    def get(self, project_id, job_id):
+        """Get the infrabox.json manifest used for a job."""
+        audit_mcp('get_job_manifest', outcome='attempt',
+                  details={'project_id': project_id, 'job_id': job_id})
+        if not check_project_access_mcp(project_id):
+            audit_mcp('get_job_manifest', outcome='forbidden', details={'project_id': project_id})
+            abort(403, _ACCESS_DENIED)
+
+        try:
+            row = g.db.execute_one_dict('''
+                SELECT j.name, j.start_date, j.end_date,
+                       definition#>'{resources,limits,cpu}' AS cpu,
+                       definition#>'{resources,limits,memory}' AS memory,
+                       j.state, j.id, b.build_number, j.env_var, c.root_url
+                FROM job j
+                JOIN build b ON b.id = j.build_id AND b.project_id = j.project_id
+                JOIN cluster c ON j.cluster_name = c.name
+                WHERE j.id = %s AND j.project_id = %s
+            ''', [job_id, project_id])
+            if not row:
+                abort(404)
+
+            root_url = row['root_url']
+            image = (root_url + '/' + project_id + '/' + row['name']
+                     + ':build_' + str(row['build_number']))
+            image = image.replace('https://', '').replace('http://', '').replace('//', '/')
+
+            result = {
+                'name': row['name'],
+                'start_date': row['start_date'].isoformat() if row.get('start_date') else None,
+                'end_date': row['end_date'].isoformat() if row.get('end_date') else None,
+                'cpu': row['cpu'],
+                'memory': row['memory'],
+                'state': row['state'],
+                'id': row['id'],
+                'build_number': row['build_number'],
+                'environment': row['env_var'],
+                'image': image,
+                'output': {
+                    'url': (root_url + '/api/v1/projects/' + project_id
+                            + '/jobs/' + job_id + '/output'),
+                    'format': 'tar.snappy',
+                },
+            }
+            audit_mcp('get_job_manifest', outcome='success',
+                      details={'project_id': project_id, 'job_id': job_id})
+            return result
+        except Exception as exc:
+            audit_mcp('get_job_manifest', outcome='failure',
+                      details={'project_id': project_id, 'job_id': job_id}, error=str(exc))
+            raise
+
+
 def _job_dict(r):
     return {
         'id': r['id'],
@@ -134,3 +295,10 @@ def _job_dict(r):
         'message': r.get('message'),
     }
 
+
+def _compact_stats(series):
+    """Downsample a stats time series to at most 100 points."""
+    if not isinstance(series, list) or len(series) <= 100:
+        return series
+    step = len(series) // 100
+    return series[::step]

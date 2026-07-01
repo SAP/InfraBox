@@ -1,12 +1,13 @@
 """
-MCP projects endpoint: GET /api/v1/mcp/projects
-Returns projects the MCP token has access to.
+MCP projects endpoints.
+GET /api/v1/mcp/projects
+GET /api/v1/mcp/projects/<project_id>
 """
-from flask import g
+from flask import g, abort
 from flask_restx import Resource
 
 from pyinfraboxutils.ibrestplus import api
-from api.handlers.mcp.auth import mcp_auth_required, get_mcp_user_id
+from api.handlers.mcp.auth import mcp_auth_required, check_project_access_mcp, get_mcp_user_id
 from api.handlers.mcp.rate_limit import mcp_rate_limit
 from api.handlers.mcp.audit import audit_mcp
 
@@ -60,5 +61,33 @@ class MCPProjects(Resource):
             return result
         except Exception as exc:
             audit_mcp('list_projects', outcome='failure', error=str(exc))
+            raise
+
+
+@ns.route('/projects/<project_id>')
+class MCPProject(Resource):
+    @mcp_auth_required
+    @mcp_rate_limit('list_projects')
+    def get(self, project_id):
+        """Get a single project by ID."""
+        audit_mcp('get_project', outcome='attempt', details={'project_id': project_id})
+        if not check_project_access_mcp(project_id):
+            audit_mcp('get_project', outcome='forbidden', details={'project_id': project_id})
+            abort(403, 'access to this project is not permitted for the current MCP token')
+
+        try:
+            row = g.db.execute_one_dict('''
+                SELECT p.id, p.name, p.type, p.public
+                FROM project p
+                WHERE p.id = %s
+            ''', [project_id])
+            if not row:
+                abort(404)
+            result = {'id': row['id'], 'name': row['name'], 'type': row['type'], 'public': row['public']}
+            audit_mcp('get_project', outcome='success', details={'project_id': project_id})
+            return result
+        except Exception as exc:
+            audit_mcp('get_project', outcome='failure',
+                      details={'project_id': project_id}, error=str(exc))
             raise
 

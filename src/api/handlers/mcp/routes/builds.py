@@ -1,6 +1,7 @@
 """
 MCP builds endpoints.
 GET  /api/v1/mcp/projects/<project_id>/builds
+GET  /api/v1/mcp/projects/<project_id>/builds/<build_id>
 POST /api/v1/mcp/projects/<project_id>/trigger
 """
 import uuid as _uuid
@@ -62,6 +63,51 @@ class MCPBuilds(Resource):
             raise
 
 
+@ns.route('/builds/<build_id>')
+class MCPBuild(Resource):
+    @mcp_auth_required
+    @mcp_rate_limit('list_builds')
+    def get(self, project_id, build_id):
+        """Get a single build by ID."""
+        audit_mcp('get_build', outcome='attempt',
+                  details={'project_id': project_id, 'build_id': build_id})
+        if not check_project_access_mcp(project_id):
+            audit_mcp('get_build', outcome='forbidden', details={'project_id': project_id})
+            abort(403, 'access to this project is not permitted for the current MCP token')
+
+        try:
+            rows = g.db.execute_many_dict('''
+                SELECT b.id, b.build_number, b.restart_counter, b.project_id, b.commit_id,
+                       c.branch,
+                       MIN(j.created_at)                                        AS created_at,
+                       MAX(j.end_date)                                          AS finished_at,
+                       CASE
+                           WHEN bool_or(j.state IN ('running','queued','scheduled')) THEN 'running'
+                           WHEN bool_or(j.state = 'failure')  THEN 'failure'
+                           WHEN bool_or(j.state = 'error')    THEN 'error'
+                           WHEN bool_or(j.state = 'killed')   THEN 'killed'
+                           WHEN bool_or(j.state = 'unstable') THEN 'unstable'
+                           WHEN bool_and(j.state = 'finished') THEN 'finished'
+                           ELSE NULL
+                       END                                                      AS status
+                FROM build b
+                LEFT JOIN commit c ON c.id = b.commit_id
+                LEFT JOIN job j    ON j.build_id = b.id
+                WHERE b.id = %s AND b.project_id = %s
+                GROUP BY b.id, b.build_number, b.restart_counter, b.project_id, b.commit_id, c.branch
+            ''', [build_id, project_id])
+            if not rows:
+                abort(404)
+            result = _build_dict(rows[0])
+            audit_mcp('get_build', outcome='success',
+                      details={'project_id': project_id, 'build_id': build_id})
+            return result
+        except Exception as exc:
+            audit_mcp('get_build', outcome='failure',
+                      details={'project_id': project_id, 'build_id': build_id}, error=str(exc))
+            raise
+
+
 @ns.route('/trigger')
 class MCPTrigger(Resource):
     @mcp_auth_required
@@ -77,10 +123,6 @@ class MCPTrigger(Resource):
                       details={'project_id': project_id, 'reason': 'trigger not allowed'})
             abort(403, 'this MCP token does not have trigger permission')
 
-        # Delegate to the existing /api/v1/projects/<id>/trigger endpoint internals.
-        # We do this by calling the DB-level trigger path that creates a build entry
-        # for manual (upload-type) triggers.  Full GitHub/gerrit triggers are handled
-        # by the existing endpoint and are out of scope for MCP.
         project = g.db.execute_one_dict('''
             SELECT id, type FROM project WHERE id = %s
         ''', [project_id])
@@ -94,8 +136,6 @@ class MCPTrigger(Resource):
 
         try:
             build_id = str(_uuid.uuid4())
-            # Lock the table so concurrent triggers compute non-duplicate build numbers,
-            # matching the pattern used by the existing trigger endpoint (trigger.py).
             g.db.execute('LOCK TABLE build IN EXCLUSIVE MODE')
             g.db.execute('''
                 INSERT INTO build (id, project_id, build_number, restart_counter, source)
