@@ -9,6 +9,7 @@ GET /api/v1/mcp/projects/<project_id>/jobs/<job_id>/testruns
 GET /api/v1/mcp/projects/<project_id>/jobs/<job_id>/manifest
 """
 import json
+import logging
 
 from flask import g, abort
 from flask_restx import Resource
@@ -17,6 +18,8 @@ from pyinfraboxutils.ibrestplus import api
 from api.handlers.mcp.auth import mcp_auth_required, check_project_access_mcp
 from api.handlers.mcp.rate_limit import mcp_rate_limit
 from api.handlers.mcp.audit import audit_mcp
+
+logger = logging.getLogger('mcp_jobs')
 
 _ACCESS_DENIED = 'access to this project is not permitted for the current MCP token'
 _JOB_BY_PROJECT = 'SELECT id FROM job WHERE id = %s AND project_id = %s'
@@ -180,8 +183,12 @@ class MCPJobStats(Resource):
                     parsed = json.loads(row['stats'])
                     for k, v in parsed.items():
                         result[k] = _compact_stats(v)
-                except Exception:
-                    pass
+                except Exception as parse_exc:
+                    logger.warning('failed to parse stats for job %s: %s', job_id, parse_exc)
+                    audit_mcp('get_job_stats', outcome='partial',
+                              details={'project_id': project_id, 'job_id': job_id},
+                              error=str(parse_exc))
+                    return result
             audit_mcp('get_job_stats', outcome='success',
                       details={'project_id': project_id, 'job_id': job_id})
             return result
