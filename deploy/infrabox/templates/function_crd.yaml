@@ -38,10 +38,10 @@ spec:
     -
         mountPath: /tmp/docker-secret
         name: docker-config
-{{ end }}
     -
         name: docker-dir
         mountPath: /root/.docker
+{{ end }}
     -
         name: data-dir
         mountPath: "/data"
@@ -54,19 +54,19 @@ spec:
     -
         name: data-dir
         emptyDir: {}
+{{- if .Values.job.docker_config_secret }}
     -
         name: docker-dir
         emptyDir: {}
-    -
-        name: dockerd-config
-        configMap:
-            name: infrabox-dockerd-config
-{{- if .Values.job.docker_config_secret }}
     -
         name: docker-config
         secret:
             secretName: {{ .Values.job.docker_config_secret }}
 {{ end }}
+    -
+        name: dockerd-config
+        configMap:
+            name: infrabox-dockerd-config
 {{ if .Values.local_cache.enabled }}
     -
         name: local-cache
