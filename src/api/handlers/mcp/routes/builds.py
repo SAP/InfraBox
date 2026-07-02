@@ -1,18 +1,26 @@
 """
 MCP builds endpoints.
-GET  /api/v1/mcp/projects/<project_id>/builds
-GET  /api/v1/mcp/projects/<project_id>/builds/<build_id>
-POST /api/v1/mcp/projects/<project_id>/trigger
+GET    /api/v1/mcp/projects/<project_id>/builds
+GET    /api/v1/mcp/projects/<project_id>/builds/<build_id>
+POST   /api/v1/mcp/projects/<project_id>/trigger
+POST   /api/v1/mcp/projects/<project_id>/builds/<build_id>/restart
+DELETE /api/v1/mcp/projects/<project_id>/builds/<build_id>/abort
 """
+import json
 import uuid as _uuid
 
 from flask import g, abort
 from flask_restx import Resource
 
 from pyinfraboxutils.ibrestplus import api
-from api.handlers.mcp.auth import mcp_auth_required, check_project_access_mcp, check_trigger_access_mcp
+from api.handlers.mcp.auth import (mcp_auth_required, check_project_access_mcp,
+                                    check_trigger_access_mcp, get_mcp_user_id)
 from api.handlers.mcp.rate_limit import mcp_rate_limit
 from api.handlers.mcp.audit import audit_mcp
+
+_ACCESS_DENIED = 'access to this project is not permitted for the current MCP token'
+_TRIGGER_DENIED = 'this MCP token does not have trigger permission'
+_TRIGGER_DENIED_REASON = 'trigger not allowed'
 
 ns = api.namespace('MCP Builds',
                    path='/api/v1/mcp/projects/<project_id>',
@@ -28,7 +36,7 @@ class MCPBuilds(Resource):
         audit_mcp('list_builds', outcome='attempt', details={'project_id': project_id})
         if not check_project_access_mcp(project_id):
             audit_mcp('list_builds', outcome='forbidden', details={'project_id': project_id})
-            abort(403, 'access to this project is not permitted for the current MCP token')
+            abort(403, _ACCESS_DENIED)
 
         try:
             rows = g.db.execute_many_dict('''
@@ -73,7 +81,7 @@ class MCPBuild(Resource):
                   details={'project_id': project_id, 'build_id': build_id})
         if not check_project_access_mcp(project_id):
             audit_mcp('get_build', outcome='forbidden', details={'project_id': project_id})
-            abort(403, 'access to this project is not permitted for the current MCP token')
+            abort(403, _ACCESS_DENIED)
 
         try:
             rows = g.db.execute_many_dict('''
@@ -116,11 +124,11 @@ class MCPTrigger(Resource):
         """Trigger a new build (requires allow_trigger on the MCP token)."""
         if not check_project_access_mcp(project_id):
             audit_mcp('trigger_build', outcome='forbidden', details={'project_id': project_id})
-            abort(403, 'access to this project is not permitted for the current MCP token')
+            abort(403, _ACCESS_DENIED)
 
         if not check_trigger_access_mcp():
             audit_mcp('trigger_build', outcome='forbidden',
-                      details={'project_id': project_id, 'reason': 'trigger not allowed'})
+                      details={'project_id': project_id, 'reason': _TRIGGER_DENIED_REASON})
             abort(403, 'this MCP token does not have trigger permission')
 
         project = g.db.execute_one_dict('''
@@ -149,6 +157,114 @@ class MCPTrigger(Resource):
         except Exception as exc:
             audit_mcp('trigger_build', outcome='failure',
                       details={'project_id': project_id}, error=str(exc))
+            raise
+
+
+@ns.route('/builds/<build_id>/restart')
+class MCPBuildRestart(Resource):
+    @mcp_auth_required
+    @mcp_rate_limit('trigger_build')
+    def post(self, project_id, build_id):
+        """Restart a build (requires allow_trigger on the MCP token)."""
+        audit_mcp('restart_build', outcome='attempt',
+                  details={'project_id': project_id, 'build_id': build_id})
+        if not check_project_access_mcp(project_id):
+            audit_mcp('restart_build', outcome='forbidden', details={'project_id': project_id})
+            abort(403, _ACCESS_DENIED)
+        if not check_trigger_access_mcp():
+            audit_mcp('restart_build', outcome='forbidden',
+                      details={'project_id': project_id, 'reason': _TRIGGER_DENIED_REASON})
+            abort(403, _TRIGGER_DENIED)
+
+        try:
+            build = g.db.execute_one_dict('''
+                SELECT commit_id, build_number, source_upload_id
+                FROM build WHERE id = %s AND project_id = %s
+            ''', [build_id, project_id])
+            if not build:
+                abort(404)
+
+            result = g.db.execute_one_dict('''
+                SELECT max(restart_counter) AS restart_counter
+                FROM build WHERE build_number = %s AND project_id = %s
+            ''', [build['build_number'], project_id])
+            restart_counter = result['restart_counter'] + 1
+
+            new_result = g.db.execute_one_dict('''
+                INSERT INTO build (commit_id, build_number, project_id, restart_counter, source_upload_id)
+                VALUES (%s, %s, %s, %s, %s) RETURNING id
+            ''', [build['commit_id'], build['build_number'], project_id,
+                  restart_counter, build['source_upload_id']])
+            new_build_id = new_result['id']
+
+            job = g.db.execute_one_dict('''
+                SELECT repo, env_var, definition FROM job
+                WHERE project_id = %s AND name = 'Create Jobs' AND build_id = %s
+            ''', [project_id, build_id])
+
+            env_var = json.dumps(job['env_var']) if job and job['env_var'] else None
+            repo = json.dumps(job['repo']) if job and job['repo'] else None
+            definition = json.dumps(job['definition']) if job and job['definition'] else None
+
+            job_id = str(_uuid.uuid4())
+            msg = 'Build restarted by MCP token %s\n' % get_mcp_user_id()
+            g.db.execute('''
+                INSERT INTO job (id, state, build_id, type, name, project_id,
+                                 dockerfile, repo, env_var, definition, cluster_name)
+                VALUES (%s, 'queued', %s, 'create_job_matrix', 'Create Jobs',
+                        %s, '', %s, %s, %s, null);
+                INSERT INTO console (job_id, output) VALUES (%s, %s);
+            ''', [job_id, new_build_id, project_id, repo, env_var, definition, job_id, msg])
+            g.db.commit()
+
+            audit_mcp('restart_build', outcome='success',
+                      details={'project_id': project_id, 'build_id': build_id,
+                               'new_build_id': new_build_id})
+            return {'build_id': new_build_id, 'restart_counter': restart_counter}, 200
+        except Exception as exc:
+            audit_mcp('restart_build', outcome='failure',
+                      details={'project_id': project_id, 'build_id': build_id}, error=str(exc))
+            raise
+
+
+@ns.route('/builds/<build_id>/abort')
+class MCPBuildAbort(Resource):
+    @mcp_auth_required
+    @mcp_rate_limit('trigger_build')
+    def delete(self, project_id, build_id):
+        """Abort all running jobs in a build (requires allow_trigger on the MCP token)."""
+        audit_mcp('abort_build', outcome='attempt',
+                  details={'project_id': project_id, 'build_id': build_id})
+        if not check_project_access_mcp(project_id):
+            audit_mcp('abort_build', outcome='forbidden', details={'project_id': project_id})
+            abort(403, _ACCESS_DENIED)
+        if not check_trigger_access_mcp():
+            audit_mcp('abort_build', outcome='forbidden',
+                      details={'project_id': project_id, 'reason': _TRIGGER_DENIED_REASON})
+            abort(403, _TRIGGER_DENIED)
+
+        try:
+            user_id = get_mcp_user_id()
+            jobs = g.db.execute_many_dict('''
+                SELECT id FROM job
+                WHERE build_id = %s AND project_id = %s
+            ''', [build_id, project_id])
+            if not jobs:
+                abort(404)
+
+            for j in jobs:
+                g.db.execute('''
+                    INSERT INTO abort(job_id, user_id) VALUES(%s, %s)
+                ''', [j['id'], user_id])
+            g.db.commit()
+
+            audit_mcp('abort_build', outcome='success',
+                      details={'project_id': project_id, 'build_id': build_id,
+                               'jobs_aborted': len(jobs)})
+            return {'message': 'Aborted all jobs', 'jobs_aborted': len(jobs)}, 200
+        except Exception as exc:
+            audit_mcp('abort_build', outcome='failure',
+                      details={'project_id': project_id, 'build_id': build_id}, error=str(exc))
             raise
 
 
