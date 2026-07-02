@@ -36,9 +36,8 @@ spec:
 {{ end }}
 {{- if .Values.job.docker_config_secret }}
     -
-        mountPath: /root/.docker/config.json
+        mountPath: /root/.docker
         name: docker-config
-        subPath: config.json
 {{ end }}
     -
         name: data-dir
