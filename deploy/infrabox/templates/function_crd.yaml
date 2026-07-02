@@ -34,6 +34,11 @@ spec:
         name: dockerd-config
         subPath: rootca.pem
 {{ end }}
+{{- if .Values.job.docker_config_secret }}
+    -
+        mountPath: /root/.docker
+        name: docker-config
+{{ end }}
     -
         name: data-dir
         mountPath: "/data"
@@ -50,6 +55,12 @@ spec:
         name: dockerd-config
         configMap:
             name: infrabox-dockerd-config
+{{- if .Values.job.docker_config_secret }}
+    -
+        name: docker-config
+        secret:
+            secretName: {{ .Values.job.docker_config_secret }}
+{{ end }}
 {{ if .Values.local_cache.enabled }}
     -
         name: local-cache
