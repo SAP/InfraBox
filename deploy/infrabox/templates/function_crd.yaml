@@ -36,9 +36,12 @@ spec:
 {{ end }}
 {{- if .Values.job.docker_config_secret }}
     -
-        mountPath: /root/.docker
+        mountPath: /tmp/docker-secret
         name: docker-config
 {{ end }}
+    -
+        name: docker-dir
+        mountPath: /root/.docker
     -
         name: data-dir
         mountPath: "/data"
@@ -50,6 +53,9 @@ spec:
     volumes:
     -
         name: data-dir
+        emptyDir: {}
+    -
+        name: docker-dir
         emptyDir: {}
     -
         name: dockerd-config

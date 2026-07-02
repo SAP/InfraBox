@@ -4,6 +4,12 @@ mkdir -p /data/infrabox
 mkdir -p /data/tmp
 mkdir -p /data/repo
 mkdir -p ~/.ssh
+mkdir -p /root/.docker
+
+if [ -f /tmp/docker-secret/config.json ]; then
+    cp /tmp/docker-secret/config.json /root/.docker/config.json
+    echo "Docker config copied from secret"
+fi
 
 
 function startDocker() {
