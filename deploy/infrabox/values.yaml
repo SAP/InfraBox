@@ -360,11 +360,6 @@ job:
         {}
 
     storage_driver: overlay
-    # Name of a K8s Secret (in infrabox-worker namespace) containing a config.json
-    # key with pre-authenticated docker credentials. Allows job containers to pull
-    # from private registries without explicit docker login.
-    # The secret can be managed via ExternalSecret synced from Vault.
-    docker_config_secret: ""
     #rootca_pem: |- # Using base64 encoded string to put the cert in one line
 
 
