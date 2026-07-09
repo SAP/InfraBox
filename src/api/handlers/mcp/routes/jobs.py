@@ -1,21 +1,31 @@
 """
 MCP job endpoints.
-GET /api/v1/mcp/projects/<project_id>/builds/<build_id>/jobs
-GET /api/v1/mcp/projects/<project_id>/jobs/<job_id>
-GET /api/v1/mcp/projects/<project_id>/jobs/<job_id>/log
-GET /api/v1/mcp/projects/<project_id>/jobs/<job_id>/artifacts
-GET /api/v1/mcp/projects/<project_id>/jobs/<job_id>/stats
-GET /api/v1/mcp/projects/<project_id>/jobs/<job_id>/testruns
-GET /api/v1/mcp/projects/<project_id>/jobs/<job_id>/manifest
+GET    /api/v1/mcp/projects/<project_id>/builds/<build_id>/jobs
+GET    /api/v1/mcp/projects/<project_id>/jobs/<job_id>
+GET    /api/v1/mcp/projects/<project_id>/jobs/<job_id>/log
+GET    /api/v1/mcp/projects/<project_id>/jobs/<job_id>/artifacts
+GET    /api/v1/mcp/projects/<project_id>/jobs/<job_id>/stats
+GET    /api/v1/mcp/projects/<project_id>/jobs/<job_id>/testruns
+GET    /api/v1/mcp/projects/<project_id>/jobs/<job_id>/manifest
+POST   /api/v1/mcp/projects/<project_id>/jobs/<job_id>/restart
+POST   /api/v1/mcp/projects/<project_id>/jobs/<job_id>/rerun
+DELETE /api/v1/mcp/projects/<project_id>/jobs/<job_id>/abort
 """
 import json
 import logging
+import re
+import uuid as _uuid
 
 from flask import g, abort
 from flask_restx import Resource
 
 from pyinfraboxutils.ibrestplus import api
-from api.handlers.mcp.auth import mcp_auth_required, check_project_access_mcp
+from api.handlers.mcp.auth import (
+    mcp_auth_required,
+    check_project_access_mcp,
+    check_trigger_access_mcp,
+    get_mcp_user_id,
+)
 from api.handlers.mcp.rate_limit import mcp_rate_limit
 from api.handlers.mcp.audit import audit_mcp
 
@@ -110,12 +120,25 @@ class MCPJobLog(Resource):
             abort(404)
 
         try:
-            rows = g.db.execute_many_dict('''
-                SELECT output FROM console WHERE job_id = %s ORDER BY date
-            ''', [job_id])
-            log = ''.join(r['output'] for r in rows)
+            # Two-stage lookup mirroring legacy /console endpoint:
+            # 1) prefer the archived job.console column (scheduler moves logs there on
+            #    job termination and DELETEs the streaming rows)
+            # 2) fall back to the console table (for jobs still running)
+            archived = g.db.execute_one_dict('''
+                SELECT console FROM job WHERE id = %s AND project_id = %s
+            ''', [job_id, project_id])
+
+            if archived and archived['console']:
+                log = archived['console']
+            else:
+                rows = g.db.execute_many_dict('''
+                    SELECT output FROM console WHERE job_id = %s ORDER BY date
+                ''', [job_id])
+                log = ''.join(r['output'] for r in rows)
+
             audit_mcp('get_job_log', outcome='success',
-                      details={'project_id': project_id, 'job_id': job_id})
+                      details={'project_id': project_id, 'job_id': job_id,
+                               'bytes': len(log)})
             return log, 200, {'Content-Type': 'text/plain; charset=utf-8'}
         except Exception as exc:
             audit_mcp('get_job_log', outcome='failure',
@@ -140,16 +163,18 @@ class MCPJobArtifacts(Resource):
             abort(404)
 
         try:
-            rows = g.db.execute_many_dict('''
-                SELECT filename, filesize, created_at
-                FROM archive
-                WHERE job_id = %s
-                ORDER BY filename
-            ''', [job_id])
-            result = [{'filename': r['filename'],
-                       'filesize': r.get('filesize'),
-                       'created_at': r['created_at'].isoformat() if r.get('created_at') else None}
-                      for r in rows]
+            # `archive` is a jsonb[] column on the job table (see migration 00009.sql),
+            # NOT a standalone table. Legacy /archive endpoint reads it this way.
+            row = g.db.execute_one_dict('''
+                SELECT archive
+                FROM job
+                WHERE id = %s AND project_id = %s
+            ''', [job_id, project_id])
+
+            archive = (row or {}).get('archive') or []
+            result = [{'filename': a.get('filename'),
+                       'filesize': a.get('size') or a.get('filesize')}
+                      for a in archive]
             audit_mcp('list_job_artifacts', outcome='success',
                       details={'project_id': project_id, 'job_id': job_id, 'count': len(result)})
             return result
@@ -302,3 +327,270 @@ def _compact_stats(series):
         return series
     step = len(series) // 100
     return series[::step]
+
+
+# ────────────────────────────────────────────────────────────────────────────
+# Shared write-path helpers (restart / rerun)
+# ────────────────────────────────────────────────────────────────────────────
+
+_RESTARTABLE_STATES = ('error', 'failure', 'finished', 'killed', 'unstable')
+_RESTARTABLE_TYPES = ('run_project_container', 'run_docker_compose')
+
+
+def _clone_jobs_and_bump_names(build_jobs, restart_ids, single_id=None):
+    """Clone the specified jobs, mark originals as restarted, and re-wire dependencies.
+
+    Args:
+        build_jobs: rows from `SELECT id, dependencies, restarted, state FROM job WHERE build_id`
+        restart_ids: list of job ids that should be marked as restarted
+        single_id: if given (rerun mode), only this one is cloned (dependencies get re-wired
+            in downstream jobs but only this one gets a new row inserted)
+
+    Returns:
+        (jobs_to_insert, old_id_job_map). old_id_job_map maps old-id → cloned-row (with new id/name)
+        for dependency rewriting in the second pass.
+    """
+    # Load the full job rows for the ones we plan to touch.
+    to_clone = restart_ids if single_id is None else [single_id]
+    jobs = []
+    for jid in to_clone:
+        row = g.db.execute_one_dict('''
+            SELECT id, build_id, type, dockerfile, name, project_id, dependencies,
+                   repo, env_var, env_var_ref, build_arg, deployment, definition, cluster_name
+            FROM job
+            WHERE id = %s
+        ''', [jid])
+        if row:
+            jobs.append(row)
+
+    old_id_job = {}
+    for j in jobs:
+        # Mark the original as restarted so it won't be picked again.
+        g.db.execute('UPDATE job SET restarted = true WHERE id = %s;', [j['id']])
+        old_id_job[j['id']] = j
+        j['id'] = str(_uuid.uuid4())
+
+        # Bump the name suffix (`.1`, `.2`, ...) so the clone gets a unique name.
+        parts = j['name'].split('/')
+        last = parts[-1]
+        m = re.search(r'(.*)\.([0-9]+)$', last)
+        if m:
+            n = int(m.group(2)) + 1
+            front = '/'.join(parts[:-1])
+            j['name'] = ('%s/%s.%d' % (front, m.group(1), n)) if front else '%s.%d' % (m.group(1), n)
+        else:
+            j['name'] = j['name'] + '.1'
+    return jobs, old_id_job
+
+
+def _restart_or_rerun_job(project_id, job_id, rerun_only, msg_who):
+    """Shared core for MCP restart_job and rerun_job.
+
+    Args:
+        project_id, job_id: target
+        rerun_only: if True, only the target job is cloned (dependents are NOT restarted).
+                    if False, target job + all downstream dependents are cloned.
+        msg_who: string inserted into the audit console message
+
+    Returns dict payload for the JSON response.
+    """
+    job = g.db.execute_one_dict('''
+        SELECT state, type, build_id, restarted, dependencies, name
+        FROM job
+        WHERE id = %s AND project_id = %s
+    ''', [job_id, project_id])
+    if not job:
+        abort(404)
+
+    if job['type'] not in _RESTARTABLE_TYPES:
+        abort(400, 'Job type cannot be restarted')
+    if job['state'] not in _RESTARTABLE_STATES:
+        abort(400, 'Job in state %s cannot be restarted' % job['state'])
+    if job['restarted']:
+        abort(400, 'This job has been already restarted')
+
+    build_id = job['build_id']
+
+    # For rerun_only, additionally require that upstream deps aren't still running.
+    if rerun_only:
+        for dep in (job['dependencies'] or []):
+            p = g.db.execute_one_dict('''
+                SELECT state FROM job WHERE id = %s AND project_id = %s
+            ''', [dep['job-id'], project_id])
+            if p and p['state'] in ('queued', 'running'):
+                abort(400, 'Job %s has an executing parent job' % job_id)
+
+    # Gather all jobs in the build (for downstream propagation and safety checks).
+    build_jobs = g.db.execute_many_dict('''
+        SELECT state, id, dependencies, restarted
+        FROM job
+        WHERE build_id = %s AND project_id = %s
+    ''', [build_id, project_id])
+
+    # Compute the set to mark-restarted:
+    #  - restart_job: closure of the target + all transitive downstream dependents
+    #  - rerun_job:   just the target
+    restart_ids = [job_id]
+    if not rerun_only:
+        while True:
+            found = False
+            for j in build_jobs:
+                if j['id'] in restart_ids:
+                    continue
+                if not j['dependencies'] or j['restarted']:
+                    continue
+                for dep in j['dependencies']:
+                    if dep['job-id'] in restart_ids:
+                        restart_ids.append(j['id'])
+                        found = True
+                        break
+            if not found:
+                break
+
+    # Safety: none of the affected jobs may be running/scheduled.
+    ok_states = _RESTARTABLE_STATES + ('skipped', 'queued')
+    for j in build_jobs:
+        if j['id'] in restart_ids and j['state'] not in ok_states:
+            abort(400, 'Some child jobs are still running')
+
+    single_id = job_id if rerun_only else None
+    jobs, old_id_job = _clone_jobs_and_bump_names(build_jobs, restart_ids, single_id=single_id)
+
+    # In restart mode, rewire dependencies among cloned jobs.
+    # In rerun mode, only the target is cloned so no dependency rewiring is needed on jobs.
+    if not rerun_only:
+        for j in jobs:
+            for dep in (j['dependencies'] or []):
+                if dep['job-id'] in old_id_job:
+                    dep['job'] = old_id_job[dep['job-id']]['name']
+                    dep['job-id'] = old_id_job[dep['job-id']]['id']
+
+    msg = 'Job restarted by %s\n' % msg_who
+    for j in jobs:
+        g.db.execute('''
+            INSERT INTO job (state, id, build_id, type, dockerfile, name, project_id, dependencies, repo,
+                             env_var, env_var_ref, build_arg, deployment, definition, restarted, cluster_name)
+            VALUES ('queued', %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, false, %s);
+            INSERT INTO console (job_id, output) VALUES (%s, %s);
+        ''', [j['id'], j['build_id'], j['type'], j['dockerfile'], j['name'], j['project_id'],
+              json.dumps(j['dependencies']),
+              json.dumps(j['repo']),
+              json.dumps(j['env_var']),
+              json.dumps(j['env_var_ref']),
+              json.dumps(j['build_arg']),
+              json.dumps(j['deployment']),
+              json.dumps(j['definition']),
+              j['cluster_name'],
+              j['id'],
+              msg])
+    g.db.commit()
+    return {
+        'job_id': jobs[0]['id'] if jobs else None,
+        'cloned_count': len(jobs),
+        'status': 200,
+    }
+
+
+# ────────────────────────────────────────────────────────────────────────────
+# MCP write endpoints
+# ────────────────────────────────────────────────────────────────────────────
+
+
+@ns_job.route('/restart')
+class MCPJobRestart(Resource):
+    @mcp_auth_required
+    @mcp_rate_limit('trigger_build')  # share the trigger bucket for all write ops
+    def post(self, project_id, job_id):
+        """Restart a job AND its downstream dependents. Requires allow_trigger."""
+        audit_mcp('restart_job', outcome='attempt',
+                  details={'project_id': project_id, 'job_id': job_id})
+        if not check_project_access_mcp(project_id):
+            audit_mcp('restart_job', outcome='forbidden', details={'project_id': project_id})
+            abort(403, _ACCESS_DENIED)
+        if not check_trigger_access_mcp():
+            audit_mcp('restart_job', outcome='forbidden',
+                      details={'project_id': project_id, 'job_id': job_id,
+                               'reason': 'trigger not allowed'})
+            abort(403, 'this MCP token does not have trigger permission')
+
+        try:
+            msg_who = 'MCP token (user %s)' % get_mcp_user_id()
+            result = _restart_or_rerun_job(project_id, job_id, rerun_only=False, msg_who=msg_who)
+            audit_mcp('restart_job', outcome='success',
+                      details={'project_id': project_id, 'job_id': job_id,
+                               'cloned_count': result.get('cloned_count')})
+            return result, 200
+        except Exception as exc:
+            audit_mcp('restart_job', outcome='failure',
+                      details={'project_id': project_id, 'job_id': job_id},
+                      error=str(exc))
+            raise
+
+
+@ns_job.route('/rerun')
+class MCPJobRerun(Resource):
+    @mcp_auth_required
+    @mcp_rate_limit('trigger_build')  # share the trigger bucket
+    def post(self, project_id, job_id):
+        """Rerun a single job WITHOUT restarting its downstream dependents.
+        Most common AI use case: 'retry just this failed step'. Requires allow_trigger."""
+        audit_mcp('rerun_job', outcome='attempt',
+                  details={'project_id': project_id, 'job_id': job_id})
+        if not check_project_access_mcp(project_id):
+            audit_mcp('rerun_job', outcome='forbidden', details={'project_id': project_id})
+            abort(403, _ACCESS_DENIED)
+        if not check_trigger_access_mcp():
+            audit_mcp('rerun_job', outcome='forbidden',
+                      details={'project_id': project_id, 'job_id': job_id,
+                               'reason': 'trigger not allowed'})
+            abort(403, 'this MCP token does not have trigger permission')
+
+        try:
+            msg_who = 'MCP token (user %s)' % get_mcp_user_id()
+            result = _restart_or_rerun_job(project_id, job_id, rerun_only=True, msg_who=msg_who)
+            audit_mcp('rerun_job', outcome='success',
+                      details={'project_id': project_id, 'job_id': job_id,
+                               'cloned_count': result.get('cloned_count')})
+            return result, 200
+        except Exception as exc:
+            audit_mcp('rerun_job', outcome='failure',
+                      details={'project_id': project_id, 'job_id': job_id},
+                      error=str(exc))
+            raise
+
+
+@ns_job.route('/abort')
+class MCPJobAbort(Resource):
+    @mcp_auth_required
+    @mcp_rate_limit('trigger_build')  # share the trigger bucket
+    def delete(self, project_id, job_id):
+        """Abort a single running job. Requires allow_trigger on the MCP token."""
+        audit_mcp('abort_job', outcome='attempt',
+                  details={'project_id': project_id, 'job_id': job_id})
+        if not check_project_access_mcp(project_id):
+            audit_mcp('abort_job', outcome='forbidden', details={'project_id': project_id})
+            abort(403, _ACCESS_DENIED)
+        if not check_trigger_access_mcp():
+            audit_mcp('abort_job', outcome='forbidden',
+                      details={'project_id': project_id, 'job_id': job_id,
+                               'reason': 'trigger not allowed'})
+            abort(403, 'this MCP token does not have trigger permission')
+
+        # Confirm the job exists in this project before writing the abort row.
+        job = g.db.execute_one_dict(_JOB_BY_PROJECT, [job_id, project_id])
+        if not job:
+            abort(404)
+
+        try:
+            g.db.execute('''
+                INSERT INTO abort(job_id, user_id) VALUES(%s, %s)
+            ''', [job_id, get_mcp_user_id()])
+            g.db.commit()
+            audit_mcp('abort_job', outcome='success',
+                      details={'project_id': project_id, 'job_id': job_id})
+            return {'message': 'Successfully aborted job', 'status': 200}, 200
+        except Exception as exc:
+            audit_mcp('abort_job', outcome='failure',
+                      details={'project_id': project_id, 'job_id': job_id},
+                      error=str(exc))
+            raise
