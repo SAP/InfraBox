@@ -247,6 +247,14 @@ class MCPBuildRestart(Resource):
             abort(404)
 
         try:
+            # Lock the build table BEFORE reading max(restart_counter) so two
+            # concurrent restarts of the same build_number cannot both read the
+            # same max and insert duplicate restart_counter rows. The lock is held
+            # until the commit at the end of this try block. Do NOT call audit_mcp()
+            # between here and the commit — audit uses its own connection now, but
+            # keeping the locked section audit-free avoids any future regression.
+            g.db.execute('LOCK TABLE build IN EXCLUSIVE MODE')
+
             # Compute next restart_counter for this build_number.
             row = g.db.execute_one_dict('''
                 SELECT max(restart_counter) AS restart_counter
@@ -276,6 +284,9 @@ class MCPBuildRestart(Resource):
                   AND build_id = %s
             ''', [project_id, build_id])
             if not seed:
+                # Roll back the just-inserted build so we don't leave an orphan
+                # build row (and release the LOCK) before auditing/aborting.
+                g.db.rollback()
                 audit_mcp('restart_build', outcome='failure',
                           details={'project_id': project_id, 'build_id': build_id,
                                    'reason': 'original build has no Create Jobs seed'})

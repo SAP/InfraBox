@@ -411,6 +411,23 @@ def _restart_or_rerun_job(project_id, job_id, rerun_only, msg_who):
 
     build_id = job['build_id']
 
+    # Bug F fix: take a row lock on the build so two concurrent restarts of jobs
+    # in the same build cannot both read the same build_jobs snapshot and clone
+    # overlapping downstream dependents. Held until commit at the end of this fn.
+    g.db.execute('SELECT id FROM build WHERE id = %s FOR UPDATE', [build_id])
+
+    # Bug B fix: atomically claim the target job via compare-and-set. Only the
+    # first concurrent request flips restarted false->true and gets a row back;
+    # a second concurrent request matches 0 rows and aborts cleanly. This replaces
+    # the earlier read-then-check TOCTOU (the guard above is only a fast-path).
+    claimed = g.db.execute_one_dict('''
+        UPDATE job SET restarted = true
+        WHERE id = %s AND project_id = %s AND restarted = false
+        RETURNING id
+    ''', [job_id, project_id])
+    if not claimed:
+        abort(409, 'Job %s has already been restarted by a concurrent request' % job_id)
+
     # For rerun_only, additionally require that upstream deps aren't still running.
     if rerun_only:
         for dep in (job['dependencies'] or []):
