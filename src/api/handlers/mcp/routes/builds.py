@@ -66,6 +66,12 @@ class MCPBuilds(Resource):
                       details={'project_id': project_id, 'count': len(result)})
             return result
         except Exception as exc:
+            # Clear any aborted/pending transaction so the failure audit
+            # (which shares g.db) can write, and no stray write is committed.
+            try:
+                g.db.rollback()
+            except Exception:
+                pass
             audit_mcp('list_builds', outcome='failure',
                       details={'project_id': project_id}, error=str(exc))
             raise
@@ -111,6 +117,12 @@ class MCPBuild(Resource):
                       details={'project_id': project_id, 'build_id': build_id})
             return result
         except Exception as exc:
+            # Clear any aborted/pending transaction so the failure audit
+            # (which shares g.db) can write, and no stray write is committed.
+            try:
+                g.db.rollback()
+            except Exception:
+                pass
             audit_mcp('get_build', outcome='failure',
                       details={'project_id': project_id, 'build_id': build_id}, error=str(exc))
             raise
@@ -196,6 +208,12 @@ class MCPTrigger(Resource):
                                'source_upload_id': source_upload_id})
             return {'build_id': build_id, 'status': 200}, 200
         except Exception as exc:
+            # Clear any aborted/pending transaction so the failure audit
+            # (which shares g.db) can write, and no stray write is committed.
+            try:
+                g.db.rollback()
+            except Exception:
+                pass
             audit_mcp('trigger_build', outcome='failure',
                       details={'project_id': project_id}, error=str(exc))
             raise
@@ -321,6 +339,12 @@ class MCPBuildRestart(Resource):
                 'status': 200,
             }, 200
         except Exception as exc:
+            # Clear any aborted/pending transaction so the failure audit
+            # (which shares g.db) can write, and no stray write is committed.
+            try:
+                g.db.rollback()
+            except Exception:
+                pass
             audit_mcp('restart_build', outcome='failure',
                       details={'project_id': project_id, 'build_id': build_id},
                       error=str(exc))
@@ -364,6 +388,12 @@ class MCPBuildAbort(Resource):
                                'aborted_count': len(jobs)})
             return {'message': 'Aborted %d job(s)' % len(jobs), 'status': 200}, 200
         except Exception as exc:
+            # Clear any aborted/pending transaction so the failure audit
+            # (which shares g.db) can write, and no stray write is committed.
+            try:
+                g.db.rollback()
+            except Exception:
+                pass
             audit_mcp('abort_build', outcome='failure',
                       details={'project_id': project_id, 'build_id': build_id},
                       error=str(exc))

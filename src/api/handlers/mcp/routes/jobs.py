@@ -68,6 +68,12 @@ class MCPJobList(Resource):
                       details={'project_id': project_id, 'build_id': build_id, 'count': len(result)})
             return result
         except Exception as exc:
+            # Clear any aborted/pending transaction so the failure audit
+            # (which shares g.db) can write, and no stray write is committed.
+            try:
+                g.db.rollback()
+            except Exception:
+                pass
             audit_mcp('list_jobs', outcome='failure',
                       details={'project_id': project_id, 'build_id': build_id}, error=str(exc))
             raise
@@ -98,6 +104,12 @@ class MCPJob(Resource):
                       details={'project_id': project_id, 'job_id': job_id})
             return _job_dict(row)
         except Exception as exc:
+            # Clear any aborted/pending transaction so the failure audit
+            # (which shares g.db) can write, and no stray write is committed.
+            try:
+                g.db.rollback()
+            except Exception:
+                pass
             audit_mcp('get_job', outcome='failure',
                       details={'project_id': project_id, 'job_id': job_id}, error=str(exc))
             raise
@@ -141,6 +153,12 @@ class MCPJobLog(Resource):
                                'bytes': len(log)})
             return log, 200, {'Content-Type': 'text/plain; charset=utf-8'}
         except Exception as exc:
+            # Clear any aborted/pending transaction so the failure audit
+            # (which shares g.db) can write, and no stray write is committed.
+            try:
+                g.db.rollback()
+            except Exception:
+                pass
             audit_mcp('get_job_log', outcome='failure',
                       details={'project_id': project_id, 'job_id': job_id}, error=str(exc))
             raise
@@ -179,6 +197,12 @@ class MCPJobArtifacts(Resource):
                       details={'project_id': project_id, 'job_id': job_id, 'count': len(result)})
             return result
         except Exception as exc:
+            # Clear any aborted/pending transaction so the failure audit
+            # (which shares g.db) can write, and no stray write is committed.
+            try:
+                g.db.rollback()
+            except Exception:
+                pass
             audit_mcp('list_job_artifacts', outcome='failure',
                       details={'project_id': project_id, 'job_id': job_id}, error=str(exc))
             raise
@@ -218,6 +242,12 @@ class MCPJobStats(Resource):
                       details={'project_id': project_id, 'job_id': job_id})
             return result
         except Exception as exc:
+            # Clear any aborted/pending transaction so the failure audit
+            # (which shares g.db) can write, and no stray write is committed.
+            try:
+                g.db.rollback()
+            except Exception:
+                pass
             audit_mcp('get_job_stats', outcome='failure',
                       details={'project_id': project_id, 'job_id': job_id}, error=str(exc))
             raise
@@ -246,6 +276,12 @@ class MCPJobTestruns(Resource):
                       details={'project_id': project_id, 'job_id': job_id, 'count': len(rows)})
             return rows
         except Exception as exc:
+            # Clear any aborted/pending transaction so the failure audit
+            # (which shares g.db) can write, and no stray write is committed.
+            try:
+                g.db.rollback()
+            except Exception:
+                pass
             audit_mcp('get_job_testruns', outcome='failure',
                       details={'project_id': project_id, 'job_id': job_id}, error=str(exc))
             raise
@@ -303,6 +339,12 @@ class MCPJobManifest(Resource):
                       details={'project_id': project_id, 'job_id': job_id})
             return result
         except Exception as exc:
+            # Clear any aborted/pending transaction so the failure audit
+            # (which shares g.db) can write, and no stray write is committed.
+            try:
+                g.db.rollback()
+            except Exception:
+                pass
             audit_mcp('get_job_manifest', outcome='failure',
                       details={'project_id': project_id, 'job_id': job_id}, error=str(exc))
             raise
@@ -538,6 +580,12 @@ class MCPJobRestart(Resource):
                                'cloned_count': result.get('cloned_count')})
             return result, 200
         except Exception as exc:
+            # Clear any aborted/pending transaction so the failure audit
+            # (which shares g.db) can write, and no stray write is committed.
+            try:
+                g.db.rollback()
+            except Exception:
+                pass
             audit_mcp('restart_job', outcome='failure',
                       details={'project_id': project_id, 'job_id': job_id},
                       error=str(exc))
@@ -570,6 +618,12 @@ class MCPJobRerun(Resource):
                                'cloned_count': result.get('cloned_count')})
             return result, 200
         except Exception as exc:
+            # Clear any aborted/pending transaction so the failure audit
+            # (which shares g.db) can write, and no stray write is committed.
+            try:
+                g.db.rollback()
+            except Exception:
+                pass
             audit_mcp('rerun_job', outcome='failure',
                       details={'project_id': project_id, 'job_id': job_id},
                       error=str(exc))
@@ -607,6 +661,12 @@ class MCPJobAbort(Resource):
                       details={'project_id': project_id, 'job_id': job_id})
             return {'message': 'Successfully aborted job', 'status': 200}, 200
         except Exception as exc:
+            # Clear any aborted/pending transaction so the failure audit
+            # (which shares g.db) can write, and no stray write is committed.
+            try:
+                g.db.rollback()
+            except Exception:
+                pass
             audit_mcp('abort_job', outcome='failure',
                       details={'project_id': project_id, 'job_id': job_id},
                       error=str(exc))
