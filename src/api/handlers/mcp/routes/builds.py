@@ -256,12 +256,15 @@ class MCPBuildRestart(Resource):
             g.db.execute('LOCK TABLE build IN EXCLUSIVE MODE')
 
             # Compute next restart_counter for this build_number.
+            # MAX() returns NULL (-> None) if no rows match; guard with `or 0`
+            # so we never do None + 1. (COALESCE in SQL would work too, matching
+            # the pattern MCPTrigger uses for build_number.)
             row = g.db.execute_one_dict('''
                 SELECT max(restart_counter) AS restart_counter
                 FROM build
                 WHERE build_number = %s AND project_id = %s
             ''', [build['build_number'], project_id])
-            restart_counter = row['restart_counter'] + 1
+            restart_counter = (row['restart_counter'] or 0) + 1
 
             # Insert the new build row referencing the same commit/source_upload.
             new_build_row = g.db.execute_one_dict('''
