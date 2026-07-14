@@ -60,6 +60,12 @@ class MCPProjects(Resource):
             audit_mcp('list_projects', outcome='success', details={'count': len(result)})
             return result
         except Exception as exc:
+            # Clear any aborted/pending transaction so the failure audit
+            # (which shares g.db) can write, and no stray write is committed.
+            try:
+                g.db.rollback()
+            except Exception:
+                pass
             audit_mcp('list_projects', outcome='failure', error=str(exc))
             raise
 
@@ -87,6 +93,12 @@ class MCPProject(Resource):
             audit_mcp('get_project', outcome='success', details={'project_id': project_id})
             return result
         except Exception as exc:
+            # Clear any aborted/pending transaction so the failure audit
+            # (which shares g.db) can write, and no stray write is committed.
+            try:
+                g.db.rollback()
+            except Exception:
+                pass
             audit_mcp('get_project', outcome='failure',
                       details={'project_id': project_id}, error=str(exc))
             raise

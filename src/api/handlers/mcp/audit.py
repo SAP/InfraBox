@@ -1,8 +1,22 @@
 """
 Audit logging for MCP API calls.
 
-Writes to the mcp_access_log table (best-effort, synchronous).
+Writes to the mcp_access_log table (best-effort, synchronous) on the
+request's g.db connection.
+
 Never raises — a logging failure must not break the request.
+
+IMPORTANT invariants for callers (this audit shares g.db and commits it):
+  * Call audit('attempt')/('forbidden') BEFORE any write in the handler —
+    audit's commit() would otherwise flush uncommitted work.
+  * Call audit('success') only AFTER the handler's own g.db.commit().
+  * On any failure path that has already executed SQL (a failed statement
+    poisons the connection, or an uncommitted write is pending), call
+    g.db.rollback() BEFORE audit('failure') — otherwise the audit INSERT
+    either fails on the aborted connection (losing the log) or commits a
+    stray partial write.
+  * Never call audit inside a LOCK TABLE / SELECT ... FOR UPDATE critical
+    section — its commit() would release the lock mid-transaction.
 """
 import json
 import logging
