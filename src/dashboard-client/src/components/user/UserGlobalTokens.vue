@@ -82,7 +82,7 @@
                                 </md-table-cell>
                                 <md-table-cell>{{ t.last_used_at ? formatDate(t.last_used_at) : '—' }}</md-table-cell>
                                 <md-table-cell>
-                                    <md-switch v-model="t.allow_trigger" @change="toggleMcpTrigger(t)" class="mcp-trigger-switch"></md-switch>
+                                    <md-switch v-model="t.allow_trigger" @change="toggleMcpTrigger(t, $event)" class="mcp-trigger-switch"></md-switch>
                                 </md-table-cell>
                                 <md-table-cell>
                                     <md-button class="md-icon-button" @click="toggleScopeEdit(t)">
@@ -565,10 +565,12 @@ export default {
                 .catch(() => {})
         },
 
-        toggleMcpTrigger (token) {
-            // v-model has already flipped token.allow_trigger to the new value;
-            // read it directly rather than negating again.
-            const newVal = token.allow_trigger
+        toggleMcpTrigger (token, newVal) {
+            // md-switch emits the new model value via @change. Rely on that
+            // explicit value rather than reading token.allow_trigger, which is
+            // not guaranteed to be updated by v-model yet when @change fires
+            // (that timing gap caused the "first click is a no-op" bug).
+            token.allow_trigger = newVal
             UserTokenService.setMcpTrigger(token.token_id, newVal)
                 .catch(() => { token.allow_trigger = !newVal })
         },
