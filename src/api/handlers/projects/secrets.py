@@ -7,7 +7,7 @@ from flask_restx import Resource, fields
 from pyinfrabox.utils import validate_uuid
 from pyinfraboxutils.ibflask import OK
 from pyinfraboxutils.ibrestplus import api, response_model
-from pyinfraboxutils.secrets import encrypt_secret
+from pyinfraboxutils.secrets import encrypt_secret, decrypt_secret
 
 ns = api.namespace('Secrets',
                    path='/api/v1/projects/<project_id>/secrets',
@@ -110,3 +110,42 @@ class Secret(Resource):
         g.db.commit()
 
         return OK('Successfully deleted secret.')
+
+
+secret_value_model = api.model('SecretValue', {
+    'name': fields.String(required=True),
+    'value': fields.String(required=True),
+})
+
+
+@ns.route('/values')
+@api.doc(responses={403: 'Not Authorized', 404: 'Project not found'})
+class SecretValues(Resource):
+
+    @api.marshal_list_with(secret_value_model)
+    def get(self, project_id):
+        '''
+        Returns project's secrets with decrypted values.
+
+        WARNING: this endpoint exposes plaintext secret values and is
+        restricted to project administrators by the OPA policy.
+        '''
+        if not validate_uuid(project_id):
+            abort(400, 'Invalid project uuid.')
+
+        project = g.db.execute_one_dict('''
+            SELECT id FROM project WHERE id = %s
+        ''', [project_id])
+
+        if not project:
+            abort(404, 'Project not found.')
+
+        secrets = g.db.execute_many_dict('''
+            SELECT name, value FROM secret
+            WHERE project_id = %s
+        ''', [project_id])
+
+        for secret in secrets:
+            secret['value'] = decrypt_secret(secret['value'])
+
+        return secrets

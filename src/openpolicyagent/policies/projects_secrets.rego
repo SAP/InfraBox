@@ -20,6 +20,14 @@ allow {
     projects_secrets_administrator([api.token.user.id, project_id])
 }
 
+# Allow GET access to /api/v1/projects/<project_id>/secrets/values for project administrators
+allow {
+    api.method = "GET"
+    api.path = ["api", "v1", "projects", project_id, "secrets", "values"]
+    api.token.type = "user"
+    projects_secrets_administrator([api.token.user.id, project_id])
+}
+
 # Allow POST access to /api/v1/projects/<project_id>/secrets for project administrators
 allow {
     api.method = "POST"
