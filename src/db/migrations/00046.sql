@@ -1,0 +1,13 @@
+-- Intentionally empty placeholder migration.
+--
+-- Historically the migration sequence skipped 00046 (00045 was followed
+-- directly by 00047). The migration runner (migrate.py) selects pending
+-- migrations by slicing the sorted file list with the stored schema_version
+-- as an index, which assumes file numbers are contiguous. The gap made the
+-- file number and list index diverge, causing later migrations (e.g. 00048)
+-- to be skipped on databases already at schema_version 47.
+--
+-- This placeholder fills the gap so the numbering is contiguous again and the
+-- number/index alignment is restored. It performs no schema change:
+-- migrate.py strips the file contents and only executes when non-empty, so a
+-- comment-only file is a safe no-op that still advances schema_version.
