@@ -8,7 +8,7 @@ class ApiTestTemplate(unittest.TestCase):
 
     def setUp(self):
         TestClient.execute(
-            'TRUNCATE mcp_access_log, mcp_token, '
+            'TRUNCATE secret_read_token, mcp_access_log, mcp_token, '
             'global_token_access_log, global_token, '
             'collaborator, auth_token, secret, '
             'console, job_markup, job_badge, job, '
