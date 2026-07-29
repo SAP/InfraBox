@@ -58,7 +58,7 @@ class Test(TestCase):
     def setUp(self):
         cur = conn.cursor()
         cur.execute('TRUNCATE auth_token')
-        cur.execute('TRUNCATE project')
+        cur.execute('TRUNCATE secret_read_token, project')
         cur.execute('TRUNCATE collaborator')
         cur.execute('''INSERT INTO auth_token (id, description, project_id, scope_push, scope_pull)
                         VALUES(%s, 'test token', %s, true, true)''', (self.token, self.project_id,))
