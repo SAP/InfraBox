@@ -10,6 +10,7 @@ from pyinfraboxutils.ibrestplus import api
 from api.handlers.mcp.auth import mcp_auth_required, check_project_access_mcp, get_mcp_user_id
 from api.handlers.mcp.rate_limit import mcp_rate_limit
 from api.handlers.mcp.audit import audit_mcp
+from api.handlers.mcp.pagination import parse_pagination, page
 
 ns = api.namespace('MCP Projects',
                    path='/api/v1/mcp',
@@ -21,44 +22,43 @@ class MCPProjects(Resource):
     @mcp_auth_required
     @mcp_rate_limit('list_projects')
     def get(self):
-        """List projects accessible to the current MCP token or session user."""
+        """List projects accessible to the current MCP token or session user.
+
+        Paginated (default limit 100). Returns {items, total, limit, offset}.
+        """
         audit_mcp('list_projects', outcome='attempt')
         try:
             user_id = get_mcp_user_id()
             enabled = getattr(g, 'mcp_enabled_projects', None)
 
-            if enabled is not None:
-                # MCP token path
-                if not enabled:
-                    # empty dict = all projects the user is a collaborator on
-                    rows = g.db.execute_many_dict('''
-                        SELECT p.id, p.name, p.type, p.public
-                        FROM project p
-                        INNER JOIN collaborator co ON co.project_id = p.id AND co.user_id = %s
-                        ORDER BY p.name
-                    ''', [user_id])
-                else:
-                    project_ids = list(enabled.keys())
-                    rows = g.db.execute_many_dict('''
-                        SELECT p.id, p.name, p.type, p.public
-                        FROM project p
-                        INNER JOIN collaborator co ON co.project_id = p.id AND co.user_id = %s
-                        WHERE p.id = ANY(%s::uuid[])
-                        ORDER BY p.name
-                    ''', [user_id, project_ids])
-            else:
-                # Session path: return all projects the user is a collaborator on
-                rows = g.db.execute_many_dict('''
-                    SELECT p.id, p.name, p.type, p.public
-                    FROM project p
-                    INNER JOIN collaborator co ON co.project_id = p.id AND co.user_id = %s
-                    ORDER BY p.name
-                ''', [user_id])
+            # Build a shared WHERE clause across the three access paths:
+            #  - MCP token with an explicit project scope  -> filter by those ids
+            #  - MCP token with empty scope, or session user -> all collaborations
+            where = 'co.user_id = %s'
+            params = [user_id]
+            if enabled:
+                where += ' AND p.id = ANY(%s::uuid[])'
+                params.append(list(enabled.keys()))
 
-            result = [{'id': r['id'], 'name': r['name'], 'type': r['type'], 'public': r['public']}
-                      for r in rows]
-            audit_mcp('list_projects', outcome='success', details={'count': len(result)})
-            return result
+            limit, offset = parse_pagination()
+            total = g.db.execute_one_dict('''
+                SELECT count(*) AS c
+                FROM project p
+                INNER JOIN collaborator co ON co.project_id = p.id AND ''' + where,
+                params)['c']
+            rows = g.db.execute_many_dict('''
+                SELECT p.id, p.name, p.type, p.public
+                FROM project p
+                INNER JOIN collaborator co ON co.project_id = p.id AND ''' + where + '''
+                ORDER BY p.name
+                LIMIT %s OFFSET %s
+            ''', params + [limit, offset])
+
+            items = [{'id': r['id'], 'name': r['name'], 'type': r['type'], 'public': r['public']}
+                     for r in rows]
+            audit_mcp('list_projects', outcome='success',
+                      details={'count': len(items), 'total': total})
+            return page(items, total, limit, offset)
         except Exception as exc:
             # Clear any aborted/pending transaction so the failure audit
             # (which shares g.db) can write, and no stray write is committed.

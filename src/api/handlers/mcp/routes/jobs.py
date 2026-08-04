@@ -16,7 +16,7 @@ import logging
 import re
 import uuid as _uuid
 
-from flask import g, abort
+from flask import g, request, abort
 from flask_restx import Resource
 
 from pyinfraboxutils.ibrestplus import api
@@ -28,11 +28,16 @@ from api.handlers.mcp.auth import (
 )
 from api.handlers.mcp.rate_limit import mcp_rate_limit
 from api.handlers.mcp.audit import audit_mcp
+from api.handlers.mcp.pagination import parse_pagination, page
 
 logger = logging.getLogger('mcp_jobs')
 
 _ACCESS_DENIED = 'access to this project is not permitted for the current MCP token'
 _JOB_BY_PROJECT = 'SELECT id FROM job WHERE id = %s AND project_id = %s'
+
+# Log byte caps: bound get_job_log so one call can't overflow the context.
+DEFAULT_LOG_BYTES = 1024 * 1024      # 1 MB tail by default
+MAX_LOG_BYTES = 5 * 1024 * 1024      # 5 MB hard ceiling per request
 
 ns_build_jobs = api.namespace('MCP Build Jobs',
                               path='/api/v1/mcp/projects/<project_id>/builds/<build_id>',
@@ -48,25 +53,43 @@ class MCPJobList(Resource):
     @mcp_auth_required
     @mcp_rate_limit('list_jobs')
     def get(self, project_id, build_id):
-        """List jobs for a build."""
+        """List jobs for a build.
+
+        Paginated (default limit 100). Optional ?state= filters by job state
+        (e.g. failure). Returns {items, total, limit, offset}.
+        """
         audit_mcp('list_jobs', outcome='attempt',
                   details={'project_id': project_id, 'build_id': build_id})
         if not check_project_access_mcp(project_id):
             audit_mcp('list_jobs', outcome='forbidden', details={'project_id': project_id})
             abort(403, _ACCESS_DENIED)
 
+        limit, offset = parse_pagination()
+        state = request.args.get('state') or None
+
+        # Build the WHERE clause; state is an optional, exact-match filter.
+        where = 'j.build_id = %s AND j.project_id = %s'
+        params = [build_id, project_id]
+        if state:
+            where += ' AND j.state = %s'
+            params.append(state)
+
         try:
+            total = g.db.execute_one_dict(
+                'SELECT count(*) AS c FROM job j WHERE ' + where, params)['c']
             rows = g.db.execute_many_dict('''
                 SELECT j.id, j.name, j.state, j.build_id, j.project_id,
                        j.start_date, j.end_date, j.message
                 FROM job j
-                WHERE j.build_id = %s AND j.project_id = %s
+                WHERE ''' + where + '''
                 ORDER BY j.name
-            ''', [build_id, project_id])
-            result = [_job_dict(r) for r in rows]
+                LIMIT %s OFFSET %s
+            ''', params + [limit, offset])
+            items = [_job_dict(r) for r in rows]
             audit_mcp('list_jobs', outcome='success',
-                      details={'project_id': project_id, 'build_id': build_id, 'count': len(result)})
-            return result
+                      details={'project_id': project_id, 'build_id': build_id,
+                               'count': len(items), 'total': total})
+            return page(items, total, limit, offset)
         except Exception as exc:
             # Clear any aborted/pending transaction so the failure audit
             # (which shares g.db) can write, and no stray write is committed.
@@ -120,7 +143,15 @@ class MCPJobLog(Resource):
     @mcp_auth_required
     @mcp_rate_limit('get_job_log')
     def get(self, project_id, job_id):
-        """Get console log for a job."""
+        """Get console log for a job.
+
+        Bounded by default: returns at most the last DEFAULT_LOG_BYTES (1 MB) of
+        the log so a single call cannot overflow the client/model context.
+        Query params:
+          - max_bytes: cap on returned bytes (default 1 MB, max 5 MB)
+          - offset/length: read an explicit byte range instead of the tail
+        Returns {log, total_bytes, offset, length, truncated}.
+        """
         audit_mcp('get_job_log', outcome='attempt',
                   details={'project_id': project_id, 'job_id': job_id})
         if not check_project_access_mcp(project_id):
@@ -148,10 +179,13 @@ class MCPJobLog(Resource):
                 ''', [job_id])
                 log = ''.join(r['output'] for r in rows)
 
+            sliced = _slice_log(log)
             audit_mcp('get_job_log', outcome='success',
                       details={'project_id': project_id, 'job_id': job_id,
-                               'bytes': len(log)})
-            return log, 200, {'Content-Type': 'text/plain; charset=utf-8'}
+                               'total_bytes': sliced['total_bytes'],
+                               'returned_bytes': sliced['length'],
+                               'truncated': sliced['truncated']})
+            return sliced
         except Exception as exc:
             # Clear any aborted/pending transaction so the failure audit
             # (which shares g.db) can write, and no stray write is committed.
@@ -190,12 +224,18 @@ class MCPJobArtifacts(Resource):
             ''', [job_id, project_id])
 
             archive = (row or {}).get('archive') or []
-            result = [{'filename': a.get('filename'),
-                       'filesize': a.get('size') or a.get('filesize')}
-                      for a in archive]
+            all_items = [{'filename': a.get('filename'),
+                          'filesize': a.get('size') or a.get('filesize')}
+                         for a in archive]
+            # archive is a single jsonb[] column (already in memory), so paginate
+            # by slicing the list rather than in SQL.
+            limit, offset = parse_pagination()
+            total = len(all_items)
+            items = all_items[offset:offset + limit]
             audit_mcp('list_job_artifacts', outcome='success',
-                      details={'project_id': project_id, 'job_id': job_id, 'count': len(result)})
-            return result
+                      details={'project_id': project_id, 'job_id': job_id,
+                               'count': len(items), 'total': total})
+            return page(items, total, limit, offset)
         except Exception as exc:
             # Clear any aborted/pending transaction so the failure audit
             # (which shares g.db) can write, and no stray write is committed.
@@ -266,15 +306,23 @@ class MCPJobTestruns(Resource):
             abort(403, _ACCESS_DENIED)
 
         try:
+            limit, offset = parse_pagination()
+            total = g.db.execute_one_dict('''
+                SELECT count(*) AS c FROM test_run tr
+                WHERE tr.job_id = %s AND tr.project_id = %s
+            ''', [job_id, project_id])['c']
             rows = g.db.execute_many_dict('''
                 SELECT tr.state, tr.name, tr.suite, tr.duration, tr.message, tr.stack,
                        to_char(tr.timestamp, 'YYYY-MM-DD HH24:MI:SS') AS timestamp
                 FROM test_run tr
                 WHERE tr.job_id = %s AND tr.project_id = %s
-            ''', [job_id, project_id])
+                ORDER BY tr.suite, tr.name
+                LIMIT %s OFFSET %s
+            ''', [job_id, project_id, limit, offset])
             audit_mcp('get_job_testruns', outcome='success',
-                      details={'project_id': project_id, 'job_id': job_id, 'count': len(rows)})
-            return rows
+                      details={'project_id': project_id, 'job_id': job_id,
+                               'count': len(rows), 'total': total})
+            return page(rows, total, limit, offset)
         except Exception as exc:
             # Clear any aborted/pending transaction so the failure audit
             # (which shares g.db) can write, and no stray write is committed.
@@ -361,6 +409,59 @@ def _job_dict(r):
         'end_date': r['end_date'].isoformat() if r.get('end_date') else None,
         'message': r.get('message'),
     }
+
+
+def _slice_log(log):
+    """Bound a job log to a byte window.
+
+    Default (no params): return the LAST DEFAULT_LOG_BYTES of the log — the tail
+    is where failures/stack traces live, and it's what's useful when truncating.
+    Query params:
+      - max_bytes: cap the returned size (clamped to [1, MAX_LOG_BYTES])
+      - offset/length: read an explicit byte range from the start instead of the tail
+    Returns {log, total_bytes, offset, length, truncated}.
+    """
+    data = (log or '').encode('utf-8')
+    total = len(data)
+
+    raw_offset = request.args.get('offset')
+    raw_length = request.args.get('length')
+    raw_max = request.args.get('max_bytes')
+
+    if raw_offset is not None or raw_length is not None:
+        # Explicit range read from the start of the log.
+        offset = _pos_int('offset', raw_offset, 0)
+        length = _pos_int('length', raw_length, DEFAULT_LOG_BYTES)
+        length = min(length, MAX_LOG_BYTES)
+        chunk = data[offset:offset + length]
+    else:
+        # Default: tail of the log, capped by max_bytes.
+        max_bytes = _pos_int('max_bytes', raw_max, DEFAULT_LOG_BYTES)
+        max_bytes = min(max(max_bytes, 1), MAX_LOG_BYTES)
+        offset = max(0, total - max_bytes)
+        chunk = data[offset:]
+        length = max_bytes
+
+    text = chunk.decode('utf-8', errors='replace')
+    return {
+        'log': text,
+        'total_bytes': total,
+        'offset': offset,
+        'length': len(chunk),
+        'truncated': offset > 0 or (offset + len(chunk)) < total,
+    }
+
+
+def _pos_int(name, raw, default):
+    if raw is None or raw == '':
+        return default
+    try:
+        v = int(raw)
+    except (TypeError, ValueError):
+        abort(400, '%s must be an integer' % name)
+    if v < 0:
+        abort(400, '%s must be >= 0' % name)
+    return v
 
 
 def _compact_stats(series):
