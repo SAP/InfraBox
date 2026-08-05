@@ -21,6 +21,7 @@ from api.handlers.mcp.auth import (
 )
 from api.handlers.mcp.rate_limit import mcp_rate_limit
 from api.handlers.mcp.audit import audit_mcp
+from api.handlers.mcp.pagination import parse_pagination, page
 
 ns = api.namespace('MCP Builds',
                    path='/api/v1/mcp/projects/<project_id>',
@@ -32,13 +33,17 @@ class MCPBuilds(Resource):
     @mcp_auth_required
     @mcp_rate_limit('list_builds')
     def get(self, project_id):
-        """List builds for a project."""
+        """List builds for a project. Paginated (default limit 50)."""
         audit_mcp('list_builds', outcome='attempt', details={'project_id': project_id})
         if not check_project_access_mcp(project_id):
             audit_mcp('list_builds', outcome='forbidden', details={'project_id': project_id})
             abort(403, 'access to this project is not permitted for the current MCP token')
 
+        limit, offset = parse_pagination()
+
         try:
+            total = g.db.execute_one_dict(
+                'SELECT count(*) AS c FROM build WHERE project_id = %s', [project_id])['c']
             rows = g.db.execute_many_dict('''
                 SELECT b.id, b.build_number, b.restart_counter, b.project_id, b.commit_id,
                        c.branch,
@@ -59,12 +64,12 @@ class MCPBuilds(Resource):
                 WHERE b.project_id = %s
                 GROUP BY b.id, b.build_number, b.restart_counter, b.project_id, b.commit_id, c.branch
                 ORDER BY b.build_number DESC, b.restart_counter DESC
-                LIMIT 50
-            ''', [project_id])
-            result = [_build_dict(r) for r in rows]
+                LIMIT %s OFFSET %s
+            ''', [project_id, limit, offset])
+            items = [_build_dict(r) for r in rows]
             audit_mcp('list_builds', outcome='success',
-                      details={'project_id': project_id, 'count': len(result)})
-            return result
+                      details={'project_id': project_id, 'count': len(items), 'total': total})
+            return page(items, total, limit, offset)
         except Exception as exc:
             # Clear any aborted/pending transaction so the failure audit
             # (which shares g.db) can write, and no stray write is committed.

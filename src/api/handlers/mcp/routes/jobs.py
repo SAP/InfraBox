@@ -68,10 +68,13 @@ class MCPJobList(Resource):
         state = request.args.get('state') or None
 
         # Build the WHERE clause; state is an optional, exact-match filter.
+        # Compare against state::text so an unknown value (not in the job_state
+        # enum) simply matches nothing instead of raising a 22P02 invalid-enum
+        # error (which would surface as a 500).
         where = 'j.build_id = %s AND j.project_id = %s'
         params = [build_id, project_id]
         if state:
-            where += ' AND j.state = %s'
+            where += ' AND j.state::text = %s'
             params.append(state)
 
         try:
