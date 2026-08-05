@@ -17,7 +17,7 @@ offset + len(items) >= total.
 """
 from flask import request, abort
 
-DEFAULT_LIMIT = 100
+DEFAULT_LIMIT = 50
 MAX_LIMIT = 500
 
 

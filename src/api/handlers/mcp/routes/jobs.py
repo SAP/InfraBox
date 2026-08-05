@@ -55,7 +55,7 @@ class MCPJobList(Resource):
     def get(self, project_id, build_id):
         """List jobs for a build.
 
-        Paginated (default limit 100). Optional ?state= filters by job state
+        Paginated (default limit 50). Optional ?state= filters by job state
         (e.g. failure). Returns {items, total, limit, offset}.
         """
         audit_mcp('list_jobs', outcome='attempt',

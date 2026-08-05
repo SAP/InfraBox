@@ -24,7 +24,7 @@ class MCPProjects(Resource):
     def get(self):
         """List projects accessible to the current MCP token or session user.
 
-        Paginated (default limit 100). Returns {items, total, limit, offset}.
+        Paginated (default limit 50). Returns {items, total, limit, offset}.
         """
         audit_mcp('list_projects', outcome='attempt')
         try:
