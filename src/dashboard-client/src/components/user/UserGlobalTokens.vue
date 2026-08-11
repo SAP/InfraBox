@@ -236,12 +236,39 @@
                         <md-layout>
                             <md-layout md-vertical-align="center">Project Tokens</md-layout>
                             <md-layout md-vertical-align="center">
-                                <small class="section-hint">Manage individual project tokens in each project's settings</small>
+                                <small class="section-hint">Create and manage project tokens (INFRABOX_CLI_TOKEN)</small>
                             </md-layout>
                         </md-layout>
                     </h3>
                 </md-card-header-text>
             </md-card-header>
+
+            <!-- Create form -->
+            <md-card md-theme="white" class="clean-card">
+                <md-card-area>
+                    <md-list class="m-t-md m-b-md">
+                        <md-list-item>
+                            <md-input-container class="m-r-sm" style="flex: 0 0 220px">
+                                <label>Project</label>
+                                <md-select v-model="projectTokenForm.projectId">
+                                    <md-option v-for="p in adminProjects" :key="p.id" :value="p.id">{{ p.name }}</md-option>
+                                </md-select>
+                            </md-input-container>
+                            <md-input-container class="m-r-sm" style="flex: 2">
+                                <label>Token Description (e.g. "Jenkins Integration")</label>
+                                <md-input v-model="projectTokenForm.description" @keyup.enter.native="createProjectToken"></md-input>
+                            </md-input-container>
+                            <md-button :disabled="disableProjectTokenAdd" class="md-icon-button md-list-action" @click="createProjectToken">
+                                <md-icon md-theme="running" class="md-primary">add_circle</md-icon>
+                                <md-tooltip>Create project token</md-tooltip>
+                            </md-button>
+                        </md-list-item>
+                        <div v-if="adminProjects.length === 0" style="padding: 0 16px 12px; font-size: 13px; color: #999;">
+                            You have no projects with admin rights to create tokens for.
+                        </div>
+                    </md-list>
+                </md-card-area>
+            </md-card>
 
             <md-table-card class="clean-card">
                 <md-table>
@@ -358,6 +385,10 @@ export default {
             description: '',
             expiresDays: 365
         },
+        projectTokenForm: {
+            projectId: '',
+            description: ''
+        },
         mcpTokens: [],
         newMcpToken: '',
         pendingMcpRevoke: null,
@@ -374,6 +405,10 @@ export default {
         disableAdd () {
             return !this.form.description || this.form.description.length < 3 ||
                 !this.form.expiresDays || this.form.expiresDays < 1 || this.form.expiresDays > 3650
+        },
+        disableProjectTokenAdd () {
+            return !this.projectTokenForm.projectId ||
+                !this.projectTokenForm.description || this.projectTokenForm.description.length < 3
         },
         disableMcpAdd () {
             return !this.mcpForm.name || this.mcpForm.name.length < 3 ||
@@ -456,6 +491,21 @@ export default {
         confirmRevoke (token) {
             this.pendingRevoke = token
             this.$refs['revokeDialog'].open()
+        },
+
+        createProjectToken () {
+            if (this.disableProjectTokenAdd) return
+            const project = this.adminProjects.find(p => p.id === this.projectTokenForm.projectId)
+            if (!project) return
+            // Reuse the same Project.addToken() used by project settings — it posts to
+            // POST projects/{id}/tokens and reloads that project's token list on success.
+            project.addToken(this.projectTokenForm.description)
+                .then((token) => {
+                    if (!token) return
+                    this.newToken = token
+                    this.$refs['tokenDialog'].open()
+                    this.projectTokenForm.description = ''
+                })
         },
 
         onRevokeClose (type) {
