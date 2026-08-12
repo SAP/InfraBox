@@ -381,6 +381,7 @@ export default {
         accessLog: [],
         logLoading: false,
         projectTokensLoading: false,
+        projectTokensLoaded: false,
         form: {
             description: '',
             expiresDays: 365
@@ -441,15 +442,31 @@ export default {
             this.mcpTokens = tokens
         }).catch(() => {})
 
-        const adminProjects = this.$store.state.projects.filter(p => p.userHasAdminRights())
-        if (adminProjects.length > 0) {
-            this.projectTokensLoading = true
-            Promise.all(adminProjects.map(p => p._loadTokens()))
-                .finally(() => { this.projectTokensLoading = false })
+        this.loadProjectTokens()
+    },
+
+    watch: {
+        // store.state.projects is populated asynchronously. If this page is opened
+        // directly (e.g. on refresh) before projects have loaded, created() sees an
+        // empty list and never loads project tokens. Re-run the load once projects
+        // arrive. projectTokensLoaded guards against reloading on later changes.
+        'adminProjects.length' (len) {
+            if (len > 0 && !this.projectTokensLoaded) {
+                this.loadProjectTokens()
+            }
         }
     },
 
     methods: {
+        loadProjectTokens () {
+            const adminProjects = this.adminProjects
+            if (adminProjects.length === 0) return
+            this.projectTokensLoaded = true
+            this.projectTokensLoading = true
+            Promise.all(adminProjects.map(p => p._loadTokens()))
+                .finally(() => { this.projectTokensLoading = false })
+        },
+
         formatDate (v) {
             return v ? moment(v).format('YYYY-MM-DD HH:mm:ss') : '-'
         },
