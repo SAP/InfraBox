@@ -247,7 +247,7 @@
             <md-card md-theme="white" class="clean-card">
                 <md-card-area>
                     <md-list class="m-t-md m-b-md">
-                        <md-list-item>
+                        <md-list-item v-if="adminProjects.length > 0">
                             <md-input-container class="m-r-sm" style="flex: 0 0 220px">
                                 <label>Project</label>
                                 <md-select v-model="projectTokenForm.projectId" name="project_token_select" id="project_token_select">
@@ -381,7 +381,7 @@ export default {
         accessLog: [],
         logLoading: false,
         projectTokensLoading: false,
-        projectTokensLoaded: false,
+        loadedProjectIds: [],
         form: {
             description: '',
             expiresDays: 365
@@ -446,24 +446,28 @@ export default {
     },
 
     watch: {
-        // store.state.projects is populated asynchronously. If this page is opened
-        // directly (e.g. on refresh) before projects have loaded, created() sees an
-        // empty list and never loads project tokens. Re-run the load once projects
-        // arrive. projectTokensLoaded guards against reloading on later changes.
-        'adminProjects.length' (len) {
-            if (len > 0 && !this.projectTokensLoaded) {
-                this.loadProjectTokens()
-            }
+        // store.state.projects is populated asynchronously and can grow across
+        // multiple commits (e.g. a single-project load followed by the full list).
+        // Re-run the loader whenever the admin project set grows; loadProjectTokens()
+        // only fetches projects it hasn't fetched yet, so late arrivals are picked up.
+        'adminProjects.length' () {
+            this.loadProjectTokens()
         }
     },
 
     methods: {
         loadProjectTokens () {
-            const adminProjects = this.adminProjects
-            if (adminProjects.length === 0) return
-            this.projectTokensLoaded = true
+            // Only fetch projects we haven't fetched yet (tracked by id), so admin
+            // projects arriving in a later store commit still get loaded. Use
+            // _reloadTokens() (returns a real Promise) instead of _loadTokens() so
+            // the loading flag stays on until the GETs actually complete and the
+            // data is fresh on every visit.
+            const pending = this.adminProjects.filter(p => this.loadedProjectIds.indexOf(p.id) === -1)
+            if (pending.length === 0) return
+            pending.forEach(p => this.loadedProjectIds.push(p.id))
             this.projectTokensLoading = true
-            Promise.all(adminProjects.map(p => p._loadTokens()))
+            Promise.all(pending.map(p => p._reloadTokens()))
+                .catch(() => {})
                 .finally(() => { this.projectTokensLoading = false })
         },
 
