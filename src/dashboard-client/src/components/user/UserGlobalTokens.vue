@@ -250,8 +250,8 @@
                         <md-list-item>
                             <md-input-container class="m-r-sm" style="flex: 0 0 220px">
                                 <label>Project</label>
-                                <md-select v-model="projectTokenForm.projectId">
-                                    <md-option v-for="p in adminProjects" :key="p.id" :value="p.id">{{ p.name }}</md-option>
+                                <md-select v-model="projectTokenForm.projectId" name="project_token_select" id="project_token_select">
+                                    <md-option v-for="p in adminProjects" :key="p.id" :value="p.id" class="bg-white">{{ p.name }}</md-option>
                                 </md-select>
                             </md-input-container>
                             <md-input-container class="m-r-sm" style="flex: 2">
