@@ -278,6 +278,7 @@
                             <md-table-head>Description</md-table-head>
                             <md-table-head>Read</md-table-head>
                             <md-table-head>Write</md-table-head>
+                            <md-table-head>Actions</md-table-head>
                         </md-table-row>
                     </md-table-header>
                     <md-table-body>
@@ -301,14 +302,20 @@
                                     <md-icon v-if="token.scope_push" class="md-primary">check</md-icon>
                                     <md-icon v-else>close</md-icon>
                                 </md-table-cell>
+                                <md-table-cell>
+                                    <md-button class="md-icon-button" @click="confirmProjectTokenRevoke(project, token)">
+                                        <md-icon class="md-primary">delete</md-icon>
+                                        <md-tooltip>Delete token</md-tooltip>
+                                    </md-button>
+                                </md-table-cell>
                             </md-table-row>
                         </template>
 
                         <md-table-row v-if="projectTokensLoading">
-                            <md-table-cell colspan="4">Loading...</md-table-cell>
+                            <md-table-cell colspan="5">Loading...</md-table-cell>
                         </md-table-row>
                         <md-table-row v-else-if="totalProjectTokenCount === 0">
-                            <md-table-cell colspan="4">No project tokens found.</md-table-cell>
+                            <md-table-cell colspan="5">No project tokens found.</md-table-cell>
                         </md-table-row>
                     </md-table-body>
                 </md-table>
@@ -362,6 +369,16 @@
             md-cancel-text="Cancel"
             @close="onMcpRevokeClose">
         </md-dialog-confirm>
+
+        <!-- Project token revoke confirmation dialog -->
+        <md-dialog-confirm
+            ref="projectTokenRevokeDialog"
+            md-title="Delete Project Token"
+            :md-content="`Delete &quot;${pendingProjectTokenRevoke ? pendingProjectTokenRevoke.token.description : ''}&quot;? This cannot be undone.`"
+            md-ok-text="Delete"
+            md-cancel-text="Cancel"
+            @close="onProjectTokenRevokeClose">
+        </md-dialog-confirm>
     </div>
 </template>
 
@@ -382,6 +399,7 @@ export default {
         logLoading: false,
         projectTokensLoading: false,
         loadedProjectIds: [],
+        pendingProjectTokenRevoke: null,
         form: {
             description: '',
             expiresDays: 365
@@ -527,6 +545,24 @@ export default {
                     this.$refs['tokenDialog'].open()
                     this.projectTokenForm.description = ''
                 })
+        },
+
+        confirmProjectTokenRevoke (project, token) {
+            this.pendingProjectTokenRevoke = { project, token }
+            this.$refs['projectTokenRevokeDialog'].open()
+        },
+
+        onProjectTokenRevokeClose (type) {
+            if (type !== 'ok' || !this.pendingProjectTokenRevoke) {
+                this.pendingProjectTokenRevoke = null
+                return
+            }
+            const { project, token } = this.pendingProjectTokenRevoke
+            // Reuse the same Project.deleteToken() used by project settings — it
+            // DELETEs projects/{id}/tokens/{tid} and reloads that project's token
+            // list on success.
+            project.deleteToken(token.id)
+                .finally(() => { this.pendingProjectTokenRevoke = null })
         },
 
         onRevokeClose (type) {
