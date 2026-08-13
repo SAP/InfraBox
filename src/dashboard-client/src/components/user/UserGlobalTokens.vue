@@ -294,11 +294,11 @@
                                     </router-link>
                                 </md-table-cell>
                                 <md-table-cell>{{ token.description }}</md-table-cell>
-                                <md-table-cell>
+                                <md-table-cell class="scope-col">
                                     <md-icon v-if="token.scope_pull" class="md-primary">check</md-icon>
                                     <md-icon v-else>close</md-icon>
                                 </md-table-cell>
-                                <md-table-cell>
+                                <md-table-cell class="scope-col">
                                     <md-icon v-if="token.scope_push" class="md-primary">check</md-icon>
                                     <md-icon v-else>close</md-icon>
                                 </md-table-cell>
@@ -691,6 +691,14 @@ export default {
 </script>
 
 <style scoped>
+/* vue-material puts header text in .md-table-head-text (padding-left:24px) but
+   cell content in .md-table-cell-container (no left padding), so the Read/Write
+   check icons sat left of their header labels. Match the header's left padding
+   so the icons line up under the column titles. */
+.scope-col >>> .md-table-cell-container {
+    padding-left: 24px;
+}
+
 .fix-padding {
     padding-top: 7px !important;
     padding-bottom: 22px !important;
