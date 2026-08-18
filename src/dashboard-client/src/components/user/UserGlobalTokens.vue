@@ -276,9 +276,9 @@
                         <md-table-row>
                             <md-table-head>Project</md-table-head>
                             <md-table-head>Description</md-table-head>
-                            <md-table-head>Read</md-table-head>
-                            <md-table-head>Write</md-table-head>
-                            <md-table-head>Actions</md-table-head>
+                            <md-table-head class="scope-col">Read</md-table-head>
+                            <md-table-head class="scope-col">Write</md-table-head>
+                            <md-table-head class="scope-col">Actions</md-table-head>
                         </md-table-row>
                     </md-table-header>
                     <md-table-body>
@@ -302,7 +302,7 @@
                                     <md-icon v-if="token.scope_push" class="md-primary">check</md-icon>
                                     <md-icon v-else>close</md-icon>
                                 </md-table-cell>
-                                <md-table-cell>
+                                <md-table-cell class="scope-col">
                                     <md-button class="md-icon-button" @click="confirmProjectTokenRevoke(project, token)">
                                         <md-icon class="md-primary">delete</md-icon>
                                         <md-tooltip>Delete token</md-tooltip>
@@ -696,12 +696,31 @@ export default {
 </script>
 
 <style scoped>
-/* vue-material puts header text in .md-table-head-text (padding-left:24px) but
-   cell content in .md-table-cell-container (no left padding), so the Read/Write
-   check icons sat left of their header labels. Match the header's left padding
-   so the icons line up under the column titles. */
+/* Center the Read/Write/Actions columns. vue-material left-aligns header text
+   while cell icons/buttons sit centered-ish in their container, so the two
+   never line up by default. Center both the header container and the cell
+   container (verified: header-text center and icon center then coincide). */
+.scope-col >>> .md-table-head-container {
+    display: flex;
+    justify-content: center;
+}
+.scope-col >>> .md-table-head-text {
+    padding-left: 0;
+    padding-right: 0;
+}
+/* Cells containing a button get vue-material's .md-has-action rule
+   (justify-content: space-between), so override it with !important to keep
+   the Actions button centered like the Read/Write icons. */
 .scope-col >>> .md-table-cell-container {
-    padding-left: 24px;
+    display: flex;
+    justify-content: center !important;
+    padding-left: 0;
+    padding-right: 0;
+}
+/* vue-material gives the last icon-button a negative right margin
+   (margin: 0 -10px 0 0) which throws off the centering; reset it. */
+.scope-col >>> .md-button {
+    margin: 0;
 }
 
 .fix-padding {
