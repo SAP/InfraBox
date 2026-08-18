@@ -441,7 +441,12 @@ export default {
                 (this.mcpForm.expiresDays < 1 || this.mcpForm.expiresDays > 365)
         },
         userProjects () {
-            return this.$store.state.projects || []
+            // Only projects the user is a collaborator on. Opening a public/other
+            // project by URL injects it into store.state.projects without a
+            // collaborator role (userrole is undefined), and MCP tokens are only
+            // usable on projects the user is a member of — so exclude those here to
+            // avoid offering a scope the resulting token can't actually access.
+            return (this.$store.state.projects || []).filter(p => p.userrole)
         },
         adminProjects () {
             return this.$store.state.projects.filter(p => p.userHasAdminRights())
