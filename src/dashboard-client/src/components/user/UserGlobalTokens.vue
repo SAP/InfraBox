@@ -236,12 +236,39 @@
                         <md-layout>
                             <md-layout md-vertical-align="center">Project Tokens</md-layout>
                             <md-layout md-vertical-align="center">
-                                <small class="section-hint">Manage individual project tokens in each project's settings</small>
+                                <small class="section-hint">Create and manage project tokens (INFRABOX_CLI_TOKEN)</small>
                             </md-layout>
                         </md-layout>
                     </h3>
                 </md-card-header-text>
             </md-card-header>
+
+            <!-- Create form -->
+            <md-card md-theme="white" class="clean-card">
+                <md-card-area>
+                    <md-list class="m-t-md m-b-md">
+                        <md-list-item v-if="adminProjects.length > 0">
+                            <md-input-container class="m-r-sm" style="flex: 0 0 220px">
+                                <label>Project</label>
+                                <md-select v-model="projectTokenForm.projectId" name="project_token_select" id="project_token_select">
+                                    <md-option v-for="p in adminProjects" :key="p.id" :value="p.id" class="bg-white">{{ p.name }}</md-option>
+                                </md-select>
+                            </md-input-container>
+                            <md-input-container class="m-r-sm" style="flex: 2">
+                                <label>Token Description (e.g. "Jenkins Integration")</label>
+                                <md-input v-model="projectTokenForm.description" @keyup.enter.native="createProjectToken"></md-input>
+                            </md-input-container>
+                            <md-button :disabled="disableProjectTokenAdd" class="md-icon-button md-list-action" @click="createProjectToken">
+                                <md-icon md-theme="running" class="md-primary">add_circle</md-icon>
+                                <md-tooltip>Create project token</md-tooltip>
+                            </md-button>
+                        </md-list-item>
+                        <div v-if="adminProjects.length === 0" style="padding: 0 16px 12px; font-size: 13px; color: #999;">
+                            You have no projects with admin rights to create tokens for.
+                        </div>
+                    </md-list>
+                </md-card-area>
+            </md-card>
 
             <md-table-card class="clean-card">
                 <md-table>
@@ -249,8 +276,9 @@
                         <md-table-row>
                             <md-table-head>Project</md-table-head>
                             <md-table-head>Description</md-table-head>
-                            <md-table-head>Read</md-table-head>
-                            <md-table-head>Write</md-table-head>
+                            <md-table-head class="scope-col">Read</md-table-head>
+                            <md-table-head class="scope-col">Write</md-table-head>
+                            <md-table-head class="scope-col">Actions</md-table-head>
                         </md-table-row>
                     </md-table-header>
                     <md-table-body>
@@ -266,22 +294,28 @@
                                     </router-link>
                                 </md-table-cell>
                                 <md-table-cell>{{ token.description }}</md-table-cell>
-                                <md-table-cell>
+                                <md-table-cell class="scope-col">
                                     <md-icon v-if="token.scope_pull" class="md-primary">check</md-icon>
                                     <md-icon v-else>close</md-icon>
                                 </md-table-cell>
-                                <md-table-cell>
+                                <md-table-cell class="scope-col">
                                     <md-icon v-if="token.scope_push" class="md-primary">check</md-icon>
                                     <md-icon v-else>close</md-icon>
+                                </md-table-cell>
+                                <md-table-cell class="scope-col">
+                                    <md-button class="md-icon-button" @click="confirmProjectTokenRevoke(project, token)">
+                                        <md-icon class="md-primary">delete</md-icon>
+                                        <md-tooltip>Delete token</md-tooltip>
+                                    </md-button>
                                 </md-table-cell>
                             </md-table-row>
                         </template>
 
                         <md-table-row v-if="projectTokensLoading">
-                            <md-table-cell colspan="4">Loading...</md-table-cell>
+                            <md-table-cell colspan="5">Loading...</md-table-cell>
                         </md-table-row>
                         <md-table-row v-else-if="totalProjectTokenCount === 0">
-                            <md-table-cell colspan="4">No project tokens found.</md-table-cell>
+                            <md-table-cell colspan="5">No project tokens found.</md-table-cell>
                         </md-table-row>
                     </md-table-body>
                 </md-table>
@@ -335,6 +369,16 @@
             md-cancel-text="Cancel"
             @close="onMcpRevokeClose">
         </md-dialog-confirm>
+
+        <!-- Project token revoke confirmation dialog -->
+        <md-dialog-confirm
+            ref="projectTokenRevokeDialog"
+            md-title="Delete Project Token"
+            :md-content="`Delete &quot;${pendingProjectTokenRevoke ? pendingProjectTokenRevoke.token.description : ''}&quot;? This cannot be undone.`"
+            md-ok-text="Delete"
+            md-cancel-text="Cancel"
+            @close="onProjectTokenRevokeClose">
+        </md-dialog-confirm>
     </div>
 </template>
 
@@ -354,9 +398,15 @@ export default {
         accessLog: [],
         logLoading: false,
         projectTokensLoading: false,
+        loadedProjectIds: [],
+        pendingProjectTokenRevoke: null,
         form: {
             description: '',
             expiresDays: 365
+        },
+        projectTokenForm: {
+            projectId: '',
+            description: ''
         },
         mcpTokens: [],
         newMcpToken: '',
@@ -375,6 +425,10 @@ export default {
             return !this.form.description || this.form.description.length < 3 ||
                 !this.form.expiresDays || this.form.expiresDays < 1 || this.form.expiresDays > 3650
         },
+        disableProjectTokenAdd () {
+            return !this.projectTokenForm.projectId ||
+                !this.projectTokenForm.description || this.projectTokenForm.description.length < 3
+        },
         disableMcpAdd () {
             return !this.mcpForm.name || this.mcpForm.name.length < 3 ||
                 !this.mcpForm.expiresDays || this.mcpForm.expiresDays < 1 || this.mcpForm.expiresDays > 365
@@ -387,7 +441,12 @@ export default {
                 (this.mcpForm.expiresDays < 1 || this.mcpForm.expiresDays > 365)
         },
         userProjects () {
-            return this.$store.state.projects || []
+            // Only projects the user is a collaborator on. Opening a public/other
+            // project by URL injects it into store.state.projects without a
+            // collaborator role (userrole is undefined), and MCP tokens are only
+            // usable on projects the user is a member of — so exclude those here to
+            // avoid offering a scope the resulting token can't actually access.
+            return (this.$store.state.projects || []).filter(p => p.userrole)
         },
         adminProjects () {
             return this.$store.state.projects.filter(p => p.userHasAdminRights())
@@ -406,15 +465,35 @@ export default {
             this.mcpTokens = tokens
         }).catch(() => {})
 
-        const adminProjects = this.$store.state.projects.filter(p => p.userHasAdminRights())
-        if (adminProjects.length > 0) {
-            this.projectTokensLoading = true
-            Promise.all(adminProjects.map(p => p._loadTokens()))
-                .finally(() => { this.projectTokensLoading = false })
+        this.loadProjectTokens()
+    },
+
+    watch: {
+        // store.state.projects is populated asynchronously and can grow across
+        // multiple commits (e.g. a single-project load followed by the full list).
+        // Re-run the loader whenever the admin project set grows; loadProjectTokens()
+        // only fetches projects it hasn't fetched yet, so late arrivals are picked up.
+        'adminProjects.length' () {
+            this.loadProjectTokens()
         }
     },
 
     methods: {
+        loadProjectTokens () {
+            // Only fetch projects we haven't fetched yet (tracked by id), so admin
+            // projects arriving in a later store commit still get loaded. Use
+            // _reloadTokens() (returns a real Promise) instead of _loadTokens() so
+            // the loading flag stays on until the GETs actually complete and the
+            // data is fresh on every visit.
+            const pending = this.adminProjects.filter(p => this.loadedProjectIds.indexOf(p.id) === -1)
+            if (pending.length === 0) return
+            pending.forEach(p => this.loadedProjectIds.push(p.id))
+            this.projectTokensLoading = true
+            Promise.all(pending.map(p => p._reloadTokens()))
+                .catch(() => {})
+                .finally(() => { this.projectTokensLoading = false })
+        },
+
         formatDate (v) {
             return v ? moment(v).format('YYYY-MM-DD HH:mm:ss') : '-'
         },
@@ -456,6 +535,39 @@ export default {
         confirmRevoke (token) {
             this.pendingRevoke = token
             this.$refs['revokeDialog'].open()
+        },
+
+        createProjectToken () {
+            if (this.disableProjectTokenAdd) return
+            const project = this.adminProjects.find(p => p.id === this.projectTokenForm.projectId)
+            if (!project) return
+            // Reuse the same Project.addToken() used by project settings — it posts to
+            // POST projects/{id}/tokens and reloads that project's token list on success.
+            project.addToken(this.projectTokenForm.description)
+                .then((token) => {
+                    if (!token) return
+                    this.newToken = token
+                    this.$refs['tokenDialog'].open()
+                    this.projectTokenForm.description = ''
+                })
+        },
+
+        confirmProjectTokenRevoke (project, token) {
+            this.pendingProjectTokenRevoke = { project, token }
+            this.$refs['projectTokenRevokeDialog'].open()
+        },
+
+        onProjectTokenRevokeClose (type) {
+            if (type !== 'ok' || !this.pendingProjectTokenRevoke) {
+                this.pendingProjectTokenRevoke = null
+                return
+            }
+            const { project, token } = this.pendingProjectTokenRevoke
+            // Reuse the same Project.deleteToken() used by project settings — it
+            // DELETEs projects/{id}/tokens/{tid} and reloads that project's token
+            // list on success.
+            project.deleteToken(token.id)
+                .finally(() => { this.pendingProjectTokenRevoke = null })
         },
 
         onRevokeClose (type) {
@@ -584,6 +696,33 @@ export default {
 </script>
 
 <style scoped>
+/* Center the Read/Write/Actions columns. vue-material left-aligns header text
+   while cell icons/buttons sit centered-ish in their container, so the two
+   never line up by default. Center both the header container and the cell
+   container (verified: header-text center and icon center then coincide). */
+.scope-col >>> .md-table-head-container {
+    display: flex;
+    justify-content: center;
+}
+.scope-col >>> .md-table-head-text {
+    padding-left: 0;
+    padding-right: 0;
+}
+/* Cells containing a button get vue-material's .md-has-action rule
+   (justify-content: space-between), so override it with !important to keep
+   the Actions button centered like the Read/Write icons. */
+.scope-col >>> .md-table-cell-container {
+    display: flex;
+    justify-content: center !important;
+    padding-left: 0;
+    padding-right: 0;
+}
+/* vue-material gives the last icon-button a negative right margin
+   (margin: 0 -10px 0 0) which throws off the centering; reset it. */
+.scope-col >>> .md-button {
+    margin: 0;
+}
+
 .fix-padding {
     padding-top: 7px !important;
     padding-bottom: 22px !important;
