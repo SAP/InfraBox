@@ -91,6 +91,10 @@ def mcp_auth_required(f):
             )
             g.db.commit()
         except Exception as exc:
+            try:
+                g.db.rollback()
+            except Exception:
+                pass
             logger.warning('failed to update last_used_at: %s', exc)
 
         g.mcp_token_id = token_id

@@ -894,8 +894,9 @@ func cleanUpClusters(maxAge string, log *logrus.Entry) {
 }
 
 func getOutdatedClusters(maxAge string, log *logrus.Entry) ([]RemoteCluster, error) {
-	cmd := exec.Command("bash", "-c", "gcloud container clusters list "+
-		"--filter='createTime<-P"+maxAge+" AND name:ib-*' --format json")
+	cmd := exec.Command("gcloud", "container", "clusters", "list",
+		"--filter", fmt.Sprintf("createTime<-P%s AND name:ib-*", maxAge),
+		"--format", "json")
 
 	out, err := cmd.Output()
 
