@@ -14,7 +14,7 @@ def get_files(current_schema_version):
     files = [f for f in os.listdir(migration_path) if os.path.isfile(os.path.join(migration_path, f)) and f.startswith('0')]
 
     files.sort(key=lambda f: int(f[:5]))
-    files = files[current_schema_version:]
+    files = [f for f in files if int(f[:5]) > current_schema_version]
 
     return [(os.path.join(migration_path, f), int(f[:5])) for f in files]
 
