@@ -15,6 +15,7 @@ spec:
             labels:
                 app: infrabox-api
         spec:
+            serviceAccountName: infrabox
             {{ include "imagePullSecret" . | indent 8 }}
             containers:
             {{ include "containers_database" . | indent 12 }}
@@ -90,6 +91,12 @@ spec:
                 -
                     name: INFRABOX_GERRIT_ENABLED
                     value: {{ .Values.gerrit.enabled | quote }}
+                -
+                    name: INFRABOX_KUBERNETES_MASTER_HOST
+                    value: "kubernetes.default"
+                -
+                    name: INFRABOX_KUBERNETES_MASTER_PORT
+                    value: "443"
             volumes:
                 {{ include "volumes_database" . | indent 16 }}
                 {{ include "volumes_rsa" . | indent 16 }}
