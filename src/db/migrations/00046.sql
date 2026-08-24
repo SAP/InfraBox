@@ -8,6 +8,13 @@
 -- to be skipped on databases already at schema_version 47.
 --
 -- This placeholder fills the gap so the numbering is contiguous again and the
--- number/index alignment is restored. It performs no schema change:
--- migrate.py strips the file contents and only executes when non-empty, so a
--- comment-only file is a safe no-op that still advances schema_version.
+-- number/index alignment is restored. It performs no schema change.
+--
+-- Note: migrate.py's `apply_migration` does `sql.strip()` and then guards with
+-- `if sql:` before calling `cur.execute(sql)`.  For a comment-only file,
+-- `strip()` does NOT remove SQL comments, so `sql` is a non-empty string
+-- containing only `--` lines.  psycopg2 then rejects it with
+-- `ProgrammingError: can't execute an empty query`, which fails the whole
+-- migration job and blocks 00047/00048 from running.  A single trivial
+-- statement below makes this file a true no-op that psycopg2 accepts.
+SELECT 1;
