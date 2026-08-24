@@ -1,9 +1,16 @@
 import os
+import re
+
 import bcrypt
 import importlib
 
 from pyinfraboxutils import get_logger, get_env
 from pyinfraboxutils.db import connect_db
+
+
+# Matches C-style block comments (/* ... */), across multiple lines.
+# Non-greedy so consecutive `/* a */ x /* b */` blocks are matched independently.
+_BLOCK_COMMENT_RE = re.compile(r'/\*.*?\*/', re.DOTALL)
 
 logger = get_logger("migrate")
 
@@ -21,18 +28,27 @@ def get_files(current_schema_version):
 def _has_executable_sql(sql):
     """Return True iff `sql` contains at least one non-comment, non-blank line.
 
-    `str.strip()` only removes leading/trailing whitespace; SQL line comments
-    (`-- ...`) are kept.  Passing a comment-only string to `cur.execute()`
-    raises `psycopg2.ProgrammingError: can't execute an empty query`, which
-    breaks migration runs whenever a placeholder file (e.g. an intentionally
-    empty migration to close a numbering gap) is applied.  This helper skips
-    such files safely.
+    `str.strip()` only removes leading/trailing whitespace; SQL comments are
+    kept.  Passing a comment-only string to `cur.execute()` raises
+    `psycopg2.ProgrammingError: can't execute an empty query`, which breaks
+    migration runs whenever a placeholder file (e.g. an intentionally empty
+    migration to close a numbering gap) is applied.  This helper detects such
+    files so the caller can skip the execute call.
 
-    NOTE: This is a lightweight heuristic — it does NOT parse SQL and does
-    not understand `/* ... */` block comments.  For a comment-only migration
-    file to be recognised as empty, use `--` line comments.
+    Recognised as "no SQL":
+      - completely empty / whitespace-only files
+      - only `-- ...` line comments
+      - only `/* ... */` block comments (even across lines)
+      - any combination of the above
+
+    Lightweight heuristic — does not tokenise SQL, so quoted strings that
+    happen to contain `--` or `/* */` are still treated as executable
+    (which is fine, they contain real statements).
     """
-    for line in sql.splitlines():
+    # Strip C-style block comments first so any `/* ... */`-only content is
+    # collapsed away before the per-line `--` check.
+    sql_no_block = _BLOCK_COMMENT_RE.sub('', sql)
+    for line in sql_no_block.splitlines():
         stripped = line.strip()
         if stripped and not stripped.startswith('--'):
             return True
