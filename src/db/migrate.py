@@ -18,6 +18,27 @@ def get_files(current_schema_version):
 
     return [(os.path.join(migration_path, f), int(f[:5])) for f in files]
 
+def _has_executable_sql(sql):
+    """Return True iff `sql` contains at least one non-comment, non-blank line.
+
+    `str.strip()` only removes leading/trailing whitespace; SQL line comments
+    (`-- ...`) are kept.  Passing a comment-only string to `cur.execute()`
+    raises `psycopg2.ProgrammingError: can't execute an empty query`, which
+    breaks migration runs whenever a placeholder file (e.g. an intentionally
+    empty migration to close a numbering gap) is applied.  This helper skips
+    such files safely.
+
+    NOTE: This is a lightweight heuristic — it does NOT parse SQL and does
+    not understand `/* ... */` block comments.  For a comment-only migration
+    file to be recognised as empty, use `--` line comments.
+    """
+    for line in sql.splitlines():
+        stripped = line.strip()
+        if stripped and not stripped.startswith('--'):
+            return True
+    return False
+
+
 def apply_migration(conn, migration):
     filename = migration[0]
     logger.info("Starting to apply migration %s", filename)
@@ -27,8 +48,13 @@ def apply_migration(conn, migration):
             sql = sql_file.read().strip()
 
             cur = conn.cursor()
-            if sql:
+            if _has_executable_sql(sql):
                 cur.execute(sql)
+            else:
+                logger.info(
+                    "Skipping execute for %s (no non-comment SQL statements)",
+                    filename,
+                )
 
             cur.close()
     elif filename.endswith('.py'):
