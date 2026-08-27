@@ -56,11 +56,15 @@ if [ ! -e /var/run/docker.sock ]; then
         done
         echo "SAP Root CA installed for $(ls /etc/docker/certs.d/ | wc -l) registries"
 
-        # BuildKit's cache registry client uses the system CA bundle, not /etc/docker/certs.d/.
-        # Append the SAP Root CA to the Alpine system bundle so BuildKit can trust
-        # InfraBox internal registries when importing --cache-from manifests via HTTPS.
-        cat /etc/ssl/certs/saprootca.pem >> /etc/ssl/certs/ca-certificates.crt
-        echo "SAP Root CA appended to system CA bundle for BuildKit"
+        # DM01-6122: The previous fix (appending to ca-certificates.crt) did not work because
+        # Docker 23's embedded BuildKit reads the system CA bundle that was compiled into the
+        # dockerd binary, not the file on disk at runtime. The correct approach is to drop the
+        # CA into /usr/local/share/ca-certificates/ and run update-ca-certificates, which
+        # rebuilds ca-certificates.crt before dockerd starts and is the mechanism the Alpine
+        # ca-certificates package officially supports for adding custom CAs.
+        cp /etc/ssl/certs/saprootca.pem /usr/local/share/ca-certificates/saprootca.crt
+        update-ca-certificates
+        echo "SAP Root CA registered via update-ca-certificates for BuildKit"
     fi
 
     echo "Waiting for docker daemon to start up"
