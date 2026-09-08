@@ -5,6 +5,7 @@ import os
 import random
 import json
 import copy
+import threading
 from datetime import datetime
 
 import requests
@@ -547,6 +548,49 @@ class Scheduler(object):
         self.function_controller = FunctionInvocationController(args)
         self.pipeline_controller = PipelineInvocationController(args)
 
+        # K8s state cache — refreshed every 10s by background thread.
+        # Main scheduling loop reads from cache to avoid blocking on K8s API
+        # calls (which can stall for up to 10s under load and cause job queuing
+        # delays of hours when multiplied across many scheduler ticks).
+        self._k8s_lock = threading.Lock()
+        self._k8s_nodes = []      # items from GET /api/v1/nodes
+        self._k8s_pipelines = []  # items from GET ibpipelineinvocations
+        self._start_k8s_refresh_thread()
+
+    def _start_k8s_refresh_thread(self):
+        def refresh_loop():
+            while True:
+                try:
+                    self._refresh_k8s_nodes()
+                except Exception as e:
+                    self.logger.exception(e)
+                try:
+                    self._refresh_k8s_pipelines()
+                except Exception as e:
+                    self.logger.exception(e)
+                time.sleep(10)
+
+        t = threading.Thread(target=refresh_loop, daemon=True)
+        t.start()
+
+    def _refresh_k8s_nodes(self):
+        h = {'Authorization': 'Bearer %s' % self.args.token}
+        r = requests.get(self.args.api_server + '/api/v1/nodes', headers=h, timeout=10)
+        items = r.json().get('items', [])
+        with self._k8s_lock:
+            self._k8s_nodes = items
+
+    def _refresh_k8s_pipelines(self):
+        h = {'Authorization': 'Bearer %s' % self.args.token}
+        r = requests.get(
+            self.args.api_server + '/apis/core.infrabox.net/v1alpha1/namespaces/%s/ibpipelineinvocations' % self.namespace,
+            headers=h,
+            timeout=10
+        )
+        items = r.json().get('items', [])
+        with self._k8s_lock:
+            self._k8s_pipelines = items
+
     def handle_function_invocations(self):
         self.logger.info("handle function invocations")
         self.function_controller.handle()
@@ -1069,16 +1113,13 @@ class Scheduler(object):
     def handle_orphaned_jobs(self):
         self.logger.info("handle orphaned jobs")
 
-        h = {'Authorization': 'Bearer %s' % self.args.token}
-        r = requests.get(self.args.api_server + '/apis/core.infrabox.net/v1alpha1/namespaces/%s/ibpipelineinvocations' % self.namespace,
-                         headers=h,
-                         timeout=10)
-        data = r.json()
+        with self._k8s_lock:
+            items = list(self._k8s_pipelines)
 
-        if 'items' not in data:
+        if not items:
             return
 
-        for j in data['items']:
+        for j in items:
             if 'metadata' not in j:
                 continue
 
@@ -1257,17 +1298,15 @@ class Scheduler(object):
 
         root_url = os.environ['INFRABOX_ROOT_URL']
 
-        h = {'Authorization': 'Bearer %s' % self.args.token}
-        r = requests.get(self.args.api_server + '/api/v1/nodes',
-                         headers=h,
-                         timeout=10)
-        data = r.json()
+        with self._k8s_lock:
+            items = list(self._k8s_nodes)
+
+        if not items:
+            return
 
         memory = 0
         cpu = 0
         nodes = 0
-
-        items = data.get('items', [])
 
         for i in items:
             metadata = i.get('metadata', {})
@@ -1345,7 +1384,7 @@ class Scheduler(object):
             self.handle()
             self.conn.close()
 
-            time.sleep(1)
+            time.sleep(3)
 
 def main():
     # Arguments
