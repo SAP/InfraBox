@@ -555,27 +555,49 @@ class Scheduler(object):
         self._k8s_lock = threading.Lock()
         self._k8s_nodes = []      # items from GET /api/v1/nodes
         self._k8s_pipelines = []  # items from GET ibpipelineinvocations
-        self._start_k8s_refresh_thread()
+        self._start_k8s_refresh_threads()
 
-    def _start_k8s_refresh_thread(self):
-        def refresh_loop():
+    def _start_k8s_refresh_threads(self):
+        # Fix: run initial synchronous fetch so caches are populated before
+        # the first scheduler tick (avoids update_cluster_state skipping the
+        # DB write on startup when the cluster row may not exist yet).
+        try:
+            self._refresh_k8s_nodes()
+        except Exception as e:
+            self.logger.exception(e)
+        try:
+            self._refresh_k8s_pipelines()
+        except Exception as e:
+            self.logger.exception(e)
+
+        # Fix: run nodes and pipelines in separate threads so a slow/hung
+        # nodes API call does not delay the pipelines refresh (and vice versa).
+        def nodes_loop():
             while True:
+                time.sleep(10)
                 try:
                     self._refresh_k8s_nodes()
                 except Exception as e:
                     self.logger.exception(e)
+
+        def pipelines_loop():
+            while True:
+                time.sleep(10)
                 try:
                     self._refresh_k8s_pipelines()
                 except Exception as e:
                     self.logger.exception(e)
-                time.sleep(10)
 
-        t = threading.Thread(target=refresh_loop, daemon=True)
-        t.start()
+        for target in (nodes_loop, pipelines_loop):
+            t = threading.Thread(target=target, daemon=True)
+            t.start()
 
     def _refresh_k8s_nodes(self):
         h = {'Authorization': 'Bearer %s' % self.args.token}
         r = requests.get(self.args.api_server + '/api/v1/nodes', headers=h, timeout=10)
+        # Fix: raise on HTTP error so a non-200 response does not overwrite
+        # the previously valid cache with an empty list.
+        r.raise_for_status()
         items = r.json().get('items', [])
         with self._k8s_lock:
             self._k8s_nodes = items
@@ -587,6 +609,9 @@ class Scheduler(object):
             headers=h,
             timeout=10
         )
+        # Fix: raise on HTTP error so a non-200 response does not overwrite
+        # the previously valid cache with an empty list.
+        r.raise_for_status()
         items = r.json().get('items', [])
         with self._k8s_lock:
             self._k8s_pipelines = items
