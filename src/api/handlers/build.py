@@ -19,10 +19,10 @@ build_model = api.model('BuildModel', {
 @ns.route('/')
 @api.doc(responses={403: 'Not Authorized'})
 class Builds(Resource):
-    @api.marshal_list_with(build_model)
     def get(self, project_id):
         '''
-        Returns builds
+        Returns build summaries with aggregated state, dates, commit and PR info.
+        Accepts: from, to, sha, branch, cronjob, state, size/build_limit
         '''
 
         build_from = request.args.get('from', None)
@@ -30,7 +30,8 @@ class Builds(Resource):
         sha = request.args.get('sha', None)
         branch = request.args.get('branch', None)
         cronjob = request.args.get('cronjob', None)
-        size = request.args.get('size', 10)
+        state = request.args.get('state', None)
+        size = request.args.get('build_limit', request.args.get('size', 10))
 
         if cronjob == "true":
             cronjob = True
@@ -62,21 +63,57 @@ class Builds(Resource):
         if not build_from:
             build_from = 0
 
-        #if build_to - build_from > 500:
-        #    build_from = max(build_to - 500, 0)
-
-        p = g.db.execute_many_dict('''
-            SELECT b.id, b.build_number, b.restart_counter, b.is_cronjob
+        rows = g.db.execute_many_dict('''
+            SELECT
+                b.id,
+                b.build_number,
+                b.restart_counter,
+                b.is_cronjob,
+                CASE
+                    WHEN bool_or(j.state IN ('queued', 'scheduled', 'running')
+                                 AND j.restarted IS NOT TRUE) THEN 'running'
+                    WHEN bool_or(j.state = 'killed'   AND j.restarted IS NOT TRUE) THEN 'killed'
+                    WHEN bool_or(j.state = 'error'    AND j.restarted IS NOT TRUE) THEN 'error'
+                    WHEN bool_or(j.state = 'failure'  AND j.restarted IS NOT TRUE) THEN 'failure'
+                    WHEN bool_or(j.state = 'unstable' AND j.restarted IS NOT TRUE) THEN 'unstable'
+                    ELSE 'finished'
+                END AS state,
+                to_char(min(j.start_date), 'YYYY-MM-DD HH24:MI:SS') AS start_date,
+                to_char(max(j.end_date),   'YYYY-MM-DD HH24:MI:SS') AS end_date,
+                c.id          AS commit_id,
+                c.branch      AS commit_branch,
+                c.author_name AS commit_author_name,
+                c.tag         AS commit_tag,
+                c.url         AS commit_url,
+                su.filename   AS source_upload_filename,
+                pr.title      AS pull_request_title,
+                pr.url        AS pull_request_url
             FROM build b
-            LEFT OUTER JOIN commit c
-            ON b.commit_id = c.id
+            INNER JOIN job j           ON j.build_id        = b.id
+            LEFT JOIN commit c         ON b.commit_id       = c.id
+            LEFT JOIN source_upload su ON b.source_upload_id = su.id
+            LEFT JOIN pull_request pr  ON c.pull_request_id  = pr.id
             WHERE b.project_id = %(pid)s
             AND b.build_number < %(to)s
             AND b.build_number >= %(from)s
-            AND (%(sha)s IS NULL OR c.id = %(sha)s)
-            AND (%(branch)s IS NULL OR c.branch = %(branch)s)
+            AND (%(sha)s     IS NULL OR c.id         = %(sha)s)
+            AND (%(branch)s  IS NULL OR c.branch     = %(branch)s)
             AND (%(cronjob)s IS NULL OR b.is_cronjob = %(cronjob)s)
-            ORDER BY build_number DESC, restart_counter DESC
+            GROUP BY b.id, b.build_number, b.restart_counter, b.is_cronjob,
+                     c.id, c.branch, c.author_name, c.tag, c.url,
+                     su.filename, pr.title, pr.url
+            HAVING (%(state)s IS NULL OR
+                CASE
+                    WHEN bool_or(j.state IN ('queued', 'scheduled', 'running')
+                                 AND j.restarted IS NOT TRUE) THEN 'running'
+                    WHEN bool_or(j.state = 'killed'   AND j.restarted IS NOT TRUE) THEN 'killed'
+                    WHEN bool_or(j.state = 'error'    AND j.restarted IS NOT TRUE) THEN 'error'
+                    WHEN bool_or(j.state = 'failure'  AND j.restarted IS NOT TRUE) THEN 'failure'
+                    WHEN bool_or(j.state = 'unstable' AND j.restarted IS NOT TRUE) THEN 'unstable'
+                    ELSE 'finished'
+                END = %(state)s
+            )
+            ORDER BY b.build_number DESC, b.restart_counter DESC
             LIMIT %(size)s
         ''', {
             'pid': project_id,
@@ -85,10 +122,41 @@ class Builds(Resource):
             'sha': sha,
             'branch': branch,
             'cronjob': cronjob,
+            'state': state,
             'size': size,
         })
 
-        return p
+        result = []
+        for b in rows:
+            o = {
+                'id': b['id'],
+                'build_number': b['build_number'],
+                'restart_counter': b['restart_counter'],
+                'is_cronjob': b['is_cronjob'],
+                'state': b['state'],
+                'start_date': b['start_date'],
+                'end_date': b['end_date'],
+                'commit': None,
+                'source_upload': None,
+                'pull_request': None,
+            }
+            if b['commit_id']:
+                o['commit'] = {
+                    'id': b['commit_id'],
+                    'branch': b['commit_branch'],
+                    'author_name': b['commit_author_name'],
+                    'tag': b['commit_tag'],
+                    'url': b['commit_url'],
+                }
+            if b['source_upload_filename']:
+                o['source_upload'] = {'filename': b['source_upload_filename']}
+            if b['pull_request_title']:
+                o['pull_request'] = {
+                    'title': b['pull_request_title'],
+                    'url': b['pull_request_url'],
+                }
+            result.append(o)
+        return result
 
 @ns.route('/<build_id>')
 @api.doc(responses={403: 'Not Authorized'})

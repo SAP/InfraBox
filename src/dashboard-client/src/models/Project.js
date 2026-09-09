@@ -56,7 +56,7 @@ export default class Project {
     }
 
     loadBuilds (from, to, sha, branch, cronjob, buildLimit) {
-        let url = `projects/${this.id}/jobs/?from=${from}&to=${to}`
+        let url = `projects/${this.id}/builds/?from=${from}&to=${to}`
 
         if (sha) {
             url += `&sha=${sha}`
@@ -75,8 +75,8 @@ export default class Project {
         }
 
         return NewAPIService.get(url)
-            .then((jobs) => {
-                this._addJobs(jobs)
+            .then((builds) => {
+                store.commit('addBuilds', { projectId: this.id, builds })
             })
             .catch((err) => {
                 NotificationService.$emit('NOTIFICATION', new Notification(err))
@@ -86,7 +86,7 @@ export default class Project {
     getBuild (number, restartCounter) {
         const b = this._getBuild(number, restartCounter)
 
-        if (b) {
+        if (b && b.jobs.length > 0) {
             return new Promise((resolve) => { resolve(b) })
         }
 
@@ -178,9 +178,9 @@ export default class Project {
     }
 
     _loadJobs () {
-        return NewAPIService.get(`projects/${this.id}/jobs/`)
-            .then((response) => {
-                store.commit('addJobs', response)
+        return NewAPIService.get(`projects/${this.id}/builds/`)
+            .then((builds) => {
+                store.commit('addBuilds', { projectId: this.id, builds })
                 events.listenJobs(this)
             })
     }

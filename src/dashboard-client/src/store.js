@@ -170,6 +170,40 @@ function handleJobUpdate (state, event) {
     project._updateState()
 }
 
+function addBuilds (state, payload) {
+    const project = findProject(state, payload.projectId)
+    if (!project) return
+
+    for (const b of payload.builds) {
+        let build = findBuild(project, b.id)
+        if (!build) {
+            build = new Build(
+                b.id, b.build_number, b.restart_counter, b.is_cronjob,
+                b.commit || null, b.pull_request || null, project
+            )
+            let builds = [build]
+            for (let ex of project.builds) {
+                builds.push(ex)
+            }
+            builds = _(builds)
+                .chain()
+                .sortBy((x) => x.restartCounter)
+                .sortBy((x) => x.number)
+                .value()
+                .reverse()
+            project.builds = builds
+        }
+        build.state = b.state
+        build.startDate = b.start_date ? toDate(b.start_date) : null
+        build.endDate = b.end_date ? toDate(b.end_date) : null
+        if (b.commit) build.commit = b.commit
+        if (b.pull_request) build.pull_request = b.pull_request
+    }
+    if (project.builds.length > 0) {
+        project._updateState()
+    }
+}
+
 function addProjects (state, projects) {
     for (const project of projects) {
         let p = findProject(state, project.id)
@@ -353,6 +387,7 @@ function setAdminGlobalTokens (state, tokens) {
 const mutations = {
     addProjects,
     addJobs,
+    addBuilds,
     setSecrets,
     setCronJobs,
     setSSHKeys,
