@@ -782,8 +782,15 @@ class Console(Resource):
 
     def get(self, project_id, job_id):
         '''
-        Returns job's console output
+        Returns job's console output. Pass ?tail=N to return only the last N lines.
         '''
+        tail = request.args.get('tail', None)
+        if tail is not None:
+            try:
+                tail = max(1, int(tail))
+            except (ValueError, TypeError):
+                tail = None
+
         result = g.db.execute_one_dict('''
             SELECT console
             FROM job
@@ -792,14 +799,30 @@ class Console(Resource):
         ''', [job_id, project_id])
 
         if result and result['console']:
-            return Response(result['console'], mimetype='text/plain')
+            output = result['console']
+            if tail:
+                lines = output.split('\n')
+                output = '\n'.join(lines[-tail:])
+            return Response(output, mimetype='text/plain')
 
-        result = g.db.execute_many_dict('''
-            SELECT output
-            FROM console
-            WHERE job_id = %s
-            ORDER BY date
-        ''', [job_id])
+        if tail:
+            result = g.db.execute_many_dict('''
+                SELECT output FROM (
+                    SELECT output, date
+                    FROM console
+                    WHERE job_id = %s
+                    ORDER BY date DESC
+                    LIMIT %s
+                ) sub
+                ORDER BY date
+            ''', [job_id, tail])
+        else:
+            result = g.db.execute_many_dict('''
+                SELECT output
+                FROM console
+                WHERE job_id = %s
+                ORDER BY date
+            ''', [job_id])
 
         if not result:
             return ''
