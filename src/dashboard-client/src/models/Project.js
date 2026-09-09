@@ -86,7 +86,7 @@ export default class Project {
     getBuild (number, restartCounter) {
         const b = this._getBuild(number, restartCounter)
 
-        if (b) {
+        if (b && b.jobs.length > 0) {
             return new Promise((resolve) => { resolve(b) })
         }
 

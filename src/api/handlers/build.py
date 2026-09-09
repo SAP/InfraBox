@@ -71,11 +71,11 @@ class Builds(Resource):
                 b.is_cronjob,
                 CASE
                     WHEN bool_or(j.state IN ('queued', 'scheduled', 'running')
-                                 AND NOT j.restarted) THEN 'running'
-                    WHEN bool_or(j.state = 'killed'   AND NOT j.restarted) THEN 'killed'
-                    WHEN bool_or(j.state = 'error'    AND NOT j.restarted) THEN 'error'
-                    WHEN bool_or(j.state = 'failure'  AND NOT j.restarted) THEN 'failure'
-                    WHEN bool_or(j.state = 'unstable' AND NOT j.restarted) THEN 'unstable'
+                                 AND j.restarted IS NOT TRUE) THEN 'running'
+                    WHEN bool_or(j.state = 'killed'   AND j.restarted IS NOT TRUE) THEN 'killed'
+                    WHEN bool_or(j.state = 'error'    AND j.restarted IS NOT TRUE) THEN 'error'
+                    WHEN bool_or(j.state = 'failure'  AND j.restarted IS NOT TRUE) THEN 'failure'
+                    WHEN bool_or(j.state = 'unstable' AND j.restarted IS NOT TRUE) THEN 'unstable'
                     ELSE 'finished'
                 END AS state,
                 to_char(min(j.start_date), 'YYYY-MM-DD HH24:MI:SS') AS start_date,
@@ -89,7 +89,7 @@ class Builds(Resource):
                 pr.title      AS pull_request_title,
                 pr.url        AS pull_request_url
             FROM build b
-            LEFT JOIN job j            ON j.build_id        = b.id
+            INNER JOIN job j           ON j.build_id        = b.id
             LEFT JOIN commit c         ON b.commit_id       = c.id
             LEFT JOIN source_upload su ON b.source_upload_id = su.id
             LEFT JOIN pull_request pr  ON c.pull_request_id  = pr.id
@@ -99,12 +99,20 @@ class Builds(Resource):
             AND (%(sha)s     IS NULL OR c.id         = %(sha)s)
             AND (%(branch)s  IS NULL OR c.branch     = %(branch)s)
             AND (%(cronjob)s IS NULL OR b.is_cronjob = %(cronjob)s)
-            AND (%(state)s   IS NULL OR EXISTS (
-                SELECT 1 FROM job jf WHERE jf.build_id = b.id AND jf.state = %(state)s
-            ))
             GROUP BY b.id, b.build_number, b.restart_counter, b.is_cronjob,
                      c.id, c.branch, c.author_name, c.tag, c.url,
                      su.filename, pr.title, pr.url
+            HAVING (%(state)s IS NULL OR
+                CASE
+                    WHEN bool_or(j.state IN ('queued', 'scheduled', 'running')
+                                 AND j.restarted IS NOT TRUE) THEN 'running'
+                    WHEN bool_or(j.state = 'killed'   AND j.restarted IS NOT TRUE) THEN 'killed'
+                    WHEN bool_or(j.state = 'error'    AND j.restarted IS NOT TRUE) THEN 'error'
+                    WHEN bool_or(j.state = 'failure'  AND j.restarted IS NOT TRUE) THEN 'failure'
+                    WHEN bool_or(j.state = 'unstable' AND j.restarted IS NOT TRUE) THEN 'unstable'
+                    ELSE 'finished'
+                END = %(state)s
+            )
             ORDER BY b.build_number DESC, b.restart_counter DESC
             LIMIT %(size)s
         ''', {

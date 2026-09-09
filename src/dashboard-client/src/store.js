@@ -177,8 +177,10 @@ function addBuilds (state, payload) {
     for (const b of payload.builds) {
         let build = findBuild(project, b.id)
         if (!build) {
-            build = new Build(b.id, b.build_number, b.restart_counter, b.is_cronjob,
-                              b.commit || null, b.pull_request || null, project)
+            build = new Build(
+                b.id, b.build_number, b.restart_counter, b.is_cronjob,
+                b.commit || null, b.pull_request || null, project
+            )
             let builds = [build]
             for (let ex of project.builds) {
                 builds.push(ex)
@@ -197,7 +199,9 @@ function addBuilds (state, payload) {
         if (b.commit) build.commit = b.commit
         if (b.pull_request) build.pull_request = b.pull_request
     }
-    project._updateState()
+    if (project.builds.length > 0) {
+        project._updateState()
+    }
 }
 
 function addProjects (state, projects) {
