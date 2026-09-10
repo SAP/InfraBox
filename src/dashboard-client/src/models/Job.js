@@ -105,7 +105,6 @@ export default class Job {
         this.currentSection = null
         this.linesProcessed = 0
         this.hasLogsAvailable = false
-        this.consoleTruncated = false
         this.message = message
         this.definition = definition
         this.nodeName = nodeName
@@ -239,29 +238,33 @@ export default class Job {
             })
     }
 
-    loadConsole (tail = 500) {
+    loadConsole () {
         if (this.sections.length) {
             return
         }
 
-        const param = tail ? `?tail=${tail}` : ''
-        return NewAPIService.get(`projects/${this.project.id}/jobs/${this.id}/console${param}`)
+        return NewAPIService.get(`projects/${this.project.id}/jobs/${this.id}/console?tail=500`)
             .then((console) => {
                 store.commit('setConsole', { job: this, console: console })
-                this.consoleTruncated = tail !== null
                 events.listenConsole(this.id)
+                this._prefetchFullConsole()
             })
             .catch((err) => {
                 NotificationService.$emit('NOTIFICATION', new Notification(err))
             })
     }
 
-    loadFullConsole () {
-        this.sections = []
-        this.currentSection = null
-        this.linesProcessed = 0
-        this.consoleTruncated = false
-        return this.loadConsole(null)
+    _prefetchFullConsole () {
+        NewAPIService.get(`projects/${this.project.id}/jobs/${this.id}/console`)
+            .then((console) => {
+                if (console) {
+                    this.sections = []
+                    this.currentSection = null
+                    this.linesProcessed = 0
+                    store.commit('setConsole', { job: this, console: console })
+                }
+            })
+            .catch(() => {})
     }
 
     loadTabs () {

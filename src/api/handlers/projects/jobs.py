@@ -3,6 +3,7 @@ import os
 import uuid
 import re
 import mimetypes
+import gzip as gzip_module
 
 from io import BytesIO
 
@@ -776,10 +777,20 @@ class ArchiveDownloadAll(Resource):
         '''
         return redirect("/api/v1/projects/%s/jobs/%s/archive/download?filename=all_archives.tar.gz" %(project_id, job_id))
 
+def _console_response(output):
+    accepts_gzip = 'gzip' in request.headers.get('Accept-Encoding', '')
+    if accepts_gzip and len(output) > 102400:
+        compressed = gzip_module.compress(output.encode('utf-8'), compresslevel=6)
+        resp = Response(compressed, mimetype='text/plain')
+        resp.headers['Content-Encoding'] = 'gzip'
+        resp.headers['Content-Length'] = len(compressed)
+        return resp
+    return Response(output, mimetype='text/plain')
+
+
 @ns.route('/<job_id>/console')
 @api.response(403, 'Not Authorized')
 class Console(Resource):
-
     def get(self, project_id, job_id):
         '''
         Returns job's console output. Pass ?tail=N to return only the last N lines.
@@ -791,22 +802,29 @@ class Console(Resource):
             except (ValueError, TypeError):
                 tail = None
 
-        result = g.db.execute_one_dict('''
-            SELECT console
-            FROM job
-            WHERE   id = %s
-                AND project_id = %s
-        ''', [job_id, project_id])
+        if tail:
+            result = g.db.execute_one_dict('''
+                SELECT array_to_string(
+                    (string_to_array(console, E'\\n'))
+                    [greatest(array_length(string_to_array(console, E'\\n'), 1) - %s + 1, 1):],
+                    E'\\n'
+                ) AS console
+                FROM job
+                WHERE id = %s AND project_id = %s
+                  AND console IS NOT NULL AND console != ''
+            ''', [tail, job_id, project_id])
+        else:
+            result = g.db.execute_one_dict('''
+                SELECT console
+                FROM job
+                WHERE id = %s AND project_id = %s
+            ''', [job_id, project_id])
 
         if result and result['console']:
-            output = result['console']
-            if tail:
-                lines = output.split('\n')
-                output = '\n'.join(lines[-tail:])
-            return Response(output, mimetype='text/plain')
+            return _console_response(result['console'])
 
         if tail:
-            result = g.db.execute_many_dict('''
+            rows = g.db.execute_many_dict('''
                 SELECT output FROM (
                     SELECT output, date
                     FROM console
@@ -817,21 +835,18 @@ class Console(Resource):
                 ORDER BY date
             ''', [job_id, tail])
         else:
-            result = g.db.execute_many_dict('''
+            rows = g.db.execute_many_dict('''
                 SELECT output
                 FROM console
                 WHERE job_id = %s
                 ORDER BY date
             ''', [job_id])
 
-        if not result:
+        if not rows:
             return ''
 
-        output = ''
-        for r in result:
-            output += r['output']
-
-        return Response(output, mimetype='text/plain')
+        output = ''.join(r['output'] for r in rows)
+        return _console_response(output)
 
 
 @ns.route('/<job_id>/output', doc=False)

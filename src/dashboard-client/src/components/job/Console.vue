@@ -56,10 +56,6 @@
                 </md-table-body>
             </md-table>
         </md-table-card>
-        <div v-if="job.consoleTruncated" class="truncation-notice">
-            Showing last 500 lines.
-            <a class="load-full-link" @click="job.loadFullConsole()">Load full log</a>
-        </div>
     </div>
 </template>
 
@@ -84,21 +80,5 @@ export default {
     .font-roboto {
         font-family: Roboto;
         font-weight: 500;
-    }
-
-    .truncation-notice {
-        background-color: #1e2b30;
-        color: #9e9e9e;
-        font-family: monospace;
-        font-size: 12px;
-        padding: 6px 16px;
-        text-align: center;
-    }
-
-    .load-full-link {
-        color: #80cbc4;
-        cursor: pointer;
-        margin-left: 8px;
-        text-decoration: underline;
     }
 </style>
