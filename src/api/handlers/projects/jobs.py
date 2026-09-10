@@ -779,7 +779,7 @@ class ArchiveDownloadAll(Resource):
 
 def _console_response(output):
     accepts_gzip = 'gzip' in request.headers.get('Accept-Encoding', '')
-    if accepts_gzip and len(output) > 102400:
+    if accepts_gzip and len(output.encode('utf-8')) > 102400:
         compressed = gzip_module.compress(output.encode('utf-8'), compresslevel=6)
         resp = Response(compressed, mimetype='text/plain')
         resp.headers['Content-Encoding'] = 'gzip'
@@ -811,41 +811,53 @@ class Console(Resource):
                 ) AS console
                 FROM job
                 WHERE id = %s AND project_id = %s
-                  AND console IS NOT NULL AND console != ''
+                  AND console IS NOT NULL
+                  AND console != ''
+                  AND console != 'deleted'
             ''', [tail, job_id, project_id])
         else:
             result = g.db.execute_one_dict('''
                 SELECT console
                 FROM job
                 WHERE id = %s AND project_id = %s
+                  AND console != 'deleted'
             ''', [job_id, project_id])
 
         if result and result['console']:
             return _console_response(result['console'])
 
+        # console table stores chunks (one row per flush), not individual lines.
+        # Fetch enough chunks to cover tail lines, then trim to exact line count.
         if tail:
+            chunk_limit = max(tail, 200)
             rows = g.db.execute_many_dict('''
                 SELECT output FROM (
                     SELECT output, date
                     FROM console
                     WHERE job_id = %s
+                      AND job_id IN (SELECT id FROM job WHERE project_id = %s)
                     ORDER BY date DESC
                     LIMIT %s
                 ) sub
                 ORDER BY date
-            ''', [job_id, tail])
+            ''', [job_id, project_id, chunk_limit])
         else:
             rows = g.db.execute_many_dict('''
                 SELECT output
                 FROM console
                 WHERE job_id = %s
+                  AND job_id IN (SELECT id FROM job WHERE project_id = %s)
                 ORDER BY date
-            ''', [job_id])
+            ''', [job_id, project_id])
 
         if not rows:
             return ''
 
         output = ''.join(r['output'] for r in rows)
+        if tail:
+            lines = output.split('\n')
+            if len(lines) > tail:
+                output = '\n'.join(lines[-tail:])
         return _console_response(output)
 
 
