@@ -54,6 +54,8 @@ spec:
                   type: boolean
                 stackType:
                   type: string
+                keepAlive:
+                  type: boolean
             status:
               x-kubernetes-preserve-unknown-fields: true
   names:
