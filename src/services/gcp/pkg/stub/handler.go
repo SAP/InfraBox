@@ -240,6 +240,9 @@ func createCluster(cr *v1alpha1.GKECluster, log *logrus.Entry) (*v1alpha1.GKEClu
 	if !cr.Spec.EnableManagedPrometheus {
 		args = append(args, "--no-enable-managed-prometheus")
 	}
+	if cr.Spec.KeepAlive {
+		args = append(args, "--labels", "infrabox-keep-alive=true")
+	}
 	master_authorized_networks := os.Getenv("ALLOW_IPS")
 	if master_authorized_networks == "" {
 		master_authorized_networks = "0.0.0.0/0"
@@ -546,6 +549,15 @@ func checkTimeout(cr *v1alpha1.GKECluster, log *logrus.Entry) error {
 }
 
 func deleteGKECluster(cr *v1alpha1.GKECluster, log *logrus.Entry) error {
+	if cr.Spec.KeepAlive {
+		if err := cleanUpCrd(cr, log); err != nil {
+			log.Errorf("Failed to remove GKECluster CRD: %v", err)
+			return err
+		}
+		log.Infof("GKE cluster %s kept alive (keepAlive=true)", cr.Status.ClusterName)
+		return nil
+	}
+
 	// Get the GKE Cluster
 	gkecluster, err := getRemoteCluster(cr.Status.ClusterName, log)
 	if err != nil && !errors.IsNotFound(err) {
@@ -895,7 +907,7 @@ func cleanUpClusters(maxAge string, log *logrus.Entry) {
 
 func getOutdatedClusters(maxAge string, log *logrus.Entry) ([]RemoteCluster, error) {
 	cmd := exec.Command("gcloud", "container", "clusters", "list",
-		"--filter", fmt.Sprintf("createTime<-P%s AND name:ib-*", maxAge),
+		"--filter", fmt.Sprintf("createTime<-P%s AND name:ib-* AND NOT labels.infrabox-keep-alive=true", maxAge),
 		"--format", "json")
 
 	out, err := cmd.Output()
