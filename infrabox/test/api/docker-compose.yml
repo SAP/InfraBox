@@ -7,11 +7,13 @@ services:
             dockerfile: ./src/postgres/Dockerfile
 
     minio:
-        image: quay.io/minio/minio
+        build:
+            context: ../../../
+            dockerfile: ./infrabox/test/minio/Dockerfile
         command: server /data
         environment:
-            - MINIO_ACCESS_KEY=AKIAIOSFODNN7EXAMPLE
-            - MINIO_SECRET_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+            - MINIO_ROOT_USER=AKIAIOSFODNN7EXAMPLE
+            - MINIO_ROOT_PASSWORD=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
 
     opa:
         build:
