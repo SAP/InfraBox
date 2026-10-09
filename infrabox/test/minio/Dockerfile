@@ -1,4 +1,4 @@
-FROM debian:bullseye-slim
+FROM debian:bookworm-slim
 RUN apt-get update && apt-get install -y --no-install-recommends wget ca-certificates && \
     rm -rf /var/lib/apt/lists/*
 RUN wget -q -O /usr/local/bin/minio \
