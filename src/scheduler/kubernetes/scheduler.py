@@ -770,9 +770,14 @@ class Scheduler(object):
         try:
             r = requests.post(self.args.api_server + '/apis/core.infrabox.net/v1alpha1/namespaces/%s/ibpipelineinvocations' % self.namespace,
                               headers=h, json=job, timeout=10)
-        except requests.exceptions.Timeout:
-            self.logger.warn("Timeout creating IBPipelineInvocation for job %s, will retry next tick", job_id)
+        except requests.exceptions.RequestException as e:
+            self.logger.warn("Failed to create IBPipelineInvocation for job %s: %s, will retry next tick", job_id, e)
             return False
+
+        if r.status_code == 409:
+            # IBPipelineInvocation already exists — a previous POST succeeded but the response
+            # timed out on our side. Treat as success so the job can proceed to 'scheduled'.
+            return True
 
         if r.status_code != 201:
             self.logger.warn(r.text)
@@ -1374,12 +1379,11 @@ class Scheduler(object):
         return not (active and enabled)
 
     def handle(self):
-        self.update_cluster_state()
-
         cluster_name = os.environ['INFRABOX_CLUSTER_NAME']
         ha_mode = os.environ['INFRABOX_HA_ENABLED'] == "true"
 
         try:
+            self.update_cluster_state()
             self.handle_aborts()
             self.handle_timeouts()
             self.handle_orphaned_jobs()
