@@ -767,8 +767,12 @@ class Scheduler(object):
             }
         }
 
-        r = requests.post(self.args.api_server + '/apis/core.infrabox.net/v1alpha1/namespaces/%s/ibpipelineinvocations' % self.namespace,
-                          headers=h, json=job, timeout=10)
+        try:
+            r = requests.post(self.args.api_server + '/apis/core.infrabox.net/v1alpha1/namespaces/%s/ibpipelineinvocations' % self.namespace,
+                              headers=h, json=job, timeout=10)
+        except requests.exceptions.Timeout:
+            self.logger.warn("Timeout creating IBPipelineInvocation for job %s, will retry next tick", job_id)
+            return False
 
         if r.status_code != 201:
             self.logger.warn(r.text)
@@ -1372,6 +1376,9 @@ class Scheduler(object):
     def handle(self):
         self.update_cluster_state()
 
+        cluster_name = os.environ['INFRABOX_CLUSTER_NAME']
+        ha_mode = os.environ['INFRABOX_HA_ENABLED'] == "true"
+
         try:
             self.handle_aborts()
             self.handle_timeouts()
@@ -1380,23 +1387,20 @@ class Scheduler(object):
             self.handle_pipeline_invocations()
             self.handle_cron_jobs()
             self.handle_inactive_cluster_queued_jobs()
+
+            if self._inactive():
+                self.logger.info('Cluster set to inactive or disabled, sleeping...')
+                time.sleep(5)
+                return
+
+            if ha_mode:
+                self.assign_cluster()
+            elif cluster_name == 'master':
+                self.assign_cluster()
+
+            self.schedule()
         except Exception as e:
             self.logger.exception(e)
-
-        cluster_name = os.environ['INFRABOX_CLUSTER_NAME']
-        ha_mode = os.environ['INFRABOX_HA_ENABLED'] == "true"
-
-        if self._inactive():
-            self.logger.info('Cluster set to inactive or disabled, sleeping...')
-            time.sleep(5)
-            return
-
-        if ha_mode:
-            self.assign_cluster()
-        elif cluster_name == 'master':
-            self.assign_cluster()
-
-        self.schedule()
 
     def run(self):
         self.logger.info("Starting scheduler")
