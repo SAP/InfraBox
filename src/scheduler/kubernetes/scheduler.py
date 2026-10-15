@@ -588,7 +588,23 @@ class Scheduler(object):
                 except Exception as e:
                     self.logger.exception(e)
 
-        for target in (nodes_loop, pipelines_loop):
+        def pipeline_invocations_loop():
+            while True:
+                try:
+                    self.pipeline_controller.handle()
+                except Exception as e:
+                    self.logger.exception(e)
+                time.sleep(5)
+
+        def function_invocations_loop():
+            while True:
+                try:
+                    self.function_controller.handle()
+                except Exception as e:
+                    self.logger.exception(e)
+                time.sleep(5)
+
+        for target in (nodes_loop, pipelines_loop, pipeline_invocations_loop, function_invocations_loop):
             t = threading.Thread(target=target, daemon=True)
             t.start()
 
@@ -767,8 +783,17 @@ class Scheduler(object):
             }
         }
 
-        r = requests.post(self.args.api_server + '/apis/core.infrabox.net/v1alpha1/namespaces/%s/ibpipelineinvocations' % self.namespace,
-                          headers=h, json=job, timeout=10)
+        try:
+            r = requests.post(self.args.api_server + '/apis/core.infrabox.net/v1alpha1/namespaces/%s/ibpipelineinvocations' % self.namespace,
+                              headers=h, json=job, timeout=10)
+        except requests.exceptions.RequestException as e:
+            self.logger.warn("Failed to create IBPipelineInvocation for job %s: %s, will retry next tick", job_id, e)
+            return False
+
+        if r.status_code == 409:
+            # IBPipelineInvocation already exists — a previous POST succeeded but the response
+            # timed out on our side. Treat as success so the job can proceed to 'scheduled'.
+            return True
 
         if r.status_code != 201:
             self.logger.warn(r.text)
@@ -1372,31 +1397,29 @@ class Scheduler(object):
     def handle(self):
         self.update_cluster_state()
 
+        cluster_name = os.environ['INFRABOX_CLUSTER_NAME']
+        ha_mode = os.environ['INFRABOX_HA_ENABLED'] == "true"
+
         try:
             self.handle_aborts()
             self.handle_timeouts()
             self.handle_orphaned_jobs()
-            self.handle_function_invocations()
-            self.handle_pipeline_invocations()
             self.handle_cron_jobs()
             self.handle_inactive_cluster_queued_jobs()
+
+            if self._inactive():
+                self.logger.info('Cluster set to inactive or disabled, sleeping...')
+                time.sleep(5)
+                return
+
+            if ha_mode:
+                self.assign_cluster()
+            elif cluster_name == 'master':
+                self.assign_cluster()
+
+            self.schedule()
         except Exception as e:
             self.logger.exception(e)
-
-        cluster_name = os.environ['INFRABOX_CLUSTER_NAME']
-        ha_mode = os.environ['INFRABOX_HA_ENABLED'] == "true"
-
-        if self._inactive():
-            self.logger.info('Cluster set to inactive or disabled, sleeping...')
-            time.sleep(5)
-            return
-
-        if ha_mode:
-            self.assign_cluster()
-        elif cluster_name == 'master':
-            self.assign_cluster()
-
-        self.schedule()
 
     def run(self):
         self.logger.info("Starting scheduler")
