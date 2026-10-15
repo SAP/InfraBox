@@ -1379,11 +1379,12 @@ class Scheduler(object):
         return not (active and enabled)
 
     def handle(self):
+        self.update_cluster_state()
+
         cluster_name = os.environ['INFRABOX_CLUSTER_NAME']
         ha_mode = os.environ['INFRABOX_HA_ENABLED'] == "true"
 
         try:
-            self.update_cluster_state()
             self.handle_aborts()
             self.handle_timeouts()
             self.handle_orphaned_jobs()
