@@ -588,7 +588,23 @@ class Scheduler(object):
                 except Exception as e:
                     self.logger.exception(e)
 
-        for target in (nodes_loop, pipelines_loop):
+        def pipeline_invocations_loop():
+            while True:
+                try:
+                    self.pipeline_controller.handle()
+                except Exception as e:
+                    self.logger.exception(e)
+                time.sleep(5)
+
+        def function_invocations_loop():
+            while True:
+                try:
+                    self.function_controller.handle()
+                except Exception as e:
+                    self.logger.exception(e)
+                time.sleep(5)
+
+        for target in (nodes_loop, pipelines_loop, pipeline_invocations_loop, function_invocations_loop):
             t = threading.Thread(target=target, daemon=True)
             t.start()
 
@@ -1388,8 +1404,6 @@ class Scheduler(object):
             self.handle_aborts()
             self.handle_timeouts()
             self.handle_orphaned_jobs()
-            self.handle_function_invocations()
-            self.handle_pipeline_invocations()
             self.handle_cron_jobs()
             self.handle_inactive_cluster_queued_jobs()
 
