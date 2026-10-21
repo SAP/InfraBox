@@ -240,6 +240,10 @@ func createCluster(cr *v1alpha1.GKECluster, log *logrus.Entry) (*v1alpha1.GKEClu
 	if !cr.Spec.EnableManagedPrometheus {
 		args = append(args, "--no-enable-managed-prometheus")
 	}
+	// Enable Node Auto-Provisioning required for ComputeClass fallback
+	args = append(args, "--enable-autoprovisioning")
+	args = append(args, "--max-cpu", "500")
+	args = append(args, "--max-memory", "2000")
 	master_authorized_networks := os.Getenv("ALLOW_IPS")
 	if master_authorized_networks == "" {
 		master_authorized_networks = "0.0.0.0/0"
@@ -301,6 +305,11 @@ func syncGKECluster(cr *v1alpha1.GKECluster, log *logrus.Entry) (*v1alpha1.GKECl
 			err = updateClusterFirewall(gkecluster, log)
 			if err != nil {
 				log.Errorf("Failed to update cluster %s firewall: %v", gkecluster.Name, err)
+			}
+
+			err = applyDefaultComputeClass(gkecluster, cr.Spec.Zone, cr.Spec.MachineType, log)
+			if err != nil {
+				log.Errorf("Failed to apply default ComputeClass for cluster %s: %v", gkecluster.Name, err)
 			}
 
 			log.Infof("GKE cluster %s is ready", cr.Status.ClusterName)
@@ -1309,6 +1318,60 @@ func updateClusterFirewall(cluster *RemoteCluster, log *logrus.Entry) error {
 		return nil
 	}
 	log.Warningf("MasterIpv4CidrBlock fetching failed for cluster %s", cluster.Name)
+	return nil
+}
+
+// applyDefaultComputeClass applies a ComputeClass with zone+machine-type fallback priorities to
+// mitigate GCE stockout events. Failures are non-fatal and only logged.
+func applyDefaultComputeClass(cluster *RemoteCluster, zone, machineType string, log *logrus.Entry) error {
+	if err := getGkeKubeConfig(cluster, log); err != nil {
+		return fmt.Errorf("failed to get kubeconfig: %v", err)
+	}
+
+	if machineType == "" {
+		machineType = "n1-standard-4"
+	}
+
+	// Derive sibling zones in the same region (e.g. europe-west3-c -> europe-west3-a, europe-west3-b)
+	parts := strings.Split(zone, "-")
+	region := strings.Join(parts[:len(parts)-1], "-")
+	primarySuffix := parts[len(parts)-1]
+	var priorities strings.Builder
+	// Primary zone first
+	fmt.Fprintf(&priorities, "  - nodepoolConfig:\n      gke:\n        machineType: %s\n        location: %s\n", machineType, zone)
+	for _, s := range []string{"a", "b", "c"} {
+		if s != primarySuffix {
+			fmt.Fprintf(&priorities, "  - nodepoolConfig:\n      gke:\n        machineType: %s\n        location: %s-%s\n", machineType, region, s)
+		}
+	}
+
+	yaml := fmt.Sprintf(`apiVersion: cloud.google.com/v1
+kind: ComputeClass
+metadata:
+  name: infrabox-default
+spec:
+  priorities:
+%s`, priorities.String())
+
+	tmpFile, err := os.CreateTemp("", "computeclass-*.yaml")
+	if err != nil {
+		return fmt.Errorf("failed to create temp file: %v", err)
+	}
+	defer os.Remove(tmpFile.Name())
+
+	if _, err := tmpFile.WriteString(yaml); err != nil {
+		return fmt.Errorf("failed to write ComputeClass yaml: %v", err)
+	}
+	tmpFile.Close()
+
+	kubeConfigPath := "/tmp/kubeconfig-" + cluster.Name
+	cmd := exec.Command("kubectl", "apply", "-f", tmpFile.Name(), "--kubeconfig", kubeConfigPath)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("kubectl apply ComputeClass failed: %v, %s", err, out)
+	}
+
+	log.Infof("Applied default ComputeClass for cluster %s (zone: %s)", cluster.Name, zone)
 	return nil
 }
 
