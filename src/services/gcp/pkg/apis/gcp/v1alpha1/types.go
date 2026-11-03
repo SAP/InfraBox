@@ -18,6 +18,7 @@ type GKECluster struct {
 type GKEClusterSpec struct {
 	DiskSize                   int32    `json:"diskSize,omitempty"`
 	MachineType                string   `json:"machineType,omitempty"`
+	MachineTypes               []string `json:"machineTypes,omitempty"`
 	EnableNetworkPolicy        bool     `json:"enableNetworkPolicy,omitempty"`
 	StackType                  string   `json:"stackType,omitempty"`
 	DisableLegacyAuthorization bool     `json:"disableLegacyAuthorization,omitempty"`
@@ -36,11 +37,11 @@ type GKEClusterSpec struct {
 }
 
 type GKEClusterStatus struct {
-	Status         string `json:"status,omitempty"`
-	Message        string `json:"message,omitempty"`
-	ClusterName    string `json:"clusterName,omitempty"`
+	Status        string `json:"status,omitempty"`
+	Message       string `json:"message,omitempty"`
+	ClusterName   string `json:"clusterName,omitempty"`
 	FirstCleanedAt string `json:"firstCleanedAt,omitempty"`
-	ZoneIndex      int    `json:"zoneIndex,omitempty"`
+	FallbackIndex int    `json:"fallbackIndex,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

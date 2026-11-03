@@ -79,6 +79,11 @@ func (in *GKEClusterSpec) DeepCopyInto(out *GKEClusterSpec) {
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
+	if in.MachineTypes != nil {
+		in, out := &in.MachineTypes, &out.MachineTypes
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	return
 }
 
