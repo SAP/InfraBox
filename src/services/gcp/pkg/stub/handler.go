@@ -311,8 +311,48 @@ func syncGKECluster(cr *v1alpha1.GKECluster, log *logrus.Entry) (*v1alpha1.GKECl
 			return &status, nil
 		}
 		if gkecluster.Status == "ERROR" {
-			log.Errorf("Error creating cluster %s", cr.Status.ClusterName)
-			return nil, goerrors.New(fmt.Sprintf("error creating GKE cluster %s, which means the cluster get an ERROR status on GCP, please restart current job or check it on GCP directly", cr.Status.ClusterName))
+			log.Errorf("GKE cluster %s is in ERROR state in zone %s (possibly GCE_STOCKOUT), attempting zone fallback", cr.Status.ClusterName, cr.Spec.Zone)
+
+			// Delete the failed cluster on GCP; GC will catch it if this fails
+			if err := deleteRemoteCluster(cr, log); err != nil {
+				log.Warningf("Failed to delete errored cluster %s, GC will clean it up: %v", cr.Status.ClusterName, err)
+			}
+
+			// Build the ordered zone list: Zones takes precedence, fall back to single Zone.
+			// Default covers europe-west1/west3 only — all current users require n1 machine
+			// types which are not available in europe-west10/west12.
+			zones := cr.Spec.Zones
+			if len(zones) == 0 {
+				allZones := []string{
+					"europe-west3-c", "europe-west3-a", "europe-west3-b",
+					"europe-west1-b", "europe-west1-c", "europe-west1-d",
+				}
+				zones = []string{cr.Spec.Zone}
+				for _, z := range allZones {
+					if z != cr.Spec.Zone {
+						zones = append(zones, z)
+					}
+				}
+			}
+
+			nextIndex := cr.Status.ZoneIndex + 1
+			if nextIndex >= len(zones) {
+				return nil, fmt.Errorf("GKE cluster creation failed in all configured zones %v", zones)
+			}
+
+			nextZone := zones[nextIndex]
+			log.Infof("Retrying GKE cluster creation in zone %s (attempt %d/%d)", nextZone, nextIndex+1, len(zones))
+
+			cr.Spec.Zone = nextZone
+			cr.Status.ZoneIndex = nextIndex
+			cr.SetFinalizers([]string{})
+			cr.Status.ClusterName = ""
+			cr.Status.Status = "pending"
+			cr.Status.Message = fmt.Sprintf("Retrying in zone %s (%d/%d)", nextZone, nextIndex+1, len(zones))
+			if err := action.Update(cr); err != nil {
+				return nil, err
+			}
+			return &cr.Status, nil
 		}
 	}
 
