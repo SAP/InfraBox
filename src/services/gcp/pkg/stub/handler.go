@@ -208,12 +208,16 @@ func createCluster(cr *v1alpha1.GKECluster, log *logrus.Entry) (*v1alpha1.GKEClu
 	}
 
 	log.Infof("Create GKE cluster %s", cr.Status.ClusterName)
+	zone := cr.Spec.Zone
+	if cr.Status.FallbackZone != "" {
+		zone = cr.Status.FallbackZone
+	}
 	args := []string{"container", "clusters",
 		"create", cr.Status.ClusterName,
 		"--async",
 		"--enable-autorepair",
 		"--scopes=gke-default,storage-rw",
-		"--zone", cr.Spec.Zone,
+		"--zone", zone,
 	}
 
 	args = append(args, "--metadata")
@@ -224,9 +228,13 @@ func createCluster(cr *v1alpha1.GKECluster, log *logrus.Entry) (*v1alpha1.GKEClu
 		args = append(args, strconv.Itoa(int(cr.Spec.DiskSize)))
 	}
 
-	if cr.Spec.MachineType != "" {
+	machineType := cr.Spec.MachineType
+	if cr.Status.FallbackMachineType != "" {
+		machineType = cr.Status.FallbackMachineType
+	}
+	if machineType != "" {
 		args = append(args, "--machine-type")
-		args = append(args, cr.Spec.MachineType)
+		args = append(args, machineType)
 	}
 
 	if cr.Spec.StackType != "" {
@@ -417,8 +425,8 @@ func syncGKECluster(cr *v1alpha1.GKECluster, log *logrus.Entry) (*v1alpha1.GKECl
 			next := fallbackList[nextIndex]
 			log.Infof("Retrying with zone=%s machineType=%s (attempt %d/%d)", next.Zone, next.MachineType, nextIndex+1, len(fallbackList))
 
-			cr.Spec.Zone = next.Zone
-			cr.Spec.MachineType = next.MachineType
+			cr.Status.FallbackZone = next.Zone
+			cr.Status.FallbackMachineType = next.MachineType
 			cr.Status.FallbackIndex = nextIndex
 			cr.SetFinalizers([]string{})
 			cr.Status.ClusterName = ""
