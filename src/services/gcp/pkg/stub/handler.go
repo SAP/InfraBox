@@ -106,7 +106,7 @@ func buildEquivalentMachineTypes(mt string) []string {
 	switch series {
 	case "n1", "n2", "e2":
 		if tier == "highcpu" {
-			candidates = []string{"n1", "n2"} // e2 has no highcpu series
+			candidates = []string{"n1", "n2"}
 		} else {
 			candidates = []string{"n1", "n2", "e2"}
 		}
@@ -388,7 +388,6 @@ func syncGKECluster(cr *v1alpha1.GKECluster, log *logrus.Entry) (*v1alpha1.GKECl
 		if gkecluster.Status == "ERROR" {
 			log.Errorf("GKE cluster %s is in ERROR state in zone %s with machineType %s (possibly GCE_STOCKOUT), attempting fallback", cr.Status.ClusterName, cr.Spec.Zone, cr.Spec.MachineType)
 
-			// Delete the failed cluster on GCP; GC will catch it if this fails
 			if err := deleteRemoteCluster(cr, log); err != nil {
 				log.Warningf("Failed to delete errored cluster %s, GC will clean it up: %v", cr.Status.ClusterName, err)
 			}
@@ -396,7 +395,6 @@ func syncGKECluster(cr *v1alpha1.GKECluster, log *logrus.Entry) (*v1alpha1.GKECl
 			fallbackList := buildFallbackList(cr)
 			nextIndex := cr.Status.FallbackIndex + 1
 			if nextIndex >= len(fallbackList) {
-				// Collect unique zones and machine types for diagnosis
 				zoneSet := make(map[string]struct{})
 				mtSet := make(map[string]struct{})
 				for _, o := range fallbackList {
