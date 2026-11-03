@@ -388,7 +388,30 @@ func syncGKECluster(cr *v1alpha1.GKECluster, log *logrus.Entry) (*v1alpha1.GKECl
 			fallbackList := buildFallbackList(cr)
 			nextIndex := cr.Status.FallbackIndex + 1
 			if nextIndex >= len(fallbackList) {
-				return nil, fmt.Errorf("GKE cluster creation failed for all fallback options (zones x machineTypes exhausted)")
+				// Collect unique zones and machine types for diagnosis
+				zoneSet := make(map[string]struct{})
+				mtSet := make(map[string]struct{})
+				for _, o := range fallbackList {
+					zoneSet[o.Zone] = struct{}{}
+					mtSet[o.MachineType] = struct{}{}
+				}
+				var zones, mts []string
+				for z := range zoneSet {
+					zones = append(zones, z)
+				}
+				for m := range mtSet {
+					mts = append(mts, m)
+				}
+				return nil, fmt.Errorf(
+					"GKE cluster creation failed after %d attempts. "+
+						"Zones tried: [%s]. Machine types tried: [%s]. "+
+						"Root cause: GCE_STOCKOUT — Google Compute Engine does not have enough resources "+
+						"available in any of the configured zones. "+
+						"Check https://status.cloud.google.com or contact your GCP administrator.",
+					len(fallbackList),
+					strings.Join(zones, ", "),
+					strings.Join(mts, ", "),
+				)
 			}
 
 			next := fallbackList[nextIndex]
