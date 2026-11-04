@@ -84,6 +84,73 @@ func NewHandler() handler.Handler {
 
 type Handler struct{}
 
+type fallbackOption struct {
+	Zone        string
+	MachineType string
+}
+
+func parseMachineType(mt string) (series, tier, size string, ok bool) {
+	parts := strings.SplitN(mt, "-", 3)
+	if len(parts) != 3 {
+		return "", "", "", false
+	}
+	return parts[0], parts[1], parts[2], true
+}
+
+func buildEquivalentMachineTypes(mt string) []string {
+	series, tier, size, ok := parseMachineType(mt)
+	if !ok {
+		return []string{mt}
+	}
+	var candidates []string
+	switch series {
+	case "n1", "n2", "e2":
+		if tier == "highcpu" {
+			candidates = []string{"n1", "n2"}
+		} else {
+			candidates = []string{"n1", "n2", "e2"}
+		}
+	default:
+		return []string{mt}
+	}
+	result := []string{mt}
+	for _, s := range candidates {
+		if s != series {
+			result = append(result, s+"-"+tier+"-"+size)
+		}
+	}
+	return result
+}
+
+func buildFallbackList(cr *v1alpha1.GKECluster) []fallbackOption {
+	zones := cr.Spec.Zones
+	if len(zones) == 0 {
+		allZones := []string{
+			"europe-west3-c", "europe-west3-a", "europe-west3-b",
+			"europe-west1-b", "europe-west1-c", "europe-west1-d",
+		}
+		zones = []string{cr.Spec.Zone}
+		for _, z := range allZones {
+			if z != cr.Spec.Zone {
+				zones = append(zones, z)
+			}
+		}
+	}
+
+	machineTypes := cr.Spec.MachineTypes
+	if len(machineTypes) == 0 {
+		machineTypes = buildEquivalentMachineTypes(cr.Spec.MachineType)
+	}
+
+	var list []fallbackOption
+	for _, mt := range machineTypes {
+		for _, z := range zones {
+			list = append(list, fallbackOption{Zone: z, MachineType: mt})
+		}
+	}
+	return list
+}
+
 func setClusterName(cr *v1alpha1.GKECluster, log *logrus.Entry) error {
 	finalizers := cr.GetFinalizers()
 	if len(finalizers) == 0 {
@@ -141,12 +208,16 @@ func createCluster(cr *v1alpha1.GKECluster, log *logrus.Entry) (*v1alpha1.GKEClu
 	}
 
 	log.Infof("Create GKE cluster %s", cr.Status.ClusterName)
+	zone := cr.Spec.Zone
+	if cr.Status.FallbackZone != "" {
+		zone = cr.Status.FallbackZone
+	}
 	args := []string{"container", "clusters",
 		"create", cr.Status.ClusterName,
 		"--async",
 		"--enable-autorepair",
 		"--scopes=gke-default,storage-rw",
-		"--zone", cr.Spec.Zone,
+		"--zone", zone,
 	}
 
 	args = append(args, "--metadata")
@@ -157,9 +228,13 @@ func createCluster(cr *v1alpha1.GKECluster, log *logrus.Entry) (*v1alpha1.GKEClu
 		args = append(args, strconv.Itoa(int(cr.Spec.DiskSize)))
 	}
 
-	if cr.Spec.MachineType != "" {
+	machineType := cr.Spec.MachineType
+	if cr.Status.FallbackMachineType != "" {
+		machineType = cr.Status.FallbackMachineType
+	}
+	if machineType != "" {
 		args = append(args, "--machine-type")
-		args = append(args, cr.Spec.MachineType)
+		args = append(args, machineType)
 	}
 
 	if cr.Spec.StackType != "" {
@@ -311,8 +386,54 @@ func syncGKECluster(cr *v1alpha1.GKECluster, log *logrus.Entry) (*v1alpha1.GKECl
 			return &status, nil
 		}
 		if gkecluster.Status == "ERROR" {
-			log.Errorf("Error creating cluster %s", cr.Status.ClusterName)
-			return nil, goerrors.New(fmt.Sprintf("error creating GKE cluster %s, which means the cluster get an ERROR status on GCP, please restart current job or check it on GCP directly", cr.Status.ClusterName))
+			log.Errorf("GKE cluster %s is in ERROR state in zone %s with machineType %s (possibly GCE_STOCKOUT), attempting fallback", cr.Status.ClusterName, cr.Spec.Zone, cr.Spec.MachineType)
+
+			if err := deleteRemoteCluster(cr, log); err != nil {
+				log.Warningf("Failed to delete errored cluster %s, GC will clean it up: %v", cr.Status.ClusterName, err)
+			}
+
+			fallbackList := buildFallbackList(cr)
+			nextIndex := cr.Status.FallbackIndex + 1
+			if nextIndex >= len(fallbackList) {
+				zoneSet := make(map[string]struct{})
+				mtSet := make(map[string]struct{})
+				for _, o := range fallbackList {
+					zoneSet[o.Zone] = struct{}{}
+					mtSet[o.MachineType] = struct{}{}
+				}
+				var zones, mts []string
+				for z := range zoneSet {
+					zones = append(zones, z)
+				}
+				for m := range mtSet {
+					mts = append(mts, m)
+				}
+				return nil, fmt.Errorf(
+					"GKE cluster creation failed after %d attempts. "+
+						"Zones tried: [%s]. Machine types tried: [%s]. "+
+						"Root cause: GCE_STOCKOUT — Google Compute Engine does not have enough resources "+
+						"available in any of the configured zones. "+
+						"Check https://status.cloud.google.com or contact your GCP administrator.",
+					len(fallbackList),
+					strings.Join(zones, ", "),
+					strings.Join(mts, ", "),
+				)
+			}
+
+			next := fallbackList[nextIndex]
+			log.Infof("Retrying with zone=%s machineType=%s (attempt %d/%d)", next.Zone, next.MachineType, nextIndex+1, len(fallbackList))
+
+			cr.Status.FallbackZone = next.Zone
+			cr.Status.FallbackMachineType = next.MachineType
+			cr.Status.FallbackIndex = nextIndex
+			cr.SetFinalizers([]string{})
+			cr.Status.ClusterName = ""
+			cr.Status.Status = "pending"
+			cr.Status.Message = fmt.Sprintf("Retrying in zone %s with %s (%d/%d)", next.Zone, next.MachineType, nextIndex+1, len(fallbackList))
+			if err := action.Update(cr); err != nil {
+				return nil, err
+			}
+			return &cr.Status, nil
 		}
 	}
 

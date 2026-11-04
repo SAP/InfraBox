@@ -16,29 +16,34 @@ type GKECluster struct {
 }
 
 type GKEClusterSpec struct {
-	DiskSize                   int32  `json:"diskSize,omitempty"`
-	MachineType                string `json:"machineType,omitempty"`
-	EnableNetworkPolicy        bool   `json:"enableNetworkPolicy,omitempty"`
-	StackType                  string `json:"stackType,omitempty"`
-	DisableLegacyAuthorization bool   `json:"disableLegacyAuthorization,omitempty"`
-	EnablePodSecurityPolicy    bool   `json:"enablePodSecurityPolicy,omitempty"`
-	NumNodes                   int32  `json:"numNodes,omitempty"`
-	Preemptible                bool   `json:"preemptible,omitempty"`
-	EnableAutoscaling          bool   `json:"enableAutoscaling,omitempty"`
-	MaxNodes                   int32  `json:"maxNodes,omitempty"`
-	MinNodes                   int32  `json:"minNodes,omitempty"`
-	ClusterVersion             string `json:"clusterVersion,omitempty"`
-	Zone                       string `json:"zone"`
-	ServiceCidr                string `json:"serviceCidr,omitempty"`
-	ClusterCidr                string `json:"clusterCidr,omitempty"`
-	EnableManagedPrometheus    bool   `json:"enableManagedPrometheus,omitempty"`
+	DiskSize                   int32    `json:"diskSize,omitempty"`
+	MachineType                string   `json:"machineType,omitempty"`
+	MachineTypes               []string `json:"machineTypes,omitempty"`
+	EnableNetworkPolicy        bool     `json:"enableNetworkPolicy,omitempty"`
+	StackType                  string   `json:"stackType,omitempty"`
+	DisableLegacyAuthorization bool     `json:"disableLegacyAuthorization,omitempty"`
+	EnablePodSecurityPolicy    bool     `json:"enablePodSecurityPolicy,omitempty"`
+	NumNodes                   int32    `json:"numNodes,omitempty"`
+	Preemptible                bool     `json:"preemptible,omitempty"`
+	EnableAutoscaling          bool     `json:"enableAutoscaling,omitempty"`
+	MaxNodes                   int32    `json:"maxNodes,omitempty"`
+	MinNodes                   int32    `json:"minNodes,omitempty"`
+	ClusterVersion             string   `json:"clusterVersion,omitempty"`
+	Zone                       string   `json:"zone"`
+	Zones                      []string `json:"zones,omitempty"`
+	ServiceCidr                string   `json:"serviceCidr,omitempty"`
+	ClusterCidr                string   `json:"clusterCidr,omitempty"`
+	EnableManagedPrometheus    bool     `json:"enableManagedPrometheus,omitempty"`
 }
 
 type GKEClusterStatus struct {
-	Status         string `json:"status,omitempty"`
-	Message        string `json:"message,omitempty"`
-	ClusterName    string `json:"clusterName,omitempty"`
-	FirstCleanedAt string `json:"firstCleanedAt,omitempty"`
+	Status              string `json:"status,omitempty"`
+	Message             string `json:"message,omitempty"`
+	ClusterName         string `json:"clusterName,omitempty"`
+	FirstCleanedAt      string `json:"firstCleanedAt,omitempty"`
+	FallbackIndex       int    `json:"fallbackIndex,omitempty"`
+	FallbackZone        string `json:"fallbackZone,omitempty"`
+	FallbackMachineType string `json:"fallbackMachineType,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
