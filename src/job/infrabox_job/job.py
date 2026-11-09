@@ -4,6 +4,8 @@ import json
 import glob
 import copy
 import time
+import traceback
+import uuid
 import shutil
 import requests
 
@@ -33,15 +35,27 @@ class Job(object):
 
     def load_data(self):
         retry = 0
+        attempt = 0
         current_backoff = 1
         backoff_limit = 300
+        url = "%s/job" % self.api_server
 
         while True:
+            attempt += 1
+            request_id = str(uuid.uuid4())
+            headers = self.get_headers()
+            headers['X-Request-ID'] = request_id
+            started = time.monotonic()
+            print("Loading job data: GET %s job_id=%s request_id=%s attempt=%s" %
+                  (url, os.environ.get('INFRABOX_JOB_ID', 'unknown'), request_id, attempt),
+                  flush=True)
             try:
-                r = requests.get("%s/job" % self.api_server,
-                                 headers=self.get_headers(),
-                                 timeout=10,
+                r = requests.get(url,
+                                 headers=headers,
+                                 timeout=120,
                                  verify=self.verify)
+                print("Job data response: request_id=%s status=%s elapsed=%.2fs" %
+                      (request_id, r.status_code, time.monotonic() - started), flush=True)
                 time.sleep(1)
 
                 if r.status_code == 409:
@@ -73,7 +87,12 @@ class Job(object):
             except Error as e:
                 raise e
             except Exception as e:
-                print(e)
+                print("Job data request failed: GET %s request_id=%s attempt=%s "
+                      "elapsed=%.2fs exception=%s: %s" %
+                      (url, request_id, attempt, time.monotonic() - started,
+                       type(e).__name__, e), flush=True)
+                traceback.print_exc(file=sys.stdout)
+                sys.stdout.flush()
 
         data = r.json()
         self.job = data['job']
