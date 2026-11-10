@@ -27,7 +27,8 @@ class JobRequestTest(unittest.TestCase):
     @patch('infrabox_job.job.time.sleep')
     def test_timeout_is_flushed_before_retry_and_success_still_loads_secrets(self, _sleep):
         output = io.StringIO()
-        output.flush = Mock()
+        flushed_output = []
+        output.flush = Mock(side_effect=lambda: flushed_output.append(output.getvalue()))
         response = Mock(status_code=200)
         response.json.return_value = {
             'job': {'id': 'test-job'}, 'project': {}, 'build': {},
@@ -36,22 +37,34 @@ class JobRequestTest(unittest.TestCase):
             'registries': [], 'deployments': [],
         }
         attempts = []
+        output_before_attempt = []
+        original_get_headers = self.job.get_headers
+
+        def get_headers():
+            output_before_attempt.append(flushed_output[-1] if flushed_output else '')
+            return original_get_headers()
 
         def get(_url, **kwargs):
-            attempts.append(kwargs['headers']['X-Request-ID'])
-            uuid.UUID(attempts[-1])
-            self.assertEqual(kwargs['headers']['Authorization'], 'token private-job-token')
+            attempts.append(kwargs['headers'].copy())
             if len(attempts) == 1:
                 raise requests.exceptions.ReadTimeout('read timeout=10')
-            self.assertIn('ReadTimeout', output.getvalue())
-            self.assertIn('Traceback (most recent call last)', output.getvalue())
-            self.assertTrue(output.flush.called)
+            if len(attempts) > 2:
+                return Mock(status_code=409)
             return response
 
-        with patch('infrabox_job.job.requests.get', side_effect=get), redirect_stdout(output):
+        with patch.object(self.job, 'get_headers', side_effect=get_headers), \
+                patch('infrabox_job.job.requests.get', side_effect=get) as request_get, \
+                redirect_stdout(output):
             self.job.load_data()
 
-        self.assertNotEqual(attempts[0], attempts[1])
+        self.assertEqual(request_get.call_count, 2)
+        self.assertEqual(len(output_before_attempt), 2)
+        self.assertIn('ReadTimeout', output_before_attempt[1])
+        self.assertIn('Traceback (most recent call last)', output_before_attempt[1])
+        for headers in attempts:
+            uuid.UUID(headers['X-Request-ID'])
+            self.assertEqual(headers['Authorization'], 'token private-job-token')
+        self.assertNotEqual(attempts[0]['X-Request-ID'], attempts[1]['X-Request-ID'])
         self.assertIn('/api/job/job', output.getvalue())
         self.assertIn('attempt=2', output.getvalue())
         self.assertNotIn('private-job-token', output.getvalue())
