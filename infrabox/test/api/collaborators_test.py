@@ -1,3 +1,5 @@
+import json
+
 from temp_tools import TestClient
 from test_template import ApiTestTemplate
 
@@ -64,3 +66,29 @@ class CollaboratorsTest(ApiTestTemplate):
                                    SELECT count(*) FROM collaborator WHERE user_id = %s
                                    """, [self.collaborator_id])
         self.assertEqual(r[0], 0)
+
+    def test_administrator_cannot_promote_self_to_owner(self):
+        TestClient.execute("""
+                           INSERT INTO "user" (id, github_id, username, avatar_url)
+                           VALUES (%s, 2, %s, 'url1');
+                           """, [self.collaborator_id,
+                                     self.test_collaborator_data['username']])
+        TestClient.execute("""
+                           INSERT INTO collaborator (user_id, project_id, role)
+                           VALUES (%s, %s, 'Administrator')
+                           """, [self.collaborator_id, self.project_id])
+        TestClient.opa_push()
+
+        r = TestClient.app.put(
+            'api/v1/projects/%s/collaborators/%s' % (self.project_id, self.collaborator_id),
+            data=json.dumps({'role': 'Owner'}),
+            headers=TestClient.get_user_authorization(self.collaborator_id),
+            content_type='application/json')
+
+        self.assertEqual(r.status_code, 403)
+        self.assertEqual(json.loads(r.data)['message'], 'A project is limited to one owner.')
+        role = TestClient.execute_one("""
+                                      SELECT role FROM collaborator
+                                      WHERE user_id = %s AND project_id = %s
+                                      """, [self.collaborator_id, self.project_id])
+        self.assertEqual(role[0], 'Administrator')
