@@ -40,7 +40,7 @@ class Job(object):
             try:
                 r = requests.get("%s/job" % self.api_server,
                                  headers=self.get_headers(),
-                                 timeout=10,
+                                 timeout=120,
                                  verify=self.verify)
                 time.sleep(1)
 
@@ -74,6 +74,11 @@ class Job(object):
                 raise e
             except Exception as e:
                 print(e)
+                if retry >= 10:
+                    raise Error("Failed to load job data after 10 retries: %s" % type(e).__name__)
+                retry += 1
+                time.sleep(min(current_backoff, backoff_limit))
+                current_backoff = min(current_backoff * 2, backoff_limit)
 
         data = r.json()
         self.job = data['job']
