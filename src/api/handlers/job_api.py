@@ -63,7 +63,12 @@ class Vault():
         app_role_url = self.base_url + '/v1/' + self.namespace + '/auth/approle/login' if self.namespace else self.base_url + '/v1/auth/approle/login'
         json_data = json.dumps(app_role)
         for i in range(0, 10):
-            res = requests.post(url=app_role_url, data=json_data, verify=False)
+            try:
+                res = requests.post(url=app_role_url, data=json_data, verify=False, timeout=10)
+            except requests.exceptions.RequestException as e:
+                abort(400, "Vault AppRole authentication request failed: %s" % type(e).__name__)
+            if res.status_code in (400, 401, 403):
+                abort(400, "Vault AppRole authentication failed (HTTP %s); check credentials and permissions" % res.status_code)
             if res.status_code == 200:
                 json_res = json.loads(res.content)
                 self.token = json_res['auth']['client_token']
@@ -81,7 +86,7 @@ class Vault():
         try:
             lookup_url = self.base_url + '/v1/' + self.namespace + '/auth/token/lookup-self' if self.namespace else self.base_url + 'v1/auth/token/lookup-self'
             with request_stage("vault_token_lookup_request"):
-                res = requests.get(url=lookup_url, headers={"X-Vault-Token": token}, verify=False)
+                res = requests.get(url=lookup_url, headers={"X-Vault-Token": token}, verify=False, timeout=10)
             if res.status_code == 200:
                 json_res = json.loads(res.content)
                 policies = json_res['data']['policies']
@@ -114,7 +119,7 @@ class Vault():
             
             for i in range(0, 10):
                 with request_stage("vault_batch_token_request"):
-                    res = requests.post(url=url, json=batch_payload, headers={"X-Vault-Token": service_token}, verify=False)
+                    res = requests.post(url=url, json=batch_payload, headers={"X-Vault-Token": service_token}, verify=False, timeout=10)
                 if res.status_code == 200:
                     json_res = json.loads(res.content)
                     token = json_res['auth']['client_token']
@@ -368,6 +373,17 @@ class Job(Resource):
              WHERE project_id = %s
         ''', [data['project']['id']])
 
+        vault_configs = {}
+        for config in trace_call('vault_configs_query', g.db.execute_many, '''
+             SELECT name, url, version, token, ca, namespace, role_id, secret_id
+             FROM vault
+             WHERE project_id = %s
+        ''', [data['project']['id']]):
+            vault_configs.setdefault(config[0], config[1:])
+
+        # Release the connection before resolving secrets through external services.
+        g.release_db()
+
         is_fork = data['job'].get('fork', False)
         # Cache Vault instances per vault name+project so we create them only once
         vault_cache = {}
@@ -399,9 +415,7 @@ class Job(Resource):
                 secret_path = vault_cfg['$vault_secret_path']
                 secret_key = vault_cfg['$vault_secret_key']
 
-                result = trace_call('vault_config:%s' % vault_name, g.db.execute_one, """
-                  SELECT url, version, token, ca, namespace, role_id, secret_id FROM vault WHERE name = %s and project_id = %s
-                """, [vault_name, data['project']['id']])
+                result = vault_configs.get(vault_name)
 
                 if not result:
                     abort(400, "Cannot get Vault '%s' in project '%s' " % (vault_name, data['project']['id']))

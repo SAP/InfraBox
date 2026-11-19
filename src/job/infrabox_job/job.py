@@ -93,6 +93,11 @@ class Job(object):
                        type(e).__name__, e), flush=True)
                 traceback.print_exc(file=sys.stdout)
                 sys.stdout.flush()
+                if retry >= 10:
+                    raise Error("Failed to load job data after 10 retries: %s" % type(e).__name__)
+                retry += 1
+                time.sleep(min(current_backoff, backoff_limit))
+                current_backoff = min(current_backoff * 2, backoff_limit)
 
         data = r.json()
         self.job = data['job']
