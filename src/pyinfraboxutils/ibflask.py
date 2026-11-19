@@ -11,6 +11,7 @@ from pyinfrabox.utils import validate_uuid
 from pyinfraboxutils import get_logger, get_env, dbpool
 from pyinfraboxutils.db import DB, connect_db
 from pyinfraboxutils.token import decode
+from pyinfraboxutils.request_diagnostics import start_job_request, request_stage, finish_job_request
 
 app = Flask(__name__)
 app.url_map.strict_slashes = False
@@ -19,6 +20,8 @@ logger = get_logger('ibflask')
 
 @app.before_request
 def before_request():
+    start_job_request()
+
     def release_db():
         db = getattr(g, 'db', None)
         if not db:
@@ -29,11 +32,19 @@ def before_request():
 
     g.release_db = release_db
 
-    g.db = dbpool.get()
+    with request_stage('database_pool'):
+        g.db = dbpool.get()
 
     if app.config['OPA_ENABLED']:
-        g.token = normalize_token(get_token())
-        check_request_authorization()
+        with request_stage('token_validation'):
+            g.token = normalize_token(get_token())
+        with request_stage('opa_authorization'):
+            check_request_authorization()
+
+
+@app.after_request
+def log_job_request(response):
+    return finish_job_request(response)
 
 @app.teardown_request
 def teardown_request(_):
