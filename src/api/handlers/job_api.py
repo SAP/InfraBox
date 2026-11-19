@@ -30,6 +30,7 @@ from pyinfraboxutils.ibflask import app
 from pyinfraboxutils.storage import storage
 from pyinfraboxutils.secrets import decrypt_secret
 from pyinfraboxutils import get_root_url
+from pyinfraboxutils.request_diagnostics import request_stage, trace_call, trace_stage
 
 logger = get_logger(__name__)
 
@@ -53,6 +54,7 @@ class Vault():
         self.token = None
         self.policies = None
 
+    @trace_stage('vault_approle_login')
     def get_token_by_app_role(self):
         self.policies = self.get_policies(self.token)
         if self.token and self.policies:
@@ -71,13 +73,15 @@ class Vault():
         err_msg = "Getting token from Vault error even tried 10 times, url is {}, API response is {}:{}".format(app_role_url, res.status_code, res.text)
         abort(400, err_msg)
 
+    @trace_stage('vault_token_lookup')
     def get_policies(self, token):
         """Return the policies associated with the provided token."""
         if not token:
             return None
         try:
             lookup_url = self.base_url + '/v1/' + self.namespace + '/auth/token/lookup-self' if self.namespace else self.base_url + 'v1/auth/token/lookup-self'
-            res = requests.get(url=lookup_url, headers={"X-Vault-Token": token}, verify=False)
+            with request_stage("vault_token_lookup_request"):
+                res = requests.get(url=lookup_url, headers={"X-Vault-Token": token}, verify=False)
             if res.status_code == 200:
                 json_res = json.loads(res.content)
                 policies = json_res['data']['policies']
@@ -87,6 +91,7 @@ class Vault():
             logger.debug("Token validation failed: %s", str(e))
             return None
 
+    @trace_stage('vault_batch_token')
     def generate_batch_token(self, service_token, ttl="1h"):
         """
         Generate a batch token using AppRole credentials.
@@ -108,7 +113,8 @@ class Vault():
             url = self.base_url + '/v1/' + self.namespace + '/auth/token/create' if self.namespace else self.base_url + '/v1/auth/token/create'
             
             for i in range(0, 10):
-                res = requests.post(url=url, json=batch_payload, headers={"X-Vault-Token": service_token}, verify=False)
+                with request_stage("vault_batch_token_request"):
+                    res = requests.post(url=url, json=batch_payload, headers={"X-Vault-Token": service_token}, verify=False)
                 if res.status_code == 200:
                     json_res = json.loads(res.content)
                     token = json_res['auth']['client_token']
@@ -136,6 +142,7 @@ class Vault():
             url += '/v1/' + self.namespace + '/' + paths[0] + '/data/' + '/'.join(paths[1:]) if self.namespace else '/v1/' + paths[0] + '/data/' + '/'.join(paths[1:])
         return url
 
+    @trace_stage('vault_secret_read')
     def get_value_from_vault(self, token, secret_path, secret_key, verify):
         try:
             url = self._get_api_url(secret_path)
@@ -159,12 +166,13 @@ class Vault():
 @api.route("/api/job/job", doc=False)
 class Job(Resource):
 
+    @trace_stage('job_data')
     def get(self):
         job_id = g.token['job']['id']
         data = {}
 
         # get all the job details
-        r = g.db.execute_one('''
+        r = trace_call('job_details_query', g.db.execute_one, '''
             SELECT
                 j.name,
                 null,
@@ -272,7 +280,7 @@ class Job(Resource):
         pull_request_id = None
         commit_env = None
         if data['project']['type'] == 'github' or data['project']['type'] == 'gerrit':
-            r = g.db.execute_one('''
+            r = trace_call('repository_query', g.db.execute_one, '''
                 SELECT
                     r.clone_url, r.name, r.private
                 FROM repository r
@@ -284,7 +292,7 @@ class Job(Resource):
             data['repository']['private'] = r[2]
 
             # A regular commit
-            r = g.db.execute_one('''
+            r = trace_call('commit_query', g.db.execute_one, '''
                 SELECT
                     c.branch, c.committer_name, c.tag, c.pull_request_id, c.env
                 FROM commit c
@@ -302,7 +310,7 @@ class Job(Resource):
             commit_env = r[4]
 
         if data['project']['type'] == 'upload':
-            r = g.db.execute_one('''
+            r = trace_call('source_upload_query', g.db.execute_one, '''
                 SELECT filename FROM source_upload
                 WHERE id = %s
             ''', [data['build']['source_upload_id']])
@@ -312,7 +320,7 @@ class Job(Resource):
             }
 
         # get dependencies
-        r = g.db.execute_many('''
+        r = trace_call('dependencies_query', g.db.execute_many, '''
               WITH RECURSIVE next_job(id, parent) AS (
                       SELECT j.id, (p->>'job-id')::uuid parent
                       FROM job j, jsonb_array_elements(j.dependencies) AS p
@@ -340,7 +348,7 @@ class Job(Resource):
             })
 
         # get parents
-        r = g.db.execute_many('''
+        r = trace_call('parents_query', g.db.execute_many, '''
           SELECT id, name FROM job where id
               IN (SELECT (deps->>'job-id')::uuid FROM job, jsonb_array_elements(job.dependencies) as deps WHERE id = %s)
         ''', [data['job']['id']])
@@ -354,7 +362,7 @@ class Job(Resource):
             })
 
         # get the secrets
-        secrets = g.db.execute_many('''
+        secrets = trace_call('project_secrets_query', g.db.execute_many, '''
              SELECT name, value
              FROM secret
              WHERE project_id = %s
@@ -382,6 +390,7 @@ class Job(Resource):
                     validate_res = 'error'
             return validate_res
 
+        @trace_stage('resolve_secret')
         def get_secret(name):
             secret_type = get_secret_type(name)
             if secret_type == 'vault':
@@ -390,7 +399,7 @@ class Job(Resource):
                 secret_path = vault_cfg['$vault_secret_path']
                 secret_key = vault_cfg['$vault_secret_key']
 
-                result = g.db.execute_one("""
+                result = trace_call('vault_config:%s' % vault_name, g.db.execute_one, """
                   SELECT url, version, token, ca, namespace, role_id, secret_id FROM vault WHERE name = %s and project_id = %s
                 """, [vault_name, data['project']['id']])
 
@@ -413,21 +422,21 @@ class Job(Resource):
                     token_to_use = token
                 elif validate_res == 'appRole':
                     logger.info('validate way is appRole')
-                    token_to_use = vault_client.get_token_by_app_role()
+                    token_to_use = trace_call('vault_login:%s' % vault_name, vault_client.get_token_by_app_role)
                     batch_token = vault_client.generate_batch_token(token_to_use)
                     if batch_token:
                         token_to_use = batch_token
                 else:
-                    abort(400, "Validate way is '%s' ! result is '%s' " % (validate_res, result))
+                    abort(400, "Invalid authentication configuration for Vault '%s'" % vault_name)
 
                 if not ca:
-                    logger.info('Start to get value fron vault %s %s %s' % (token_to_use, secret_path, secret_key))
-                    return vault_client.get_value_from_vault(token_to_use, secret_path, secret_key, False)
+                    logger.info('Start to get value from vault %s', vault_name)
+                    return trace_call('vault_read:%s' % vault_name, vault_client.get_value_from_vault, token_to_use, secret_path, secret_key, False)
                 else:
                     with tempfile.NamedTemporaryFile(delete=False) as f:
                         f.write(ca)
                         f.flush()  # ensure all data written
-                    return vault_client.get_value_from_vault(token_to_use, secret_path, secret_key, f.name)
+                    return trace_call('vault_read:%s' % vault_name, vault_client.get_value_from_vault, token_to_use, secret_path, secret_key, f.name)
             else:
                 if is_fork:
                     abort(400, 'Access to secret %s is not allowed from a fork' % name)
