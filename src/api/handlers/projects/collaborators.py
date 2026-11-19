@@ -146,6 +146,9 @@ class Collaborator(Resource):
         if [userrole] not in roles:
             abort(400, "Role unknown.")
 
+        if userrole == 'Owner':
+            abort(403, "A project is limited to one owner.")
+
         # Do update
         g.db.execute(
             """
