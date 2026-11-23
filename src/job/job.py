@@ -173,6 +173,18 @@ class RunJob(Job):
             schema, url = clone_url.split("://")
             clone_url = schema + "://" + token + '@' + url
 
+        https_fallback = None
+        if token and self.github_host:
+            for prefix in ('git@%s:' % self.github_host, 'ssh://git@%s/' % self.github_host):
+                if clone_url.startswith(prefix):
+                    https_fallback = 'https://%s@%s/%s' % (token, self.github_host, clone_url[len(prefix):])
+                    break
+
+        # Only clean up a failed clone if its destination was absent or empty.
+        if https_fallback and os.path.lexists(mount_repo_dir):
+            if os.path.islink(mount_repo_dir) or not os.path.isdir(mount_repo_dir) or os.listdir(mount_repo_dir):
+                https_fallback = None
+
         cmd = ['git', 'clone']
 
         if not full_history:
@@ -182,7 +194,17 @@ class RunJob(Job):
                 cmd += ['--single-branch', '-b', branch]
 
         cmd += [clone_url, mount_repo_dir]
-        c.execute_mask(cmd, show=True, retry=True, mask=token)
+        try:
+            c.execute_mask(cmd, show=True, retry=https_fallback is None, mask=token)
+        except Exception:
+            if not https_fallback:
+                raise
+            c.collect('SSH clone failed, retrying with HTTPS and GitHub token', show=True)
+            if os.path.isdir(mount_repo_dir):
+                shutil.rmtree(mount_repo_dir)
+            clone_url = https_fallback
+            cmd[-2] = clone_url
+            c.execute_mask(cmd, show=True, retry=True, mask=token)
 
         if ref:
             cmd = ['git', 'fetch']
