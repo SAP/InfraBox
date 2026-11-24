@@ -3,6 +3,8 @@ import sys
 import time
 import random
 
+from infrabox_job.secret_masker import SecretMasker
+
 class Failure(Exception):
     def __init__(self, message):
         super(Failure, self).__init__(message)
@@ -16,20 +18,25 @@ class Error(Exception):
 
 class ApiConsole(object):
     def __init__(self):
-        pass
+        self.masker = SecretMasker()
+
+    def write(self, text):
+        text = self.masker.mask(text)
+        try:
+            sys.stdout.write(text)
+        except UnicodeEncodeError:
+            sys.stdout.write(text.encode('ascii', errors='backslashreplace').decode('ascii'))
+        sys.stdout.flush()
 
     def collect(self, line, show=False):
         if show:
-            try:
-                print(line)
-            except UnicodeEncodeError:
-                print((line.encode('utf-8')))
-            sys.stdout.flush()
+            self.write(str(line) + '\n')
 
     def execute_mask(self, command, cwd=None, shell=False, show=False, env=None, ignore_error=False, show_cmd=True, retry=False, mask=None):
+        self.masker.add(mask)
         if not mask or not show_cmd:
             return self.execute(command, cwd, shell, show, env, ignore_error, show_cmd, retry)
-        self.collect(' '.join([x.replace(mask, '********') for x in command]), show=True)
+        self.collect(' '.join(command), show=True)
         self.execute(command, cwd, shell, show, env, ignore_error, False, retry)
 
     def execute(self, command, cwd=None, shell=False, show=False, env=None, ignore_error=False, show_cmd=True, retry=False):
@@ -41,8 +48,11 @@ class ApiConsole(object):
             if show_cmd:
                 self.collect(' '.join(command), show=show)
 
-            p = subprocess.Popen(command, cwd=cwd, env=env, shell=shell)
-            p.wait()
+            with subprocess.Popen(command, cwd=cwd, env=env, shell=shell,
+                                  stdout=subprocess.PIPE, stderr=subprocess.STDOUT) as p:
+                for line in iter(p.stdout.readline, b''):
+                    self.write(line.decode('utf-8', errors='replace'))
+                p.wait()
 
             if p.returncode == 0:
                 return
