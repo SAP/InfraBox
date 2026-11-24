@@ -8,11 +8,22 @@ import traceback
 import uuid
 import shutil
 import requests
+import base64
 
-from infrabox_job.process import Failure, Error
+from infrabox_job.process import ApiConsole, Failure, Error
 
 class Job(object):
-    def __init__(self):
+    def __init__(self, console=None):
+        self.console = console or ApiConsole()
+        for name in ('INFRABOX_JOB_TOKEN', 'INFRABOX_GIT_PRIVATE_KEY'):
+            self.console.masker.add(os.environ.get(name))
+        resource_token = os.environ.get('INFRABOX_RESOURCES_KUBERNETES_TOKEN')
+        if resource_token:
+            self.console.masker.add(resource_token)
+            try:
+                self.console.masker.add(base64.b64decode(resource_token).decode('utf-8'))
+            except (ValueError, UnicodeDecodeError):
+                pass
         self.api_server =  "http://infrabox-api." + os.environ["INFRABOX_GENERAL_SYSTEM_NAMESPACE"] + ":8080/api/job"
         self.verify = False
 
@@ -46,16 +57,16 @@ class Job(object):
             headers = self.get_headers()
             headers['X-Request-ID'] = request_id
             started = time.monotonic()
-            print("Loading job data: GET %s job_id=%s request_id=%s attempt=%s" %
-                  (url, os.environ.get('INFRABOX_JOB_ID', 'unknown'), request_id, attempt),
-                  flush=True)
+            self.console.collect("Loading job data: GET %s job_id=%s request_id=%s attempt=%s" %
+                                 (url, os.environ.get('INFRABOX_JOB_ID', 'unknown'), request_id, attempt),
+                                 show=True)
             try:
                 r = requests.get(url,
                                  headers=headers,
                                  timeout=120,
                                  verify=self.verify)
-                print("Job data response: request_id=%s status=%s elapsed=%.2fs" %
-                      (request_id, r.status_code, time.monotonic() - started), flush=True)
+                self.console.collect("Job data response: request_id=%s status=%s elapsed=%.2fs" %
+                                     (request_id, r.status_code, time.monotonic() - started), show=True)
                 time.sleep(1)
 
                 if r.status_code == 409:
@@ -87,12 +98,11 @@ class Job(object):
             except Error as e:
                 raise e
             except Exception as e:
-                print("Job data request failed: GET %s request_id=%s attempt=%s "
-                      "elapsed=%.2fs exception=%s: %s" %
-                      (url, request_id, attempt, time.monotonic() - started,
-                       type(e).__name__, e), flush=True)
-                traceback.print_exc(file=sys.stdout)
-                sys.stdout.flush()
+                self.console.collect("Job data request failed: GET %s request_id=%s attempt=%s "
+                                     "elapsed=%.2fs exception=%s: %s" %
+                                     (url, request_id, attempt, time.monotonic() - started,
+                                      type(e).__name__, e), show=True)
+                self.console.collect(traceback.format_exc(), show=True)
                 if retry >= 10:
                     raise Error("Failed to load job data after 10 retries: %s" % type(e).__name__)
                 retry += 1
@@ -117,6 +127,12 @@ class Job(object):
             self.source_upload = data['source_upload']
 
         self.deployments = data['deployments']
+
+        self.console.masker.add(self.secrets)
+        self.console.masker.add_sensitive_fields(self.env_vars)
+        self.console.masker.add(self.repository.get('github_api_token'))
+        for registry in self.registries + self.deployments:
+            self.console.masker.add_sensitive_fields(registry)
 
         self.enable_token_access = self.enable_token_access and self.repository.get('github_api_token', None)
 
@@ -169,7 +185,7 @@ class Job(object):
                 if r.status_code == 200:
                     return
             except Exception as e:
-                print(e)
+                self.console.collect(str(e), show=True)
 
             self.console.collect('Failed to connect to API, retrying.', show=True)
             time.sleep(1)
