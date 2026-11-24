@@ -16,12 +16,14 @@ import urllib3
 import yaml
 import tarfile
 import signal
+import logging
 
 from pyinfrabox.infrabox import validate_json
 from pyinfrabox.docker_compose import create_from
 
 from infrabox_job.stats import StatsCollector
 from infrabox_job.process import ApiConsole, Failure, Error
+from infrabox_job.secret_masker import SecretMaskingFormatter
 from infrabox_job.job import Job
 from infrabox_job import find_infrabox_file
 
@@ -49,8 +51,7 @@ def get_registry_name():
 
 class RunJob(Job):
     def __init__(self, console):
-        Job.__init__(self)
-        self.console = console
+        Job.__init__(self, console)
         self.storage_dir = '/data/tmp/storage'
         self.error = None
 
@@ -1391,6 +1392,8 @@ def main():
     get_env('INFRABOX_GENERAL_DONT_CHECK_CERTIFICATES')
     get_env('INFRABOX_LOCAL_CACHE_ENABLED')
     console = ApiConsole()
+    for handler in logging.getLogger().handlers:
+        handler.setFormatter(SecretMaskingFormatter(console.masker, handler.formatter))
 
     j = None
     try:
@@ -1406,7 +1409,7 @@ def main():
         j.console.collect(str(e), show=True)
 
         with open('/dev/termination-log', 'w+') as out:
-            out.write(str(e))
+            out.write(console.masker.mask(str(e)))
 
         sys.exit(ERR_EXIT_FAILURE)
 
@@ -1415,7 +1418,7 @@ def main():
         j.console.collect(str(e), show=True)
 
         with open('/dev/termination-log', 'w+') as out:
-            out.write(str(e))
+            out.write(console.masker.mask(str(e)))
 
         sys.exit(ERR_EXIT_ERROR)
     except:
@@ -1425,7 +1428,7 @@ def main():
             j.console.collect(msg, show=True)
 
             with open('/dev/termination-log', 'w+') as out:
-                out.write(msg)
+                out.write(console.masker.mask(msg))
 
         sys.exit(ERR_EXIT_ERROR)
 
